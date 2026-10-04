@@ -7,6 +7,7 @@ import { MOVEMENT_URGENCY_FACTORS, type MovementFacing, type MovementIntent, typ
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { tuning } from '../tuning'
 import { defensiveShape, postScore, tacticalIntent } from '../tactics/TacticalIdentity'
+import { onBallCushion, onBallReactionSeconds, stanceSlideFactor } from './PointOfAttack'
 
 const ON_BALL_CUSHION_METERS = 1.05
 const GAP_DEPTH_METERS = 0.9
@@ -16,6 +17,52 @@ const HELP_SHADE_METERS = 2.2
 const RECOVER_START_METERS = 1.0
 const RECOVER_END_METERS = 0.6
 const DRIVE_PAINT_THREAT_METERS = 4.8
+/** BT6.7: how far ahead along a drive the on-ball defender aims (cut-off), and how far behind his spot he turns and runs instead of sliding. */
+const ON_BALL_CUTOFF_LEAD_SECONDS = 0.1
+const ON_BALL_TURN_AND_RUN_METERS = 1.0
+/** BT6.6: within this distance of his spot the on-ball defender is in his stance (reading the handler, a reaction late). */
+const ON_BALL_STANCE_METERS = 1.5
+/** BT6.4: a handler who has picked up his dribble cannot drive: his defender crowds him (a pressure defense more). */
+const DEAD_DRIBBLE_CUSHION_METERS = 0.45
+/** BT6.15-18 help: trigger distance from the rim (conservative .. aggressive), where the helper meets the drive, and the stunt from the nail. */
+const HELP_TRIGGER_MIN_METERS = 3.4
+const HELP_TRIGGER_RANGE_METERS = 3.6
+const STUNT_MIN_HELP = 0.55
+const STUNT_MAX_METERS = 2.2
+const STUNT_REACH_METERS = 7
+const STUNT_STANDOFF_METERS = 2.5
+/** BT6.26: ticks of the rotation call for a team with no familiarity with its scheme (none for a team that knows it by heart). */
+const ROTATION_CALL_TICKS = 5
+
+/**
+ * Where the helper meets a drive: a conservative help waits at the rim on the driver's line (vertical, protect the basket); an aggressive one
+ * steps up into the driver's path, a step and a half in front of him, to stop the ball before the paint.
+ */
+function helpSpot(handler: CourtPosition, basket: CourtPosition, court: MatchState['court'], help: number): CourtPosition {
+  const dx = handler.x - basket.x
+  const dy = handler.y - basket.y
+  const length = Math.hypot(dx, dy) || 1
+  const atRim = Math.min(1.3, length)
+  const high = Math.max(atRim, length - 1.5)
+  const depth = atRim + (high - atRim) * clamp((help - 0.2) / 0.8, 0, 1)
+  return { x: clamp(basket.x + (dx / length) * depth, 0.15, court.lengthMeters - 0.15), y: clamp(basket.y + (dy / length) * depth, 0.15, court.widthMeters - 0.15) }
+}
+
+/**
+ * BT6.18: a stunt. With an aggressive help defense the defenders off the ball do not just stand in their gap during a drive: they take steps
+ * toward the driver (to show a crowd and slow him), as far as they can and still recover, and less off a shooter who would punish it.
+ */
+function stuntSpot(gap: CourtPosition, handler: CourtPosition, attacker: MatchPlayerState, help: number): CourtPosition {
+  const toward = { x: handler.x - gap.x, y: handler.y - gap.y }
+  const length = Math.hypot(toward.x, toward.y)
+  // Only the men near enough to the drive to bother it stunt; the far side stays home.
+  if (length < 1e-6 || length > STUNT_REACH_METERS) return gap
+  const respect = clamp((attacker.offense.shooting - 55) / 35, 0, 1)
+  // A stunt is a show in the gap, not a double team: he stops well short of the driver, where he can still get back to his man.
+  const step = Math.min(length - STUNT_STANDOFF_METERS, STUNT_MAX_METERS * clamp((help - STUNT_MIN_HELP) / (1 - STUNT_MIN_HELP), 0, 1) * (1 - 0.6 * respect))
+  if (step <= 0) return gap
+  return { x: gap.x + (toward.x / length) * step, y: gap.y + (toward.y / length) * step }
+}
 const CLOSEOUT_SPRINT_DISTANCE_METERS = 2.2
 /** Staying with a man who is moving takes more than a jog. */
 const TRACKING_RUN_DISTANCE_METERS = 0.7
@@ -62,7 +109,11 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const screenHelp = helpDecision.status === 'TRIGGERED' || tuning().screenPostHelp === 0 ? null : resolveScreenAndPostHelp(state, assignments, playerById, ballHandlerId, defendedBasket, intent.defense.help)
   const driveHelperDefenderId = helpDecision.helperPlayerId
   const rimProtectorPlayerId = resolveRimProtector(state, assignments, playerById, ballHandlerId, prior?.rimProtectorPlayerId ?? null, helpDecision, defendedBasket)
-  const rotationByDefender = new Map(helpDecision.rotations.map((rotation) => [rotation.playerId, rotation]))
+  // BT6.26: the rotations behind the help need the call between the defenders: a team that knows its scheme rotates at once, one that does
+  // not is a beat late (the helper himself goes on his own read).
+  const rotationDelay = Math.round((1 - intent.familiarity) * ROTATION_CALL_TICKS)
+  const rotationsLive = helpDecision.triggeredT === undefined || state.t - helpDecision.triggeredT >= rotationDelay
+  const rotationByDefender = new Map(rotationsLive ? helpDecision.rotations.map((rotation) => [rotation.playerId, rotation]) : [])
   const previousResponsibilities = new Map(state.responsibilities.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
   const previousDecisions = new Map(state.decisions.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
   const nextResponsibilitySequenceStart = state.nextResponsibilitySequence
@@ -155,31 +206,47 @@ export function reconcileManDefense(input: MatchState): MatchState {
 
       const rawTarget = (kind === 'TAG' || kind === 'DIG') && extraHelp !== null ? extraHelp.target
         : kind === 'HELP' || kind === 'LOW_MAN'
-        ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
+        ? helpSpot(handlerPosition(state, ballHandlerId, attacker.position), defendedBasket, state.court, intent.defense.help)
+        : kind === 'GAP' && activeDrive !== undefined && ballHandlerId !== null && helpDecision.status === 'TRIGGERED' && intent.defense.help > STUNT_MIN_HELP
+          ? stuntSpot(guardPosition(attacker.position, state.ball.position, defendedBasket, 'GAP', state.court, defensiveTactics, attacker.offense.shooting), handlerPosition(state, ballHandlerId, attacker.position), attacker, intent.defense.help)
         : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
           ? sagTowardRim(attacker, rimProtectorPosition(state.ball.position, defendedBasket, state.court))
           : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics, attacker.offense.shooting)
-      const target = kind === 'ON_BALL' ? rawTarget : keepGoalSide(rawTarget, state.ball.position, defendedBasket)
+      // BT6.6: the on-ball defender plays the handler at the cushion his coach asks for, and answers his first step a reaction late.
+      const handlerNow = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
+      const onBallRead = kind === 'ON_BALL' && handlerNow !== undefined && state.ball.kind === 'HELD' && state.ball.ownerPlayerId === handlerNow.playerId
+        ? { reaction: onBallReactionSeconds(state, defender, handlerNow), cushion: state.ball.dribble === 'picked' ? DEAD_DRIBBLE_CUSHION_METERS + 0.25 * (1 - intent.defense.pressure) : onBallCushion(intent.defense.pressure, defender, handlerNow) } : null
+      // Against a drive he does not backpedal: he turns and races to a spot on the driver's path (beat him to the spot), from where he read
+      // the driver to be; who gets there first is the containment.
+      const drivingNow = onBallRead !== null && activeDrive?.playerId === ballHandlerId
+      const lead = drivingNow ? ON_BALL_CUTOFF_LEAD_SECONDS : 0
+      // The read is late only for a defender who is guarding him (in his stance near his spot): one still coming up to pick him up runs
+      // to where the handler is, or he would run past him.
+      const settledOnBall = onBallRead !== null && handlerNow !== undefined
+        && distanceBetween(defender.position, guardPosition(handlerNow.position, state.ball.position, defendedBasket, 'ON_BALL', state.court, defensiveTactics, handlerNow.offense.shooting, onBallRead.cushion)) <= ON_BALL_STANCE_METERS
+      const lag = settledOnBall || drivingNow ? lead - onBallRead!.reaction : 0
+      const target = onBallRead !== null && handlerNow !== undefined
+        ? guardPosition({ x: handlerNow.position.x + handlerNow.velocity.x * lag, y: handlerNow.position.y + handlerNow.velocity.y * lag }, state.ball.position, defendedBasket, 'ON_BALL', state.court, defensiveTactics, handlerNow.offense.shooting, onBallRead.cushion)
+        : kind === 'ON_BALL' ? rawTarget : keepGoalSide(rawTarget, state.ball.position, defendedBasket)
       const distanceToTarget = distanceBetween(defender.position, target)
-      const handler = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
       const isContainingDrive = kind === 'ON_BALL' && activeDrive?.playerId === ballHandlerId
-      const containmentMatchup = handler === undefined ? 0
-        : defender.defense.pointOfAttack + defender.defense.mobility - handler.offense.rimAttack - handler.offense.creation
       const urgentRotation = (kind === 'HELP' || kind === 'LOW_MAN' || kind === 'ROTATE' || kind === 'X_OUT' || kind === 'RECOVER' || kind === 'TAG' || kind === 'DIG')
         && distanceToTarget > 2
+      // BT6.6: every defender goes all out to stay in front of a drive; whether he can is his read, his feet and his speed (PointOfAttack).
       const urgency: MovementUrgency = isContainingDrive
-        ? containmentMatchup >= 0 ? 'sprint' : 'run'
+        ? 'sprint'
         : (possession.phase === 'ADVANCE' && distanceToTarget > 2) || urgentRotation ? 'run'
           // A defender who is far from where he must be (a closeout after a catch, a swing to the far side) hustles;
           // a jog is only for small adjustments around his man.
           : distanceToTarget > CLOSEOUT_SPRINT_DISTANCE_METERS ? 'sprint' : distanceToTarget > TRACKING_RUN_DISTANCE_METERS ? 'run' : 'jog'
       // With far to go he turns and runs; close to his spot he faces the ball (stance). BT4.2.
-      const facing: MovementFacing = tuning().defenderTravelFacing !== 0 && distanceToTarget > 3 ? { kind: 'TRAVEL' } : { kind: 'BALL' }
+      const facing: MovementFacing = tuning().defenderTravelFacing !== 0 && (distanceToTarget > 3 || (isContainingDrive && distanceToTarget > ON_BALL_TURN_AND_RUN_METERS)) ? { kind: 'TRAVEL' } : { kind: 'BALL' }
       intents.push({
         playerId: defender.playerId,
         target,
         urgency: keepUrgencyAboveCurrentSpeed(urgency, defender),
         facing,
+        ...(kind === 'ON_BALL' && facing.kind === 'BALL' && defender.kinematics.backpedalFactor !== undefined ? { stanceSlide: stanceSlideFactor(defender, defender.kinematics.backpedalFactor) } : {}),
         provenance: { responsibilityId: responsibility.id, decisionId: decision.id, owner: 'defensiveStructure' },
       })
       if (previous?.kind !== kind) state = emitEvent(state, 'defensiveResponsibilityChanged', { teamId: defender.teamId, playerId: defender.playerId, responsibilityKind: kind })
@@ -302,8 +369,9 @@ function resolveDriveHelpDecision(
   const direction = unitVector({ x: basket.x - onBallDefender.position.x, y: basket.y - onBallDefender.position.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
   const handlerPastDefender = (handler.position.x - onBallDefender.position.x) * direction.x
     + (handler.position.y - onBallDefender.position.y) * direction.y > 0.5
-  // BT5.18/5.19: an aggressive help defense steps in earlier (protects the rim, leaves the kick-out); a conservative one waits for the paint.
-  const enteredPaintThreat = basketDistance <= DRIVE_PAINT_THREAT_METERS + (helpAggression - 0.5) * 2.4
+  // BT6.15: an aggressive help defense reads the drive early and meets it high (protects the rim, leaves the kick-out); a conservative one
+  // waits for the driver at the rim. The trigger distance runs from 3.4 m (stay home) to 7 m (help early).
+  const enteredPaintThreat = basketDistance <= HELP_TRIGGER_MIN_METERS + helpAggression * HELP_TRIGGER_RANGE_METERS
   const containment = clamp((onBallDefender.defense.pointOfAttack + onBallDefender.defense.mobility
     - handler.offense.rimAttack - handler.offense.creation) / 200, -0.12, 0.12)
   const beaten = handlerPastDefender && basketDistance <= DRIVE_PAINT_THREAT_METERS + 2 + containment
@@ -349,6 +417,7 @@ function resolveDriveHelpDecision(
     reason: `Help triggered because ${cause}; ${weaksideLowMan ? 'weak side low man' : 'nearest rim-side assignment'} helps, then ROTATE and X_OUT cover the vacated matchups.`,
     helperPlayerId: helper.assignment.defenderPlayerId,
     helperKind: weaksideLowMan ? 'LOW_MAN' : 'HELP',
+    triggeredT: state.t,
     rotations,
   }
 }
@@ -482,13 +551,15 @@ export function guardPosition(
   tactics?: MatchState['tacticalPlans']['home']['defense'],
   /** Shooting rating of the man being guarded: a defender crowds a shooter who can punish space and sags off one who cannot. */
   attackerShooting = 55,
+  /** BT6: the on-ball cushion from the point-of-attack model (pressure and matchup); omitted: the shape's perimeter level. */
+  onBallCushionMeters?: number,
 ): CourtPosition {
   const threatScale = clamp(1.5 - attackerShooting * 0.009, 0.65, 1.4)
   const basketSideFallback = { x: defendedBasket.x >= court.lengthMeters / 2 ? -1 : 1, y: 0 }
   const towardBasket = unitVector({ x: defendedBasket.x - attackerPosition.x, y: defendedBasket.y - attackerPosition.y }, basketSideFallback)
   const towardBall = unitVector({ x: ballPosition.x - attackerPosition.x, y: ballPosition.y - attackerPosition.y }, { x: 0, y: 0 })
   const basketDistance = distanceBetween(attackerPosition, defendedBasket)
-  const onBallCushion = clamp(ON_BALL_CUSHION_METERS - (tactics?.perimeter ?? 0) * 0.12, 0.6, 1.5)
+  const onBallCushion = onBallCushionMeters ?? clamp(ON_BALL_CUSHION_METERS - (tactics?.perimeter ?? 0) * 0.12, 0.6, 1.5)
   const gapDepth = clamp((GAP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.1) * threatScale, 0.4, 1.6)
   const helpDepth = clamp(HELP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.2, 0.7, 2.3)
   const gapShade = clamp((GAP_SHADE_METERS + (tactics?.perimeter ?? 0) * 0.1) * threatScale, 0.25, 1.2)

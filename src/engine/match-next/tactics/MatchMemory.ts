@@ -27,6 +27,10 @@ export interface TeamTacticalMemory {
   readonly adjustment: TacticalAdjustment | null
   readonly adjustments: number
   readonly lastAdjustmentT: number
+  /** BT6.29: coverages the bench has left, with what each conceded when it was left (the reason, kept so a benign stretch does not undo it). */
+  readonly abandoned?: Readonly<Record<string, number>>
+  /** BT6.28: the coverage records when the last change was made: a new coverage is judged on what happened since, not on its old sample. */
+  readonly defenseAtAdjust?: Readonly<Record<string, OutcomeRecord>>
 }
 
 export interface TacticsState {
@@ -50,6 +54,8 @@ const RECENT_INITIATORS = 6
 const MIN_COVERAGE_SAMPLE = 6
 const MIN_FAMILY_SAMPLE = 7
 const ADJUSTMENT_COOLDOWN_TICKS = 1500
+/** BT6.28: extra possessions a coverage the bench chose during the game needs before it is judged a failure too (confidence in the change). */
+const ADOPTED_EXTRA_SAMPLE = 4
 const MAX_ADJUSTMENTS = 3
 
 const add = (record: OutcomeRecord | undefined, points: number): OutcomeRecord => ({ n: (record?.n ?? 0) + 1, points: (record?.points ?? 0) + points })
@@ -153,12 +159,21 @@ function review(state: MatchState, teamId: TeamId): MatchState {
   const margin = 0.45 - 0.25 * knowledge - 0.1 * adaptability
   const baseline = Math.max(0.95, memory.allDefense.n === 0 ? 1 : memory.allDefense.points / memory.allDefense.n)
   const current = intent.defense.coverage
-  const record = memory.defense[current]
-  if (record !== undefined && record.n >= sampleNeeded && record.points / record.n > baseline + margin + 0.6 / Math.sqrt(record.n)) {
+  // BT6.28: judged on the possessions since it was adopted; a coverage the bench chose in the game needs more evidence to be dropped again.
+  const total = memory.defense[current]
+  const before = memory.defenseAtAdjust?.[current]
+  const record = total === undefined ? undefined : { n: total.n - (before?.n ?? 0), points: total.points - (before?.points ?? 0) }
+  const needed = sampleNeeded + (memory.adjustment?.coverage === current ? ADOPTED_EXTRA_SAMPLE : 0)
+  if (record !== undefined && record.n >= needed && record.points / record.n > baseline + margin + 0.6 / Math.sqrt(record.n)) {
+    const ppp = record.points / record.n
     const next = answerTo(current, memory.conceded, intent.roster.switchability)
-    if (next !== current) {
-      const reason = `${current} conceded ${(record.points / record.n).toFixed(2)} points per possession over ${record.n} (team ${baseline.toFixed(2)}): change to ${next}`
-      return adjust(state, teamId, { ...(memory.adjustment ?? {}), coverage: next, reason, atT: state.t })
+    // BT6.29 hysteresis: going back to a coverage the bench left needs the current one to be clearly worse than that one was.
+    const left = memory.abandoned?.[next]
+    const worthGoingBack = left === undefined || ppp > left + margin
+    if (next !== current && worthGoingBack) {
+      const reason = `${current} conceded ${ppp.toFixed(2)} points per possession over ${record.n} (team ${baseline.toFixed(2)}): change to ${next}`
+      const abandoned = { ...(memory.abandoned ?? {}), [current]: Number(ppp.toFixed(3)) }
+      return adjust(state, teamId, { ...(memory.adjustment ?? {}), coverage: next, reason, atT: state.t }, { abandoned, defenseAtAdjust: { ...memory.defense } })
     }
   }
   const familySample = Math.round(MIN_FAMILY_SAMPLE + (1 - adaptability) * 4)
@@ -204,10 +219,10 @@ function answerTo(current: ScreenCoverage, conceded: Readonly<Record<string, num
   return by('PR_ROLLER') + by('KICK_OUT') > by('PR_HANDLER') ? 'drop' : clamp(switchability, 0, 1) >= 0.5 ? 'switch' : 'drop'
 }
 
-function adjust(state: MatchState, teamId: TeamId, adjustment: TacticalAdjustment): MatchState {
+function adjust(state: MatchState, teamId: TeamId, adjustment: TacticalAdjustment, coverageMemory: Pick<TeamTacticalMemory, 'abandoned' | 'defenseAtAdjust'> = {}): MatchState {
   const key = side(state, teamId)
   const tactics = state.tactics!
   const memory = tactics[key]
-  const next: MatchState = { ...state, tactics: { ...tactics, [key]: { ...memory, adjustment, adjustments: memory.adjustments + 1, lastAdjustmentT: state.t } } }
+  const next: MatchState = { ...state, tactics: { ...tactics, [key]: { ...memory, ...coverageMemory, adjustment, adjustments: memory.adjustments + 1, lastAdjustmentT: state.t } } }
   return emitEvent(next, 'tacticalAdjustment', { teamId, tacticalReason: adjustment.reason, ...(adjustment.coverage === undefined ? {} : { screenCoverage: adjustment.coverage }) })
 }

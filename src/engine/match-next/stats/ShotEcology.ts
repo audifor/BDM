@@ -47,7 +47,10 @@ const SCREEN_WINDOW_TICKS = 45
 const DRIVE_FINISH_WINDOW_TICKS = 16
 const CUT_WINDOW_TICKS = 30
 const LATE_CLOCK_SECONDS = 4
-const EARLY_OFFENSE_TICKS = 60
+const EARLY_OFFENSE_TICKS = 80
+/** BT6.23: a defense with fewer than this many men inside the arc of its basket is not back. */
+const DEFENDERS_BACK = 3
+const BACK_RADIUS_METERS = 6.75
 
 function recent(events: readonly MatchNextEvent[], sinceT: number, test: (event: MatchNextEvent) => boolean): MatchNextEvent | undefined {
   for (let index = events.length - 1; index >= 0; index -= 1) {
@@ -56,6 +59,24 @@ function recent(events: readonly MatchNextEvent[], sinceT: number, test: (event:
     if (test(event)) return event
   }
   return undefined
+}
+
+/** Numbers at the shot (more attackers than defenders between the ball and the basket) or a defense not back yet. */
+export function breakAdvantage(state: MatchState, shooterId: PlayerId, position: CourtPosition, basket: CourtPosition): boolean {
+  const reach = distanceBetween(position, basket)
+  const shooter = state.players.find((player) => player.playerId === shooterId)
+  if (shooter === undefined) return false
+  let attackers = 1
+  let defendersAhead = 0
+  let defendersBack = 0
+  for (const player of state.players) {
+    if (!player.active || player.playerId === shooterId) continue
+    const toBasket = distanceBetween(player.position, basket)
+    if (player.teamId === shooter.teamId) { if (toBasket < reach) attackers += 1; continue }
+    if (toBasket < reach + 0.5) defendersAhead += 1
+    if (toBasket <= BACK_RADIUS_METERS) defendersBack += 1
+  }
+  return attackers > defendersAhead || defendersBack < DEFENDERS_BACK
 }
 
 /**
@@ -68,8 +89,9 @@ export function classifyShotCreation(state: MatchState, shooterId: PlayerId, pos
   const mine = (event: MatchNextEvent): boolean => event.playerId === shooterId
   if (distance <= 3.4 && recent(events, state.t - PUTBACK_WINDOW_TICKS, (event) => event.type === 'reboundSecured' && event.reboundType === 'offensive' && mine(event)) !== undefined) return 'PUTBACK'
   const possession = activePossession(state)
-  // Early offense: the shot comes in the first seconds of the possession, before the defense has had time to set (whatever the set-up).
-  if (possession !== undefined && possession.startReason !== 'periodStart' && state.t - possession.startedT <= EARLY_OFFENSE_TICKS) return 'TRANSITION'
+  // BT6.23: a transition shot is one that comes early AND from an advantage the break created: numbers between the ball and the basket, or a
+  // defense that is not back yet. An early shot against a defense that is back is an ordinary shot taken early (labelled for how it was made).
+  if (possession !== undefined && possession.startReason !== 'periodStart' && state.t - possession.startedT <= EARLY_OFFENSE_TICKS && breakAdvantage(state, shooterId, position, basket)) return 'TRANSITION'
   const caught = recent(events, state.t - CATCH_WINDOW_TICKS, (event) => event.type === 'passReceived' && event.receiverPlayerId === shooterId)
   if (caught !== undefined && distance <= 3.2 && recent(events, state.t - CUT_WINDOW_TICKS, (event) => event.type === 'offBallMove' && mine(event) && (event.ballReason === 'BASKET_CUT' || event.ballReason === 'BACKDOOR_CUT')) !== undefined) return 'CUT_FINISH'
   if (caught !== undefined && state.actions.some((action) => action.kind === 'KICK_OUT' && action.targetPlayerId === shooterId && action.resolvedT !== undefined && state.t - action.resolvedT <= CATCH_WINDOW_TICKS)) return 'KICK_OUT'

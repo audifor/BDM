@@ -1,0 +1,52 @@
+{
+ "catch<=1s": {
+  "n": 759,
+  "gap": 3.39,
+  "tight": 0.11
+ },
+ "catch1-2.5s": {
+  "n": 162,
+  "gap": 1.83,
+  "tight": 0.18
+ },
+ "settled": {
+  "n": 390,
+  "gap": 1.12,
+  "tight": 0.58
+ },
+ "settled:toTarget0.5-1.5": {
+  "n": 290,
+  "gap": 0.95,
+  "tight": 0.7
+ },
+ "settled:handlerDist>=6.75": {
+  "n": 285,
+  "gap": 0.98,
+  "tight": 0.69
+ },
+ "settled:toTarget<0.5": {
+  "n": 29,
+  "gap": 1.19,
+  "tight": 0.41
+ },
+ "screen": {
+  "n": 769,
+  "gap": 2.36,
+  "tight": 0.15
+ },
+ "drive": {
+  "n": 222,
+  "gap": 1.39,
+  "tight": 0.45
+ },
+ "settled:toTarget>1.5": {
+  "n": 71,
+  "gap": 1.76,
+  "tight": 0.17
+ },
+ "settled:handlerDist<6.75": {
+  "n": 105,
+  "gap": 1.5,
+  "tight": 0.28
+ }
+}

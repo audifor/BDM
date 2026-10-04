@@ -3,6 +3,7 @@ import type { PlayerId } from '@/domain/ids'
 import { activePossession, type MatchPlayerState, type MatchState, type OffenseFlowState, type OffenseStage } from '../state'
 import { distanceBetween } from '@/domain/court'
 import { tuning } from '../tuning'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
 import { isInsideZone } from '../structure/OffensiveStructure'
 import { emitEvent } from '../events'
 import { callPlay, spacingFor, type PlayCall } from '../tactics/PlayCalling'
@@ -28,8 +29,13 @@ export function readTicksFor(state: MatchState, player: MatchPlayerState): numbe
   const speed = Math.hypot(player.velocity.x, player.velocity.y)
   const nearest = Math.min(...state.players.filter((other) => other.active && other.teamId !== player.teamId).map((other) => distanceBetween(other.position, player.position)), Number.POSITIVE_INFINITY)
   const gather = Math.round(speed * tuning().catchGatherTicksPerMps) + (nearest < 2 ? Math.round((2 - nearest) * tuning().catchPressureTicksPerMeter) : 0)
-  return base + gather + (decisionNoise(state, player.playerId, 'read') < 0.5 ? 0 : 1)
+  // BT6.26: in a system the team knows, the receiver already knows where the next action is; in a new one he looks for it.
+  const system = Math.round((1 - tacticalIntent(state, player.teamId).familiarity) * SYSTEM_READ_TICKS)
+  return base + gather + system + (decisionNoise(state, player.playerId, 'read') < 0.5 ? 0 : 1)
 }
+
+/** BT6.26: extra read ticks after a catch for a team with no familiarity with its system. */
+const SYSTEM_READ_TICKS = 3
 
 export function offenseSettlement(state: MatchState): { readonly inZone: number; readonly total: number; readonly share: number } {
   const structure = state.offensiveStructure

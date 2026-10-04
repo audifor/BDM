@@ -27,6 +27,17 @@ export const TACTICAL_STYLES: Readonly<Record<string, Coach>> = {
     offense: { tempo: -0.2, ballMovement: 0.1, ballScreen: 0.3, offBall: 0.4, interior: 0.95, isolation: 0.15, crash: 0.85 },
     defense: { pressure: 0.4, help: 0.8, coverage: 'drop', dropDepth: 0.7 }, adaptability: 40, tacticalKnowledge: 60,
   },
+  // BT6 visual validation: the balanced coach with one defensive instruction changed (the offense is the same), so a viewer compares only it.
+  /** High ball pressure (arm's length, reaching, denying). */
+  press: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.95, help: 0.5, coverage: 'switch', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
+  /** Low ball pressure (sagging, containing, conceding the shot). */
+  sag: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.05, help: 0.5, coverage: 'switch', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
+  dropD: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.5, help: 0.5, coverage: 'drop', dropDepth: 0.7 }, adaptability: 10, tacticalKnowledge: 30 },
+  switchD: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.5, help: 0.5, coverage: 'switch', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
+  blitzD: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.5, help: 0.5, coverage: 'blitz', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
+  /** Aggressive help (early, high, with stunts) and stay-home help. */
+  helpHigh: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.5, help: 0.95, coverage: 'switch', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
+  helpLow: { offense: { tempo: 0, ballMovement: 0, ballScreen: 0.5, offBall: 0.4, interior: 0, isolation: 0.25, crash: 0.4 }, defense: { pressure: 0.5, help: 0.05, coverage: 'switch', dropDepth: 0.5 }, adaptability: 10, tacticalKnowledge: 30 },
 }
 
 export function withStyle(plan: MatchNextTacticalPlan, style: string | undefined): MatchNextTacticalPlan {

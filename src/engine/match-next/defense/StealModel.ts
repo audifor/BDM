@@ -15,6 +15,8 @@ const STEAL_ATTEMPT_RATE_PER_TICK = 0.009
 const STEAL_REACH_METERS = 1.15
 /** Per-tick chance a handler under contact pressure loses the handle on his own, before ball security. */
 const LOST_DRIBBLE_RATE_PER_TICK = 0.0011
+/** Ticks a defender who reached and missed stays off balance. */
+const OFF_BALANCE_TICKS = 6
 
 function guardOf(state: MatchState, handlerId: MatchPlayerState['playerId']): MatchPlayerState | undefined {
   const id = state.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === handlerId)?.defenderPlayerId
@@ -51,8 +53,8 @@ export function reconcileOnBallPressure(state: MatchState): MatchState {
   if (gap > STEAL_REACH_METERS) return state
 
   const speed = speedOf(handler)
-  // A ball being dribbled at speed is exposed; one held still and shielded is not.
-  const exposure = Math.max(0.3, Math.min(1, 0.3 + speed / 5))
+  // A ball being dribbled at speed is exposed; one held still and shielded is much less (BT6: a handler standing with a live dribble protects it).
+  const exposure = Math.max(0.15, Math.min(1, 0.1 + speed / 5))
   const stealRating = defender.defense.steal ?? 50
   const advantage = Math.max(-0.5, Math.min(0.5, (stealRating - handler.offense.ballSecurity) / 100))
   const roll = draw(state.rng, 'outcome')
@@ -96,6 +98,8 @@ export function reconcileOnBallPressure(state: MatchState): MatchState {
     const outcome = commitFoul(next, { offenderId: defender.playerId, victimId: handler.playerId, type: 'REACH', contact: 'LEGAL_DEFENSIVE', severity: Math.max(0.1, contactSeverity(closing + 0.8, defender.weightKg)), offensive: false })
     return outcome.state
   }
+  // BT6.5: a reach that misses has a price: his weight went to the ball, and he is late to the handler's next step.
+  next = { ...next, players: next.players.map((player) => player.playerId === defender.playerId ? { ...player, offBalanceUntilT: next.t + OFF_BALANCE_TICKS } : player) }
   return emitEvent(next, 'stealAttempt', { possessionId: possession.id, teamId: defender.teamId, playerId: defender.playerId, victimPlayerId: handler.playerId, stealKind: 'FAILED_ATTEMPT' })
 }
 

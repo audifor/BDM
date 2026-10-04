@@ -1,0 +1,253 @@
+{
+ "press": {
+  "transitionShot:homeAttacks": [
+   49,
+   718
+  ],
+  "drive": [
+   519,
+   1206,
+   2126,
+   2906
+  ],
+  "helpTriggered": [
+   522,
+   1217,
+   2136,
+   3133
+  ],
+  "reachAttempt": [
+   791,
+   1496
+  ],
+  "transitionShot:awayAttacks": [
+   826,
+   3147
+  ],
+  "screen:switch": [
+   1204,
+   2124,
+   2197,
+   2539
+  ],
+  "kickOut": [
+   2142
+  ],
+  "halfCourtPossessionStart": [
+   2034,
+   2432
+  ],
+  "offBall:BACKDOOR_CUT": [
+   2568
+  ]
+ },
+ "sag": {
+  "transitionShot:homeAttacks": [
+   49,
+   2170
+  ],
+  "screen:switch": [
+   514,
+   584,
+   878,
+   945
+  ],
+  "drive": [
+   516,
+   880,
+   1681,
+   2262
+  ],
+  "helpTriggered": [
+   527,
+   894,
+   1694,
+   2268
+  ],
+  "offBall:BACKDOOR_CUT": [
+   572,
+   868,
+   1984,
+   2088
+  ],
+  "halfCourtPossessionStart": [
+   413,
+   789,
+   1396,
+   1899
+  ],
+  "kickOut": [
+   900,
+   2276
+  ],
+  "offBall:BASKET_CUT": [
+   976
+  ],
+  "transitionShot:awayAttacks": [
+   1170,
+   3232
+  ]
+ },
+ "dropD": {
+  "transitionShot:homeAttacks": [
+   49,
+   647,
+   1463
+  ],
+  "halfCourtPossessionStart": [
+   181,
+   924,
+   1748,
+   2464
+  ],
+  "reachAttempt": [
+   936,
+   3471
+  ],
+  "drive": [
+   1558,
+   2602
+  ],
+  "transitionShot:awayAttacks": [
+   1571
+  ],
+  "screen:drop": [
+   1846,
+   1934,
+   2585,
+   2930
+  ],
+  "offBall:BACKDOOR_CUT": [
+   1860
+  ],
+  "offBall:COME_OFF": [
+   2296,
+   3504
+  ],
+  "helpTriggered": [
+   2609
+  ]
+ },
+ "switchD": {
+  "transitionShot:homeAttacks": [
+   49,
+   647,
+   1463
+  ],
+  "halfCourtPossessionStart": [
+   181,
+   924,
+   2034,
+   2468
+  ],
+  "reachAttempt": [
+   936,
+   2061
+  ],
+  "drive": [
+   1558,
+   2586,
+   3206
+  ],
+  "transitionShot:awayAttacks": [
+   1571
+  ],
+  "offBall:COME_OFF": [
+   2108
+  ],
+  "screen:switch": [
+   2584,
+   3268
+  ],
+  "helpTriggered": [
+   2597,
+   3208
+  ],
+  "kickOut": [
+   2603,
+   3217
+  ]
+ },
+ "blitzD": {
+  "transitionShot:homeAttacks": [
+   49,
+   647,
+   1463
+  ],
+  "halfCourtPossessionStart": [
+   181,
+   924,
+   2001,
+   2836
+  ],
+  "reachAttempt": [
+   936,
+   2019
+  ],
+  "drive": [
+   1558,
+   2649,
+   3446,
+   3533
+  ],
+  "transitionShot:awayAttacks": [
+   1571,
+   3203,
+   3459
+  ],
+  "screen:blitz": [
+   1846,
+   2101,
+   2961
+  ],
+  "offBall:BACKDOOR_CUT": [
+   1860,
+   2944
+  ],
+  "helpTriggered": [
+   2659,
+   3544
+  ],
+  "pickup": [
+   3551
+  ]
+ },
+ "helpHigh": {
+  "transitionShot:homeAttacks": [
+   49
+  ],
+  "halfCourtPossessionStart": [
+   181,
+   754,
+   1618,
+   2344
+  ],
+  "screen:switch": [
+   857,
+   1345,
+   1744,
+   2440
+  ],
+  "drive": [
+   1690,
+   2442,
+   2830
+  ],
+  "helpTriggered": [
+   1697,
+   2450
+  ],
+  "pickup": [
+   1704
+  ],
+  "offBall:COME_OFF": [
+   2416
+  ],
+  "kickOut": [
+   2460
+  ],
+  "transitionShot:awayAttacks": [
+   2843
+  ]
+ }
+}

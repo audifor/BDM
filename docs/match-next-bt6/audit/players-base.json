@@ -1,0 +1,54 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    11,
+    12,
+    3,
+    5,
+    21,
+    42
+  ],
+  "playerGames": 147,
+  "correlations": {
+    "creation vs usage/36": 0.67,
+    "usage rating vs usage/36": 0.65,
+    "creation vs assists/36": 0.3,
+    "vision vs assists/36": 0.31,
+    "creation vs initiations/36": 0.79,
+    "shooting vs 3PA share": 0.1,
+    "shooting vs 3PA/36": 0.67,
+    "rimAttack vs rim attempts/36": 0.49,
+    "rimAttack vs FTA/36": 0.23,
+    "rebounding vs rebounds/36": 0.66,
+    "steal vs steals/36": 0.22,
+    "interior D vs blocks/36": 0.2,
+    "ballSecurity vs TOV per usage": -0.46
+  },
+  "roles": {
+    "topFgaShare": {
+      "mean": 0.368,
+      "max": 0.461
+    },
+    "topUsageShare": {
+      "mean": 0.349,
+      "max": 0.43
+    },
+    "topInitiationShare": {
+      "mean": 0.503,
+      "max": 0.753
+    },
+    "topAssistShare": {
+      "mean": 0.336,
+      "max": 0.5
+    },
+    "topPointsShare": {
+      "mean": 0.39,
+      "max": 0.522
+    }
+  }
+}

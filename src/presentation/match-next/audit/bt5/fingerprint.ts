@@ -34,7 +34,7 @@ function empty(): TeamCounts {
 const bump = (record: Record<string, number>, key: string, by = 1): void => { record[key] = (record[key] ?? 0) + by }
 
 /** Runs one full game with an optional setup transform and returns both teams' counts. `sample` may record per-tick intent snapshots. */
-export function runFingerprintGame(seed: number, transform?: (setup: MatchSetup) => MatchSetup, options: { maxTicks?: number; sample?: (state: MatchState) => IntentSample | undefined; prepare?: (state: MatchState) => MatchState } = {}): FingerprintGame {
+export function runFingerprintGame(seed: number, transform?: (setup: MatchSetup) => MatchSetup, options: { maxTicks?: number; sample?: (state: MatchState) => IntentSample | undefined; prepare?: (state: MatchState) => MatchState; observe?: (state: MatchState, events: readonly MatchNextEvent[], setup: MatchSetup) => void } = {}): FingerprintGame {
   const base = preparedSetup(seed)
   const setup = transform === undefined ? base : transform(base)
   const live = createMatchEnginePort('match-next').createLiveSession(setup)
@@ -72,6 +72,7 @@ export function runFingerprintGame(seed: number, transform?: (setup: MatchSetup)
     if (options.sample !== undefined) { const sample = options.sample(s); if (sample !== undefined) intents.push(sample) }
     const events: readonly MatchNextEvent[] = s.events.slice(processed)
     processed = s.events.length
+    if (options.observe !== undefined) options.observe(s, events, setup)
     for (const e of events) {
       const pid = e.possessionId ?? s.activePossessionId ?? undefined
       switch (e.type) {

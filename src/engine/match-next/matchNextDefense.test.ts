@@ -116,7 +116,8 @@ describe('Match Next man-to-man defense', () => {
     expect(driving.responsibilities.find((item) => item.playerId === help.helperPlayerId)?.kind).toBe('LOW_MAN')
     const lowManAssignment = driving.defensiveStructure!.assignments.find((item) => item.defenderPlayerId === help.helperPlayerId)!
     expect(driving.players.find((player) => player.playerId === lowManAssignment.attackerPlayerId)!.position.y).toBeLessThan(state.court.widthMeters / 2)
-    expect(driving.movementIntents.find((item) => item.playerId === onBallDefender)?.urgency).toBe('run')
+    // BT6.6: every on-ball defender goes all out against a drive (no rating gate on effort); whether he stays in front is his read and his feet.
+    expect(driving.movementIntents.find((item) => item.playerId === onBallDefender)?.urgency).toBe('sprint')
     expect(driving.movementIntents.find((item) => item.playerId === help.helperPlayerId)?.urgency).toBe('run')
     expect(help.rotations.map((item) => item.kind)).toEqual(['ROTATE', 'X_OUT'])
     expect(reconcileManDefense({

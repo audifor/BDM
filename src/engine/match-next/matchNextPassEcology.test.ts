@@ -62,13 +62,24 @@ const flight = ballFlightSeconds(6)
 
 describe('BT4.5 lane in real time (interception layer)', () => {
   it('a defender next to the line who cannot get a hand on it before the ball passes is not a threat, however close', () => {
-    // 0.3 m from the line, but right beside the passer: the ball has left before he can react.
+    // 0.9 m off the line, level with the receiver's side of the passer: the ball has left before he can react.
+    const { state, passerId } = stage({ defender: { x: 11.5, y: 8.4 } })
+    const passer = state.players.find((player) => String(player.playerId) === passerId)!
+    const read = laneRead(state, passer.position, to, passer.teamId, flight)
+    expect(read.minPerpendicular).toBeLessThan(1)
+    expect(read.slack).toBeLessThan(0)
+    expect(interceptAttemptChance(read)).toBe(0)
+  })
+
+  it('BT6.8: a defender on the passer with his hands in the line can tip the release, but only as a small gamble', () => {
+    // 0.3 m from the line and right beside the passer: before BT6 the first 8% of the flight was out of everybody's reach; a man pressing the
+    // passer has his hands there, so the throw that goes through them is at (small) risk and the passer reads it.
     const { state, passerId } = stage({ defender: { x: 10.4, y: 7.8 } })
     const passer = state.players.find((player) => String(player.playerId) === passerId)!
     const read = laneRead(state, passer.position, to, passer.teamId, flight)
-    expect(read.minPerpendicular).toBeLessThan(0.5)
-    expect(read.slack).toBeLessThan(0)
-    expect(interceptAttemptChance(read)).toBe(0)
+    expect(read.slack).toBeGreaterThan(0)
+    expect(interceptAttemptChance(read)).toBeGreaterThan(0)
+    expect(interceptAttemptChance(read)).toBeLessThan(0.05)
   })
 
   it('a defender who already stands in the line needs no reaction time: the ball cannot pass through him', () => {

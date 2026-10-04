@@ -16,6 +16,8 @@ const LANE_START = 0.08
 const LANE_END = 0.97
 /** A defender this close to the line of the ball has his body (and hands) in it already. */
 const BODY_IN_LANE_METERS = 0.45
+/** A defender this close to the passer is on him: his hands cover the release. */
+const ON_PASSER_METERS = 1.25
 
 export interface LaneRead {
   readonly defender: MatchPlayerState | null
@@ -61,7 +63,10 @@ export function laneRead(state: MatchState, from: CourtPosition, to: CourtPositi
     const point = { x: from.x + u * dx, y: from.y + u * dy }
     const perpendicular = distanceBetween(defender.position, point)
     minPerpendicular = Math.min(minPerpendicular, perpendicular)
-    if (u <= LANE_START || u >= LANE_END) continue
+    // BT6.8: a defender on the passer (hands up, in his face) can get a hand on the ball from the moment it leaves: a pressured passer has to
+    // throw around him. Every other defender can only reach the ball once it is on its way.
+    const onPasser = distanceBetween(defender.position, from) <= ON_PASSER_METERS
+    if ((u <= LANE_START && !onPasser) || u >= LANE_END) continue
     const reach = defender.wingspanCm / 200
     // Already moving toward the line: his current speed toward it counts (what an elite reader sees coming).
     const towardX = (point.x - defender.position.x) / Math.max(1e-6, perpendicular)
@@ -84,7 +89,11 @@ export function interceptAttemptChance(read: LaneRead): number {
   if (read.defender === null || read.slack <= -0.02) return 0
   const hands = 0.6 + (read.defender.defense.steal ?? 50) / 125
   const reach = 1 - Math.exp(-(read.slack + 0.02) / tuning().passInterceptSlackScale)
-  return Math.min(0.95, tuning().passInterceptMax * reach * hands)
+  const gamble = tuning().passInterceptMax * reach * hands
+  // BT6.11: a defender who is on the line well before the ball is not gambling: he is standing in the lane, and he takes it (his hands
+  // decide whether it is a catch or a tip). Only a ball that barely beats him or arrives with him is a gamble.
+  const there = Math.max(0, Math.min(1, (read.slack - tuning().passLaneOwnedSlack) / 0.35)) * Math.min(1, hands / 1.27) * 0.85
+  return Math.min(0.95, Math.max(gamble, there))
 }
 
 /** What the passer perceives: a poor reader underestimates how fast a defender gets to the line; an elite reader sees it all. */

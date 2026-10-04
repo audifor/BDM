@@ -19,7 +19,8 @@ import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow } f
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
-import { defensiveShape } from '../tactics/TacticalIdentity'
+import { defensiveShape, tacticalIntent } from '../tactics/TacticalIdentity'
+import { onBallCushion } from '../defense/PointOfAttack'
 
 const DRIVE_MIN_TICKS = 8
 const DRIVE_MIN_PROGRESS_METERS = 2.4
@@ -175,7 +176,7 @@ function updateDrives(state: MatchState): MatchState {
           const containDraw = draw(next.rng, 'outcome')
           next = { ...next, rng: containDraw.state }
           if (containDraw.value >= read.values.pFinish) {
-            next = resolveAction(next, action.id, 'CONTAINED')
+            next = pickUpIfSmothered(resolveAction(next, action.id, 'CONTAINED'), driver)
             next = setPossessionPhase(next, 'SETUP')
             continue
           }
@@ -209,14 +210,30 @@ function updateDrives(state: MatchState): MatchState {
           > (driver.offense.rimAttack + driver.offense.creation) / 2 - driver.fatigue * 0.06
         ? 'CONTAINED' : 'FINISH'
       next = resolveAction(next, action.id, outcome)
+      if (outcome === 'CONTAINED') next = pickUpIfSmothered(next, driver)
       next = setPossessionPhase(next, 'SETUP')
     } else if (elapsed >= DRIVE_TIMEOUT_TICKS) {
-      next = resolveAction(next, action.id, 'CONTAINED')
+      next = pickUpIfSmothered(resolveAction(next, action.id, 'CONTAINED'), driver)
       next = setPossessionPhase(next, 'SETUP')
     }
   }
   return next
 }
+
+/**
+ * BT6.4: a contained driver with his defender right in front of him picks up the dribble: he cannot drive again or use a screen, and the
+ * defender can crowd the dead ball. How close is close enough depends on his handle (a poor handler kills his dribble sooner).
+ */
+function pickUpIfSmothered(state: MatchState, driver: MatchPlayerState): MatchState {
+  if (state.ball.kind !== 'HELD' || state.ball.ownerPlayerId !== driver.playerId || state.ball.dribble !== 'live') return state
+  const guardId = state.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === driver.playerId)?.defenderPlayerId
+  const guard = state.players.find((player) => player.playerId === guardId && player.active)
+  if (guard === undefined) return state
+  const handle = clamp((driver.offense.creation * 0.6 + driver.offense.ballSecurity * 0.4) / 100, 0, 1)
+  if (distanceBetween(guard.position, driver.position) > PICKUP_GAP_METERS + (1 - handle) * 0.5) return state
+  return emitEvent({ ...state, ball: { ...state.ball, dribble: 'picked' } }, 'dribblePickedUp', { possessionId: activePossession(state)?.id, teamId: driver.teamId, playerId: driver.playerId, victimPlayerId: guard.playerId })
+}
+const PICKUP_GAP_METERS = 0.75
 
 const DRIVE_STOP_MIN_TICKS = 3
 /** How fast the remembered value of a team's shots follows the shots it takes (about the last 16). */
@@ -685,7 +702,10 @@ function applyPassReceiveIntents(state: MatchState): MatchState {
   const basket = next.defensiveStructure?.defendedBasket
   if (defender !== undefined && defenderIntent !== undefined && basket !== undefined && defender.teamId !== ball.passerTeamId && state.t - ball.releaseT >= closeoutReactionTicks()) {
     const tactics = defensiveShape(next, defender.teamId)
-    const target = guardPosition(action.target, action.target, basket, 'ON_BALL', next.court, tactics)
+    // BT6.5: a pressure defense closes out to arm's length (contests, but can be driven past); a conservative one stops short (contains, concedes the shot).
+    const receiverNow = next.players.find((player) => player.playerId === receiverId)
+    const cushion = receiverNow === undefined ? undefined : onBallCushion(tacticalIntent(next, defender.teamId).defense.pressure, defender, receiverNow)
+    const target = guardPosition(action.target, action.target, basket, 'ON_BALL', next.court, tactics, receiverNow?.offense.shooting, cushion)
     next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== defender.playerId), { ...defenderIntent, target, urgency: 'sprint' as const }] }
   }
   // BT4.5: the defender who went for the ball runs to the point of the line where he can meet it.

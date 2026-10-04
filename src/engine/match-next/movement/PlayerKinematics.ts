@@ -2,6 +2,7 @@ import { distanceBetween, type CourtGeometry, type CourtPosition } from '@/domai
 import type { MatchNextPlayerProfile } from '../setup'
 import type { MatchPlayerState, MatchState } from '../state'
 import { MOVEMENT_URGENCY_FACTORS, type MovementIntent } from './MovementIntent'
+import { tuning } from '../tuning'
 
 export const MOVEMENT_DT_SECONDS = 0.1
 export const TARGET_ARRIVAL_TOLERANCE_METERS = 0.15
@@ -24,9 +25,18 @@ export function integrateMatchPlayers(state: MatchState): readonly MatchPlayerSt
     if (!intent) return player
     const others = activePositions.filter((other) => other.playerId !== player.playerId).map((other) => other.position)
     const basket = state.offensiveStructure?.attackingBasket ?? state.defensiveStructure?.defendedBasket ?? state.court.baskets.left
-    const result = stepPlayerKinematics(player, player.kinematics, intent, state.ball.position, basket, others, state.court)
+    // BT6.7: a man dribbling the ball does not run as fast as he sprints without it; how much he keeps is his handle.
+    const dribbling = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === player.playerId && state.ball.dribble === 'live'
+    const profile = dribbling ? { ...player.kinematics, maxSpeedMps: player.kinematics.maxSpeedMps * dribbleSpeedFactor(player) } : player.kinematics
+    const result = stepPlayerKinematics(player, profile, intent, state.ball.position, basket, others, state.court)
     return { ...player, position: result.position, velocity: result.velocity, facing: result.facing }
   })
+}
+
+/** Share of his top speed a handler keeps with the ball, from his handle (creation and ball security). */
+export function dribbleSpeedFactor(player: MatchPlayerState): number {
+  const handle = Math.max(0, Math.min(1, (player.offense.creation * 0.6 + player.offense.ballSecurity * 0.4) / 100))
+  return tuning().dribbleSpeedMin + (tuning().dribbleSpeedMax - tuning().dribbleSpeedMin) * handle
 }
 
 export function stepPlayerKinematics(
@@ -49,11 +59,12 @@ export function stepPlayerKinematics(
   const acceleration = Math.max(0.01, profile.accelerationMps2)
   // A runner is quickest running where he faces; backpedalling or sliding sideways costs top speed (BT4.2).
   let directionFactor = 1
-  if (profile.backpedalFactor !== undefined && distance > 1e-6) {
+  const backpedal = intent.stanceSlide ?? profile.backpedalFactor
+  if (backpedal !== undefined && distance > 1e-6) {
     const facingLength = Math.hypot(player.facing.x, player.facing.y)
     if (facingLength > 1e-6) {
       const cosine = (player.facing.x * dx + player.facing.y * dy) / (facingLength * distance)
-      const loss = 1 - profile.backpedalFactor
+      const loss = 1 - backpedal
       directionFactor = 1 - loss * clamp((0.7 - cosine) / 1.7, 0, 1)
     }
   }

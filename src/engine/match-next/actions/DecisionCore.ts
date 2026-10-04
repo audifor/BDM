@@ -19,6 +19,7 @@ import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
 import { callPlay, type PlayCall, type PlayFamily } from '../tactics/PlayCalling'
 import { defensiveShape, tacticalIntent, type TacticalIntent } from '../tactics/TacticalIdentity'
 import { lineupRoles } from '../tactics/OffensiveRoles'
+import { defenderQuickness, expectedSeparation, handlerBurst, onBallCushion } from '../defense/PointOfAttack'
 
 export interface ShotContest {
   readonly score: number
@@ -64,7 +65,7 @@ export function estimateContestAt(state: MatchState, teamId: MatchPlayerState['t
       return {
         defender,
         distance: distanceBetween(defender.position, position),
-        score: clamp((3.4 - effective) / 2.8, 0, 1)
+        score: clamp((3.4 - effective) / 2.8, 0, 1) * contestAngleFactor(position, basket, defender.position)
           * (0.6 + clamp((nearRim ? 0.75 * defender.defense.interior + 0.25 * defender.defense.pointOfAttack : defender.defense.pointOfAttack) - defender.fatigue * 0.08, 0, 100) / 250),
       }
     })
@@ -75,6 +76,22 @@ export function estimateContestAt(state: MatchState, teamId: MatchPlayerState['t
 }
 
 const NEAR_RIM_CONTEST_METERS = 4.6
+
+/**
+ * BT6.35: where the contest comes from. A hand between the shooter and the rim takes the shot away; one from the side bothers it; one from
+ * behind (a beaten defender trailing the play, a chase-down) can only reach a careless release. Distance alone treated all three alike.
+ */
+export function contestAngleFactor(shooter: CourtPosition, basket: CourtPosition, defender: CourtPosition): number {
+  const ux = basket.x - shooter.x
+  const uy = basket.y - shooter.y
+  const wx = defender.x - shooter.x
+  const wy = defender.y - shooter.y
+  const lu = Math.hypot(ux, uy)
+  const lw = Math.hypot(wx, wy)
+  if (lu < 1e-6 || lw < 1e-6) return 1
+  const cosine = (ux * wx + uy * wy) / (lu * lw)
+  return cosine >= 0 ? 0.8 + 0.2 * cosine : 0.8 + 0.45 * cosine
+}
 const DEFENSIVE_REBOUND_GATHER_TICKS = 9
 
 /** How far ahead (seconds) a closing defender's contest is projected: the shot takes time to leave the shooter's hands. */
@@ -251,7 +268,7 @@ function forecastCloseout(state: MatchState, defender: MatchPlayerState, receive
   const runTicks = Math.max(0, totalTicks - closeoutReactionTicks())
   const basket = attackingBasketForTeam(receiver.teamId, state.homeTeamId, state.period, state.court)
   const tactics = defensiveShape(state, defender.teamId)
-  const target = guardPosition(receiver.position, receiver.position, basket, 'ON_BALL', state.court, tactics)
+  const target = guardPosition(receiver.position, receiver.position, basket, 'ON_BALL', state.court, tactics, receiver.offense.shooting, onBallCushion(tacticalIntent(state, defender.teamId).defense.pressure, defender, receiver))
   const intent = { playerId: defender.playerId, target, urgency: 'sprint' as const, facing: { kind: 'BALL' as const }, provenance: { responsibilityId: 'forecast', decisionId: 'forecast', owner: 'defensiveStructure' as const } }
   let position = { ...defender.position }
   let velocity = { ...defender.velocity }
@@ -278,13 +295,19 @@ function predictContestAfterPass(state: MatchState, passer: MatchPlayerState, re
       : { x: defender.position.x + defender.velocity.x * CONTEST_LOOKAHEAD_SECONDS, y: defender.position.y + defender.velocity.y * CONTEST_LOOKAHEAD_SECONDS }
     const helpReach = defender.playerId === guardId ? 0 : defender.kinematics.maxSpeedMps * (1 - defender.fatigue * 0.0012) * tuning().helpCloseoutBelief * Math.max(0, seconds - closeoutReactionTicks() / 10)
     const distance = Math.max(0, distanceBetween(at, receiver.position) - helpReach)
-    const score = clamp((3.4 - distance) / 2.8, 0, 1) * (0.6 + clamp(defender.defense.pointOfAttack - defender.fatigue * 0.08, 0, 100) / 250)
+    const basketFor = attackingBasketForTeam(receiver.teamId, state.homeTeamId, state.period, state.court)
+    const score = clamp((3.4 - distance) / 2.8, 0, 1) * contestAngleFactor(receiver.position, basketFor, at) * (0.6 + clamp(defender.defense.pointOfAttack - defender.fatigue * 0.08, 0, 100) / 250)
     worst = Math.max(worst, score)
   }
   return worst
 }
 
 function readReceivers(state: MatchState, passer: MatchPlayerState, basket: CourtPosition): ReceiverRead[] {
+  // BT6.12: a ball lost in the open floor (a live transition, or a half court that is not set yet) is not only the possession: the defense
+  // turns it into a break against a team that is not back. A ball lost against a set half court leaves the passer's team in its shell.
+  const flow = state.offenseFlow
+  const openFloor = (state.transition !== null && state.transition.teamId === passer.teamId) || (flow !== null && flow.teamId === passer.teamId && flow.settledAtT === null)
+  const lossPoints = tuning().passLossPoints + (openFloor ? tuning().openFloorLossPoints : 0)
   return state.players
     .filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
     .map((player) => {
@@ -294,7 +317,7 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
       // A passer who sees the floor values his teammates' looks at what they are worth; one who does not, misses some of them.
       const sight = 1 - tuning().passSightSpread / 2 + tuning().passSightSpread * (passer.passing.vision / 100)
       // BT4.5: a pass that is lost is not worth zero, it is worth minus the possession (and the break that follows).
-      return { player, opportunity, completion, value: completion * opportunity.value * sight - (1 - completion) * tuning().passLossPoints }
+      return { player, opportunity, completion, value: completion * opportunity.value * sight - (1 - completion) * lossPoints }
     })
     .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))
 }
@@ -325,13 +348,20 @@ interface DriveEdge {
 
 /** How much better the driver is than the man in front of him, from real ratings, the gap and the lane to the rim. */
 function driveEdge(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): DriveEdge {
-  const defender = guardOf(state, actor)
+  // His own man, or without an assignment (a scramble) the opponent nearest to him on the way to the rim.
+  const toRim = distanceBetween(actor.position, basket)
+  const defender = guardOf(state, actor) ?? state.players
+    .filter((player) => player.active && player.teamId !== actor.teamId && distanceBetween(player.position, basket) < toRim)
+    .sort((left, right) => distanceBetween(left.position, actor.position) - distanceBetween(right.position, actor.position) || String(left.playerId).localeCompare(String(right.playerId)))[0]
   const gap = defender ? distanceBetween(defender.position, actor.position) : 4
   // A defender standing on the line to the rim obstructs the drive; one who is out of position (closing out) does not.
   const lane = defender ? distanceToSegment(defender.position, actor.position, basket) : 3
-  const attack = (actor.offense.rimAttack + actor.offense.creation) / 2 - actor.fatigue * 0.06
-  const defend = defender ? (defender.defense.pointOfAttack + defender.defensiveMobility) / 2 : 50
-  return { edge: clamp((attack - defend) / 60 + (gap - 1.1) / 5 + Math.min(0.3, (lane - 0.9) * 0.15), -0.4, 0.6), defender }
+  // BT6.7: the edge is the separation his first step creates against this defender's read and slide at the distance he is played (the same
+  // quantities the movement uses), plus how far the defender is from the line to the rim (a closeout, a man caught on a screen).
+  if (defender === undefined) return { edge: 0.6, defender }
+  const separation = expectedSeparation(state, defender, actor, gap)
+  const ratings = (handlerBurst(actor) - defenderQuickness(defender)) / 75
+  return { edge: clamp(ratings + 0.35 * clamp(separation, -0.3, 1) + Math.min(0.3, (lane - 0.9) * 0.15), -0.4, 0.6), defender }
 }
 
 /** A spot at the rim on the driver's side, where a drive that gets through ends. */
@@ -449,7 +479,7 @@ export function readDecision(state: MatchState): DecisionRead {
   const tempo = tacticalIntent(state, possession.teamId).offense.tempo
   const outlet = liveTransition && state.transition && !outletAlreadyCaught
     && (state.transition.trigger === 'defensiveRebound' || state.transition.advantage === 'ADVANTAGE' || (tempo > 0.35 && state.transition.advantage === 'NEUTRAL'))
-    ? bestTransitionReceiver(state, actor, basket, state.transition.advantage === 'ADVANTAGE' || state.transition.trigger === 'defensiveRebound' ? 0.6 : tuning().tempoPushCompletion) ?? (state.transition.trigger === 'defensiveRebound' ? bestReceiver(state, actor, false) : undefined)
+    ? bestTransitionReceiver(state, actor, basket, state.transition.advantage === 'ADVANTAGE')
     : undefined
 
   if (outlet) {
@@ -608,9 +638,11 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   // A post player with the ball works from the block: his drive is a post move (a shorter path to the rim than a drive from the arc).
   const postMove = call?.family === 'POST' && call.targetId === actor.playerId && distanceToBasket <= POST_TOUCH_METERS
   // Actions take time: a drive needs ~3 s to develop and a pass ~1.5 s before the receiver can shoot.
-  const drive = !contained && distanceToBasket > (postMove ? 2.3 : 3.2) && distanceToBasket < 14 && secondsLeft > 5 ? driveValue(state, actor, basket) + screenSeparation.driveGain : Number.NEGATIVE_INFINITY
+  // BT6.4: a handler who has picked up his dribble can pass or shoot, nothing else.
+  const deadDribble = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === actor.playerId && state.ball.dribble === 'picked'
+  const drive = !contained && !deadDribble && distanceToBasket > (postMove ? 2.3 : 3.2) && distanceToBasket < 14 && secondsLeft > 5 ? driveValue(state, actor, basket) + screenSeparation.driveGain : Number.NEGATIVE_INFINITY
   const isolating = committed && play!.kind === 'ISOLATION' && isInitiator && play!.drivesDone === 0
-  const screenPlan = screen === null && !contained && !mustAct && !isolating && flow !== null && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && secondsLeft > SCREEN_MIN_SECONDS_LEFT
+  const screenPlan = screen === null && !contained && !deadDribble && !mustAct && !isolating && flow !== null && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && secondsLeft > SCREEN_MIN_SECONDS_LEFT
     ? planScreen(state, actor, basket) : null
   const hold = workingValue(state) * tuning().holdDiscount
   const noise = (salt: string): number => 1 + (decisionNoise(state, actor.playerId, salt) - 0.5) * 0.12
@@ -735,26 +767,30 @@ export function bestReceiver(state: MatchState, passer: MatchPlayerState, prefer
 }
 
 /**
- * BT5.12: `minCompletion` is the confidence the push needs. A numbers advantage or a rebound outlet accepts the BT4.5 risk; a push that
- * only the team's tempo asks for (no advantage) needs a pass the passer is nearly sure of; and a long throw ahead (over 12 m of
- * progress) always needs more confidence than a short outlet: running teams push the ball by dribble, not by heaving it.
+ * BT6.12-14: the pass ahead in transition (the outlet of a rebound, the push of a fast team, the hit-ahead of a break) is a decision with a
+ * price, valued like every other: what the ball gains up the floor (the progress, a numbers advantage, the primary creator receiving it
+ * where he can push) against what a lost ball costs here (the possession and the opponent's break at our basket). The alternative is to
+ * secure it and bring it up (the handler dribbles out of the traffic; the read comes again next tick). A short outlet through the rebound
+ * scrum has nothing to gain and is not thrown; a long hit-ahead to a man in the clear with numbers is. The risk is the BT4.5 completion
+ * as the passer reads it (execution, the lane in real time, a denied receiver), so a rebounder who sees the floor finds the outlets a
+ * poor one does not.
  */
-function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, basket: CourtPosition, minCompletion = 0.6): MatchPlayerState | undefined {
+function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, basket: CourtPosition, advantage: boolean): MatchPlayerState | undefined {
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
-  // BT5.5: the outlet looks for the man who brings it up (the primary creator), unless someone is already ahead of the play.
   const roles = lineupRoles(state, passer.teamId, tacticalIntent(state, passer.teamId))
-  return state.players.filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
+  const keep = 1
+  const best = state.players.filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
     .map((player) => {
       const progress = (player.position.x - passer.position.x) * direction
-      const nearestDefender = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== passer.teamId)
-        .map((defender) => distanceBetween(defender.position, player.position)), Number.POSITIVE_INFINITY)
-      // BT4.5: the same risk the half court uses (execution, lane in real time, receiver availability): a pass ahead into a lane that is closed is not an outlet.
       const completion = perceivedCompletion(state, passer, player)
-      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008 - (1 - completion) * 14 + (player.playerId === roles.primaryCreatorId && progress < 4 ? 1 : 0)
-      return { player, score, progress, completion }
+      // The creator is who should push it; a big who has the ball is better off handing it to him than dribbling it up himself.
+      const creatorGain = player.playerId === roles.primaryCreatorId && passer.playerId !== roles.primaryCreatorId ? tuning().outletCreatorGain : 0
+      const gain = tuning().outletProgressGain * clamp(progress, 0, 20) + (advantage ? tuning().outletAdvantageGain : 0) + creatorGain
+      return { player, progress, value: completion * (keep + gain) - (1 - completion) * tuning().outletLossPoints }
     })
-    .filter((candidate) => candidate.progress > 0.75 && candidate.completion > (candidate.progress > 12 ? Math.max(minCompletion, tuning().longOutletCompletion) : minCompletion))
-    .sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player
+    .filter((candidate) => candidate.progress > -1.5 && candidate.value > keep)
+    .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]
+  return best?.player
 }
 
 /**

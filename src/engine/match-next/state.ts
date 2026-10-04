@@ -42,6 +42,8 @@ export interface DefensiveHelpDecision {
   readonly reason: string
   readonly helperPlayerId?: PlayerId
   readonly helperKind?: 'HELP' | 'LOW_MAN'
+  /** BT6.26: tick the help was triggered (the rotations behind it start after the team's communication delay). */
+  readonly triggeredT?: number
   readonly rotations: readonly {
     readonly playerId: PlayerId
     readonly kind: 'ROTATE' | 'X_OUT'
@@ -126,6 +128,7 @@ export type MatchNextEventType =
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
   | 'playCalled' | 'tacticalAdjustment'
+  | 'dribblePickedUp'
 
 export interface MatchNextEvent {
   readonly sequence: number
@@ -378,6 +381,8 @@ export interface MatchPlayerState {
   readonly passing: Required<NonNullable<MatchSetup['players'][number]['passing']>>
   readonly defense: MatchSetup['players'][number]['defense']
   readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; readonly lateralGripMps2?: number; readonly backpedalFactor?: number }
+  /** BT6: a defender who reached for the ball and missed is off balance (late to the handler's next step) until this tick. */
+  readonly offBalanceUntilT?: number
 }
 
 export interface MatchState {

@@ -13,6 +13,8 @@ export interface MovementIntent {
   readonly target: CourtPosition
   readonly urgency: MovementUrgency
   readonly facing: MovementFacing
+  /** BT6: a defender in his stance keeps this share of his top speed sliding backward or sideways (his footwork); omitted: the generic backpedal. */
+  readonly stanceSlide?: number
   readonly provenance: {
     readonly responsibilityId: string
     readonly decisionId: string

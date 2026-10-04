@@ -170,13 +170,21 @@ export function interceptPass(state: MatchState, defenderPlayerId: PlayerId): Ma
   return next
 }
 
-/** A defender tips the pass: it drops loose beside him, last touched by his team (so it is the offense's ball if it goes out). */
+/** BT6.34: share of the pass speed a tipped ball keeps along its line, and its sideways speed off the hand. */
+const DEFLECTION_KEEP_SHARE = 0.45
+const DEFLECTION_SIDE_MPS = 2.6
+
+/** A defender tips the pass: it goes loose off his hand, last touched by his team (so it is the offense's ball if it goes out). */
 function deflectPass(state: MatchState, ball: Extract<BallState, { kind: 'PASS_IN_FLIGHT' }>, defenderPlayerId: PlayerId, position: CourtPosition): MatchState {
   const defender = activePlayer(state, defenderPlayerId)
   const along = { x: ball.target.x - ball.from.x, y: ball.target.y - ball.from.y }
   const length = Math.hypot(along.x, along.y) || 1
   const side = ((defender.position.x - position.x) * -along.y + (defender.position.y - position.y) * along.x) >= 0 ? 1 : -1
-  const velocity = { x: (along.x / length) * 1.8 + (-along.y / length) * 3.4 * side, y: (along.y / length) * 1.8 + (along.x / length) * 3.4 * side }
+  // BT6.34: a tip changes the ball's line, it does not stop it: it keeps part of the pass's speed toward where it was going, so the receiver
+  // (or the line) decides as often as the man who tipped it. Before, the ball almost stopped beside the deflector, who nearly always recovered it.
+  const passSpeed = length / Math.max(0.1, (ball.arrivalT - ball.releaseT) / 10)
+  const keep = Math.min(5.5, passSpeed * DEFLECTION_KEEP_SHARE)
+  const velocity = { x: (along.x / length) * keep + (-along.y / length) * DEFLECTION_SIDE_MPS * side, y: (along.y / length) * keep + (along.x / length) * DEFLECTION_SIDE_MPS * side }
   const possession = activePossession(state)
   let next: MatchState = {
     ...state,

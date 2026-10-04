@@ -173,6 +173,39 @@ describe('BT5 tactical identity', () => {
     expect(run(90, 1).tactics?.home.adjustment).toBeNull()
     expect(run(5, 9).tactics?.home.adjustment).toBeNull()
   })
+
+  it('BT6.28-29: an adopted coverage is judged on its own possessions and the bench does not go back to the one it left for noise', () => {
+    // The bench left the drop (it conceded 1.9) for a switch. Going back to the drop because the switch has had a bad stretch that is still
+    // better than what the drop gave would be chasing noise.
+    const run = (switchN: number, switchPoints: number): MatchState => {
+      const s = state(setupWith(ELITE_PNR, { homePlan: { ...NEUTRAL_PLAN, coach: { defense: { coverage: 'drop' }, adaptability: 90, tacticalKnowledge: 80 } } }))
+      const tactics = initialTacticsState()
+      const seeded: MatchState = {
+        ...s, t: 6000, autonomousActions: true,
+        tactics: {
+          ...tactics,
+          home: {
+            ...tactics.home, adjustments: 1, lastAdjustmentT: 1000,
+            adjustment: { coverage: 'switch', reason: 'drop conceded', atT: 1000 },
+            abandoned: { drop: 1.9 },
+            defenseAtAdjust: { drop: { n: 9, points: 17.1 }, switch: { n: 3, points: 2 } },
+            defense: { drop: { n: 9, points: 17.1 }, switch: { n: 3 + switchN, points: 2 + switchPoints } },
+            allDefense: { n: 40 + switchN, points: 38 + switchPoints },
+          },
+          open: [{ possessionId: 'p-x', offenseTeamId: AWAY, family: null, coverages: ['switch'], points: 0 }], processedSequence: s.events.at(-1)!.sequence,
+        },
+      }
+      const end = { sequence: seeded.nextEventSequence, t: seeded.t, period: 1, gameClockTenths: seeded.gameClockTenths, type: 'possessionEnd' as const, possessionId: 'p-x', teamId: AWAY }
+      return reconcileTacticalMemory({ ...seeded, events: [...seeded.events, end], nextEventSequence: seeded.nextEventSequence + 1 })
+    }
+    // 1.7 per possession over 11 since adopted: bad enough to act on, but not worse than what the drop conceded: no flip back.
+    expect(run(10, 18.7).tactics?.home.adjustment?.coverage).toBe('switch')
+    expect(run(10, 18.7).tactics?.home.adjustments).toBe(1)
+    // 7 possessions since it was adopted are not enough evidence to judge the bench's own change.
+    expect(run(6, 15).tactics?.home.adjustments).toBe(1)
+    // A switch that is truly worse than the drop was (2.6 over 15) is changed back.
+    expect(run(14, 39).tactics?.home.adjustment?.coverage).toBe('drop')
+  })
 })
 
 describe('BT5 tactical identity in a real match', () => {

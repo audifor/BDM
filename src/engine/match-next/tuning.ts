@@ -104,12 +104,19 @@ export interface MatchNextTuning {
   readonly passInterceptMax: number
   /** Seconds of slack over which that chance rises from 0 to its maximum. */
   readonly passInterceptSlackScale: number
+  /** BT6.11: seconds of slack beyond which a defender owns the lane (no gamble: he is there first and takes the ball). */
+  readonly passLaneOwnedSlack: number
   /** Seconds by which a passer with no vision underestimates how fast a defender reaches the line (0 for vision 100). */
   readonly passPerceptionBiasSeconds: number
   /** Base probability that a throw goes wrong, before skill, distance, pressure on the passer and a running receiver. */
   readonly passErrorBase: number
   /** What a lost ball costs the offense, in points, when a pass is valued (the continuation of the possession plus the opponent's break). */
   readonly passLossPoints: number
+  /** BT6.12: what a pass lost in the open floor costs on top (the opponent's break against a team that is not back). */
+  readonly openFloorLossPoints: number
+  /** BT6.7: share of his top speed a handler keeps dribbling at full speed, at handle 0 and 100 (creation and ball security). */
+  readonly dribbleSpeedMin: number
+  readonly dribbleSpeedMax: number
   /** How much a denied receiver (a defender on him or between him and the ball) lowers the completion the passer expects. */
   readonly passDenialWeight: number
   /** BT5 audit switches (1 = on): the throw-in goes to the primary creator; the set's man gets pass priority; 4-out-1-in spacing; TAG/DIG help; a fast team's leak-out. */
@@ -123,9 +130,14 @@ export interface MatchNextTuning {
   readonly newFamilies: number
   /** BT5: exponent of the family weights (1 = plain shares, larger = a coach's preferred family dominates more). */
   readonly familySharpness: number
-  /** BT5.12: completion a tempo-only push needs, and that any transition pass over 12 m of progress needs. */
-  readonly tempoPushCompletion: number
-  readonly longOutletCompletion: number
+  /**
+   * BT6.12: the pass ahead in transition is valued against securing the ball (worth 1): points per metre of progress (up to 20 m), for a
+   * numbers advantage, for putting it in the primary creator's hands, and what a lost ball there costs (the possession plus the opponent's break).
+   */
+  readonly outletProgressGain: number
+  readonly outletAdvantageGain: number
+  readonly outletCreatorGain: number
+  readonly outletLossPoints: number
   /** BT5.11: weight of the identity's read priorities (interior looks inside and attacks the rim, perimeter looks for the open shooter). */
   readonly identityReadWeight: number
 }
@@ -189,9 +201,13 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   passReactionSeconds: 0.25,
   passInterceptMax: 0.12,
   passInterceptSlackScale: 0.35,
-  passPerceptionBiasSeconds: 0.3,
+  passLaneOwnedSlack: 0.25,
+  passPerceptionBiasSeconds: 0.15,
   passErrorBase: 0.012,
   passLossPoints: 0.9,
+  openFloorLossPoints: 0.6,
+  dribbleSpeedMin: 0.86,
+  dribbleSpeedMax: 0.98,
   passDenialWeight: 0.25,
   inboundToCreator: 0,
   setPassPriority: 1,
@@ -201,8 +217,10 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   baselineDrives: 1,
   newFamilies: 1,
   familySharpness: 1.5,
-  tempoPushCompletion: 0.88,
-  longOutletCompletion: 0.82,
+  outletProgressGain: 0.012,
+  outletAdvantageGain: 0.12,
+  outletCreatorGain: 0.04,
+  outletLossPoints: 1.5,
   identityReadWeight: 1,
 })
 
