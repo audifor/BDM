@@ -4,7 +4,7 @@ import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
 import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday } from './advanceGameDay'
-import { getContinueStopReason, getExplicitAdvanceStopReason, type ContinueStopReason } from './ContinueFlow'
+import { getContinueStopReason, getExplicitAdvanceStopReason, noProgressStop, type ContinueStopReason } from './ContinueFlow'
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { getScheduledGamesToday } from '@/engine/calendar'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
@@ -133,10 +133,12 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
       return result(tick.world, daysAdvanced, tick.event.stopReason, seasonTransitions)
     }
 
-    current = tick.world
     if (tick.event.type === 'dayAdvanced') {
+      const stalled = noProgressStop(current, tick.world)
+      if (stalled !== undefined) return result(tick.world, daysAdvanced, stalled, seasonTransitions)
       daysAdvanced += 1
     }
+    current = tick.world
   }
 
   if (getExplicitAdvanceStopReason(current) === undefined && getScheduledGamesToday(current).length > 0) {

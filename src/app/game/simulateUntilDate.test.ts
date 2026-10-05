@@ -65,7 +65,7 @@ describe('simulate until date', () => {
     const world = createNewGame()
     const complete = {
       ...world,
-      games: Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, { ...game, status: 'completed' }])),
+      games: Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, game.status === 'completed' ? game : { ...game, status: 'completed', result: { homeScore: 0, awayScore: 0 } }])),
     } as typeof world
 
     const result = simulateUntilDate(complete, addDays(complete.currentDate, 10))
@@ -164,7 +164,7 @@ describe('simulate until date', () => {
 
     it('empty days with no games or events still advance correctly', () => {
       const world = createNewGame()
-      const complete = { ...world, games: Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, { ...game, status: 'completed' }])) } as typeof world
+      const complete = { ...world, games: Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, game.status === 'completed' ? game : { ...game, status: 'completed', result: { homeScore: 0, awayScore: 0 } }])) } as typeof world
       const target = addDays(complete.currentDate, 15)
       const result = simulateUntilDate(complete, target)
       expect(result.finalDate).toBe(target)
@@ -201,8 +201,11 @@ describe('simulate until date', () => {
   })
 })
 
-function withNoScheduledGames<T extends { readonly games: Record<string, { status: string }>; readonly recruitingCyclesById: Record<string, unknown> }>(world: T): T {
-  return { ...withNoRecruiting(world), games: Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, { ...game, status: 'completed' }])) }
+function withNoScheduledGames<T extends { readonly games: Record<string, { readonly status: string }>; readonly recruitingCyclesById: Record<string, unknown> }>(world: T): T {
+  // `Game` requires a result on a completed game: completing the fixtures keeps the world type-consistent so the
+  // calendar walk is exercised instead of the standings projection (which legitimately reads completed results).
+  const games = Object.fromEntries(Object.entries(world.games).map(([id, game]) => [id, game.status === 'completed' ? game : { ...game, status: 'completed', result: { homeScore: 0, awayScore: 0 } }]))
+  return { ...withNoRecruiting(world), games } as T
 }
 
 /**
