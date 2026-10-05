@@ -286,13 +286,47 @@ export function tacticalIntent(state: MatchState, teamId: TeamId): TacticalInten
   return intent
 }
 
-function memoizedTacticalIntent(state: MatchState, teamId: TeamId): TacticalIntent {
-  const lineup = state.players.filter((player) => player.active && player.teamId === teamId)
-  const fatigue = lineup.length === 0 ? 0 : lineup.reduce((sum, player) => sum + player.fatigue, 0) / lineup.length
+/**
+ * ME-LOCK1.2: the parts of the last key built per team. When every part is equal the key string is equal, so it is reused instead of
+ * rebuilt (filter, join, template) for every new players array. The lookup below is unchanged: same Map, same key, same eviction.
+ */
+interface IntentKeyParts {
+  readonly lineupIds: readonly string[]; readonly scoreHome: number; readonly scoreAway: number; readonly period: number
+  readonly clockPart: number | 'x'; readonly fatiguePart: number | 'low'; readonly adjustmentPart: number | 'none'; readonly key: string
+}
+const lastKeyByTeam = new Map<TeamId, IntentKeyParts>()
+
+function intentKey(state: MatchState, teamId: TeamId): string {
+  // The lineup in players order and its mean fatigue, summed in the same order as `lineup.reduce` did.
+  const last = lastKeyByTeam.get(teamId)
+  let sameLineup = last !== undefined
+  let count = 0
+  let fatigueSum = 0
+  for (const player of state.players) {
+    if (!player.active || player.teamId !== teamId) continue
+    if (sameLineup && last!.lineupIds[count] !== player.playerId) sameLineup = false
+    fatigueSum += player.fatigue
+    count += 1
+  }
+  if (sameLineup && last!.lineupIds.length !== count) sameLineup = false
+  const fatigue = count === 0 ? 0 : fatigueSum / count
   const finalPeriod = state.period >= state.clockRules.periodCount
   const late = finalPeriod && state.gameClockTenths <= 2400
   const memory = teamId === state.homeTeamId ? state.tactics?.home : state.tactics?.away
-  const key = `${teamId}|${lineup.map((player) => player.playerId).join(',')}|${state.score.home}:${state.score.away}|${state.period}|${late ? state.gameClockTenths : 'x'}|${fatigue > 35 ? fatigue : 'low'}|${memory?.adjustment?.atT ?? 'none'}`
+  const clockPart = late ? state.gameClockTenths : 'x'
+  const fatiguePart = fatigue > 35 ? fatigue : 'low'
+  const adjustmentPart = memory?.adjustment?.atT ?? 'none'
+  // Numbers print to distinct strings exactly when they differ (0 and -0 print alike and compare equal), so equal parts mean an equal key.
+  if (sameLineup && last!.scoreHome === state.score.home && last!.scoreAway === state.score.away && last!.period === state.period
+    && last!.clockPart === clockPart && last!.fatiguePart === fatiguePart && last!.adjustmentPart === adjustmentPart) return last!.key
+  const lineupIds = state.players.filter((player) => player.active && player.teamId === teamId).map((player) => player.playerId)
+  const key = `${teamId}|${lineupIds.join(',')}|${state.score.home}:${state.score.away}|${state.period}|${clockPart}|${fatiguePart}|${adjustmentPart}`
+  lastKeyByTeam.set(teamId, { lineupIds, scoreHome: state.score.home, scoreAway: state.score.away, period: state.period, clockPart, fatiguePart, adjustmentPart, key })
+  return key
+}
+
+function memoizedTacticalIntent(state: MatchState, teamId: TeamId): TacticalIntent {
+  const key = intentKey(state, teamId)
   let byState = intentCache.get(state.tacticalPlans)
   if (byState === undefined) { byState = new Map(); intentCache.set(state.tacticalPlans, byState) }
   const cached = byState.get(key)

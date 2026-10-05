@@ -1,6 +1,7 @@
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId } from '@/domain/ids'
 import { activePossession, type MatchNextEvent, type MatchState } from '../state'
+import { eventsOf } from '../execution/EventLog'
 
 /**
  * BT4E/F: shot ecology. Both labels are DERIVED from facts (where the shooter is, what he did in the last seconds); they are never
@@ -84,7 +85,7 @@ export function breakAdvantage(state: MatchState, shooterId: PlayerId, position:
  * the shot names it (a putback is a putback even in transition).
  */
 export function classifyShotCreation(state: MatchState, shooterId: PlayerId, position: CourtPosition, basket: CourtPosition, options: { readonly stopKind?: 'PULL_UP' | 'FLOATER' } = {}): ShotCreation {
-  const events = state.events
+  const events = eventsOf(state)
   const distance = distanceBetween(position, basket)
   const mine = (event: MatchNextEvent): boolean => event.playerId === shooterId
   if (distance <= 3.4 && recent(events, state.t - PUTBACK_WINDOW_TICKS, (event) => event.type === 'reboundSecured' && event.reboundType === 'offensive' && mine(event)) !== undefined) return 'PUTBACK'

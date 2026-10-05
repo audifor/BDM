@@ -20,6 +20,7 @@ import { callPlay, type PlayCall, type PlayFamily } from '../tactics/PlayCalling
 import { defensiveShape, tacticalIntent, type TacticalIntent } from '../tactics/TacticalIdentity'
 import { lineupRoles } from '../tactics/OffensiveRoles'
 import { defenderQuickness, expectedSeparation, handlerBurst, onBallCushion } from '../defense/PointOfAttack'
+import { eventCount } from '../execution/EventLog'
 
 export interface ShotContest {
   readonly score: number
@@ -239,7 +240,7 @@ const PUTBACK_MAX_DISTANCE_METERS = 3.2
 export function putbackQuality(state: MatchState, shooter: MatchPlayerState, position: CourtPosition, basket: CourtPosition): number {
   if (distanceBetween(position, basket) > PUTBACK_MAX_DISTANCE_METERS) return 1
   let grabbed = false
-  for (let index = state.events.length - 1; index >= 0; index -= 1) {
+  for (let index = eventCount(state) - 1; index >= 0; index -= 1) {
     const event = state.events[index]!
     if (event.t < state.t - PUTBACK_WINDOW_TICKS) break
     if (event.type === 'reboundSecured' && event.reboundType === 'offensive' && event.playerId === shooter.playerId) { grabbed = true; break }
@@ -622,7 +623,7 @@ function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: Ma
   const postTouches = call.targetId === undefined ? 0 : mine.filter((action) => (action.kind === 'PASS' || action.kind === 'KICK_OUT') && action.outcome === 'CAUGHT'
     && action.targetPlayerId === call.targetId && action.target !== undefined && distanceBetween(action.target, basket) <= POST_TOUCH_METERS).length
   let offBallScreens = 0
-  for (let index = state.events.length - 1; index >= 0; index -= 1) {
+  for (let index = eventCount(state) - 1; index >= 0; index -= 1) {
     const event = state.events[index]!
     if (event.t < since) break
     if (event.type === 'offBallMove' && event.ballReason === 'COME_OFF' && event.teamId === teamId) offBallScreens += 1

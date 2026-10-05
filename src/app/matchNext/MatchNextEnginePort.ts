@@ -8,6 +8,11 @@ import { type MatchNextResult } from './MatchNextResult'
 import { completeMatchNext } from './applyMatchNextResult'
 import type { MatchEnginePort } from './MatchEnginePort'
 
+/**
+ * The simulation resolution seam (ME-LOCK1.2): FULL and FAST are the two exact tiers of the one Match Next engine. A lower-fidelity
+ * BACKGROUND tier for distant competitions is intentionally unsupported: it would be a separate tier with its own (statistical)
+ * certification and a relevance policy deciding which games use it.
+ */
 export type MatchExecutionMode = 'FULL' | 'FAST'
 
 export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNextLiveController, MatchNextResult> {
@@ -35,7 +40,7 @@ export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNex
   public simulate(setup: MatchSetup, mode: MatchExecutionMode): MatchNextResult {
     const session = this.createLiveSession(setup)
     if (mode === 'FAST') return session.skipToEnd()
-    while (!session.matchState.isComplete) session.advanceOneStep()
+    while (!session.advanceOneStep().isComplete) { /* every step builds its presentation frame */ }
     return session.result()
   }
 

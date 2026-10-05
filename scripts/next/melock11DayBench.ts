@@ -36,7 +36,7 @@ if (scenario.startsWith('day-')) {
   const setups = Array.from({ length: n }, (_, i) => port.prepare(world, day[i % day.length]!, 9000 + i))
   await pool.simulate(setups.slice(0, size)) // warm the pool
   const t0 = performance.now(); const results = await pool.simulate(setups); const t1 = performance.now()
-  Object.assign(out, { matches: n, parallelMs: Math.round(t1 - t0), perMatchMs: Math.round((t1 - t0) / n), first: results[0]!.score })
+  Object.assign(out, { matches: n, parallelMs: Math.round(t1 - t0), perMatchMs: Math.round((t1 - t0) / n), first: results[0]!.score, rssMb: Math.round(process.memoryUsage().rss / 1e6) })
 }
 pool.dispose()
 console.log(JSON.stringify(out))

@@ -2,6 +2,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent, findLastEvent } from '../events'
 import type { MatchNextEvent, MatchState, ScreenCoverage } from '../state'
 import { clamp, tacticalIntent, type OffensiveIdentity } from './TacticalIdentity'
+import { eventCount } from '../execution/EventLog'
 
 /**
  * BT5.27: what a bench remembers of this game. Small and bounded: per play family the possessions run and the points they produced,
@@ -64,13 +65,14 @@ const add = (record: OutcomeRecord | undefined, points: number): OutcomeRecord =
 export function reconcileTacticalMemory(input: MatchState): MatchState {
   if (!input.autonomousActions) return input
   let tactics = input.tactics ?? initialTacticsState()
-  const last = input.events[input.events.length - 1]
+  const count = eventCount(input)
+  const last = input.events[count - 1]
   if (last === undefined || last.sequence <= tactics.processedSequence) return input.tactics === undefined ? { ...input, tactics } : input
-  let start = input.events.length - 1
+  let start = count - 1
   while (start > 0 && input.events[start - 1]!.sequence > tactics.processedSequence) start -= 1
   let state: MatchState = input
   const reviews: TeamId[] = []
-  for (let index = start; index < input.events.length; index += 1) {
+  for (let index = start; index < count; index += 1) {
     const event = input.events[index]!
     tactics = follow(state, tactics, event, reviews)
   }

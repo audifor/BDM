@@ -5,6 +5,7 @@ import { applyCommand, createMatchState, decideRotationSubstitutions, inboundRec
 import type { MovementIntent } from '@/engine/match-next/movement/MovementIntent'
 import type { InboundStartReason } from '@/engine/match-next/ball/BallTransitions'
 import { createMatchNextResult, type MatchNextResult } from './MatchNextResult'
+import { ownEvents, publishEvents, trimEvents } from '@/engine/match-next/execution/EventLog'
 
 export interface MatchNextLiveSnapshot {
   readonly frame: MatchFrame
@@ -40,6 +41,12 @@ export class MatchNextLiveController {
     })
   }
 
+  /*
+   * ME-LOCK1.2 execution boundary: during a step the session owns the event buffer and the engine appends to it in place (see
+   * execution/EventLog). Every state that leaves the session (the accessor, the result) is published first: its events become exactly
+   * its own and are never written again. Frames copy the events, so a snapshot needs no publication.
+   */
+
   public advanceOneStep(): MatchNextLiveSnapshot {
     return this.advanceTicks(1)
   }
@@ -59,10 +66,14 @@ export class MatchNextLiveController {
   }
 
   public result(): MatchNextResult {
+    this.state = publishEvents(this.state)
     return createMatchNextResult(this.setup, this.state)
   }
 
-  public get matchState(): MatchState { return this.state }
+  public get matchState(): MatchState {
+    this.state = publishEvents(this.state)
+    return this.state
+  }
   public get matchSeed(): number { return this.setup.matchSeed }
 
   private teamsReadyForInbound(): boolean {
@@ -121,6 +132,12 @@ export class MatchNextLiveController {
   }
 
   private stepState(): void {
+    this.state = ownEvents(this.state)
+    this.stepOwnedState()
+    this.state = trimEvents(this.state)
+  }
+
+  private stepOwnedState(): void {
     const previousPeriod = this.state.period
     this.state = tick(this.state)
     const reachedStoppage = someEventSince(this.state, this.state.t, (event) => event.type === 'ballDead')

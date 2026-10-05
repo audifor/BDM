@@ -3,6 +3,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { MatchState, MatchNextEvent } from '../state'
 import { isSubstitutionOpportunity } from '../clockRules'
 import { resolveFoulRules } from '../rules/FoulRules'
+import { appendEvent } from '../execution/EventLog'
 
 export interface CoachSubstitutionProposal {
   readonly teamId: TeamId
@@ -174,7 +175,7 @@ function appendSubstitutionEvent(state: MatchState, proposal: CoachSubstitutionP
     substitutionReason: proposal.reason,
     expectedMinutes: proposal.expectedMinutes,
   }
-  return { ...state, events: [...state.events, event], nextEventSequence: state.nextEventSequence + 1 }
+  return { ...state, events: appendEvent(state, event), nextEventSequence: state.nextEventSequence + 1 }
 }
 
 function roleFit(plan: NonNullable<MatchState['coachingPlans']>['home'], playerId: PlayerId, role: BasketballPosition | undefined): number {

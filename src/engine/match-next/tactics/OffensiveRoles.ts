@@ -25,8 +25,42 @@ export function creatorStanding(state: MatchState, player: MatchPlayerState): nu
   return creatorScore(player) - player.fatigue * 0.15 + (featured ? 4 : 0)
 }
 
+/**
+ * ME-LOCK1.2: the roles are read several times per tick and only change with the lineup, its fatigue, the plan or the intent's off-ball
+ * and crash levels. The last answer per team is kept with exactly those inputs (every player field the scores below read, by value or by
+ * the reference of a ratings object that is never rebuilt during a game) and reused while they are all equal.
+ */
+interface RolesInputs {
+  readonly homeTeamId: TeamId; readonly plans: MatchState['tacticalPlans']; readonly offBall: number; readonly crash: number
+  readonly lineup: readonly MatchPlayerState[]; readonly roles: LineupRoles
+}
+const lastRolesByTeam = new Map<TeamId, RolesInputs>()
+
+function sameRoleInputs(left: MatchPlayerState, right: MatchPlayerState): boolean {
+  return left === right || left.playerId === right.playerId && left.fatigue === right.fatigue && left.offense === right.offense && left.passing === right.passing
+    && left.kinematics === right.kinematics && left.heightCm === right.heightCm && left.weightKg === right.weightKg && left.reboundingImpact === right.reboundingImpact
+}
+
 export function lineupRoles(state: MatchState, teamId: TeamId, intent: TacticalIntent): LineupRoles {
+  const last = lastRolesByTeam.get(teamId)
+  if (last !== undefined && last.homeTeamId === state.homeTeamId && last.plans === state.tacticalPlans && last.offBall === intent.offense.offBall && last.crash === intent.offense.crash) {
+    let count = 0
+    let same = true
+    for (const player of state.players) {
+      if (!player.active || player.teamId !== teamId) continue
+      const previous = last.lineup[count]
+      if (previous === undefined || !sameRoleInputs(previous, player)) { same = false; break }
+      count += 1
+    }
+    if (same && count === last.lineup.length) return last.roles
+  }
   const lineup = state.players.filter((player) => player.active && player.teamId === teamId)
+  const roles = computeLineupRoles(state, teamId, intent, lineup)
+  lastRolesByTeam.set(teamId, { homeTeamId: state.homeTeamId, plans: state.tacticalPlans, offBall: intent.offense.offBall, crash: intent.offense.crash, lineup, roles })
+  return roles
+}
+
+function computeLineupRoles(state: MatchState, teamId: TeamId, intent: TacticalIntent, lineup: readonly MatchPlayerState[]): LineupRoles {
   const byId = (score: (player: MatchPlayerState) => number, pool: readonly MatchPlayerState[] = lineup): MatchPlayerState[] =>
     [...pool].sort((left, right) => score(right) - score(left) || String(left.playerId).localeCompare(String(right.playerId)))
   const roles = new Map<string, OffensiveRole[]>(lineup.map((player) => [String(player.playerId), []]))

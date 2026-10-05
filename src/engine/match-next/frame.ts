@@ -6,6 +6,7 @@ import type { PlayerResponsibility, StructuralDecision } from './responsibility/
 import type { OffensiveStructureState } from './structure/FiveOutStructure'
 import type { DefensiveAssignment, DefensiveStructureState, MatchReboundState, MatchTransitionState, OffenseFlowState, ReboundResponsibility, ScreenState, TransitionRole } from './state'
 import type { MatchActionState } from './actions/ActionState'
+import { eventsOf } from './execution/EventLog'
 
 export interface MatchFramePlayer {
   readonly playerId: PlayerId
@@ -113,7 +114,7 @@ export function toFrame(state: MatchState): MatchFrame {
   const possession = activePossession(state)
   const ball = state.ball
   const statsByPlayer = new Map<PlayerId, MatchFrameRotationPlayer['stats']>()
-  for (const event of state.events) {
+  for (const event of eventsOf(state)) {
     const playerId = event.shooterPlayerId ?? (event.type === 'reboundSecured' || event.type === 'passIntercepted' ? event.playerId : undefined)
     if (playerId === undefined) continue
     const current = statsByPlayer.get(playerId) ?? { points: 0, rebounds: 0, steals: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0 }
@@ -186,7 +187,7 @@ export function toFrame(state: MatchState): MatchFrame {
     responsibilities: state.responsibilities.map((item) => ({ ...item, endCondition: { ...item.endCondition } })),
     decisions: state.decisions.map((item) => ({ ...item })),
     movementIntents: state.movementIntents.map((item) => ({ ...item, target: { ...item.target }, facing: item.facing.kind === 'POINT' ? { ...item.facing, position: { ...item.facing.position } } : { ...item.facing }, provenance: { ...item.provenance } })),
-    events: state.events.map((event) => ({ ...event })),
+    events: eventsOf(state).map((event) => ({ ...event })),
     currentDecision: state.currentDecision === null ? null : { ...state.currentDecision },
     actions: state.actions.map((action) => ({
       ...action,

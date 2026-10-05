@@ -1,5 +1,6 @@
 import type { MatchNextEvent, MatchNextEventType, MatchState } from './state'
 import { addMatchEventFatigue } from './playerDynamicState'
+import { appendEvent, eventCount } from './execution/EventLog'
 
 type EventDetails = Partial<Omit<MatchNextEvent, 'sequence' | 't' | 'period' | 'gameClockTenths' | 'type'>>
 
@@ -12,7 +13,7 @@ export function emitEvent(state: MatchState, type: MatchNextEventType, details: 
     type,
     ...details,
   }
-  return addMatchEventFatigue({ ...state, events: [...state.events, event], nextEventSequence: state.nextEventSequence + 1 }, event)
+  return addMatchEventFatigue({ ...state, events: appendEvent(state, event), nextEventSequence: state.nextEventSequence + 1 }, event)
 }
 
 /*
@@ -22,20 +23,20 @@ export function emitEvent(state: MatchState, type: MatchNextEventType, details: 
  */
 
 /** `events.some((e) => e.t >= fromT && test(e))`. */
-export function someEventSince(state: Pick<MatchState, 'events'>, fromT: number, test: (event: MatchNextEvent) => boolean): boolean {
-  for (let index = state.events.length - 1; index >= 0 && state.events[index]!.t >= fromT; index -= 1) if (test(state.events[index]!)) return true
+export function someEventSince(state: Pick<MatchState, 'events' | 'nextEventSequence'>, fromT: number, test: (event: MatchNextEvent) => boolean): boolean {
+  for (let index = eventCount(state) - 1; index >= 0 && state.events[index]!.t >= fromT; index -= 1) if (test(state.events[index]!)) return true
   return false
 }
 
 /** `events.filter((e) => e.t >= fromT && test(e)).length`. */
-export function countEventsSince(state: Pick<MatchState, 'events'>, fromT: number, test: (event: MatchNextEvent) => boolean): number {
+export function countEventsSince(state: Pick<MatchState, 'events' | 'nextEventSequence'>, fromT: number, test: (event: MatchNextEvent) => boolean): number {
   let count = 0
-  for (let index = state.events.length - 1; index >= 0 && state.events[index]!.t >= fromT; index -= 1) if (test(state.events[index]!)) count += 1
+  for (let index = eventCount(state) - 1; index >= 0 && state.events[index]!.t >= fromT; index -= 1) if (test(state.events[index]!)) count += 1
   return count
 }
 
 /** `[...events].reverse().find(test)`, without copying the history. */
-export function findLastEvent(state: Pick<MatchState, 'events'>, test: (event: MatchNextEvent) => boolean): MatchNextEvent | undefined {
-  for (let index = state.events.length - 1; index >= 0; index -= 1) if (test(state.events[index]!)) return state.events[index]
+export function findLastEvent(state: Pick<MatchState, 'events' | 'nextEventSequence'>, test: (event: MatchNextEvent) => boolean): MatchNextEvent | undefined {
+  for (let index = eventCount(state) - 1; index >= 0; index -= 1) if (test(state.events[index]!)) return state.events[index]
   return undefined
 }

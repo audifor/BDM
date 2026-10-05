@@ -9,6 +9,7 @@ import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { tuning } from '../tuning'
 import { defensiveShape, postScore, tacticalIntent } from '../tactics/TacticalIdentity'
 import { onBallCushion, onBallReactionSeconds, stanceSlideFactor } from './PointOfAttack'
+import { jsonEqual } from '../execution/jsonEqual'
 
 const ON_BALL_CUSHION_METERS = 1.05
 const GAP_DEPTH_METERS = 0.9
@@ -263,7 +264,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
     && prior.defendedBasket.y === defendedBasket.y
     && prior.onBallDefenderPlayerId === onBallDefenderPlayerId
     && helpDefenderPlayerIds === prior.helpDefenderPlayerIds
-    && JSON.stringify(prior.helpDecision) === JSON.stringify(helpDecision)
+    && jsonEqual(prior.helpDecision, helpDecision)
     && (prior.rimProtectorPlayerId ?? null) === rimProtectorPlayerId
     ? prior
     : { teamId: defendingTeamId, scheme: 'MAN', defendedBasket, assignments, onBallDefenderPlayerId, helpDefenderPlayerIds, helpDecision, rimProtectorPlayerId }

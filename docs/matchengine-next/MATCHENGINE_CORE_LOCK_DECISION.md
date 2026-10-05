@@ -1,5 +1,59 @@
 # MatchEngine Next · Decisión de Core Lock
 
+## Actualización ME-LOCK1.2 (2026-10-05)
+
+Rama `match-next-me-lock1-2-exact-execution`, desde `6492794`. Evidencia en:
+
+- `ME_LOCK1_2_EXECUTION_PROFILE.md`;
+- `ME_LOCK1_2_EXACT_EXECUTION_ARCHITECTURE.md`;
+- `ME_LOCK1_2_PERFORMANCE_CERTIFICATION.md`.
+
+### BASKETBALL CORE LOCK: **YES** (sin cambios)
+
+La ejecución cambió y el baloncesto no:
+
+- corpus de 25 partidos (FIBA, NBA, NCAA masculino y femenino, WNBA, ACB, estilos, coberturas, faltas, fatiga, prórroga) idéntico a `6492794`, con y sin diagnóstico completo;
+- FULL = FAST;
+- mundo completo idéntico tras 38 partidos de duración real en 251 dominios.
+
+### Lo que se midió
+
+| Medida | Valor |
+|---|---|
+| Copia del estado de primer nivel | ~0,6 % del partido: un núcleo mutable no era la palanca |
+| Coste real | recorridos de historial, recálculos de datos que no cambian, copias de historiales completos, y sobre todo el cálculo de baloncesto de tres pases por tick que avanzan el partido (congelados) |
+| Rendimiento exacto | **×0,73** en un partido; **×0,65–0,68** con el pool (100 partidos: 65–78 s → 44–51 s) |
+| Días | 4 partidos 2,7–3,3 s; 9 partidos 5,0–6,5 s |
+
+### Frontera de niveles de simulación
+
+| Nivel | Estado |
+|---|---|
+| FULL | partido en vivo |
+| FAST | resto de partidos exactos |
+| BACKGROUND | sin soporte, a propósito |
+
+**Capacidad medida de FAST:** ~20 partidos por avance de día en ≤ 10–20 s. 50 partidos cuestan 24–28 s en sobremesa de 6 núcleos y ~40–47 s en 4 núcleos; 250 partidos, 2–4 min. Es el **caso B, en el límite con C**.
+
+### PRODUCTION MATCHENGINE LOCK: **YES, condicionado a la frontera explícita**
+
+La ejecución exacta es operativa para el nivel que debe servir: la competición del usuario y las competiciones activas (hoy ≤ 9 partidos al día; capacidad ~20).
+
+**No** es operativa para un mundo de 50–250 partidos al día. Ese mundo necesita un nivel BACKGROUND, que es una pieza nueva y no reabre el motor.
+
+| Si el producto… | Entonces |
+|---|---|
+| exige que todo el mundo futuro se juegue en FAST | el lock es **NO** |
+| acepta la frontera de niveles | el lock es **YES** |
+
+Adoptar la frontera (qué competiciones son activas) es una decisión humana. **Recomendación:** adoptarla.
+
+### BACKGROUND MODE REQUIRED NOW: **YES**
+
+Es el siguiente hito de diseño (P0 antes de ampliar el mundo más allá de ~20 partidos al día). No se ha implementado nada de BACKGROUND ni de relevancia.
+
+**MATCHENGINE LOCK ≠ ARQUITECTURA DE SIMULACIÓN DEL MUNDO COMPLETA.**
+
 ## Actualización ME-LOCK1.1 (2026-10-05)
 
 Rama `match-next-me-lock1-1-production-performance`, desde `8c81154`. Evidencia en:
