@@ -1,8 +1,35 @@
-import { addDays } from '@/domain/date'
+import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { createDraftForCompletedSeason, generateDraftProspects } from '@/engine/draft'
+import { assessNbaDraftEligibility, createDraftForCompletedSeason } from '@/engine/draft'
+import { nbaDraftRulesForYear } from '@/domain/draft'
 import { resolveFuturePickProtections } from '@/engine/trade'
 import { defaultRecruitingRules, recruitingRulesetForSeason, type RecruitingCycle } from '@/domain/recruiting'
+
+export interface ProductionDraftPoolProjection { readonly playerIds: readonly import('@/domain/ids').PlayerId[]; readonly playersBefore: number; readonly playersAfter: number }
+
+/** Pure projection: eligible production candidates are existing Players already on NCAA/FIBA rosters. */
+export function projectProductionDraftPool(world: GameWorld, seasonId: keyof GameWorld['seasons'], rules: ReturnType<typeof nbaDraftRulesForYear>, scheduledOn?: GameDate): ProductionDraftPoolProjection {
+  const playersBefore = Object.keys(world.players).length
+  const season = world.seasons[seasonId]
+  if (season === undefined) return { playerIds: [], playersBefore, playersAfter: playersBefore }
+  const draftYear = Number(season.startDate.slice(0, 4)) + 1
+  const date = scheduledOn ?? rules.draftDate ?? addDays(season.endDate, rules.scheduledAfterDays)
+  const candidates = Object.values(world.teams)
+    .filter((team) => Object.values(world.competitions).some((competition) => competition.participantTeamIds.includes(team.id) && world.ecosystems[competition.ecosystemId]?.kind !== 'nbaLike'))
+    .flatMap((team) => team.rosterPlayerIds)
+    .filter((id, index, ids) => {
+      if (ids.indexOf(id) !== index || world.players[id] === undefined) return false
+      const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(id))
+      const ecosystemId = team === undefined ? undefined : Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(team.id))?.ecosystemId
+      const kind = ecosystemId === undefined ? undefined : world.ecosystems[ecosystemId]?.kind
+      if (kind !== 'ncaaLike' && kind !== 'fibaLike') return false
+      if (kind === 'ncaaLike' && !Object.values(world.playerEnrollmentsById).some((enrollment) => enrollment.playerId === id && enrollment.status === 'active')) return false
+      return assessNbaDraftEligibility(world, id, { scheduledOn: date, rules }).automatic
+    })
+  const playersAfter = Object.keys(world.players).length
+  if (playersAfter !== playersBefore || candidates.some((playerId) => world.players[playerId] === undefined)) throw new Error('Production Draft pool projection must preserve Player count and existing identities')
+  return { playerIds: candidates, playersBefore, playersAfter }
+}
 
 /** Produces season-scoped content only when its configured ecosystem season completes. */
 export function processSeasonContentLifecycle(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {
@@ -10,11 +37,12 @@ export function processSeasonContentLifecycle(world: GameWorld, seasonId: keyof 
   if (season === undefined || world.seasonHistoryBySeasonId[seasonId] === undefined) return world
   const ecosystem = world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!
   if (ecosystem.draftRules === undefined) return world
-  const created = createDraftForCompletedSeason(world, ecosystem.id, season.id, ecosystem.draftRules, [])
+  const draftYear = Number(season.startDate.slice(0, 4)) + 1
+  const rules = nbaDraftRulesForYear(draftYear, ecosystem.draftRules.rounds)
+  const projection = projectProductionDraftPool(world, season.id, rules)
+  const created = createDraftForCompletedSeason(world, ecosystem.id, season.id, rules, projection.playerIds)
   const draftId = `draft:${ecosystem.id}:${season.id}`
-  const prospectCount = world.competitions[season.competitionId]!.participantTeamIds.length * ecosystem.draftRules.rounds
-  const prospected = created.draftsById[draftId]!.prospectPlayerIds.length === 0 ? generateDraftProspects(created, draftId, prospectCount) : created
-  return resolveFuturePickProtections(prospected, ecosystem.id, Number(season.startDate.slice(0, 4)), Object.values(prospected.draftPicksById).filter((pick) => pick.draftId === draftId))
+  return resolveFuturePickProtections(created, ecosystem.id, Number(season.startDate.slice(0, 4)), Object.values(created.draftPicksById).filter((pick) => pick.draftId === draftId))
 }
 
 /** Creates an NCAA recruiting cycle from configured capability and its source season. */

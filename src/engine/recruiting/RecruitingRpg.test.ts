@@ -15,10 +15,19 @@ import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { createTalentSupplyCohort } from '@/engine/world/TalentSupply'
+import { basketballTransferWindow } from '@/domain/eligibility'
+import { completeTransferEducationModule, processTransferPortalEntry, submitTransferNotice } from '@/engine/eligibility/TransferPortalLifecycle'
+import { addTransferRecruitToCycle, completeCollegeTransfer } from './RecruitingEngine'
+import { createDraftForCompletedSeason, declareDraftEntry, getCurrentDraftPick, getDraftCandidates, makeDraftSelection, openDraft } from '@/engine/draft'
+import { nbaDraftRulesForYear } from '@/domain/draft'
+import { finalizeSeason } from '@/engine/season'
+import { applyMatchResult } from '@/engine/match'
+import { signDraftRightsToNba } from '@/engine/career'
 import { getEligibleScoutingEvaluators, progressScoutingAssignments, requestScouting } from '@/engine/scouting/ScoutingEngine'
 import { decommitRecruitingProspect, designateOffCampusRecruiter, discoverRecruitingTalentCandidate, evaluateRecruitingChoice, generateRecruitingPool, performRecruitingAction, recordRecruitingEvaluation, promiseRecruitingRole, resolveRecruitingCommitments, makeRecruitingOffer, materializeRecruitingTalentCandidate, signCommittedRecruit, arriveSignedRecruits, selectAiNegotiationResponse, rankAiRecruitingTargets } from './RecruitingEngine'
 import { applyRecruitingPressure, openAiRecruitingNegotiation, openRecruitingNegotiation, respondToRecruitingConcern } from './RecruitingNegotiationEngine'
 import { performRecruitingGrayAction } from './RecruitingGrayActionEngine'
+import { buildPlayerHistoryModel } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
 
 const home = teamIdFromString('team-home')
 const away = teamIdFromString('team-away')
@@ -285,6 +294,8 @@ describe('Recruiting RPG authority', () => {
     expect(Object.keys(first.value.talentMaterializationsByCandidateKey)).toHaveLength(1)
     const materialization = Object.values(first.value.talentMaterializationsByCandidateKey)[0]!
     const recruit = Object.values(first.value.recruitProfilesById).find((item) => item.playerId === materialization.playerId)!
+    expect(first.value.players[materialization.playerId]!.personId).toBe(first.value.personsById[first.value.players[materialization.playerId]!.personId!]!.id)
+    expect(materialization.materializationCause).toBe('RECRUITING_POOL')
     const organizationId = organizationIdForTeam(program)
     expect(first.value.organizationPlayerAwarenessById[`player-awareness:${organizationId}:${materialization.playerId}`]).toMatchObject({ source: 'RECRUITING_DISCOVERY', playerId: materialization.playerId })
     expect(first.value.organizationKnowledge.some((item) => item.organizationId === organizationId && item.subjectPlayerId === materialization.playerId)).toBe(false)
@@ -384,6 +395,97 @@ describe('Recruiting RPG authority', () => {
     expect(legacyLoaded.recruitProfilesById[recruit.id]!.recruitingRpg).toBeUndefined()
     expect(legacyLoaded.recruitingCyclesById[cycle.id]!.calendar).toBeUndefined()
     expect(legacyLoaded.recruitingCyclesById[cycle.id]!.staffDesignations).toBeUndefined()
+
+    const sourcePlayerId = materialization.playerId
+    let pathWorld = enrolledWorld
+    const returnId = `${sourcePlayerId}:continuity`
+    const portalRules = Object.values(pathWorld.transferPortalRulesetsById).find((ruleset) => ruleset.ecosystemId === competition.ecosystemId)!
+    const finalGame = Object.values(pathWorld.games).filter((game) => game.seasonId === season.id).sort((left, right) => left.date.localeCompare(right.date)).at(-1)!
+    const portalWindow = basketballTransferWindow(finalGame.date, portalRules)
+    pathWorld = updateGameWorld(pathWorld, { currentDate: portalWindow.opensOn })
+    const submitted = submitTransferNotice(pathWorld, { id: returnId, playerId: sourcePlayerId, sourceTeamId: program, ecosystemId: competition.ecosystemId, rulesetId: portalRules.id }, portalWindow)
+    expect(submitted.ok, submitted.ok ? undefined : submitted.reason).toBe(true)
+    if (!submitted.ok) return
+    expect(submitted.world.players[sourcePlayerId]!.personId).toBe(personId)
+    const module = completeTransferEducationModule(submitted.world, returnId)
+    expect(module.ok, module.ok ? undefined : module.reason).toBe(true)
+    if (!module.ok) return
+    pathWorld = updateGameWorld(module.world, { currentDate: addDays(module.world.currentDate, 1) })
+    const authorized = processTransferPortalEntry(pathWorld, returnId)
+    expect(authorized.ok, authorized.ok ? undefined : authorized.reason).toBe(true)
+    if (!authorized.ok) return
+    pathWorld = authorized.world
+    expect(pathWorld.transferPortalEntriesById[returnId]?.status).toBe('authorized')
+    expect(pathWorld.players[sourcePlayerId]!.personId).toBe(personId)
+    const destination = competition.participantTeamIds.find((teamId) => teamId !== program)!
+    const transferCycle = pathWorld.recruitingCyclesById[cycle.id]!
+    pathWorld = updateGameWorld(pathWorld, { recruitingCycles: Object.values(pathWorld.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status: 'open' as const, sourceSeasonId: season.id, targetSeasonId: season.id, opensOn: pathWorld.currentDate, signingOn: pathWorld.currentDate, closesOn: pathWorld.currentDate, rules: { ...item.rules, commitmentThreshold: -100 } } : item) })
+    const addedTransfer = addTransferRecruitToCycle(pathWorld, transferCycle.id, returnId)
+    expect(addedTransfer.ok, addedTransfer.ok ? undefined : addedTransfer.reason).toBe(true)
+    if (!addedTransfer.ok) return
+    const transferProfile = Object.values(addedTransfer.value.recruitProfilesById).find((item) => item.transferPortalEntryId === returnId)!
+    const transferOffer = makeRecruitingOffer(addedTransfer.value, transferCycle.id, transferProfile.id, destination)
+    expect(transferOffer.ok, transferOffer.ok ? undefined : transferOffer.reason).toBe(true)
+    if (!transferOffer.ok) return
+    const transferCommitment = resolveRecruitingCommitments(transferOffer.value, transferCycle.id)
+    const transferSigning = signCommittedRecruit(transferCommitment, transferCycle.id, transferProfile.id)
+    expect(transferSigning.ok, transferSigning.ok ? undefined : transferSigning.reason).toBe(true)
+    if (!transferSigning.ok) return
+    const movedCollege = completeCollegeTransfer(transferSigning.value, transferProfile.id)
+    expect(movedCollege.ok, movedCollege.ok ? undefined : movedCollege.reason).toBe(true)
+    if (!movedCollege.ok) return
+    pathWorld = movedCollege.value
+    const collegeAEnrollment = Object.values(pathWorld.playerEnrollmentsById).find((enrollment) => enrollment.playerId === sourcePlayerId && enrollment.teamId === program && enrollment.status === 'ended')!
+    const collegeBEnrollment = Object.values(pathWorld.playerEnrollmentsById).find((enrollment) => enrollment.playerId === sourcePlayerId && enrollment.teamId === destination && enrollment.status === 'active')!
+    expect(pathWorld.players[sourcePlayerId]!.personId).toBe(personId)
+    expect(pathWorld.teams[program]!.rosterPlayerIds).not.toContain(sourcePlayerId)
+    expect(pathWorld.teams[destination]!.rosterPlayerIds).toContain(sourcePlayerId)
+    expect(pathWorld.transferPortalEntriesById[returnId]?.movement).toMatchObject({ playerId: sourcePlayerId, sourceTeamId: program, destinationTeamId: destination, sourceEnrollmentId: collegeAEnrollment.id, destinationEnrollmentId: collegeBEnrollment.id })
+
+    const nba = Object.values(pathWorld.ecosystems).find((item) => item.kind === 'nbaLike')!
+    const nbaSeason = Object.values(pathWorld.seasons).find((item) => pathWorld.competitions[item.competitionId]?.ecosystemId === nba.id)!
+    for (const game of Object.values(pathWorld.games).filter((item) => item.seasonId === nbaSeason.id && item.status === 'scheduled')) pathWorld = applyMatchResult(pathWorld, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 95, awayScore: 82 })
+    if (pathWorld.seasonHistoryBySeasonId[nbaSeason.id] === undefined) pathWorld = finalizeSeason(pathWorld, nbaSeason.id)
+    pathWorld = updateGameWorld(pathWorld, { drafts: [], draftPicks: [] })
+    pathWorld = createDraftForCompletedSeason(pathWorld, nba.id, nbaSeason.id, nbaDraftRulesForYear(2045, 1), [])
+    const futureDraft = Object.values(pathWorld.draftsById).find((item) => item.sourceSeasonId === nbaSeason.id)!
+    expect(futureDraft.rules.provenance).toBe('SIMULATED_CARRY_FORWARD')
+    expect(futureDraft.scheduledOn.slice(0, 4)).toBe('2045')
+    pathWorld = updateGameWorld(pathWorld, {
+      currentDate: futureDraft.rules.earlyEntryDeadline!,
+      recruitProfiles: Object.values(pathWorld.recruitProfilesById).map((item) => item.id === recruit.id ? { ...item, education: { ...item.education!, highSchoolGraduationYear: 2032, completedUsHighSchool: true, enrolledAtUsCollege: true } } : item),
+    })
+    pathWorld = declareDraftEntry(pathWorld, futureDraft.id, sourcePlayerId)
+    expect(getDraftCandidates(pathWorld, futureDraft.id)).toContain(sourcePlayerId)
+    expect(pathWorld.players[sourcePlayerId]!.personId).toBe(personId)
+    pathWorld = openDraft(updateGameWorld(pathWorld, { currentDate: futureDraft.scheduledOn }), futureDraft.id)
+    const pick = getCurrentDraftPick(pathWorld, futureDraft.id)!
+    pathWorld = makeDraftSelection(pathWorld, futureDraft.id, pick.ownerTeamId, sourcePlayerId)
+    const rights = Object.values(pathWorld.playerRightsById).find((item) => item.playerId === sourcePlayerId && item.ownerTeamId === pick.ownerTeamId)!
+    expect(pathWorld.players[sourcePlayerId]!.personId).toBe(personId)
+    expect(rights.contractId).toBeUndefined()
+    pathWorld = signDraftRightsToNba(pathWorld, { id: `transition:same-human:${sourcePlayerId}`, playerId: sourcePlayerId, toTeamId: pick.ownerTeamId, rightsId: rights.id, annualSalary: 700_000, contractYears: 2 })
+    const signedRights = pathWorld.playerRightsById[rights.id]!
+    expect(pathWorld.players[sourcePlayerId]!.personId).toBe(personId)
+    expect(signedRights.contractId).toBeDefined()
+    expect(pathWorld.teams[pick.ownerTeamId]!.rosterPlayerIds).toContain(sourcePlayerId)
+    expect(pathWorld.draftsById[futureDraft.id]!.entries?.find((entry) => entry.playerId === sourcePlayerId)?.history?.map((event) => event.status)).toEqual(['declaredEarlyEntry', 'finalPool', 'drafted'])
+    expect(pathWorld.ecosystemTransitionsById[`transition:same-human:${sourcePlayerId}`]?.contractId).toBe(signedRights.contractId)
+    const finalReload = deserializeGameWorldV4(serializeGameWorldV4(pathWorld, `${pathWorld.currentDate}T00:00:00.000Z`))
+    expect(finalReload.players[sourcePlayerId]!.personId).toBe(personId)
+    expect(Object.values(finalReload.personsById).filter((person) => person.id === personId)).toHaveLength(1)
+    expect(finalReload.playerEnrollmentsById[collegeAEnrollment.id]).toEqual(collegeAEnrollment)
+    expect(finalReload.playerEnrollmentsById[collegeBEnrollment.id]).toMatchObject({ ...collegeBEnrollment, status: 'ended' })
+    expect(finalReload.transferPortalEntriesById[returnId]?.movement).toEqual(pathWorld.transferPortalEntriesById[returnId]?.movement)
+    expect(finalReload.draftsById[futureDraft.id]!.entries?.find((entry) => entry.playerId === sourcePlayerId)).toEqual(pathWorld.draftsById[futureDraft.id]!.entries?.find((entry) => entry.playerId === sourcePlayerId))
+    expect(finalReload.playerRightsById[rights.id]).toEqual(signedRights)
+    expect(finalReload.contractsById[signedRights.contractId as never]).toEqual(pathWorld.contractsById[signedRights.contractId as never])
+    expect(finalReload.ecosystemTransitionsById[`transition:same-human:${sourcePlayerId}`]).toEqual(pathWorld.ecosystemTransitionsById[`transition:same-human:${sourcePlayerId}`])
+    const careerHistory = buildPlayerHistoryModel(finalReload, sourcePlayerId)!
+    expect(careerHistory.items.map((item) => item.title)).toEqual(expect.arrayContaining(['Talent cohort materialized', 'NCAA recruiting signing', 'NCAA enrollment', 'Transfer Portal move', 'Declared for Draft', 'Entered final Draft pool', 'Drafted', 'Draft rights held', 'Contract', 'NCAA to NBA draft']))
+    expect(careerHistory.items.some((item) => item.title === 'Transfer Portal move' && item.detail.includes(pathWorld.teams[destination]!.name))).toBe(true)
+    expect(careerHistory.items.some((item) => item.title === 'Draft rights held' && item.detail === pathWorld.teams[pick.ownerTeamId]!.name)).toBe(true)
+    expect(careerHistory.items.some((item) => item.title === 'Contract' && item.detail === pathWorld.teams[pick.ownerTeamId]!.name)).toBe(true)
   })
 
   it('keeps canonical off-campus recruiter designation stable and records person-days through contact', () => {

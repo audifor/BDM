@@ -51,6 +51,7 @@ export type HistoryEventSource =
   | 'TRADE_RECORD'
   | 'DRAFT_RECORD'
   | 'ECOSYSTEM_RECORD'
+  | 'CAREER_RECORD'
   | 'GAME_LOG_DERIVATION'
 
 export type HistoryDatePrecision = 'exact' | 'season'
@@ -307,7 +308,10 @@ const TRANSACTION_LABELS: Record<PlayerTransactionKind, string> = {
 
 const ECOSYSTEM_LABELS: Record<EcosystemTransitionType, string> = {
   ncaaToNbaDraft: 'NCAA to NBA draft',
+  ncaaToNbaUndrafted: 'NCAA to NBA free agency',
+  fibaToNbaUndrafted: 'International to NBA free agency',
   ncaaToFiba: 'NCAA to FIBA',
+  fibaToFiba: 'FIBA club move',
   fibaToNba: 'FIBA to NBA',
   nbaToFiba: 'NBA to FIBA',
 }
@@ -487,11 +491,39 @@ function buildDraftEvents(world: GameWorld, playerId: PlayerId): PlayerHistoryIt
       contextLabel: `Round ${pick.round} · Pick ${pick.order}`,
     })
   }
+  const entryLabels = {
+    considering: 'Considered for Draft',
+    declaredEarlyEntry: 'Declared for Draft',
+    withdrawnNCAAEligible: 'Withdrew and returned to NCAA',
+    withdrawnNCAAIneligible: 'Withdrew after NCAA return deadline',
+    withdrawnNBA: 'Withdrew from NBA Draft',
+    finalPool: 'Entered final Draft pool',
+    drafted: 'Drafted',
+    undrafted: 'Undrafted',
+  } as const
+  for (const draft of Object.values(world.draftsById)) {
+    const entry = draft.entries?.find((candidate) => candidate.playerId === playerId)
+    if (entry === undefined) continue
+    for (const [index, event] of (entry.history ?? []).entries()) {
+      events.push({
+        id: `draft-entry:${entry.id}:${index}`,
+        type: 'draft',
+        source: 'DRAFT_RECORD',
+        filterCategory: 'draft',
+        dateLabel: formatGameDateLabel(event.occurredOn),
+        datePrecision: 'exact',
+        sortDate: event.occurredOn,
+        title: entryLabels[event.status],
+        detail: draft.scheduledOn.slice(0, 4),
+        contextLabel: entry.sourcePathway,
+      })
+    }
+  }
   return events
 }
 
 function buildEcosystemEvents(world: GameWorld, playerId: PlayerId): PlayerHistoryItemModel[] {
-  return Object.values(world.ecosystemTransitionsById)
+  const transitions: PlayerHistoryItemModel[] = Object.values(world.ecosystemTransitionsById)
     .filter((transition) => transition.playerId === playerId)
     .map((transition) => ({
       id: `ecosystem:${transition.id}`,
@@ -505,6 +537,79 @@ function buildEcosystemEvents(world: GameWorld, playerId: PlayerId): PlayerHisto
       detail: `${teamName(world, transition.fromTeamId)} → ${teamName(world, transition.toTeamId)}`,
       contextLabel: `${transition.fromEcosystemId} → ${transition.toEcosystemId}`,
     }))
+  const careerRecords: PlayerHistoryItemModel[] = [
+    ...Object.values(world.talentMaterializationsByCandidateKey)
+      .filter((record) => record.playerId === playerId)
+      .map((record) => ({
+        id: `career:materialization:${record.candidateKey}`,
+        type: 'ecosystem' as const,
+        source: 'CAREER_RECORD' as const,
+        filterCategory: 'ecosystem' as const,
+        dateLabel: formatGameDateLabel(record.materializedOn),
+        datePrecision: 'exact' as const,
+        sortDate: record.materializedOn,
+        title: 'Talent cohort materialized',
+        detail: world.placesById[record.placeId]?.name ?? record.placeId,
+        contextLabel: `${record.materializationCause} · ${record.generatorVersion}`,
+      })),
+    ...Object.values(world.recruitSigningsById)
+      .filter((signing) => signing.playerId === playerId)
+      .map((signing) => ({
+        id: `career:recruit-signing:${signing.id}`,
+        type: 'ecosystem' as const,
+        source: 'CAREER_RECORD' as const,
+        filterCategory: 'ecosystem' as const,
+        dateLabel: formatGameDateLabel(signing.signedOn),
+        datePrecision: 'exact' as const,
+        sortDate: signing.signedOn,
+        title: 'NCAA recruiting signing',
+        detail: teamName(world, signing.programTeamId),
+        contextLabel: world.recruitProfilesById[signing.recruitId]?.origin ?? 'Recruiting record',
+      })),
+    ...Object.values(world.playerEnrollmentsById)
+      .filter((enrollment) => enrollment.playerId === playerId)
+      .map((enrollment) => ({
+        id: `career:enrollment:${enrollment.id}`,
+        type: 'ecosystem' as const,
+        source: 'CAREER_RECORD' as const,
+        filterCategory: 'ecosystem' as const,
+        dateLabel: formatGameDateLabel(enrollment.startsOn),
+        datePrecision: 'exact' as const,
+        sortDate: enrollment.startsOn,
+        title: 'NCAA enrollment',
+        detail: teamName(world, enrollment.teamId),
+        contextLabel: enrollment.status === 'active' ? 'Active enrollment' : `Ended${enrollment.endsOn === undefined ? '' : ` · ${formatGameDateLabel(enrollment.endsOn)}`}`,
+      })),
+    ...Object.values(world.transferPortalEntriesById)
+      .filter((entry) => entry.playerId === playerId && entry.movement !== undefined)
+      .map((entry) => ({
+        id: `career:portal:${entry.id}`,
+        type: 'ecosystem' as const,
+        source: 'CAREER_RECORD' as const,
+        filterCategory: 'ecosystem' as const,
+        dateLabel: formatGameDateLabel(entry.movement!.transferredOn),
+        datePrecision: 'exact' as const,
+        sortDate: entry.movement!.transferredOn,
+        title: 'Transfer Portal move',
+        detail: `${teamName(world, entry.movement!.sourceTeamId)} → ${teamName(world, entry.movement!.destinationTeamId)}`,
+        contextLabel: `Portal entry ${entry.id}`,
+      })),
+    ...Object.values(world.playerRightsById)
+      .filter((rights) => rights.playerId === playerId && rights.rightsType === 'draft')
+      .map((rights) => ({
+        id: `career:rights:${rights.id}`,
+        type: 'ecosystem' as const,
+        source: 'CAREER_RECORD' as const,
+        filterCategory: 'ecosystem' as const,
+        dateLabel: formatGameDateLabel(rights.acquiredAt),
+        datePrecision: 'exact' as const,
+        sortDate: rights.acquiredAt,
+        title: 'Draft rights held',
+        detail: teamName(world, rights.ownerTeamId),
+        contextLabel: rights.contractId === undefined ? 'Unsigned' : 'Contract linked',
+      })),
+  ]
+  return [...transitions, ...careerRecords]
 }
 
 function buildSeasonEvents(world: GameWorld, playerId: PlayerId): PlayerHistoryItemModel[] {

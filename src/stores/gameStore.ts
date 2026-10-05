@@ -45,6 +45,7 @@ import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
+import { considerDraftEntry, declareDraftEntry, withdrawDraftEntry } from '@/engine/draft'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
 import { addRecruitingBoardEntry, addTransferRecruitToCycle, applyRecruitingPressure, completeCollegeTransfer, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, resolveBasketballChampionshipDate, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
@@ -161,6 +162,9 @@ interface GameStore {
   saveDesignerPlaybook(playbook: Playbook): void
   deleteDesignerPlaybook(playbookId: string): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
+  considerDraftEntry(draftId: string, playerId: PlayerId): string | null
+  declareDraftEntry(draftId: string, playerId: PlayerId): string | null
+  withdrawDraftEntry(draftId: string, playerId: PlayerId): string | null
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
   discoverRecruitingTalent(cycleId: string): string | null
   removeRecruitingTarget(recruitId: string): void
@@ -432,6 +436,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveDesignerPlaybook: (playbook) => set({ world: saveDesignerPlaybook(requireWorld(get().world), playbook) }),
   deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
+  considerDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: considerDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft consideration failed' } },
+  declareDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: declareDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft declaration failed' } },
+  withdrawDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: withdrawDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft withdrawal failed' } },
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
   discoverRecruitingTalent: (cycleId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = discoverRecruitingTalentCandidate(world, cycleId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },

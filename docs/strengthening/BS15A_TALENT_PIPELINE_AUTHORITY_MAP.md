@@ -2,6 +2,19 @@
 
 This map defines who owns a fact and who consumes it. It is a design contract, not an implementation request. Preserve current domain boundaries and add only the smallest missing authorities after each product/rules decision.
 
+## BS15G Draft and professional movement authority note
+
+| Fact | Canonical owner | Integration |
+|---|---|---|
+| Draft cycle, rules, and annual dates | `Draft` + versioned `DraftRules` | Cycle-specific 2026 dates are source data; unsupported future annual dates are simulated carry-forward. |
+| Declaration and withdrawal | `DraftEntry` nested in the Draft cycle | Holds professional-entry intent and deadline state around the same PlayerId; NCAA return is checked through BS15D eligibility where enrollment evidence exists. |
+| Candidate pool | Existing Players + roster, age, enrollment, and entry evidence | Production season content projects the class from existing Players; no synthetic Player is made for a new cycle. |
+| Pick and uncontracted rights | Existing `DraftPick` and `PlayerRights` | Selection records the existing PlayerId and creates tradeable Draft rights; employment is separate. |
+| Pro employment/movement | `PlayerContract`, Team roster, `EcosystemTransition` | NCAA→NBA gateway preserves Player identity and college history. Full international eligibility and all undrafted/portal workflows remain open. |
+| Scouting knowledge | `OrganizationKnowledge` + organization evaluation policy | AI boards remain team-specific and do not rank from hidden PlayerTruth. |
+
+See the [BS15G authority audit](../research/DRAFT_INTEGRATION_AUDIT_BS15G.md) and [2026 Draft rule provenance](../research/NBA_DRAFT_PATHWAYS_2026.md). This note describes the current slice and does not certify the full BS15G gate.
+
 ## Canonical fact ownership
 
 | Fact / decision | Canonical owner | Existing status | Consumers and guardrails |

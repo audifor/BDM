@@ -1337,11 +1337,15 @@ function validateWorld(world: GameWorld): void {
 
   for (const transition of Object.values(world.ecosystemTransitionsById)) {
     requireEntity(world.players, transition.playerId, `Ecosystem transition ${transition.id} player`)
+    if (transition.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(transition.contractId), `Ecosystem transition ${transition.id} Contract`); if (contract.playerId !== transition.playerId) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} Contract belongs to another Player`) }
     requireEntity(world.ecosystems, transition.fromEcosystemId, `Ecosystem transition ${transition.id} origin ecosystem`)
     requireEntity(world.ecosystems, transition.toEcosystemId, `Ecosystem transition ${transition.id} destination ecosystem`)
-    if (transition.fromEcosystemId === transition.toEcosystemId) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} must cross ecosystems`)
     if (transition.fromTeamId !== undefined) requireEntity(world.teams, transition.fromTeamId, `Ecosystem transition ${transition.id} origin team`)
     if (transition.toTeamId !== undefined) requireEntity(world.teams, transition.toTeamId, `Ecosystem transition ${transition.id} destination team`)
+    if (transition.fromEcosystemId === transition.toEcosystemId) {
+      const fibaClubMove = transition.transitionType === 'fibaToFiba' && transition.fromTeamId !== undefined && transition.toTeamId !== undefined && transition.fromTeamId !== transition.toTeamId && world.ecosystems[transition.fromEcosystemId]?.kind === 'fibaLike' && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.fromEcosystemId && competition.participantTeamIds.includes(transition.fromTeamId!)) && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.toEcosystemId && competition.participantTeamIds.includes(transition.toTeamId!))
+      if (!fibaClubMove) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} must cross ecosystems or record a FIBA club move`)
+    }
   }
 
   for (const conference of Object.values(world.conferencesById)) {
@@ -1695,7 +1699,7 @@ function validateWorld(world: GameWorld): void {
     if ((rules.tradeWindow?.opensOn !== undefined && (compareGameDates(rules.tradeWindow.opensOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.opensOn, season.endDate) > 0))
       || (rules.tradeWindow?.closesOn !== undefined && (compareGameDates(rules.tradeWindow.closesOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.closesOn, season.endDate) > 0))) throw new GameWorldValidationError('Trade window must stay within its season')
   }
-  for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem') }
+  for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem'); if (rights.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(rights.contractId), 'Player rights Contract'); if (contract.playerId !== rights.playerId) throw new GameWorldValidationError(`Player rights ${rights.id} Contract belongs to another Player`) } }
   for (const right of Object.values(world.futureDraftPickRightsById)) { createFutureDraftPickRight(right); requireEntity(world.teams, right.originalTeamId, 'Future pick original Team'); requireEntity(world.teams, right.ownerTeamId, 'Future pick owner Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Future pick ecosystem'); if (right.conditionalRecipientTeamId !== undefined) requireEntity(world.teams, right.conditionalRecipientTeamId, 'Future pick conditional Team') }
   for (const right of Object.values(world.draftPickSwapRightsById)) { createDraftPickSwapRight(right); requireEntity(world.teams, right.holderTeamId, 'Swap right holder Team'); requireEntity(world.teams, right.counterpartTeamId, 'Swap right counterpart Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Swap right ecosystem') }
   for (const obligation of Object.values(world.retainedSalaryObligationsById)) { createRetainedSalaryObligation(obligation); requireEntity(world.players, obligation.playerId, 'Retained salary Player'); requireEntity(world.teams, obligation.retainingTeamId, 'Retained salary retaining Team'); requireEntity(world.teams, obligation.receivingTeamId, 'Retained salary receiving Team'); requireEntity(world.seasons, obligation.seasonId, 'Retained salary season') }
@@ -2434,12 +2438,21 @@ function validateDraft(world: GameWorld, draft: Draft): void {
   if (ecosystem.kind !== 'nbaLike' || season === undefined || world.competitions[season.competitionId]?.ecosystemId !== ecosystem.id || (draft.status !== 'scheduled' && world.seasonHistoryBySeasonId[draft.sourceSeasonId] === undefined) || !Number.isInteger(draft.rules.rounds) || draft.rules.rounds < 1 || !Number.isInteger(draft.rules.scheduledAfterDays) || draft.rules.scheduledAfterDays < 0 || draft.rules.orderMethod !== 'reverseStandings') throw new GameWorldValidationError('Draft is invalid')
   for (const playerId of draft.prospectPlayerIds) requireEntity(world.players, playerId, 'Draft prospect')
   if (new Set(draft.prospectPlayerIds).size !== draft.prospectPlayerIds.length) throw new GameWorldValidationError('Draft has duplicate prospects')
+  if (draft.entries !== undefined) {
+    const entryPlayers = new Set<PlayerId>()
+    for (const entry of draft.entries) {
+      requireEntity(world.players, entry.playerId, 'Draft entry Player')
+      const returnAssessment = entry.collegeReturnAssessment
+      if (entry.draftId !== draft.id || entry.status === 'considering' && draft.prospectPlayerIds.includes(entry.playerId) || entryPlayers.has(entry.playerId) || !['considering','declaredEarlyEntry','withdrawnNCAAEligible','withdrawnNCAAIneligible','withdrawnNBA','finalPool','drafted','undrafted'].includes(entry.status) || !['early','automatic','preEnrollment'].includes(entry.entryType) || !['college','international','other'].includes(entry.sourcePathway) || !['OFFICIAL_SOURCE','SIMULATED_CARRY_FORWARD','PRODUCT_ABSTRACTION'].includes(entry.provenance) || returnAssessment !== undefined && (entry.sourcePathway !== 'college' || !['withdrawnNCAAEligible','withdrawnNCAAIneligible'].includes(entry.status) || returnAssessment.allowed !== (entry.status === 'withdrawnNCAAEligible') || returnAssessment.reasons.length === 0 || Boolean(returnAssessment.rulesetId) !== Boolean(returnAssessment.rulesetVersion))) throw new GameWorldValidationError('Draft entry is invalid')
+      entryPlayers.add(entry.playerId)
+    }
+  }
 }
 function validateDraftPick(world: GameWorld, pick: DraftPick): void {
   const draft = requireEntity(world.draftsById, pick.draftId, 'Draft pick draft')
   requireEntity(world.teams, pick.originalTeamId, 'Draft pick original Team'); requireEntity(world.teams, pick.ownerTeamId, 'Draft pick owner Team')
   if (!Number.isInteger(pick.round) || pick.round < 1 || pick.round > draft.rules.rounds || !Number.isInteger(pick.order) || pick.order < 1 || Object.values(world.draftPicksById).some((other) => other.id !== pick.id && other.draftId === pick.draftId && other.order === pick.order)) throw new GameWorldValidationError('Draft pick is invalid')
-  if (pick.selection !== undefined) { if (!draft.prospectPlayerIds.includes(pick.selection.playerId) || pick.selection.teamId !== pick.ownerTeamId || Object.values(world.draftPicksById).some((other) => other.id !== pick.id && other.selection?.playerId === pick.selection!.playerId)) throw new GameWorldValidationError('Draft pick selection is invalid') }
+  if (pick.selection !== undefined) { const entry = draft.entries?.find((candidate) => candidate.playerId === pick.selection!.playerId); if (!draft.prospectPlayerIds.includes(pick.selection.playerId) && entry?.status !== 'drafted' || pick.selection.teamId !== pick.ownerTeamId || Object.values(world.draftPicksById).some((other) => other.id !== pick.id && other.selection?.playerId === pick.selection!.playerId)) throw new GameWorldValidationError('Draft pick selection is invalid') }
 }
 
 function sameStanding(a: SeasonHistoryRecord['finalStandings'][number], b: SeasonHistoryRecord['finalStandings'][number]): boolean {
@@ -2618,7 +2631,7 @@ function validateTransferPortal(world: GameWorld): void {
     const season = requireEntity(world.seasons, cycle.sourceSeasonId, `Transfer RecruitProfile ${profile.id} source Season`)
     const competition = requireEntity(world.competitions, season.competitionId, `Transfer RecruitProfile ${profile.id} source Competition`)
     if (entry.playerId !== profile.playerId || entry.ecosystemId !== cycle.ecosystemId || competition.ecosystemId !== entry.ecosystemId) throw new GameWorldValidationError(`Transfer RecruitProfile ${profile.id} has mismatched Player, Portal, or RecruitingCycle authority`)
-    if (profile.status === 'arrived' && (entry.status !== 'completed' || entry.destinationTeamId === undefined || !world.teams[entry.destinationTeamId]?.rosterPlayerIds.includes(profile.playerId))) throw new GameWorldValidationError(`Arrived transfer RecruitProfile ${profile.id} has no completed destination movement`)
+    if (profile.status === 'arrived' && (entry.status !== 'completed' || entry.destinationTeamId === undefined || entry.movement?.playerId !== profile.playerId || entry.movement.destinationTeamId !== entry.destinationTeamId)) throw new GameWorldValidationError(`Arrived transfer RecruitProfile ${profile.id} has no completed destination movement`)
     if (profile.status === 'incoming' && (entry.status !== 'authorized' || !Object.values(world.recruitSigningsById).some((signing) => signing.recruitId === profile.id && signing.playerId === profile.playerId))) throw new GameWorldValidationError(`Incoming transfer RecruitProfile ${profile.id} has no authorized signed destination`)
     if (['open', 'committed'].includes(profile.status) && entry.status !== 'authorized') throw new GameWorldValidationError(`Active transfer RecruitProfile ${profile.id} has no authorized Portal entry`)
   }

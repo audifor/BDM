@@ -5,6 +5,7 @@ import { getFreeAgents, getNextScheduledGame, type GameWorld } from '@/domain/wo
 import { getEligibleScoutingEvaluators, requestScouting, updateScoutingAssignmentPriority as setAssignmentPriority, cancelScoutingAssignment as cancelAssignment } from '@/engine/scouting'
 import { getTeamsInScoutingTerritory } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { getDraftCandidates } from '@/engine/draft/DraftEngine'
 import { createScoutingTerritoryAssignment as createTerritoryOperation, endScoutingTerritoryAssignment as endTerritoryOperation, getScoutingTerritoryCoverage as deriveTerritoryCoverage } from '@/engine/scouting/ScoutingTerritoryOperations'
 
 export type { ScoutingTerritoryCoverage } from '@/engine/scouting/ScoutingTerritoryOperations'
@@ -35,7 +36,7 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     const opponentId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
     for (const playerId of world.teams[opponentId]?.rosterPlayerIds ?? []) ids.add(playerId)
     const ecosystemId = world.competitions[nextGame.competitionId]?.ecosystemId
-    for (const draft of Object.values(world.draftsById)) if (draft.ecosystemId === ecosystemId && (draft.status === 'scheduled' || draft.status === 'inProgress')) for (const playerId of draft.prospectPlayerIds) ids.add(playerId)
+    for (const draft of Object.values(world.draftsById)) if (draft.ecosystemId === ecosystemId && (draft.status === 'scheduled' || draft.status === 'inProgress')) for (const playerId of getDraftCandidates(world, draft.id)) ids.add(playerId)
   }
   for (const board of world.recruitingBoards) {
     if (board.programTeamId !== teamId) continue

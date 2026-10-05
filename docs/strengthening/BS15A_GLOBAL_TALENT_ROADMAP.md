@@ -117,3 +117,7 @@ Every milestone that changes persisted data must include explicit save-version d
 ## BS15B recommendation
 
 Start with the deterministic Global Talent Supply and Materialization slice. It establishes bounded candidate supply, source provenance and one persistent identity before any academy or international recruiting route depends on them. Keep the initial fixture small and measurable; do not expand geographic coverage or generate a world-sized list of named Players in the first pass.
+
+## BS15G pathway integration note
+
+The Draft and professional market are being connected to already-materialized canonical Players. The production season lifecycle now builds its Draft projection from existing rostered non-NBA PlayerIds; the legacy synthetic Draft prospect helper is retained for fixtures. DraftEntry, rights, professional contracts, enrollment, and ecosystem movement remain state/events around the existing Player identity. See [BS15G pathway movement and Draft integration](BS15G_PATHWAY_MOVEMENT_DRAFT_SHARED_AI.md) for implemented scope and open certification gaps.
