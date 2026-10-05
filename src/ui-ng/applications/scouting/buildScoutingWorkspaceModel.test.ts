@@ -4,7 +4,7 @@ import { createNewGame } from '@/app/game/createNewGame'
 import { addDays } from '@/domain/date'
 import { organizationIdForTeam } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
+import { getNextScheduledGameForTeam, getUserTeam } from '@/engine/calendar'
 import { progressScoutingAssignments, requestScouting } from '@/engine/scouting'
 import { buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 
@@ -32,10 +32,23 @@ describe('buildScoutingWorkspaceModel', () => {
 
     const subject = model!.knowledge.find((row) => row.isOwnRoster)!
     const player = world.players[subject.playerId]!
-    expect(subject.evaluations.every((evaluation) => evaluation.evaluationLabel === '?')).toBe(true)
+    expect(subject.knowledgeState).toBe('UNKNOWN')
     expect(subject.valuationCurrent).toBeNull()
     expect(JSON.stringify(subject)).not.toContain(JSON.stringify(player.basketball.ratings))
     expect(JSON.stringify(model)).not.toMatch(/actualRating|truthValue|canonicalPlayer/)
+  })
+
+  it('keeps public opponent players addressable without granting scouting knowledge', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const game = getNextScheduledGameForTeam(world, team.id)!
+    const opponentTeamId = game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId
+    const publicPlayerId = world.teams[opponentTeamId]!.rosterPlayerIds[0]!
+    const model = buildScoutingWorkspaceModel(world)!
+    const row = model.knowledge.find((candidate) => candidate.playerId === publicPlayerId)!
+    expect(row).toBeDefined()
+    expect(row.knownDomains).toEqual([])
+    expect(row.knowledgeState).toBe('UNKNOWN')
   })
 
   it('surfaces completed assignments and reports through organization knowledge, not player truth', () => {
@@ -90,7 +103,8 @@ describe('buildScoutingWorkspaceModel', () => {
     })
     const after = buildScoutingWorkspaceModel(altered)!
     const afterRow = after.knowledge.find((row) => row.playerId === player.id)!
-    expect(afterRow.evaluations).toEqual(beforeRow.evaluations)
+    expect(afterRow.knowledgeState).toBe(beforeRow.knowledgeState)
+    expect(afterRow.knownRatingCount).toBe(beforeRow.knownRatingCount)
     expect(afterRow.valuationCurrent).toBe(beforeRow.valuationCurrent)
     expect(afterRow.valuationCurrent).toBeNull()
   })

@@ -132,7 +132,7 @@ function recordOutcome(world: GameWorld, teamId: TeamId, resolution: NonNullable
   if (world.delegationOutcomesById[outcomeId] !== undefined) return world
   const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
   const qualityScore = recruitingQuality(resolution.context, seed)
-  const outcome = createDelegationOutcome({ id: outcomeId, responsibilityId: resolution.responsibilityId, staffId: resolution.staffId, decidedOn: world.currentDate, kind, applied: false, qualityScore, payload: { teamId, ...payload } })
+  const outcome = createDelegationOutcome({ id: outcomeId, responsibilityId: resolution.responsibilityId, staffId: resolution.staffId, decidedOn: world.currentDate, kind, applied: false, qualityScore, staffRoleIdAtDecision: resolution.context.roleId, staffWasOverloadedAtDecision: resolution.context.workload.overloaded, payload: { teamId, ...payload } })
   return { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }
 }
 

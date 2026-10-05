@@ -1,0 +1,59 @@
+# BS13 Staff Integration Matrix
+
+This matrix traces a real Staff source through a consumer, actual consequence and visible result. A Responsibility registration without a consumer is listed separately as disconnected. “User manifestation” includes explicit outcome/advisory surfaces; it does not imply that every consequence has an explanation.
+
+| Staff source | Consumer | Actual consequence | User manifestation | Status |
+|---|---|---|---|---|
+| Staff role assignment + `createTeamTrainingPlan` holder | `TrainingPlanning` / weekly AI planner | Planner context can resolve Staff; AI schedules sessions and attributes a valid holder; planning context uses fatigue/schedule | Training plan/session view; Staff assignment/workload | CONNECTED |
+| Staff attributes + personality + workload, via `trainingQuality` | `ScheduledTrainingEngine` | Effective team/individual module and intensity quality; stimulus/session consequences, never direct rating edits | Session outcome/history and development progress | CONNECTED |
+| Staff medical role/responsibility + medical quality | Medical advice/risk/RTP engines | Produces assessment/recommendation quality; injury/availability engine still owns medical transition | Medical/advisory surfaces | CONNECTED |
+| Staff evaluator + `assignScouts` / `prioritizeRegions` | `DelegatedScouting` | Canonical scouting assignments/region priority are changed through scouting operations | Scouting assignments/region UI | CONNECTED |
+| Staff role/proficiency + `oppositionReport` / `prospectReport` | Scouting advisory and Draft prospect advisory | Report quality/uncertainty and persisted outcome; does not create unsupported knowledge or select a Draft pick | Report/prospect advice | CONNECTED |
+| Staff scouting/tactics expertise + `oppositionScouting` | `OppositionScoutingReportEngine` | Unapplied report/recommendation outcome; report remains preparation input, not MatchEngine command | Opposition report/advisory view | CONNECTED |
+| Staff recruiting coordinator/recruiter + advisory responsibilities | `RecruitingAdvisory` | Identifies/evaluates prospects and suggests priority as outcomes; Recruiting Engine remains action/commit/sign authority | Recruiting recommendations; accept/dismiss where supported | CONNECTED |
+| Staff basketball-operations role + recommendation responsibilities | `BasketballOperationsAdvisory` / GM decision context | Quality-ranked signings, player shortlist, contract/trade recommendations; no automatic signing or trade | Club strategy/recommendation panels | CONNECTED |
+| Staff contact/offer/signing responsibility + assignment | Market contact, offer preparation, signing authority services | Determines authorized actor/execution gate; market and contract engines validate/commit | Free-agent/contract workflow | CONNECTED |
+| Staff actor + `negotiatePlayerTrade` / `executePlayerTrade` | Trade negotiation and governance execution | Can respond/negotiate or execute an authorized operational step; TradeEngine validates atomic transfer and governance remains applicable | Trade workflow and transaction history | CONNECTED |
+| Staff prospect report holder | Draft prospect advisory | Adds a scouting advisory outcome for a prospect; no pick order or selection changes | Prospect report | PARTIAL |
+| Head-coach Coach facade + StaffProfile | Match/Coach RPG/result pathways | Coach identity and professional context derive from canonical Staff; Coach experience/RPG operates separately from the match simulation result | MatchViewer and Coach screen | PARTIAL |
+| Direct Coach/Rotation pathways | Rotation/lineup systems | Existing user/engine lineup lifecycle remains; `rotationPlanning` was retired as redundant Staff Responsibility vocabulary | Rotation UI | PARTIAL; `rotationPlanning` RETIRED |
+| `oppositionScouting` + `OppositionScoutingReportEngine` | Existing report generation and acceptance path | Accepted defensive emphasis and pace update canonical `TeamGamePlan`; `defensiveGamePlan` is retired as duplicate vocabulary | Opposition report and Tactics plan | CONNECTED; `defensiveGamePlan` RETIRED |
+| `offensivePreparation` | No Staff output consumer/acceptance seam for `TeamGamePlan.shotProfile` | Deferred until a Tactics planning owner defines supported advisory and acceptance semantics | No new advice surface | DEFERRED_TO_NON_BS13_OWNER |
+| `matchupRecommendation` | Manual Tactics matchup inputs; no Staff review/acceptance validation path | Deferred until Tactics/Rotation planning defines an advisory payload and validates accepted inputs | Existing user Tactics/Rotation controls | DEFERRED_TO_NON_BS13_OWNER |
+| Training planning and Medical lifecycle | Training and Medical engines | Existing scheduled recovery, fatigue/load planning and clinical advice remain owned by their domains; `manageRecovery` and `recommendWorkloadChange` retired as duplicate/unused vocabulary | Existing Training and Medical surfaces | RETIRED (two kinds) |
+| Staff contract salary | Organization `ContractFinancialSchedule` | Adds STAFF_SALARY cash/guaranteed expense exposure under the contract schedule | Finance/contract views | CONNECTED |
+| Staff politics/career autonomy/human state | Staff political, career, culture, cohesion, conflict engines | Persists state, evaluates reactions/positions, opens requests or cases; not general governance authority | Staff dynamics and governance contexts | PARTIAL |
+| Staff personality/morale/relationships | Human, quality and culture consumers | Shapes specified quality/reaction/culture behavior; not a universal performance bonus | Dynamics/profile panels | PARTIAL |
+| Staff training quality | PlayerDevelopment transition | Session stimulus later informs Player development; Staff does not directly change Player ratings | Training/development history | PARTIAL |
+| Staff professional profile in Facilities | Facilities Engine | No current Staff input/consequence | None | ABSENT |
+| Staff role in Youth/Newgens | Youth ecosystem | No youth Staff authority or consumer | None | ABSENT |
+| Staff role in Media | Media/news systems | No Staff media authority or consumer | None | ABSENT |
+
+## Required distinctions
+
+- **Recommendation versus authority:** an advisory outcome has `applied: false` until an explicit acceptance path; it does not become a signing, trade, medical transition or recruiting action by being generated.
+- **Modifier versus decision owner:** quality functions can change the bounded quality of a report/session/recommendation. The consumer domain owns the final action and canonical mutation.
+- **Delegated versus advisory:** delegated resolution requires a valid holder in delegated mode and the consumer may apply the result. Advisory resolution requires advisory mode and produces an unapplied outcome.
+- **Registry versus caller:** retired and deferred kinds remain registered only for legacy compatibility and explicit audit disposition; they cannot be newly assigned, enriched into new worlds, resolved, counted as workload, or shown as active Staff controls.
+- **Coach facade versus MatchEngine:** Coach identity and role use StaffProfile, but this does not make Staff ratings a MatchEngine input. Coach professional attributes derive from the same canonical Staff profile.
+- **Configured versus automated:** a delegated row authorizes eligible execution when a caller runs. It does not create a cadence, assign a holder, or guarantee a Staff decision.
+
+## Connected systems
+
+Training, Medical, Scouting, Recruiting, Contract/Market, Trades and Finance have concrete Staff-backed consumers. Human RPG has concrete Staff state engines and surfaces. Draft has prospect advice but no Staff pick authority.
+
+## Partial systems
+
+Match/coaching, Rotation, Tactics, Draft, NCAA, Governance/Board, Morale/Relationships and Player Development have a narrower connection described above; none should be described as fully Staff-owned.
+
+## Absent systems
+
+Facilities staffing/effects, Youth/Newgen Staff authority and Media Staff authority are absent. Their named milestone ownership remains outside BS13.
+
+## BS13E manifestation update
+
+- Training execution and delegated decision snapshots feed the existing Training history and Staff Recent Impact projection; no parallel event store was introduced.
+- Medical/recruiting/operations/scouting advisories retain their existing target-domain decision seams and expose Staff decision-time role and qualitative quality where their outcome record is present.
+- Opposition report acceptance remains connected to existing TeamGamePlan state; no MatchEngine behavior changed.
+- Staff career history supplies dated evaluator roles for scouting reports. The report artifact itself still does not snapshot evaluator role, so unresolvable legacy history is presented as unknown.
+- Market contact/offer and Trade action histories show persisted Staff actors with dated career roles where the history can resolve them.

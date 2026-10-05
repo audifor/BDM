@@ -17,8 +17,8 @@ import type {
 import type { Player } from '@/domain/player'
 import type { Season } from '@/domain/season'
 import type { Team } from '@/domain/team'
-import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from '@/domain/coachRpg'
-import type { StaffProfessionalProfile } from '@/domain/staff'
+import type { CoachRpgProfile } from '@/domain/coachRpg'
+import { calculateStaffRoleProficiencyFromProfile, type StaffProfessionalProfile } from '@/domain/staff'
 import type { CoachReputationProfile } from '@/domain/coachReputation'
 import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCareer'
 import { getCoachFinancialPosition, type CoachFinanceProfile } from '@/domain/coachFinances'
@@ -138,7 +138,7 @@ export function getGame(world: GameWorld, id: GameId): Game {
 export function getUserCoach(world: GameWorld): Coach {
   return getCoach(world, world.userCoachId)
 }
-export function getCoachProfessionalProfile(world: GameWorld, coachId: CoachId): StaffProfessionalProfile | undefined { return world.coachProfessionalProfilesByCoachId[coachId] }
+export function getCoachProfessionalProfile(world: GameWorld, coachId: CoachId): StaffProfessionalProfile | undefined { const coach = world.coaches[coachId]; return coach === undefined ? undefined : world.staffPeopleById[coach.staffProfileId]?.professional }
 export function getCoachRpgProfile(world: GameWorld, coachId: CoachId): CoachRpgProfile | undefined { return world.coachRpgProfilesByCoachId[coachId] }
 export function getCoachReputationProfile(world: GameWorld, coachId: CoachId): CoachReputationProfile | undefined { return world.coachReputationProfilesByCoachId[coachId] }
 export function getCoachEmployment(world: GameWorld, coachId: CoachId): CoachEmployment | undefined { return world.coachEmploymentByCoachId[coachId] }
@@ -150,7 +150,7 @@ export function getCoachFinanceProfile(world: GameWorld, coachId: CoachId): Coac
 export function getUserCoachFinanceProfile(world: GameWorld): CoachFinanceProfile | undefined { return getCoachFinanceProfile(world, world.userCoachId) }
 export function getCoachFinancialPositionForCareer(world: GameWorld, coachId: CoachId) { const profile = getCoachFinanceProfile(world, coachId); return profile === undefined ? undefined : getCoachFinancialPosition(profile) }
 export function getUserCoachFinancialSummary(world: GameWorld) { const profile = getUserCoachFinanceProfile(world); return profile === undefined ? undefined : { profile, ...getCoachFinancialPosition(profile) } }
-export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
+export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateStaffRoleProficiencyFromProfile(profile, 'headCoach') }
 export function getRelationshipValue(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId): number { return world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.value ?? 0 }
 export function getRelationshipBandForPeople(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId) { return getRelationshipBand(getRelationshipValue(world, sourceId, targetId)) }
 export function getRelationshipsForPerson(world: GameWorld, personId: RelationshipPersonId) { return Object.values(world.relationshipsByKey).filter((profile) => profile.sourceId === personId || profile.targetId === personId).sort((a, b) => b.value - a.value || a.sourceId.localeCompare(b.sourceId) || a.targetId.localeCompare(b.targetId)) }

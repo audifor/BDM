@@ -232,6 +232,24 @@ describe('buildPlayerScoutingModel', () => {
     const model = buildPlayerScoutingModel(world, playerId)
 
     expect(model.noteTimeline).toHaveLength(0)
-    expect(model.actionsNote).toContain('not actions this workspace can perform')
+    expect(model.actionsNote).toContain('current assignment and report history')
+  })
+
+  it('keeps strengths and weaknesses separate and gates archetypes on broad evidence', () => {
+    const base = createNewGame()
+    const playerId = defaultPlayerIdForNg(base)!
+    const sparse = buildPlayerScoutingModel(withScoutingKnowledge(base, playerId, {
+      shooting: { estimate: 32, uncertainty: 5 },
+      physical: { estimate: 28, uncertainty: 5 },
+    }), playerId)
+    expect(sparse.archetypeTitle).toBe('Insufficient scouting information')
+    expect(sparse.strengths).toEqual([])
+    const broad = buildPlayerScoutingModel(withScoutingKnowledge(base, playerId, {
+      shooting: { estimate: 78, uncertainty: 5 }, finishing: { estimate: 72, uncertainty: 5 }, creation: { estimate: 70, uncertainty: 5 },
+      perimeterDefense: { estimate: 35, uncertainty: 5 }, interiorDefense: { estimate: 32, uncertainty: 5 }, rebounding: { estimate: 38, uncertainty: 5 }, physical: { estimate: 74, uncertainty: 5 },
+    }), playerId)
+    expect(broad.archetypeTitle).not.toBe('Insufficient scouting information')
+    expect(broad.strengths.map((item) => item.id)).not.toEqual(expect.arrayContaining(broad.weaknesses.map((item) => item.id)))
+    expect(broad.weaknesses.length).toBeGreaterThan(0)
   })
 })

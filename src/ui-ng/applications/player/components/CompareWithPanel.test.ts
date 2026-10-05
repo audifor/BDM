@@ -14,6 +14,9 @@ function snapshot(overrides: Partial<PlayerComparisonSnapshot> = {}): PlayerComp
     teamName: 'Rival Club',
     age: 24,
     ratings: { threePointShooting: 84, midRangeShooting: 80 } as never,
+    accessKind: 'own-roster',
+    knownDimensions: [],
+    ratingEvaluations: [],
     ...overrides,
   }
 }

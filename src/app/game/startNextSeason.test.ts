@@ -17,6 +17,9 @@ import { getCurrentSeason } from './selectors'
 import { rollForwardTradeRules, startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
 import { withShortGameFormat } from './testFixtures'
+import { createScoutingTerritoryAssignment } from '@/app/scouting'
+import { progressScoutingAssignments, requestScouting } from '@/engine/scouting'
+import { progressScoutingTerritoryAssignments } from '@/engine/scouting/ScoutingTerritoryOperations'
 
 // ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
 const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
@@ -148,6 +151,25 @@ describe('startNextSeason', () => {
 
     expect(startNextSeason(completed).teamStaffAssignmentsById).toEqual(completed.teamStaffAssignmentsById)
   }, 10_000)
+
+  it('preserves Player knowledge, reports, assignments, evidence, awareness and territory operations across season rollover', () => {
+    const completed = completeCurrentSeason(createNewGame())
+    const team = Object.values(completed.teams).find((item) => item.coachId === completed.userCoachId)!
+    const player = Object.values(completed.players).find((item) => !team.rosterPlayerIds.includes(item.id))!
+    const evaluator = Object.values(completed.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
+    const queued = requestScouting(completed, { organizationId: team.organizationId, teamContextId: team.id, playerId: player.id, evaluatorStaffId: evaluator.staffPersonId, missionType: 'QUICK_LOOK' })
+    const active = progressScoutingAssignments(queued)
+    const competition = Object.values(active.competitions).find((item) => item.participantTeamIds.includes(team.id))!
+    const territory = progressScoutingTerritoryAssignments(createScoutingTerritoryAssignment(active, { requestingTeamId: team.id, scoutStaffId: evaluator.staffPersonId, territory: { kind: 'COMPETITION', competitionId: competition.id } }))
+    const rolled = startNextSeason(territory)
+
+    expect(rolled.organizationKnowledge).toEqual(territory.organizationKnowledge)
+    expect(rolled.evaluatorReportsById).toEqual(territory.evaluatorReportsById)
+    expect(rolled.evidenceById).toEqual(territory.evidenceById)
+    expect(rolled.scoutingAssignmentsById).toEqual(territory.scoutingAssignmentsById)
+    expect(rolled.organizationPlayerAwarenessById).toEqual(territory.organizationPlayerAwarenessById)
+    expect(rolled.scoutingTerritoryAssignmentsById).toEqual(territory.scoutingTerritoryAssignmentsById)
+  }, 90_000)
 
   it('multi-season save/load preserves staff people exactly', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))

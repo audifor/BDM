@@ -1,4 +1,4 @@
-import { responsibilityIdForTeam, RESPONSIBILITY_KINDS, responsibilityDefinition } from '@/domain/responsibility'
+import { isResponsibilityConnected, responsibilityIdForTeam, RESPONSIBILITY_KINDS, responsibilityDefinition } from '@/domain/responsibility'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
 /**
@@ -9,7 +9,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
  */
 export function ensureResponsibilityStructure(world: GameWorld): GameWorld {
   const additions = Object.values(world.teams).flatMap((team) =>
-    RESPONSIBILITY_KINDS.filter((kind) => world.responsibilitiesById[responsibilityIdForTeam(team.id, kind)] === undefined).map((kind) => ({
+    RESPONSIBILITY_KINDS.filter((kind) => isResponsibilityConnected(kind) && world.responsibilitiesById[responsibilityIdForTeam(team.id, kind)] === undefined).map((kind) => ({
       id: responsibilityIdForTeam(team.id, kind),
       teamId: team.id,
       kind,

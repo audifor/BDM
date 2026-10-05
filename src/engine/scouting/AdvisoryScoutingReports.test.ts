@@ -15,6 +15,7 @@ function withStaffInRole(world: GameWorld, teamId: TeamId, role: string, attribu
     world: updateGameWorld(world, {
       staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Adv', lastName: 'Isor' }, professional: { attributes: { ...flatAttributes, ...attributes } } }],
       teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`advisory-scouting-assignment-${role}-${teamId}`), staffPersonId: staffId, teamId, role: role as never, assignedOn: world.currentDate }],
+      staffEmploymentByStaffId: { ...world.staffEmploymentByStaffId, [staffId]: { status: 'employed', teamId, roleId: role as never, startedOn: world.currentDate } },
     }),
     staffId,
   }

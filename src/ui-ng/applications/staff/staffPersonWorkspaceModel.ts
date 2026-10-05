@@ -156,5 +156,11 @@ export interface StaffPersonWorkspaceModel {
   readonly contract: StaffPersonContractModel
   readonly reputation: readonly StaffPersonReputationRow[]
   readonly history: readonly StaffPersonHistoryRow[]
+  readonly recentImpact: {
+    readonly trainingSessions: number
+    readonly recommendations: number
+    readonly acceptedRecommendations: number
+    readonly entries: readonly { readonly id: string; readonly date: string; readonly activity: string; readonly result: string; readonly roleLabel: string }[]
+  }
   readonly dynamics: StaffPersonDynamicsModel
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
-import { responsibilityDefinition, responsibilityIdForTeam } from '@/domain/responsibility'
+import { isResponsibilityConnected, RESPONSIBILITY_KINDS, responsibilityDefinition, responsibilityIdForTeam } from '@/domain/responsibility'
 import { updateGameWorld } from '@/domain/world'
 import { ensureResponsibilityStructure } from './ResponsibilityEnrichment'
 
@@ -36,6 +36,9 @@ describe('free-agent default reachability configuration', () => {
     expect(ensureResponsibilityStructure(once)).toEqual(once)
     for (const kind of ['initiateNegotiationContact', 'submitPlayerContractOffer', 'executePlayerContractSigning'] as const) {
       expect(once.responsibilitiesById[responsibilityIdForTeam(team.id, kind)]?.mode).toBe(responsibilityDefinition(kind).defaultMode)
+    }
+    for (const kind of RESPONSIBILITY_KINDS.filter((candidate) => !isResponsibilityConnected(candidate))) {
+      expect(once.responsibilitiesById[responsibilityIdForTeam(team.id, kind)]).toBeUndefined()
     }
   })
 })

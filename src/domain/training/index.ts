@@ -1,6 +1,7 @@
 export * from './Training'
 export * from './TrainingCatalog'
 export * from './TrainingSchedule'
+export * from './TrainingSessionQueries'
 export * from './TrainingUserModule'
 export * from './TrainingLoad'
 export * from './TeamCohesion'

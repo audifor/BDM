@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { createOrganizationKnowledge } from '@/domain/knowledge'
 import { getNextScheduledGame, updateGameWorld, type GameWorld } from '@/domain/world'
 import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings } from '@/domain/player'
 import { playerIdFromString } from '@/domain/ids'
@@ -10,11 +11,25 @@ import { requestScouting } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, parseCanonicalRatingsV2, parsePlayerTendenciesV2, serializeGameWorldV2 } from './GameWorldSaveV2'
-import { ensurePlayerKnowledge } from '@/engine/world'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { createNegotiationContact } from '@/domain/market'
+import { BASKETBALL_RATING_KEYS, legacyRatingSignals } from '@/domain/player'
+import { serializeGameWorldV3, deserializeGameWorldV3 } from './GameWorldSaveV3'
+import { serializeGameWorldV4, deserializeGameWorldV4 } from './GameWorldSaveV4'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
+function v1WithLegacyKnowledge(world: GameWorld, count = Object.keys(world.players).length) {
+  const v1 = serializeGameWorldV1(world, savedAt)
+  const observer = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
+  const records = Object.values(world.players).slice(0, count).map((player) => ({
+    id: `player-knowledge:${observer.id}:${player.id}`,
+    observerTeamId: observer.id,
+    subjectPlayerId: player.id,
+    assessedOn: world.currentDate,
+    basketball: { ratings: Object.fromEntries(BASKETBALL_RATING_KEYS.map((key) => [key, { estimatedValue: legacyRatingSignals(player.basketball.ratings)[key], uncertainty: key === 'shooting' ? 4 : 6 }])) },
+  }))
+  return { ...v1, payload: { ...v1.payload, playerKnowledge: records } }
+}
 describe('GameWorldSaveV2', () => {
   it('defaults a legacy market runtime without trade negotiations to an empty collection', () => {
     const saved = serializeGameWorldV2(createNewGame(), savedAt)
@@ -31,6 +46,32 @@ describe('GameWorldSaveV2', () => {
     expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS)
     expect(Object.keys(player.basketball.tendencies)).toEqual(PLAYER_TRUTH_TENDENCY_KEYS)
     expect(deserializeGameWorldV2(saved).players).toEqual(world.players)
+  })
+  it('round-trips sparse rating-level knowledge through V2, V3 and V4 without manufacturing legacy ratings', () => {
+    const base = createNewGame()
+    const organization = Object.values(base.teams)[0]!.organizationId
+    const playerId = Object.keys(base.players)[0]!
+    const world = updateGameWorld(base, { organizationKnowledge: [createOrganizationKnowledge({
+      organizationId: organization,
+      subjectPlayerId: playerId as never,
+      dimensions: { 'rating:THREE_POINT_STATIC': { coverage: 0.72, confidence: 0.81, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 67, uncertainty: 6 } },
+    })] })
+    for (const restored of [
+      deserializeGameWorldV2(serializeGameWorldV2(world, savedAt)),
+      deserializeGameWorldV3(serializeGameWorldV3(world, savedAt)),
+      deserializeGameWorldV4(serializeGameWorldV4(world, savedAt)),
+    ]) {
+      expect(restored.organizationKnowledge[0]!.dimensions['rating:THREE_POINT_STATIC']).toMatchObject({ estimate: 67, uncertainty: 6, coverage: 0.72 })
+      expect(Object.keys(restored.organizationKnowledge[0]!.dimensions).filter((dimension) => dimension.startsWith('rating:'))).toEqual(['rating:THREE_POINT_STATIC'])
+    }
+    const legacy = updateGameWorld(base, { organizationKnowledge: [createOrganizationKnowledge({
+      organizationId: organization,
+      subjectPlayerId: playerId as never,
+      dimensions: { shooting: { coverage: 0.8, confidence: 0.75, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 64, uncertainty: 8 } },
+    })] })
+    const legacyLoaded = deserializeGameWorldV2(serializeGameWorldV2(legacy, savedAt))
+    expect(legacyLoaded.organizationKnowledge[0]!.dimensions.shooting?.estimate).toBe(64)
+    expect(Object.keys(legacyLoaded.organizationKnowledge[0]!.dimensions).some((dimension) => dimension.startsWith('rating:'))).toBe(false)
   })
   it('round-trips sparse tactical and game-plan state with neutral legacy defaults', () => {
     const base=createNewGame();const team=Object.values(base.teams)[0]!,game=Object.values(base.games)[0]!
@@ -71,17 +112,20 @@ describe('GameWorldSaveV2', () => {
     expect(loadedNewOffer.negotiationsById[formalOffer.id]).toEqual(formalOffer)
   })
   it('migrates a V1 envelope deterministically without mutating it', () => {
-    const v1 = serializeGameWorldV1(ensurePlayerKnowledge(createNewGame()), savedAt); const snapshot = JSON.stringify(v1)
+    const v1 = v1WithLegacyKnowledge(createNewGame()); const snapshot = JSON.stringify(v1)
     const first = migrateGameWorldSaveV1ToV2(v1), second = migrateGameWorldSaveV1ToV2(v1)
     const loaded = deserializeGameWorldV2(first)
     expect(first).toEqual(second); expect(JSON.stringify(v1)).toBe(snapshot); expect(deserializeGameWorldSave(v1)).toEqual(loaded)
     expect(first.payload.playerKnowledge).toEqual([])
     expect(loaded.organizationKnowledge).toHaveLength(v1.payload.playerKnowledge.length)
-    const source = v1.payload.playerKnowledge[0] as { observerTeamId: string; subjectPlayerId: string; assessedOn: string; basketball: { ratings: { shooting: { estimatedValue: number; uncertainty: number } } } }
+    const source = v1.payload.playerKnowledge[0] as unknown as { observerTeamId: string; subjectPlayerId: string; assessedOn: string; basketball: { ratings: { shooting: { estimatedValue: number; uncertainty: number } } } }
     const migrated = loaded.organizationKnowledge[0]!
-    expect(migrated.organizationId).toBe(source.observerTeamId); expect(migrated.subjectPlayerId).toBe(source.subjectPlayerId)
+    expect(migrated.organizationId).toBe(Object.values(loaded.teams).find((team) => String(team.id) === source.observerTeamId)!.organizationId); expect(migrated.subjectPlayerId).toBe(source.subjectPlayerId)
     expect(migrated.dimensions.shooting).toMatchObject({ assessedAt: source.assessedOn, provenance: 'legacyBaseline', estimate: source.basketball.ratings.shooting.estimatedValue, uncertainty: source.basketball.ratings.shooting.uncertainty })
     expect(deserializeGameWorldV2(serializeGameWorldV2(loaded, savedAt)).organizationKnowledge).toEqual(loaded.organizationKnowledge)
+    const invalidObserver = structuredClone(v1) as unknown as { payload: { playerKnowledge: Record<string, unknown>[] } }
+    invalidObserver.payload.playerKnowledge[0]!.observerTeamId = 'team:unknown'
+    expect(() => migrateGameWorldSaveV1ToV2(invalidObserver as never)).toThrow('unknown observer Team team:unknown')
   })
 
   it('enforces independent closed V2 player contracts', () => {
@@ -111,9 +155,8 @@ describe('GameWorldSaveV2', () => {
 
   it('keeps V2 knowledge sparse on creation, V1 migration, and V2 load', () => {
     const world = createNewGame(); expect(world.organizationKnowledge).toEqual([])
-    const v1 = serializeGameWorldV1(ensurePlayerKnowledge(world), savedAt)
-    const sourceRecords = v1.payload.playerKnowledge.slice(0, 3)
-    const sparseV1 = structuredClone(v1); (sparseV1.payload as unknown as { playerKnowledge: readonly typeof sourceRecords[number][] }).playerKnowledge = sourceRecords
+    const sparseV1 = v1WithLegacyKnowledge(world, 3)
+    const sourceRecords = sparseV1.payload.playerKnowledge
     const migrated = migrateGameWorldSaveV1ToV2(sparseV1)
     const loaded = deserializeGameWorldV2(migrated)
     expect(loaded.organizationKnowledge).toHaveLength(3)

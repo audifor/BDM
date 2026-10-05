@@ -3,6 +3,8 @@ import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import { getPlayerAge } from '@/domain/player'
 import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
+import type { PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 /** One selectable rival in the comparison picker. */
 export interface ComparablePlayerOption {
@@ -19,7 +21,10 @@ export interface PlayerComparisonSnapshot {
   readonly position: string
   readonly teamName: string
   readonly age: number
-  readonly ratings: PlayerTruthRatings
+  readonly ratings: Partial<PlayerTruthRatings>
+  readonly accessKind: 'own-roster' | 'scouted' | 'unknown'
+  readonly knownDimensions: PlayerKnowledgeAccess['knownDimensions']
+  readonly ratingEvaluations: PlayerKnowledgeAccess['ratingEvaluations']
 }
 
 function displayName(player: Player): string {
@@ -59,6 +64,7 @@ export function buildPlayerComparisonSnapshot(
 ): PlayerComparisonSnapshot | undefined {
   const player = world.players[playerId]
   if (player === undefined) return undefined
+  const access = derivePlayerKnowledgeAccess(world, playerId)
 
   return {
     playerId,
@@ -66,8 +72,11 @@ export function buildPlayerComparisonSnapshot(
     position: player.basketball.primaryPosition,
     teamName: teamNameFor(world, playerId),
     age: getPlayerAge(world, playerId),
-    ratings: Object.fromEntries(
-      PLAYER_TRUTH_RATING_KEYS.map((key) => [key, player.basketball.ratings[key]]),
-    ) as Readonly<Record<PlayerTruthRatingKey, number>>,
+    ratings: access.kind === 'own-roster'
+      ? Object.fromEntries(PLAYER_TRUTH_RATING_KEYS.map((key) => [key, access.currentRatings[key]])) as PlayerTruthRatings
+      : {},
+    accessKind: access.kind,
+    knownDimensions: access.knownDimensions,
+    ratingEvaluations: access.ratingEvaluations,
   }
 }

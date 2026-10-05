@@ -14,9 +14,8 @@ afterEach(() => {
 })
 
 describe('CoachWorkspace', () => {
-  it('renders the Staff-backed profile without legacy Coach profile maps', () => {
+  it('renders the canonical Staff-backed Coach profile', () => {
     const world = updateGameWorld(createNewGame(), {
-      coachProfessionalProfilesByCoachId: {},
       coachRpgProfilesByCoachId: {},
       coachReputationProfilesByCoachId: {},
     })

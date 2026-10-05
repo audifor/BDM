@@ -31,6 +31,17 @@ export function PlayerDevelopmentView() {
   if (model === null) return null
 
   const development = model.development
+  if (model.knowledgeAccess.kind !== 'own-roster') {
+    return (
+      <div className="po-dev-board" data-ng-region="player-development">
+        <section className="po-dev-panel" data-ng-region="development-scouting-boundary">
+          <header className="po-dev-panel__head"><span className="po-dev-panel__title">Individual development</span></header>
+          <p className="po-dev-stat__note">Individual rating values and development history are unavailable for external players until rating-level scouting exists.</p>
+        </section>
+        <ScoutingProjectionPanel projection={development.projection} />
+      </div>
+    )
+  }
   const selectedCategory = selectedCategoryOf(development, selectedItemId)
 
   return (
@@ -72,7 +83,7 @@ export function PlayerDevelopmentView() {
         <DevelopmentEventsPanel events={development.longitudinal.events} />
         <ScoutingProjectionPanel projection={development.projection} />
       </div>
-      {world !== null && <PlayerHistoryPanels world={world} playerId={model.player.id} />}
+      {world !== null && <PlayerHistoryPanels world={world} playerId={model.identity.playerId} />}
     </div>
   )
 }

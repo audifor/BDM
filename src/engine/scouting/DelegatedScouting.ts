@@ -23,9 +23,9 @@ import { activeWorkload, requestScouting } from './ScoutingEngine'
  * Bounded target sources ONLY (docs §5.2 — never a world-wide player scan):
  * - the roster of the team's next scheduled opponent (`getNextScheduledGame`), when one exists.
  *
- * `prioritizeRegions`, when also delegated, computes its own `scoutingQuality` and reorders the
- * bounded target pool by existing bounded metadata only (nationality-grouped, largest
- * unknown-nationality-cluster first) — no new region entity/model is introduced (see docs §5.3).
+ * `prioritizeRegions`, when also delegated, now records the competition territory for the next
+ * scheduled opponent. Territory authority comes from the scheduled game's competition, never
+ * player nationality.
  * It records its own `DelegationOutcome` exactly once, only when it genuinely changes the
  * resulting ordering.
  *
@@ -45,7 +45,7 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
   const qualityScore = scoutingQuality(resolution.context, seed)
 
   const withPrioritization = applyPrioritizeRegions(world, teamId)
-  const targets = selectBoundedScoutingTargets(withPrioritization.world, teamId, withPrioritization.nationalityOrder)
+  const targets = selectBoundedScoutingTargets(withPrioritization.world, teamId, withPrioritization.priorityTerritory)
   if (targets.length === 0) return withPrioritization.world
 
   const evaluators = selectEvaluatorCandidates(withPrioritization.world, teamId)
@@ -79,6 +79,8 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
     kind: 'assignScouts',
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { targetPlayerId: target, evaluatorStaffId, missionType: 'QUICK_LOOK' },
   })
   return { ...withRequest, delegationOutcomesById: { ...withRequest.delegationOutcomesById, [outcomeId]: outcome } }
@@ -88,11 +90,11 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
  * Bounded target pool for `assignScouts`: the next scheduled opponent's roster, filtered to
  * players the organization has no existing knowledge of (mirrors `deriveScoutingNeeds`'s own
  * bounded-candidate + "no existing knowledge" filter, reused here rather than duplicated),
- * deterministically ordered. `nationalityOrder`, when provided by a genuinely delegated
- * `prioritizeRegions`, reorders by nationality-cluster priority; otherwise falls back to plain
- * stable id order.
+ * deterministically ordered. `priorityTerritory`, when provided by `prioritizeRegions`, is the
+ * current scheduled game's competition territory. The bounded pool is already that opponent's
+ * competition roster; stable player id order breaks ties without consulting biographical data.
  */
-function selectBoundedScoutingTargets(world: GameWorld, teamId: TeamId, nationalityOrder: readonly string[] | undefined): readonly PlayerId[] {
+function selectBoundedScoutingTargets(world: GameWorld, teamId: TeamId, priorityTerritory: string | undefined): readonly PlayerId[] {
   const nextGame = getNextScheduledGame(world, teamId)
   if (nextGame === undefined) return []
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
@@ -101,14 +103,10 @@ function selectBoundedScoutingTargets(world: GameWorld, teamId: TeamId, national
   const unknownRoster = [...opponent.rosterPlayerIds].filter((playerId) => !world.organizationKnowledge.some((knowledge) => knowledge.organizationId === organizationId && knowledge.subjectPlayerId === playerId))
   if (unknownRoster.length === 0) return []
 
-  if (nationalityOrder === undefined) return [...unknownRoster].sort()
-
-  const priority = new Map(nationalityOrder.map((nationalityId, index) => [nationalityId, index]))
-  return [...unknownRoster].sort((a, b) => {
-    const rankA = priority.get(world.players[a]!.nationalityId) ?? nationalityOrder.length
-    const rankB = priority.get(world.players[b]!.nationalityId) ?? nationalityOrder.length
-    return rankA - rankB || a.localeCompare(b)
-  })
+  // The scheduled competition is the bounded operation's territory. Keep this explicit so
+  // future multi-territory target sources can use the same authority without nationality grouping.
+  void priorityTerritory
+  return [...unknownRoster].sort()
 }
 
 /**
@@ -158,58 +156,24 @@ function pickFromTopN<Item>(ranked: readonly Item[], qualityScore: number, seed:
 }
 
 /**
- * `prioritizeRegions` (§2.6): produces a real, bounded reordering signal rather than a fixed
- * alphabetical sort. It resolves its own canonical holder/context (independent of `assignScouts`'s
- * holder — they may or may not be the same Staff), computes its own `scoutingQuality`, and derives
- * a nationality-cluster priority from EXISTING bounded metadata only: the next opponent's roster,
- * grouped by `Player.nationalityId`, base-ranked by how many roster players of that nationality the
- * organization has no knowledge of yet (larger unknown clusters ranked first, id ascending as a
- * stable tie-break — never comparing Staff nationality to Player nationality, since no such
- * affinity is modeled).
- *
- * Quality genuinely decides which cluster leads: `topNForQuality(prioritizeQuality)` bounds a
- * candidate band drawn from the front of the base ranking, and the Staff's actual SELECTION within
- * that band is made via `SeededRandomSource` keyed off a `:region-priority`-suffixed seed — so a
- * lower-quality holder can (and, over repeated seeds, will) genuinely promote a cluster other than
- * the literal top of the base ranking ahead of it, while a high-quality holder is bounded to the
- * single best cluster. The selected cluster is moved to the front; every other cluster keeps its
- * original relative (stable, deterministic) order behind it. Still never creates a new Region
- * entity — it only ever reorders the existing bounded target pool.
- *
- * Records its own `DelegationOutcome` exactly once per (responsibility, day) when it genuinely has
- * more than one candidate cluster to choose among, with a payload reflecting the ACTUAL decision
- * (`selectedNationalityId`, `candidateBandSize`, `unknownPlayerCount` of the selected cluster).
+ * `prioritizeRegions` retains its persisted responsibility ID but now means “prioritize scouting
+ * territories.” The current bounded target source is the next scheduled opponent, so its
+ * competition is the territory focus. This stays within the existing bounded cadence and does not
+ * create or allocate persistent territory operations on behalf of AI teams (that is deferred).
  */
-function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly world: GameWorld; readonly nationalityOrder: readonly string[] | undefined } {
+function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly world: GameWorld; readonly priorityTerritory: string | undefined } {
   const resolution = resolveDelegatedResponsibility(world, teamId, 'prioritizeRegions')
-  if (resolution === undefined) return { world, nationalityOrder: undefined }
+  if (resolution === undefined) return { world, priorityTerritory: undefined }
 
   const nextGame = getNextScheduledGame(world, teamId)
-  if (nextGame === undefined) return { world, nationalityOrder: undefined }
+  if (nextGame === undefined || world.competitions[nextGame.competitionId] === undefined) return { world, priorityTerritory: undefined }
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
-  const opponent = getTeam(world, opponentTeamId)
-  const organizationId = world.teams[teamId]!.organizationId
-
-  const unknownByNationality = new Map<string, number>()
-  for (const playerId of opponent.rosterPlayerIds) {
-    const known = world.organizationKnowledge.some((knowledge) => knowledge.organizationId === organizationId && knowledge.subjectPlayerId === playerId)
-    if (known) continue
-    const nationalityId = world.players[playerId]!.nationalityId
-    unknownByNationality.set(nationalityId, (unknownByNationality.get(nationalityId) ?? 0) + 1)
-  }
-  const clusters = [...unknownByNationality.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-  if (clusters.length <= 1) return { world, nationalityOrder: clusters.map(([nationalityId]) => nationalityId) }
-
-  const prioritizeSeed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}:region-priority`
+  const priorityTerritory = `COMPETITION:${nextGame.competitionId}`
+  const prioritizeSeed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}:territory-priority`
   const prioritizeQuality = scoutingQuality(resolution.context, prioritizeSeed)
-  const bandSize = Math.min(clusters.length, topNForQuality(prioritizeQuality))
-  const candidateBand = clusters.slice(0, bandSize)
-  const selectedIndex = bandSize === 1 ? 0 : new SeededRandomSource(hashStringToSeed(prioritizeSeed)).nextInt(0, bandSize - 1)
-  const [selectedNationalityId, selectedUnknownPlayerCount] = candidateBand[selectedIndex]!
-  const nationalityOrder = [selectedNationalityId, ...clusters.filter(([nationalityId]) => nationalityId !== selectedNationalityId).map(([nationalityId]) => nationalityId)]
 
   const outcomeId = delegationOutcomeIdFromString(`delegation-outcome:${resolution.responsibilityId}:${nextGame.id}:${world.currentDate}`)
-  if (world.delegationOutcomesById[outcomeId] !== undefined) return { world, nationalityOrder }
+  if (world.delegationOutcomesById[outcomeId] !== undefined) return { world, priorityTerritory }
   const outcome = createDelegationOutcome({
     id: outcomeId,
     responsibilityId: resolution.responsibilityId,
@@ -218,8 +182,10 @@ function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly wo
     kind: 'prioritizeRegions',
     applied: true,
     qualityScore: prioritizeQuality,
-    payload: { opponentTeamId, selectedNationalityId, candidateBandSize: bandSize, unknownPlayerCount: selectedUnknownPlayerCount },
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
+    payload: { opponentTeamId, territoryKind: 'COMPETITION', competitionId: nextGame.competitionId },
   })
-  return { world: { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }, nationalityOrder }
+  return { world: { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }, priorityTerritory }
 }
 

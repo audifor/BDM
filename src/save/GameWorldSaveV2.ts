@@ -1,11 +1,12 @@
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createOrganizationKnowledge, migrateLegacyPlayerKnowledge, type OrganizationKnowledge } from '@/domain/knowledge'
-import { organizationIdFromString, personIdFromString, playerIdFromString } from '@/domain/ids'
+import { competitionIdFromString, countryIdFromString, organizationIdFromString, personIdFromString, playerIdFromString, staffPersonIdFromString, teamIdFromString } from '@/domain/ids'
 import { parseGameDate } from '@/domain/date'
 import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, createPlayer, type Player, type PlayerRatings, type PlayerTendencies } from '@/domain/player'
 import { DEVELOPMENT_DOMAINS, createDevelopmentProfile, type PlayerDevelopmentProfile } from '@/domain/player/PlayerDevelopmentProfile'
 import { PERSONALITY_DIMENSIONS } from '@/domain/personality'
-import { createEvaluatorProfile, EVIDENCE_SOURCES, SCOUTING_MISSIONS, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
+import { ratingKeyFromKnowledgeDimension } from '@/domain/player/PlayerTruthCatalog'
+import { createEvaluatorProfile, createOrganizationPlayerAwareness, createScoutingRecruitmentFocus, createScoutingTerritoryAssignment, EVIDENCE_SOURCES, SCOUTING_MISSIONS, type Evidence, type EvaluatorProfile, type EvaluatorReport, type OrganizationPlayerAwareness, type ScoutingAssignment, type ScoutingRecruitmentFocus, type ScoutingTerritory, type ScoutingTerritoryAssignment } from '@/domain/scouting'
 import type { OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import { deserializeGameWorldV1, serializeGameWorldV1, type GameWorldSaveV1, type SaveGameEnvelopeV1 } from './GameWorldSaveV1'
 
@@ -16,7 +17,7 @@ export interface SaveGameEnvelopeV2 { readonly schemaVersion: 2; readonly savedA
 export function migrateGameWorldSaveV1ToV2(value: SaveGameEnvelopeV1): SaveGameEnvelopeV2 {
   const world = deserializeGameWorldV1(value, { enrichLegacy: false })
   const legacyShape = serializeGameWorldV1(world, value.savedAt)
-  return { schemaVersion: 2, savedAt: legacyShape.savedAt, payload: v2Payload(legacyShape.payload, Object.values(world.playerKnowledgeById).map((record) => migrateLegacyPlayerKnowledge(record))) }
+  return { schemaVersion: 2, savedAt: legacyShape.savedAt, payload: v2Payload(legacyShape.payload, world.organizationKnowledge) }
 }
 
 export function serializeGameWorldV2(world: GameWorld, savedAt: string, options: { readonly v3SigningCompatibility?: boolean; readonly v3TradeCompatibility?: boolean } = {}): SaveGameEnvelopeV2 {
@@ -40,11 +41,11 @@ export function deserializeGameWorldV2(value: unknown): GameWorld {
   const world = deserializeGameWorldV1({ schemaVersion: 1, savedAt: envelope.savedAt, payload }, { enrichLegacy: false, readPlayer: parsePlayerV2 })
   const runtime = parseScoutingRuntimeV2(payload.scoutingRuntime)
   const market = parseMarketRuntimeV2(payload.marketRuntime)
-  return updateGameWorld(world, { organizationKnowledge: parseOrganizationKnowledgeV2(payload.organizationKnowledge), evidence: runtime.evidence, evaluatorProfilesByStaffId: runtime.evaluatorProfilesByStaffId, scoutingAssignments: runtime.scoutingAssignments, evaluatorReports: runtime.evaluatorReports, agents: market.agents, agencies: market.agencies, playerRepresentations: market.playerRepresentations, marketReality: market.marketReality, marketKnowledge: market.marketKnowledge, marketSignals: market.marketSignals, negotiations: market.negotiations, rolePromises: market.rolePromises, tradeNegotiations: market.tradeNegotiations, ...(Object.keys(runtime.organizationEvaluationPoliciesById).length === 0 ? {} : { organizationEvaluationPoliciesById: runtime.organizationEvaluationPoliciesById }) })
+  return updateGameWorld(world, { organizationKnowledge: parseOrganizationKnowledgeV2(payload.organizationKnowledge), evidence: runtime.evidence, evaluatorProfilesByStaffId: runtime.evaluatorProfilesByStaffId, scoutingAssignments: runtime.scoutingAssignments, evaluatorReports: runtime.evaluatorReports, scoutingTerritoryAssignments: runtime.scoutingTerritoryAssignments, scoutingRecruitmentFocuses: runtime.scoutingRecruitmentFocuses, organizationPlayerAwareness: runtime.organizationPlayerAwareness, agents: market.agents, agencies: market.agencies, playerRepresentations: market.playerRepresentations, marketReality: market.marketReality, marketKnowledge: market.marketKnowledge, marketSignals: market.marketSignals, negotiations: market.negotiations, rolePromises: market.rolePromises, tradeNegotiations: market.tradeNegotiations, ...(Object.keys(runtime.organizationEvaluationPoliciesById).length === 0 ? {} : { organizationEvaluationPoliciesById: runtime.organizationEvaluationPoliciesById }) })
 }
 
 function v2Payload(payload: GameWorldSaveV1, organizationKnowledge: readonly OrganizationKnowledge[], world?: GameWorld): GameWorldSaveV2 {
-  return { ...payload, players: payload.players.map(({ potential: _potential, ...player }) => player), playerKnowledge: [], organizationKnowledge: organizationKnowledge.map((knowledge) => JSON.parse(JSON.stringify(knowledge)) as Readonly<Record<string, unknown>>), ...(world === undefined ? {} : { scoutingRuntime: { evidence: Object.values(world.evidenceById), evaluatorProfiles: Object.values(world.evaluatorProfilesByStaffId), assignments: Object.values(world.scoutingAssignmentsById), reports: Object.values(world.evaluatorReportsById), organizationPolicies: world.organizationEvaluationPoliciesById }, marketRuntime: { agents: Object.values(world.agentsById), agencies: Object.values(world.agenciesById), representations: world.playerRepresentations, reality: Object.values(world.marketRealityByPlayerId), knowledge: world.marketKnowledge, signals: Object.values(world.marketSignalsById), negotiations: Object.values(world.negotiationsById), rolePromises: Object.values(world.rolePromisesById), tradeNegotiations: Object.values(world.tradeNegotiationsById) } }) }
+  return { ...payload, players: payload.players.map(({ potential: _potential, ...player }) => player), playerKnowledge: [], organizationKnowledge: organizationKnowledge.map((knowledge) => JSON.parse(JSON.stringify(knowledge)) as Readonly<Record<string, unknown>>), ...(world === undefined ? {} : { scoutingRuntime: { evidence: Object.values(world.evidenceById), evaluatorProfiles: Object.values(world.evaluatorProfilesByStaffId), assignments: Object.values(world.scoutingAssignmentsById), reports: Object.values(world.evaluatorReportsById), organizationPolicies: world.organizationEvaluationPoliciesById, territoryAssignments: Object.values(world.scoutingTerritoryAssignmentsById), recruitmentFocuses: Object.values(world.scoutingRecruitmentFocusesById), playerAwareness: Object.values(world.organizationPlayerAwarenessById) }, marketRuntime: { agents: Object.values(world.agentsById), agencies: Object.values(world.agenciesById), representations: world.playerRepresentations, reality: Object.values(world.marketRealityByPlayerId), knowledge: world.marketKnowledge, signals: Object.values(world.marketSignalsById), negotiations: Object.values(world.negotiationsById), rolePromises: Object.values(world.rolePromisesById), tradeNegotiations: Object.values(world.tradeNegotiationsById) } }) }
 }
 
 /** V2 has its own closed-schema parsers; V1 readers are never used for changed contracts. */
@@ -114,7 +115,8 @@ export function parseOrganizationKnowledgeV2(value: unknown): readonly Organizat
     const source = record(entry, 'Organization knowledge V2'); assertExactKeys(source, ['organizationId', 'subjectPlayerId', 'dimensions'], 'Organization knowledge V2')
     const sourceDimensions = record(source.dimensions, 'Organization knowledge V2 dimensions')
     const dimensions = Object.fromEntries(Object.entries(sourceDimensions).map(([key, raw]) => {
-      if (!/^(finishing|shooting|creation|perimeterDefense|interiorDefense|rebounding|physical|potential:[a-zA-Z]+|tacticalFit)$/.test(key)) throw new TypeError(`Unknown organization knowledge dimension ${key}`)
+      const aggregateDimension = /^(finishing|shooting|creation|perimeterDefense|interiorDefense|rebounding|physical|potential:[a-zA-Z]+|tacticalFit)$/.test(key)
+      if (!aggregateDimension && ratingKeyFromKnowledgeDimension(key) === undefined) throw new TypeError(`Unknown organization knowledge dimension ${key}`)
       const finding = record(raw, 'Organization knowledge V2 finding'); const keys = ['coverage', 'confidence', 'assessedAt', 'provenance', ...(finding.estimate === undefined ? [] : ['estimate']), ...(finding.uncertainty === undefined ? [] : ['uncertainty']), ...(finding.evidenceIds === undefined ? [] : ['evidenceIds']), ...(finding.reportIds === undefined ? [] : ['reportIds'])]; assertExactKeys(finding, keys, 'Organization knowledge V2 finding')
       return [key, { coverage: bounded(finding.coverage, 'Organization knowledge coverage', 0, 1), confidence: bounded(finding.confidence, 'Organization knowledge confidence', 0, 1), assessedAt: parseGameDate(text(finding.assessedAt, 'Organization knowledge assessedAt')), provenance: enumValue(finding.provenance, ['legacyBaseline', 'public', 'ownObservation', 'scoutReport', 'inferred', 'staffFamiliarity'], 'Organization knowledge provenance') as OrganizationKnowledge['dimensions'][string]['provenance'], ...(finding.estimate === undefined ? {} : { estimate: bounded(finding.estimate, 'Organization knowledge estimate', 0, 100) }), ...(finding.uncertainty === undefined ? {} : { uncertainty: bounded(finding.uncertainty, 'Organization knowledge uncertainty', 0, 20) }), ...(finding.evidenceIds === undefined ? {} : { evidenceIds: array(finding.evidenceIds, 'Organization knowledge evidence IDs').map((id) => text(id, 'Organization knowledge evidence ID')) }), ...(finding.reportIds === undefined ? {} : { reportIds: array(finding.reportIds, 'Organization knowledge report IDs').map((id) => text(id, 'Organization knowledge report ID')) }) }]
     }))
@@ -122,20 +124,72 @@ export function parseOrganizationKnowledgeV2(value: unknown): readonly Organizat
   })
 }
 
-function parseScoutingRuntimeV2(value: unknown): { readonly evidence: readonly Evidence[]; readonly evaluatorProfilesByStaffId: Readonly<Record<import('@/domain/ids').StaffPersonId, EvaluatorProfile>>; readonly scoutingAssignments: readonly ScoutingAssignment[]; readonly evaluatorReports: readonly EvaluatorReport[]; readonly organizationEvaluationPoliciesById: Readonly<Record<import('@/domain/ids').OrganizationId, OrganizationEvaluationPolicy>> } {
-  if (value === undefined) return { evidence: [], evaluatorProfilesByStaffId: {}, scoutingAssignments: [], evaluatorReports: [], organizationEvaluationPoliciesById: {} }
-  const runtime = record(value, 'Scouting runtime V2'); assertExactKeys(runtime, runtime.organizationPolicies === undefined ? ['evidence', 'evaluatorProfiles', 'assignments', 'reports'] : ['evidence', 'evaluatorProfiles', 'assignments', 'reports', 'organizationPolicies'], 'Scouting runtime V2')
+function parseScoutingRuntimeV2(value: unknown): { readonly evidence: readonly Evidence[]; readonly evaluatorProfilesByStaffId: Readonly<Record<import('@/domain/ids').StaffPersonId, EvaluatorProfile>>; readonly scoutingAssignments: readonly ScoutingAssignment[]; readonly evaluatorReports: readonly EvaluatorReport[]; readonly organizationEvaluationPoliciesById: Readonly<Record<import('@/domain/ids').OrganizationId, OrganizationEvaluationPolicy>>; readonly scoutingTerritoryAssignments: readonly ScoutingTerritoryAssignment[]; readonly scoutingRecruitmentFocuses: readonly ScoutingRecruitmentFocus[]; readonly organizationPlayerAwareness: readonly OrganizationPlayerAwareness[] } {
+  const empty = { evidence: [], evaluatorProfilesByStaffId: {}, scoutingAssignments: [], evaluatorReports: [], organizationEvaluationPoliciesById: {}, scoutingTerritoryAssignments: [], scoutingRecruitmentFocuses: [], organizationPlayerAwareness: [] } as const
+  if (value === undefined) return empty
+  const runtime = record(value, 'Scouting runtime V2')
+  const requiredKeys = ['evidence', 'evaluatorProfiles', 'assignments', 'reports']
+  const optionalKeys = ['organizationPolicies', 'territoryAssignments', 'recruitmentFocuses', 'playerAwareness']
+  assertExactKeys(runtime, [...requiredKeys, ...optionalKeys.filter((key) => runtime[key] !== undefined)], 'Scouting runtime V2')
   const evidence = array(runtime.evidence, 'Scouting evidence').map((raw) => { const item = record(raw, 'Evidence'); assertExactKeys(item, ['id', 'organizationId', 'subjectPlayerId', 'source', 'observedAt', 'quality', 'dimensions', ...(item.context === undefined ? [] : ['context']), ...(item.gameId === undefined ? [] : ['gameId'])], 'Evidence'); return { id: text(item.id, 'Evidence id'), organizationId: organizationIdFromString(text(item.organizationId, 'Evidence organization')), subjectPlayerId: playerIdFromString(text(item.subjectPlayerId, 'Evidence player')), source: enumValue(item.source, EVIDENCE_SOURCES, 'Evidence source') as Evidence['source'], observedAt: parseGameDate(text(item.observedAt, 'Evidence date')), quality: bounded(item.quality, 'Evidence quality', 0, 1), dimensions: array(item.dimensions, 'Evidence dimensions').map((d) => text(d, 'Evidence dimension')), ...(item.context === undefined ? {} : { context: text(item.context, 'Evidence context') }), ...(item.gameId === undefined ? {} : { gameId: text(item.gameId, 'Evidence game') }) } })
   const profiles = array(runtime.evaluatorProfiles, 'Evaluator profiles').map((raw) => { const item = record(raw, 'Evaluator profile'); assertExactKeys(item, ['staffPersonId', 'experience', 'perks', 'biases'], 'Evaluator profile'); return createEvaluatorProfile({ staffPersonId: text(item.staffPersonId, 'Evaluator staff') as import('@/domain/ids').StaffPersonId, experience: bounded(item.experience, 'Evaluator experience', 0, 100), perks: array(item.perks, 'Evaluator perks').map((p) => enumValue(p, ['EYE_FOR_SHOOTERS', 'PROJECTION_EXPERT', 'TAPE_GRINDER', 'LIVE_SCOUT'], 'Evaluator perk') as EvaluatorProfile['perks'][number]), biases: array(item.biases, 'Evaluator biases').map((b) => enumValue(b, ['UPSIDE_BIAS', 'PRODUCTION_BIAS', 'ATHLETICISM_BIAS', 'SIZE_BIAS'], 'Evaluator bias') as EvaluatorProfile['biases'][number]) }) })
   const assignments = array(runtime.assignments, 'Scouting assignments').map((raw) => parseScoutingAssignmentV2(raw))
   const reports = array(runtime.reports, 'Evaluator reports').map((raw) => JSON.parse(JSON.stringify(record(raw, 'Evaluator report'))) as EvaluatorReport)
+  const territoryAssignments = runtime.territoryAssignments === undefined ? [] : array(runtime.territoryAssignments, 'Scouting territory assignments').map(parseScoutingTerritoryAssignmentV2)
+  const recruitmentFocuses = runtime.recruitmentFocuses === undefined ? [] : array(runtime.recruitmentFocuses, 'Scouting recruitment focuses').map((raw) => { const item = record(raw, 'Scouting recruitment focus'); return createScoutingRecruitmentFocus({ id: text(item.id, 'Focus id'), organizationId: organizationIdFromString(text(item.organizationId, 'Focus organization')), requestingTeamId: teamIdFromString(text(item.requestingTeamId, 'Focus team')), name: text(item.name, 'Focus name'), positions: array(item.positions, 'Focus positions').map((position) => enumValue(position, ['PG', 'SG', 'SF', 'PF', 'C'], 'Focus position') as import('@/domain/primitives').BasketballPosition), ...(item.minimumAge === undefined ? {} : { minimumAge: bounded(item.minimumAge, 'Focus minimum age', 0, 100) }), ...(item.maximumAge === undefined ? {} : { maximumAge: bounded(item.maximumAge, 'Focus maximum age', 0, 100) }), ...(item.knowledgeState === undefined ? {} : { knowledgeState: enumValue(item.knowledgeState, ['ANY', 'DISCOVERED', 'EVALUATED'], 'Focus knowledge state') as ScoutingRecruitmentFocus['knowledgeState'] }), ...(item.evaluationDimension === undefined ? {} : { evaluationDimension: enumValue(item.evaluationDimension, ['finishing', 'shooting', 'creation', 'perimeterDefense', 'interiorDefense', 'rebounding', 'physical'], 'Focus evaluation dimension') as ScoutingRecruitmentFocus['evaluationDimension'] }), ...(item.minimumCurrentLevel === undefined ? {} : { minimumCurrentLevel: bounded(item.minimumCurrentLevel, 'Focus current level', 0, 100) }), ...(item.minimumPotentialLevel === undefined ? {} : { minimumPotentialLevel: bounded(item.minimumPotentialLevel, 'Focus potential level', 0, 100) }), territories: array(item.territories, 'Focus territories').map(parseScoutingTerritoryV2), scoutStaffIds: array(item.scoutStaffIds, 'Focus Scouts').map((id) => staffPersonIdFromString(text(id, 'Focus Scout'))), priority: enumValue(item.priority, ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'Focus priority') as ScoutingRecruitmentFocus['priority'], duration: enumValue(item.duration, ['SHORT', 'MEDIUM', 'ONGOING'], 'Focus duration') as ScoutingRecruitmentFocus['duration'], daysActive: bounded(item.daysActive, 'Focus active days', 0, 100000), status: enumValue(item.status, ['ACTIVE', 'COMPLETED', 'CANCELLED'], 'Focus status') as ScoutingRecruitmentFocus['status'], createdAt: parseGameDate(text(item.createdAt, 'Focus created date')), ...(item.lastProcessedAt === undefined ? {} : { lastProcessedAt: parseGameDate(text(item.lastProcessedAt, 'Focus last processed date')) }), ...(item.completedAt === undefined ? {} : { completedAt: parseGameDate(text(item.completedAt, 'Focus completed date')) }), ...(item.cancelledAt === undefined ? {} : { cancelledAt: parseGameDate(text(item.cancelledAt, 'Focus cancelled date')) }), ...(item.dismissedPlayerIds === undefined ? {} : { dismissedPlayerIds: array(item.dismissedPlayerIds, 'Focus dismissed Players').map((id) => playerIdFromString(text(id, 'Dismissed Player'))) }) }) })
+  const playerAwareness = runtime.playerAwareness === undefined ? [] : array(runtime.playerAwareness, 'Organization player awareness').map(parseOrganizationPlayerAwarenessV2)
   const policies = runtime.organizationPolicies === undefined ? {} : Object.fromEntries(Object.entries(record(runtime.organizationPolicies, 'Organization policies')).map(([id, raw]) => { const policy=record(raw, 'Organization policy'); assertExactKeys(policy, ['riskTolerance','certaintyPreference','upsidePreference','currentAbilityPreference','scoutingReliance'], 'Organization policy'); return [organizationIdFromString(id), {riskTolerance:bounded(policy.riskTolerance,'riskTolerance',0,100),certaintyPreference:bounded(policy.certaintyPreference,'certaintyPreference',0,100),upsidePreference:bounded(policy.upsidePreference,'upsidePreference',0,100),currentAbilityPreference:bounded(policy.currentAbilityPreference,'currentAbilityPreference',0,100),scoutingReliance:bounded(policy.scoutingReliance,'scoutingReliance',0,100)}] })) as Readonly<Record<import('@/domain/ids').OrganizationId, OrganizationEvaluationPolicy>>
-  return { evidence, evaluatorProfilesByStaffId: Object.fromEntries(profiles.map((profile) => [profile.staffPersonId, profile])) as Readonly<Record<import('@/domain/ids').StaffPersonId, EvaluatorProfile>>, scoutingAssignments: assignments, evaluatorReports: reports, organizationEvaluationPoliciesById: policies }
+  return { evidence, evaluatorProfilesByStaffId: Object.fromEntries(profiles.map((profile) => [profile.staffPersonId, profile])) as Readonly<Record<import('@/domain/ids').StaffPersonId, EvaluatorProfile>>, scoutingAssignments: assignments, evaluatorReports: reports, organizationEvaluationPoliciesById: policies, scoutingTerritoryAssignments: territoryAssignments, scoutingRecruitmentFocuses: recruitmentFocuses, organizationPlayerAwareness: playerAwareness }
+}
+
+function parseScoutingTerritoryV2(value: unknown): ScoutingTerritory {
+  const item = record(value, 'Scouting territory')
+  if (item.kind === 'COUNTRY') {
+    assertExactKeys(item, ['kind', 'countryId'], 'Country scouting territory')
+    return { kind: 'COUNTRY', countryId: countryIdFromString(text(item.countryId, 'Scouting territory country')) }
+  }
+  if (item.kind === 'COMPETITION') {
+    assertExactKeys(item, ['kind', 'competitionId'], 'Competition scouting territory')
+    return { kind: 'COMPETITION', competitionId: competitionIdFromString(text(item.competitionId, 'Scouting territory competition')) }
+  }
+  throw new TypeError('Scouting territory kind is invalid')
+}
+
+function parseScoutingTerritoryAssignmentV2(value: unknown): ScoutingTerritoryAssignment {
+  const item = record(value, 'Scouting territory assignment')
+  assertExactKeys(item, ['id', 'organizationId', 'requestingTeamId', 'scoutStaffId', 'territory', 'startedAt', 'status', ...(item.recruitmentFocusId === undefined ? [] : ['recruitmentFocusId']), ...(item.priority === undefined ? [] : ['priority']), ...(item.lastProcessedAt === undefined ? [] : ['lastProcessedAt']), ...(item.endedAt === undefined ? [] : ['endedAt'])], 'Scouting territory assignment')
+  return createScoutingTerritoryAssignment({
+    id: text(item.id, 'Scouting territory assignment id'),
+    organizationId: organizationIdFromString(text(item.organizationId, 'Scouting territory organization')),
+    requestingTeamId: teamIdFromString(text(item.requestingTeamId, 'Scouting territory team')),
+    scoutStaffId: staffPersonIdFromString(text(item.scoutStaffId, 'Scouting territory Scout')),
+    ...(item.recruitmentFocusId === undefined ? {} : { recruitmentFocusId: text(item.recruitmentFocusId, 'Recruitment Focus id') }),
+    ...(item.priority === undefined ? {} : { priority: enumValue(item.priority, ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'Scouting territory priority') as ScoutingTerritoryAssignment['priority'] }),
+    territory: parseScoutingTerritoryV2(item.territory),
+    startedAt: parseGameDate(text(item.startedAt, 'Scouting territory start date')),
+    status: enumValue(item.status, ['ACTIVE', 'ENDED'], 'Scouting territory status') as ScoutingTerritoryAssignment['status'],
+    ...(item.lastProcessedAt === undefined ? {} : { lastProcessedAt: parseGameDate(text(item.lastProcessedAt, 'Scouting territory last processed date')) }),
+    ...(item.endedAt === undefined ? {} : { endedAt: parseGameDate(text(item.endedAt, 'Scouting territory end date')) }),
+  })
+}
+
+function parseOrganizationPlayerAwarenessV2(value: unknown): OrganizationPlayerAwareness {
+  const item = record(value, 'Organization player awareness')
+  assertExactKeys(item, ['id', 'organizationId', 'playerId', 'discoveredAt', 'source', 'discoveredByStaffId', 'territory'], 'Organization player awareness')
+  return createOrganizationPlayerAwareness({
+    id: text(item.id, 'Organization player awareness id'),
+    organizationId: organizationIdFromString(text(item.organizationId, 'Organization player awareness organization')),
+    playerId: playerIdFromString(text(item.playerId, 'Organization player awareness Player')),
+    discoveredAt: parseGameDate(text(item.discoveredAt, 'Organization player awareness date')),
+    source: enumValue(item.source, ['TERRITORY_DISCOVERY'], 'Organization player awareness source') as OrganizationPlayerAwareness['source'],
+    discoveredByStaffId: staffPersonIdFromString(text(item.discoveredByStaffId, 'Organization player awareness Scout')),
+    territory: parseScoutingTerritoryV2(item.territory),
+  })
 }
 
 /**
  * `staffQualityScore` (Wave 3) is the only `ScoutingAssignment` field with a closed domain
- * contract (optional, finite, 0-100) — the rest of the assignment shape is preserved via the
+ * contract (optional, finite, 0-100) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the rest of the assignment shape is preserved via the
  * existing plain JSON cast (already-established V2 discipline for this record) since it carries
  * no new Wave 3 semantics. A save with an out-of-range or non-finite `staffQualityScore` is
  * rejected rather than silently clamped or dropped.

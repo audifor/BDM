@@ -2,7 +2,7 @@ import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus
 import { createDevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, timeToMinutes, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
-import { calculateStaffRoleProficiencyByRoleId, type StaffRoleId } from '@/domain/staff'
+import { calculateStaffRoleProficiencyByRoleId, isTrainingStaffRoleEligible, trainingStaffRoleFit } from '@/domain/staff'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome } from '@/domain/responsibility'
 import { addDays, type GameDate } from '@/domain/date'
@@ -210,7 +210,9 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     ...(intensityDelegation === undefined ? [] : [intensityDelegation.outcome]),
   ]
 
-  const moduleName = (session.moduleId === undefined ? undefined : world.userTrainingModulesById[session.moduleId]?.name) ?? definition.name
+  const plannedDefinition = trainingDefinitionById(session.definitionId)
+  const plannedModuleName = (session.moduleId === undefined ? undefined : world.userTrainingModulesById[session.moduleId]?.name) ?? plannedDefinition.name
+  const moduleName = planDelegation === undefined ? plannedModuleName : definition.name
   const completedSession: ScheduledTrainingSession = {
     ...session,
     assignedStaffPersonIds: undefined,
@@ -221,6 +223,11 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
       category: definition.category,
       effectiveIntensity: intensity,
       executingStaffPersonIds: session.assignedStaffPersonIds ?? [],
+      executingStaffRoles: (session.assignedStaffPersonIds ?? []).flatMap((staffId) => {
+        const roleId = world.staffEmploymentByStaffId[staffId]?.roleId
+        return roleId === undefined ? [] : [{ staffId, roleId }]
+      }),
+      plannedModuleName,
       executionQualityMultiplier: executionMultiplier,
       participants: participantEvidence,
       cohesionDelta: (teamCohesionByTeamId[session.teamId] ?? 50) - (world.teamCohesionByTeamId[session.teamId] ?? 50),
@@ -239,40 +246,18 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   })
 }
 
-const CATEGORY_ROLE_FIT: Readonly<Record<TrainingDefinition['category'], Readonly<Partial<Record<StaffRoleId, number>>>>> = {
-  shooting: { shootingCoach: 1, skillsCoach: .92, playerDevelopmentCoach: .85, associateCoach: .65, assistantCoach: .6 },
-  finishing: { skillsCoach: 1, playerDevelopmentCoach: .9, bigManCoach: .85, shootingCoach: .55, assistantCoach: .5 },
-  ballHandling: { skillsCoach: 1, playerDevelopmentCoach: .9, assistantCoach: .6, associateCoach: .55 },
-  playmaking: { offensiveSpecialist: 1, associateCoach: .95, assistantCoach: .85, playerDevelopmentCoach: .7, skillsCoach: .65, analyticsStaff: .55 },
-  defense: { defensiveSpecialist: 1, associateCoach: .9, assistantCoach: .85, analyticsStaff: .55 },
-  rebounding: { bigManCoach: 1, defensiveSpecialist: .85, assistantCoach: .7, associateCoach: .7 },
-  physical: { strengthConditioningCoach: 1, performanceCoach: .95, loadManagementSpecialist: .8, developmentSpecialist: .7, sportsScientist: .7 },
-  recovery: { physiotherapist: 1, rehabilitationSpecialist: 1, loadManagementSpecialist: .95, sportsScientist: .9, performanceCoach: .85, teamDoctor: .75, strengthConditioningCoach: .65 },
-  tactical: { associateCoach: .95, assistantCoach: .85, offensiveSpecialist: .8, defensiveSpecialist: .8, analyticsStaff: .65, playerDevelopmentCoach: .5 },
-}
-
-const TACTICAL_DEFINITION_ROLE_FIT: Readonly<Record<string, Readonly<Partial<Record<StaffRoleId, number>>>>> = {
-  offensiveSystem: { offensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .6, playerDevelopmentCoach: .5, defensiveSpecialist: .15 },
-  spacing: { offensiveSpecialist: 1, associateCoach: .9, assistantCoach: .82, analyticsStaff: .65, skillsCoach: .5, defensiveSpecialist: .15 },
-  pickAndRollOffense: { offensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .65, defensiveSpecialist: .15 },
-  defensiveSystem: { defensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .6, offensiveSpecialist: .15 },
-  pickAndRollDefense: { defensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .65, offensiveSpecialist: .15 },
-  transition: { offensiveSpecialist: .9, associateCoach: .88, assistantCoach: .82, performanceCoach: .75, strengthConditioningCoach: .65, defensiveSpecialist: .55 },
-  teamCohesion: { associateCoach: .95, assistantCoach: .9, playerDevelopmentCoach: .85, performanceCoach: .65, skillsCoach: .55 },
-}
-
-function roleFitForDefinition(definition: TrainingDefinition, roleId: StaffRoleId): number {
-  const definitionFit = definition.category === 'tactical' ? TACTICAL_DEFINITION_ROLE_FIT[definition.id] : undefined
-  return definitionFit?.[roleId] ?? CATEGORY_ROLE_FIT[definition.category][roleId] ?? .1
-}
-
 /** 0..100 execution suitability for one StaffPerson on this concrete session/definition. */
 export function trainingStaffSuitabilityScore(world: GameWorld, session: ScheduledTrainingSession, staffId: StaffPersonId, definition = trainingDefinitionById(session.definitionId)): number {
   const person = world.staffPeopleById[staffId]
   if (person === undefined) return 0
   const assignments = Object.values(world.teamStaffAssignmentsById).filter((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
   if (assignments.length === 0) return 0
-  const best = Math.max(...assignments.map((assignment) => roleFitForDefinition(definition, assignment.role) * calculateStaffRoleProficiencyByRoleId(person, assignment.role)))
+  const fits = assignments.flatMap((assignment) => {
+    const fit = trainingStaffRoleFit(assignment.role, definition.category, definition.id)
+    return fit === undefined ? [] : [fit * calculateStaffRoleProficiencyByRoleId(person, assignment.role)]
+  })
+  if (fits.length === 0) return 0
+  const best = Math.max(...fits)
   return Math.round(Math.max(0, Math.min(100, best)))
 }
 
@@ -296,11 +281,15 @@ function validateAssignedStaff(world: GameWorld, session: ScheduledTrainingSessi
   const assigned = session.assignedStaffPersonIds
   if (assigned === undefined) return
   if (new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
+  const definition = trainingDefinitionById(session.definitionId)
   for (const staffId of assigned) {
     if (world.staffPeopleById[staffId] === undefined) throw new RangeError(`Unknown scheduled session staff ${staffId}`)
     const employment = world.staffEmploymentByStaffId[staffId]
-    const activeAssignment = Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.staffPersonId === staffId && assignment.teamId === session.teamId)
-    if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !activeAssignment) throw new RangeError(`Scheduled session staff ${staffId} is not actively employed by this team`)
+    const activeAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId === staffId && assignment.teamId === session.teamId)
+    if (employment?.status !== 'employed' || employment.teamId !== session.teamId || activeAssignments.length === 0) throw new RangeError(`Scheduled session staff ${staffId} is not actively employed by this team`)
+    if (!activeAssignments.some((assignment) => isTrainingStaffRoleEligible(assignment.role, definition.category, definition.id))) {
+      throw new RangeError(`Staff ${staffId} is not eligible to execute ${definition.name}`)
+    }
     const conflict = existing.find((other) => other.status === 'scheduled' && other.id !== session.id && other.assignedStaffPersonIds?.includes(staffId) && other.date === session.date && timeRangesOverlap(session, other))
     if (conflict !== undefined) throw new RangeError(`Staff ${staffId} is already assigned to overlapping session ${conflict.id}`)
   }
@@ -348,6 +337,8 @@ function resolvePlanDelegation(world: GameWorld, session: ScheduledTrainingSessi
     kind,
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { sessionId: session.id, definitionId: definition.id, category: definition.category, scope: session.scope },
   })
   return { definition, responsibilityId: resolution.responsibilityId, qualityScore, outcome }
@@ -367,6 +358,8 @@ function resolveIntensityDelegation(world: GameWorld, session: ScheduledTraining
     kind: 'determineIntensity',
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { sessionId: session.id, intensity, scope: session.scope },
   })
   return { intensity, outcome }

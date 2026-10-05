@@ -113,7 +113,8 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     supportFundingPledges: runtime.supportFundingPledges, supportFundingPledgeEvents: runtime.supportFundingPledgeEvents, supportContributions: runtime.supportContributions,
     supportComplianceCases: runtime.supportComplianceCases, supportComplianceCaseEvents: runtime.supportComplianceCaseEvents, supportComplianceFindings: runtime.supportComplianceFindings, supportConflictDisclosures: runtime.supportConflictDisclosures, supportConsequences: runtime.supportConsequences, supportRemediations: runtime.supportRemediations,
   })
-  const withTrainingStaff = restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
+  const withCompleteStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withStaffCareer)))
+  const withTrainingStaff = restoreScheduledTrainingStaffAssignments(withCompleteStaffCareer, trainingStaffAssignments)
   return signedNegotiations.length === 0 && trades.executed.length === 0 ? withTrainingStaff : updateGameWorld(withTrainingStaff, {
     negotiations: [...Object.values(withTrainingStaff.negotiationsById).filter((item) => !signedNegotiations.some((signed) => signed.id === item.id)), ...signedNegotiations],
     tradeNegotiations: [...Object.values(withTrainingStaff.tradeNegotiationsById).filter((item) => !trades.executed.some((executed) => executed.id === item.id)), ...trades.executed],

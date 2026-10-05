@@ -38,7 +38,8 @@ describe('createAcbTestGame', () => {
     expect(playerNames.has('Facu Campazzo')).toBe(true)
     expect(playerNames.has('Edy Tavares')).toBe(true)
     expect(playerNames.has('Willy Hernangómez')).toBe(true)
-    expect(Object.values(world.playerKnowledgeById).filter((record) => record.observerTeamId === userTeam?.id)).toHaveLength(241)
+    expect(world.organizationKnowledge.filter((record) => record.organizationId === userTeam?.organizationId)).toHaveLength(241)
+    expect(world).not.toHaveProperty('playerKnowledgeById')
   })
 
   it('allows any ACB club to become the user team', () => {

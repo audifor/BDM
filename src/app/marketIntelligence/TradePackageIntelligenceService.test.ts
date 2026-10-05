@@ -10,6 +10,7 @@ import type { OrganizationKnowledge } from '@/domain/knowledge'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
+import { PLAYER_RATING_FAMILY_KEYS, ratingKnowledgeDimensionFor } from '@/domain/player'
 
 import { assessTradePackageIntelligence } from './TradePackageIntelligenceService'
 
@@ -50,7 +51,7 @@ function configuredTradeWorld(): { readonly world: GameWorld; readonly teamId: T
     { organizationId: orgA, playerId: targetPlayerId as never, availability: 'LISTENING', sellerWillingness: 65, confidence: 85, assessedAt: world.currentDate, source: 'CLUB_CONTACT' },
   ]
   const organizationKnowledge: readonly OrganizationKnowledge[] = [
-    createOrganizationKnowledge({ organizationId: orgA, subjectPlayerId: targetPlayerId as never, dimensions: { shooting: { coverage: 0.8, confidence: 0.9, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 68, uncertainty: 5 } } }),
+    createOrganizationKnowledge({ organizationId: orgA, subjectPlayerId: targetPlayerId as never, dimensions: Object.fromEntries(PLAYER_RATING_FAMILY_KEYS.shooting.slice(0, 6).map((key) => [ratingKnowledgeDimensionFor(key), { coverage: 1, confidence: 0.9, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 68, uncertainty: 5 }])) }),
     createOrganizationKnowledge({ organizationId: orgB, subjectPlayerId: targetPlayerId as never, dimensions: { finishing: { coverage: 0.7, confidence: 0.8, assessedAt: world.currentDate, provenance: 'ownObservation', estimate: 72, uncertainty: 4 } } }),
     createOrganizationKnowledge({ organizationId: orgB, subjectPlayerId: team.rosterPlayerIds[0] as never, dimensions: { creation: { coverage: 0.95, confidence: 0.95, assessedAt: world.currentDate, provenance: 'ownObservation', estimate: 74, uncertainty: 2 } } }),
   ]

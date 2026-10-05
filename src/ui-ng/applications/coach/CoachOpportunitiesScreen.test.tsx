@@ -180,8 +180,8 @@ describe('CoachOpportunitiesScreen', () => {
     expect(within(salary!).getByText(String(COACH_OPPORTUNITIES_MOCK.salaryExpectations))).toBeInTheDocument()
   })
 
-  it('builds the live fit profile from canonical Staff when the legacy Coach profile map is absent', () => {
-    const world = updateGameWorld(createNewGame(), { coachProfessionalProfilesByCoachId: {} })
+  it('builds the live fit profile from canonical Staff', () => {
+    const world = createNewGame()
     const coach = world.coaches[world.userCoachId]!
     const professional = world.staffPeopleById[coach.staffProfileId]!.professional
 
@@ -266,12 +266,12 @@ describe('CoachOpportunitiesScreen', () => {
     }
   })
 
-  it('renders the empty shell without a world and uses canonical Staff without legacy Coach profiles', () => {
+  it('renders the empty shell without a world and uses the canonical Coach Staff profile', () => {
     const { unmount } = render(<CoachOpportunitiesScreen />)
     expect(screen.getByText('No career loaded.')).toBeInTheDocument()
     unmount()
 
-    const world = updateGameWorld(createNewGame(), { coachProfessionalProfilesByCoachId: {} })
+    const world = createNewGame()
     render(<CoachOpportunitiesScreen world={world} />)
     expect(screen.getByRole('heading', { name: /Market overview/ })).toBeInTheDocument()
     expect(screen.queryByText('Coach profile unavailable.')).not.toBeInTheDocument()

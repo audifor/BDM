@@ -69,6 +69,13 @@ export function OverviewIdentityModule({ overview }: { readonly overview: Player
             <span className="po-ov-tag__value ng-type-numeric">{chip.value}</span>
           </li>
         ))}
+        {identity.scoutedDimensions.map((dimension) => (
+          <li className="po-ov-tag" key={dimension.id}>
+            <span className="po-ov-tag__label">{dimension.label}</span>
+            <span className="po-ov-tag__value ng-type-numeric">{dimension.displayLabel}</span>
+            <span className="po-ov-tag__label">{dimension.confidence}% confidence · {dimension.coveragePercent}% coverage</span>
+          </li>
+        ))}
       </ul>
 
       <p className="po-ov-identity__description">{identity.description}</p>

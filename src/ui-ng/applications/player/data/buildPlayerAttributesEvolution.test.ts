@@ -228,13 +228,7 @@ describe('buildPlayerAttributesEvolution', () => {
     const outsiderId = otherTeam.rosterPlayerIds[0]!
 
     expect(getPlayerRosterTeamId(world, outsiderId)).not.toBe(userTeam.id)
-    const assignment = buildPlayerAttributesEvolution(world, world.players[outsiderId]!).THREE_POINT_STATIC
-      .assignment
-
-    expect(assignment.status).toBe('unavailable')
-    expect(assignment.date).toBeNull()
-    expect(assignment.sessionId).toBeNull()
-    expect(assignment.reason).toContain('canonical 80-key')
+    expect(buildPlayerAttributesEvolution(world, world.players[outsiderId]!)).toEqual({})
   })
 
   it('reports the pending individual session as the next training', () => {

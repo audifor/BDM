@@ -107,6 +107,7 @@ const attributes = {
 
 const model = {
   identity: { playerId: 'player-test' },
+  knowledgeAccess: { kind: 'own-roster' },
   attributes,
   radarAxes: [],
 } as unknown as PlayerWorkspaceModel

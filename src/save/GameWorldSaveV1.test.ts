@@ -5,6 +5,7 @@ import { calculateAge } from '@/domain/player'
 import { createDeadMoneyCharge, createTeamSalaryException } from '@/domain/salary'
 import { updateGameWorld } from '@/domain/world'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
+import { getCoachProfessionalProfile } from '@/domain/world/queries'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
 import { executeTeamTraining } from '@/engine/training'
 import { advanceDay } from '@/engine/calendar'
@@ -16,9 +17,22 @@ describe('GameWorldSaveV1', () => {
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
 
     expect(loaded).toEqual(world)
-    expect(loaded.coachProfessionalProfilesByCoachId).toEqual(world.coachProfessionalProfilesByCoachId)
     expect(loaded.coachRpgProfilesByCoachId).toEqual(world.coachRpgProfilesByCoachId)
+    expect('coachProfessionalProfilesByCoachId' in saved.payload).toBe(false)
+    expect(getCoachProfessionalProfile(loaded, loaded.userCoachId)).toEqual(loaded.staffPeopleById[loaded.coaches[loaded.userCoachId]!.staffProfileId]!.professional)
     expect(saved.payload.players).not.toBe(Object.values(world.players))
+  })
+
+  it('round-trips canonical Coach-linked Staff professional values without writing the legacy map', () => {
+    const world = createNewGame()
+    const coach = world.coaches[world.userCoachId]!
+    const professional = world.staffPeopleById[coach.staffProfileId]!.professional
+    const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const loaded = deserializeGameWorldV1(saved)
+
+    expect('coachProfessionalProfilesByCoachId' in saved.payload).toBe(false)
+    expect(loaded.staffPeopleById[coach.staffProfileId]!.professional).toEqual(professional)
+    expect(getCoachProfessionalProfile(loaded, coach.id)).toEqual(professional)
   })
 
   it('preserves decimal source measurements for Player bio and Person roots', () => {
@@ -146,6 +160,43 @@ describe('GameWorldSaveV1', () => {
     expect(Object.keys(loaded.personsById).every((id) => !id.startsWith('person:coach:'))).toBe(true)
   })
 
+  it('uses canonical Staff professional values when a legacy Coach map conflicts', () => {
+    const world = createNewGame()
+    const envelope = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const coach = world.coaches[world.userCoachId]!
+    const canonical = world.staffPeopleById[coach.staffProfileId]!.professional
+    const conflicting = { ...canonical, attributes: { ...canonical.attributes, analysis: canonical.attributes.analysis === 0 ? 1 : 0 } }
+    const legacyPayload = {
+      ...envelope.payload,
+      coachProfessionalProfilesByCoachId: [{ coachId: coach.id, profile: conflicting }],
+    }
+
+    const loaded = deserializeGameWorldV1({ ...envelope, payload: legacyPayload })
+
+    expect(loaded.staffPeopleById[coach.staffProfileId]!.professional).toEqual(canonical)
+    expect(getCoachProfessionalProfile(loaded, coach.id)).toEqual(canonical)
+    expect(loaded).not.toHaveProperty('coachProfessionalProfilesByCoachId')
+  })
+
+  it('seeds missing legacy Coach Staff professional values from the old Coach map', () => {
+    const world = createNewGame()
+    const envelope = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const coach = world.coaches[world.userCoachId]!
+    const profile = world.staffPeopleById[coach.staffProfileId]!.professional
+    const legacyPayload = {
+      ...envelope.payload,
+      staffPeople: envelope.payload.staffPeople.filter((staff) => staff.id !== coach.staffProfileId),
+      teamStaffAssignments: envelope.payload.teamStaffAssignments.filter((assignment) => assignment.staffPersonId !== coach.staffProfileId),
+      coachProfessionalProfilesByCoachId: [{ coachId: coach.id, profile }],
+    }
+
+    const loaded = deserializeGameWorldV1({ ...envelope, payload: legacyPayload })
+
+    expect(loaded.staffPeopleById[coach.staffProfileId]!.professional).toEqual(profile)
+    expect(getCoachProfessionalProfile(loaded, coach.id)).toEqual(profile)
+    expect(Object.values(loaded.teamStaffAssignmentsById)).toContainEqual(expect.objectContaining({ staffPersonId: coach.staffProfileId, role: 'headCoach' }))
+  })
+
   it('rejects unsupported schemas and corrupted collections', () => {
     expect(() => deserializeGameWorldV1({ schemaVersion: 2, savedAt: '2032-10-01T12:00:00.000Z', payload: {} })).toThrow('Unsupported save version')
     expect(() => deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T12:00:00.000Z', payload: { countries: {} } })).toThrow('Save seasons')
@@ -209,7 +260,7 @@ describe('GameWorldSaveV1', () => {
   })
 })
 
-function withoutCoachRpgProfiles<T extends { readonly coachProfessionalProfilesByCoachId: unknown; readonly coachRpgProfilesByCoachId: unknown }>(world: T): Omit<T, 'coachProfessionalProfilesByCoachId' | 'coachRpgProfilesByCoachId'> {
-  const { coachProfessionalProfilesByCoachId: _professional, coachRpgProfilesByCoachId: _rpg, ...remaining } = world
+function withoutCoachRpgProfiles<T extends { readonly coachRpgProfilesByCoachId: unknown }>(world: T): Omit<T, 'coachRpgProfilesByCoachId'> {
+  const { coachRpgProfilesByCoachId: _rpg, ...remaining } = world
   return remaining
 }

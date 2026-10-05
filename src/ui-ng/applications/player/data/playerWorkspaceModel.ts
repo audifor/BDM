@@ -9,6 +9,7 @@ import type { PlayerContractModel } from './buildPlayerContractModel'
 import type { PlayerMedicalModel, MedicalRiskOverviewTone } from './buildPlayerMedicalModel'
 import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerStructuralData'
 import type { PlayerDevelopmentModel } from './buildPlayerDevelopmentModel'
+import type { PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 import type { PlayerHistoryModel } from './buildPlayerHistoryModel'
 import type { RatingCategory } from './ratingCatalog'
 
@@ -265,6 +266,7 @@ export interface OverviewIdentityModuleModel {
   readonly archetypeTitle: string
   readonly roleTitle: string
   readonly chips: readonly OverviewChipModel[]
+  readonly scoutedDimensions: readonly { readonly id: string; readonly label: string; readonly displayLabel: string; readonly confidence: number; readonly coveragePercent: number }[]
   readonly description: string
   readonly teamName: PresentationField<string>
   readonly squadRole: PresentationField<string>
@@ -438,8 +440,8 @@ export interface PlayerOverviewModel {
 }
 
 export interface PlayerWorkspaceModel {
-  /** Complete canonical runtime records; view-specific projections must not discard fields. */
-  readonly player: Player
+  /** The single authorization result used to build every Player profile surface. */
+  readonly knowledgeAccess: PlayerKnowledgeAccess
   readonly person: Person | undefined
   readonly identity: PlayerIdentityModel
   readonly status: PlayerStatusModel

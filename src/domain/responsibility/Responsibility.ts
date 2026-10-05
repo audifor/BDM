@@ -58,6 +58,7 @@ export const RESPONSIBILITY_MODES = ['userControlled', 'delegated', 'advisory', 
 export type ResponsibilityMode = typeof RESPONSIBILITY_MODES[number]
 
 export type ResponsibilityParticipant = 'staff' | 'coach'
+export type ResponsibilityDisposition = 'CONNECTED' | 'RETIRED' | 'DEFERRED_WITH_OWNER' | 'DEFERRED_TO_NON_BS13_OWNER'
 
 export interface ResponsibilityDefinition {
   readonly kind: ResponsibilityKind
@@ -70,24 +71,28 @@ export interface ResponsibilityDefinition {
   readonly supportedModes: readonly ResponsibilityMode[]
   /** Workload units consumed while held. See `calculateStaffWorkload`. */
   readonly capacityCost: number
+  /** Whether this registry kind has a live consumer. Non-connected kinds remain for legacy saves and auditability. */
+  readonly disposition: ResponsibilityDisposition
+  /** Named milestone/team responsible for a deferred kind. */
+  readonly dispositionOwner?: string
 }
 
-function def(kind: ResponsibilityKind, domain: ResponsibilityDomain, eligibleRoleIds: readonly StaffRoleId[], capacityCost: number, supportedModes: readonly ResponsibilityMode[] = ['userControlled', 'delegated', 'advisory', 'organizational']): ResponsibilityDefinition {
-  return { kind, domain, eligibleRoleIds, eligibleParticipant: 'staff', defaultMode: 'userControlled', supportedModes, capacityCost }
+function def(kind: ResponsibilityKind, domain: ResponsibilityDomain, eligibleRoleIds: readonly StaffRoleId[], capacityCost: number, supportedModes: readonly ResponsibilityMode[] = ['userControlled', 'delegated', 'advisory', 'organizational'], disposition: ResponsibilityDisposition = 'CONNECTED', dispositionOwner?: string): ResponsibilityDefinition {
+  return { kind, domain, eligibleRoleIds, eligibleParticipant: 'staff', defaultMode: 'userControlled', supportedModes, capacityCost, disposition, ...(dispositionOwner === undefined ? {} : { dispositionOwner }) }
 }
 
 export const RESPONSIBILITY_REGISTRY: Readonly<Record<ResponsibilityKind, ResponsibilityDefinition>> = {
   createTeamTrainingPlan: def('createTeamTrainingPlan', 'training', ['assistantCoach', 'associateCoach', 'playerDevelopmentCoach', 'performanceCoach'], 2),
   assignIndividualDevelopment: def('assignIndividualDevelopment', 'training', ['playerDevelopmentCoach', 'assistantCoach', 'shootingCoach', 'skillsCoach', 'bigManCoach', 'developmentSpecialist'], 2),
-  manageRecovery: def('manageRecovery', 'training', ['physiotherapist', 'rehabilitationSpecialist', 'teamDoctor', 'sportsScientist'], 2),
+  manageRecovery: def('manageRecovery', 'training', ['physiotherapist', 'rehabilitationSpecialist', 'teamDoctor', 'sportsScientist'], 2, undefined, 'RETIRED'),
   determineIntensity: def('determineIntensity', 'training', ['strengthConditioningCoach', 'performanceCoach', 'loadManagementSpecialist'], 1),
-  recommendWorkloadChange: def('recommendWorkloadChange', 'training', ['strengthConditioningCoach', 'performanceCoach', 'loadManagementSpecialist', 'sportsScientist'], 1, ['userControlled', 'advisory', 'organizational']),
+  recommendWorkloadChange: def('recommendWorkloadChange', 'training', ['strengthConditioningCoach', 'performanceCoach', 'loadManagementSpecialist', 'sportsScientist'], 1, ['userControlled', 'advisory', 'organizational'], 'RETIRED'),
 
   oppositionScouting: def('oppositionScouting', 'tactics', ['advanceScout', 'headScout', 'assistantCoach', 'offensiveSpecialist', 'defensiveSpecialist'], 2, ['userControlled', 'advisory', 'organizational']),
-  defensiveGamePlan: def('defensiveGamePlan', 'tactics', ['defensiveSpecialist', 'associateCoach', 'assistantCoach'], 2),
-  offensivePreparation: def('offensivePreparation', 'tactics', ['offensiveSpecialist', 'associateCoach', 'assistantCoach'], 2),
-  rotationPlanning: { ...def('rotationPlanning', 'tactics', [], 1, ['userControlled']), eligibleParticipant: 'coach' },
-  matchupRecommendation: def('matchupRecommendation', 'tactics', ['advanceScout', 'assistantCoach'], 1, ['userControlled', 'advisory', 'organizational']),
+  defensiveGamePlan: def('defensiveGamePlan', 'tactics', ['defensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'RETIRED'),
+  offensivePreparation: def('offensivePreparation', 'tactics', ['offensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'DEFERRED_TO_NON_BS13_OWNER', 'Tactics planning owner · future non-BS13 tactical-planning milestone'),
+  rotationPlanning: { ...def('rotationPlanning', 'tactics', [], 1, ['userControlled'], 'RETIRED'), eligibleParticipant: 'coach' },
+  matchupRecommendation: def('matchupRecommendation', 'tactics', ['advanceScout', 'assistantCoach'], 1, ['userControlled', 'advisory', 'organizational'], 'DEFERRED_TO_NON_BS13_OWNER', 'Tactics/Rotation planning owner · future non-BS13 tactical-planning milestone'),
 
   assignScouts: def('assignScouts', 'scouting', ['headScout', 'regionalScout'], 2),
   prioritizeRegions: def('prioritizeRegions', 'scouting', ['headScout', 'regionalScout'], 1),
@@ -126,6 +131,10 @@ export function responsibilityDefinition(kind: ResponsibilityKind): Responsibili
   const definition = RESPONSIBILITY_REGISTRY[kind]
   if (definition === undefined) throw new RangeError(`Unknown Responsibility kind: ${kind}`)
   return definition
+}
+
+export function isResponsibilityConnected(kind: ResponsibilityKind): boolean {
+  return responsibilityDefinition(kind).disposition === 'CONNECTED'
 }
 
 /** Structural validation only — eligibility against a concrete StaffPerson's role is checked by `validateResponsibilityAssignment`. */
@@ -187,6 +196,10 @@ export interface DelegationOutcome {
   readonly applied: boolean
   /** 0-100, deterministic function of staff attributes/personality/context — never the "correct" answer. */
   readonly qualityScore: number
+  /** Historical assignment context; optional for saves written before this evidence was captured. */
+  readonly staffRoleIdAtDecision?: StaffRoleId
+  /** Whether the holder was overloaded when this decision was made. */
+  readonly staffWasOverloadedAtDecision?: boolean
   readonly payload: Readonly<Record<string, string | number | boolean>>
   readonly rationale?: string
   /**
@@ -214,6 +227,8 @@ export function createDelegationOutcome(input: DelegationOutcome): DelegationOut
     kind: input.kind,
     applied: input.applied,
     qualityScore: input.qualityScore,
+    ...(input.staffRoleIdAtDecision === undefined ? {} : { staffRoleIdAtDecision: input.staffRoleIdAtDecision }),
+    ...(input.staffWasOverloadedAtDecision === undefined ? {} : { staffWasOverloadedAtDecision: input.staffWasOverloadedAtDecision }),
     payload: { ...input.payload },
     ...(input.rationale === undefined ? {} : { rationale: input.rationale }),
     ...(input.userDisposition === undefined ? {} : { userDisposition: input.userDisposition }),

@@ -1,5 +1,6 @@
 import { type PlayerId, type StaffPersonId } from '@/domain/ids'
 import {
+  deriveAggregateEvaluationFromRatingKnowledge,
   formatRatingEvaluation,
   getOrganizationRatingEvaluation,
   type RatingEvaluation,
@@ -8,10 +9,11 @@ import { getPlayerGameLogs } from '@/engine/stats/PlayerHistory'
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
 import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
 
-import { formatGameDateLabel, findTeamForPlayer, opponentShortCode } from './presentationHelpers'
+import { formatGameDateLabel, opponentShortCode } from './presentationHelpers'
 import { ratingLabel } from './ratingCatalog'
 import { knowledgeDimensionLabel } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import type { AttributeHighlightModel, OverviewGapModel, PresentationAvailability } from './playerWorkspaceModel'
+import { derivePlayerKnowledgeAccess, type PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 /**
  * The six knowledge areas the reference shows. `dimensions` lists the real knowledge dimensions that
@@ -236,15 +238,15 @@ function estimateBounds(evaluation: RatingEvaluation): {
 export function buildPlayerScoutingModel(
   world: GameWorld,
   playerId: PlayerId,
+  access: PlayerKnowledgeAccess = derivePlayerKnowledgeAccess(world, playerId),
 ): PlayerScoutingModel {
   const player = world.players[playerId]
-  const team = findTeamForPlayer(world, playerId)
   const gaps = buildScoutingGaps()
 
-  if (player === undefined || team === undefined) {
+  if (player === undefined || access.organizationId === null) {
     return {
       status: 'unavailable',
-      unavailableLabel: team === undefined ? 'Requires a club context to read scouting knowledge.' : 'Player not found.',
+      unavailableLabel: player === undefined ? 'Player not found.' : 'Requires a club context to read scouting knowledge.',
       statusPanel: null,
       knowledgeAreas: [],
       attributes: [],
@@ -272,7 +274,7 @@ export function buildPlayerScoutingModel(
     }
   }
 
-  const organizationId = team.organizationId
+  const organizationId = access.organizationId
   const summary = getPlayerKnowledgeSummary(world, organizationId, playerId)
   const knowledge = world.organizationKnowledge.find(
     (entry) => entry.organizationId === organizationId && entry.subjectPlayerId === playerId,
@@ -293,14 +295,14 @@ export function buildPlayerScoutingModel(
   const statusPanel: ScoutingStatusModel = {
     // A coverage share with no evaluated dimension would read as knowledge the club does not have.
     knowledgeLabel:
-      summary.knownDomains.length === 0
+      access.knownDimensions.length + access.knownPotential.length === 0
         ? 'Not scouted'
         : `${Math.round(summary.overallCoverage * 100)}%`,
-    knowledgeCoverage: summary.knownDomains.length === 0 ? 0 : summary.overallCoverage,
-    knownDimensionCount: summary.knownDomains.length,
+    knowledgeCoverage: access.knownDimensions.length + access.knownPotential.length === 0 ? 0 : summary.overallCoverage,
+    knownDimensionCount: access.knownDimensions.length + access.knownPotential.length,
     confidenceLabel:
       summary.overallConfidence >= 0.75 ? 'High' : summary.overallConfidence >= 0.45 ? 'Medium' : 'Low',
-    confidenceNote: `Combined coverage across ${summary.knownDomains.length} scouted ${summary.knownDomains.length === 1 ? 'dimension' : 'dimensions'}.`,
+    confidenceNote: `Combined coverage across ${access.knownDimensions.length + access.knownPotential.length} scouted dimensions.`,
     lastScoutedLabel: summary.lastAssessedAt === undefined ? null : formatGameDateLabel(summary.lastAssessedAt),
     observerLabel,
     disagreementLabel: summary.disagreement,
@@ -330,9 +332,18 @@ export function buildPlayerScoutingModel(
         note: `${area.dimensions.map(knowledgeDimensionLabel).join(', ')} have not been evaluated yet.`,
       }
     }
-    const coverage =
-      known.reduce((sum, dimension) => sum + (knowledge?.dimensions[dimension]?.coverage ?? 0), 0) /
-      known.length
+    const coverage = known.reduce((sum, dimension) => {
+      const storedCoverage = knowledge?.dimensions[dimension]?.coverage
+      if (storedCoverage !== undefined) return sum + storedCoverage
+      const derived = deriveAggregateEvaluationFromRatingKnowledge({
+        organizationId,
+        playerId,
+        knowledge: world.organizationKnowledge,
+        currentDate: world.currentDate,
+        publicPosition: player.basketball.primaryPosition,
+      }, dimension as 'finishing' | 'shooting' | 'creation' | 'perimeterDefense' | 'interiorDefense' | 'rebounding' | 'physical')
+      return sum + (derived?.coverage ?? 0)
+    }, 0) / known.length
     return {
       id: area.id,
       label: area.label,
@@ -443,7 +454,7 @@ export function buildPlayerScoutingModel(
       }
     })
 
-  const ranked = [...attributes].sort(
+  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'unknown').sort(
     (left, right) => (right.estimate ?? 0) - (left.estimate ?? 0) || left.label.localeCompare(right.label),
   )
   const toHighlight = (row: ScoutingAttributeRowModel): ScoutingHighlightModel => ({
@@ -452,17 +463,15 @@ export function buildPlayerScoutingModel(
     rangeLabel: row.rangeLabel,
     knowledgeState: row.knowledgeState,
   })
-  const strengths = ranked.slice(0, 5).map(toHighlight)
-  const weaknesses = [...ranked]
-    .reverse()
-    .slice(0, 5)
-    .map(toHighlight)
+  const strengths = ranked.filter((row) => (row.estimate ?? 0) >= 65).slice(0, 5).map(toHighlight)
+  const weaknesses = ranked.filter((row) => (row.estimate ?? 101) <= 40).slice(-5).map(toHighlight)
 
-  // Archetype from the scouts' own reading: the strongest scouted dimensions, never the true profile.
-  const archetypeDescriptors = ranked.slice(0, 3).map((row) => row.label)
+  // Archetype is a projection of broad OrganizationKnowledge only, and needs four reliable dimensions.
+  const archetypeSupported = ranked.length >= 4 && ranked.reduce((sum, row) => sum + (row.confidence ?? 0), 0) / ranked.length >= 0.6
+  const archetypeDescriptors = archetypeSupported ? ranked.slice(0, 3).map((row) => row.label) : []
   const archetypeTitle =
     archetypeDescriptors.length === 0
-      ? 'Not scouted'
+      ? 'Insufficient scouting information'
       : `${archetypeDescriptors[0]}-first ${player.basketball.primaryPosition === 'PG' ? 'lead guard' : 'player'}`
   const archetypeRoleTitle =
     archetypeDescriptors.length <= 1 ? 'Insufficient reports' : `${archetypeDescriptors[1]} · ${archetypeDescriptors[2]}`
@@ -601,8 +610,7 @@ export function buildPlayerScoutingModel(
     overallFitLabel: 'Unknown',
     teamFitNote: 'No tactical or locker-room fit model exists for a player.',
     noteTimeline,
-    actionsNote:
-      'Assigning a scout, changing priority or requesting a report are not actions this workspace can perform.',
+    actionsNote: 'Actions and availability reflect the current assignment and report history.',
     gaps,
   }
 }

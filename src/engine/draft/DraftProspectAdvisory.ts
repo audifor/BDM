@@ -53,6 +53,8 @@ export function progressDraftProspectAdvisories(world: GameWorld, draftId: strin
     kind: 'prospectReport',
     applied: false,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { draftId, draftPickId: pick.id, recommendedPlayerId },
   })
   return { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }

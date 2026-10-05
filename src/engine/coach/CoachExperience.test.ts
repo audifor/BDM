@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { createStaffProfessionalProfile, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { createGameWorld } from '@/domain/world'
+import { createGameWorld, getCoachProfessionalProfile } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { applyMatchResult } from '@/engine/match'
 import { generateWorld } from '@/engine/world'
@@ -71,7 +71,7 @@ describe('Coach experience', () => {
   it('awards each involved coach once at result application and tolerates legacy worlds without profiles', () => {
     const generated = generateWorld({ seed: 40, gender: 'female' })
     const games = generateRoundRobinSchedule({ world: generated, seasonId: generated.currentSeasonId })
-    const world = createGameWorld({ currentDate: generated.currentDate, currentSeasonId: generated.currentSeasonId, userCoachId: generated.userCoachId, countries: Object.values(generated.countries), coaches: Object.values(generated.coaches), players: Object.values(generated.players), teams: Object.values(generated.teams), staffPeople: Object.values(generated.staffPeopleById), teamStaffAssignments: Object.values(generated.teamStaffAssignmentsById), competitions: Object.values(generated.competitions), seasons: Object.values(generated.seasons), games, coachProfessionalProfilesByCoachId: generated.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: generated.coachRpgProfilesByCoachId })
+    const world = createGameWorld({ currentDate: generated.currentDate, currentSeasonId: generated.currentSeasonId, userCoachId: generated.userCoachId, countries: Object.values(generated.countries), coaches: Object.values(generated.coaches), players: Object.values(generated.players), teams: Object.values(generated.teams), staffPeople: Object.values(generated.staffPeopleById), teamStaffAssignments: Object.values(generated.teamStaffAssignmentsById), competitions: Object.values(generated.competitions), seasons: Object.values(generated.seasons), games, coachRpgProfilesByCoachId: generated.coachRpgProfilesByCoachId })
     const game = games[0]!
     const completed = applyMatchResult(world, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 81, awayScore: 78 })
     const homeCoach = world.teams[game.homeTeamId]!.coachId!
@@ -79,6 +79,10 @@ describe('Coach experience', () => {
 
     expect(completed.coachRpgProfilesByCoachId[homeCoach]!.professionalExperience.byAttribute.coaching).toBeGreaterThan(0)
     expect(completed.coachRpgProfilesByCoachId[awayCoach]!.professionalExperience.byAttribute.coaching).toBeGreaterThan(0)
+    for (const coachId of [homeCoach, awayCoach]) {
+      const staffId = completed.coaches[coachId]!.staffProfileId
+      expect(getCoachProfessionalProfile(completed, coachId)).toEqual(completed.staffPeopleById[staffId]!.professional)
+    }
     expect(() => applyMatchResult(completed, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 81, awayScore: 78 })).toThrow()
 
     const legacy = createGameWorld({ currentDate: generated.currentDate, currentSeasonId: generated.currentSeasonId, userCoachId: generated.userCoachId, countries: Object.values(generated.countries), coaches: Object.values(generated.coaches), players: Object.values(generated.players), teams: Object.values(generated.teams), staffPeople: Object.values(generated.staffPeopleById), teamStaffAssignments: Object.values(generated.teamStaffAssignmentsById), competitions: Object.values(generated.competitions), seasons: Object.values(generated.seasons), games })

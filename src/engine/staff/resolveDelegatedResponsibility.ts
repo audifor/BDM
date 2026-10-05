@@ -1,4 +1,4 @@
-import type { DecisionQualityContext, ResponsibilityId, ResponsibilityKind, ResponsibilityMode } from '@/domain/responsibility'
+import { isResponsibilityConnected, type DecisionQualityContext, type ResponsibilityId, type ResponsibilityKind, type ResponsibilityMode } from '@/domain/responsibility'
 import { relationshipKey } from '@/domain/relationships'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { getPersonality, getResponsibility, getStaffAssignment, getStaffPerson, getTeamCoach, calculateStaffWorkload, type GameWorld } from '@/domain/world'
@@ -27,6 +27,7 @@ export type AdvisoryResponsibilityResolution = DelegatedResponsibilityResolution
  * no caller-supplied fake role/context can ever reach a `DecisionQualityFn`.
  */
 function resolveResponsibilityHolder(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, expectedMode: ResponsibilityMode): DelegatedResponsibilityResolution | undefined {
+  if (!isResponsibilityConnected(kind)) return undefined
   const responsibility = getResponsibility(world, teamId, kind)
   if (responsibility === undefined || responsibility.mode !== expectedMode || responsibility.holderStaffId === undefined) return undefined
   const staffId = responsibility.holderStaffId

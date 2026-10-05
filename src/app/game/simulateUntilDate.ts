@@ -3,9 +3,10 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
-import { advanceGameDay, advanceGameDayAsync } from './advanceGameDay'
-import { getContinueStopReason, type ContinueStopReason } from './ContinueFlow'
+import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday } from './advanceGameDay'
+import { getContinueStopReason, getExplicitAdvanceStopReason, type ContinueStopReason } from './ContinueFlow'
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
+import { getScheduledGamesToday } from '@/engine/calendar'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
 import type { CompetitionSeasonTransitionResult } from './startNextSeason'
 
@@ -74,8 +75,10 @@ function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readon
   }
 
   const interruption = getContinueStopReason(world)
-  if (interruption !== undefined && interruption.type !== 'seasonComplete') {
-    return { tick: { world, event: { type: 'finished', stopReason: interruption } } }
+  const advanceStop = getExplicitAdvanceStopReason(world)
+  if (advanceStop !== undefined && advanceStop.type !== 'seasonComplete') {
+    return { tick: { world, event: { type: 'finished', stopReason: advanceStop } } }
+  }
   }
 
   // Checked every tick, not only when the primary (user-facing) competition happens to be
@@ -99,7 +102,7 @@ function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readon
     // `currentSeasonId` migrates naturally (see CalendarEngine.migrateCurrentSeasonIfElapsed).
     return { advanceAllowing: ['seasonComplete'] }
   }
-  if (interruption !== undefined) return { tick: { world, event: { type: 'finished', stopReason: interruption } } }
+  if (advanceStop !== undefined) return { tick: { world, event: { type: 'finished', stopReason: advanceStop } } }
 
   return { advanceAllowing: ['userGame'] }
 }
@@ -137,7 +140,10 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
     }
   }
 
-  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'arrived' }, seasonTransitions)
+  if (getExplicitAdvanceStopReason(current) === undefined && getScheduledGamesToday(current).length > 0) {
+    current = simulateRemainingGamesToday(current, createSeed)
+  }
+  return result(current, daysAdvanced, getExplicitAdvanceStopReason(current) ?? { type: 'arrived' }, seasonTransitions)
 }
 
 function result(world: GameWorld, daysAdvanced: number, stopReason: SimulateUntilStopReason, seasonTransitions: readonly CompetitionSeasonTransitionResult[] = []): SimulateUntilResult {

@@ -8,15 +8,17 @@ import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@
 import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
-import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
+import { isTrainingStaffRoleEligible, type StaffRoleId } from "@/domain/staff";
 import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
-import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
+import { TRAINING_CATALOG, sessionsForTrainingWeek, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
 import { usePrecisionDivGrid, type PrecisionDivColumn } from "@/ui-ng/components/usePrecisionDivGrid";
+import { Dialog } from "@/ui/components/designSystem";
+import { TrainingSessionHistoryDetails } from "@/ui-ng/applications/training/TrainingSessionHistoryDetails";
 import DraggableSubnav from "../club/components/DraggableSubnav";
 import "./TrainingPcbPage.css";
 
@@ -190,6 +192,15 @@ function eligibleTrainingStaff(world: GameWorld | undefined, team: Team | undefi
     .map((assignment) => ({ id: assignment.staffPersonId, role: assignment.role, name: `${world.staffPeopleById[assignment.staffPersonId]!.identity.firstName} ${world.staffPeopleById[assignment.staffPersonId]!.identity.lastName}` }));
 }
 
+function trainingStaffForDefinition<T extends { readonly role: string }>(staff: readonly T[], definition: TrainingDefinition): readonly T[] {
+  return staff.filter((candidate) => isTrainingStaffRoleEligible(candidate.role as StaffRoleId, definition.category, definition.id));
+}
+
+function trainingDefinitionForModule(world: GameWorld | undefined, moduleId: string): TrainingDefinition | undefined {
+  const definitionId = world?.userTrainingModulesById[moduleId]?.baseDefinitionId ?? moduleId;
+  return TRAINING_CATALOG.find((definition) => definition.id === definitionId);
+}
+
 export function TrainingPcbPage({
   initialTab = "team",
   world,
@@ -341,12 +352,14 @@ function TeamTraining({
   }>();
   const [editorError, setEditorError] = useState<string>();
   const [participationSessionId, setParticipationSessionId] = useState<string>();
+  const [completedSession, setCompletedSession] = useState<ScheduledTrainingSession>();
   const trainingPlan = world === undefined ? undefined : selectUserTrainingPlan(world);
   const latestSession = world === undefined ? undefined : selectLatestUserTrainingSession(world);
   const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
   const anchor = weekAnchor(world, week);
   const days = anchor === undefined ? [] : DAY_NAMES.map((name, index) => ({ name, date: addDays(anchor, index) }));
-  const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const weekSessions = anchor === undefined || team === undefined ? [] : sessionsForTrainingWeek(scheduledSessions, team.id, anchor);
+  const sessionsForDate = (date: GameDate) => weekSessions.filter((session) => session.date === date);
   const hasAutomaticDays = days.some(({ date }) => {
     if (world === undefined || team === undefined || date <= world.currentDate) return false;
     if (isMatchDay(world, team, date)) return false;
@@ -492,6 +505,15 @@ function TeamTraining({
                       sessions.map((session) => {
                         const definition = TRAINING_CATALOG.find((entry) => entry.id === session.definitionId);
                         const intensityEs = INTENSITY_ES[session.intensity];
+                        if (session.status === "completed") {
+                          const execution = session.execution;
+                          return (
+                            <button className="pcb-training__session pcb-training__session--completed" key={session.id} onClick={() => setCompletedSession(session)} type="button">
+                              <b>{execution?.moduleName ?? execution?.plannedModuleName ?? definition?.name ?? session.definitionId}</b>
+                              <small>{session.date}{' \u00B7 '}{session.startTime}{' \u00B7 '}COMPLETED{' \u00B7 '}{intensityEs}</small>
+                            </button>
+                          );
+                        }
                         return (
                           <article className="pcb-training__session" key={session.id}>
                             <button onClick={() => setEditor({ date, session })} type="button">
@@ -561,6 +583,18 @@ function TeamTraining({
           userModules={teamModules}
         />
       )}
+      <Dialog
+        open={completedSession !== undefined}
+        onClose={() => setCompletedSession(undefined)}
+        title={completedSession?.execution?.moduleName ?? completedSession?.execution?.plannedModuleName ?? "Completed Training session"}
+      >
+        {completedSession !== undefined && world !== undefined && (
+          <div className="pcb-training__history-modal">
+            <p><strong>{completedSession.date} · COMPLETED</strong></p>
+            <TrainingSessionHistoryDetails session={completedSession} world={world} />
+          </div>
+        )}
+      </Dialog>
     </main>
   );
 }
@@ -633,6 +667,8 @@ function SessionModal({
   const [staffIds, setStaffIds] = useState<readonly StaffPersonId[]>(initial?.assignedStaffPersonIds ?? []);
   const selectedUserModule = userModules.find((module) => module.id === moduleId);
   const definition = TRAINING_CATALOG.find((entry) => entry.id === (selectedUserModule?.baseDefinitionId ?? moduleId)) ?? builtinOptions[0]!;
+  const eligibleStaffForDefinition = trainingStaffForDefinition(eligibleStaff, definition);
+  const selectedStaffIds = staffIds.filter((staffId) => eligibleStaffForDefinition.some((staff) => staff.id === staffId));
   const effectiveIntensity: DomainTrainingIntensity = selectedUserModule?.intensity ?? INTENSITY_FROM_ES[intensity];
   const durationMinutes = definition.durationMinutes;
   const load = trainingLoad(effectiveIntensity).fatigue * definition.effects.fatigueMultiplier;
@@ -648,7 +684,10 @@ function SessionModal({
         <label>
           Tipo
           <select
-            onChange={(event) => setModuleId(event.target.value)}
+            onChange={(event) => {
+              setModuleId(event.target.value);
+              setStaffIds([]);
+            }}
             value={moduleId}
           >
             <optgroup label="Catálogo">
@@ -701,8 +740,8 @@ function SessionModal({
         </div>
         <label>
           Staff ejecutor
-          <select aria-label="Staff ejecutor" multiple onChange={(event) => setStaffIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId))} value={staffIds}>
-            {eligibleStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
+          <select aria-label="Staff ejecutor" multiple onChange={(event) => setStaffIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId))} value={selectedStaffIds}>
+            {eligibleStaffForDefinition.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
           </select>
         </label>
         {error !== undefined && (
@@ -716,7 +755,7 @@ function SessionModal({
           </button>
           <button
             className="is-primary"
-            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity, assignedStaffPersonIds: staffIds })}
+            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity, assignedStaffPersonIds: selectedStaffIds })}
             type="button"
           >
             Guardar sesión
@@ -753,10 +792,7 @@ function PersonalTraining({
     ...individualDefinitions.map((entry) => ({ id: entry.id, name: entry.name })),
     ...userModules.filter((module) => module.scope !== "team").map((module) => ({ id: module.id, name: module.name })),
   ];
-  const assignStaff = eligibleStaff.filter((staff) => {
-    const department = STAFF_ROLE_REGISTRY[staff.role as StaffRoleId]?.department;
-    return department === "coaching" || department === "performance";
-  });
+  const assignStaff = eligibleStaff;
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [staffSelection, setStaffSelection] = useState<Record<string, StaffPersonId | "">>({});
   const [assignError, setAssignError] = useState<{ readonly playerId: string; readonly message: string }>();
@@ -796,6 +832,7 @@ function PersonalTraining({
               .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)))[0];
             const assignedDefinition = assignedSession === undefined ? undefined : TRAINING_CATALOG.find((entry) => entry.id === assignedSession.definitionId);
             const selectedModuleId = selection[player.id] ?? assignableModules[0]?.id ?? "";
+            const eligibleAssignStaff = trainingStaffForDefinition(assignStaff, trainingDefinitionForModule(world, selectedModuleId) ?? individualDefinitions[0]!);
             const cells: Record<string, ReactNode> = {
               player: (
                 <b>
@@ -828,10 +865,10 @@ function PersonalTraining({
                   <select
                     aria-label={`Staff ejecutor para ${playerName(player)}`}
                     onChange={(event) => setStaffSelection((current) => ({ ...current, [player.id]: event.target.value as StaffPersonId | "" }))}
-                    value={staffSelection[player.id] ?? ""}
+                    value={eligibleAssignStaff.some((staff) => staff.id === staffSelection[player.id]) ? staffSelection[player.id] ?? "" : ""}
                   >
                     <option value="">Sin staff</option>
-                    {assignStaff.map((staff) => (
+                    {eligibleAssignStaff.map((staff) => (
                       <option key={staff.id} value={staff.id}>
                         {staff.name} · {STAFF_ROLE_LABELS[staff.role as StaffRoleId] ?? staff.role}
                       </option>

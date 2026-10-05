@@ -6,5 +6,17 @@ export type { PlayerPotential, PlayerPotentialBand } from './PlayerPotential'
 export { DEVELOPMENT_DOMAINS, createDevelopmentProfile } from './PlayerDevelopmentProfile'
 export type { DevelopmentDomain, DevelopmentStage, PlayerDevelopmentProfile } from './PlayerDevelopmentProfile'
 export { calculateAge, getPlayerAge } from './PlayerAge'
-export { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from './PlayerTruthCatalog'
+export {
+  PLAYER_TRUTH_RATING_KEYS,
+  PLAYER_TRUTH_TENDENCY_KEYS,
+  PLAYER_RATING_FAMILY_KEYS,
+  PLAYER_RATING_SCOUTING_FAMILIES,
+  PLAYER_AGGREGATE_SCOUTING_KEYS,
+  playerRatingScoutingFamily,
+  ratingKnowledgeDimensionFor,
+  ratingKeyFromKnowledgeDimension,
+  ratingKeysForScoutingFamily,
+  ratingKeysForAggregateDimension,
+} from './PlayerTruthCatalog'
+export type { PlayerRatingScoutingFamily, PlayerAggregateScoutingDimension } from './PlayerTruthCatalog'
 export type { PlayerTruthRatingKey, PlayerTruthRatings, PlayerTruthTendencyKey, PlayerTruthTendencies } from './PlayerTruthCatalog'

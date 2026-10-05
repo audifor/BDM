@@ -1,9 +1,10 @@
 import type { StaffPersonId, TeamId } from '@/domain/ids'
-import { responsibilityDefinition, validateResponsibilityAssignment, type Responsibility, type ResponsibilityKind, type StaffWorkloadSnapshot } from '@/domain/responsibility'
+import { isResponsibilityConnected, responsibilityDefinition, validateResponsibilityAssignment, type Responsibility, type ResponsibilityKind, type StaffWorkloadSnapshot } from '@/domain/responsibility'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type StaffRoleId, type StaffRoleSeniority } from '@/domain/staff'
 import type { GameWorld } from './GameWorld'
 import { getStaffAssignment, getStaffPerson, getTeamStaffAssignments } from './staff'
 import { responsibilityIndex, teamKindKey } from './collectionIndexes'
+import { SCOUTING_TERRITORY_WORKLOAD_COST } from '@/domain/scouting'
 
 // WSR2: the queries below read per-collection indexes (collectionIndexes.ts): the same elements in the same order as the scans they replace.
 
@@ -37,10 +38,14 @@ export function getResponsibility(world: GameWorld, teamId: TeamId, kind: Respon
  */
 export function calculateStaffWorkload(world: GameWorld, staffId: StaffPersonId): StaffWorkloadSnapshot {
   const assignment = getStaffAssignment(world, staffId)
-  const heldResponsibilityCost = getResponsibilitiesHeldByStaff(world, staffId).reduce((sum, responsibility) => sum + responsibilityDefinition(responsibility.kind).capacityCost, 0)
-  if (assignment === undefined) return { staffId, totalCapacityUsed: heldResponsibilityCost, capacityLimit: 0, utilization: heldResponsibilityCost > 0 ? Infinity : 0, overloaded: heldResponsibilityCost > 0 }
+  const heldResponsibilityCost = getResponsibilitiesHeldByStaff(world, staffId).filter((responsibility) => isResponsibilityConnected(responsibility.kind)).reduce((sum, responsibility) => sum + responsibilityDefinition(responsibility.kind).capacityCost, 0)
+  const activeTerritoryCost = Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === staffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST
+  if (assignment === undefined) {
+    const totalCapacityUsed = heldResponsibilityCost + activeTerritoryCost
+    return { staffId, totalCapacityUsed, capacityLimit: 0, utilization: totalCapacityUsed > 0 ? Infinity : 0, overloaded: totalCapacityUsed > 0 }
+  }
   const roleDefinition = staffRoleDefinition(assignment.role)
-  const totalCapacityUsed = roleDefinition.capacityCost + heldResponsibilityCost
+  const totalCapacityUsed = roleDefinition.capacityCost + heldResponsibilityCost + activeTerritoryCost
   const capacityLimit = CAPACITY_LIMIT_BY_SENIORITY[roleDefinition.seniority]
   const utilization = totalCapacityUsed / capacityLimit
   return { staffId, totalCapacityUsed, capacityLimit, utilization, overloaded: utilization > 1 }

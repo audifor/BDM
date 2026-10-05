@@ -230,6 +230,16 @@ function OverviewView({
             ))
           )}
         </DeckCard>
+        <DeckCard title="Recent impact · 30 days" meta={`${model.recentImpact.entries.length} latest`}>
+          <Metric label="Training sessions" value={model.recentImpact.trainingSessions} />
+          <Metric label="Recommendations" value={model.recentImpact.recommendations} />
+          <Metric label="Accepted" value={model.recentImpact.acceptedRecommendations} />
+          {model.recentImpact.entries.length === 0 ? <p className="staff-person__note">No recorded activity in this period.</p> : (
+            <ul className="staff-person__bullets">
+              {model.recentImpact.entries.map((entry) => <li key={entry.id}>{entry.date} · {entry.activity} · {entry.roleLabel} · {entry.result}</li>)}
+            </ul>
+          )}
+        </DeckCard>
       </div>
     </div>
   )

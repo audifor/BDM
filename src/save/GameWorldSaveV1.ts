@@ -35,7 +35,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generatePlayerPotential } from '@/engine/world/PlayerPotentialGenerator'
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
-import { ensurePlayerKnowledge } from '@/engine/world/PlayerKnowledgeEnrichment'
+import { migrateLegacyPlayerKnowledgeRecords } from '@/domain/knowledge'
 import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
@@ -225,7 +225,8 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       // `TeamFinances` object, which now carries `staffSalaryBudget` too. V3 is the sole canonical
       // writer/validator of that field (see `GameWorldSaveV3.ts`'s `parseTeamFinancesV3`).
       teamFinances: Object.values(world.teamFinancesByTeamId).map((finances) => ({ teamId: finances.teamId, playerSalaryBudget: finances.playerSalaryBudget })),
-      playerKnowledge: copyRecords(Object.values(world.playerKnowledgeById)),
+      // V1 retains the legacy shape for reads only; modern runtime knowledge is serialized by V2+.
+      playerKnowledge: [],
       organizationEvaluationPolicies: Object.entries(world.organizationEvaluationPoliciesById).map(([organizationId, policy]) => ({ organizationId, ...policy })),
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),
       responsibilities: copyRecords(Object.values(world.responsibilitiesById)), delegationOutcomes: copyRecords(Object.values(world.delegationOutcomesById)), oppositionScoutingReports: copyRecords(Object.values(world.oppositionScoutingReportsById)),
@@ -235,7 +236,6 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       staffConflicts: copyRecords(Object.values(world.staffConflictsById)),
       staffCareerAutonomyStates: copyRecords(Object.values(world.staffCareerAutonomyByContextId)),
       staffCareerRequests: copyRecords(Object.values(world.staffCareerRequestsById)),
-      coachProfessionalProfilesByCoachId: copyProfiles(world.coachProfessionalProfilesByCoachId),
       coachRpgProfilesByCoachId: copyProfiles(world.coachRpgProfilesByCoachId),
       coachFinancesByCoachId: copyProfiles(world.coachFinancesByCoachId),
       coachReputationProfilesByCoachId: copyProfiles(world.coachReputationProfilesByCoachId),
@@ -291,6 +291,17 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   const currentDate = parseGameDate(string(payload.currentDate, 'Save currentDate'))
   const teams = array(payload.teams, 'Save teams').map(readTeam)
   const players = array(payload.players, 'Save players').map((player) => (options.readPlayer ?? readPlayer)(player, referenceDate, currentDate))
+  const legacyPlayerKnowledge = payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge)
+  const ownPlayerIdsByOrganization = new Map(teams.map((team) => [team.organizationId, new Set(teams.filter((candidate) => candidate.organizationId === team.organizationId).flatMap((candidate) => candidate.rosterPlayerIds))]))
+  const organizationKnowledge = migrateLegacyPlayerKnowledgeRecords(
+    legacyPlayerKnowledge,
+    (observerTeamId) => {
+      const observer = teams.find((team) => team.id === observerTeamId)
+      if (observer === undefined) throw new TypeError(`Legacy Player knowledge references unknown observer Team ${observerTeamId}`)
+      return observer.organizationId
+    },
+    ownPlayerIdsByOrganization,
+  )
   const contracts = payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract)
   const teamFinances = ensureTeamFinances({
     currentDate,
@@ -346,7 +357,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     contracts,
     playerTransactions: payload.playerTransactions === undefined ? [] : array(payload.playerTransactions, 'Save playerTransactions').map(readTransaction),
     teamFinances,
-    playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
+    organizationKnowledge,
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
     staffPeople, teamStaffAssignments: legacyCoachStructure.assignments,
     ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
@@ -361,7 +372,6 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     ...(payload.staffCareerAutonomyStates === undefined ? {} : { staffCareerAutonomyStates: array(payload.staffCareerAutonomyStates, 'Save staff career autonomy states').map(readStaffCareerAutonomyState) }),
     ...(payload.staffCareerRequests === undefined ? {} : { staffCareerRequests: array(payload.staffCareerRequests, 'Save staff career requests').map(readStaffCareerRequest) }),
     ...(payload.oppositionScoutingReports === undefined ? {} : { oppositionScoutingReports: array(payload.oppositionScoutingReports, 'Save oppositionScoutingReports').map(readOppositionScoutingReport) }),
-    coachProfessionalProfilesByCoachId: professionalProfiles,
     coachRpgProfilesByCoachId: rpgProfiles,
     ...(payload.coachFinancesByCoachId === undefined ? {} : { coachFinancesByCoachId: readCoachFinanceProfiles(payload.coachFinancesByCoachId) }),
     coachReputationProfilesByCoachId: reputationProfiles,
@@ -397,8 +407,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
   }
-  const withLegacyKnowledge = options.enrichLegacy === false || payload.playerKnowledge !== undefined ? world : ensurePlayerKnowledge(world)
-  const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge)))
+  const withResponsibilities = options.enrichLegacy === false ? world : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(world)))
   const withStaffCareer = options.enrichLegacy === false ? withResponsibilities : ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withResponsibilities)))
   const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withStaffCareer))
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
@@ -585,7 +594,7 @@ function readOrganizationEvaluationPolicies(value:unknown){return Object.fromEnt
 /** Legacy save values ('scout'/'medical'/'assistantCoach') deterministically map onto the canonical StaffRoleId; any already-canonical id round-trips unchanged. No second role vocabulary is kept — this is a read-time projection only. */
 function readStaffAssignment(value:unknown){const v=record(value,'Staff assignment');const role=string(v.role,'Staff role');const canonicalRole=Object.hasOwn(LEGACY_STAFF_ROLE_TO_ROLE_ID,role)?LEGACY_STAFF_ROLE_TO_ROLE_ID[role as import('@/domain/staff').StaffRole]:role as import('@/domain/staff').StaffRoleId;return{id:teamStaffAssignmentIdFromString(string(v.id,'Staff assignment id')),staffPersonId:staffPersonIdFromString(string(v.staffPersonId,'Staff assignment person')),teamId:teamIdFromString(string(v.teamId,'Staff assignment team')),role:canonicalRole,assignedOn:parseGameDate(string(v.assignedOn,'Staff assignedOn'))}}
 function readResponsibility(value: unknown) { const v = record(value, 'Responsibility'); const holderStaffId = v.holderStaffId === undefined ? undefined : staffPersonIdFromString(string(v.holderStaffId, 'Responsibility holder')); return { id: responsibilityIdFromString(string(v.id, 'Responsibility id')), teamId: teamIdFromString(string(v.teamId, 'Responsibility team')), kind: string(v.kind, 'Responsibility kind') as import('@/domain/responsibility').ResponsibilityKind, mode: string(v.mode, 'Responsibility mode') as import('@/domain/responsibility').ResponsibilityMode, ...(holderStaffId === undefined ? {} : { holderStaffId }), ...(v.assignedOn === undefined ? {} : { assignedOn: parseGameDate(string(v.assignedOn, 'Responsibility assignedOn')) }) } }
-function readDelegationOutcome(value: unknown) { const v = record(value, 'Delegation outcome'); const payload = record(v.payload ?? {}, 'Delegation outcome payload') as Record<string, string | number | boolean>; return { id: delegationOutcomeIdFromString(string(v.id, 'Delegation outcome id')), responsibilityId: responsibilityIdFromString(string(v.responsibilityId, 'Delegation outcome responsibility')), staffId: staffPersonIdFromString(string(v.staffId, 'Delegation outcome staff')), decidedOn: parseGameDate(string(v.decidedOn, 'Delegation outcome decidedOn')), kind: string(v.kind, 'Delegation outcome kind') as import('@/domain/responsibility').ResponsibilityKind, applied: Boolean(v.applied), qualityScore: number(v.qualityScore, 'Delegation outcome qualityScore'), payload, ...(v.rationale === undefined ? {} : { rationale: string(v.rationale, 'Delegation outcome rationale') }), ...(v.userDisposition === undefined ? {} : { userDisposition: string(v.userDisposition, 'Delegation outcome userDisposition') as import('@/domain/responsibility').DelegationOutcomeUserDisposition }), ...(v.userDecidedOn === undefined ? {} : { userDecidedOn: parseGameDate(string(v.userDecidedOn, 'Delegation outcome userDecidedOn')) }) } }
+function readDelegationOutcome(value: unknown) { const v = record(value, 'Delegation outcome'); const payload = record(v.payload ?? {}, 'Delegation outcome payload') as Record<string, string | number | boolean>; return { id: delegationOutcomeIdFromString(string(v.id, 'Delegation outcome id')), responsibilityId: responsibilityIdFromString(string(v.responsibilityId, 'Delegation outcome responsibility')), staffId: staffPersonIdFromString(string(v.staffId, 'Delegation outcome staff')), decidedOn: parseGameDate(string(v.decidedOn, 'Delegation outcome decidedOn')), kind: string(v.kind, 'Delegation outcome kind') as import('@/domain/responsibility').ResponsibilityKind, applied: Boolean(v.applied), qualityScore: number(v.qualityScore, 'Delegation outcome qualityScore'), ...(v.staffRoleIdAtDecision === undefined ? {} : { staffRoleIdAtDecision: string(v.staffRoleIdAtDecision, 'Delegation outcome Staff role') as import('@/domain/staff').StaffRoleId }), ...(v.staffWasOverloadedAtDecision === undefined ? {} : { staffWasOverloadedAtDecision: Boolean(v.staffWasOverloadedAtDecision) }), payload, ...(v.rationale === undefined ? {} : { rationale: string(v.rationale, 'Delegation outcome rationale') }), ...(v.userDisposition === undefined ? {} : { userDisposition: string(v.userDisposition, 'Delegation outcome userDisposition') as import('@/domain/responsibility').DelegationOutcomeUserDisposition }), ...(v.userDecidedOn === undefined ? {} : { userDecidedOn: parseGameDate(string(v.userDecidedOn, 'Delegation outcome userDecidedOn')) }) } }
 /** Wave 5A — additive Save V1 readers for Staff Human State. Backward compatible: absent in a legacy save (payload.staffHumanContexts === undefined at the call site above), so these parsers only ever run against records this reader itself previously wrote. */
 function readStaffHumanContext(value: unknown) { const v = record(value, 'Staff human context'); return { id: staffHumanContextIdFromString(string(v.id, 'Staff human context id')), staffId: staffPersonIdFromString(string(v.staffId, 'Staff human context staff')), teamId: teamIdFromString(string(v.teamId, 'Staff human context team')), startedOn: parseGameDate(string(v.startedOn, 'Staff human context startedOn')), ...(v.endedOn === undefined ? {} : { endedOn: parseGameDate(string(v.endedOn, 'Staff human context endedOn')) }) } }
 function readStaffHumanState(value: unknown) { const v = record(value, 'Staff human state'); const read = (key: string) => number(v[key], `Staff human state ${key}`); return { contextId: staffHumanContextIdFromString(string(v.contextId, 'Staff human state context')), staffId: staffPersonIdFromString(string(v.staffId, 'Staff human state staff')), roleSatisfaction: read('roleSatisfaction'), responsibilitySatisfaction: read('responsibilitySatisfaction'), autonomySatisfaction: read('autonomySatisfaction'), influenceSatisfaction: read('influenceSatisfaction'), contractSatisfaction: read('contractSatisfaction'), workloadSatisfaction: read('workloadSatisfaction'), professionalFulfillment: read('professionalFulfillment'), recognitionSatisfaction: read('recognitionSatisfaction'), frustration: read('frustration'), stress: read('stress'), organizationalCommitment: read('organizationalCommitment'), lastEvaluatedOn: parseGameDate(string(v.lastEvaluatedOn, 'Staff human state lastEvaluatedOn')) } }
@@ -687,6 +696,8 @@ function readTrainingExecution(value: unknown) {
     category,
     effectiveIntensity: intensity,
     executingStaffPersonIds: array(v.executingStaffPersonIds, 'Training executing Staff').map((id) => string(id, 'Training executing Staff id') as import('@/domain/ids').StaffPersonId),
+    executingStaffRoles: v.executingStaffRoles === undefined ? [] : array(v.executingStaffRoles, 'Training executing Staff roles').map((item) => { const staff = record(item, 'Training executing Staff role'); return { staffId: string(staff.staffId, 'Training executing Staff role id') as import('@/domain/ids').StaffPersonId, roleId: string(staff.roleId, 'Training executing Staff role') as import('@/domain/staff').StaffRoleId } }),
+    plannedModuleName: v.plannedModuleName === undefined ? string(v.moduleName, 'Training execution module name') : string(v.plannedModuleName, 'Training planned module name'),
     executionQualityMultiplier: number(v.executionQualityMultiplier, 'Training execution quality'),
     participants,
     cohesionDelta: number(v.cohesionDelta, 'Training cohesion delta'),

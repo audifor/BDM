@@ -26,7 +26,7 @@ const KNOWLEDGE_STATES: readonly {
   { id: 'unknown', label: 'Unknown' },
 ]
 
-/** Actions the reference offers. None of them exists in this workspace yet, so all stay disabled. */
+/** Actions shown in the Player profile; availability is derived by the caller from canonical state. */
 const SCOUTING_ACTIONS: readonly {
   readonly id: string
   readonly label: string
@@ -223,7 +223,7 @@ export function ScoutConsensusPanel({
   return (
     <section className="po-sc-panel po-sc-consensus" data-ng-region="scouting-consensus">
       <header className="po-sc-panel__head">
-        <span className="po-sc-panel__title">Scout consensus</span>
+        <span className="po-sc-panel__title">{rows.length > 1 ? 'Scout consensus' : rows.length === 1 ? 'Scout assessment' : 'Scout reports'}</span>
         <span className="po-sc-panel__meta ng-type-numeric">
           {rows.length} {rows.length === 1 ? 'scout' : 'scouts'}
         </span>
@@ -364,7 +364,7 @@ export function ArchetypePanel({
   )
 }
 
-export function ScoutingActionsPanel({ note }: { readonly note: string }) {
+export function ScoutingActionsPanel({ note, onAction, disabled, titles = {} }: { readonly note: string; readonly onAction: (id: string) => void; readonly disabled: Readonly<Record<string, boolean>>; readonly titles?: Readonly<Record<string, string>> }) {
   return (
     <section className="po-sc-panel po-sc-actions" data-ng-region="scouting-actions">
       <header className="po-sc-panel__head">
@@ -375,8 +375,9 @@ export function ScoutingActionsPanel({ note }: { readonly note: string }) {
           <li key={action.id}>
             <button
               className={`po-sc-action is-${action.tone}`}
-              disabled
-              title="Not performed by this workspace yet"
+              disabled={disabled[action.id] ?? false}
+              title={titles[action.id]}
+              onClick={() => onAction(action.id)}
               type="button"
             >
               {action.label}

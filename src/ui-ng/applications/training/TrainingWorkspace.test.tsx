@@ -103,7 +103,7 @@ describe('TrainingWorkspace', () => {
     expect(new URL(window.location.href).searchParams.get('playerId')).toBe(player.id)
   })
 
-  it('shows completed Training history with the executed module and participation', () => {
+  it('shows completed Training history with planned/effective context and participation', () => {
     const base = createNewGame()
     const team = getUserTeam(base)!
     const playerId = team.rosterPlayerIds[0]!
@@ -116,5 +116,9 @@ describe('TrainingWorkspace', () => {
     expect(history).toHaveTextContent('Completed sessions')
     expect(history).toHaveTextContent('Three-Point Shooting')
     expect(history).toHaveTextContent('FULL 1')
+    expect(history).toHaveTextContent('Planned')
+    expect(history).toHaveTextContent('Effective')
+    expect(history).toHaveTextContent('GOOD execution')
+    expect(history).not.toHaveTextContent('1.00×')
   })
 })

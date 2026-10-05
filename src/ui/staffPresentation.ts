@@ -77,6 +77,22 @@ export const STAFF_ROLE_LABELS: Readonly<Record<StaffRoleId, string>> = Object.f
   STAFF_ROLE_IDS.map((id) => [id, id === 'regionalScout' ? 'SCOUT' : id === 'physiotherapist' ? 'MEDICAL' : formatRoleLabel(id)]),
 ) as Readonly<Record<StaffRoleId, string>>
 
+export type StaffQualityBand = 'LOW' | 'FAIR' | 'GOOD' | 'VERY GOOD' | 'EXCELLENT'
+export function staffQualityBand(score: number): StaffQualityBand {
+  if (score < 40) return 'LOW'
+  if (score < 55) return 'FAIR'
+  if (score < 70) return 'GOOD'
+  if (score < 85) return 'VERY GOOD'
+  return 'EXCELLENT'
+}
+export function trainingContributionBand(multiplier: number): StaffQualityBand {
+  if (multiplier < 0.94) return 'LOW'
+  if (multiplier < 0.98) return 'FAIR'
+  if (multiplier <= 1.02) return 'GOOD'
+  if (multiplier < 1.1) return 'VERY GOOD'
+  return 'EXCELLENT'
+}
+
 function formatRoleLabel(id: StaffRoleId): string {
   return id.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toUpperCase()
 }
@@ -450,7 +466,7 @@ export interface StaffResponsibilityPresentationItem {
 export function getTeamResponsibilityPresentation(world: GameWorld, teamId: TeamId): readonly StaffResponsibilityPresentationItem[] {
   const existingByKind = new Map<ResponsibilityKind, Responsibility>(getTeamResponsibilities(world, teamId).map((item) => [item.kind, item]))
 
-  return [...RESPONSIBILITY_KINDS]
+  return RESPONSIBILITY_KINDS.filter(isResponsibilityConnected)
     .sort((left, right) => {
       const definitionLeft = responsibilityDefinition(left)
       const definitionRight = responsibilityDefinition(right)

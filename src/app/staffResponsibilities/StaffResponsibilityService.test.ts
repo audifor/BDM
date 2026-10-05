@@ -58,6 +58,13 @@ describe('setTeamResponsibility', () => {
     expect(responsibility?.holderStaffId).toBe(assistantId)
   })
 
+  it('rejects assignment of retired and deferred responsibility kinds', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    expect(() => setTeamResponsibility(w, { teamId, kind: 'manageRecovery', mode: 'userControlled' })).toThrow(/retired/)
+    expect(() => setTeamResponsibility(w, { teamId, kind: 'defensiveGamePlan', mode: 'userControlled' })).toThrow(/deferred with owner/)
+  })
+
   it('advisory with a valid eligible holder assigns the holder', () => {
     const w = world()
     const teamId = userTeamId(w)

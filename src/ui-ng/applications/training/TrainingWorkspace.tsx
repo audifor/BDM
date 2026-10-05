@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
+import { STAFF_ROLE_LABELS, trainingContributionBand } from '@/ui/staffPresentation'
 import { useGameStore } from '@/stores/gameStore'
 import { TRAINING_PCB_TABS, TrainingPcbPage, type TrainingPcbTab } from '@/ui/pcb-migrated/training/TrainingPcbPage'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -12,6 +13,7 @@ import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
+import { TrainingSessionHistoryDetails } from './TrainingSessionHistoryDetails'
 import type { GameWorld } from '@/domain/world'
 
 import './training-workspace.css'
@@ -147,23 +149,18 @@ function TeamTrainingHistory({ world, teamId }: { readonly world: GameWorld; rea
             for (const participant of execution.participants) counts[participant.participation] += 1
             const staff = execution.executingStaffPersonIds.map((id) => {
               const person = world.staffPeopleById[id]
-              return person === undefined ? String(id) : `${person.identity.firstName} ${person.identity.lastName}`
+              const role = execution.executingStaffRoles.find((item) => item.staffId === id)?.roleId
+              return person === undefined ? 'Staff member' : `${person.identity.firstName} ${person.identity.lastName}${role === undefined ? '' : ` · ${STAFF_ROLE_LABELS[role]}`}`
             })
+            const qualityBand = trainingContributionBand(execution.executionQualityMultiplier)
             return (
               <details className="training-history-session" key={session.id}>
                 <summary>
-                  <span><strong>{execution.moduleName}</strong><small>{session.date} · {execution.effectiveIntensity} · {execution.category}</small></span>
+                  <span><strong>{execution.moduleName}</strong><small>{session.date} · {execution.category}</small></span>
                   <span><small>{staff.join(', ') || 'No assigned executor'}</small><small>FULL {counts.FULL} · REDUCED {counts.REDUCED} · REST {counts.REST}</small></span>
-                  <span><small>Quality {execution.executionQualityMultiplier.toFixed(2)}×</small><small>{execution.participants.reduce((total, participant) => total + participant.injuryIds.length, 0)} injuries</small></span>
+                  <span><small>{qualityBand} execution</small><small>{execution.participants.reduce((total, participant) => total + participant.injuryIds.length, 0)} injuries</small></span>
                 </summary>
-                <ul>{execution.participants.map((participant) => {
-                  const player = world.players[participant.playerId]
-                  const name = player === undefined ? String(participant.playerId) : `${player.firstName} ${player.lastName}`
-                  const stimulus = participant.developmentStimulusEventId === undefined ? undefined : world.developmentStimulusEventsById[participant.developmentStimulusEventId]
-                  const stimulusTotal = stimulus === undefined ? 0 : Object.values(stimulus.byRating).reduce<number>((sum, amount) => sum + (amount ?? 0), 0)
-                  const injuries = participant.injuryIds.map((id) => world.injuriesById[id]?.kind ?? String(id)).join(', ') || 'none'
-                  return <li key={participant.playerId}><span>{name} · {participant.participation}</span><span>Fatigue {participant.careerFatigueDelta >= 0 ? '+' : ''}{participant.careerFatigueDelta.toFixed(1)} · stimulus {stimulusTotal.toFixed(2)} · injuries {injuries}</span></li>
-                })}</ul>
+                <TrainingSessionHistoryDetails session={session} world={world} />
               </details>
             )
           })}

@@ -16,6 +16,7 @@ import {
 } from '@/engine/stats/PlayerHistory'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { getUserTeam } from '@/engine/calendar'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 import {
   aggregateCategoryValue,
@@ -58,8 +59,8 @@ import {
 } from './presentationHelpers'
 import type {
   EvaluationItem,
-  PlayerAttributesModel,
   PlayerWorkspaceModel,
+  PlayerAttributesModel,
   PlayerRatingRow,
   RecentFormGameModel,
 } from './playerWorkspaceModel'
@@ -78,7 +79,17 @@ function buildRatings(playerRatings: PlayerTruthRatings): PlayerRatingRow[] {
   return [...buildFullRatingRows(playerRatings)]
 }
 
-function buildAttributes(world: GameWorld, player: Player): PlayerAttributesModel {
+function buildAttributes(world: GameWorld, player: Player, includeRatings: boolean): PlayerAttributesModel {
+  if (!includeRatings) {
+    return {
+      categories: [],
+      allRatings: [],
+      evolutionByRating: {} as PlayerAttributesModel['evolutionByRating'],
+      signatureSkills: [],
+      weakLinks: [],
+      gaps: [{ id: 'individual-ratings', label: 'Individual ratings', reason: 'Individual rating scouting is not available yet.' }],
+    }
+  }
   const playerRatings = player.basketball.ratings
   const allRatings = buildFullRatingRows(playerRatings)
   const categories = RADAR_CATEGORY_ORDER.map((category) => {
@@ -228,29 +239,30 @@ export function buildPlayerWorkspaceModel(
   const player = world.players[playerId]
   if (player === undefined) return undefined
 
+  const knowledgeAccess = derivePlayerKnowledgeAccess(world, playerId)
   const rosterTeamId = getPlayerRosterTeamId(world, player.id)
-  const team = findTeamForPlayer(world, player.id) ?? getUserTeam(world)
+  const team = findTeamForPlayer(world, player.id)
   const season = world.seasons[world.currentSeasonId]
   const competition = season === undefined ? undefined : world.competitions[season.competitionId]
   const country = world.countries[player.nationalityId]
   const fatigue = getCareerFatigueForPlayer(world, player.id)
   const injury = getCurrentPlayerInjury(world, player.id)
   const moraleBand = getMoraleBandForPerson(world, player.id)
-  const ratings = buildRatings(player.basketball.ratings)
+  const ratings = knowledgeAccess.kind === 'own-roster' ? buildRatings(knowledgeAccess.currentRatings) : []
   const seasonStats = getPlayerSeasonStats(world, player.id, world.currentSeasonId)
   const seasonAverages =
     seasonStats.gamesPlayed === 0 ? undefined : calculatePlayerStatAverages(seasonStats).ppg
   const teamColors = team === undefined ? deriveTeamColors('free-agent') : deriveTeamColors(team.id)
   const riskPresentation = resolvePlayerMedicalRiskPresentation(world, player.id)
-  const development = buildPlayerDevelopmentModel(world, player.id)
+  const development = buildPlayerDevelopmentModel(world, player.id, knowledgeAccess)
   if (development === undefined) return undefined
   const history = buildPlayerHistoryModel(world, player.id)
   if (history === undefined) return undefined
-  const overview = buildPlayerOverviewModel(world, player.id)
+  const overview = buildPlayerOverviewModel(world, player.id, knowledgeAccess)
   if (overview === undefined) return undefined
 
   return {
-    player,
+    knowledgeAccess,
     person: player.personId === undefined ? undefined : world.personsById[player.personId],
     identity: {
       playerId: player.id,
@@ -302,16 +314,16 @@ export function buildPlayerWorkspaceModel(
       riskTone: riskPresentation.status === 'available' ? riskPresentation.overviewTone ?? null : null,
     },
     ratings,
-    attributes: buildAttributes(world, player),
+    attributes: buildAttributes(world, player, knowledgeAccess.kind === 'own-roster'),
     overview,
     performance: buildPlayerPerformanceModel(world, player.id),
     contract: buildPlayerContractModel(world, player.id),
     medical: buildPlayerMedicalModel(world, player.id),
     development,
     history,
-    strengths: buildEvaluations(ratings, 'strength'),
-    limitations: buildEvaluations(ratings, 'limitation'),
-    radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({
+    strengths: knowledgeAccess.kind === 'own-roster' ? buildEvaluations(ratings, 'strength') : [],
+    limitations: knowledgeAccess.kind === 'own-roster' ? buildEvaluations(ratings, 'limitation') : [],
+    radarAxes: knowledgeAccess.kind !== 'own-roster' ? [] : RADAR_CATEGORY_ORDER.map((category) => ({
       key: category,
       label: category === 'ballHandling' ? 'HANDLE' : category === 'playmaking' ? 'PLAY' : category === 'offBall' ? 'OFF' : category === 'defense' ? 'DEF' : category === 'physical' ? 'PHYS' : category === 'mental' ? 'MENT' : category === 'finishing' ? 'FIN' : 'SHOOT',
       value: aggregateCategoryValue(category, player.basketball.ratings),
@@ -319,7 +331,7 @@ export function buildPlayerWorkspaceModel(
     roleProfile: {
       primaryPosition: player.basketball.primaryPosition,
       secondaryPositions: player.basketball.secondaryPositions ?? [],
-      derivedHighlights: [...ratings]
+      derivedHighlights: knowledgeAccess.kind !== 'own-roster' ? [] : [...ratings]
         .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
         .slice(0, 3)
         .map((rating) => rating.label),

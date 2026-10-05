@@ -1,3 +1,8 @@
 export * from './ScoutingEngine'
 export { progressDelegatedScouting } from './DelegatedScouting'
 export { progressAdvisoryScoutingReports } from './AdvisoryScoutingReports'
+export { progressScoutingTerritoryAssignments, scoutingDiscoveryThroughput } from './ScoutingTerritoryOperations'
+export { progressAiScoutingOperations, isAiScoutingPlanningDay } from './AiScoutingOperations'
+export { createScoutingTerritoryAssignment, endScoutingTerritoryAssignment, getScoutingTerritoryCoverage } from './ScoutingTerritoryOperations'
+export { progressRecruitmentFocuses } from './RecruitmentFocusEngine'
+export { hasScoutingCapacityForMission } from './ScoutingEngine'

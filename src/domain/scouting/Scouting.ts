@@ -1,6 +1,8 @@
 import type { GameDate } from '@/domain/date'
 import type { OrganizationId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 
+export * from './ScoutingTerritory'
+
 export const EVIDENCE_SOURCES = ['PUBLIC_DATA', 'STATISTICS', 'LIVE_SCOUTING', 'VIDEO_SCOUTING', 'OPPONENT_GAME', 'OWN_TEAM_OBSERVATION', 'STAFF_PRIOR_KNOWLEDGE', 'COMBINE', 'WORKOUT'] as const
 export type EvidenceSource = typeof EVIDENCE_SOURCES[number]
 export const SCOUTING_MISSIONS = ['QUICK_LOOK', 'FULL_REPORT', 'SKILL_EVALUATION', 'POTENTIAL_EVALUATION', 'TACTICAL_FIT', 'LIVE_GAME'] as const
@@ -15,6 +17,7 @@ export interface Evidence { readonly id:string; readonly organizationId:Organiza
 export interface EvaluatorProfile { readonly staffPersonId:StaffPersonId; readonly experience:number; readonly perks:readonly EvaluatorPerk[]; readonly biases:readonly EvaluatorBias[] }
 /** staffQualityScore (0-100) is set ONLY when a delegated/advisory Staff flow creates the assignment (see engine/scouting quality integration); manual HEAD_COACH requests never set it, so their EvaluatorFinding.uncertainty formula is untouched. */
 export interface ScoutingAssignment { readonly id:string; readonly organizationId:OrganizationId; readonly subjectPlayerId:PlayerId; readonly evaluatorStaffId:StaffPersonId; readonly missionType:ScoutingMission; readonly requestedBy:ScoutingRequester; readonly priority:ScoutingPriority; readonly createdAt:GameDate; readonly startedAt?:GameDate; readonly expectedCompletionAt?:GameDate; readonly completedAt?:GameDate; readonly status:ScoutingStatus; readonly targetDimension?:string; readonly teamContextId?:TeamId; readonly gameId?:string; readonly staffQualityScore?:number }
+export * from './ScoutingRecruitmentFocus'
 export interface EvaluatorFinding { readonly dimension:string; readonly estimate:number; readonly uncertainty:number; readonly confidence:number; readonly coverageContribution:number }
 export interface EvaluatorReport { readonly id:string; readonly organizationId:OrganizationId; readonly subjectPlayerId:PlayerId; readonly evaluatorStaffId:StaffPersonId; readonly assignmentId?:string; readonly missionType:ScoutingMission; readonly createdAt:GameDate; readonly evidenceIds:readonly string[]; readonly findings:readonly EvaluatorFinding[]; readonly tacticalFit?:number }
 export function createEvaluatorProfile(value:EvaluatorProfile):EvaluatorProfile { if(!Number.isInteger(value.experience)||value.experience<0||value.experience>100)throw new RangeError('Evaluator experience must be an integer from 0 to 100'); return {...value,perks:[...new Set(value.perks)],biases:[...new Set(value.biases)]} }

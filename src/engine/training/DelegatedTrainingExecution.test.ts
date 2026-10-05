@@ -8,6 +8,7 @@ import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
+import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 
 type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
 const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as StaffAttributes
@@ -68,6 +69,10 @@ describe('Delegated Training execution', () => {
     expect(outcome!.qualityScore).toBeGreaterThanOrEqual(0)
     expect(outcome!.qualityScore).toBeLessThanOrEqual(100)
     expect(outcome!.payload.scope).toBe('team')
+
+    const reloaded = deserializeGameWorldV3(serializeGameWorldV3(first, '2026-10-02T00:00:00.000Z'))
+    expect(reloaded.scheduledTrainingSessionsById['s1']!.execution).toEqual(first.scheduledTrainingSessionsById['s1']!.execution)
+    expect(reloaded.delegationOutcomesById[outcome!.id]).toEqual(outcome)
   })
 
   it('delegated individual development produces a deterministic, staff-influenced DelegationOutcome', () => {

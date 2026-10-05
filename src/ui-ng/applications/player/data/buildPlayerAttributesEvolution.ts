@@ -1,6 +1,7 @@
 import { PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatingKey, type Player } from '@/domain/player'
 import type { SeasonId } from '@/domain/ids'
 import { type GameWorld } from '@/domain/world'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 import { formatSeasonSpanLabel } from './buildPlayerContractModel'
 import { ratingLabel } from './ratingCatalog'
@@ -305,6 +306,9 @@ export function buildPlayerAttributesEvolution(
   world: GameWorld,
   player: Player,
 ): Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>> {
+  if (derivePlayerKnowledgeAccess(world, player.id).kind !== 'own-roster') {
+    return {} as Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
+  }
   const league = competitionLeagueSample(world, player)
   const team = teamRosterSample(world, player)
   const assignment = buildAssignmentContext()

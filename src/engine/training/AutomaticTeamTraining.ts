@@ -3,6 +3,7 @@ import type { TeamId } from '@/domain/ids'
 import { trainingDefinitionById, type TrainingFocus } from '@/domain/training'
 import type { GameWorld } from '@/domain/world'
 import { canTeamTrainOnDate } from './TrainingEngine'
+import { cancelScheduledTrainingSession } from './ScheduledTrainingEngine'
 import { scheduleTeamModuleSession } from './TrainingModuleEngine'
 
 /** Stable catalog module used when the planner fills a week from the team's current focus. */
@@ -39,8 +40,10 @@ function hasScheduledTeamSession(world: GameWorld, teamId: TeamId, date: GameDat
 
 /**
  * Fills future, non-match days of the given Monday-Sunday week with one team session
- * using the team's current plan intensity and focus. Existing team sessions are left intact.
- * Match days use the same `canTeamTrainOnDate` rule as the rest of training.
+ * using the team's current plan intensity and focus. On a later run, untouched pending
+ * sessions created by this planner are refreshed to the current plan; manual sessions and
+ * automatic sessions with Staff/participation overrides are preserved. Match days use the
+ * same `canTeamTrainOnDate` rule as the rest of training.
  */
 export function scheduleAutomaticTeamTrainingWeek(
   world: GameWorld,
@@ -55,6 +58,21 @@ export function scheduleAutomaticTeamTrainingWeek(
     const date = addDays(input.weekStart, offset)
     if (date <= next.currentDate) continue
     if (!canTeamTrainOnDate(next, input.teamId, date)) continue
+
+    const automaticSessionId = `auto:${input.teamId}:${date}`
+    const existingAutomaticSession = next.scheduledTrainingSessionsById[automaticSessionId]
+    if (existingAutomaticSession?.status === 'scheduled') {
+      const alreadyMatchesPlan =
+        existingAutomaticSession.definitionId === definition.id &&
+        existingAutomaticSession.intensity === plan.intensity
+      const hasUserOverrides =
+        (existingAutomaticSession.assignedStaffPersonIds?.length ?? 0) > 0 ||
+        Object.keys(existingAutomaticSession.participationByPlayerId ?? {}).length > 0
+
+      if (alreadyMatchesPlan || hasUserOverrides) continue
+      next = cancelScheduledTrainingSession(next, automaticSessionId)
+    }
+
     if (hasScheduledTeamSession(next, input.teamId, date)) continue
     next = scheduleTeamModuleSession(next, {
       teamId: input.teamId,
@@ -62,7 +80,7 @@ export function scheduleAutomaticTeamTrainingWeek(
       date,
       startTime: '09:00',
       durationMinutes: definition.durationMinutes,
-      sessionId: `auto:${input.teamId}:${date}`,
+      sessionId: automaticSessionId,
       intensity: plan.intensity,
     })
   }

@@ -227,12 +227,14 @@ describe('simulation breakpoints', () => {
     expect(broken.currentDate).toBe(addDays(game.date, 1))
   })
 
-  it('stops Simulate Until Date at a user game instead of resolving it automatically', () => {
+  it('does not make a user game block an explicit Simulate Until Date order', () => {
     const world = createNewGame()
     const result = simulateUntilDate(world, addDays(world.currentDate, 1))
-    expect(result.daysAdvanced).toBe(0)
-    expect(result.world).toBe(world)
-    expect(result.stopReason).toMatchObject({ type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED' } })
+    const todaysGames = Object.values(world.games).filter((game) => game.status === 'scheduled' && game.date === world.currentDate)
+    expect(result.daysAdvanced).toBe(1)
+    expect(result.finalDate).toBe(addDays(world.currentDate, 1))
+    expect(result.stopReason).toEqual({ type: 'arrived' })
+    expect(todaysGames.every((game) => result.world.games[game.id]?.status === 'completed')).toBe(true)
   })
 
   it('stops on media until the canonical media command resolves it', () => {

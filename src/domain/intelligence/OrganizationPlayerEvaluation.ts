@@ -1,6 +1,12 @@
 import type { OrganizationKnowledge } from '@/domain/knowledge'
 import type { OrganizationId, PlayerId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
+import {
+  PLAYER_AGGREGATE_SCOUTING_KEYS,
+  ratingKnowledgeDimensionFor,
+  type PlayerAggregateScoutingDimension,
+  type PlayerTruthRatingKey,
+} from '@/domain/player/PlayerTruthCatalog'
 
 export type IntelligenceDisplayMode = 'EXACT' | 'RANGE' | 'DESCRIPTOR' | 'UNKNOWN' | 'MIXED'
 export interface OrganizationEvaluationPolicy { readonly riskTolerance:number; readonly certaintyPreference:number; readonly upsidePreference:number; readonly currentAbilityPreference:number; readonly scoutingReliance:number }
@@ -12,7 +18,57 @@ export interface OrganizationPlayerValuation { readonly currentValue:number; rea
 
 /** A deterministic institutional identity until organizations become first-class records. */
 export function deriveOrganizationEvaluationPolicy(organizationId:OrganizationId):OrganizationEvaluationPolicy { const n=hash(String(organizationId)); return {riskTolerance:35+n%46,certaintyPreference:35+(n>>>5)%46,upsidePreference:35+(n>>>11)%46,currentAbilityPreference:35+(n>>>17)%46,scoutingReliance:35+(n>>>23)%46} }
-export function getOrganizationRatingEvaluation(input:{readonly organizationId:OrganizationId;readonly playerId:PlayerId;readonly dimension:string;readonly knowledge:readonly OrganizationKnowledge[];readonly currentDate:GameDate;readonly publicPosition?:string}):RatingEvaluation { const finding=input.knowledge.find(k=>k.organizationId===input.organizationId&&k.subjectPlayerId===input.playerId)?.dimensions[input.dimension]; if(!finding||finding.estimate===undefined)return unknownPrior(input);const freshness=lazyFreshness(finding.assessedAt,input.currentDate), uncertainty=Math.min(20,(finding.uncertainty??15)+Math.round((1-freshness)*5));const confidence=Math.round(finding.confidence*100);const disagreement=uncertainty>=13?'HIGH':uncertainty>=8?'MODERATE':'LOW';if(!input.dimension.startsWith('potential:')&&uncertainty<=1&&freshness>=.8&&finding.provenance!=='inferred')return{mode:'EXACT',estimate:Math.round(finding.estimate),confidence,freshness,disagreement};if(uncertainty<=9)return{mode:'RANGE',estimate:Math.round(finding.estimate),uncertainty,confidence,freshness,disagreement};return{mode:disagreement==='HIGH'?'MIXED':'DESCRIPTOR',estimate:Math.round(finding.estimate),uncertainty,descriptor:descriptor(finding.estimate),confidence,freshness,disagreement} }
+export function getOrganizationRatingEvaluation(input:{readonly organizationId:OrganizationId;readonly playerId:PlayerId;readonly dimension:string;readonly knowledge:readonly OrganizationKnowledge[];readonly currentDate:GameDate;readonly publicPosition?:string}):RatingEvaluation {
+  if (isAggregateScoutingDimension(input.dimension)) {
+    const derived = deriveAggregateEvaluationFromRatingKnowledge(input, input.dimension)
+    if (derived !== undefined) return derived.evaluation
+  }
+  const finding=input.knowledge.find(k=>k.organizationId===input.organizationId&&k.subjectPlayerId===input.playerId)?.dimensions[input.dimension]
+  if(!finding||finding.estimate===undefined)return unknownPrior(input)
+  return evaluationFromFinding(finding,input.currentDate,input.dimension.startsWith('potential:'))
+}
+
+export function deriveAggregateEvaluationFromRatingKnowledge(
+  input: { readonly organizationId: OrganizationId; readonly playerId: PlayerId; readonly knowledge: readonly OrganizationKnowledge[]; readonly currentDate: GameDate; readonly publicPosition?: string },
+  dimension: PlayerAggregateScoutingDimension,
+): { readonly evaluation: RatingEvaluation; readonly coverage: number } | undefined {
+  const knowledge = input.knowledge.find((entry) => entry.organizationId === input.organizationId && entry.subjectPlayerId === input.playerId)
+  const keys = PLAYER_AGGREGATE_SCOUTING_KEYS[dimension]
+  const known = keys.flatMap((key) => {
+    const stored = knowledge?.dimensions[ratingKnowledgeDimensionFor(key)]
+    if (stored?.estimate === undefined) return []
+    const evaluation = evaluationFromFinding(stored, input.currentDate, false)
+    return evaluation.mode === 'UNKNOWN' ? [] : [{ evaluation, coverage: stored.coverage }]
+  })
+  const coverage = known.reduce((sum, row) => sum + row.coverage, 0) / keys.length
+  if (known.length === 0 || coverage < 0.6) return undefined
+
+  // The estimate keeps the existing equal-weight mean. Missing/partial observations widen it.
+  const estimate = Math.round(known.reduce((sum, row) => sum + (row.evaluation.estimate ?? 50), 0) / known.length)
+  const averageUncertainty = known.reduce((sum, row) => sum + (row.evaluation.uncertainty ?? 0), 0) / known.length
+  const uncertainty = Math.min(20, Math.ceil(averageUncertainty + (1 - coverage) * 20))
+  const confidence = Math.round(known.reduce((sum, row) => sum + row.evaluation.confidence * row.coverage, 0) / known.length)
+  const freshness = known.reduce((sum, row) => sum + row.evaluation.freshness * row.coverage, 0) / known.length
+  const disagreement = uncertainty >= 13 ? 'HIGH' : uncertainty >= 8 ? 'MODERATE' : 'LOW'
+  const allExact = coverage >= 0.999 && known.length === keys.length && known.every((row) => row.evaluation.mode === 'EXACT')
+  const evaluation: RatingEvaluation = allExact
+    ? { mode: 'EXACT', estimate, confidence, freshness, disagreement }
+    : uncertainty <= 9
+      ? { mode: 'RANGE', estimate, uncertainty, confidence, freshness, disagreement }
+      : { mode: disagreement === 'HIGH' ? 'MIXED' : 'DESCRIPTOR', estimate, uncertainty, descriptor: descriptor(estimate), confidence, freshness, disagreement }
+  return { evaluation, coverage }
+}
+
+function isAggregateScoutingDimension(value: string): value is PlayerAggregateScoutingDimension {
+  return Object.hasOwn(PLAYER_AGGREGATE_SCOUTING_KEYS, value)
+}
+
+function evaluationFromFinding(finding: OrganizationKnowledge['dimensions'][string], now: GameDate, isPotential: boolean): RatingEvaluation {
+  const freshness=lazyFreshness(finding.assessedAt,now), uncertainty=Math.min(20,(finding.uncertainty??15)+Math.round((1-freshness)*5)), confidence=Math.round(finding.confidence*100), disagreement=uncertainty>=13?'HIGH':uncertainty>=8?'MODERATE':'LOW'
+  if(!isPotential&&uncertainty<=1&&freshness>=.8&&finding.provenance!=='inferred')return{mode:'EXACT',estimate:Math.round(finding.estimate!),confidence,freshness,disagreement}
+  if(uncertainty<=9)return{mode:'RANGE',estimate:Math.round(finding.estimate!),uncertainty,confidence,freshness,disagreement}
+  return{mode:disagreement==='HIGH'?'MIXED':'DESCRIPTOR',estimate:Math.round(finding.estimate!),uncertainty,descriptor:descriptor(finding.estimate!),confidence,freshness,disagreement}
+}
 export function formatRatingEvaluation(value:RatingEvaluation):string { if(value.mode==='UNKNOWN')return '?';if(value.mode==='EXACT')return String(value.estimate);if(value.mode==='RANGE')return `${Math.max(1,(value.estimate??50)-(value.uncertainty??0))}-${Math.min(100,(value.estimate??50)+(value.uncertainty??0))}`;return value.mode==='MIXED'?`${value.descriptor??'Mixed'} ±${value.uncertainty??'?'}`:value.descriptor??'Unknown' }
 /** Shared UI semantics: unknown evaluations neither sort by hidden truth nor pass numeric filters. */
 export function intelligenceSortValue(value:RatingEvaluation):number|undefined{return value.mode==='UNKNOWN'?undefined:value.estimate}

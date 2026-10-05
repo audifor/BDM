@@ -3,12 +3,14 @@ import { createElement } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
-import { createNewGame } from '@/app/game'
+import { createAcbTestGame, createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { nextEligibleTrainingDate, scheduleTeamModuleSession } from '@/engine/training'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
 import { addDays, parseGameDate } from '@/domain/date'
 import { getGamesForTeam } from '@/domain/world'
+import { updateGameWorld } from '@/domain/world'
+import { executeScheduledTrainingSessions } from '@/engine/training'
 import { TrainingPcbPage } from './TrainingPcbPage'
 
 afterEach(cleanup)
@@ -90,6 +92,55 @@ describe('TrainingPcbPage / interactions', () => {
     expect(screen.getByText('2026-08-10 - 2026-08-16')).toBeInTheDocument()
   })
 
+  it('shows a completed session in its original weekly slot after time advances and the user goes back', () => {
+    const base = { ...createNewGame(), currentDate: parseGameDate('2026-10-05') }
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const scheduled = scheduleTeamModuleSession(base, { teamId: team.id, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'history-calendar-session' })
+    const completed = executeScheduledTrainingSessions(updateGameWorld(scheduled, { currentDate: date }))
+    const later = { ...completed, currentDate: addDays(date, 8) }
+    const { container } = render(createElement(TrainingPcbPage, { world: later }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+
+    expect(container.querySelectorAll('.pcb-training__session')).toHaveLength(1)
+    const historicalCard = screen.getByRole('button', { name: /Three-Point Shooting.*COMPLETED/ })
+    expect(within(historicalCard).queryByRole('button')).not.toBeInTheDocument()
+    fireEvent.click(historicalCard)
+
+    const modal = screen.getByRole('dialog', { name: 'Three-Point Shooting' })
+    expect(within(modal).getByText(/COMPLETED/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Planned/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Effective/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Executor/)).toBeInTheDocument()
+
+    fireEvent.mouseDown(modal)
+    expect(screen.getByRole('dialog', { name: 'Three-Point Shooting' })).toBeInTheDocument()
+    fireEvent.click(within(modal).getByRole('button', { name: 'Close dialog' }))
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+
+    fireEvent.click(historicalCard)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+
+    fireEvent.click(historicalCard)
+    fireEvent.mouseDown(document.querySelector('.bdm-dialog-backdrop')!)
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+  })
+
+  it('keeps future scheduled sessions on their existing edit flow', () => {
+    const base = { ...createNewGame(), currentDate: parseGameDate('2026-10-05') }
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const scheduled = scheduleTeamModuleSession(base, { teamId: team.id, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'future-calendar-session' })
+    const world = { ...scheduled, currentDate: addDays(date, -1) }
+    const { container } = render(createElement(TrainingPcbPage, { world }))
+
+    fireEvent.click(screen.getByRole('button', { name: /Three-Point Shooting/ }))
+    expect(screen.getByRole('heading', { name: 'Editar sesión' })).toBeInTheDocument()
+    expect(container.querySelector('.pcb-training__session--completed')).toBeNull()
+  })
+
   it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleTeamModule with real domain data', () => {
     const world = createNewGame()
     const onScheduleTeamModule = vi.fn()
@@ -124,6 +175,30 @@ describe('TrainingPcbPage / interactions', () => {
 
     expect(onScheduleTeamModule).toHaveBeenCalledTimes(1)
     expect(onScheduleTeamModule.mock.calls[0]![0]).toMatchObject({ intensity: 'high' })
+  })
+
+  it('filters team-session executors by the selected module capability', () => {
+    const world = createAcbTestGame()
+    render(createElement(TrainingPcbPage, { world }))
+    const enabled = screen.getAllByRole('button', { name: '+ Sesión' }).find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'catchAndShoot' } })
+    const options = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+
+    expect(options.some((option) => option.includes('assistantCoach') || option.includes('shootingCoach'))).toBe(true)
+    expect(options.some((option) => option.includes('headCoach') || option.includes('physiotherapist') || option.includes('regionalScout') || option.includes('strengthConditioningCoach'))).toBe(false)
+
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'strength' } })
+    const physicalOptions = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+    expect(physicalOptions.some((option) => option.includes('strengthConditioningCoach'))).toBe(true)
+    expect(physicalOptions.some((option) => option.includes('physiotherapist') || option.includes('regionalScout'))).toBe(false)
+
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'rest' } })
+    const recoveryOptions = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+    expect(recoveryOptions.some((option) => option.includes('physiotherapist'))).toBe(true)
+    expect(recoveryOptions.some((option) => option.includes('regionalScout'))).toBe(false)
   })
 
   it('the session modal composes hour + minute selectors into a canonical HH:MM start time', () => {
