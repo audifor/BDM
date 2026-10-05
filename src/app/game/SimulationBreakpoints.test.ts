@@ -13,13 +13,18 @@ import { applyMatchResult } from '@/engine/match'
 import { finalizeSeason } from '@/engine/season'
 import { createDraftForCompletedSeason, generateDraftProspects, getAvailableDraftProspects, getCurrentDraftPick, makeDraftSelection, openDraft } from '@/engine/draft'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
-import { createAcbTestGame } from './createAcbTestGame'
-import { createNewGame } from './createNewGame'
+import { createAcbTestGame as createFullAcbTestGame } from './createAcbTestGame'
+import { createNewGame as createFullNewGame } from './createNewGame'
 import { advanceGameDay, advanceGameDayWithResult, SimulationAdvanceBlockedError } from './advanceGameDay'
 import { continueGame, getContinueStopReason } from './ContinueFlow'
 import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 import { openRetentionNegotiation, submitRetentionOffer } from '@/engine/contractRetention/ContractRetentionEngine'
 import { simulateUntilDate } from './simulateUntilDate'
+import { withShortGameFormat } from './testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 describe('simulation breakpoints', () => {
   it('surfaces a retention counter through the shared nonblocking breakpoint evaluator', () => {
@@ -64,6 +69,7 @@ describe('simulation breakpoints', () => {
     const nextDay = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
     expect(evaluateSimulationBreakpoints(nextDay).candidates.some((item) => item.reason === 'contractReviewHorizon')).toBe(false)
   })
+
 
   it('allows advancement when there is no pending decision', () => {
     const result = evaluateSimulationBreakpoints(createAcbTestGame())

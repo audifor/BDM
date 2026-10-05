@@ -26,7 +26,7 @@ describe('PlayerMatchConsequences stimulus provenance', () => {
       actorRandom: new SeededRandomSource(53),
     })
     const completed = applyMatchResult(world, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-    const withConsequences = applyPlayerMatchConsequences(completed, simulation)
+    const withConsequences = applyPlayerMatchConsequences(world, completed, simulation)
     const events = Object.values(withConsequences.developmentStimulusEventsById)
 
     expect(events.length).toBeGreaterThan(0)

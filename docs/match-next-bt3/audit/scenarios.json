@@ -1,0 +1,100 @@
+[
+  {
+    "kind": "screenContact",
+    "description": "A defender meets a ball screener (measured screen contact)",
+    "seed": 7,
+    "fromTick": 16159,
+    "toTick": 16229
+  },
+  {
+    "kind": "driveContact",
+    "description": "A driver and the on-ball defender make contact",
+    "seed": 424242,
+    "fromTick": 1557,
+    "toTick": 1627
+  },
+  {
+    "kind": "shootingFoul",
+    "description": "Shooting foul that sends the shooter to the line",
+    "seed": 424242,
+    "fromTick": 4353,
+    "toTick": 4498
+  },
+  {
+    "kind": "andOne",
+    "description": "Made basket with a foul: the AND-ONE free throw",
+    "seed": 424242,
+    "fromTick": 2958,
+    "toTick": 3103
+  },
+  {
+    "kind": "chargeOrBlocking",
+    "description": "Charge (offense) or blocking (defense) call on a drive",
+    "seed": 424242,
+    "fromTick": 1552,
+    "toTick": 1642
+  },
+  {
+    "kind": "freeThrows",
+    "description": "Free-throw sequence: formation, ready, each attempt, then live rebound or throw-in",
+    "seed": 424242,
+    "fromTick": 4384,
+    "toTick": 4493
+  },
+  {
+    "kind": "block",
+    "description": "A real block: defender within reach at the release",
+    "seed": 424242,
+    "fromTick": 405,
+    "toTick": 495
+  },
+  {
+    "kind": "deflection",
+    "description": "Pass deflected on its lane",
+    "seed": 424242,
+    "fromTick": 1257,
+    "toTick": 1332
+  },
+  {
+    "kind": "steal",
+    "description": "Clean steal or poke-loose by the on-ball defender",
+    "seed": 424242,
+    "fromTick": 8439,
+    "toTick": 8514
+  },
+  {
+    "kind": "interception",
+    "description": "Pass intercepted in the lane",
+    "seed": 424242,
+    "fromTick": 1834,
+    "toTick": 1909
+  },
+  {
+    "kind": "outOfBounds",
+    "description": "Ball out of bounds with the correct team and spot for the throw-in",
+    "seed": 424242,
+    "fromTick": 7378,
+    "toTick": 7493
+  },
+  {
+    "kind": "foulInbound",
+    "description": "Non-shooting foul: whistle, dead ball carried to the spot, throw-in",
+    "seed": 424242,
+    "fromTick": 1557,
+    "toTick": 1682
+  },
+  {
+    "kind": "reboundContest",
+    "description": "Rebound contested: contact recorded between the winner and an opponent",
+    "seed": 424242,
+    "fromTick": 1292,
+    "toTick": 1372
+  },
+  {
+    "kind": "putback",
+    "description": "Offensive rebound followed by the rebounder's own attempt",
+    "seed": 424242,
+    "fromTick": 396,
+    "toTick": 486
+  }
+]

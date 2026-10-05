@@ -26,7 +26,13 @@ describe('canonical court geometry', () => {
     expect(isBeyondThreePointLine({ x: 20.5, y: 7.5 }, fiba.baskets.right, fiba)).toBe(false)
     expect(isBeyondThreePointLine({ x: 8.5, y: 7.5 }, fiba.baskets.left, fiba)).toBe(true)
     expect(isBeyondThreePointLine({ x: 27.9, y: 14.5 }, fiba.baskets.right, fiba)).toBe(true)
-    expect(isBeyondThreePointLine({ x: 27.3, y: 14.5 }, fiba.baskets.right, fiba)).toBe(false)
+    // A corner shot from 1.1 m off the baseline and 0.5 m off the sideline is a three (the straight section runs 2.99 m from the baseline).
+    expect(isBeyondThreePointLine({ x: 27.3, y: 14.5 }, fiba.baskets.right, fiba)).toBe(true)
+    expect(isBeyondThreePointLine({ x: fiba.baskets.right.x, y: 14.5 }, fiba.baskets.right, fiba)).toBe(true)
+    // Past the intersection with the arc the corner strip follows the arc, and inside the corner line it is a two.
+    expect(isBeyondThreePointLine({ x: fiba.baskets.right.x - 3, y: 14.5 }, fiba.baskets.right, fiba)).toBe(true)
+    expect(isBeyondThreePointLine({ x: fiba.baskets.right.x, y: 13.5 }, fiba.baskets.right, fiba)).toBe(false)
+    expect(isBeyondThreePointLine({ x: fiba.baskets.right.x - 1.2, y: 6.5 }, fiba.baskets.right, fiba)).toBe(false)
     expect(nba.threePointLine.arcRadiusMeters).toBeGreaterThan(fiba.threePointLine.arcRadiusMeters)
     expect(isBeyondThreePointLine({ x: fiba.baskets.right.x - 7, y: fiba.widthMeters / 2 }, fiba.baskets.right, fiba)).toBe(true)
     expect(isBeyondThreePointLine({ x: nba.baskets.right.x - 7, y: nba.widthMeters / 2 }, nba.baskets.right, nba)).toBe(false)

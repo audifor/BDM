@@ -9,6 +9,7 @@ import {
   getStaffAssignment,
   getStaffPerson,
   getTeamResponsibilities,
+  staffContractsByStaff,
   type GameWorld,
 } from '@/domain/world'
 import {
@@ -45,7 +46,8 @@ export function deriveStaffReality(world: GameWorld, context: StaffHumanContext,
   const held = getResponsibilitiesHeldByStaff(world, context.staffId).filter((item) => item.teamId === context.teamId)
   const teamResponsibilities = getTeamResponsibilities(world, context.teamId)
   const workload = calculateStaffWorkload(world, context.staffId)
-  const contract = Object.values(world.staffContractsById).find((item) => item.staffId === context.staffId && item.teamId === context.teamId && isStaffContractActiveOn(item, world.currentDate))
+  // WSR2: the staff person's contracts from the per-collection index (same first match as the scan).
+  const contract = (staffContractsByStaff(world.staffContractsById).get(context.staffId) ?? []).find((item) => item.teamId === context.teamId && isStaffContractActiveOn(item, world.currentDate))
   const reputation = world.staffReputationProfilesByStaffId[context.staffId]
   const politicalInfluence = deriveStaffPoliticalInfluence(world, context, politicalInfluenceIndex)
 

@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "block",
+  "description": "A real block: defender within reach at the release",
+  "seed": 424242,
+  "fromTick": 405,
+  "toTick": 495
+ },
+ "everyMs": 750,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 405,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4407340448235498
+    },
+    {
+     "frame": 1,
+     "tick": 412,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.09818406164664983
+    },
+    {
+     "frame": 2,
+     "tick": 420,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.4299046562844278
+    },
+    {
+     "frame": 3,
+     "tick": 427,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11111207578145076
+    },
+    {
+     "frame": 4,
+     "tick": 435,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4315178638282572
+    },
+    {
+     "frame": 5,
+     "tick": 442,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.10023814446217964
+    },
+    {
+     "frame": 6,
+     "tick": 450,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.25675898173642075
+    },
+    {
+     "frame": 7,
+     "tick": 457,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.09368022289170014
+    },
+    {
+     "frame": 8,
+     "tick": 465,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.32925114524195853
+    },
+    {
+     "frame": 9,
+     "tick": 472,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.10584292762729444
+    },
+    {
+     "frame": 10,
+     "tick": 480,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.383670510148796
+    },
+    {
+     "frame": 11,
+     "tick": 487,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12642486736799657
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 405,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4407340448235498
+    },
+    {
+     "frame": 1,
+     "tick": 412,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.09818406164664983
+    },
+    {
+     "frame": 2,
+     "tick": 420,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.4299046562844278
+    },
+    {
+     "frame": 3,
+     "tick": 427,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11111207578145076
+    },
+    {
+     "frame": 4,
+     "tick": 435,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4315178638282572
+    },
+    {
+     "frame": 5,
+     "tick": 442,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.10023814446217964
+    },
+    {
+     "frame": 6,
+     "tick": 450,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.25675898173642075
+    },
+    {
+     "frame": 7,
+     "tick": 457,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.09368022289170014
+    },
+    {
+     "frame": 8,
+     "tick": 465,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.32925114524195853
+    },
+    {
+     "frame": 9,
+     "tick": 472,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.10584292762729444
+    },
+    {
+     "frame": 10,
+     "tick": 480,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.383670510148796
+    },
+    {
+     "frame": 11,
+     "tick": 487,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12642486736799657
+    }
+   ]
+  }
+ }
+}

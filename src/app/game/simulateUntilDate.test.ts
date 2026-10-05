@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest'
 
 import { addDays, parseGameDate } from '@/domain/date'
 import { isSeasonComplete } from '@/engine/season'
-import { simulateAndApplyGame } from './playUserGame'
+import { simulateAndApplyGame } from './matchResolution'
 
 import { advanceGameDay } from './advanceGameDay'
-import { createAcbTestGame } from './createAcbTestGame'
-import { createNewGame } from './createNewGame'
+import { createAcbTestGame as createFullAcbTestGame } from './createAcbTestGame'
+import { createNewGame as createFullNewGame } from './createNewGame'
 import { simulateUntilDate, tickSimulateUntilDate } from './simulateUntilDate'
+import { withShortGameFormat } from './testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 describe('simulate until date', () => {
   it('rejects a target on or before the current date without changing the world', () => {
@@ -126,7 +131,8 @@ describe('simulate until date', () => {
       // Rollover never moves currentSeasonId directly (see startNextSeason.ts): it only migrates
       // once the world clock naturally reaches the new edition's startDate, which 400 days does.
       expect(result.world.currentSeasonId).not.toBe(primarySeasonId)
-    }, 600_000)
+      // ME-LOCK1: 306 ACB Games through Match Next FAST plus a 400-day walk: ~9 minutes alone, more under parallel load.
+    }, 1_200_000)
 
     it('rolls the next edition immediately but keeps currentSeasonId until the clock actually reaches its startDate', () => {
       const world = withNoRecruiting(createNewGame())

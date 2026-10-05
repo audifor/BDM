@@ -1,0 +1,932 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    11,
+    12,
+    3,
+    5,
+    21,
+    42
+  ],
+  "overrides": {},
+  "summary": {
+    "games": 12,
+    "seeds": [
+      31337,
+      424242,
+      7,
+      1,
+      99,
+      2024,
+      11,
+      12,
+      3,
+      5,
+      21,
+      42
+    ],
+    "totals": {
+      "possessionsPerGame": 175.17,
+      "gameSecondsPerPossession": 12.21,
+      "wallSecondsPerPossession": 13.45,
+      "points": 175.17,
+      "shots": 159.58,
+      "made": 59.08,
+      "passes": 609.58,
+      "drives": 136.5,
+      "screens": 73.75,
+      "turnovers": 25.33,
+      "steals": 21.17,
+      "fouls": 35.58,
+      "orebs": 15.67,
+      "drebs": 79.17,
+      "assists": 32.83,
+      "pppPerPossession": 1,
+      "possessionSeconds": {
+        "n": 2102,
+        "mean": 12.21,
+        "median": 12.1,
+        "p10": 4.8,
+        "p90": 19.9,
+        "min": 0,
+        "max": 36.4
+      }
+    },
+    "byEndClass": {
+      "DEFENSIVE_REBOUND": {
+        "perGame": 79.17,
+        "pct": 45.2,
+        "meanGameSeconds": 14.4,
+        "medianGameSeconds": 14.2
+      },
+      "FREE_THROW_SEQUENCE": {
+        "perGame": 9.75,
+        "pct": 5.6,
+        "meanGameSeconds": 7.04,
+        "medianGameSeconds": 6.9
+      },
+      "MADE_SHOT": {
+        "perGame": 57.92,
+        "pct": 33.1,
+        "meanGameSeconds": 12.42,
+        "medianGameSeconds": 12.2
+      },
+      "OFFENSIVE_FOUL": {
+        "perGame": 1.42,
+        "pct": 0.8,
+        "meanGameSeconds": 9.96,
+        "medianGameSeconds": 10.1
+      },
+      "OTHER_TURNOVER": {
+        "perGame": 0.83,
+        "pct": 0.5,
+        "meanGameSeconds": 13.48,
+        "medianGameSeconds": 12.2
+      },
+      "PERIOD_END": {
+        "perGame": 3,
+        "pct": 1.7,
+        "meanGameSeconds": 3.72,
+        "medianGameSeconds": 1.9
+      },
+      "SHOT_CLOCK_VIOLATION": {
+        "perGame": 0.83,
+        "pct": 0.5,
+        "meanGameSeconds": 30.63,
+        "medianGameSeconds": 31.2
+      },
+      "TURNOVER_BAD_PASS": {
+        "perGame": 7.42,
+        "pct": 4.2,
+        "meanGameSeconds": 8.4,
+        "medianGameSeconds": 8.4
+      },
+      "TURNOVER_DRIBBLE": {
+        "perGame": 0.08,
+        "pct": 0,
+        "meanGameSeconds": 4.1,
+        "medianGameSeconds": 4.1
+      },
+      "TURNOVER_STEAL": {
+        "perGame": 14.75,
+        "pct": 8.4,
+        "meanGameSeconds": 5.84,
+        "medianGameSeconds": 4.6
+      }
+    },
+    "byStartReason": {
+      "defensiveRebound": {
+        "perGame": 79.17,
+        "pct": 45.2,
+        "meanGameSeconds": 12.53,
+        "medianGameSeconds": 12.5,
+        "shotsPerPossession": 0.89,
+        "points": 0.98
+      },
+      "madeBasketInbound": {
+        "perGame": 66.67,
+        "pct": 38.1,
+        "meanGameSeconds": 12.71,
+        "medianGameSeconds": 12.8,
+        "shotsPerPossession": 0.91,
+        "points": 0.98
+      },
+      "openingJumpBall": {
+        "perGame": 1,
+        "pct": 0.6,
+        "meanGameSeconds": 4.5,
+        "medianGameSeconds": 4.4,
+        "shotsPerPossession": 1.08,
+        "points": 1.08
+      },
+      "other": {
+        "perGame": 1.08,
+        "pct": 0.6,
+        "meanGameSeconds": 11.61,
+        "medianGameSeconds": 11.5,
+        "shotsPerPossession": 1.08,
+        "points": 1.23
+      },
+      "periodStart": {
+        "perGame": 3,
+        "pct": 1.7,
+        "meanGameSeconds": 9.6,
+        "medianGameSeconds": 9,
+        "shotsPerPossession": 0.94,
+        "points": 1.03
+      },
+      "shotClockViolation": {
+        "perGame": 0.83,
+        "pct": 0.5,
+        "meanGameSeconds": 9.7,
+        "medianGameSeconds": 9.9,
+        "shotsPerPossession": 1.1,
+        "points": 1
+      },
+      "steal": {
+        "perGame": 21.17,
+        "pct": 12.1,
+        "meanGameSeconds": 10.58,
+        "medianGameSeconds": 10.5,
+        "shotsPerPossession": 0.93,
+        "points": 1.13
+      },
+      "turnoverInbound": {
+        "perGame": 2.25,
+        "pct": 1.3,
+        "meanGameSeconds": 9.46,
+        "medianGameSeconds": 8.2,
+        "shotsPerPossession": 1.19,
+        "points": 1
+      }
+    },
+    "clock": {
+      "gamesComplete": 12,
+      "liveClockSecondsPerGame": 2399.7,
+      "deadBallSecondsPerGame": 310.3,
+      "transitionSeconds": 534.8,
+      "halfCourtSeconds": 629,
+      "actionSeconds": 967.1,
+      "otherLiveSeconds": 268.8,
+      "liveWithoutAnyOpenPossessionSeconds": 261,
+      "possessionRowsClockSecondsPerGame": 2138.7,
+      "reconciliationGapSeconds": 0,
+      "deadBallByPlayPhaseSeconds": {
+        "INBOUND": 17.7,
+        "READY": 20,
+        "LIVE": 14.5,
+        "WHISTLE": 2.4,
+        "DEAD": 4.7,
+        "RESOLUTION": 205.7,
+        "FREE_THROW": 45.3
+      },
+      "scheduledSecondsPerGame": 2400
+    },
+    "doubleCount": {
+      "possessionsPerGame": 175.17,
+      "teamPossessionChangesPerGame": 172.42,
+      "consecutiveSameTeamPossessionsPerGame": 1.75,
+      "sameTeamConsecutiveByPreviousEnd": {
+        "periodEnd->periodStart": 1.33,
+        "made->periodStart": 0.42
+      },
+      "possessionsWithZeroClock": 0.08,
+      "possessionsUnder1s": 2,
+      "possessionsUnder2s": 8.08,
+      "startsWithinOneSecondOfPreviousStart": 0.33,
+      "startsThatShareTheClockTickOfTheLastEnd": 121.5,
+      "possessionsWithNoShotNoTurnoverNoFreeThrowNoRebound": 2,
+      "possessionsWithFreeThrows": 17.67,
+      "possessionsEndingInTurnoverThatAlsoHadAShot": 1.17,
+      "ownershipEventsPerGame": {
+        "possessionStart": 175.17,
+        "possessionEnd": 175.17,
+        "passReceived": 588.83,
+        "passIntercepted": 6.33,
+        "steal": 21.17,
+        "deflection": 6.83,
+        "looseBallRecovered": 33.92,
+        "reboundSecured": 94.83,
+        "turnover": 25.33,
+        "inboundReleased": 89.08,
+        "jumpBallResolved": 1
+      }
+    },
+    "early": {
+      "attemptsPerGame": 70.5,
+      "byClass": {
+        "LEGITIMATE_TRANSITION": {
+          "perGame": 35.5,
+          "pct": 50.4,
+          "meanSeconds": 3.93,
+          "attackersAhead": 2.29,
+          "defendersAhead": 2.15,
+          "organizedDefenders": 3.75,
+          "defenderToBall": 0.75,
+          "shotProbability": 0.04,
+          "shots": 0.25,
+          "drives": 35.25
+        },
+        "SEMI_TRANSITION": {
+          "perGame": 4.75,
+          "pct": 6.7,
+          "meanSeconds": 4.4,
+          "attackersAhead": 0.95,
+          "defendersAhead": 2.42,
+          "organizedDefenders": 4.28,
+          "defenderToBall": 0.89,
+          "shotProbability": 0.1,
+          "shots": 1.1666666666666667,
+          "drives": 3.5833333333333335
+        },
+        "FALSE_EARLY_OFFENSE": {
+          "perGame": 30.25,
+          "pct": 42.9,
+          "meanSeconds": 6.67,
+          "attackersAhead": 2.33,
+          "defendersAhead": 4.85,
+          "organizedDefenders": 4.13,
+          "defenderToBall": 1.98,
+          "shotProbability": 0.35,
+          "shots": 5.166666666666667,
+          "drives": 25.083333333333332
+        }
+      },
+      "byStart": {
+        "defensiveRebound": {
+          "perGame": 28.83,
+          "legit": 10.42,
+          "semi": 3.42,
+          "falseEarly": 15,
+          "unsettled": 15,
+          "defenseSet45": 26.42
+        },
+        "madeBasketInbound": {
+          "perGame": 22.58,
+          "legit": 15.42,
+          "semi": 0.58,
+          "falseEarly": 6.58,
+          "unsettled": 16.67,
+          "defenseSet45": 21.83
+        },
+        "openingJumpBall": {
+          "perGame": 1,
+          "legit": 1,
+          "semi": 0,
+          "falseEarly": 0,
+          "unsettled": 1,
+          "defenseSet45": 1
+        },
+        "other": {
+          "perGame": 0.5,
+          "legit": 0.17,
+          "semi": 0,
+          "falseEarly": 0.33,
+          "unsettled": 0.17,
+          "defenseSet45": 0.42
+        },
+        "periodStart": {
+          "perGame": 2.5,
+          "legit": 0.33,
+          "semi": 0.08,
+          "falseEarly": 2.08,
+          "unsettled": 0.17,
+          "defenseSet45": 2.5
+        },
+        "shotClockViolation": {
+          "perGame": 0.58,
+          "legit": 0.5,
+          "semi": 0,
+          "falseEarly": 0.08,
+          "unsettled": 0.58,
+          "defenseSet45": 0.58
+        },
+        "steal": {
+          "perGame": 12.58,
+          "legit": 5.92,
+          "semi": 0.67,
+          "falseEarly": 6,
+          "unsettled": 7.75,
+          "defenseSet45": 9.67
+        },
+        "turnoverInbound": {
+          "perGame": 1.92,
+          "legit": 1.75,
+          "semi": 0,
+          "falseEarly": 0.17,
+          "unsettled": 1.75,
+          "defenseSet45": 1.92
+        }
+      },
+      "byKindAndCreation": {
+        "DRIVE/-": {
+          "perGame": 63.92,
+          "legit": 35.25,
+          "semi": 3.58,
+          "falseEarly": 25.08,
+          "passesBefore": 1.14,
+          "seconds": 5.08,
+          "shotProbability": 0
+        },
+        "SHOT/CATCH_AND_SHOOT": {
+          "perGame": 4,
+          "legit": 0,
+          "semi": 0,
+          "falseEarly": 4,
+          "passesBefore": 2.42,
+          "seconds": 7.18,
+          "shotProbability": 0.39
+        },
+        "SHOT/PULL_UP": {
+          "perGame": 0.25,
+          "legit": 0,
+          "semi": 0,
+          "falseEarly": 0.25,
+          "passesBefore": 1,
+          "seconds": 6.47,
+          "shotProbability": 0.21
+        },
+        "SHOT/TRANSITION": {
+          "perGame": 2.33,
+          "legit": 0.25,
+          "semi": 1.17,
+          "falseEarly": 0.92,
+          "passesBefore": 0.93,
+          "seconds": 2.98,
+          "shotProbability": 0.14
+        }
+      },
+      "byTrigger": {
+        "DRIVE|stage=EARLY/unsettled|phase=ADVANCE|transition=NEUTRAL": {
+          "perGame": 1.25,
+          "legit": 1.25,
+          "semi": 0,
+          "falseEarly": 0,
+          "seconds": 2.07
+        },
+        "DRIVE|stage=EARLY/unsettled|phase=ADVANCE|transition=NONE": {
+          "perGame": 1.92,
+          "legit": 1.92,
+          "semi": 0,
+          "falseEarly": 0,
+          "seconds": 4.35
+        },
+        "DRIVE|stage=EARLY/unsettled|phase=ADVANCE|transition=STOPPED": {
+          "perGame": 16.75,
+          "legit": 16.33,
+          "semi": 0.17,
+          "falseEarly": 0.25,
+          "seconds": 4.13
+        },
+        "DRIVE|stage=HALF_COURT/settled|phase=ACTION|transition=NONE": {
+          "perGame": 19.92,
+          "legit": 0.17,
+          "semi": 1.17,
+          "falseEarly": 18.58,
+          "seconds": 6.74
+        },
+        "DRIVE|stage=HALF_COURT/settled|phase=SETUP|transition=NONE": {
+          "perGame": 4.92,
+          "legit": 0,
+          "semi": 0,
+          "falseEarly": 4.92,
+          "seconds": 7.34
+        },
+        "DRIVE|stage=HALF_COURT/unsettled|phase=ACTION|transition=NEUTRAL": {
+          "perGame": 0.17,
+          "legit": 0.08,
+          "semi": 0.08,
+          "falseEarly": 0,
+          "seconds": 2.3
+        },
+        "DRIVE|stage=HALF_COURT/unsettled|phase=ACTION|transition=NONE": {
+          "perGame": 9.17,
+          "legit": 7.33,
+          "semi": 1.33,
+          "falseEarly": 0.5,
+          "seconds": 4.36
+        },
+        "DRIVE|stage=HALF_COURT/unsettled|phase=ACTION|transition=STOPPED": {
+          "perGame": 3.08,
+          "legit": 2.25,
+          "semi": 0.25,
+          "falseEarly": 0.58,
+          "seconds": 3.25
+        },
+        "DRIVE|stage=HALF_COURT/unsettled|phase=SETUP|transition=NONE": {
+          "perGame": 6.75,
+          "legit": 5.92,
+          "semi": 0.58,
+          "falseEarly": 0.25,
+          "seconds": 3.59
+        },
+        "SHOT|stage=ACTION/settled|phase=ACTION|transition=NONE": {
+          "perGame": 2.33,
+          "legit": 0,
+          "semi": 0,
+          "falseEarly": 2.33,
+          "seconds": 7.03
+        },
+        "SHOT|stage=ACTION/unsettled|phase=ACTION|transition=NONE": {
+          "perGame": 3.25,
+          "legit": 0,
+          "semi": 0.58,
+          "falseEarly": 2.67,
+          "seconds": 5.76
+        },
+        "SHOT|stage=ACTION/unsettled|phase=ACTION|transition=STOPPED": {
+          "perGame": 0.92,
+          "legit": 0.25,
+          "semi": 0.5,
+          "falseEarly": 0.17,
+          "seconds": 2.39
+        },
+        "SHOT|stage=NO_FLOW|phase=?|transition=NONE": {
+          "perGame": 0.08,
+          "legit": 0,
+          "semi": 0.08,
+          "falseEarly": 0,
+          "seconds": 0
+        }
+      },
+      "byZone": {
+        "ABOVE_BREAK_THREE": 4,
+        "CORNER_THREE": 0.75,
+        "DEEP": 1.58,
+        "FLOATER_RANGE": 0.08,
+        "LONG_MIDRANGE": 0.08,
+        "MIDRANGE": 0.08
+      },
+      "passesBefore": {
+        "n": 846,
+        "mean": 1.21,
+        "median": 1,
+        "p10": 0,
+        "p90": 2,
+        "min": 0,
+        "max": 5
+      },
+      "ballDistanceToBasket": {
+        "n": 846,
+        "mean": 9.33,
+        "median": 8.16,
+        "p10": 6.93,
+        "p90": 12.49,
+        "min": 3.93,
+        "max": 24.22
+      },
+      "sinceStartSeconds": {
+        "n": 846,
+        "mean": 5.14,
+        "median": 4.6,
+        "p10": 2.7,
+        "p90": 7.7,
+        "min": 0,
+        "max": 8
+      },
+      "shareOfPossessionsWithAnAttackWithin8s": 0.402
+    },
+    "turnoverChain": {
+      "turnoversPerGame": 24.5,
+      "stealsMadePerGame": 21.17,
+      "possessionsStartedByTurnoverPerGame": 24.25,
+      "nextPossession": {
+        "n": 304,
+        "firstDecisionSeconds": {
+          "n": 293,
+          "mean": 4.01,
+          "median": 3.8,
+          "p10": 1.1,
+          "p90": 7,
+          "min": 0.5,
+          "max": 12.2
+        },
+        "firstShotSeconds": {
+          "n": 265,
+          "mean": 9.61,
+          "median": 9.1,
+          "p10": 4,
+          "p90": 16.4,
+          "min": 0.8,
+          "max": 25.7
+        },
+        "gameSeconds": {
+          "n": 304,
+          "mean": 10.5,
+          "median": 10.4,
+          "p10": 4,
+          "p90": 18.3,
+          "min": 0.1,
+          "max": 36.2
+        },
+        "endingInTurnoverShare": 0.115,
+        "endClassShare": {
+          "DEFENSIVE_REBOUND": 0.447,
+          "FREE_THROW_SEQUENCE": 0.059,
+          "MADE_SHOT": 0.365,
+          "OFFENSIVE_FOUL": 0.01,
+          "OTHER_TURNOVER": 0.007,
+          "PERIOD_END": 0.01,
+          "SHOT_CLOCK_VIOLATION": 0.003,
+          "TURNOVER_BAD_PASS": 0.053,
+          "TURNOVER_STEAL": 0.046
+        }
+      },
+      "turnoverToTurnoverChainsPerGame": 2.92,
+      "byTurnoverClass": {
+        "OFFENSIVE_FOUL": {
+          "perGame": 1.42,
+          "nextPossessionSeconds": 9.68,
+          "nextShotWithin8s": 0.588,
+          "nextEndsInTurnover": 0.059
+        },
+        "OTHER_TURNOVER": {
+          "perGame": 0.83,
+          "nextPossessionSeconds": 9.08,
+          "nextShotWithin8s": 0.8,
+          "nextEndsInTurnover": 0
+        },
+        "SHOT_CLOCK_VIOLATION": {
+          "perGame": 0.83,
+          "nextPossessionSeconds": 9.7,
+          "nextShotWithin8s": 0.5,
+          "nextEndsInTurnover": 0
+        },
+        "TURNOVER_BAD_PASS": {
+          "perGame": 7.42,
+          "nextPossessionSeconds": 11.46,
+          "nextShotWithin8s": 0.281,
+          "nextEndsInTurnover": 0.101
+        },
+        "TURNOVER_DRIBBLE": {
+          "perGame": 0.08,
+          "nextPossessionSeconds": 13.4,
+          "nextShotWithin8s": 0,
+          "nextEndsInTurnover": 0
+        },
+        "TURNOVER_STEAL": {
+          "perGame": 14.75,
+          "nextPossessionSeconds": 10.2,
+          "nextShotWithin8s": 0.401,
+          "nextEndsInTurnover": 0.141
+        }
+      },
+      "possessionSecondsAfterTurnoverVsOther": {
+        "afterTurnover": 10.45,
+        "other": 12.49
+      }
+    },
+    "passRisk": {
+      "overall": {
+        "n": 7213,
+        "perGame": 601.08,
+        "interceptPct": 1.1,
+        "loosePct": 1,
+        "lossPct": 2
+      },
+      "byKind": {
+        "PASS": {
+          "n": 6517,
+          "perGame": 543.08,
+          "interceptPct": 1.1,
+          "loosePct": 1,
+          "lossPct": 2.1
+        },
+        "KICK_OUT": {
+          "n": 696,
+          "perGame": 58,
+          "interceptPct": 0.4,
+          "loosePct": 0.6,
+          "lossPct": 1
+        }
+      },
+      "byDistance": {
+        "0-4m": {
+          "n": 2059,
+          "perGame": 171.58,
+          "interceptPct": 0.6,
+          "loosePct": 0.4,
+          "lossPct": 1
+        },
+        "4-7m": {
+          "n": 2390,
+          "perGame": 199.17,
+          "interceptPct": 0.9,
+          "loosePct": 1.2,
+          "lossPct": 2.1
+        },
+        "7-10m": {
+          "n": 1705,
+          "perGame": 142.08,
+          "interceptPct": 1.6,
+          "loosePct": 1.3,
+          "lossPct": 3
+        },
+        "10-14m": {
+          "n": 1011,
+          "perGame": 84.25,
+          "interceptPct": 1.4,
+          "loosePct": 1.1,
+          "lossPct": 2.5
+        },
+        "14-99m": {
+          "n": 48,
+          "perGame": 4,
+          "interceptPct": 0,
+          "loosePct": 0,
+          "lossPct": 0
+        }
+      },
+      "byLaneClearance": {
+        "0-1m": {
+          "n": 3787,
+          "perGame": 315.58,
+          "interceptPct": 1.9,
+          "loosePct": 1.5,
+          "lossPct": 3.4
+        },
+        "1-1.5m": {
+          "n": 814,
+          "perGame": 67.83,
+          "interceptPct": 0.5,
+          "loosePct": 0.9,
+          "lossPct": 1.4
+        },
+        "1.5-2.5m": {
+          "n": 919,
+          "perGame": 76.58,
+          "interceptPct": 0,
+          "loosePct": 0.7,
+          "lossPct": 0.7
+        },
+        "2.5-4m": {
+          "n": 1409,
+          "perGame": 117.42,
+          "interceptPct": 0,
+          "loosePct": 0.1,
+          "lossPct": 0.1
+        },
+        "4-99m": {
+          "n": 284,
+          "perGame": 23.67,
+          "interceptPct": 0,
+          "loosePct": 0.4,
+          "lossPct": 0.4
+        }
+      },
+      "bySkill": {
+        "0-50": {
+          "n": 815,
+          "perGame": 67.92,
+          "interceptPct": 1.7,
+          "loosePct": 0.9,
+          "lossPct": 2.6
+        },
+        "50-60": {
+          "n": 343,
+          "perGame": 28.58,
+          "interceptPct": 2.3,
+          "loosePct": 1.2,
+          "lossPct": 3.5
+        },
+        "60-70": {
+          "n": 1542,
+          "perGame": 128.5,
+          "interceptPct": 1,
+          "loosePct": 1.2,
+          "lossPct": 2.2
+        },
+        "70-80": {
+          "n": 3896,
+          "perGame": 324.67,
+          "interceptPct": 0.8,
+          "loosePct": 1,
+          "lossPct": 1.8
+        },
+        "80-101": {
+          "n": 617,
+          "perGame": 51.42,
+          "interceptPct": 0.8,
+          "loosePct": 0.6,
+          "lossPct": 1.5
+        }
+      },
+      "topPassersByLosses": [
+        {
+          "passer": "generated-player-0096",
+          "n": 791,
+          "perGame": 65.92,
+          "interceptPct": 1,
+          "loosePct": 0.4,
+          "lossPct": 1.4,
+          "skill": 75
+        },
+        {
+          "passer": "generated-player-0093",
+          "n": 747,
+          "perGame": 62.25,
+          "interceptPct": 0.4,
+          "loosePct": 1.1,
+          "lossPct": 1.5,
+          "skill": 78.5
+        },
+        {
+          "passer": "generated-player-0009",
+          "n": 713,
+          "perGame": 59.42,
+          "interceptPct": 0.8,
+          "loosePct": 0.8,
+          "lossPct": 1.7,
+          "skill": 73.17
+        },
+        {
+          "passer": "generated-player-0087",
+          "n": 669,
+          "perGame": 55.75,
+          "interceptPct": 0.6,
+          "loosePct": 0.9,
+          "lossPct": 1.5,
+          "skill": 76.83
+        },
+        {
+          "passer": "generated-player-0004",
+          "n": 666,
+          "perGame": 55.5,
+          "interceptPct": 1.1,
+          "loosePct": 1.2,
+          "lossPct": 2.3,
+          "skill": 68.67
+        },
+        {
+          "passer": "generated-player-0085",
+          "n": 617,
+          "perGame": 51.42,
+          "interceptPct": 0.8,
+          "loosePct": 0.6,
+          "lossPct": 1.5,
+          "skill": 85.33
+        }
+      ],
+      "interceptorsTop": [
+        {
+          "defender": "generated-player-0096",
+          "perGame": 1.08
+        },
+        {
+          "defender": "generated-player-0093",
+          "perGame": 0.75
+        },
+        {
+          "defender": "generated-player-0085",
+          "perGame": 0.5
+        },
+        {
+          "defender": "generated-player-0092",
+          "perGame": 0.5
+        },
+        {
+          "defender": "generated-player-0011",
+          "perGame": 0.5
+        }
+      ],
+      "meanDistance": 6.41,
+      "meanLaneClearance": 1.34,
+      "passesWithClearanceUnder1_5m": 383.42
+    },
+    "playEconomy": {
+      "BALL_SCREEN": {
+        "perGame": 42.33,
+        "pct": 24.2,
+        "gameSeconds": 14.6,
+        "passes": 3.81,
+        "drives": 0.75,
+        "screens": 0.84,
+        "fgaPerPossession": 0.91,
+        "turnoversPerPossession": 0.08,
+        "ppp": 1.05,
+        "shareOfGameClock": 28.9
+      },
+      "BROKEN_PLAY_RESET": {
+        "perGame": 11.58,
+        "pct": 6.6,
+        "gameSeconds": 21.91,
+        "passes": 7.01,
+        "drives": 1.23,
+        "screens": 0.93,
+        "fgaPerPossession": 1.98,
+        "turnoversPerPossession": 0.09,
+        "ppp": 0.94,
+        "shareOfGameClock": 11.9
+      },
+      "CIRCULATION": {
+        "perGame": 39.17,
+        "pct": 22.4,
+        "gameSeconds": 14.04,
+        "passes": 5.11,
+        "drives": 0.68,
+        "screens": 0.51,
+        "fgaPerPossession": 0.9,
+        "turnoversPerPossession": 0.1,
+        "ppp": 1.04,
+        "shareOfGameClock": 25.7
+      },
+      "DRIVE_KICK": {
+        "perGame": 31.5,
+        "pct": 18,
+        "gameSeconds": 13.29,
+        "passes": 3.35,
+        "drives": 1.08,
+        "screens": 0.21,
+        "fgaPerPossession": 0.89,
+        "turnoversPerPossession": 0.1,
+        "ppp": 1.09,
+        "shareOfGameClock": 19.6
+      },
+      "EARLY_OFFENSE": {
+        "perGame": 32.58,
+        "pct": 18.6,
+        "gameSeconds": 7.45,
+        "passes": 1.18,
+        "drives": 0.91,
+        "screens": 0.03,
+        "fgaPerPossession": 1.06,
+        "turnoversPerPossession": 0.02,
+        "ppp": 1.23,
+        "shareOfGameClock": 11.3
+      },
+      "NO_SET_REACHED": {
+        "perGame": 18,
+        "pct": 10.3,
+        "gameSeconds": 3.11,
+        "passes": 1.26,
+        "drives": 0.01,
+        "screens": 0,
+        "fgaPerPossession": 0.03,
+        "turnoversPerPossession": 0.73,
+        "ppp": 0.24,
+        "shareOfGameClock": 2.6
+      }
+    },
+    "starUsage": {
+      "perTeamGame": {
+        "rank1": {
+          "fga": 27.42,
+          "fgaShare": 0.34,
+          "initiationShare": 0.26,
+          "touches": 84.25,
+          "passesMade": 59.25,
+          "passesReceived": 70.63,
+          "turnovers": 2.13,
+          "points": 32.67
+        },
+        "rank2": {
+          "fga": 18.75,
+          "fgaShare": 0.23,
+          "initiationShare": 0.22,
+          "touches": 71.29,
+          "passesMade": 56.17,
+          "passesReceived": 57.17,
+          "turnovers": 1.83,
+          "points": 21.04
+        },
+        "rank3": {
+          "fga": 13.88,
+          "fgaShare": 0.17,
+          "initiationShare": 0.17,
+          "touches": 67.25,
+          "passesMade": 56.42,
+          "passesReceived": 57.13,
+          "turnovers": 2.38,
+          "points": 15.25
+        }
+      },
+      "topFgaPerTeamGame": 36,
+      "fgaPerTeamGame": 79.79
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
-import { createCompetition } from '@/domain/competition'
+import { createCompetition, defaultLeagueCompetitionRules, NBA_GAME_FORMAT, NCAA_MEN_GAME_FORMAT, NCAA_WOMEN_GAME_FORMAT, WNBA_GAME_FORMAT, type CompetitionRules, type GameFormatRules } from '@/domain/competition'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { createConference, createConferenceMembership } from '@/domain/conference'
 import { createCountry } from '@/domain/country'
@@ -177,9 +177,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     gender,
     participantTeamIds: teams.slice(0, FIBA_TEAM_COUNT).map((team) => team.id),
   })
-  const nbaCompetition = options.includeNbaLike ? createCompetition({ id: GENERATED_NBA_COMPETITION_ID, name: 'Orinthian Comets League', gender, participantTeamIds: teams.slice(FIBA_TEAM_COUNT, FIBA_TEAM_COUNT + 4).map((team) => team.id), ecosystemId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID }) : undefined
+  const nbaCompetition = options.includeNbaLike ? createCompetition({ id: GENERATED_NBA_COMPETITION_ID, name: 'Orinthian Comets League', gender, participantTeamIds: teams.slice(FIBA_TEAM_COUNT, FIBA_TEAM_COUNT + 4).map((team) => team.id), ecosystemId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, rules: leagueRulesWithFormat(gender === 'female' ? WNBA_GAME_FORMAT : NBA_GAME_FORMAT) }) : undefined
   const nbaTeamsEnd = professionalTeamCount
-  const ncaaCompetition = includeNcaaLike ? createCompetition({ id: GENERATED_NCAA_COMPETITION_ID, name: 'Asteria Collegiate Circuit', gender, participantTeamIds: teams.slice(nbaTeamsEnd).map((team) => team.id), ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID }) : undefined
+  const ncaaCompetition = includeNcaaLike ? createCompetition({ id: GENERATED_NCAA_COMPETITION_ID, name: 'Asteria Collegiate Circuit', gender, participantTeamIds: teams.slice(nbaTeamsEnd).map((team) => team.id), ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, rules: leagueRulesWithFormat(gender === 'female' ? NCAA_WOMEN_GAME_FORMAT : NCAA_MEN_GAME_FORMAT) }) : undefined
   const season = createSeason({
     id: GENERATED_SEASON_ID,
     competitionId: competition.id,
@@ -248,4 +248,12 @@ function shuffle<Item>(items: Item[], random: RandomSource): Item[] {
 
 function formatSequence(value: number): string {
   return value.toString().padStart(4, '0')
+}
+
+/**
+ * ME-LOCK1: each generated league plays its own ecosystem's game format (NBA/WNBA, NCAA men/women; the FIBA-like league keeps the
+ * default). Before, every generated competition fell back to the FIBA default, so NBA-like and NCAA-like games were 4 x 10.
+ */
+function leagueRulesWithFormat(gameFormat: GameFormatRules): CompetitionRules {
+  return { ...defaultLeagueCompetitionRules, gameFormat }
 }

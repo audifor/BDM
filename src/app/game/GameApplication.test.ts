@@ -4,6 +4,7 @@ import { getGamesToday, getScheduledGamesToday, getUserTeam } from '@/engine/cal
 import { calculateActiveLineups } from '@/engine/match'
 import { describe, expect, it } from 'vitest'
 import { updateGameWorld } from '@/domain/world'
+import { calculateFatigueAtEvents } from '@/engine/match'
 import { createMatchSession } from '@/engine/match'
 
 import {
@@ -17,6 +18,7 @@ import {
   simulateRemainingGamesToday,
 } from './index'
 import { prepareMatchOptions } from './playUserGame'
+import { createMatchEnginePort } from '@/app/matchNext'
 
 describe('prototype game application', () => {
   it('creates a playable scheduled world from the fixed prototype configuration', () => {
@@ -59,7 +61,7 @@ describe('prototype game application', () => {
     expect(completedWorld.games[simulation.gameId]).toMatchObject({ status: 'completed', result: { homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away } })
   })
 
-  it('records actual match load without changing MatchEngine starting fatigue', () => {
+  it('carries career fatigue into MatchEngine and returns actual legacy match load to the Player world state', () => {
     const world = createNewGame()
     const game = getGamesToday(world).find((candidate) => candidate.homeTeamId === getUserTeam(world)?.id)!
     const starterId = prepareUserMatch(world, undefined, 5678).lineups.home[0]!
@@ -67,10 +69,14 @@ describe('prototype game application', () => {
     const session = createMatchSession(prepareMatchOptions(fatigueWorld, game, undefined, 5678))
     const simulation = prepareUserMatch(fatigueWorld, undefined, 5678)
     const completed = completeMatch(fatigueWorld, simulation)
+    const initialMatchFatigue = 20
+    const finalMatchFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events, { [starterId]: initialMatchFatigue })[starterId]!
+
     expect(completed.careerFatigueByPlayerId[starterId]).toBeGreaterThan(40)
-    expect(session.state.fatigueByPlayerId[starterId]).toBe(0)
+    expect(session.state.fatigueByPlayerId[starterId]).toBe(20)
     expect(completed.developmentStimulusByPlayerId[starterId]!.byRating.stamina).toBeGreaterThan(fatigueWorld.developmentStimulusByPlayerId[starterId]!.byRating.stamina)
     expect(completed.players[starterId]!.basketball.ratings).toEqual(fatigueWorld.players[starterId]!.basketball.ratings)
+    expect(finalMatchFatigue).toBeGreaterThan(initialMatchFatigue)
     expect(() => completeMatch(completed, simulation)).toThrow()
   })
 
@@ -90,13 +96,19 @@ describe('prototype game application', () => {
     expect(calculateStandings(completed, unrelatedSeason.id)).toEqual(unrelatedBefore)
   })
 
-  it('uses the same final score for Instant Result and MatchViewer preparation', () => {
+  it('uses the same final score for Instant Result and the Match Next live viewer', () => {
+    // ME-LOCK1: Instant resolves through Match Next FAST; the viewer is the Match Next Live session of the same Game and seed.
     const world = createNewGame()
-    const simulation = prepareUserMatch(world, undefined, 12345)
+    const userTeam = getUserTeam(world)!
+    const game = getGamesToday(world).find((candidate) => candidate.homeTeamId === userTeam.id || candidate.awayTeamId === userTeam.id)!
+    const port = createMatchEnginePort('match-next')
+    const live = port.createLiveSession(port.prepare(world, game, 12345))
+    while (!live.matchState.isComplete) live.advanceTicks(200)
+    const viewer = live.result()
     const instantWorld = instantResult(world, undefined, 12345)
 
-    expect(instantWorld.games[simulation.gameId]?.result).toEqual({ homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-  })
+    expect(instantWorld.games[game.id]?.result).toEqual({ homeScore: viewer.score.home, awayScore: viewer.score.away })
+  }, 300_000)
 
   it('prepares transient five-player lineups from each game roster', () => {
     const world = createNewGame()

@@ -16,6 +16,8 @@ import {
   calculateStaffWorkload,
   getTeamResponsibilities,
   getTeamStaffAssignments,
+  liveStaffContextByStaff,
+  staffAssignmentIndex,
   type GameWorld,
 } from '@/domain/world'
 import { hasCanonicalAcceptanceSeam } from '@/domain/responsibility'
@@ -299,7 +301,8 @@ export function deriveStaffCulturePreferences(world: GameWorld, staffId: StaffPe
   const attributes = person?.professional.attributes as Readonly<Record<string, number>> | undefined
   const a = (key: string): number => attributes?.[key] ?? 50
 
-  const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId)
+  // WSR2: per-collection indexes (the same first match the scans returned).
+  const assignment = staffAssignmentIndex(world.teamStaffAssignmentsById).byStaff.get(staffId)
   const definition = assignment === undefined ? undefined : staffRoleDefinition(assignment.role)
   const leadershipPull = definition === undefined ? 0 : (seniorityWeight(definition.seniority) - 1) * 5
   const analyticalPull = ((definition?.attributeWeights.analysis ?? 0) - 0.15) * 60
@@ -308,7 +311,7 @@ export function deriveStaffCulturePreferences(world: GameWorld, staffId: StaffPe
   // Bounded correction from the person's OWN live Wave 5A Expectations, where a context exists.
   // Extremity-weighting alone ignores explicit expectations and role importance — this closes that
   // gap without duplicating any expectation state (read directly, never copied/persisted here).
-  const context = Object.values(world.staffHumanContextsById).find((item) => item.staffId === staffId && item.endedOn === undefined)
+  const context = liveStaffContextByStaff(world.staffHumanContextsById).get(staffId)
   const expectations = context === undefined ? undefined : world.staffExpectationProfilesByContextId[context.id]?.current
   const e = (dimension: string): number | undefined => expectations?.[dimension as keyof typeof expectations]
   /** Small bounded pull toward an explicit expectation reading, away from the personality-only estimate. Never dominates. */

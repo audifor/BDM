@@ -1,0 +1,177 @@
+[
+ {
+  "wallMs": 33142,
+  "tick": 16168,
+  "sequence": 8582,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 33353,
+  "tick": 16173,
+  "sequence": 8583,
+  "type": "screenSet",
+  "detail": "A. Dain > B. Istra"
+ },
+ {
+  "wallMs": 33353,
+  "tick": 16173,
+  "sequence": 8584,
+  "type": "actionResolved",
+  "detail": "B. Istra SCREEN"
+ },
+ {
+  "wallMs": 33359,
+  "tick": 16175,
+  "sequence": 8587,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 33359,
+  "tick": 16175,
+  "sequence": 8588,
+  "type": "actionStarted",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 33359,
+  "tick": 16175,
+  "sequence": 8589,
+  "type": "screenUsed",
+  "detail": "B. Istra > A. Dain"
+ },
+ {
+  "wallMs": 33363,
+  "tick": 16176,
+  "sequence": 8590,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 33363,
+  "tick": 16176,
+  "sequence": 8591,
+  "type": "offBallMove",
+  "detail": "H. Joren DRIFT"
+ },
+ {
+  "wallMs": 33790,
+  "tick": 16184,
+  "sequence": 8592,
+  "type": "contact",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 34024,
+  "tick": 16190,
+  "sequence": 8596,
+  "type": "actionResolved",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 34024,
+  "tick": 16190,
+  "sequence": 8597,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 34038,
+  "tick": 16193,
+  "sequence": 8601,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 34038,
+  "tick": 16193,
+  "sequence": 8602,
+  "type": "actionStarted",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 34038,
+  "tick": 16193,
+  "sequence": 8603,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 34045,
+  "tick": 16195,
+  "sequence": 8604,
+  "type": "contact",
+  "detail": "F. Grove"
+ },
+ {
+  "wallMs": 34045,
+  "tick": 16195,
+  "sequence": 8605,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 34045,
+  "tick": 16195,
+  "sequence": 8606,
+  "type": "shotReleased",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 34045,
+  "tick": 16195,
+  "sequence": 8607,
+  "type": "screenEnded",
+  "detail": "A. Dain > B. Istra exit"
+ },
+ {
+  "wallMs": 34278,
+  "tick": 16201,
+  "sequence": 8608,
+  "type": "shotMade",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 34278,
+  "tick": 16201,
+  "sequence": 8609,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 34278,
+  "tick": 16201,
+  "sequence": 8610,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 34278,
+  "tick": 16201,
+  "sequence": 8611,
+  "type": "actionResolved",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 34278,
+  "tick": 16201,
+  "sequence": 8612,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 34484,
+  "tick": 16202,
+  "sequence": 8613,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 34487,
+  "tick": 16203,
+  "sequence": 8614,
+  "type": "playStateChanged",
+  "detail": "-"
+ }
+]

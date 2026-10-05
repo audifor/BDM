@@ -1,0 +1,59 @@
+| Métrica (media, mín–máx entre partidos) | Antes (4b900de) | Después (BT2) |
+|---|---|---|
+| Puntos totales | 370 (339–419) | 203 (176–222) |
+| Tiros (FGA) | 328 (313–345) | 200 (192–220) |
+| Posesiones | 248 (233–263) | 184 (173–193) |
+| Tiros / posesión | 1.33 (1.19–1.46) | 1.09 (1.02–1.24) |
+| Duración media posesión (s) | 7.7 (7.2–8.2) | 11.3 (10.6–12.1) |
+| % triples (3PA/FGA) | 0.68 (0.63–0.73) | 0.45 (0.40–0.52) |
+| % tiros a > 9 m | 0.17 (0.12–0.20) | 0.02 (0.00–0.03) |
+| % rebotes ofensivos | 0.54 (0.46–0.61) | 0.26 (0.20–0.39) |
+| Putbacks (tiro ≤ 2,5 s tras OREB) | 87 (66–111) | 24 (15–47) |
+| Pérdidas | 19.0 (11.0–27.0) | 12.1 (7.0–16.0) |
+| FG% | 0.42 (0.38–0.49) | 0.43 (0.38–0.47) |
+| Violaciones 24 s | 0.0 (0.0–0.0) | 0.0 (0.0–0.0) |
+
+| Nivel posesión | Antes | Después |
+|---|---|---|
+| Segundos: media / mediana / p90 | 7.66 / 6.8 / 12.1 | 11.24 / 10.7 / 18.1 |
+| Decisiones: media / mediana / p90 | 4.92 / 4 / 9 | 4.5 / 4 / 7 |
+| Pases: media / mediana / p90 | 2.37 / 2 / 4 | 2.16 / 2 / 3 |
+| Bote/drives: media / mediana / p90 | 1.51 / 1 / 3 | 1.44 / 1 / 2 |
+| Pantallas: media / mediana / p90 | 0 / 0 / 0 | 0.15 / 0 / 1 |
+| Tiros: media / mediana / p90 | 1.33 / 1 / 2 | 1.09 / 1 / 2 |
+| Histograma tiros/posesión (0,1,2,3,4+) | [0.065, 0.652, 0.203, 0.062, 0.018] | [0.073, 0.799, 0.104, 0.018, 0.005] |
+| Fin de posesión | {'defensiveRebound': 0.354, 'made': 0.555, 'turnover': 0.077, 'periodEnd': 0.014} | {'made': 0.462, 'defensiveRebound': 0.454, 'turnover': 0.066, 'periodEnd': 0.018} |
+| Gap entre decisiones (s) media/mediana/p90 | 2.02/0.9/7.7 | 2.95/1.5/8.2 |
+| Decisiones por segundo de SETUP | 1.32 | 0.51 |
+| Distancia de tiro (m) media/mediana/p90 | 8.37/7.78/14.41 | 5.15/4.53/7.8 |
+| Esquinas vacías (muestras SETUP/ACTION con balón) | 1 | 0.434 |
+| Dist. media al slot (m) | 4.68 | 5.30 |
+| Balón retenido (s) media/p90 | 0.29/0.6 | 1.85/4.8 |
+
+halfCourtSettled (after): {"samples": 5063, "cornersEmptyShare": 0.008, "cornersOccupied": {"n": 5063, "mean": 1.77, "median": 2, "p10": 1, "p90": 2, "min": 0, "max": 3}, "inZoneShare": 0.848, "meanGuardDistance": {"n": 5063, "mean": 3.12, "median": 2.58, "p10": 2.31, "p90": 4.87, "min": 1.05, "max": 8.41}, "minPairDistance": {"n": 5063, "mean": 5.32, "median": 6.21, "p10": 3.06, "p90": 6.25, "min": 0.06, "max": 7.15}, "paintOccupants": {"n": 5063, "mean": 0.11, "median": 0, "p10": 0, "p90": 0, "min": 0, "max": 3}}
+shotGeography after:
+   {'bucket': 'rim <2.2m', 'attempts': 354, 'share': 0.221, 'fgPct': 0.517, 'meanProbability': 0.534, 'meanContest': 0.794}
+   {'bucket': 'paint 2.2-4.5m', 'attempts': 426, 'share': 0.266, 'fgPct': 0.448, 'meanProbability': 0.44, 'meanContest': 0.651}
+   {'bucket': 'mid 4.5-6.5m', 'attempts': 98, 'share': 0.061, 'fgPct': 0.449, 'meanProbability': 0.469, 'meanContest': 0.517}
+   {'bucket': 'three 6.5-8m', 'attempts': 682, 'share': 0.426, 'fgPct': 0.381, 'meanProbability': 0.348, 'meanContest': 0.308}
+   {'bucket': 'three 8-9m', 'attempts': 17, 'share': 0.011, 'fgPct': 0.059, 'meanProbability': 0.325, 'meanContest': 0.311}
+   {'bucket': 'deep >9m', 'attempts': 25, 'share': 0.016, 'fgPct': 0.12, 'meanProbability': 0.07, 'meanContest': 0.711}
+shotGeography before:
+   {'bucket': 'rim <2.2m', 'attempts': 107, 'share': 0.041, 'fgPct': 0.542, 'meanProbability': 0.523, 'meanContest': 0.872}
+   {'bucket': 'paint 2.2-4.5m', 'attempts': 373, 'share': 0.142, 'fgPct': 0.397, 'meanProbability': 0.405, 'meanContest': 0.805}
+   {'bucket': 'mid 4.5-6.5m', 'attempts': 268, 'share': 0.102, 'fgPct': 0.34, 'meanProbability': 0.354, 'meanContest': 0.637}
+   {'bucket': 'three 6.5-8m', 'attempts': 1201, 'share': 0.458, 'fgPct': 0.425, 'meanProbability': 0.427, 'meanContest': 0.066}
+   {'bucket': 'three 8-9m', 'attempts': 233, 'share': 0.089, 'fgPct': 0.472, 'meanProbability': 0.419, 'meanContest': 0.076}
+   {'bucket': 'deep >9m', 'attempts': 443, 'share': 0.169, 'fgPct': 0.415, 'meanProbability': 0.422, 'meanContest': 0.062}
+rebounds after: {'n': 916, 'offensiveShare': 0.258, 'meanOffenseNearest': 1.48, 'meanDefenseNearest': 0.77, 'meanOffenseWithin2m': 0.78, 'meanDefenseWithin2m': 2.03, 'meanLandingDistanceToRim': 2.45, 'meanShotDistance': 5.45, 'offensiveShareWhenOffenseNearer': 0.351, 'offensiveShareWhenDefenseNearer': 0.208, 'shareOffenseNearer': 0.348}
+rebounds before: {'n': 1522, 'offensiveShare': 0.536, 'meanOffenseNearest': 1.66, 'meanDefenseNearest': 1.55, 'meanOffenseWithin2m': 0.96, 'meanDefenseWithin2m': 1.41, 'meanLandingDistanceToRim': 2.68, 'meanShotDistance': 8.36, 'offensiveShareWhenOffenseNearer': 0.695, 'offensiveShareWhenDefenseNearer': 0.395, 'shareOffenseNearer': 0.47}
+seeds [424242, 7, 1, 99, 2024, 31337, 11, 12] perGame after:
+   {'seed': 424242, 'points': 176, 'shots': 201, 'possessions': 173, 'shotsPerPossession': 1.16, 'meanPossessionSeconds': 12.09, 'threeShare': 0.418, 'shotsOver9mShare': 0.02, 'offensiveReboundShare': 0.301, 'putbackShots': 31, 'turnovers': 7, 'fieldGoalPct': 0.378, 'shotClockViolations': 0}
+   {'seed': 7, 'points': 209, 'shots': 200, 'possessions': 190, 'shotsPerPossession': 1.05, 'meanPossessionSeconds': 10.8, 'threeShare': 0.395, 'shotsOver9mShare': 0.02, 'offensiveReboundShare': 0.239, 'putbackShots': 21, 'turnovers': 15, 'fieldGoalPct': 0.445, 'shotClockViolations': 0}
+   {'seed': 1, 'points': 201, 'shots': 192, 'possessions': 184, 'shotsPerPossession': 1.04, 'meanPossessionSeconds': 11.34, 'threeShare': 0.469, 'shotsOver9mShare': 0.01, 'offensiveReboundShare': 0.245, 'putbackShots': 15, 'turnovers': 16, 'fieldGoalPct': 0.438, 'shotClockViolations': 0}
+   {'seed': 99, 'points': 218, 'shots': 203, 'possessions': 193, 'shotsPerPossession': 1.05, 'meanPossessionSeconds': 10.62, 'threeShare': 0.433, 'shotsOver9mShare': 0.025, 'offensiveReboundShare': 0.224, 'putbackShots': 18, 'turnovers': 12, 'fieldGoalPct': 0.463, 'shotClockViolations': 0}
+   {'seed': 2024, 'points': 201, 'shots': 220, 'possessions': 178, 'shotsPerPossession': 1.24, 'meanPossessionSeconds': 11.7, 'threeShare': 0.418, 'shotsOver9mShare': 0.009, 'offensiveReboundShare': 0.393, 'putbackShots': 47, 'turnovers': 11, 'fieldGoalPct': 0.382, 'shotClockViolations': 0}
+   {'seed': 31337, 'points': 187, 'shots': 198, 'possessions': 184, 'shotsPerPossession': 1.08, 'meanPossessionSeconds': 11.45, 'threeShare': 0.49, 'shotsOver9mShare': 0.02, 'offensiveReboundShare': 0.212, 'putbackShots': 18, 'turnovers': 9, 'fieldGoalPct': 0.394, 'shotClockViolations': 0}
+   {'seed': 11, 'points': 222, 'shots': 192, 'possessions': 189, 'shotsPerPossession': 1.02, 'meanPossessionSeconds': 10.82, 'threeShare': 0.458, 'shotsOver9mShare': 0, 'offensiveReboundShare': 0.198, 'putbackShots': 17, 'turnovers': 14, 'fieldGoalPct': 0.474, 'shotClockViolations': 0}
+   {'seed': 12, 'points': 212, 'shots': 196, 'possessions': 185, 'shotsPerPossession': 1.06, 'meanPossessionSeconds': 11.22, 'threeShare': 0.515, 'shotsOver9mShare': 0.02, 'offensiveReboundShare': 0.234, 'putbackShots': 21, 'turnovers': 13, 'fieldGoalPct': 0.439, 'shotClockViolations': 0}
+events after (first game): {'possessionStart': 173, 'decisionSelected': 812, 'screenSet': 27, 'screenUsed': 27, 'offBallMove': 394, 'passReleased': 409, 'passIntercepted': 2, 'passBecameLoose': 17, 'shotReleased': 201}

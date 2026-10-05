@@ -1,0 +1,668 @@
+{
+ "scen": "R:NCAAM",
+ "wallMs": 56895,
+ "notes": {},
+ "failed": [],
+ "audits": [
+  {
+   "label": "rules NCAAM",
+   "gameId": "schedule-generated-season-0001-game-0001",
+   "competition": "generated-competition-0001",
+   "gender": "male",
+   "clockRules": {
+    "periodCount": 2,
+    "periodSeconds": 1200,
+    "overtimeSeconds": 300,
+    "shotClockSeconds": 30,
+    "offensiveReboundShotClockSeconds": 20,
+    "madeBasketClockStopUnderSecondsInFinalPeriod": 60,
+    "madeBasketClockStopUnderSecondsInOtherPeriods": null,
+    "madeBasketSubstitutionUnderSecondsInFinalPeriod": 60,
+    "madeBasketSubstitutionUnderSecondsInOtherPeriods": null,
+    "madeBasketSubstitutionEligibleTeam": "both",
+    "clockStopReasons": [
+     "outOfBounds",
+     "other",
+     "shotClockViolation"
+    ],
+    "substitutionOpportunityReasons": [
+     "outOfBounds",
+     "other",
+     "shotClockViolation"
+    ],
+    "clockRestartOnInbound": "receive",
+    "foulRules": {
+     "personalFoulLimit": 5,
+     "teamFoulPenaltyFrom": 10,
+     "teamFoulOneAndOneFrom": 7
+    }
+   },
+   "seed": 3498342002,
+   "checks": [
+    {
+     "name": "home: squad == canonical availability projection",
+     "ok": true,
+     "detail": "roster 12, available 12, squad 12"
+    },
+    {
+     "name": "home: squad subset of roster",
+     "ok": true
+    },
+    {
+     "name": "home: starting five legal (5 unique, in squad)",
+     "ok": true,
+     "detail": "generated-player-0001,generated-player-0004,generated-player-0008,generated-player-0009,generated-player-0011"
+    },
+    {
+     "name": "home: starting five == coaching authority lineup",
+     "ok": true
+    },
+    {
+     "name": "away: squad == canonical availability projection",
+     "ok": true,
+     "detail": "roster 12, available 12, squad 12"
+    },
+    {
+     "name": "away: squad subset of roster",
+     "ok": true
+    },
+    {
+     "name": "away: starting five legal (5 unique, in squad)",
+     "ok": true,
+     "detail": "generated-player-0085,generated-player-0087,generated-player-0088,generated-player-0093,generated-player-0096"
+    },
+    {
+     "name": "away: starting five == coaching authority lineup",
+     "ok": true
+    },
+    {
+     "name": "no player outside the available squads appears in events",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "name": "every substitution swaps an on-court player for a bench player of the same team",
+     "ok": true,
+     "detail": "0"
+    },
+    {
+     "name": "five on court for each team after every substitution",
+     "ok": true
+    },
+    {
+     "name": "no fouled-out player re-enters",
+     "ok": true
+    },
+    {
+     "name": "no fouled-out player is on court at the end",
+     "ok": true
+    },
+    {
+     "name": "no player exceeds the competition foul limit (5)",
+     "ok": true
+    },
+    {
+     "name": "substitutions happen at a dead ball (not in live play)",
+     "ok": true
+    },
+    {
+     "name": "sum of player minutes == 5 x game minutes (home)",
+     "ok": true,
+     "detail": "200 vs 200"
+    },
+    {
+     "name": "sum of player minutes == 5 x game minutes (away)",
+     "ok": true,
+     "detail": "200 vs 200"
+    },
+    {
+     "name": "home: team totals == sum of player lines",
+     "ok": true
+    },
+    {
+     "name": "home: points == final score",
+     "ok": true
+    },
+    {
+     "name": "home: FGA == shotReleased events",
+     "ok": true
+    },
+    {
+     "name": "home: FTA == free-throw events",
+     "ok": true
+    },
+    {
+     "name": "home: assists <= FGM",
+     "ok": true
+    },
+    {
+     "name": "home: rebounds == offensive + defensive",
+     "ok": true
+    },
+    {
+     "name": "home: 3PM <= FGM, FGM <= FGA",
+     "ok": true
+    },
+    {
+     "name": "away: team totals == sum of player lines",
+     "ok": true
+    },
+    {
+     "name": "away: points == final score",
+     "ok": true
+    },
+    {
+     "name": "away: FGA == shotReleased events",
+     "ok": true
+    },
+    {
+     "name": "away: FTA == free-throw events",
+     "ok": true
+    },
+    {
+     "name": "away: assists <= FGM",
+     "ok": true
+    },
+    {
+     "name": "away: rebounds == offensive + defensive",
+     "ok": true
+    },
+    {
+     "name": "away: 3PM <= FGM, FGM <= FGA",
+     "ok": true
+    },
+    {
+     "name": "plus-minus sums to zero across both teams",
+     "ok": true,
+     "detail": "0"
+    },
+    {
+     "name": "possession ledger: one start per possession, every possession closed",
+     "ok": true,
+     "detail": "152 starts, 152 ends, 152 ledger"
+    },
+    {
+     "name": "pre-match fatigue enters the session from the canonical career fatigue",
+     "ok": true,
+     "detail": "0"
+    },
+    {
+     "name": "in-match fatigue never decreases below its session baseline for players who never played",
+     "ok": true
+    },
+    {
+     "name": "post-match: career fatigue rises for players who played",
+     "ok": true,
+     "detail": "19/20"
+    },
+    {
+     "name": "post-match: unused players keep their career fatigue",
+     "ok": true,
+     "detail": "0"
+    },
+    {
+     "name": "result applied: Game completed with the final score",
+     "ok": true
+    },
+    {
+     "name": "exactly one MatchStatLog for the Game",
+     "ok": true
+    },
+    {
+     "name": "second application of the same result fails closed",
+     "ok": true
+    },
+    {
+     "name": "stat lines carry whole seconds (save contract)",
+     "ok": true
+    },
+    {
+     "name": "save/reload: result, stat log and fatigue survive",
+     "ok": true
+    },
+    {
+     "name": "save/reload: re-applying the result after reload fails closed",
+     "ok": true
+    },
+    {
+     "name": "save/reload: the next scheduled game is available normally",
+     "ok": true,
+     "detail": "schedule-generated-season-0001-game-0005"
+    }
+   ],
+   "metrics": {
+    "score": {
+     "home": 89,
+     "away": 72
+    },
+    "possessions": 152,
+    "periods": 2,
+    "home": {
+     "points": 89,
+     "possessions": 75,
+     "ppp": 1.187,
+     "tovPct": 10.7,
+     "steals": 7,
+     "ftr": 0.158,
+     "rimShare": 0.224,
+     "threeShare": 0.474,
+     "astPct": 0.559,
+     "orbPct": 0.275,
+     "fouls": 13,
+     "playersUsed": 10,
+     "topMinutes": 37.1,
+     "topUsageShare": 0.31,
+     "minutes": [
+      {
+       "player": "generated-player-0008",
+       "min": 37.1,
+       "pts": 11,
+       "fga": 7,
+       "ast": 4,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 12.1,
+       "sessionFatigueEnd": 24.2,
+       "rating": 63.9
+      },
+      {
+       "player": "generated-player-0009",
+       "min": 34.6,
+       "pts": 36,
+       "fga": 25,
+       "ast": 3,
+       "pf": 2,
+       "fatiguePre": 0,
+       "fatiguePost": 12,
+       "sessionFatigueEnd": 24,
+       "rating": 80.9
+      },
+      {
+       "player": "generated-player-0004",
+       "min": 32.1,
+       "pts": 26,
+       "fga": 20,
+       "ast": 5,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 10.5,
+       "sessionFatigueEnd": 20.9,
+       "rating": 67.7
+      },
+      {
+       "player": "generated-player-0011",
+       "min": 29.5,
+       "pts": 2,
+       "fga": 1,
+       "ast": 0,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 7.1,
+       "sessionFatigueEnd": 14.1,
+       "rating": 50.4
+      },
+      {
+       "player": "generated-player-0001",
+       "min": 25.9,
+       "pts": 10,
+       "fga": 17,
+       "ast": 5,
+       "pf": 5,
+       "fatiguePre": 0,
+       "fatiguePost": 8.8,
+       "sessionFatigueEnd": 17.6,
+       "rating": 68.2
+      },
+      {
+       "player": "generated-player-0012",
+       "min": 10.4,
+       "pts": 0,
+       "fga": 0,
+       "ast": 1,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 2.2,
+       "sessionFatigueEnd": 4.4,
+       "rating": 49
+      },
+      {
+       "player": "generated-player-0002",
+       "min": 10.1,
+       "pts": 0,
+       "fga": 1,
+       "ast": 0,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 2.6,
+       "sessionFatigueEnd": 5.1,
+       "rating": 44.8
+      },
+      {
+       "player": "generated-player-0010",
+       "min": 9.5,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 1.4,
+       "sessionFatigueEnd": 2.9,
+       "rating": 52.2
+      },
+      {
+       "player": "generated-player-0005",
+       "min": 7.9,
+       "pts": 4,
+       "fga": 5,
+       "ast": 1,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 2,
+       "sessionFatigueEnd": 4,
+       "rating": 45.8
+      },
+      {
+       "player": "generated-player-0006",
+       "min": 2.9,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0.9,
+       "sessionFatigueEnd": 1.9,
+       "rating": 49.5
+      },
+      {
+       "player": "generated-player-0003",
+       "min": 0,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0,
+       "sessionFatigueEnd": 0,
+       "rating": 39.1
+      },
+      {
+       "player": "generated-player-0007",
+       "min": 0,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0,
+       "sessionFatigueEnd": 0,
+       "rating": 41.6
+      }
+     ]
+    },
+    "away": {
+     "points": 72,
+     "possessions": 77,
+     "ppp": 0.935,
+     "tovPct": 14.3,
+     "steals": 7,
+     "ftr": 0.139,
+     "rimShare": 0.278,
+     "threeShare": 0.528,
+     "astPct": 0.5,
+     "orbPct": 0.214,
+     "fouls": 14,
+     "playersUsed": 10,
+     "topMinutes": 38.8,
+     "topUsageShare": 0.215,
+     "minutes": [
+      {
+       "player": "generated-player-0096",
+       "min": 38.8,
+       "pts": 11,
+       "fga": 12,
+       "ast": 2,
+       "pf": 5,
+       "fatiguePre": 0,
+       "fatiguePost": 10.9,
+       "sessionFatigueEnd": 21.9,
+       "rating": 72.4
+      },
+      {
+       "player": "generated-player-0093",
+       "min": 35.7,
+       "pts": 11,
+       "fga": 6,
+       "ast": 2,
+       "pf": 3,
+       "fatiguePre": 0,
+       "fatiguePost": 11.2,
+       "sessionFatigueEnd": 22.3,
+       "rating": 78.8
+      },
+      {
+       "player": "generated-player-0085",
+       "min": 31.7,
+       "pts": 13,
+       "fga": 16,
+       "ast": 3,
+       "pf": 3,
+       "fatiguePre": 0,
+       "fatiguePost": 10,
+       "sessionFatigueEnd": 20,
+       "rating": 76.7
+      },
+      {
+       "player": "generated-player-0088",
+       "min": 30.9,
+       "pts": 15,
+       "fga": 14,
+       "ast": 1,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 9.4,
+       "sessionFatigueEnd": 18.8,
+       "rating": 69.3
+      },
+      {
+       "player": "generated-player-0087",
+       "min": 22.1,
+       "pts": 12,
+       "fga": 10,
+       "ast": 2,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 6.6,
+       "sessionFatigueEnd": 13.2,
+       "rating": 73.1
+      },
+      {
+       "player": "generated-player-0092",
+       "min": 15.8,
+       "pts": 7,
+       "fga": 5,
+       "ast": 0,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 4,
+       "sessionFatigueEnd": 8,
+       "rating": 67.1
+      },
+      {
+       "player": "generated-player-0089",
+       "min": 9.8,
+       "pts": 3,
+       "fga": 5,
+       "ast": 1,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 2.3,
+       "sessionFatigueEnd": 4.5,
+       "rating": 64.2
+      },
+      {
+       "player": "generated-player-0086",
+       "min": 8.3,
+       "pts": 0,
+       "fga": 3,
+       "ast": 2,
+       "pf": 1,
+       "fatiguePre": 0,
+       "fatiguePost": 1.8,
+       "sessionFatigueEnd": 3.7,
+       "rating": 61.5
+      },
+      {
+       "player": "generated-player-0090",
+       "min": 3.6,
+       "pts": 0,
+       "fga": 1,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0,
+       "sessionFatigueEnd": 0,
+       "rating": 54.4
+      },
+      {
+       "player": "generated-player-0094",
+       "min": 3.5,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0.7,
+       "sessionFatigueEnd": 1.3,
+       "rating": 55.1
+      },
+      {
+       "player": "generated-player-0091",
+       "min": 0,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0,
+       "sessionFatigueEnd": 0,
+       "rating": 49.6
+      },
+      {
+       "player": "generated-player-0095",
+       "min": 0,
+       "pts": 0,
+       "fga": 0,
+       "ast": 0,
+       "pf": 0,
+       "fatiguePre": 0,
+       "fatiguePost": 0,
+       "sessionFatigueEnd": 0,
+       "rating": 40.9
+      }
+     ]
+    },
+    "substitutions": 21,
+    "subsByReason": {
+     "17.0 minutes reaches the 16-minute period target": 2,
+     "17.2 minutes reaches the 16-minute period target": 2,
+     "17.4 minutes reaches the 16-minute period target": 2,
+     "17.8 minutes reaches the 16-minute period target": 2,
+     "1.4 minutes reaches the 1-minute period target": 1,
+     "2.3 minutes reaches the 2-minute period target": 1,
+     "foul trouble: 4 of 5 personal fouls": 1,
+     "5.7 minutes reaches the 4-minute period target": 2,
+     "6.9 minutes reaches the 5-minute period target": 2,
+     "7.5 minutes reaches the 6-minute period target": 1,
+     "11.6 minutes reaches the 7-minute period target": 1,
+     "fouled out": 2,
+     "3.5 minutes reaches the 3-minute period target": 1,
+     "17.1 minutes reaches the 16-minute period target": 1
+    },
+    "tacticalAdjustments": [
+     {
+      "t": 9759,
+      "team": "generated-team-0008",
+      "reason": "BALL_SCREEN produced 1.60 points per possession over 10 (offense 1.00): go back to it"
+     }
+    ],
+    "foulOuts": 2,
+    "foulTrouble": [
+     {
+      "player": "generated-player-0001",
+      "fouls": 2,
+      "t": 10013,
+      "period": 1
+     },
+     {
+      "player": "generated-player-0001",
+      "fouls": 3,
+      "t": 10305,
+      "period": 1
+     },
+     {
+      "player": "generated-player-0093",
+      "fouls": 2,
+      "t": 10858,
+      "period": 1
+     },
+     {
+      "player": "generated-player-0001",
+      "fouls": 4,
+      "t": 10974,
+      "period": 1
+     },
+     {
+      "player": "generated-player-0085",
+      "fouls": 2,
+      "t": 11261,
+      "period": 1
+     },
+     {
+      "player": "generated-player-0093",
+      "fouls": 3,
+      "t": 17874,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0096",
+      "fouls": 2,
+      "t": 20419,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0001",
+      "fouls": 5,
+      "t": 22617,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0085",
+      "fouls": 3,
+      "t": 23216,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0096",
+      "fouls": 3,
+      "t": 23493,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0096",
+      "fouls": 4,
+      "t": 24415,
+      "period": 2
+     },
+     {
+      "player": "generated-player-0009",
+      "fouls": 2,
+      "t": 24949,
+      "period": 2
+     }
+    ]
+   },
+   "msInstant": 55962,
+   "msLive": null
+  }
+ ]
+}

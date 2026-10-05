@@ -1,0 +1,352 @@
+[
+ {
+  "wallMs": 680,
+  "tick": 400,
+  "sequence": 188,
+  "type": "passReceived",
+  "detail": "H. Grove > H. Grove"
+ },
+ {
+  "wallMs": 680,
+  "tick": 400,
+  "sequence": 191,
+  "type": "actionResolved",
+  "detail": "C. Dain PASS"
+ },
+ {
+  "wallMs": 680,
+  "tick": 400,
+  "sequence": 192,
+  "type": "actionStarted",
+  "detail": "A. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 870,
+  "tick": 404,
+  "sequence": 193,
+  "type": "offBallMove",
+  "detail": "D. Corven BASKET_CUT"
+ },
+ {
+  "wallMs": 870,
+  "tick": 404,
+  "sequence": 194,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 870,
+  "tick": 404,
+  "sequence": 195,
+  "type": "actionStarted",
+  "detail": "H. Grove CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 871,
+  "tick": 408,
+  "sequence": 196,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 871,
+  "tick": 408,
+  "sequence": 197,
+  "type": "shotReleased",
+  "detail": "H. Grove +3"
+ },
+ {
+  "wallMs": 871,
+  "tick": 408,
+  "sequence": 198,
+  "type": "actionResolved",
+  "detail": "A. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 871,
+  "tick": 408,
+  "sequence": 199,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1067,
+  "tick": 414,
+  "sequence": 200,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 1067,
+  "tick": 414,
+  "sequence": 201,
+  "type": "shotMissed",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1067,
+  "tick": 414,
+  "sequence": 202,
+  "type": "actionResolved",
+  "detail": "H. Grove CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1268,
+  "tick": 426,
+  "sequence": 203,
+  "type": "reboundBecameAvailable",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1268,
+  "tick": 426,
+  "sequence": 204,
+  "type": "reboundSecured",
+  "detail": "H. Grove offensive"
+ },
+ {
+  "wallMs": 1268,
+  "tick": 426,
+  "sequence": 205,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1465,
+  "tick": 433,
+  "sequence": 211,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1465,
+  "tick": 433,
+  "sequence": 212,
+  "type": "actionStarted",
+  "detail": "H. Grove SHOOT"
+ },
+ {
+  "wallMs": 1465,
+  "tick": 433,
+  "sequence": 213,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 214,
+  "type": "shotReleased",
+  "detail": "H. Grove +2"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 215,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 216,
+  "type": "shotBlocked",
+  "detail": "H. Grove +2"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 217,
+  "type": "looseBallCreated",
+  "detail": "A. Dain block"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 218,
+  "type": "actionResolved",
+  "detail": "H. Grove SHOOT"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 219,
+  "type": "looseBallRecovered",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 220,
+  "type": "reboundSecured",
+  "detail": "H. Grove offensive"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 221,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1653,
+  "tick": 435,
+  "sequence": 223,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1654,
+  "tick": 436,
+  "sequence": 224,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1654,
+  "tick": 436,
+  "sequence": 225,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1839,
+  "tick": 442,
+  "sequence": 231,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1839,
+  "tick": 442,
+  "sequence": 232,
+  "type": "actionStarted",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 1839,
+  "tick": 442,
+  "sequence": 233,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1839,
+  "tick": 442,
+  "sequence": 234,
+  "type": "passReleased",
+  "detail": "H. Grove > A. Bexley"
+ },
+ {
+  "wallMs": 2023,
+  "tick": 449,
+  "sequence": 235,
+  "type": "passReceived",
+  "detail": "A. Bexley > A. Bexley"
+ },
+ {
+  "wallMs": 2023,
+  "tick": 449,
+  "sequence": 238,
+  "type": "actionResolved",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 2023,
+  "tick": 449,
+  "sequence": 239,
+  "type": "actionStarted",
+  "detail": "A. Bexley CLOSEOUT"
+ },
+ {
+  "wallMs": 2024,
+  "tick": 453,
+  "sequence": 240,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2024,
+  "tick": 453,
+  "sequence": 241,
+  "type": "actionStarted",
+  "detail": "A. Bexley CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 2227,
+  "tick": 457,
+  "sequence": 242,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2227,
+  "tick": 457,
+  "sequence": 243,
+  "type": "shotReleased",
+  "detail": "A. Bexley +3"
+ },
+ {
+  "wallMs": 2227,
+  "tick": 457,
+  "sequence": 244,
+  "type": "actionResolved",
+  "detail": "A. Bexley CLOSEOUT"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 245,
+  "type": "shotMade",
+  "detail": "A. Bexley +3"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 246,
+  "type": "assist",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 247,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 248,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 249,
+  "type": "actionResolved",
+  "detail": "A. Bexley CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 2228,
+  "tick": 463,
+  "sequence": 250,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2427,
+  "tick": 464,
+  "sequence": 251,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2427,
+  "tick": 465,
+  "sequence": 252,
+  "type": "playStateChanged",
+  "detail": "-"
+ }
+]

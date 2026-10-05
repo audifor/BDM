@@ -1,0 +1,967 @@
+{
+  "tag": "bt42",
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "overrides": {},
+  "summary": {
+    "games": 12,
+    "complete": 12,
+    "perGame": {
+      "possessions": 168.5,
+      "clockRunningSeconds": 2400,
+      "possessionSecondsTotal": 2424.3,
+      "points": 159,
+      "fga": 145.92,
+      "threes": 70.83,
+      "fta": 34.5,
+      "turnovers": 29,
+      "oreb": 12.08,
+      "fouls": 35.75,
+      "assists": 21.58,
+      "drives": 96.42,
+      "screens": 58,
+      "passes": 396.33,
+      "decisions": 596.17,
+      "shotClockViolations": 0.92,
+      "made": 54.08
+    },
+    "possessionSeconds": {
+      "n": 2022,
+      "mean": 14.39,
+      "median": 14.9,
+      "p10": 5.3,
+      "p90": 23.1,
+      "min": 0.1,
+      "max": 59.2
+    },
+    "bins": {
+      "<4 s": 0.069,
+      "4-8 s": 0.203,
+      "8-12 s": 0.131,
+      "12-16 s": 0.137,
+      "16-20 s": 0.232,
+      ">20 s": 0.227
+    },
+    "phases": [
+      {
+        "phase": "inbound",
+        "meanPerPossession": 0.41,
+        "medianWhenPresent": 0.7,
+        "p10WhenPresent": 0.7,
+        "p90WhenPresent": 1.2,
+        "frequency": 0.47,
+        "sharePct": 2.9
+      },
+      {
+        "phase": "backcourtAdvance",
+        "meanPerPossession": 0.09,
+        "medianWhenPresent": 0.1,
+        "p10WhenPresent": 0.1,
+        "p90WhenPresent": 3.9,
+        "frequency": 0.081,
+        "sharePct": 0.7
+      },
+      {
+        "phase": "transition",
+        "meanPerPossession": 2.91,
+        "medianWhenPresent": 3.6,
+        "p10WhenPresent": 1.4,
+        "p90WhenPresent": 4,
+        "frequency": 0.932,
+        "sharePct": 20.2
+      },
+      {
+        "phase": "earlyOffense",
+        "meanPerPossession": 0,
+        "medianWhenPresent": 0,
+        "p10WhenPresent": 0,
+        "p90WhenPresent": 0,
+        "frequency": 0,
+        "sharePct": 0
+      },
+      {
+        "phase": "settlement",
+        "meanPerPossession": 1.56,
+        "medianWhenPresent": 2.6,
+        "p10WhenPresent": 0.9,
+        "p90WhenPresent": 4.3,
+        "frequency": 0.577,
+        "sharePct": 10.8
+      },
+      {
+        "phase": "reading",
+        "meanPerPossession": 2.43,
+        "medianWhenPresent": 4,
+        "p10WhenPresent": 1.8,
+        "p90WhenPresent": 7.5,
+        "frequency": 0.552,
+        "sharePct": 16.9
+      },
+      {
+        "phase": "offBallMove",
+        "meanPerPossession": 1.3,
+        "medianWhenPresent": 2.9,
+        "p10WhenPresent": 0.7,
+        "p90WhenPresent": 4.7,
+        "frequency": 0.452,
+        "sharePct": 9.1
+      },
+      {
+        "phase": "screenSetup",
+        "meanPerPossession": 0.9,
+        "medianWhenPresent": 2.4,
+        "p10WhenPresent": 1.5,
+        "p90WhenPresent": 4.1,
+        "frequency": 0.341,
+        "sharePct": 6.2
+      },
+      {
+        "phase": "screenUse",
+        "meanPerPossession": 0,
+        "medianWhenPresent": 0,
+        "p10WhenPresent": 0,
+        "p90WhenPresent": 0,
+        "frequency": 0,
+        "sharePct": 0
+      },
+      {
+        "phase": "drive",
+        "meanPerPossession": 0.76,
+        "medianWhenPresent": 1.9,
+        "p10WhenPresent": 1,
+        "p90WhenPresent": 2,
+        "frequency": 0.468,
+        "sharePct": 5.3
+      },
+      {
+        "phase": "passFlight",
+        "meanPerPossession": 1.14,
+        "medianWhenPresent": 1.2,
+        "p10WhenPresent": 0.3,
+        "p90WhenPresent": 3.2,
+        "frequency": 0.755,
+        "sharePct": 8
+      },
+      {
+        "phase": "catchGather",
+        "meanPerPossession": 0.05,
+        "medianWhenPresent": 24,
+        "p10WhenPresent": 15.9,
+        "p90WhenPresent": 36,
+        "frequency": 0.002,
+        "sharePct": 0.3
+      },
+      {
+        "phase": "shotSetup",
+        "meanPerPossession": 0.31,
+        "medianWhenPresent": 0.3,
+        "p10WhenPresent": 0.3,
+        "p90WhenPresent": 0.4,
+        "frequency": 0.616,
+        "sharePct": 2.1
+      },
+      {
+        "phase": "shotFlight",
+        "meanPerPossession": 0.63,
+        "medianWhenPresent": 0.6,
+        "p10WhenPresent": 0.6,
+        "p90WhenPresent": 1.2,
+        "frequency": 0.819,
+        "sharePct": 4.4
+      },
+      {
+        "phase": "rebound",
+        "meanPerPossession": 0.78,
+        "medianWhenPresent": 1.4,
+        "p10WhenPresent": 0.3,
+        "p90WhenPresent": 2,
+        "frequency": 0.57,
+        "sharePct": 5.4
+      },
+      {
+        "phase": "offensiveReset",
+        "meanPerPossession": 0.06,
+        "medianWhenPresent": 0.7,
+        "p10WhenPresent": 0.6,
+        "p90WhenPresent": 1.4,
+        "frequency": 0.063,
+        "sharePct": 0.4
+      },
+      {
+        "phase": "advantage",
+        "meanPerPossession": 0.23,
+        "medianWhenPresent": 0.3,
+        "p10WhenPresent": 0.3,
+        "p90WhenPresent": 1.5,
+        "frequency": 0.399,
+        "sharePct": 1.6
+      },
+      {
+        "phase": "deadBall",
+        "meanPerPossession": 0.82,
+        "medianWhenPresent": 4.1,
+        "p10WhenPresent": 2.9,
+        "p90WhenPresent": 5.5,
+        "frequency": 0.193,
+        "sharePct": 5.7
+      }
+    ],
+    "byType": {
+      "afterDeadBall": {
+        "perGame": 10.5,
+        "seconds": {
+          "n": 126,
+          "mean": 16.44,
+          "median": 18.6,
+          "p10": 5.5,
+          "p90": 24.3,
+          "min": 1.3,
+          "max": 40.3
+        },
+        "phaseMeans": {
+          "inbound": 0.67,
+          "backcourtAdvance": 1.39,
+          "transition": 0.93,
+          "settlement": 2.02,
+          "reading": 3.43,
+          "offBallMove": 2.59,
+          "screenSetup": 1.43,
+          "drive": 0.47,
+          "passFlight": 1.24,
+          "shotSetup": 0.18,
+          "shotFlight": 0.58,
+          "rebound": 0.8,
+          "advantage": 0.15,
+          "deadBall": 0.58
+        },
+        "bins": {
+          "<4 s": 0.056,
+          "4-8 s": 0.119,
+          "8-12 s": 0.095,
+          "12-16 s": 0.095,
+          "16-20 s": 0.341,
+          ">20 s": 0.294
+        },
+        "passes": 2.24,
+        "decisions": 3.4
+      },
+      "afterDefensiveRebound": {
+        "perGame": 67.5,
+        "seconds": {
+          "n": 810,
+          "mean": 12.59,
+          "median": 11.5,
+          "p10": 2.7,
+          "p90": 21.8,
+          "min": 0.1,
+          "max": 54.8
+        },
+        "phaseMeans": {
+          "inbound": 0.09,
+          "transition": 2.92,
+          "settlement": 1.51,
+          "reading": 1.74,
+          "offBallMove": 1.3,
+          "screenSetup": 0.88,
+          "drive": 0.7,
+          "passFlight": 1.11,
+          "catchGather": 0.07,
+          "shotSetup": 0.27,
+          "shotFlight": 0.53,
+          "rebound": 0.67,
+          "advantage": 0.16,
+          "deadBall": 0.66
+        },
+        "bins": {
+          "<4 s": 0.119,
+          "4-8 s": 0.279,
+          "8-12 s": 0.117,
+          "12-16 s": 0.094,
+          "16-20 s": 0.219,
+          ">20 s": 0.173
+        },
+        "passes": 2.14,
+        "decisions": 3.53
+      },
+      "afterFreeThrows": {
+        "perGame": 15.3,
+        "seconds": {
+          "n": 184,
+          "mean": 15.32,
+          "median": 15.4,
+          "p10": 7.5,
+          "p90": 23,
+          "min": 1.5,
+          "max": 30.9
+        },
+        "phaseMeans": {
+          "inbound": 0.8,
+          "transition": 3.69,
+          "settlement": 1.42,
+          "reading": 2.72,
+          "offBallMove": 0.93,
+          "screenSetup": 0.81,
+          "drive": 0.73,
+          "passFlight": 1.01,
+          "shotSetup": 0.32,
+          "shotFlight": 0.7,
+          "rebound": 0.8,
+          "advantage": 0.28,
+          "deadBall": 1.11
+        },
+        "bins": {
+          "<4 s": 0.027,
+          "4-8 s": 0.13,
+          "8-12 s": 0.12,
+          "12-16 s": 0.255,
+          "16-20 s": 0.212,
+          ">20 s": 0.255
+        },
+        "passes": 2.49,
+        "decisions": 3.07
+      },
+      "afterMadeBasket": {
+        "perGame": 44.5,
+        "seconds": {
+          "n": 534,
+          "mean": 14.55,
+          "median": 14.1,
+          "p10": 6.9,
+          "p90": 22.4,
+          "min": 0.5,
+          "max": 44.3
+        },
+        "phaseMeans": {
+          "inbound": 0.8,
+          "transition": 3.67,
+          "settlement": 1.23,
+          "reading": 2.29,
+          "offBallMove": 0.96,
+          "screenSetup": 0.7,
+          "drive": 0.91,
+          "passFlight": 0.97,
+          "catchGather": 0.03,
+          "shotSetup": 0.33,
+          "shotFlight": 0.66,
+          "rebound": 0.69,
+          "advantage": 0.32,
+          "deadBall": 0.99
+        },
+        "bins": {
+          "<4 s": 0.03,
+          "4-8 s": 0.161,
+          "8-12 s": 0.191,
+          "12-16 s": 0.174,
+          "16-20 s": 0.24,
+          ">20 s": 0.204
+        },
+        "passes": 2.47,
+        "decisions": 3.07
+      },
+      "afterSteal": {
+        "perGame": 16,
+        "seconds": {
+          "n": 192,
+          "mean": 13.15,
+          "median": 13.3,
+          "p10": 5,
+          "p90": 21.7,
+          "min": 0.4,
+          "max": 35.9
+        },
+        "phaseMeans": {
+          "inbound": 0.11,
+          "backcourtAdvance": 0.05,
+          "transition": 1.98,
+          "settlement": 1.69,
+          "reading": 3.24,
+          "offBallMove": 1.17,
+          "screenSetup": 0.71,
+          "drive": 0.78,
+          "passFlight": 0.89,
+          "shotSetup": 0.31,
+          "shotFlight": 0.57,
+          "rebound": 0.65,
+          "advantage": 0.24,
+          "deadBall": 0.75
+        },
+        "bins": {
+          "<4 s": 0.073,
+          "4-8 s": 0.266,
+          "8-12 s": 0.135,
+          "12-16 s": 0.115,
+          "16-20 s": 0.234,
+          ">20 s": 0.177
+        },
+        "passes": 1.38,
+        "decisions": 2.87
+      },
+      "openingJumpBall": {
+        "perGame": 1,
+        "seconds": {
+          "n": 12,
+          "mean": 14.97,
+          "median": 15.9,
+          "p10": 4.7,
+          "p90": 23.7,
+          "min": 4.2,
+          "max": 41.4
+        },
+        "phaseMeans": {
+          "inbound": 0.07,
+          "transition": 0.63,
+          "settlement": 1.73,
+          "reading": 2.86,
+          "offBallMove": 2.87,
+          "screenSetup": 1.57,
+          "drive": 1.09,
+          "passFlight": 0.69,
+          "shotSetup": 0.22,
+          "shotFlight": 0.85,
+          "rebound": 0.67,
+          "advantage": 0.21,
+          "deadBall": 1.51
+        },
+        "bins": {
+          "<4 s": 0,
+          "4-8 s": 0.333,
+          "8-12 s": 0.167,
+          "12-16 s": 0.083,
+          "16-20 s": 0.083,
+          ">20 s": 0.333
+        },
+        "passes": 1,
+        "decisions": 3.17
+      },
+      "periodStart": {
+        "perGame": 2.8,
+        "seconds": {
+          "n": 34,
+          "mean": 16.97,
+          "median": 18.3,
+          "p10": 5.6,
+          "p90": 22.9,
+          "min": 2.6,
+          "max": 25.5
+        },
+        "phaseMeans": {
+          "inbound": 0.75,
+          "backcourtAdvance": 0.02,
+          "settlement": 2.26,
+          "reading": 5.25,
+          "offBallMove": 4.17,
+          "screenSetup": 1.55,
+          "passFlight": 1.27,
+          "shotSetup": 0.16,
+          "shotFlight": 0.51,
+          "rebound": 0.59,
+          "advantage": 0.03,
+          "deadBall": 0.4
+        },
+        "bins": {
+          "<4 s": 0.059,
+          "4-8 s": 0.088,
+          "8-12 s": 0,
+          "12-16 s": 0.118,
+          "16-20 s": 0.353,
+          ">20 s": 0.382
+        },
+        "passes": 2.71,
+        "decisions": 3.15
+      },
+      "secondChance": {
+        "perGame": 10.8,
+        "seconds": {
+          "n": 130,
+          "mean": 22.67,
+          "median": 21.8,
+          "p10": 13.2,
+          "p90": 33.9,
+          "min": 6.9,
+          "max": 59.2
+        },
+        "phaseMeans": {
+          "inbound": 0.42,
+          "backcourtAdvance": 0.04,
+          "transition": 2.93,
+          "settlement": 2.55,
+          "reading": 3.99,
+          "offBallMove": 1.36,
+          "screenSetup": 1.5,
+          "drive": 1.07,
+          "passFlight": 2.59,
+          "catchGather": 0.18,
+          "shotSetup": 0.53,
+          "shotFlight": 1.2,
+          "rebound": 2.05,
+          "offensiveReset": 0.88,
+          "advantage": 0.34,
+          "deadBall": 1.04
+        },
+        "bins": {
+          "<4 s": 0,
+          "4-8 s": 0.015,
+          "8-12 s": 0.046,
+          "12-16 s": 0.177,
+          "16-20 s": 0.185,
+          ">20 s": 0.577
+        },
+        "passes": 4.59,
+        "decisions": 7.38
+      }
+    },
+    "byFirstShot": {
+      "CATCH_AND_SHOOT": {
+        "perGame": 53.4,
+        "possessionSeconds": 20.24,
+        "toFirstShotSeconds": 18.24,
+        "passes": 3.61,
+        "settledShare": 0.99
+      },
+      "DRIVE_FINISH": {
+        "perGame": 32.1,
+        "possessionSeconds": 11.32,
+        "toFirstShotSeconds": 8.23,
+        "passes": 1.28,
+        "settledShare": 0.25
+      },
+      "FLOATER": {
+        "perGame": 2.8,
+        "possessionSeconds": 12.44,
+        "toFirstShotSeconds": 9.34,
+        "passes": 1.7,
+        "settledShare": 0.27
+      },
+      "KICK_OUT": {
+        "perGame": 5,
+        "possessionSeconds": 22.48,
+        "toFirstShotSeconds": 19.92,
+        "passes": 4.13,
+        "settledShare": 1
+      },
+      "LATE_CLOCK": {
+        "perGame": 0.6,
+        "possessionSeconds": 24.23,
+        "toFirstShotSeconds": 21.6,
+        "passes": 5.29,
+        "settledShare": 1
+      },
+      "PR_HANDLER": {
+        "perGame": 9,
+        "possessionSeconds": 21.12,
+        "toFirstShotSeconds": 17.97,
+        "passes": 3.17,
+        "settledShare": 1
+      },
+      "PR_ROLLER": {
+        "perGame": 1.8,
+        "possessionSeconds": 21.36,
+        "toFirstShotSeconds": 19.64,
+        "passes": 4.73,
+        "settledShare": 1
+      },
+      "PULL_UP": {
+        "perGame": 5.5,
+        "possessionSeconds": 15.68,
+        "toFirstShotSeconds": 13.27,
+        "passes": 2.3,
+        "settledShare": 0.68
+      },
+      "TRANSITION": {
+        "perGame": 24.8,
+        "possessionSeconds": 8.16,
+        "toFirstShotSeconds": 4.88,
+        "passes": 1.16,
+        "settledShare": 0.02
+      },
+      "noShot": {
+        "perGame": 33.5,
+        "possessionSeconds": 8.99,
+        "toFirstShotSeconds": 0,
+        "passes": 1.65,
+        "settledShare": 0
+      }
+    },
+    "halfCourtOnly": {
+      "n": 1587,
+      "seconds": {
+        "n": 1587,
+        "mean": 15.26,
+        "median": 16.4,
+        "p10": 6.3,
+        "p90": 22.9,
+        "min": 0.4,
+        "max": 54.8
+      },
+      "bins": {
+        "<4 s": 0.057,
+        "4-8 s": 0.13,
+        "8-12 s": 0.135,
+        "12-16 s": 0.156,
+        "16-20 s": 0.28,
+        ">20 s": 0.242
+      }
+    },
+    "short": {
+      "perGame": 45.9,
+      "shareOfAll": 0.273,
+      "classes": {
+        "turnover before a shot": {
+          "perGame": 14.9,
+          "share": 0.325
+        },
+        "transition legitimate": {
+          "perGame": 14.7,
+          "share": 0.319
+        },
+        "setup skipped (shot before the half court settled)": {
+          "perGame": 7.3,
+          "share": 0.16
+        },
+        "steal/break legitimate": {
+          "perGame": 4,
+          "share": 0.087
+        },
+        "premature shot (no action, at most one pass)": {
+          "perGame": 1.8,
+          "share": 0.038
+        },
+        "turnover after steal": {
+          "perGame": 1.3,
+          "share": 0.029
+        },
+        "clock/period end": {
+          "perGame": 1.2,
+          "share": 0.025
+        },
+        "inbound too fast": {
+          "perGame": 0.6,
+          "share": 0.013
+        },
+        "other": {
+          "perGame": 0.2,
+          "share": 0.004
+        }
+      }
+    },
+    "shotClock": {
+      "shotsWithClock": 1751,
+      "remainingSeconds": {
+        "n": 1751,
+        "mean": 11.79,
+        "median": 10,
+        "p10": 4.6,
+        "p90": 19.1,
+        "min": 1.4,
+        "max": 23.8
+      },
+      "bins": {
+        "24-20": 0.048,
+        "19-15": 0.356,
+        "14-10": 0.099,
+        "9-5": 0.372,
+        "4-0": 0.126
+      },
+      "firstShotOfPossessionBins": {
+        "24-20": 0.051,
+        "19-15": 0.382,
+        "14-10": 0.085,
+        "9-5": 0.36,
+        "4-0": 0.122
+      }
+    },
+    "decisions": {
+      "perPossession": {
+        "n": 2022,
+        "mean": 3.54,
+        "median": 3,
+        "p10": 1,
+        "p90": 7,
+        "min": 0,
+        "max": 18
+      },
+      "perSecond": 0.246,
+      "cancelledPerPossession": 0.03
+    },
+    "reboundToNext": {
+      "pass": {
+        "perGame": 9.6,
+        "seconds": {
+          "n": 115,
+          "mean": 0.95,
+          "median": 0.7,
+          "p10": 0.7,
+          "p90": 1.3,
+          "min": 0.7,
+          "max": 4.2
+        }
+      },
+      "putback": {
+        "perGame": 2.2,
+        "seconds": {
+          "n": 26,
+          "mean": 1.14,
+          "median": 1,
+          "p10": 1,
+          "p90": 1.4,
+          "min": 1,
+          "max": 2.4
+        }
+      },
+      "otherShot": {
+        "perGame": 0.3,
+        "seconds": {
+          "n": 3,
+          "mean": 1.27,
+          "median": 1.1,
+          "p10": 1,
+          "p90": 1.7,
+          "min": 1,
+          "max": 1.7
+        }
+      }
+    }
+  },
+  "perGame": [
+    {
+      "seed": 424242,
+      "complete": true,
+      "possessions": 150,
+      "points": 141,
+      "fga": 124,
+      "threes": 67,
+      "fta": 28,
+      "turnovers": 28,
+      "oreb": 7,
+      "fouls": 29,
+      "assists": 24,
+      "drives": 75,
+      "screens": 68,
+      "passes": 369,
+      "decisions": 531,
+      "shotClockViolations": 8,
+      "made": 47
+    },
+    {
+      "seed": 7,
+      "complete": true,
+      "possessions": 163,
+      "points": 146,
+      "fga": 139,
+      "threes": 68,
+      "fta": 34,
+      "turnovers": 28,
+      "oreb": 10,
+      "fouls": 37,
+      "assists": 19,
+      "drives": 97,
+      "screens": 64,
+      "passes": 394,
+      "decisions": 601,
+      "shotClockViolations": 0,
+      "made": 48
+    },
+    {
+      "seed": 1,
+      "complete": true,
+      "possessions": 177,
+      "points": 177,
+      "fga": 145,
+      "threes": 75,
+      "fta": 47,
+      "turnovers": 38,
+      "oreb": 13,
+      "fouls": 41,
+      "assists": 20,
+      "drives": 92,
+      "screens": 64,
+      "passes": 399,
+      "decisions": 604,
+      "shotClockViolations": 0,
+      "made": 57
+    },
+    {
+      "seed": 99,
+      "complete": true,
+      "possessions": 169,
+      "points": 168,
+      "fga": 161,
+      "threes": 66,
+      "fta": 36,
+      "turnovers": 16,
+      "oreb": 15,
+      "fouls": 37,
+      "assists": 24,
+      "drives": 109,
+      "screens": 55,
+      "passes": 396,
+      "decisions": 612,
+      "shotClockViolations": 0,
+      "made": 59
+    },
+    {
+      "seed": 2024,
+      "complete": true,
+      "possessions": 167,
+      "points": 144,
+      "fga": 147,
+      "threes": 81,
+      "fta": 30,
+      "turnovers": 26,
+      "oreb": 10,
+      "fouls": 30,
+      "assists": 18,
+      "drives": 98,
+      "screens": 59,
+      "passes": 415,
+      "decisions": 633,
+      "shotClockViolations": 0,
+      "made": 49
+    },
+    {
+      "seed": 31337,
+      "complete": true,
+      "possessions": 167,
+      "points": 154,
+      "fga": 146,
+      "threes": 74,
+      "fta": 32,
+      "turnovers": 30,
+      "oreb": 12,
+      "fouls": 41,
+      "assists": 23,
+      "drives": 94,
+      "screens": 59,
+      "passes": 402,
+      "decisions": 597,
+      "shotClockViolations": 1,
+      "made": 54
+    },
+    {
+      "seed": 11,
+      "complete": true,
+      "possessions": 176,
+      "points": 165,
+      "fga": 147,
+      "threes": 67,
+      "fta": 27,
+      "turnovers": 35,
+      "oreb": 13,
+      "fouls": 33,
+      "assists": 20,
+      "drives": 99,
+      "screens": 47,
+      "passes": 385,
+      "decisions": 578,
+      "shotClockViolations": 1,
+      "made": 59
+    },
+    {
+      "seed": 12,
+      "complete": true,
+      "possessions": 172,
+      "points": 150,
+      "fga": 157,
+      "threes": 70,
+      "fta": 39,
+      "turnovers": 30,
+      "oreb": 20,
+      "fouls": 38,
+      "assists": 20,
+      "drives": 108,
+      "screens": 54,
+      "passes": 393,
+      "decisions": 607,
+      "shotClockViolations": 1,
+      "made": 51
+    },
+    {
+      "seed": 13,
+      "complete": true,
+      "possessions": 169,
+      "points": 145,
+      "fga": 147,
+      "threes": 75,
+      "fta": 23,
+      "turnovers": 26,
+      "oreb": 9,
+      "fouls": 26,
+      "assists": 17,
+      "drives": 99,
+      "screens": 48,
+      "passes": 392,
+      "decisions": 594,
+      "shotClockViolations": 0,
+      "made": 53
+    },
+    {
+      "seed": 14,
+      "complete": true,
+      "possessions": 162,
+      "points": 196,
+      "fga": 138,
+      "threes": 67,
+      "fta": 44,
+      "turnovers": 26,
+      "oreb": 9,
+      "fouls": 36,
+      "assists": 24,
+      "drives": 91,
+      "screens": 55,
+      "passes": 394,
+      "decisions": 581,
+      "shotClockViolations": 0,
+      "made": 65
+    },
+    {
+      "seed": 15,
+      "complete": true,
+      "possessions": 181,
+      "points": 162,
+      "fga": 151,
+      "threes": 70,
+      "fta": 39,
+      "turnovers": 38,
+      "oreb": 12,
+      "fouls": 39,
+      "assists": 26,
+      "drives": 101,
+      "screens": 63,
+      "passes": 392,
+      "decisions": 599,
+      "shotClockViolations": 0,
+      "made": 54
+    },
+    {
+      "seed": 16,
+      "complete": true,
+      "possessions": 169,
+      "points": 160,
+      "fga": 149,
+      "threes": 70,
+      "fta": 35,
+      "turnovers": 27,
+      "oreb": 15,
+      "fouls": 42,
+      "assists": 24,
+      "drives": 94,
+      "screens": 60,
+      "passes": 425,
+      "decisions": 617,
+      "shotClockViolations": 0,
+      "made": 53
+    }
+  ]
+}

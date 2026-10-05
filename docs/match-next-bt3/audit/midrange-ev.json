@@ -1,0 +1,508 @@
+{
+  "rows": [
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.62,
+      "expectedPoints": 1.24
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.49,
+      "expectedPoints": 0.98
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.49,
+      "expectedPoints": 0.98
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.394,
+      "expectedPoints": 0.788
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.384,
+      "expectedPoints": 0.769
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.31,
+      "expectedPoints": 0.93
+    },
+    {
+      "shooting": 40,
+      "contest": 0,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.303,
+      "expectedPoints": 0.909
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.536,
+      "expectedPoints": 1.072
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.406,
+      "expectedPoints": 0.812
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.406,
+      "expectedPoints": 0.812
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.31,
+      "expectedPoints": 0.62
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.3,
+      "expectedPoints": 0.601
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.226,
+      "expectedPoints": 0.678
+    },
+    {
+      "shooting": 40,
+      "contest": 0.3,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.219,
+      "expectedPoints": 0.657
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.452,
+      "expectedPoints": 0.904
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.322,
+      "expectedPoints": 0.644
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.322,
+      "expectedPoints": 0.644
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.226,
+      "expectedPoints": 0.452
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.216,
+      "expectedPoints": 0.433
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.142,
+      "expectedPoints": 0.426
+    },
+    {
+      "shooting": 40,
+      "contest": 0.6,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.135,
+      "expectedPoints": 0.405
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.7,
+      "expectedPoints": 1.4
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.57,
+      "expectedPoints": 1.14
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.57,
+      "expectedPoints": 1.14
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.474,
+      "expectedPoints": 0.948
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.464,
+      "expectedPoints": 0.929
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.39,
+      "expectedPoints": 1.17
+    },
+    {
+      "shooting": 60,
+      "contest": 0,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.383,
+      "expectedPoints": 1.149
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.616,
+      "expectedPoints": 1.232
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.486,
+      "expectedPoints": 0.972
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.486,
+      "expectedPoints": 0.972
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.39,
+      "expectedPoints": 0.78
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.38,
+      "expectedPoints": 0.761
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.306,
+      "expectedPoints": 0.918
+    },
+    {
+      "shooting": 60,
+      "contest": 0.3,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.299,
+      "expectedPoints": 0.897
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.532,
+      "expectedPoints": 1.064
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.402,
+      "expectedPoints": 0.804
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.402,
+      "expectedPoints": 0.804
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.306,
+      "expectedPoints": 0.612
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.296,
+      "expectedPoints": 0.593
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.222,
+      "expectedPoints": 0.666
+    },
+    {
+      "shooting": 60,
+      "contest": 0.6,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.215,
+      "expectedPoints": 0.645
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.78,
+      "expectedPoints": 1.56
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.65,
+      "expectedPoints": 1.3
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.65,
+      "expectedPoints": 1.3
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.554,
+      "expectedPoints": 1.108
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.544,
+      "expectedPoints": 1.089
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.47,
+      "expectedPoints": 1.41
+    },
+    {
+      "shooting": 80,
+      "contest": 0,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.463,
+      "expectedPoints": 1.389
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.696,
+      "expectedPoints": 1.392
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.566,
+      "expectedPoints": 1.132
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.566,
+      "expectedPoints": 1.132
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.47,
+      "expectedPoints": 0.94
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.46,
+      "expectedPoints": 0.921
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.386,
+      "expectedPoints": 1.158
+    },
+    {
+      "shooting": 80,
+      "contest": 0.3,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.379,
+      "expectedPoints": 1.137
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 1.2,
+      "points": 2,
+      "probability": 0.612,
+      "expectedPoints": 1.224
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 2.5,
+      "points": 2,
+      "probability": 0.482,
+      "expectedPoints": 0.964
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 4,
+      "points": 2,
+      "probability": 0.482,
+      "expectedPoints": 0.964
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 5.5,
+      "points": 2,
+      "probability": 0.386,
+      "expectedPoints": 0.772
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 6.3,
+      "points": 2,
+      "probability": 0.376,
+      "expectedPoints": 0.753
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 6.9,
+      "points": 3,
+      "probability": 0.302,
+      "expectedPoints": 0.906
+    },
+    {
+      "shooting": 80,
+      "contest": 0.6,
+      "distance": 7.6,
+      "points": 3,
+      "probability": 0.295,
+      "expectedPoints": 0.885
+    }
+  ]
+}

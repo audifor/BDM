@@ -1,0 +1,253 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7
+  ],
+  "summary": {
+    "games": 3,
+    "liveMinutesPerGame": 35.4,
+    "byRole": {
+      "ballHandler": {
+        "meanSpeed": 2.09,
+        "bands": {
+          "standing": 0.267,
+          "walk": 0.179,
+          "jog": 0.479,
+          "run": 0.063,
+          "sprint": 0.011
+        },
+        "reversalsPerMinute": 0.1,
+        "meanTurnDegreesPerTick": 3.5,
+        "pathEfficiency3s": 0.83
+      },
+      "offBall": {
+        "meanSpeed": 2.06,
+        "bands": {
+          "standing": 0.294,
+          "walk": 0.194,
+          "jog": 0.362,
+          "run": 0.149,
+          "sprint": 0
+        },
+        "reversalsPerMinute": 0.5,
+        "meanTurnDegreesPerTick": 2.9,
+        "pathEfficiency3s": 0.78
+      },
+      "onBallDefender": {
+        "meanSpeed": 2.38,
+        "bands": {
+          "standing": 0.157,
+          "walk": 0.258,
+          "jog": 0.432,
+          "run": 0.144,
+          "sprint": 0.009
+        },
+        "reversalsPerMinute": 0.1,
+        "meanTurnDegreesPerTick": 5.2,
+        "pathEfficiency3s": 0.68
+      },
+      "offBallDefender": {
+        "meanSpeed": 2.28,
+        "bands": {
+          "standing": 0.164,
+          "walk": 0.268,
+          "jog": 0.452,
+          "run": 0.112,
+          "sprint": 0.004
+        },
+        "reversalsPerMinute": 0.2,
+        "meanTurnDegreesPerTick": 5.6,
+        "pathEfficiency3s": 0.74
+      }
+    },
+    "defense": {
+      "responsibilityKindSwitchesPerDefenderMinute": {
+        "n": 60,
+        "mean": 6.2,
+        "median": 5.78,
+        "p10": 1.09,
+        "p90": 12.26,
+        "min": 0.14,
+        "max": 14.54
+      },
+      "movementTargetJumpsPerDefenderMinute": {
+        "n": 60,
+        "mean": 7.6,
+        "median": 7.39,
+        "p10": 1.63,
+        "p90": 15.24,
+        "min": 0.22,
+        "max": 16.11
+      },
+      "distanceToBall": {
+        "n": 219900,
+        "mean": 4.2,
+        "median": 3.84,
+        "p10": 1.05,
+        "p90": 8.11,
+        "min": 0,
+        "max": 15.57
+      },
+      "shareOfHalfCourtDefenderFramesBeyondTheBallLine": 0.155
+    },
+    "offense": {
+      "shareOfOffBallPlayersMoving": {
+        "n": 43980,
+        "mean": 0.59,
+        "median": 0.5,
+        "p10": 0,
+        "p90": 1,
+        "min": 0,
+        "max": 1.25
+      },
+      "holderStandingStretchesPerGame": 64,
+      "holderStandingSeconds": {
+        "n": 192,
+        "mean": 3.15,
+        "median": 2.8,
+        "p10": 2.1,
+        "p90": 4,
+        "min": 2,
+        "max": 21.1
+      },
+      "nearestTeammateMeters": {
+        "n": 43980,
+        "mean": 4.13,
+        "median": 4.27,
+        "p10": 2.7,
+        "p90": 5.37,
+        "min": 0.53,
+        "max": 7.07
+      },
+      "hullAreaSquareMeters": {
+        "n": 43980,
+        "mean": 45.31,
+        "median": 44.39,
+        "p10": 21.09,
+        "p90": 71.01,
+        "min": 0.7,
+        "max": 108.24
+      },
+      "playersWhoTouchedTheBallPerPossession": {
+        "n": 571,
+        "mean": 2.09,
+        "median": 2,
+        "p10": 1,
+        "p90": 4,
+        "min": 0,
+        "max": 5
+      },
+      "secondsUntilTheFirstRealAction": {
+        "n": 510,
+        "mean": 7.11,
+        "median": 7.1,
+        "p10": 4.4,
+        "p90": 10.2,
+        "min": 1.3,
+        "max": 34
+      },
+      "offersPerPossession": {
+        "n": 510,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "offersThatGotTheBallWithin4s": 0,
+      "offBallMovesPerGame": {
+        "DRIFT": 289.3,
+        "BACKDOOR_CUT": 15,
+        "BASKET_CUT": 14.3
+      },
+      "decisionsPerGame": {
+        "PASS": 393.7,
+        "DRIVE": 146,
+        "SCREEN": 74.7,
+        "CATCH_AND_SHOOT": 85,
+        "SHOOT": 58.7,
+        "KICK_OUT": 36.7
+      },
+      "mostCommonPossessionPatterns": [
+        {
+          "pattern": "catch > DRIVE > DRIFT > SHOOT > SHOT DRIVE_FINISH RESTRICTED",
+          "share": 0.072
+        },
+        {
+          "pattern": "PASS > catch > SCREEN > screenSet > DRIVE > DRIFT > DRIFT",
+          "share": 0.051
+        },
+        {
+          "pattern": "catch > DRIVE > DRIFT > SHOOT > SHOT DRIVE_FINISH RESTRICTED > REB defensive",
+          "share": 0.039
+        },
+        {
+          "pattern": "PASS > catch > DRIVE > DRIFT > DRIFT > DRIFT > DRIFT",
+          "share": 0.028
+        },
+        {
+          "pattern": "PASS > catch > PASS > catch > PASS > catch > PASS",
+          "share": 0.028
+        },
+        {
+          "pattern": "catch",
+          "share": 0.023
+        },
+        {
+          "pattern": "catch > TURNOVER LOST_DRIBBLE",
+          "share": 0.021
+        },
+        {
+          "pattern": "PASS > catch",
+          "share": 0.019
+        },
+        {
+          "pattern": "catch > PASS > catch > PASS > catch > PASS > catch",
+          "share": 0.019
+        },
+        {
+          "pattern": "PASS > catch > SCREEN > screenSet > PASS > catch > CATCH_AND_SHOOT",
+          "share": 0.018
+        },
+        {
+          "pattern": "catch > PASS > catch > DRIVE > DRIFT > DRIFT > DRIFT",
+          "share": 0.018
+        },
+        {
+          "pattern": "PASS > catch > PASS > catch > DRIVE > DRIFT > DRIFT",
+          "share": 0.016
+        }
+      ],
+      "distinctPatterns": 214,
+      "possessions": 571
+    },
+    "sampleTimelines": [
+      "#possession-1 openingJumpBall 13.2s: 1.7s PASS | 2.2s catch | 3.2s DRIVE | 3.2s DRIFT | 3.2s DRIFT | 3.2s DRIFT | 3.2s DRIFT | 5.3s PASS | 5.7s catch | 6.0s BACKDOOR_CUT | 6.2s SCREEN | 8.2s screenSet | 8.4s PASS | 9.0s catch | 9.8s PASS | 10.4s catch | 10.9s CATCH_AND_SHOOT | 11.3s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE | 13.2s REB defensive",
+      "#possession-2 defensiveRebound 8.8s: 0.9s PASS | 2.3s PASS | 2.5s catch | 6.7s DRIVE | 6.8s DRIFT | 6.8s DRIFT | 8.2s SHOT FLOATER SHORT_PAINT",
+      "#possession-3 madeBasketInbound 8.8s: 0.7s catch | 4.5s DRIVE | 4.9s DRIFT | 6.7s SHOOT | 7.0s SHOT DRIVE_FINISH RESTRICTED | 8.8s REB defensive",
+      "#possession-4 defensiveRebound 20.2s: 0.9s PASS | 1.3s catch | 4.6s PASS | 5.2s catch | 5.8s PASS | 6.6s catch | 7.2s PASS | 7.6s catch | 8.0s PASS | 8.8s catch | 9.3s BACKDOOR_CUT | 9.3s SCREEN | 10.9s screenSet | 11.1s DRIVE | 11.3s DRIFT | 12.9s KICK_OUT | 13.5s catch | 13.9s PASS | 14.6s catch | 15.0s PASS | 15.8s catch | 16.5s PASS | 17.3s catch | 17.8s CATCH_AND_SHOOT | 18.2s SHOT CATCH_AND_SHOOT CORNER_THREE | 20.2s REB defensive",
+      "#possession-5 defensiveRebound 11.6s: 0.9s PASS | 1.1s catch | 8.2s DRIVE | 8.3s DRIFT | 8.3s DRIFT | 8.3s DRIFT | 9.9s SHOT PULL_UP SHORT_PAINT | 11.6s REB defensive",
+      "#possession-6 defensiveRebound 7.6s: 0.9s PASS | 1.3s catch | 5.0s DRIVE | 5.1s DRIFT | 5.1s DRIFT | 5.1s DRIFT | 6.7s SHOOT | 7.0s SHOT DRIVE_FINISH RESTRICTED",
+      "#possession-7 madeBasketInbound 23.4s: 0.7s catch | 4.4s DRIVE | 4.7s DRIFT | 6.7s SHOOT | 7.0s SHOT DRIVE_FINISH RESTRICTED | 12.9s REB offensive | 13.7s PASS | 14.1s catch | 14.8s PASS | 15.6s catch | 16.7s SCREEN | 18.3s screenSet | 18.5s PASS | 19.3s catch | 19.8s PASS | 20.6s catch | 21.1s PASS | 21.9s catch | 22.4s CATCH_AND_SHOOT | 22.8s SHOT CATCH_AND_SHOOT CORNER_THREE",
+      "#possession-8 madeBasketInbound 6.8s: 0.7s catch | 4.4s DRIVE | 4.9s DRIFT | 5.8s KICK_OUT | 6.8s TURNOVER BAD_PASS",
+      "#possession-9 other 9.3s: 5.0s DRIVE | 5.3s DRIFT | 7.2s SHOOT | 7.5s SHOT DRIVE_FINISH RESTRICTED | 9.3s REB defensive",
+      "#possession-10 defensiveRebound 9.5s: 0.9s PASS | 1.3s catch | 7.3s DRIVE | 7.6s DRIFT | 7.6s DRIFT | 7.6s DRIFT | 7.6s DRIFT | 8.9s SHOT PULL_UP SHORT_PAINT",
+      "#possession-11 madeBasketInbound 26.5s: 0.7s catch | 7.5s PASS | 8.3s catch | 9.0s PASS | 11.5s DRIVE | 11.6s DRIFT | 11.6s DRIFT | 13.2s KICK_OUT | 13.8s catch | 14.3s PASS | 15.1s catch | 15.5s CATCH_AND_SHOOT | 15.9s SHOT CATCH_AND_SHOOT CORNER_THREE | 18.3s REB offensive | 19.0s PASS | 19.8s catch | 22.1s DRIVE | 22.4s DRIFT | 22.4s DRIFT | 24.3s PASS | 25.1s catch | 25.5s CATCH_AND_SHOOT | 25.9s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE",
+      "#possession-12 madeBasketInbound 14.4s: 0.7s catch | 4.4s DRIVE | 4.9s DRIFT | 5.8s KICK_OUT | 6.3s catch | 7.0s PASS | 7.8s catch | 8.3s SCREEN | 9.9s screenSet | 10.1s PASS | 10.6s catch | 11.1s PASS | 11.7s catch | 12.2s PASS | 13.0s catch | 13.4s CATCH_AND_SHOOT | 13.8s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE",
+      "#possession-13 madeBasketInbound 10.8s: 0.7s catch | 7.6s DRIVE | 7.7s DRIFT | 7.7s DRIFT | 7.7s DRIFT | 9.8s PASS | 10.8s TURNOVER OUT_OF_BOUNDS",
+      "#possession-14 turnoverInbound 21.6s: 1.2s catch | 10.4s catch | 13.5s BASKET_CUT | 13.7s SCREEN | 15.4s screenSet | 15.6s PASS | 16.4s catch | 16.8s PASS | 17.6s catch | 18.0s DRIVE | 18.3s DRIFT | 19.5s KICK_OUT | 20.1s catch | 20.6s CATCH_AND_SHOOT | 21.0s SHOT KICK_OUT ABOVE_BREAK_THREE",
+      "#possession-15 madeBasketInbound 15.8s: 0.7s catch | 5.3s PASS | 7.6s PASS | 8.4s catch | 8.8s SCREEN | 10.8s screenSet | 11.0s PASS | 11.7s catch | 12.3s PASS | 12.9s catch | 13.4s CATCH_AND_SHOOT | 13.8s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE | 15.8s REB defensive",
+      "#possession-16 defensiveRebound 6.0s: 0.9s PASS | 1.3s catch | 4.6s PASS | 6.0s TURNOVER BAD_PASS",
+      "#possession-18 steal 6.8s: 2.7s DRIVE | 3.6s DRIFT | 4.9s SHOOT | 5.2s SHOT TRANSITION RIM | 6.8s REB defensive",
+      "#possession-19 defensiveRebound 14.5s: 0.9s PASS | 1.3s catch | 7.6s SCREEN | 10.2s screenSet | 10.4s DRIVE | 10.4s DRIFT | 10.4s DRIFT | 12.6s SHOT PR_HANDLER SHORT_PAINT | 14.5s REB defensive",
+      "#possession-20 defensiveRebound 13.5s: 0.9s PASS | 1.2s catch | 7.4s SCREEN | 9.3s screenSet | 9.5s PASS | 10.3s catch | 10.8s CATCH_AND_SHOOT | 11.2s SHOT CATCH_AND_SHOOT CORNER_THREE | 13.5s REB defensive",
+      "#possession-21 defensiveRebound 8.9s: 0.9s PASS | 1.3s catch | 6.7s PASS | 7.4s catch | 7.9s CATCH_AND_SHOOT | 8.3s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE",
+      "#possession-22 madeBasketInbound 8.6s: 0.7s catch | 4.4s DRIVE | 4.8s DRIFT | 6.6s SHOOT | 6.9s SHOT DRIVE_FINISH RESTRICTED | 8.6s REB defensive",
+      "#possession-23 defensiveRebound 7.9s: 0.9s PASS | 1.2s PASS | 1.4s catch | 5.1s DRIVE | 5.4s DRIFT | 5.4s DRIFT | 7.0s SHOOT | 7.3s SHOT DRIVE_FINISH RESTRICTED",
+      "#possession-24 madeBasketInbound 13.4s: 0.7s catch | 4.5s DRIVE | 5.0s DRIFT | 6.7s SHOOT | 7.0s SHOT DRIVE_FINISH RESTRICTED",
+      "#possession-25 madeBasketInbound 31.4s: 0.7s catch | 7.8s DRIVE | 7.9s DRIFT | 7.9s DRIFT | 7.9s DRIFT | 9.4s SHOT PULL_UP SHORT_PAINT | 11.4s REB offensive | 12.1s PASS | 12.5s catch | 15.4s PASS | 17.4s DRIVE | 17.5s DRIFT | 17.5s DRIFT | 18.9s KICK_OUT | 19.6s catch | 20.1s CATCH_AND_SHOOT | 20.5s SHOT KICK_OUT ABOVE_BREAK_THREE | 22.8s REB offensive | 24.3s PASS | 25.1s catch | 25.7s PASS | 27.8s PASS | 28.4s catch | 28.7s BASKET_CUT | 28.9s CATCH_AND_SHOOT | 29.3s SHOT CATCH_AND_SHOOT ABOVE_BREAK_THREE | 31.4s REB defensive"
+    ]
+  }
+}

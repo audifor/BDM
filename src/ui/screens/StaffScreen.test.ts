@@ -2,7 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame, getCurrentSeason, simulateAndApplyGame, startNextSeason } from '@/app/game'
+import { createNewGame as createFullNewGame, getCurrentSeason, simulateAndApplyGame, startNextSeason } from '@/app/game'
 import { NAVIGATION } from '@/ui/App'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
@@ -12,6 +12,10 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/ui/staffPresentation'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 
 import { StaffScreen } from './StaffScreen'
+import { withShortGameFormat } from '@/app/game/testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
 
 describe('StaffScreen', () => {
   it('adds STAFF to main navigation', () => {

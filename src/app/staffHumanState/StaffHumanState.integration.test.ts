@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createAcbTestGame } from '@/app/game/createAcbTestGame'
+import { createAcbTestGame as createFullAcbTestGame } from '@/app/game/createAcbTestGame'
 import { advanceGameDay } from '@/app/game/advanceGameDay'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffAssignments, updateGameWorld, type GameWorld } from '@/domain/world'
@@ -11,6 +11,10 @@ import { acceptStaffRecommendation, dismissStaffRecommendation } from '@/app/sta
 import { progressMedicalAdvisories } from '@/engine/injury/MedicalAdvisory'
 import { staffHumanContextIdFor, createStaffHumanEvent } from '@/domain/staffHumanState'
 import { applyStaffHumanEvent } from '@/engine/staff/StaffHumanReactionEngine'
+import { withShortGameFormat } from '@/app/game/testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
 const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as StaffAttributes

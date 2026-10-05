@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "putback",
+  "description": "Offensive rebound followed by the rebounder's own attempt",
+  "seed": 424242,
+  "fromTick": 396,
+  "toTick": 486
+ },
+ "everyMs": 750,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 397,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.38497699698981686
+    },
+    {
+     "frame": 1,
+     "tick": 404,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1259237278468457
+    },
+    {
+     "frame": 2,
+     "tick": 412,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3436442157632734
+    },
+    {
+     "frame": 3,
+     "tick": 419,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.12282995360241766
+    },
+    {
+     "frame": 4,
+     "tick": 427,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.38889226523508025
+    },
+    {
+     "frame": 5,
+     "tick": 434,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.12329796886855712
+    },
+    {
+     "frame": 6,
+     "tick": 442,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.35083350561763055
+    },
+    {
+     "frame": 7,
+     "tick": 449,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.06848274172275697
+    },
+    {
+     "frame": 8,
+     "tick": 457,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3278807801209549
+    },
+    {
+     "frame": 9,
+     "tick": 464,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09081954327877514
+    },
+    {
+     "frame": 10,
+     "tick": 472,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3704502466955359
+    },
+    {
+     "frame": 11,
+     "tick": 479,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.10297653144239745
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 397,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.38497699698981686
+    },
+    {
+     "frame": 1,
+     "tick": 404,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1259237278468457
+    },
+    {
+     "frame": 2,
+     "tick": 412,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3436442157632734
+    },
+    {
+     "frame": 3,
+     "tick": 419,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.12282995360241766
+    },
+    {
+     "frame": 4,
+     "tick": 427,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.38889226523508025
+    },
+    {
+     "frame": 5,
+     "tick": 434,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.12329796886855712
+    },
+    {
+     "frame": 6,
+     "tick": 442,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.35083350561763055
+    },
+    {
+     "frame": 7,
+     "tick": 449,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.06848274172275697
+    },
+    {
+     "frame": 8,
+     "tick": 457,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3278807801209549
+    },
+    {
+     "frame": 9,
+     "tick": 464,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09081954327877514
+    },
+    {
+     "frame": 10,
+     "tick": 472,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3704502466955359
+    },
+    {
+     "frame": 11,
+     "tick": 479,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.10297653144239745
+    }
+   ]
+  }
+ }
+}

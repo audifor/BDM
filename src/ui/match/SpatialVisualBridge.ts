@@ -1,5 +1,6 @@
 import type { SpatialState } from '@/engine/match'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import type { CourtBallState } from './court/CourtEntityTypes'
 
 export interface VisualMatchPlayer {
   readonly playerId: PlayerId
@@ -16,6 +17,8 @@ export interface VisualMatchSnapshot {
     readonly yPercent: number
     readonly ownerPlayerId: PlayerId | null
     readonly isPassing: boolean
+    readonly state?: CourtBallState
+    readonly heightMeters?: number
   }
 }
 

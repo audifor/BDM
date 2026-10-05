@@ -11,10 +11,15 @@ import { acceptCoachJobOffer, completeCoachInterview, createCoachJobOffer, fireC
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import { getEligibleResponsibilityCandidates } from '@/ui/staffPresentation'
 import { getStaffRecommendationsForTeam } from '@/ui/staffRecommendationPresentation'
-import { createNewGame } from './createNewGame'
-import { createAcbTestGame } from './createAcbTestGame'
+import { createNewGame as createFullNewGame } from './createNewGame'
+import { createAcbTestGame as createFullAcbTestGame } from './createAcbTestGame'
 import { advanceGameDay } from './advanceGameDay'
 import { continueGame } from './ContinueFlow'
+import { withShortGameFormat } from './testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 describe('createAcbTestGame', () => {
   it('creates the complete ACB 2026/27 regular-season test universe', () => {

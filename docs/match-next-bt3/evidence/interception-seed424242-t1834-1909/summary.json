@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "interception",
+  "description": "Pass intercepted in the lane",
+  "seed": 424242,
+  "fromTick": 1834,
+  "toTick": 1909
+ },
+ "everyMs": 625,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1837,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4316963092608844
+    },
+    {
+     "frame": 1,
+     "tick": 1843,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.25822488991463366
+    },
+    {
+     "frame": 2,
+     "tick": 1849,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.11045835862113888
+    },
+    {
+     "frame": 3,
+     "tick": 1856,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.4743725196900157
+    },
+    {
+     "frame": 4,
+     "tick": 1862,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2046925127799889
+    },
+    {
+     "frame": 5,
+     "tick": 1868,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.20566596373065557
+    },
+    {
+     "frame": 6,
+     "tick": 1874,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.09382795493877366
+    },
+    {
+     "frame": 7,
+     "tick": 1881,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4776161326573466
+    },
+    {
+     "frame": 8,
+     "tick": 1887,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4358262417511753
+    },
+    {
+     "frame": 9,
+     "tick": 1893,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2801730016799972
+    },
+    {
+     "frame": 10,
+     "tick": 1899,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11567462074471944
+    },
+    {
+     "frame": 11,
+     "tick": 1906,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.5755714902015364
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1837,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4316963092608844
+    },
+    {
+     "frame": 1,
+     "tick": 1843,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.25822488991463366
+    },
+    {
+     "frame": 2,
+     "tick": 1849,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.11045835862113888
+    },
+    {
+     "frame": 3,
+     "tick": 1856,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.4743725196900157
+    },
+    {
+     "frame": 4,
+     "tick": 1862,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2046925127799889
+    },
+    {
+     "frame": 5,
+     "tick": 1868,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.20566596373065557
+    },
+    {
+     "frame": 6,
+     "tick": 1874,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.09382795493877366
+    },
+    {
+     "frame": 7,
+     "tick": 1881,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4776161326573466
+    },
+    {
+     "frame": 8,
+     "tick": 1887,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4358262417511753
+    },
+    {
+     "frame": 9,
+     "tick": 1893,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2801730016799972
+    },
+    {
+     "frame": 10,
+     "tick": 1899,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11567462074471944
+    },
+    {
+     "frame": 11,
+     "tick": 1906,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.5755714902015364
+    }
+   ]
+  }
+ }
+}

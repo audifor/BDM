@@ -1,4 +1,4 @@
-import { calculateStaffWorkload, getStaffAssignment, type GameWorld } from '@/domain/world'
+import { calculateStaffWorkload, getStaffAssignment, reactionRecordsByContext, type GameWorld } from '@/domain/world'
 import {
   classifyWorkloadBand,
   createStaffHumanEvent,
@@ -56,8 +56,9 @@ export function emitWorkloadTransitionEvents(world: GameWorld): GameWorld {
 
 /** Reads the band recorded by the most recent weekly workload checkpoint reaction for this context — never a new persisted field, purely a query over existing `StaffReactionRecord` history. */
 function lastRecordedBand(world: GameWorld, context: StaffHumanContext): StaffWorkloadBand | undefined {
-  const checkpoints = Object.values(world.staffReactionRecordsById)
-    .filter((record) => record.contextId === context.id && record.sourceEventId.startsWith(checkpointSourceId(context)))
+  // WSR2: the context's records from the per-collection index (same elements, same order) instead of the whole growing history.
+  const checkpoints = (reactionRecordsByContext(world.staffReactionRecordsById).get(context.id) ?? [])
+    .filter((record) => record.sourceEventId.startsWith(checkpointSourceId(context)))
     .sort((a, b) => b.occurredOn.localeCompare(a.occurredOn) || b.id.localeCompare(a.id))
   const latest = checkpoints[0]
   if (latest === undefined) return undefined

@@ -1,0 +1,224 @@
+{
+ "sag": {
+  "transitionShot:homeAttacks": [
+   49,
+   652,
+   5809,
+   7504
+  ],
+  "offBall:COME_OFF": [
+   244,
+   10204,
+   14488,
+   16340
+  ],
+  "screen:switch": [
+   297,
+   548,
+   810,
+   1294
+  ],
+  "halfCourtPossessionStart": [
+   181,
+   1194,
+   1720,
+   2313
+  ],
+  "drive": [
+   550,
+   812,
+   1818,
+   2095
+  ],
+  "helpTriggered": [
+   560,
+   823,
+   1825,
+   2106
+  ],
+  "drive:FINISH": [
+   566,
+   2114,
+   8043,
+   9850
+  ],
+  "interiorEntry": [
+   753,
+   1242,
+   1778,
+   2377
+  ],
+  "offBall:BASKET_CUT": [
+   788,
+   6016,
+   7116,
+   21952
+  ],
+  "drive:STOPPED": [
+   826,
+   5355,
+   6025,
+   12834
+  ],
+  "transitionShot:awayAttacks": [
+   1523,
+   7560,
+   19224,
+   19422
+  ],
+  "drive:CONTAINED": [
+   1832,
+   6772,
+   8364,
+   9079
+  ],
+  "pickup": [
+   1832,
+   6772,
+   8364,
+   9079
+  ],
+  "reachAttempt": [
+   4168,
+   5939,
+   7534,
+   9849
+  ],
+  "offBall:BACKDOOR_CUT": [
+   4252,
+   13280,
+   13712,
+   21044
+  ],
+  "drive:ADVANTAGE": [
+   5073,
+   13606,
+   14503,
+   21002
+  ],
+  "kickOut": [
+   5076,
+   13609,
+   14506,
+   21005
+  ],
+  "shortRollPass": [
+   6806,
+   8014,
+   15322,
+   16930
+  ],
+  "shootingFoul": [
+   7560,
+   11735,
+   19921,
+   21411
+  ],
+  "drive:CANCELLED": [
+   15881
+  ]
+ },
+ "helpHigh": {
+  "transitionShot:homeAttacks": [
+   49,
+   3228,
+   8756,
+   12124
+  ],
+  "interiorEntry": [
+   584,
+   1031,
+   1717,
+   2141
+  ],
+  "offBall:BACKDOOR_CUT": [
+   612,
+   21240
+  ],
+  "screen:switch": [
+   638,
+   707,
+   1073,
+   1315
+  ],
+  "drive": [
+   640,
+   1075,
+   1317,
+   1433
+  ],
+  "helpTriggered": [
+   647,
+   1082,
+   1324,
+   1440
+  ],
+  "drive:ADVANTAGE": [
+   655,
+   1453,
+   1768,
+   4272
+  ],
+  "kickOut": [
+   658,
+   1456,
+   1771,
+   4275
+  ],
+  "shortRollPass": [
+   709,
+   2820,
+   3988,
+   10402
+  ],
+  "halfCourtPossessionStart": [
+   536,
+   1666,
+   2091,
+   2441
+  ],
+  "drive:STOPPED": [
+   1090,
+   1331,
+   8637,
+   9215
+  ],
+  "offBall:BASKET_CUT": [
+   1796,
+   4016,
+   4832,
+   12048
+  ],
+  "drive:CANCELLED": [
+   2177,
+   22457
+  ],
+  "drive:FINISH": [
+   2629,
+   4857,
+   10756,
+   13775
+  ],
+  "transitionShot:awayAttacks": [
+   4610,
+   6377,
+   6716,
+   7709
+  ],
+  "drive:CONTAINED": [
+   5434,
+   15375,
+   15738
+  ],
+  "reachAttempt": [
+   6995,
+   8006,
+   11876,
+   12156
+  ],
+  "pickup": [
+   15375,
+   15738
+  ]
+ }
+}

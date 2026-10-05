@@ -33,6 +33,13 @@ export interface PlayerGameStatLine {
   readonly stats: PlayerGameStatsSnapshot
 }
 
+/**
+ * WSR1: which simulation resolution produced a Game result. FULL and FAST are the exact Match Next engine (watched live / not);
+ * BACKGROUND is the World Simulation aggregate tier. Provenance only: every resolution's result is equally canonical. Absent on results
+ * saved before WSR1.
+ */
+export type MatchResolution = 'FULL' | 'FAST' | 'BACKGROUND'
+
 export interface MatchStatLog {
   readonly gameId: GameId
   readonly competitionId: CompetitionId
@@ -42,4 +49,7 @@ export interface MatchStatLog {
   readonly awayTeamId: TeamId
   readonly finalScore: { readonly home: number; readonly away: number }
   readonly playerLines: readonly PlayerGameStatLine[]
+  readonly resolution?: MatchResolution
+  /** BACKGROUND results: the version of the aggregate model that produced them (long-run statistics depend on it). */
+  readonly backgroundModelVersion?: string
 }

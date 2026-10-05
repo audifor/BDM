@@ -87,11 +87,14 @@ export function isBeyondThreePointLine(position: CourtPosition, attackingBasket:
     return distanceFromBasket(position, attackingBasket) >= geometry.threePointLine.arcRadiusMeters
   }
 
+  // Within the corner strip the line runs straight along the sideline from the baseline up to the point where it meets
+  // the arc: that point lies `cornerIntersectionDistance` in FRONT of the basket centre (2.99 m from the baseline in FIBA).
   const distanceFromCenterLine = geometry.widthMeters / 2 - geometry.threePointLine.cornerOffsetMeters
   if (distanceFromCenterLine >= geometry.threePointLine.arcRadiusMeters) return true
 
   const cornerIntersectionDistance = Math.sqrt(geometry.threePointLine.arcRadiusMeters ** 2 - distanceFromCenterLine ** 2)
   const attacksRight = attackingBasket.x > geometry.lengthMeters / 2
-  const distanceTowardBasket = attacksRight ? attackingBasket.x - position.x : position.x - attackingBasket.x
-  return distanceTowardBasket <= -cornerIntersectionDistance
+  const distanceTowardMidcourt = attacksRight ? attackingBasket.x - position.x : position.x - attackingBasket.x
+  if (distanceTowardMidcourt <= cornerIntersectionDistance) return true
+  return distanceFromBasket(position, attackingBasket) >= geometry.threePointLine.arcRadiusMeters
 }

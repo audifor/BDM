@@ -1,3 +1,4 @@
+import { staffAssignmentIndex, teamIndex } from './collectionIndexes'
 import { createFacilityFinancialBinding, validateFacilityFinancialBindingCollection, type FacilityFinancialBinding } from '@/domain/facilities/FacilityFinancialBinding'
 import type { Coach } from '@/domain/coach'
 import type { Person } from '@/domain/person'
@@ -1000,7 +1001,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
   validateDebtInstrumentCollections(Object.values(updated.debtInstrumentsById), updated)
   validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated)
   validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated)
-  validateWorld(updated)
+  if (singleValidationDepth === 0) validateWorld(updated)
   return updated
 }
 
@@ -1016,8 +1017,29 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
   }
   if (!changed) return world
   const updated = { ...world, memoriesById: Object.freeze(memoriesById) }
-  validateWorld(updated)
+  if (singleValidationDepth === 0) validateWorld(updated)
   return updated
+}
+
+/*
+ * ME-LOCK1.1: applying one match result is a chain of world updates (result, stat log, Player consequences, eligibility, season,
+ * injuries) and a day applies several matches; each update used to re-validate the whole world (every domain), which made applying a
+ * result cost more than preparing it. Inside `withSingleWorldValidation` the intermediate worlds are not validated, and the returned
+ * world goes through exactly the same whole-world validation once. `validateWorld` only checks (it never changes the world), so the
+ * returned world is identical, and an invalid result still fails closed (the operation throws and nothing is returned).
+ */
+let singleValidationDepth = 0
+
+export function withSingleWorldValidation(world: GameWorld, update: (world: GameWorld) => GameWorld): GameWorld {
+  singleValidationDepth += 1
+  let result: GameWorld
+  try {
+    result = update(world)
+  } finally {
+    singleValidationDepth -= 1
+  }
+  if (singleValidationDepth === 0 && result !== world) validateWorld(result)
+  return result
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
@@ -1257,7 +1279,7 @@ function validateWorld(world: GameWorld): void {
       for (const staffId of assigned) {
         requireEntity(world.staffPeopleById, staffId, `Scheduled training session ${session.id} staff`)
         const employment = world.staffEmploymentByStaffId[staffId]
-        const assignment = Object.values(world.teamStaffAssignmentsById).some((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
+        const assignment = (staffAssignmentIndex(world.teamStaffAssignmentsById).allByStaff.get(staffId) ?? []).some((item) => item.teamId === session.teamId)
         if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !assignment) throw new GameWorldValidationError(`Scheduled training session ${session.id} staff ${staffId} is not actively assigned to its team`)
       }
     }
@@ -1389,7 +1411,7 @@ function validateWorld(world: GameWorld): void {
   for (const [staffId, profile] of Object.entries(world.evaluatorProfilesByStaffId) as [StaffPersonId, EvaluatorProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Evaluator profile staff'); createEvaluatorProfile(profile) }
   for (const assignment of Object.values(world.scoutingAssignmentsById)) { requireEntity(world.players, assignment.subjectPlayerId, 'Scouting assignment subject Player'); requireEntity(world.staffPeopleById, assignment.evaluatorStaffId, 'Scouting assignment evaluator') }
   for (const report of Object.values(world.evaluatorReportsById)) { requireEntity(world.players, report.subjectPlayerId, 'Evaluator report subject Player'); requireEntity(world.staffPeopleById, report.evaluatorStaffId, 'Evaluator report evaluator'); for (const evidenceId of report.evidenceIds) requireEntity(world.evidenceById, evidenceId, 'Evaluator report Evidence') }
-  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => team.organizationId === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
+  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!teamIndex(world.teams).organizations.has(organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   const responsibilityKeys = new Set<string>()
   for (const responsibility of Object.values(world.responsibilitiesById)) {
@@ -1400,7 +1422,7 @@ function validateWorld(world: GameWorld): void {
     responsibilityKeys.add(key)
     if (responsibility.holderStaffId !== undefined) {
       const holder = requireEntity(world.staffPeopleById, responsibility.holderStaffId, `Responsibility ${responsibility.id} holder`)
-      const holderAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === responsibility.holderStaffId)
+      const holderAssignment = responsibility.holderStaffId === undefined ? undefined : staffAssignmentIndex(world.teamStaffAssignmentsById).byStaff.get(responsibility.holderStaffId)
       if (holderAssignment === undefined || holderAssignment.teamId !== responsibility.teamId) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is not on Team ${responsibility.teamId}`)
       const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, holderAssignment.role, holder)
       if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is ineligible: ${result.reason}`)
@@ -1495,7 +1517,7 @@ function validateWorld(world: GameWorld): void {
     const game = requireEntity(world.games, report.gameId, `Opposition scouting report ${report.id} Game`)
     if (!((game.homeTeamId === report.teamId && game.awayTeamId === report.opponentTeamId) || (game.awayTeamId === report.teamId && game.homeTeamId === report.opponentTeamId))) throw new GameWorldValidationError(`Opposition scouting report ${report.id} team/opponent do not match Game ${report.gameId} participants`)
     requireEntity(world.staffPeopleById, report.authoredByStaffId, `Opposition scouting report ${report.id} author`)
-    const authorAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === report.authoredByStaffId)
+    const authorAssignment = staffAssignmentIndex(world.teamStaffAssignmentsById).byStaff.get(report.authoredByStaffId)
     if (authorAssignment === undefined || authorAssignment.teamId !== report.teamId) throw new GameWorldValidationError(`Opposition scouting report ${report.id} author is not Staff assigned to Team ${report.teamId}`)
     const opponentRoster = new Set(world.teams[report.opponentTeamId]!.rosterPlayerIds)
     for (const playerId of report.flaggedPlayerIds) if (!opponentRoster.has(playerId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} flagged Player ${playerId} is not on opponent Team ${report.opponentTeamId}'s roster`)
@@ -1514,10 +1536,10 @@ function validateWorld(world: GameWorld): void {
   for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
     const coach = requireEntity(world.coaches, coachId, 'Coach employment')
     createCoachEmployment(employment)
-    const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coachId)
+    const assignedTeam = teamIndex(world.teams).byCoach.get(coachId)
     if (employment.status === 'employed' && (assignedTeam === undefined || employment.teamId !== assignedTeam.id)) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
     if (employment.status === 'unemployed' && assignedTeam !== undefined) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
-    const headCoachAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId === coach.staffProfileId)
+    const headCoachAssignments = staffAssignmentIndex(world.teamStaffAssignmentsById).allByStaff.get(coach.staffProfileId) ?? []
     if (employment.status === 'employed') {
       const assignment = headCoachAssignments[0]
       if (headCoachAssignments.length !== 1 || assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== 'headCoach') throw new GameWorldValidationError(`Coach ${coachId} employment requires one matching headCoach Staff assignment`)
@@ -1535,7 +1557,7 @@ function validateWorld(world: GameWorld): void {
   for (const [staffId, employment] of Object.entries(world.staffEmploymentByStaffId) as [StaffPersonId, StaffEmployment][]) {
     requireEntity(world.staffPeopleById, staffId, 'Staff employment')
     createStaffEmployment(employment)
-    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId)
+    const assignment = staffAssignmentIndex(world.teamStaffAssignmentsById).byStaff.get(staffId)
     if (employment.status === 'employed') {
       if (assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== employment.roleId) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
     } else if (assignment !== undefined) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)

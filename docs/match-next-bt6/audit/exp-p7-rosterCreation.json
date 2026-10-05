@@ -1,0 +1,832 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1,
+    99,
+    2024
+  ],
+  "overrides": {},
+  "out": {
+    "rosterCreation": {
+      "description": "Home: coach C + creation roster (elite handlers and shooters)",
+      "msPerGame": 125849,
+      "complete": 6,
+      "totals": {
+        "possessions": 179.67,
+        "points": 197,
+        "ppp": 1.1,
+        "fga": 167.17,
+        "twoPa": 65.67,
+        "threePa": 101.5,
+        "fta": 16,
+        "turnovers": 25.83,
+        "steals": 22.67,
+        "oreb": 18.33,
+        "dreb": 73,
+        "assists": 39.33,
+        "fouls": 27.17,
+        "blocks": 4.5,
+        "transitionPossessions": 17.33,
+        "shotsWithin8": 51.5,
+        "halfCourtPossessions": 108.17,
+        "possessionSecondsMean": 11.54,
+        "passesPerPossession": 2.79,
+        "drives": 98.33,
+        "ballScreens": 69.17,
+        "offBallActions": 41.5,
+        "postPlays": 7.67,
+        "tovPct": 14.38,
+        "orebPct": 20.07,
+        "ftRate": 0.1,
+        "astPerFgm": 0.53
+      },
+      "perSeed": [
+        {
+          "seed": 31337,
+          "score": {
+            "home": 93,
+            "away": 80
+          },
+          "possessions": 181,
+          "turnovers": 30,
+          "steals": 29
+        },
+        {
+          "seed": 424242,
+          "score": {
+            "home": 67,
+            "away": 108
+          },
+          "possessions": 171,
+          "turnovers": 22,
+          "steals": 21
+        },
+        {
+          "seed": 7,
+          "score": {
+            "home": 96,
+            "away": 112
+          },
+          "possessions": 187,
+          "turnovers": 28,
+          "steals": 23
+        },
+        {
+          "seed": 1,
+          "score": {
+            "home": 94,
+            "away": 104
+          },
+          "possessions": 178,
+          "turnovers": 27,
+          "steals": 25
+        },
+        {
+          "seed": 99,
+          "score": {
+            "home": 98,
+            "away": 138
+          },
+          "possessions": 182,
+          "turnovers": 22,
+          "steals": 17
+        },
+        {
+          "seed": 2024,
+          "score": {
+            "home": 80,
+            "away": 112
+          },
+          "possessions": 179,
+          "turnovers": 26,
+          "steals": 21
+        }
+      ],
+      "adjustments": [
+        [
+          {
+            "t": 10816,
+            "side": "away",
+            "reason": "switch conceded 1.89 points per possession over 9 (team 0.95): change to drop"
+          },
+          {
+            "t": 11415,
+            "side": "home",
+            "reason": "CIRCULATION produced 0.43 points per possession over 7 (offense 0.93): run it less"
+          },
+          {
+            "t": 20983,
+            "side": "home",
+            "reason": "MOVEMENT produced 0.43 points per possession over 7 (offense 0.95): run it less"
+          }
+        ],
+        [
+          {
+            "t": 5752,
+            "side": "home",
+            "reason": "BALL_SCREEN produced 2.00 points per possession over 7 (offense 1.53): go back to it"
+          },
+          {
+            "t": 6698,
+            "side": "away",
+            "reason": "switch conceded 2.22 points per possession over 9 (team 1.38): change to drop"
+          },
+          {
+            "t": 12768,
+            "side": "home",
+            "reason": "switch conceded 1.71 points per possession over 17 (team 1.40): change to drop"
+          },
+          {
+            "t": 14439,
+            "side": "home",
+            "reason": "MOVEMENT produced 0.43 points per possession over 7 (offense 0.85): run it less"
+          },
+          {
+            "t": 16557,
+            "side": "away",
+            "reason": "MOVEMENT produced 2.00 points per possession over 10 (offense 1.44): go back to it"
+          },
+          {
+            "t": 19118,
+            "side": "away",
+            "reason": "CIRCULATION produced 0.91 points per possession over 11 (offense 1.38): run it less"
+          }
+        ],
+        [
+          {
+            "t": 6494,
+            "side": "home",
+            "reason": "BALL_SCREEN produced 0.38 points per possession over 8 (offense 0.78): run it less"
+          },
+          {
+            "t": 15922,
+            "side": "home",
+            "reason": "CIRCULATION produced 0.43 points per possession over 7 (offense 1.08): run it less"
+          },
+          {
+            "t": 18244,
+            "side": "home",
+            "reason": "ISOLATION produced 0.71 points per possession over 7 (offense 1.13): run it less"
+          }
+        ],
+        [
+          {
+            "t": 5749,
+            "side": "home",
+            "reason": "BALL_SCREEN produced 1.57 points per possession over 7 (offense 1.11): go back to it"
+          },
+          {
+            "t": 20048,
+            "side": "home",
+            "reason": "CIRCULATION produced 0.56 points per possession over 9 (offense 0.96): run it less"
+          },
+          {
+            "t": 20843,
+            "side": "away",
+            "reason": "MOVEMENT produced 0.73 points per possession over 11 (offense 1.20): run it less"
+          },
+          {
+            "t": 21701,
+            "side": "home",
+            "reason": "switch conceded 1.50 points per possession over 20 (team 1.16): change to drop"
+          },
+          {
+            "t": 22355,
+            "side": "away",
+            "reason": "CIRCULATION produced 2.00 points per possession over 10 (offense 1.18): go back to it"
+          }
+        ],
+        [
+          {
+            "t": 4749,
+            "side": "home",
+            "reason": "BALL_SCREEN produced 0.29 points per possession over 7 (offense 1.07): run it less"
+          },
+          {
+            "t": 12338,
+            "side": "home",
+            "reason": "CIRCULATION produced 1.71 points per possession over 7 (offense 1.25): go back to it"
+          },
+          {
+            "t": 22630,
+            "side": "home",
+            "reason": "ISOLATION produced 1.86 points per possession over 7 (offense 1.11): go back to it"
+          },
+          {
+            "t": 23737,
+            "side": "away",
+            "reason": "ISOLATION produced 2.50 points per possession over 10 (offense 1.49): go back to it"
+          },
+          {
+            "t": 25272,
+            "side": "away",
+            "reason": "MOVEMENT produced 1.07 points per possession over 14 (offense 1.55): run it less"
+          }
+        ],
+        [
+          {
+            "t": 9795,
+            "side": "away",
+            "reason": "switch conceded 1.45 points per possession over 11 (team 1.00): change to drop"
+          },
+          {
+            "t": 12312,
+            "side": "home",
+            "reason": "CIRCULATION produced 2.29 points per possession over 7 (offense 1.02): go back to it"
+          },
+          {
+            "t": 19169,
+            "side": "away",
+            "reason": "CIRCULATION produced 0.60 points per possession over 10 (offense 1.08): run it less"
+          },
+          {
+            "t": 19270,
+            "side": "home",
+            "reason": "MOVEMENT produced 0.29 points per possession over 7 (offense 0.92): run it less"
+          }
+        ]
+      ],
+      "home": {
+        "fingerprint": {
+          "games": 6,
+          "possessions": 90.167,
+          "ppp": 0.976,
+          "secondsPerPossession": 11.093,
+          "transitionShare": 0.1,
+          "passesPerPossession": 2.778,
+          "assistsPerFgm": 0.547,
+          "drivesPerPossession": 0.418,
+          "screensPerPossession": 0.373,
+          "cutsPerPossession": 0.211,
+          "rimShare": 0.203,
+          "paintShare": 0.083,
+          "midShare": 0.039,
+          "threeShare": 0.675,
+          "catchShootShare": 0.573,
+          "pullUpShare": 0.063,
+          "prShare": 0.076,
+          "cutShare": 0,
+          "orebRate": 0.076,
+          "tovPerPossession": 0.155,
+          "stealsPerOppPossession": 0.115,
+          "blocksPerOppFga": 0.029,
+          "ftaPerFga": 0.096,
+          "coverageUsed": {
+            "drop": 0.138,
+            "switch": 0.862
+          },
+          "switchesPerScreenFaced": 0.798,
+          "helpsPerDriveFaced": 0.92,
+          "topInitiatorShare": 0.467,
+          "topShooterShare": 0.307,
+          "rollShare": 0,
+          "playFamilies": {
+            "BALL_SCREEN": 0.376,
+            "CIRCULATION": 0.155,
+            "DRIVE_KICK": 0.124,
+            "EARLY_OFFENSE": 0.127,
+            "ISOLATION": 0.095,
+            "MOVEMENT": 0.098,
+            "POST": 0.024
+          },
+          "playLocations": {
+            "BALL_SCREEN@EMPTY_CORNER": 0.034,
+            "BALL_SCREEN@HIGH": 0.158,
+            "BALL_SCREEN@SIDE": 0.184,
+            "CIRCULATION@TOP": 0.155,
+            "DRIVE_KICK@WING": 0.124,
+            "EARLY_OFFENSE@TRANSITION": 0.127,
+            "ISOLATION@TOP": 0.095,
+            "MOVEMENT@WING": 0.098,
+            "POST@ELBOW": 0.024
+          },
+          "spacing": {
+            "5OUT": 1
+          },
+          "adaptations": 2.667,
+          "offBallScreensPerPossession": 0.033,
+          "helpKinds": {
+            "help:TAG": 6.167,
+            "help:DIG": 34.5
+          },
+          "firstShotSecondsP50": 10.3,
+          "passesPerPossessionP90": 6
+        },
+        "bt6": {
+          "offense": {
+            "turnoverCauses": {
+              "badPass": 0.5,
+              "deflectedPass": 3,
+              "handleLoss": 0.17,
+              "interception": 2.17,
+              "offensiveFoul": 0.5,
+              "onBallStrip": 2.17,
+              "passOutOfBounds": 0.17,
+              "pokedLoose": 0.17,
+              "shotClock": 0.33,
+              "strippedDrive": 0.33,
+              "transitionPass": 4.5
+            },
+            "turnoversPerPossession": 0.155,
+            "durationBuckets": {
+              "earlyAfterInbound|13-16": 0.17,
+              "earlyAfterInbound|17-20": 0.33,
+              "earlyAfterInbound|5-8": 13.33,
+              "earlyAfterInbound|9-12": 4.17,
+              "earlyAfterInbound|<=4": 2.17,
+              "earlyOffense|13-16": 0.17,
+              "earlyOffense|5-8": 9,
+              "earlyOffense|9-12": 4,
+              "earlyOffense|<=4": 3.83,
+              "fastBreak|5-8": 0.5,
+              "halfCourt|13-16": 20.33,
+              "halfCourt|17-20": 9.33,
+              "halfCourt|9-12": 17.83,
+              "halfCourt|>20": 5
+            },
+            "durationByEnd": {
+              "defensiveRebound|13-16": 12.33,
+              "defensiveRebound|17-20": 7,
+              "defensiveRebound|5-8": 4.67,
+              "defensiveRebound|9-12": 13.33,
+              "defensiveRebound|<=4": 0.5,
+              "defensiveRebound|>20": 2.83,
+              "made|13-16": 7.33,
+              "made|17-20": 2.33,
+              "made|5-8": 10.67,
+              "made|9-12": 10.67,
+              "made|<=4": 1,
+              "made|>20": 1.5,
+              "periodEnd|5-8": 0.17,
+              "periodEnd|9-12": 0.17,
+              "periodEnd|<=4": 1.5,
+              "periodEnd|>20": 0.17,
+              "turnover|13-16": 1,
+              "turnover|17-20": 0.33,
+              "turnover|5-8": 7.33,
+              "turnover|9-12": 1.83,
+              "turnover|<=4": 3,
+              "turnover|>20": 0.5
+            },
+            "possessionSecondsMean": 11,
+            "possessionSecondsP25": 7.2,
+            "possessionSecondsP50": 10.6,
+            "possessionSecondsP75": 14.6,
+            "shotsWithin8PerGame": 24.67,
+            "orebContinuations": 3,
+            "orebContinuationSecondsMean": 5.66,
+            "paint": {
+              "offenseInPaintAvg": 0.302,
+              "defenseInPaintAvg": 1.126,
+              "crowdedShare": 0.003,
+              "crowdedIllegitShare": 0.001,
+              "episodesPerGame": 1.83,
+              "longEpisodesPerGame": 0
+            },
+            "zones": {
+              "ABOVE_BREAK_THREE": "27.33 @ 0.37",
+              "CATCH_AND_SHOOT": "41 @ 0.35",
+              "CORNER_THREE": "18.83 @ 0.36",
+              "DEEP": "5.5 @ 0.27",
+              "DRIVE_FINISH": "12.5 @ 0.57",
+              "FLOATER": "1.33 @ 0.75",
+              "FLOATER_RANGE": "2 @ 0.50",
+              "KICK_OUT": "2.83 @ 0.47",
+              "LONG_MIDRANGE": "2.33 @ 0.36",
+              "MIDRANGE": "0.67 @ 0.49",
+              "PR_HANDLER": "4.17 @ 0.36",
+              "PR_ROLLER": "1.67 @ 0.40",
+              "PULL_UP": "3.5 @ 0.48",
+              "PUTBACK": "0.5 @ 0.34",
+              "RESTRICTED": "10.33 @ 0.65",
+              "RIM": "5.17 @ 0.42",
+              "SHORT_PAINT": "4.33 @ 0.54",
+              "TRANSITION": "9 @ 0.44"
+            },
+            "rimAttemptsPerGame": 15.5,
+            "rimFgPct": 0.57,
+            "rimContestMean": 0.473
+          },
+          "defense": {
+            "stealsPerOppPossession": 0.116,
+            "stealKinds": {
+              "CLEAN_STEAL": 2.17,
+              "DEFLECTION": 4.67,
+              "PASS_INTERCEPTION": 3.17,
+              "POKE_LOOSE": 0.33
+            },
+            "stealResponsibility": {
+              "CLEAN_STEAL|ON_BALL": 0.67,
+              "CLEAN_STEAL|STOP_BALL": 1.5,
+              "DEFLECTION|GAP": 4,
+              "DEFLECTION|ON_BALL": 0.5,
+              "DEFLECTION|RECOVER": 0.17,
+              "PASS_INTERCEPTION|GAP": 2.17,
+              "PASS_INTERCEPTION|ON_BALL": 0.5,
+              "PASS_INTERCEPTION|PROTECT_RIM": 0.17,
+              "PASS_INTERCEPTION|RECOVER": 0.33,
+              "POKE_LOOSE|DIG": 0.17,
+              "POKE_LOOSE|STOP_BALL": 0.17
+            },
+            "foulsCommitted": {
+              "def:BLOCKING": 4.17,
+              "def:REACH": 4.67,
+              "def:SHOOTING": 4.67,
+              "off:CHARGING": 0.17,
+              "off:ILLEGAL_SCREEN": 0.17,
+              "off:LOOSE_BALL": 0.17
+            },
+            "drivesFaced": {
+              "blowBy": 32.17,
+              "contained": 0.5,
+              "fouled": 1.17,
+              "partialEdge": 21,
+              "partialEdgeStop": 5.17,
+              "passedOrCancelled": 0.17,
+              "stripped": 0.5
+            },
+            "drivesFacedPerGame": 60.68,
+            "blowByShare": 0.53,
+            "containedShare": 0.008,
+            "blowByCauses": {
+              "closeout+mismatch": 2.67,
+              "closeout+switched": 0.33,
+              "closeout": 9.5,
+              "handlerAdvantage": 14.83,
+              "mismatch": 4.83
+            },
+            "drivesByGap": {
+              "1.0-1.5|blowBy": 9.33,
+              "1.0-1.5|contained": 0.17,
+              "1.0-1.5|fouled": 0.17,
+              "1.0-1.5|partialEdge": 6,
+              "1.0-1.5|partialEdgeStop": 2.17,
+              "1.0-1.5|stripped": 0.17,
+              "1.5-2.0|blowBy": 5.5,
+              "1.5-2.0|partialEdge": 3.17,
+              "1.5-2.0|partialEdgeStop": 0.5,
+              "1.5-2.0|stripped": 0.17,
+              "2.0-3.0|blowBy": 6.17,
+              "2.0-3.0|fouled": 0.17,
+              "2.0-3.0|partialEdge": 1,
+              "2.0-3.0|partialEdgeStop": 0.33,
+              "2.0-3.0|stripped": 0.17,
+              "<1.0|blowBy": 5.5,
+              "<1.0|contained": 0.33,
+              "<1.0|fouled": 0.17,
+              "<1.0|partialEdge": 5,
+              "<1.0|partialEdgeStop": 1.33,
+              "<1.0|passedOrCancelled": 0.17,
+              ">=3.0|blowBy": 5.67,
+              ">=3.0|fouled": 0.67,
+              ">=3.0|partialEdge": 5.83,
+              ">=3.0|partialEdgeStop": 0.83
+            },
+            "drivesByEdge": {
+              "0.9-1.0|blowBy": 1.17,
+              "0.9-1.0|partialEdge": 1,
+              "0.9-1.0|partialEdgeStop": 0.33,
+              "0.9-1.0|passedOrCancelled": 0.17,
+              "1.0-1.1|blowBy": 1.17,
+              "1.0-1.1|contained": 0.33,
+              "1.0-1.1|fouled": 0.17,
+              "1.0-1.1|partialEdge": 5,
+              "1.0-1.1|partialEdgeStop": 0.5,
+              "1.1-1.2|blowBy": 12.33,
+              "1.1-1.2|fouled": 0.33,
+              "1.1-1.2|partialEdge": 7,
+              "1.1-1.2|partialEdgeStop": 1.67,
+              "1.1-1.2|stripped": 0.5,
+              "<0.9|blowBy": 1.5,
+              "<0.9|fouled": 0.17,
+              "<0.9|partialEdge": 2.17,
+              "<0.9|partialEdgeStop": 0.5,
+              ">=1.2|blowBy": 16,
+              ">=1.2|contained": 0.17,
+              ">=1.2|fouled": 0.5,
+              ">=1.2|partialEdge": 5.83,
+              ">=1.2|partialEdgeStop": 2.17
+            },
+            "ballPressure": {
+              "pickupsPerGame": 0.5,
+              "meanGap": 2.527,
+              "tightShare": 0.305,
+              "passLossUnderPressure": 0.031,
+              "passLossFree": 0.02,
+              "pressuredPassShare": 0.277
+            },
+            "help": {
+              "triggeredPerGame": 53,
+              "helperTravelMean": 3.86,
+              "kickOutShare": 0.409,
+              "kickOutShotsPerGame": 9.5,
+              "kickOutThreeShare": 0.982,
+              "kickOutPpShot": 1.053,
+              "kickOutContest": 0.304,
+              "driverRimAfterHelpPerGame": 31,
+              "driverRimPpShot": 1.226,
+              "rotationsPerHelp": 2
+            },
+            "blocksPerOppRim": 0.108,
+            "oppRimFgPct": 0.588
+          }
+        }
+      },
+      "away": {
+        "fingerprint": {
+          "games": 6,
+          "possessions": 89.5,
+          "ppp": 1.218,
+          "secondsPerPossession": 12.169,
+          "transitionShare": 0.093,
+          "passesPerPossession": 2.81,
+          "assistsPerFgm": 0.522,
+          "drivesPerPossession": 0.678,
+          "screensPerPossession": 0.397,
+          "cutsPerPossession": 0.179,
+          "rimShare": 0.272,
+          "paintShare": 0.123,
+          "midShare": 0.055,
+          "threeShare": 0.55,
+          "catchShootShare": 0.494,
+          "pullUpShare": 0.092,
+          "prShare": 0.096,
+          "cutShare": 0,
+          "orebRate": 0.317,
+          "tovPerPossession": 0.132,
+          "stealsPerOppPossession": 0.137,
+          "blocksPerOppFga": 0.024,
+          "ftaPerFga": 0.096,
+          "coverageUsed": {
+            "drop": 0.252,
+            "hedge": 0.163,
+            "switch": 0.584
+          },
+          "switchesPerScreenFaced": 0.559,
+          "helpsPerDriveFaced": 0.929,
+          "topInitiatorShare": 0.356,
+          "topShooterShare": 0.308,
+          "rollShare": 0.521,
+          "playFamilies": {
+            "BALL_SCREEN": 0.312,
+            "CIRCULATION": 0.163,
+            "DRIVE_KICK": 0.148,
+            "EARLY_OFFENSE": 0.093,
+            "ISOLATION": 0.108,
+            "MOVEMENT": 0.129,
+            "POST": 0.046
+          },
+          "playLocations": {
+            "BALL_SCREEN@EMPTY_CORNER": 0.018,
+            "BALL_SCREEN@HIGH": 0.153,
+            "BALL_SCREEN@SIDE": 0.141,
+            "CIRCULATION@TOP": 0.163,
+            "DRIVE_KICK@WING": 0.148,
+            "EARLY_OFFENSE@TRANSITION": 0.093,
+            "ISOLATION@ELBOW": 0.092,
+            "ISOLATION@TOP": 0.01,
+            "ISOLATION@WING": 0.006,
+            "MOVEMENT@WING": 0.129,
+            "POST@ELBOW": 0.046
+          },
+          "spacing": {
+            "4OUT1IN": 0.84,
+            "5OUT": 0.16
+          },
+          "adaptations": 1.667,
+          "offBallScreensPerPossession": 0.039,
+          "helpKinds": {
+            "help:DIG": 1.5
+          },
+          "firstShotSecondsP50": 10,
+          "passesPerPossessionP90": 6
+        },
+        "bt6": {
+          "offense": {
+            "turnoverCauses": {
+              "badPass": 0.33,
+              "deflectedPass": 4.67,
+              "handleLoss": 0.17,
+              "interception": 3,
+              "offensiveFoul": 0.17,
+              "onBallStrip": 2,
+              "passOutOfBounds": 0.33,
+              "pokedLoose": 0.17,
+              "shotClock": 0.17,
+              "strippedDrive": 0.33,
+              "transitionPass": 0.5
+            },
+            "turnoversPerPossession": 0.132,
+            "durationBuckets": {
+              "earlyAfterInbound|13-16": 0.33,
+              "earlyAfterInbound|17-20": 0.17,
+              "earlyAfterInbound|5-8": 7.17,
+              "earlyAfterInbound|9-12": 3.17,
+              "earlyAfterInbound|<=4": 0.67,
+              "earlyAfterInbound|>20": 0.5,
+              "earlyOffense|13-16": 1.17,
+              "earlyOffense|17-20": 0.33,
+              "earlyOffense|5-8": 11.17,
+              "earlyOffense|9-12": 4.33,
+              "earlyOffense|<=4": 3.5,
+              "earlyOffense|>20": 0.5,
+              "fastBreak|5-8": 0.5,
+              "fastBreak|9-12": 0.17,
+              "fastBreak|<=4": 0.17,
+              "halfCourt|13-16": 20.33,
+              "halfCourt|17-20": 10.17,
+              "halfCourt|9-12": 18.5,
+              "halfCourt|>20": 6.67
+            },
+            "durationByEnd": {
+              "defensiveRebound|13-16": 9.17,
+              "defensiveRebound|17-20": 4.67,
+              "defensiveRebound|5-8": 3.67,
+              "defensiveRebound|9-12": 10.33,
+              "defensiveRebound|<=4": 0.33,
+              "defensiveRebound|>20": 4.17,
+              "made|13-16": 10.5,
+              "made|17-20": 5.5,
+              "made|5-8": 11.5,
+              "made|9-12": 13.17,
+              "made|<=4": 0.83,
+              "made|>20": 2.17,
+              "periodEnd|17-20": 0.17,
+              "periodEnd|5-8": 0.33,
+              "periodEnd|<=4": 1.17,
+              "turnover|13-16": 2.17,
+              "turnover|17-20": 0.33,
+              "turnover|5-8": 3.33,
+              "turnover|9-12": 2.67,
+              "turnover|<=4": 2,
+              "turnover|>20": 1.33
+            },
+            "possessionSecondsMean": 12.08,
+            "possessionSecondsP25": 8,
+            "possessionSecondsP50": 11.3,
+            "possessionSecondsP75": 15.3,
+            "shotsWithin8PerGame": 26.83,
+            "orebContinuations": 12.333333333333334,
+            "orebContinuationSecondsMean": 5.94,
+            "paint": {
+              "offenseInPaintAvg": 0.756,
+              "defenseInPaintAvg": 1.736,
+              "crowdedShare": 0.026,
+              "crowdedIllegitShare": 0.011,
+              "episodesPerGame": 3.83,
+              "longEpisodesPerGame": 0
+            },
+            "zones": {
+              "ABOVE_BREAK_THREE": "38 @ 0.40",
+              "CATCH_AND_SHOOT": "39.33 @ 0.40",
+              "CORNER_THREE": "7.67 @ 0.41",
+              "DEEP": "4.17 @ 0.12",
+              "DRIVE_FINISH": "18.17 @ 0.58",
+              "FLOATER": "2.83 @ 0.53",
+              "FLOATER_RANGE": "2.5 @ 0.47",
+              "KICK_OUT": "5.5 @ 0.49",
+              "LONG_MIDRANGE": "3.5 @ 0.38",
+              "MIDRANGE": "1.5 @ 0.67",
+              "PR_HANDLER": "7 @ 0.43",
+              "PR_ROLLER": "1.67 @ 0.80",
+              "PULL_UP": "5.5 @ 0.49",
+              "PUTBACK": "2.33 @ 0.57",
+              "RESTRICTED": "13.83 @ 0.61",
+              "RIM": "10.83 @ 0.55",
+              "SHORT_PAINT": "8.67 @ 0.60",
+              "TRANSITION": "8.33 @ 0.42"
+            },
+            "rimAttemptsPerGame": 24.67,
+            "rimFgPct": 0.588,
+            "rimContestMean": 0.527
+          },
+          "defense": {
+            "stealsPerOppPossession": 0.137,
+            "stealKinds": {
+              "CLEAN_STEAL": 2.5,
+              "DEFLECTION": 3,
+              "PASS_INTERCEPTION": 6.67,
+              "POKE_LOOSE": 0.17
+            },
+            "stealResponsibility": {
+              "CLEAN_STEAL|ON_BALL": 0.5,
+              "CLEAN_STEAL|STOP_BALL": 2,
+              "DEFLECTION|GAP": 2.5,
+              "DEFLECTION|ON_BALL": 0.17,
+              "DEFLECTION|PURSUE_LOOSE_BALL": 0.33,
+              "PASS_INTERCEPTION|GAP": 1.5,
+              "PASS_INTERCEPTION|MATCH": 0.33,
+              "PASS_INTERCEPTION|ON_BALL": 0.5,
+              "PASS_INTERCEPTION|PROTECT_RIM": 4.17,
+              "PASS_INTERCEPTION|RECOVER": 0.17,
+              "POKE_LOOSE|STOP_BALL": 0.17
+            },
+            "foulsCommitted": {
+              "def:BLOCKING": 4.67,
+              "def:REACH": 5.67,
+              "def:SHOOTING": 2.67,
+              "off:CHARGING": 0.17
+            },
+            "drivesFaced": {
+              "blowBy": 21,
+              "contained": 1.67,
+              "fouled": 0.67,
+              "partialEdge": 10.67,
+              "partialEdgeStop": 2.33,
+              "passedOrCancelled": 0.83,
+              "stripped": 0.5
+            },
+            "drivesFacedPerGame": 37.67,
+            "blowByShare": 0.557,
+            "containedShare": 0.044,
+            "blowByCauses": {
+              "closeout+mismatch": 0.33,
+              "closeout": 5.5,
+              "handlerAdvantage": 13.5,
+              "mismatch": 1.67
+            },
+            "drivesByGap": {
+              "1.0-1.5|blowBy": 3.67,
+              "1.0-1.5|contained": 0.5,
+              "1.0-1.5|fouled": 0.17,
+              "1.0-1.5|partialEdge": 3.17,
+              "1.0-1.5|partialEdgeStop": 1.17,
+              "1.0-1.5|passedOrCancelled": 0.33,
+              "1.0-1.5|stripped": 0.17,
+              "1.5-2.0|blowBy": 2.67,
+              "1.5-2.0|partialEdge": 1.67,
+              "1.5-2.0|partialEdgeStop": 0.17,
+              "1.5-2.0|passedOrCancelled": 0.33,
+              "2.0-3.0|blowBy": 2.33,
+              "2.0-3.0|contained": 0.17,
+              "2.0-3.0|fouled": 0.17,
+              "2.0-3.0|partialEdge": 1,
+              "2.0-3.0|partialEdgeStop": 0.17,
+              "<1.0|blowBy": 8.67,
+              "<1.0|contained": 1,
+              "<1.0|fouled": 0.33,
+              "<1.0|partialEdge": 2.17,
+              "<1.0|partialEdgeStop": 0.5,
+              "<1.0|stripped": 0.33,
+              ">=3.0|blowBy": 3.67,
+              ">=3.0|partialEdge": 2.67,
+              ">=3.0|partialEdgeStop": 0.33,
+              ">=3.0|passedOrCancelled": 0.17
+            },
+            "drivesByEdge": {
+              "0.9-1.0|blowBy": 0.67,
+              "0.9-1.0|contained": 0.17,
+              "0.9-1.0|partialEdge": 0.83,
+              "1.0-1.1|blowBy": 1.5,
+              "1.0-1.1|contained": 0.17,
+              "1.0-1.1|fouled": 0.33,
+              "1.0-1.1|partialEdge": 2,
+              "1.0-1.1|partialEdgeStop": 0.17,
+              "1.0-1.1|passedOrCancelled": 0.17,
+              "1.0-1.1|stripped": 0.17,
+              "1.1-1.2|blowBy": 5.33,
+              "1.1-1.2|contained": 1.17,
+              "1.1-1.2|fouled": 0.33,
+              "1.1-1.2|partialEdge": 3,
+              "1.1-1.2|partialEdgeStop": 0.83,
+              "1.1-1.2|passedOrCancelled": 0.33,
+              "<0.9|blowBy": 0.33,
+              "<0.9|partialEdge": 0.67,
+              "<0.9|partialEdgeStop": 0.17,
+              ">=1.2|blowBy": 13.17,
+              ">=1.2|contained": 0.17,
+              ">=1.2|partialEdge": 4.17,
+              ">=1.2|partialEdgeStop": 1.17,
+              ">=1.2|passedOrCancelled": 0.33,
+              ">=1.2|stripped": 0.33
+            },
+            "ballPressure": {
+              "pickupsPerGame": 0.17,
+              "meanGap": 2.608,
+              "tightShare": 0.324,
+              "passLossUnderPressure": 0.025,
+              "passLossFree": 0.02,
+              "pressuredPassShare": 0.307
+            },
+            "help": {
+              "triggeredPerGame": 33.83,
+              "helperTravelMean": 4.13,
+              "kickOutShare": 0.394,
+              "kickOutShotsPerGame": 5.83,
+              "kickOutThreeShare": 0.971,
+              "kickOutPpShot": 1.343,
+              "kickOutContest": 0.306,
+              "driverRimAfterHelpPerGame": 19.5,
+              "driverRimPpShot": 1.214,
+              "rotationsPerHelp": 2
+            },
+            "blocksPerOppRim": 0.118,
+            "oppRimFgPct": 0.57
+          }
+        }
+      }
+    }
+  }
+}

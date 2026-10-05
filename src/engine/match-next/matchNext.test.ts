@@ -1,0 +1,499 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { distanceBetween, type CourtPosition } from '@/domain/court'
+import type { PlayerId } from '@/domain/ids'
+import { getGamesForTeam } from '@/domain/world'
+import { createNewGame } from '@/app/game/createNewGame'
+import { prepareMatchSetup } from '@/app/matchNext/prepareMatchSetup'
+import { projectMatchNextPlayByPlay } from '@/app/matchNext/MatchNextResult'
+import { activePossession, applyCommand, createMatchState, tick, toFrame, observeFrames, createRngState, draw, validateMatchSetup, type MatchSetup, type MatchState } from './index'
+
+function generatedSetup() {
+  const world = createNewGame()
+  const worldSnapshot = JSON.stringify(world)
+  const team = Object.values(world.teams).find((candidate) => candidate.coachId === world.userCoachId)!
+  const game = getGamesForTeam(world, team.id).find((candidate) => candidate.status === 'scheduled')!
+  const setup = { ...prepareMatchSetup(world, game, 123456), autonomousActions: false }
+  return { world, game, setup, worldSnapshot }
+}
+
+function positionedSetup(source: MatchSetup, overrides: Readonly<Record<string, CourtPosition>> = {}, changes: Partial<MatchSetup['clockRules']> = {}): MatchSetup {
+  const center = { x: source.court.lengthMeters / 2, y: source.court.widthMeters / 2 }
+  const home = [center, { x: source.court.lengthMeters - 4, y: center.y }, { x: center.x + 4, y: center.y }, { x: center.x + 3, y: center.y }, { x: 4, y: center.y - 1 }]
+  const away = [{ x: source.court.lengthMeters - 0.5, y: center.y }, { x: source.court.lengthMeters - 3, y: center.y }, { x: source.court.lengthMeters - 8, y: center.y }, { x: source.court.lengthMeters - 6, y: center.y - 2 }, { x: source.court.lengthMeters - 6, y: center.y + 2 }]
+  return { ...source, clockRules: { ...source.clockRules, ...changes }, initialPlayerPositions: [...source.initialLineups.home.map((playerId, i) => ({ playerId, position: overrides[playerId] ?? home[i]! })), ...source.initialLineups.away.map((playerId, i) => ({ playerId, position: overrides[playerId] ?? away[i]! }))] }
+}
+
+function ticks(state: MatchState, count: number): MatchState { let current = state; for (let i = 0; i < count; i += 1) current = tick(current); return current }
+
+function projectedPosition(state: MatchState, playerId: PlayerId, count: number): CourtPosition {
+  const future = ticks(state, count)
+  return future.players.find((player) => player.playerId === playerId)!.position
+}
+
+function strongSlotPlayer(state: MatchState): PlayerId {
+  return state.offensiveStructure!.assignments.find((item) => item.slot === 'STRONG_SLOT')!.playerId
+}
+
+function liveHome(source: MatchSetup, changes: Partial<MatchSetup['clockRules']> = {}): MatchState {
+  const setup = { ...source, clockRules: { ...source.clockRules, ...changes }, initialPlayerPositions: source.initialPlayerPositions ?? positionedSetup(source).initialPlayerPositions }
+  let state = createMatchState(setup)
+  state = applyCommand(state, { type: 'startInbound', teamId: setup.homeTeamId, inbounderPlayerId: setup.initialLineups.home[0]!, reason: 'periodStart' })
+  state = applyCommand(state, { type: 'releaseInbound', receiverPlayerId: setup.initialLineups.home[1]!, passKind: 'chest', travelTicks: 10 })
+  return ticks(state, 10)
+}
+
+describe('Match Next ball and possession authority', () => {
+  it('prepares a JSON-safe setup without retaining or mutating GameWorld', () => {
+    const { world, game, setup, worldSnapshot } = generatedSetup()
+    expect(setup.gameId).toBe(game.id)
+    expect(setup.initialLineups.home).toHaveLength(5)
+    expect(setup.initialLineups.away).toHaveLength(5)
+    expect(setup).not.toHaveProperty('world')
+    expect(Object.values(setup)).not.toContain(world)
+    expect(JSON.stringify(world)).toBe(worldSnapshot)
+    expect(JSON.parse(JSON.stringify(setup))).toEqual(setup)
+    expect(setup.clockRules).toHaveProperty('shotClockSeconds', 24)
+    // BT7: the prepared rules are the Competition's (FIBA-like: offensive-rebound reset to 14 s since 54a9f7a), never a hard-coded null.
+    expect(setup.clockRules).toHaveProperty('offensiveReboundShotClockSeconds', 14)
+  })
+
+  it('validates setup membership, positions, lineups, and optional shot-clock reset rules', () => {
+    const { setup } = generatedSetup()
+    expect(() => validateMatchSetup({ ...setup, awayTeamId: setup.homeTeamId })).toThrow('Home and away teams must be different')
+    expect(() => validateMatchSetup({ ...setup, players: [...setup.players, setup.players[0]!] })).toThrow('Duplicate player profile')
+    expect(() => validateMatchSetup({ ...setup, homeSquad: [...setup.homeSquad, setup.homeSquad[0]!] })).toThrow('Home squad contains duplicate player IDs')
+    expect(() => validateMatchSetup({ ...setup, clockRules: { ...setup.clockRules, offensiveReboundShotClockSeconds: 0 } })).toThrow('offensiveReboundShotClockSeconds')
+    expect(() => validateMatchSetup(positionedSetup(setup, { [setup.initialLineups.home[0]!]: { x: 1000, y: 0 } }))).toThrow('outside the court')
+  })
+
+  it('starts possession explicitly and starts both clocks only after a legal inbound catch', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    let state = createMatchState(setup)
+    expect(state.ball.kind).toBe('DEAD')
+    expect(state.activePossessionId).toBeNull()
+    expect(state.clock).toEqual({ gameRunning: false, shotRunning: false })
+    state = applyCommand(state, { type: 'startInbound', teamId: setup.homeTeamId, inbounderPlayerId: setup.initialLineups.home[0]!, reason: 'periodStart' })
+    expect(state.ball.kind).toBe('INBOUND')
+    expect(activePossession(state)).toMatchObject({ id: 'possession-1', startReason: 'periodStart', phase: 'INBOUND' })
+    state = applyCommand(state, { type: 'releaseInbound', receiverPlayerId: setup.initialLineups.home[1]!, passKind: 'chest', travelTicks: 10 })
+    expect(state.clock).toEqual({ gameRunning: false, shotRunning: false })
+    const middle = ticks(state, 5)
+    expect(middle.ball.kind).toBe('PASS_IN_FLIGHT')
+    state = ticks(middle, 5)
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: setup.initialLineups.home[1]!, ownerTeamId: setup.homeTeamId })
+    expect(activePossession(state)?.phase).toBe('SETUP')
+    expect(state.clock).toEqual({ gameRunning: true, shotRunning: true })
+    expect(state.shotClockTenths).toBe(240)
+    expect(tick(state).gameClockTenths).toBe(state.gameClockTenths - 1)
+    expect(tick(state).shotClockTenths).toBe(239)
+  })
+
+  it('moves passes continuously and resolves either the catch, interception, or loose-ball path', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
+    const receiver = strongSlotPlayer(held)
+    const target = projectedPosition(held, receiver, 10)
+    let state = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: receiver, target, passKind: 'chest', travelTicks: 10 } })
+    const start = state.ball.position
+    state = ticks(state, 5)
+    if (state.ball.kind === 'PASS_IN_FLIGHT') expect(state.ball.position).not.toEqual(start)
+    state = ticks(state, 5)
+    expect(state.events.some((event) => event.type === 'passReceived' && event.acquisitionDistanceMeters! <= 1)
+      || state.events.some((event) => event.type === 'passIntercepted' && event.acquisitionDistanceMeters! <= 1)).toBe(true)
+    if (state.ball.kind === 'HELD' && state.ball.ownerTeamId === held.homeTeamId) expect(state.ball.ownerPlayerId).toBe(receiver)
+
+    let distant = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }, passKind: 'bounce', travelTicks: 10 } })
+    distant = ticks(distant, 10)
+    expect(distant.events.some((event) => event.type === 'passBecameLoose')
+      || distant.events.some((event) => event.type === 'passIntercepted')).toBe(true)
+  })
+
+  it('automatically intercepts a pass when a defender reaches the live ball first', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
+    const receiverId = setup.initialLineups.home[4]!
+    const defenderId = setup.initialLineups.away[0]!
+    const target = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
+    let state = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: receiverId, target, passKind: 'chest', travelTicks: 1 } })
+    if (state.ball.kind !== 'PASS_IN_FLIGHT') throw new Error('Expected released pass')
+    const progress = 1 / (state.ball.arrivalT - state.ball.releaseT)
+    const ballPosition = { x: state.ball.from.x + (target.x - state.ball.from.x) * progress, y: state.ball.from.y + (target.y - state.ball.from.y) * progress }
+    state = { ...state, players: state.players.map((player) => player.playerId === defenderId ? { ...player, position: ballPosition } : player) }
+    state = tick(state)
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: defenderId, ownerTeamId: setup.awayTeamId })
+    expect(state.events.some((event) => event.type === 'passIntercepted' && event.playerId === defenderId)).toBe(true)
+    expect(projectMatchNextPlayByPlay(state.events)).toContainEqual(expect.objectContaining({ type: 'steal', playerId: defenderId }))
+    expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
+    expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'steal' })
+    const possessionEnd = state.events.find((event) => event.type === 'possessionEnd' && event.endReason === 'turnover')!
+    const transitionStarted = state.events.find((event) => event.type === 'transitionStarted' && event.teamId === setup.awayTeamId)
+    expect(transitionStarted?.transitionTrigger).toBe('turnover')
+    expect(transitionStarted!.sequence).toBeGreaterThan(possessionEnd.sequence)
+  })
+
+  it('pursues a loose ball with one player per team and recovers it on contact', () => {
+    const { setup } = generatedSetup()
+    const held = liveHome(setup)
+    const ballPosition = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
+    const loose: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: ballPosition, previousPosition: ballPosition, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+      players: held.players.map((player) => ({ ...player, position: { x: player.teamId === setup.homeTeamId ? 3 : setup.court.lengthMeters - 3, y: player.position.y } })),
+    }
+    const pursuing = tick(loose)
+    expect(pursuing.responsibilities.filter((item) => item.kind === 'PURSUE_LOOSE_BALL')).toHaveLength(2)
+    expect(new Set(pursuing.responsibilities.filter((item) => item.kind === 'PURSUE_LOOSE_BALL').map((item) => item.teamId))).toEqual(new Set([setup.homeTeamId, setup.awayTeamId]))
+    expect(pursuing.movementIntents.filter((item) => pursuing.responsibilities.some((role) => role.id === item.provenance.responsibilityId && role.kind === 'PURSUE_LOOSE_BALL')).map((item) => item.target)).toEqual([ballPosition, ballPosition])
+    let recovered = pursuing
+    for (let index = 0; index < 100 && recovered.ball.kind === 'LOOSE'; index += 1) recovered = tick(recovered)
+    expect(recovered.ball.kind).toBe('HELD')
+    expect(recovered.events.some((event) => event.type === 'looseBallRecovered')).toBe(true)
+    expect(recovered.responsibilities.some((item) => item.kind === 'PURSUE_LOOSE_BALL')).toBe(false)
+  })
+
+  it('rejects distant interception, rebound, and loose-ball recovery attempts', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(source)
+    let pass = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[2]!, target: setup.court.baskets.left, passKind: 'lob', travelTicks: 20 } })
+    pass = ticks(pass, 5)
+    expect(() => applyCommand(pass, { type: 'interceptPass', playerId: setup.initialLineups.away[0]! })).toThrow('from the pass')
+
+    let rebound = applyCommand(held, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: setup.court.baskets.left, reboundAvailableT: held.t + 20 } } })
+    rebound = ticks(rebound, 20)
+    expect(rebound.ball.kind).toBe('REBOUNDABLE')
+    expect(() => applyCommand(rebound, { type: 'secureRebound', playerId: setup.initialLineups.away[4]! })).toThrow('from the ball')
+
+    let loose = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }, passKind: 'chest', travelTicks: 10 } })
+    loose = ticks(loose, 10)
+    expect(loose.ball.kind).toBe('LOOSE')
+    expect(() => applyCommand(loose, { type: 'recoverLooseBall', playerId: setup.initialLineups.away[0]! })).toThrow('from the ball')
+  })
+
+  it('records a physically close interception as a turnover and a new possession', () => {
+    const { setup: source } = generatedSetup()
+    const centerY = source.court.widthMeters / 2
+    const receiverId = source.initialLineups.home[2]!
+    const defenderId = source.initialLineups.away[0]!
+    const target = { x: source.court.lengthMeters / 2 + 4, y: centerY }
+    const origin = { x: source.court.lengthMeters - 4, y: centerY }
+    const setup = positionedSetup(source, { [defenderId]: { x: (target.x + origin.x) / 2, y: centerY } })
+    let state = liveHome(setup)
+    state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiverId, target, passKind: 'chest', travelTicks: 10 } })
+    state = ticks(state, 5)
+    const previous = activePossession(state)!
+    state = applyCommand(state, { type: 'interceptPass', playerId: defenderId })
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: defenderId })
+    expect(state.possessions.find((item) => item.id === previous.id)).toMatchObject({ endReason: 'turnover' })
+    expect(activePossession(state)).toMatchObject({ id: 'possession-2', teamId: setup.awayTeamId, startReason: 'steal', phase: 'ADVANCE' })
+  })
+
+  it('scores a planned make once, closes possession, and waits for a legal opponent inbound', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    let state = liveHome(source)
+    state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MAKE', points: 3 } } })
+    state = ticks(state, 5)
+    expect(state.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket', restartTeamId: setup.awayTeamId })
+    expect(state.score).toEqual({ home: 3, away: 0 })
+    expect(state.possessions[0]).toMatchObject({ endReason: 'made' })
+    // BT7: FIBA-like rules stop the game clock after a made basket only in the last 2:00 of the final period/overtime (54a9f7a); at 10:00 of Q1
+    // it keeps running while the shot clock stops. The late-game stop is asserted below with the same planned make.
+    expect(state.clock).toEqual({ gameRunning: true, shotRunning: false })
+    expect(state.events.filter((event) => event.type === 'shotMade')).toHaveLength(1)
+    let late = { ...liveHome(source), period: 4, gameClockTenths: 600 }
+    late = applyCommand(late, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+    late = ticks(late, 5)
+    expect(late.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
+    expect(late.clock).toEqual({ gameRunning: false, shotRunning: false })
+    state = applyCommand(state, { type: 'startInbound', teamId: setup.awayTeamId, inbounderPlayerId: setup.initialLineups.away[0]!, reason: 'madeBasketInbound' })
+    expect(state.ball.kind).toBe('INBOUND')
+    expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'madeBasketInbound', phase: 'INBOUND' })
+  })
+
+  it('supports a turnover dead ball followed by an explicit turnover inbound possession', () => {
+    const { setup: source } = generatedSetup()
+    const center = { x: source.court.lengthMeters / 2, y: source.court.widthMeters / 2 }
+    const awayInbounder = source.initialLineups.away[0]!
+    const setup = positionedSetup(source, { [awayInbounder]: center })
+    let state = liveHome(setup)
+    state = applyCommand(state, { type: 'putBallDead', reason: 'other', restartTeamId: setup.awayTeamId })
+    expect(state.ball).toMatchObject({ kind: 'DEAD', reason: 'other', restartTeamId: setup.awayTeamId })
+    expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
+    // BT2K: play restarts at the sideline point nearest to where the ball went dead, not at a centre-court jump.
+    const spot = state.ball.kind === 'DEAD' ? state.ball.restartSpot! : center
+    expect(Math.min(spot.y, setup.court.widthMeters - spot.y)).toBeLessThanOrEqual(0.5)
+    state = { ...state, players: state.players.map((player) => player.playerId === awayInbounder ? { ...player, position: { ...spot } } : player) }
+    state = applyCommand(state, { type: 'startInbound', teamId: setup.awayTeamId, inbounderPlayerId: awayInbounder, reason: 'turnoverInbound' })
+    expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'turnoverInbound', phase: 'INBOUND' })
+  })
+
+  it('distinguishes physical defensive rebounds from offensive rebounds and their optional reset', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(source)
+    const awayRebounder = setup.initialLineups.away[2]!
+    const awayPosition = held.players.find((player) => player.playerId === awayRebounder)!.position
+    let defensive = applyCommand(held, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: awayPosition, reboundAvailableT: held.t + 25 } } })
+    defensive = ticks(defensive, 24)
+    defensive = { ...defensive, players: defensive.players.map((player) => player.playerId === awayRebounder ? { ...player, position: awayPosition } : player.teamId === setup.homeTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    defensive = tick(defensive)
+    for (let index = 0; index < 120 && !defensive.events.some((event) => event.type === 'reboundSecured'); index += 1) defensive = tick(defensive)
+    expect(defensive.possessions[0]).toMatchObject({ endReason: 'defensiveRebound' })
+    expect(activePossession(defensive)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'defensiveRebound', phase: 'ADVANCE' })
+
+    const resetSetup = positionedSetup(source, {}, { offensiveReboundShotClockSeconds: 14 })
+    const offense = liveHome(resetSetup)
+    const rebounder = offense.ball.kind === 'HELD' ? offense.ball.ownerPlayerId : resetSetup.initialLineups.home[2]!
+    const offensePosition = offense.players.find((player) => player.playerId === rebounder)!.position
+    let offensive = applyCommand(offense, { type: 'releaseShot', command: { targetBasket: resetSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: offensePosition, reboundAvailableT: offense.t + 25 } } })
+    offensive = ticks(offensive, 24)
+    // BT7: rebounds are physical (nearest/boxing player secures it), so the offensive case clears the defenders the same way the defensive case clears the offense.
+    offensive = { ...offensive, players: offensive.players.map((player) => player.playerId === rebounder ? { ...player, position: offensePosition } : player.teamId === resetSetup.awayTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    offensive = tick(offensive)
+    for (let index = 0; index < 120 && !offensive.events.some((event) => event.type === 'reboundSecured'); index += 1) offensive = tick(offensive)
+    const id = activePossession(offensive)?.id
+    expect(activePossession(offensive)).toMatchObject({ id, phase: 'SETUP', offensiveRebounds: 1 })
+    expect(offensive.shotClockTenths).toBe(140)
+
+    // BT7: a competition WITHOUT an offensive-rebound reset is now declared explicitly (the generated FIBA-like competition resets to 14 s).
+    const unresolvedSetup = positionedSetup(source, {}, { offensiveReboundShotClockSeconds: null })
+    const unresolvedHeld = liveHome(unresolvedSetup)
+    const unresolvedRebounder = unresolvedHeld.ball.kind === 'HELD' ? unresolvedHeld.ball.ownerPlayerId : unresolvedSetup.initialLineups.home[2]!
+    const unresolvedTarget = unresolvedHeld.players.find((player) => player.playerId === unresolvedRebounder)!.position
+    let unresolved = applyCommand(unresolvedHeld, { type: 'releaseShot', command: { targetBasket: unresolvedSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: unresolvedTarget, reboundAvailableT: unresolvedHeld.t + 25 } } })
+    unresolved = ticks(unresolved, 24)
+    unresolved = { ...unresolved, players: unresolved.players.map((player) => player.playerId === unresolvedRebounder ? { ...player, position: unresolvedTarget } : player.teamId === unresolvedSetup.awayTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    const shotClockBeforeRebound = unresolved.shotClockTenths ?? 0
+    unresolved = tick(unresolved)
+    for (let index = 0; index < 120 && !unresolved.events.some((event) => event.type === 'reboundSecured'); index += 1) unresolved = tick(unresolved)
+    expect(unresolvedSetup.clockRules.offensiveReboundShotClockSeconds).toBeNull()
+    expect(activePossession(unresolved)?.offensiveRebounds).toBe(1)
+    expect(unresolved.shotClockTenths).toBeLessThan(shotClockBeforeRebound)
+    expect(activePossession(unresolved)?.phase).toBe('SETUP')
+  })
+
+  it('recovers a loose ball automatically without changing possession when the same team wins it', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
+    const owner = held.players.find((player) => player.teamId === setup.homeTeamId)!
+    const ballPosition = { x: owner.position.x + 0.5, y: owner.position.y }
+    const loose: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: ballPosition, previousPosition: ballPosition, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+    }
+    const state = tick(loose)
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerTeamId: setup.homeTeamId })
+    expect(state.events.some((event) => event.type === 'looseBallRecovered' && event.teamId === setup.homeTeamId)).toBe(true)
+    expect(activePossession(state)?.id).toBe('possession-1')
+  })
+
+  it('closes the old possession and starts the winner team possession after a loose-ball turnover', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
+    const center = { x: source.court.lengthMeters / 2 + 4, y: source.court.widthMeters / 2 }
+    const awayRecoverer = setup.initialLineups.away[0]!
+    let state: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: center, previousPosition: center, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+      players: held.players.map((player) => player.playerId === awayRecoverer
+        ? { ...player, position: center }
+        : { ...player, position: { x: player.teamId === setup.homeTeamId ? 1 : setup.court.lengthMeters - 1, y: player.position.y } }),
+    }
+    state = tick(state)
+    expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
+    expect(activePossession(state)).toMatchObject({ id: 'possession-2', teamId: setup.awayTeamId, startReason: 'other', phase: 'ADVANCE' })
+    expect(state.events.some((event) => event.type === 'looseBallRecovered' && event.teamId === setup.awayTeamId)).toBe(true)
+  })
+
+  it.each([24, 30])('uses configured %s-second shot-clock mechanics in tenths', (seconds) => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source, {}, { shotClockSeconds: seconds })
+    let state = liveHome(setup)
+    state = ticks(state, seconds * 10 - 1)
+    expect(state.shotClockTenths).toBe(1)
+    state = tick(state)
+    expect(state.shotClockTenths).toBe(0)
+    expect(state.ball).toMatchObject({ kind: 'DEAD', reason: 'shotClockViolation' })
+    expect(state.possessions.at(-1)).toMatchObject({ endReason: 'shotClock' })
+    expect(state.events.some((event) => event.type === 'shotClockViolation')).toBe(true)
+    expect(state.clock).toEqual({ gameRunning: false, shotRunning: false })
+  })
+
+  it('allows a shot released before shot-clock zero to resolve afterward', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source, {}, { shotClockSeconds: 1 })
+    let state = liveHome(setup)
+    state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 20, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+    state = ticks(state, 10)
+    expect(state.shotClockTenths).toBe(0)
+    expect(state.ball.kind).toBe('SHOT_IN_FLIGHT')
+    expect(state.events.some((event) => event.type === 'shotClockViolation')).toBe(false)
+    state = ticks(state, 10)
+    expect(state.score.home).toBe(2)
+    expect(state.events.some((event) => event.type === 'shotMade')).toBe(true)
+  })
+
+  it('ends pass, shot, and live rebound states at the exact period horn', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source, {}, { periodCount: 2, periodSeconds: 1 })
+    let pass = liveHome(setup)
+    pass = applyCommand(pass, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[2]!, target: pass.players.find((player) => player.playerId === setup.initialLineups.home[2])!.position, passKind: 'lob', travelTicks: 20 } })
+    pass = tick({ ...pass, gameClockTenths: 1 })
+    expect(pass.ball).toMatchObject({ kind: 'DEAD', reason: 'periodEnd' })
+    expect(pass.period).toBe(2)
+
+    let shot = liveHome(setup)
+    shot = applyCommand(shot, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 20, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+    shot = tick({ ...shot, gameClockTenths: 1 })
+    expect(shot.ball).toMatchObject({ kind: 'DEAD', reason: 'periodEnd' })
+    expect(shot.score.home).toBe(0)
+    expect(shot.possessions[0]).toMatchObject({ endReason: 'periodEnd' })
+
+    let rebound = liveHome(setup)
+    rebound = applyCommand(rebound, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 1, plannedOutcome: { kind: 'MISS', reboundTarget: setup.court.baskets.right, reboundAvailableT: rebound.t + 10 } } })
+    rebound = tick({ ...rebound, gameClockTenths: 1 })
+    expect(rebound.ball).toMatchObject({ kind: 'DEAD', reason: 'periodEnd' })
+  })
+
+  it('resumes exactly from JSON during inbound, pass, shot, reboundable, and loose states', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const initial = createMatchState(setup)
+    const inbound = applyCommand(initial, { type: 'startInbound', teamId: setup.homeTeamId, inbounderPlayerId: setup.initialLineups.home[0]!, reason: 'periodStart' })
+    expect(ticks(JSON.parse(JSON.stringify(inbound)) as MatchState, 3)).toEqual(ticks(inbound, 3))
+
+    const held = liveHome(source)
+    const target = held.players.find((player) => player.playerId === setup.initialLineups.home[2])!.position
+    let pass = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[2]!, target, passKind: 'lob', travelTicks: 10 } })
+    pass = ticks(pass, 3)
+    expect(ticks(JSON.parse(JSON.stringify(pass)) as MatchState, 10)).toEqual(ticks(pass, 10))
+
+    let shot = applyCommand(held, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 12, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+    shot = ticks(shot, 3)
+    expect(ticks(JSON.parse(JSON.stringify(shot)) as MatchState, 12)).toEqual(ticks(shot, 12))
+
+    let rebound = applyCommand(held, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 4, plannedOutcome: { kind: 'MISS', reboundTarget: target, reboundAvailableT: held.t + 20 } } })
+    rebound = ticks(rebound, 6)
+    expect(rebound.ball.kind).toBe('REBOUNDABLE')
+    expect(ticks(JSON.parse(JSON.stringify(rebound)) as MatchState, 14)).toEqual(ticks(rebound, 14))
+
+    let loose = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }, passKind: 'chest', travelTicks: 10 } })
+    loose = ticks(loose, 10)
+    expect(loose.ball.kind).toBe('LOOSE')
+    expect(ticks(JSON.parse(JSON.stringify(loose)) as MatchState, 10)).toEqual(ticks(loose, 10))
+  })
+
+  it('replays identical commands identically and maintains event sequence ordering', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const replay = () => {
+      let state = liveHome(setup)
+      const receiver = strongSlotPlayer(state)
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: projectedPosition(state, receiver, 10), passKind: 'bounce', travelTicks: 10 } })
+      state = ticks(state, 10)
+      state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 10, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+      return ticks(state, 10)
+    }
+    const first = replay()
+    expect(replay()).toEqual(first)
+    expect(first.events.map((event) => event.sequence)).toEqual(first.events.map((_, index) => index + 1))
+    expect(first.nextEventSequence).toBe(first.events.length + 1)
+  })
+
+  it('reports zero structural violations over repeatable ball-heavy scripts', () => {
+    const { setup: source } = generatedSetup()
+    for (const seed of [11, 123456, 0xffff_ffff]) {
+      const setup = positionedSetup({ ...source, matchSeed: seed })
+      let state = liveHome(setup)
+      const frames = [toFrame(state)]
+      const receiver = strongSlotPlayer(state)
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: projectedPosition(state, receiver, 10), passKind: seed % 2 ? 'chest' : 'lob', travelTicks: 10 } })
+      frames.push(toFrame(state))
+      state = ticks(state, 10)
+      frames.push(toFrame(state))
+      const target = state.players.find((player) => player.playerId === receiver)!.position
+      state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 10, plannedOutcome: { kind: 'MISS', reboundTarget: target, reboundAvailableT: state.t + 20 } } })
+      frames.push(toFrame(state))
+      state = ticks(state, 20)
+      frames.push(toFrame(state))
+      const report = observeFrames(frames)
+      expect(report.ballTeleports).toBe(0)
+      expect(report.illegalAcquisitions).toBe(0)
+      expect(report.invalidPossessions).toBe(0)
+      expect(report.clockViolationCount).toBe(0)
+      expect(report.ballStateViolations).toEqual([])
+      expect(report.possessionViolations).toEqual([])
+      expect(report.clockViolations).toEqual([])
+      expect(report.playerContinuityViolations).toEqual([])
+    }
+  })
+
+  it('keeps production engine code free of UI, wall-clock, random, and persistent-world dependencies', () => {
+    const folder = join(process.cwd(), 'src/engine/match-next')
+    const files = readdirSync(folder, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? readdirSync(join(folder, entry.name)).map((name) => join(folder, entry.name, name)) : [join(folder, entry.name)]).filter((path) => path.endsWith('.ts') && !path.endsWith('.test.ts'))
+    const source = files.map((path) => readFileSync(path, 'utf8')).join('\n')
+    expect(source).not.toMatch(/from\s+['"](?:react|zustand|@tauri-apps)/i)
+    expect(source).not.toMatch(/Math\.random\s*\(|Date\.now\s*\(|performance\.now\s*\(/)
+    expect(source).not.toMatch(/GameWorld/)
+    expect(readFileSync(join(folder, 'state.ts'), 'utf8')).not.toMatch(/\b(?:Map|Set)\b/)
+  })
+
+  it('measures a full clock-only regulation baseline and a synthetic ball-heavy workload', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source, {}, { periodCount: 4, periodSeconds: 600 })
+    const samples: number[] = []
+    for (let run = 0; run < 3; run += 1) {
+      let state = { ...createMatchState(setup), score: { home: 1, away: 0 } }
+      const started = performance.now()
+      for (let i = 0; i < 24_000; i += 1) {
+        if (!state.clock.gameRunning && !state.isComplete) state = { ...state, clock: { gameRunning: true, shotRunning: false } }
+        state = tick(state)
+      }
+      samples.push(performance.now() - started)
+      expect(state.isComplete).toBe(true)
+      expect(state.t).toBe(24_000)
+    }
+    const mean = samples.reduce((sum, item) => sum + item, 0) / samples.length
+    process.stderr.write(`Match Next foundation regulation: 24000 ticks x 3; ${samples.map((value) => value.toFixed(1)).join(', ')} ms; mean ${mean.toFixed(1)} ms/game; ${(24_000 / (mean / 1000)).toFixed(0)} ticks/s\n`)
+    expect(mean).toBeLessThan(200)
+
+    const workloadSetup = positionedSetup(source, {}, { periodSeconds: 10000, shotClockSeconds: 600 })
+    const started = performance.now()
+    let state = liveHome(workloadSetup)
+    for (let cycle = 0; cycle < 100; cycle += 1) {
+      const teamId = activePossession(state)!.teamId
+      const lineup = teamId === workloadSetup.homeTeamId ? workloadSetup.initialLineups.home : workloadSetup.initialLineups.away
+      const owner = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : lineup[1]!
+      const receiver = lineup.find((playerId) => playerId !== owner)!
+      const receiverPosition = state.players.find((player) => player.playerId === receiver)!.position
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: receiverPosition, passKind: cycle % 2 ? 'chest' : 'bounce', travelTicks: 2 } })
+      state = ticks(state, 2)
+      const shooter = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : receiver
+      const landing = projectedPosition(state, shooter, 4)
+      const targetBasket = teamId === workloadSetup.homeTeamId ? workloadSetup.court.baskets.right : workloadSetup.court.baskets.left
+      state = applyCommand(state, { type: 'releaseShot', command: { targetBasket, travelTicks: 2, plannedOutcome: { kind: 'MISS', reboundTarget: landing, reboundAvailableT: state.t + 4 } } })
+      state = ticks(state, 4)
+      for (let wait = 0; wait < 120 && state.ball.kind === 'REBOUNDABLE'; wait += 1) state = tick(state)
+    }
+    const workloadMs = performance.now() - started
+    process.stderr.write(`Match Next ball-heavy workload: ${state.t} ticks, ${state.events.length} events, ${workloadMs.toFixed(1)} ms, ${(state.t / (workloadMs / 1000)).toFixed(0)} ticks/s\n`)
+    expect(state.events.filter((event) => event.type === 'passReleased')).toHaveLength(101)
+    expect(state.events.filter((event) => event.type === 'shotMissed')).toHaveLength(100)
+    expect(state.events.filter((event) => event.type === 'reboundSecured')).toHaveLength(100)
+  })
+
+  it('preserves deterministic RNG stream behavior without consuming draws for planned outcomes', () => {
+    const initial = createRngState(11)
+    expect(draw(initial, 'outcome').value).toBe(draw(createRngState(11), 'outcome').value)
+    expect(draw(initial, 'outcome').value).not.toBe(draw(createRngState(12), 'outcome').value)
+    expect(draw(draw(initial, 'outcome').state, 'decision').value).toBe(draw(initial, 'decision').value)
+  })
+})

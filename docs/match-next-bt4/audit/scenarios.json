@@ -1,0 +1,121 @@
+[
+  {
+    "kind": "pullUp",
+    "description": "Pull-up: the driver stops where the lane closed and shoots (creation PULL_UP)",
+    "seed": 424242,
+    "fromTick": 4268,
+    "toTick": 4348
+  },
+  {
+    "kind": "floater",
+    "description": "Floater: a driver near the rim goes over the help (creation FLOATER)",
+    "seed": 424242,
+    "fromTick": 9917,
+    "toTick": 9997
+  },
+  {
+    "kind": "midrange",
+    "description": "Mid-range shot that comes out of a drive or a screen",
+    "seed": 424242,
+    "fromTick": 5814,
+    "toTick": 5899
+  },
+  {
+    "kind": "driveContained",
+    "description": "A drive is contained: the driver is stopped and has to read again",
+    "seed": 424242,
+    "fromTick": 125,
+    "toTick": 205
+  },
+  {
+    "kind": "rimAttack",
+    "description": "Drive to the rim: finish through contact",
+    "seed": 424242,
+    "fromTick": 440,
+    "toTick": 520
+  },
+  {
+    "kind": "kickOut",
+    "description": "Kick-out three after the defense collapses on a drive",
+    "seed": 424242,
+    "fromTick": 1911,
+    "toTick": 1996
+  },
+  {
+    "kind": "pnrHandler",
+    "description": "Pick and roll: the handler uses the screen and shoots",
+    "seed": 424242,
+    "fromTick": 180,
+    "toTick": 260
+  },
+  {
+    "kind": "screen",
+    "description": "Ball screen: approach, set, use",
+    "seed": 424242,
+    "fromTick": 190,
+    "toTick": 270
+  },
+  {
+    "kind": "catchAndShoot",
+    "description": "Catch-and-shoot three after ball movement",
+    "seed": 424242,
+    "fromTick": 303,
+    "toTick": 383
+  },
+  {
+    "kind": "shootingFoul",
+    "description": "Shooting foul and free throws",
+    "seed": 424242,
+    "fromTick": 900,
+    "toTick": 1050
+  },
+  {
+    "kind": "offBallFoul",
+    "description": "A non-shooting foul from contact away from a shot (team fouls build up)",
+    "seed": 424242,
+    "fromTick": 4344,
+    "toTick": 4464
+  },
+  {
+    "kind": "block",
+    "description": "A block: defender within reach at the release",
+    "seed": 424242,
+    "fromTick": 16253,
+    "toTick": 16343
+  },
+  {
+    "kind": "rebound",
+    "description": "Rebound contest with the contest positions around the landing spot",
+    "seed": 424242,
+    "fromTick": 192,
+    "toTick": 282
+  },
+  {
+    "kind": "putback",
+    "description": "Offensive rebound and the rebounder's own attempt",
+    "seed": 424242,
+    "fromTick": 16258,
+    "toTick": 16338
+  },
+  {
+    "kind": "longPossession",
+    "description": "A long half-court possession (over 17 s): reversals, screens, a late shot",
+    "seed": 424242,
+    "fromTick": 1317,
+    "toTick": 1532
+  },
+  {
+    "kind": "quickTransition",
+    "description": "A quick transition possession that ends in a shot inside 6 s",
+    "seed": 424242,
+    "fromTick": 11994,
+    "toTick": 12080
+  },
+  {
+    "kind": "freeThrows",
+    "description": "Free-throw sequence",
+    "seed": 424242,
+    "fromTick": 936,
+    "toTick": 1039
+  }
+]

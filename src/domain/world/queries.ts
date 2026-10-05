@@ -68,6 +68,7 @@ export interface ResolvedGameClockRules {
   readonly clockStopReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
   readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
   readonly clockRestartOnInbound?: 'release' | 'receive'
+  readonly foulRules?: { readonly personalFoulLimit: number; readonly teamFoulPenaltyFrom: number; readonly teamFoulOneAndOneFrom?: number | null }
 }
 
 /**
@@ -96,6 +97,7 @@ export function resolveGameClockRules(world: GameWorld, competitionId: Competiti
     clockStopReasons: gameFormat.clockStopReasons ?? ['outOfBounds', 'other', 'shotClockViolation'],
     substitutionOpportunityReasons: gameFormat.substitutionOpportunityReasons ?? ['outOfBounds', 'other', 'shotClockViolation'],
     clockRestartOnInbound: gameFormat.clockRestartOnInbound ?? 'receive',
+    ...(gameFormat.foulRules === undefined ? {} : { foulRules: { ...gameFormat.foulRules } }),
   }
 }
 

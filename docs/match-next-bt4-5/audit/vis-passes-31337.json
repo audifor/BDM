@@ -1,0 +1,58 @@
+[
+ {
+  "t": 3588,
+  "label": "INTERCEPTED_SWING_slack0.48_perp0.81"
+ },
+ {
+  "t": 6575,
+  "label": "INTERCEPTED_TRANSITION_ADVANCE_slack-9.00_perp0.42"
+ },
+ {
+  "t": 8114,
+  "label": "INTERCEPTED_ENTRY_slack0.47_perp1.08"
+ },
+ {
+  "t": 7192,
+  "label": "DEFLECTED_SKIP_slack0.64_perp0.23"
+ },
+ {
+  "t": 8990,
+  "label": "DEFLECTED_OUTLET_slack0.31_perp0.37"
+ },
+ {
+  "t": 154,
+  "label": "contestedDone_SKIP_slack0.21_perp0.46"
+ },
+ {
+  "t": 222,
+  "label": "contestedDone_OUTLET_slack0.25_perp0.06"
+ },
+ {
+  "t": 75,
+  "label": "closeButSafe_OUTLET_slack-0.30_perp0.33"
+ },
+ {
+  "t": 846,
+  "label": "closeButSafe_SWING_slack-9.00_perp0.41"
+ },
+ {
+  "t": 141,
+  "label": "kick_KICK_OUT_slack-0.03_perp1.53"
+ },
+ {
+  "t": 2224,
+  "label": "kick_KICK_OUT_slack-0.06_perp0.88"
+ },
+ {
+  "t": 2809,
+  "label": "transition_TRANSITION_ADVANCE_slack0.64_perp0.55"
+ },
+ {
+  "t": 4208,
+  "label": "transition_TRANSITION_ADVANCE_slack0.33_perp0.12"
+ },
+ {
+  "t": 115,
+  "label": "swing_SWING_slack-9.00_perp1.02"
+ }
+]

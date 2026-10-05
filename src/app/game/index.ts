@@ -1,9 +1,10 @@
-export { advanceGameDay, advanceGameDayWithResult, assertSimulationMayAdvance, simulateRemainingGamesToday, SimulationAdvanceBlockedError, type WorldDayAdvancePhase, type WorldDayAdvanceResult, type WorldDayAdvanceStatus } from './advanceGameDay'
+export { advanceGameDay, advanceGameDayAsync, advanceGameDayWithResult, advanceGameDayWithResultAsync, assertSimulationMayAdvance, simulateRemainingGamesToday, simulateRemainingGamesTodayAsync, SimulationAdvanceBlockedError, type WorldDayAdvancePhase, type WorldDayAdvanceResult, type WorldDayAdvanceStatus } from './advanceGameDay'
 export { evaluateSimulationBreakpoints, SIMULATION_BREAKPOINT_LEVELS, type SimulationBreakpoint, type SimulationBreakpointContext, type SimulationBreakpointInput, type SimulationBreakpointLevel, type SimulationBreakpointResult } from './SimulationBreakpoints'
-export { continueGame, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
+export { continueGame, continueGameAsync, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
 export {
   simulateUntilDate,
   tickSimulateUntilDate,
+  tickSimulateUntilDateAsync,
   type SimulateUntilEvent,
   type SimulateUntilResult,
   type SimulateUntilStopReason,
@@ -55,13 +56,12 @@ export {
   type MatchSeedFactory,
   completeMatch,
   createLiveUserMatch,
-  instantResult,
   PlayUserGameError,
-  playUserGame,
   prepareMatch,
   prepareUserMatch,
-  simulateAndApplyGame,
 } from './playUserGame'
+export { instantResult, playUserGame, simulateAndApplyGame } from './matchResolution'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'
 export { startNextSeason, startNextSeasonTransitionFor, type CompetitionSeasonTransition, type CompetitionSeasonTransitionResult } from './startNextSeason'
+export { getWorldMatchRunner, setWorldMatchRunner } from './worldMatchRunner'

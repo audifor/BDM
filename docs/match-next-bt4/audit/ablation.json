@@ -1,0 +1,177 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1
+  ],
+  "out": {
+    "current": {
+      "possessions": 230.33,
+      "possessionSeconds": 9.77,
+      "byEnd": {
+        "made": 97.3,
+        "defensiveRebound": 102.7,
+        "turnover": 26.7,
+        "periodEnd": 3.7
+      },
+      "secondsPerPossession": {
+        "inbound": 0.39,
+        "transition": 1.95,
+        "early": 0,
+        "settlement": 2.21,
+        "reading": 0.51,
+        "actionSetup": 0.4,
+        "actionExecution": 1.92,
+        "advantage": 0.51,
+        "reset": 0.08,
+        "shot": 0.64,
+        "rebound": 0.7,
+        "deadBall": 0.47
+      }
+    },
+    "argmaxChoice": {
+      "possessions": 231.67,
+      "possessionSeconds": 9.58,
+      "byEnd": {
+        "defensiveRebound": 92.3,
+        "turnover": 28.3,
+        "made": 108,
+        "periodEnd": 3
+      },
+      "secondsPerPossession": {
+        "inbound": 0.42,
+        "transition": 2.07,
+        "early": 0,
+        "settlement": 1.95,
+        "reading": 0.57,
+        "actionSetup": 0.25,
+        "actionExecution": 1.91,
+        "advantage": 0.52,
+        "reset": 0.08,
+        "shot": 0.65,
+        "rebound": 0.67,
+        "deadBall": 0.49
+      }
+    },
+    "noUsageWant": {
+      "possessions": 227.67,
+      "possessionSeconds": 10.45,
+      "byEnd": {
+        "defensiveRebound": 97,
+        "made": 99.3,
+        "turnover": 27.7,
+        "periodEnd": 3.7
+      },
+      "secondsPerPossession": {
+        "inbound": 0.39,
+        "transition": 1.99,
+        "early": 0,
+        "settlement": 2.22,
+        "reading": 0.59,
+        "actionSetup": 0.47,
+        "actionExecution": 2.15,
+        "advantage": 0.59,
+        "reset": 0.12,
+        "shot": 0.67,
+        "rebound": 0.71,
+        "deadBall": 0.54
+      }
+    },
+    "noBlockOrFoulValue": {
+      "possessions": 222,
+      "possessionSeconds": 9.96,
+      "byEnd": {
+        "made": 93.3,
+        "defensiveRebound": 101,
+        "turnover": 23.7,
+        "periodEnd": 4
+      },
+      "secondsPerPossession": {
+        "inbound": 0.36,
+        "transition": 1.99,
+        "early": 0,
+        "settlement": 2.21,
+        "reading": 0.54,
+        "actionSetup": 0.39,
+        "actionExecution": 2.09,
+        "advantage": 0.56,
+        "reset": 0.07,
+        "shot": 0.63,
+        "rebound": 0.76,
+        "deadBall": 0.35
+      }
+    },
+    "bt2RimShot": {
+      "possessions": 237.67,
+      "possessionSeconds": 9.76,
+      "byEnd": {
+        "made": 97.7,
+        "defensiveRebound": 106.3,
+        "turnover": 29.7,
+        "periodEnd": 4
+      },
+      "secondsPerPossession": {
+        "inbound": 0.35,
+        "transition": 1.9,
+        "early": 0,
+        "settlement": 2.3,
+        "reading": 0.5,
+        "actionSetup": 0.35,
+        "actionExecution": 1.98,
+        "advantage": 0.53,
+        "reset": 0.09,
+        "shot": 0.63,
+        "rebound": 0.73,
+        "deadBall": 0.38
+      }
+    },
+    "noPutbackPenalty": {
+      "possessions": 229.33,
+      "possessionSeconds": 9.57,
+      "byEnd": {
+        "made": 102,
+        "defensiveRebound": 94.7,
+        "turnover": 29,
+        "periodEnd": 3.7
+      },
+      "secondsPerPossession": {
+        "inbound": 0.39,
+        "transition": 1.98,
+        "early": 0,
+        "settlement": 2.09,
+        "reading": 0.49,
+        "actionSetup": 0.35,
+        "actionExecution": 1.96,
+        "advantage": 0.51,
+        "reset": 0.09,
+        "shot": 0.64,
+        "rebound": 0.68,
+        "deadBall": 0.4
+      }
+    },
+    "slowCloseout": {
+      "possessions": 229.67,
+      "possessionSeconds": 9.91,
+      "byEnd": {
+        "made": 107,
+        "defensiveRebound": 97.7,
+        "turnover": 21.3,
+        "periodEnd": 3.7
+      },
+      "secondsPerPossession": {
+        "inbound": 0.38,
+        "transition": 2.02,
+        "early": 0,
+        "settlement": 2.1,
+        "reading": 0.49,
+        "actionSetup": 0.28,
+        "actionExecution": 2.07,
+        "advantage": 0.54,
+        "reset": 0.08,
+        "shot": 0.69,
+        "rebound": 0.69,
+        "deadBall": 0.56
+      }
+    }
+  }
+}

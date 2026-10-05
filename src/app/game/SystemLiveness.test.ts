@@ -7,7 +7,7 @@ import { createScheduledTrainingSession } from '@/domain/training'
 import { nextEligibleTrainingDate, scheduleTrainingSession } from '@/engine/training'
 import { advanceGameDay } from './advanceGameDay'
 import { createNewGame } from './createNewGame'
-import { instantResult } from './playUserGame'
+import { instantResult } from './matchResolution'
 
 describe('system liveness gameplay route', () => {
   it('reaches scheduled training, match consequences, media, career movement and save/load from normal game boundaries', () => {

@@ -1,0 +1,466 @@
+[
+  {
+    "seed": 424242,
+    "ticks": 24580,
+    "ballStepMetersByKind": {
+      "JUMP_BALL->JUMP_BALL": {
+        "n": 19,
+        "mean": 0.17,
+        "median": 0,
+        "p10": 0,
+        "p90": 0.41,
+        "min": 0,
+        "max": 0.41
+      },
+      "JUMP_BALL->HELD": {
+        "n": 1,
+        "mean": 0.4,
+        "median": 0.4,
+        "p10": 0.4,
+        "p90": 0.4,
+        "min": 0.4,
+        "max": 0.4
+      },
+      "HELD->HELD": {
+        "n": 10055,
+        "mean": 0.36,
+        "median": 0.42,
+        "p10": 0.09,
+        "p90": 0.56,
+        "min": 0,
+        "max": 0.63
+      },
+      "HELD->PASS_IN_FLIGHT": {
+        "n": 450,
+        "mean": 0.25,
+        "median": 0.21,
+        "p10": 0,
+        "p90": 0.58,
+        "min": 0,
+        "max": 0.6
+      },
+      "PASS_IN_FLIGHT->PASS_IN_FLIGHT": {
+        "n": 2508,
+        "mean": 0.99,
+        "median": 0.96,
+        "p10": 0.75,
+        "p90": 1.27,
+        "min": 0.2,
+        "max": 2.1
+      },
+      "PASS_IN_FLIGHT->HELD": {
+        "n": 672,
+        "mean": 0.98,
+        "median": 1,
+        "p10": 0.77,
+        "p90": 1.24,
+        "min": 0.06,
+        "max": 2.3
+      },
+      "HELD->SHOT_IN_FLIGHT": {
+        "n": 341,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "SHOT_IN_FLIGHT->SHOT_IN_FLIGHT": {
+        "n": 1700,
+        "mean": 1.29,
+        "median": 1.28,
+        "p10": 0.66,
+        "p90": 2.09,
+        "min": 0.05,
+        "max": 4.4
+      },
+      "SHOT_IN_FLIGHT->REBOUNDABLE": {
+        "n": 208,
+        "mean": 1.27,
+        "median": 1.28,
+        "p10": 0.66,
+        "p90": 2.08,
+        "min": 0.05,
+        "max": 4.4
+      },
+      "REBOUNDABLE->REBOUNDABLE": {
+        "n": 2606,
+        "mean": 0.2,
+        "median": 0.25,
+        "p10": 0.01,
+        "p90": 0.25,
+        "min": 0,
+        "max": 0.25
+      },
+      "REBOUNDABLE->HELD": {
+        "n": 106,
+        "mean": 0.15,
+        "median": 0.15,
+        "p10": 0.06,
+        "p90": 0.25,
+        "min": 0,
+        "max": 0.31
+      },
+      "SHOT_IN_FLIGHT->DEAD": {
+        "n": 133,
+        "mean": 1.31,
+        "median": 1.28,
+        "p10": 0.64,
+        "p90": 2.16,
+        "min": 0.3,
+        "max": 4.35
+      },
+      "DEAD->DEAD": {
+        "n": 5230,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "DEAD->PASS_IN_FLIGHT": {
+        "n": 137,
+        "mean": 1.17,
+        "median": 1.07,
+        "p10": 1.07,
+        "p90": 1.07,
+        "min": 0,
+        "max": 10.95
+      },
+      "REBOUNDABLE->PASS_IN_FLIGHT": {
+        "n": 102,
+        "mean": 0.17,
+        "median": 0.19,
+        "p10": 0.01,
+        "p90": 0.28,
+        "min": 0,
+        "max": 0.35
+      },
+      "PASS_IN_FLIGHT->LOOSE": {
+        "n": 37,
+        "mean": 1.15,
+        "median": 1.09,
+        "p10": 0.76,
+        "p90": 1.59,
+        "min": 0.59,
+        "max": 2.04
+      },
+      "LOOSE->LOOSE": {
+        "n": 236,
+        "mean": 0.09,
+        "median": 0.07,
+        "p10": 0.01,
+        "p90": 0.2,
+        "min": 0,
+        "max": 0.2
+      },
+      "LOOSE->PASS_IN_FLIGHT": {
+        "n": 20,
+        "mean": 0.92,
+        "median": 0.95,
+        "p10": 0.83,
+        "p90": 1.04,
+        "min": 0.7,
+        "max": 1.12
+      },
+      "LOOSE->HELD": {
+        "n": 14,
+        "mean": 0.86,
+        "median": 0.85,
+        "p10": 0.74,
+        "p90": 1.09,
+        "min": 0.49,
+        "max": 1.15
+      },
+      "LOOSE->DEAD": {
+        "n": 3,
+        "mean": 0.1,
+        "median": 0.09,
+        "p10": 0.05,
+        "p90": 0.15,
+        "min": 0.05,
+        "max": 0.15
+      },
+      "HELD->DEAD": {
+        "n": 2,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "ballTeleports": [
+      {
+        "t": 6186,
+        "from": "DEAD",
+        "to": "PASS_IN_FLIGHT",
+        "meters": 10.95
+      },
+      {
+        "t": 12239,
+        "from": "DEAD",
+        "to": "PASS_IN_FLIGHT",
+        "meters": 6.51
+      }
+    ],
+    "ballHeightJumps": [],
+    "maxPlayerStepMeters": 0.63,
+    "deadBallSeconds": {
+      "n": 137,
+      "mean": 4.02,
+      "median": 4,
+      "p10": 3.6,
+      "p90": 4.3,
+      "min": 3.2,
+      "max": 7.3
+    },
+    "inboundRecoveryMeters": {
+      "n": 0,
+      "mean": 0,
+      "median": 0,
+      "p10": 0,
+      "p90": 0,
+      "min": 0,
+      "max": 0
+    }
+  },
+  {
+    "seed": 7,
+    "ticks": 24702,
+    "ballStepMetersByKind": {
+      "JUMP_BALL->JUMP_BALL": {
+        "n": 19,
+        "mean": 0.17,
+        "median": 0,
+        "p10": 0,
+        "p90": 0.41,
+        "min": 0,
+        "max": 0.41
+      },
+      "JUMP_BALL->HELD": {
+        "n": 1,
+        "mean": 0.4,
+        "median": 0.4,
+        "p10": 0.4,
+        "p90": 0.4,
+        "min": 0.4,
+        "max": 0.4
+      },
+      "HELD->HELD": {
+        "n": 10379,
+        "mean": 0.36,
+        "median": 0.42,
+        "p10": 0.1,
+        "p90": 0.56,
+        "min": 0,
+        "max": 0.62
+      },
+      "HELD->PASS_IN_FLIGHT": {
+        "n": 429,
+        "mean": 0.27,
+        "median": 0.22,
+        "p10": 0,
+        "p90": 0.58,
+        "min": 0,
+        "max": 0.6
+      },
+      "PASS_IN_FLIGHT->PASS_IN_FLIGHT": {
+        "n": 2304,
+        "mean": 0.98,
+        "median": 0.93,
+        "p10": 0.75,
+        "p90": 1.2,
+        "min": 0.35,
+        "max": 2.11
+      },
+      "PASS_IN_FLIGHT->HELD": {
+        "n": 650,
+        "mean": 0.97,
+        "median": 1,
+        "p10": 0.75,
+        "p90": 1.21,
+        "min": 0.26,
+        "max": 1.99
+      },
+      "HELD->SHOT_IN_FLIGHT": {
+        "n": 316,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "SHOT_IN_FLIGHT->SHOT_IN_FLIGHT": {
+        "n": 1575,
+        "mean": 1.33,
+        "median": 1.29,
+        "p10": 0.68,
+        "p90": 1.98,
+        "min": 0.13,
+        "max": 4.41
+      },
+      "SHOT_IN_FLIGHT->DEAD": {
+        "n": 156,
+        "mean": 1.33,
+        "median": 1.29,
+        "p10": 0.66,
+        "p90": 2.09,
+        "min": 0.13,
+        "max": 4.4
+      },
+      "DEAD->DEAD": {
+        "n": 6203,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      },
+      "DEAD->PASS_IN_FLIGHT": {
+        "n": 161,
+        "mean": 1.2,
+        "median": 1.07,
+        "p10": 1.07,
+        "p90": 1.07,
+        "min": 0,
+        "max": 11.77
+      },
+      "SHOT_IN_FLIGHT->REBOUNDABLE": {
+        "n": 160,
+        "mean": 1.32,
+        "median": 1.29,
+        "p10": 0.68,
+        "p90": 1.94,
+        "min": 0.28,
+        "max": 4.41
+      },
+      "REBOUNDABLE->REBOUNDABLE": {
+        "n": 1964,
+        "mean": 0.21,
+        "median": 0.25,
+        "p10": 0.1,
+        "p90": 0.25,
+        "min": 0,
+        "max": 0.25
+      },
+      "REBOUNDABLE->HELD": {
+        "n": 81,
+        "mean": 0.12,
+        "median": 0.11,
+        "p10": 0.05,
+        "p90": 0.21,
+        "min": 0,
+        "max": 0.29
+      },
+      "PASS_IN_FLIGHT->LOOSE": {
+        "n": 30,
+        "mean": 1.16,
+        "median": 1.09,
+        "p10": 0.76,
+        "p90": 1.68,
+        "min": 0.57,
+        "max": 2.11
+      },
+      "LOOSE->PASS_IN_FLIGHT": {
+        "n": 11,
+        "mean": 0.95,
+        "median": 0.98,
+        "p10": 0.83,
+        "p90": 1,
+        "min": 0.8,
+        "max": 1.08
+      },
+      "LOOSE->LOOSE": {
+        "n": 163,
+        "mean": 0.09,
+        "median": 0.07,
+        "p10": 0.01,
+        "p90": 0.2,
+        "min": 0,
+        "max": 0.2
+      },
+      "LOOSE->HELD": {
+        "n": 15,
+        "mean": 0.9,
+        "median": 0.91,
+        "p10": 0.8,
+        "p90": 0.99,
+        "min": 0.75,
+        "max": 1.02
+      },
+      "REBOUNDABLE->PASS_IN_FLIGHT": {
+        "n": 79,
+        "mean": 0.17,
+        "median": 0.25,
+        "p10": 0.01,
+        "p90": 0.28,
+        "min": 0,
+        "max": 0.31
+      },
+      "LOOSE->DEAD": {
+        "n": 4,
+        "mean": 0.04,
+        "median": 0.04,
+        "p10": 0,
+        "p90": 0.05,
+        "min": 0,
+        "max": 0.05
+      },
+      "HELD->DEAD": {
+        "n": 2,
+        "mean": 0,
+        "median": 0,
+        "p10": 0,
+        "p90": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "ballTeleports": [
+      {
+        "t": 6166,
+        "from": "DEAD",
+        "to": "PASS_IN_FLIGHT",
+        "meters": 8.58
+      },
+      {
+        "t": 12212,
+        "from": "DEAD",
+        "to": "PASS_IN_FLIGHT",
+        "meters": 7.29
+      },
+      {
+        "t": 18265,
+        "from": "DEAD",
+        "to": "PASS_IN_FLIGHT",
+        "meters": 11.77
+      }
+    ],
+    "ballHeightJumps": [],
+    "maxPlayerStepMeters": 0.63,
+    "deadBallSeconds": {
+      "n": 161,
+      "mean": 4.05,
+      "median": 4,
+      "p10": 3.5,
+      "p90": 4.4,
+      "min": 3.2,
+      "max": 5.8
+    },
+    "inboundRecoveryMeters": {
+      "n": 0,
+      "mean": 0,
+      "median": 0,
+      "p10": 0,
+      "p90": 0,
+      "min": 0,
+      "max": 0
+    }
+  }
+]

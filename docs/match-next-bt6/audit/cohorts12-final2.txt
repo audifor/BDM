@@ -1,0 +1,5 @@
+pressureLow   oppPPP 1.008 ( 0.992 1.024 ) oppTOV 0.154 stl/op 0.130 blow 0.17 cont 0.13 drv 45.8 defFouls 13.3 oppRim 0.230 opp3 0.580 oppFTr 0.104 pickups 4.0 tight 0.18 kickOutPPS 1.07 blkRim 0.216 oppRimFG 0.470
+pressureMid   oppPPP 1.032 ( 1 1.065 ) oppTOV 0.141 stl/op 0.119 blow 0.39 cont 0.10 drv 52.9 defFouls 14.3 oppRim 0.198 opp3 0.607 oppFTr 0.115 pickups 2.3 tight 0.22 kickOutPPS 1.03 blkRim 0.135 oppRimFG 0.484
+pressureHigh  oppPPP 1.010 ( 0.994 1.025 ) oppTOV 0.150 stl/op 0.131 blow 0.61 cont 0.03 drv 59.3 defFouls 21.0 oppRim 0.236 opp3 0.548 oppFTr 0.240 pickups 0.8 tight 0.34 kickOutPPS 0.78 blkRim 0.112 oppRimFG 0.507
+helpLow       oppPPP 1.014 ( 1.052 0.976 ) oppTOV 0.157 stl/op 0.135 blow 0.46 cont 0.06 drv 53.9 defFouls 14.4 oppRim 0.251 opp3 0.563 oppFTr 0.126 pickups 1.6 tight 0.23 kickOutPPS 1.17 blkRim 0.148 oppRimFG 0.529
+helpHigh      oppPPP 1.063 ( 1.109 1.018 ) oppTOV 0.154 stl/op 0.128 blow 0.36 cont 0.08 drv 52.4 defFouls 14.4 oppRim 0.224 opp3 0.599 oppFTr 0.167 pickups 1.8 tight 0.24 kickOutPPS 1.18 blkRim 0.132 oppRimFG 0.476

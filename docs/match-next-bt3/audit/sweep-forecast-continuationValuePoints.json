@@ -1,0 +1,90 @@
+{
+  "param": "continuationValuePoints",
+  "seeds": [
+    424242,
+    7,
+    1
+  ],
+  "rows": [
+    {
+      "value": 0.9,
+      "points": 216,
+      "shots": 206,
+      "possessions": 200.333,
+      "threeShare": 0.619,
+      "rimShare": 0.139,
+      "paintShare": 0.199,
+      "midShare": 0.036,
+      "screens": 23.333,
+      "drives": 260.333,
+      "passes": 469,
+      "orebShare": 0.212,
+      "turnovers": 18.333,
+      "fg": 0.416
+    },
+    {
+      "value": 0.94,
+      "points": 226,
+      "shots": 200.333,
+      "possessions": 192.333,
+      "threeShare": 0.623,
+      "rimShare": 0.135,
+      "paintShare": 0.187,
+      "midShare": 0.05,
+      "screens": 27.667,
+      "drives": 264.667,
+      "passes": 473.667,
+      "orebShare": 0.232,
+      "turnovers": 16.667,
+      "fg": 0.437
+    },
+    {
+      "value": 0.98,
+      "points": 210,
+      "shots": 197.667,
+      "possessions": 187,
+      "threeShare": 0.608,
+      "rimShare": 0.171,
+      "paintShare": 0.177,
+      "midShare": 0.035,
+      "screens": 26.333,
+      "drives": 255.667,
+      "passes": 460.667,
+      "orebShare": 0.238,
+      "turnovers": 15.333,
+      "fg": 0.414
+    },
+    {
+      "value": 1.02,
+      "points": 207.333,
+      "shots": 198.333,
+      "possessions": 189,
+      "threeShare": 0.626,
+      "rimShare": 0.141,
+      "paintShare": 0.185,
+      "midShare": 0.039,
+      "screens": 23,
+      "drives": 249.667,
+      "passes": 453.667,
+      "orebShare": 0.235,
+      "turnovers": 16.333,
+      "fg": 0.412
+    },
+    {
+      "value": 1.06,
+      "points": 206,
+      "shots": 196.333,
+      "possessions": 187.667,
+      "threeShare": 0.639,
+      "rimShare": 0.142,
+      "paintShare": 0.168,
+      "midShare": 0.034,
+      "screens": 19,
+      "drives": 251,
+      "passes": 449,
+      "orebShare": 0.232,
+      "turnovers": 15.667,
+      "fg": 0.404
+    }
+  ]
+}

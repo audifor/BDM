@@ -9,8 +9,8 @@ export const MAX_FATIGUE_STRENGTH_PENALTY = 0.20
 
 export type FatigueByPlayerId = Readonly<Record<PlayerId, number>>
 
-export function createInitialFatigue(squads: MatchSquads): FatigueByPlayerId {
-  return Object.fromEntries([...squads.home, ...squads.away].map((playerId) => [playerId, 0])) as FatigueByPlayerId
+export function createInitialFatigue(squads: MatchSquads, initialFatigueByPlayerId: FatigueByPlayerId = {}): FatigueByPlayerId {
+  return Object.fromEntries([...squads.home, ...squads.away].map((playerId) => [playerId, clampFatigue(initialFatigueByPlayerId[playerId] ?? 0)])) as FatigueByPlayerId
 }
 
 /** Advances live fatigue for one elapsed game-clock interval. */
@@ -48,8 +48,9 @@ export function calculateFatigueAtEvents(
   homeTeamId: TeamId,
   awayTeamId: TeamId,
   events: readonly MatchEvent[],
+  initialFatigueByPlayerId: FatigueByPlayerId = {},
 ): FatigueByPlayerId {
-  let fatigue = createInitialFatigue(squads)
+  let fatigue = createInitialFatigue(squads, initialFatigueByPlayerId)
   let activeLineups = initialLineups
   let currentPeriod: number | undefined
   let previousClock: number | undefined

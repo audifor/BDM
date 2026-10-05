@@ -1,0 +1,117 @@
+{
+  "frames": 84015,
+  "meanToMan": 2.68,
+  "within1_5m": 0.429,
+  "within2_5m": 0.624,
+  "beyond3m": 0.311,
+  "beyond4m": 0.24,
+  "chasing": 0.046,
+  "orbiting": 0.001,
+  "awayFromTarget": 0.021,
+  "reversalsPerSecond": 0.02,
+  "targetJumpsPerSecond": 0.27,
+  "meanSpeed": 1.95,
+  "byKind": {
+    "ON_BALL": {
+      "share": 0.2,
+      "frames": 16803,
+      "toMan": 1.26,
+      "beyond3m": 0.037,
+      "chasing": 0.007,
+      "reversalsPerSecond": 0.02,
+      "targetJumpsPerSecond": 0.03
+    },
+    "GAP": {
+      "share": 0.7428911503898113,
+      "frames": 62414,
+      "toMan": 3,
+      "beyond3m": 0.372,
+      "chasing": 0.059,
+      "reversalsPerSecond": 0.01,
+      "targetJumpsPerSecond": 0.2
+    },
+    "ROTATE": {
+      "share": 0.015628161637802774,
+      "frames": 1313,
+      "toMan": 3.74,
+      "beyond3m": 0.529,
+      "chasing": 0.012,
+      "reversalsPerSecond": 0,
+      "targetJumpsPerSecond": 1.68
+    },
+    "LOW_MAN": {
+      "share": 0.01534249836338749,
+      "frames": 1289,
+      "toMan": 3.37,
+      "beyond3m": 0.407,
+      "chasing": 0.014,
+      "reversalsPerSecond": 0,
+      "targetJumpsPerSecond": 1.52
+    },
+    "X_OUT": {
+      "share": 0.015628161637802774,
+      "frames": 1313,
+      "toMan": 2.44,
+      "beyond3m": 0.219,
+      "chasing": 0.03,
+      "reversalsPerSecond": 0,
+      "targetJumpsPerSecond": 2.67
+    },
+    "RECOVER": {
+      "share": 0.010224364696780336,
+      "frames": 859,
+      "toMan": 5.24,
+      "beyond3m": 0.874,
+      "chasing": 0.02,
+      "reversalsPerSecond": 0,
+      "targetJumpsPerSecond": 1.93
+    },
+    "HELP": {
+      "share": 0.000285663274415283,
+      "frames": 24,
+      "toMan": 6.34,
+      "beyond3m": 0.792,
+      "chasing": 0,
+      "reversalsPerSecond": 0.42,
+      "targetJumpsPerSecond": 1.25
+    }
+  },
+  "byRelation": {
+    "ON_BALL": {
+      "share": 0.2,
+      "frames": 16803,
+      "toMan": 1.26,
+      "beyond3m": 0.037,
+      "chasing": 0.007,
+      "reversalsPerSecond": 0.02,
+      "targetJumpsPerSecond": 0.03
+    },
+    "ONE_PASS_AWAY": {
+      "share": 0.7428911503898113,
+      "frames": 62414,
+      "toMan": 3,
+      "beyond3m": 0.372,
+      "chasing": 0.059,
+      "reversalsPerSecond": 0.01,
+      "targetJumpsPerSecond": 0.2
+    },
+    "ASSIGNED": {
+      "share": 0.05682318633577337,
+      "frames": 4774,
+      "toMan": 3.55,
+      "beyond3m": 0.473,
+      "chasing": 0.019,
+      "reversalsPerSecond": 0,
+      "targetJumpsPerSecond": 1.95
+    },
+    "TWO_PLUS_PASSES_AWAY": {
+      "share": 0.000285663274415283,
+      "frames": 24,
+      "toMan": 6.34,
+      "beyond3m": 0.792,
+      "chasing": 0,
+      "reversalsPerSecond": 0.42,
+      "targetJumpsPerSecond": 1.25
+    }
+  }
+}

@@ -232,9 +232,9 @@ export function MatchCourt({
       ball = {
         xPercent: visualSnapshot.ball.xPercent,
         yPercent: visualSnapshot.ball.yPercent,
-        z: visualSnapshot.ball.ownerPlayerId === null ? 0 : 0.5,
+        z: visualSnapshot.ball.heightMeters ?? (visualSnapshot.ball.ownerPlayerId === null ? 0 : 0.5),
         ownerPlayerId: visualSnapshot.ball.ownerPlayerId,
-        state: visualSnapshot.ball.isPassing ? 'PASS' : visualSnapshot.ball.ownerPlayerId === null ? 'LOOSE' : 'HELD',
+        state: visualSnapshot.ball.state ?? (visualSnapshot.ball.isPassing ? 'PASS' : visualSnapshot.ball.ownerPlayerId === null ? 'LOOSE' : 'HELD'),
       }
     } else if (focused !== undefined) {
       const derived = deriveBallState(visualProgress, events)

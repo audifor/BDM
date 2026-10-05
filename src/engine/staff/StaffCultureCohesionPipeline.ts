@@ -1,4 +1,4 @@
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { staffAssignmentIndex, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { StaffCultureState } from '@/domain/staffCulture'
 import type { StaffHumanState } from '@/domain/staffHumanState'
 import type { StaffUnitCohesionState } from '@/domain/staffUnitCohesion'
@@ -109,8 +109,8 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
 }
 
 function getRelevantTeamStaffIds(world: GameWorld, teamId: import('@/domain/ids').TeamId): readonly string[] {
-  return Object.values(world.teamStaffAssignmentsById)
-    .filter((assignment) => assignment.teamId === teamId)
+  // WSR2: the team's assignments from the per-collection index (same elements, same order).
+  return (staffAssignmentIndex(world.teamStaffAssignmentsById).byTeam.get(teamId) ?? [])
     .map((assignment) => assignment.staffPersonId)
     .filter((staffId) => world.staffPeopleById[staffId] !== undefined)
     .filter((staffId) => world.staffEmploymentByStaffId[staffId] === undefined || world.staffEmploymentByStaffId[staffId]!.status === 'employed')

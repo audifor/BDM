@@ -48,8 +48,20 @@ export function classifyStaffPoliticalInfluenceBand(overall: number): StaffPolit
   return 'CENTRAL'
 }
 
+/**
+ * WSR2: the index is a pure function of an (immutable) world, and callers rebuilt it for every Staff context; it is now built once per
+ * world object and reused (the same answer, by construction).
+ */
+const politicalIndexByWorld = new WeakMap<GameWorld, StaffPoliticalInfluenceIndex>()
+
 /** Pure political-structure projection. It deliberately never reads Human State or Career Autonomy. */
 export function buildStaffPoliticalInfluenceIndex(world: GameWorld): StaffPoliticalInfluenceIndex {
+  let index = politicalIndexByWorld.get(world)
+  if (index === undefined) { index = computeStaffPoliticalInfluenceIndex(world); politicalIndexByWorld.set(world, index) }
+  return index
+}
+
+function computeStaffPoliticalInfluenceIndex(world: GameWorld): StaffPoliticalInfluenceIndex {
   const staffTeamById: Record<string, string> = {}
   const activeAssignmentByStaffId: Record<string, TeamStaffAssignment> = {}
   const leadershipActorByStaffId: Record<string, string> = {}

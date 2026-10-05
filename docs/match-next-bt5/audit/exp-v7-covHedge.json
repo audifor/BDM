@@ -1,0 +1,241 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1,
+    99,
+    2024
+  ],
+  "overrides": {},
+  "out": {
+    "covHedge": {
+      "description": "Home defense: hedge",
+      "msPerGame": 122436,
+      "complete": 6,
+      "home": {
+        "games": 6,
+        "possessions": 88.167,
+        "ppp": 0.985,
+        "secondsPerPossession": 12.226,
+        "transitionShare": 0.083,
+        "passesPerPossession": 2.809,
+        "assistsPerFgm": 0.592,
+        "drivesPerPossession": 0.694,
+        "screensPerPossession": 0.501,
+        "cutsPerPossession": 0.149,
+        "rimShare": 0.253,
+        "paintShare": 0.138,
+        "midShare": 0.043,
+        "threeShare": 0.567,
+        "catchShootShare": 0.513,
+        "pullUpShare": 0.072,
+        "prShare": 0.146,
+        "cutShare": 0,
+        "orebRate": 0.238,
+        "tovPerPossession": 0.18,
+        "stealsPerOppPossession": 0.123,
+        "blocksPerOppFga": 0.037,
+        "ftaPerFga": 0.187,
+        "coverageUsed": {
+          "hedge": 1
+        },
+        "switchesPerScreenFaced": 0,
+        "helpsPerDriveFaced": 0.925,
+        "topInitiatorShare": 0.331,
+        "topShooterShare": 0.367,
+        "rollShare": 0.57,
+        "playFamilies": {
+          "BALL_SCREEN": 0.342,
+          "CIRCULATION": 0.133,
+          "DRIVE_KICK": 0.162,
+          "EARLY_OFFENSE": 0.063,
+          "ISOLATION": 0.14,
+          "MOVEMENT": 0.141,
+          "POST": 0.018
+        },
+        "playLocations": {
+          "BALL_SCREEN@EMPTY_CORNER": 0.032,
+          "BALL_SCREEN@HIGH": 0.164,
+          "BALL_SCREEN@SIDE": 0.146,
+          "CIRCULATION@TOP": 0.133,
+          "DRIVE_KICK@TOP": 0.031,
+          "DRIVE_KICK@WING": 0.132,
+          "EARLY_OFFENSE@TRANSITION": 0.063,
+          "ISOLATION@ELBOW": 0.005,
+          "ISOLATION@TOP": 0.135,
+          "MOVEMENT@WING": 0.141,
+          "POST@ELBOW": 0.005,
+          "POST@LOW_POST": 0.013
+        },
+        "spacing": {
+          "4OUT1IN": 0.957,
+          "5OUT": 0.043
+        },
+        "adaptations": 0,
+        "offBallScreensPerPossession": 0.028,
+        "helpKinds": {
+          "help:DIG": 37.833,
+          "help:TAG": 60.333
+        },
+        "firstShotSecondsP50": 11.3,
+        "passesPerPossessionP90": 6
+      },
+      "away": {
+        "games": 6,
+        "possessions": 88,
+        "ppp": 1.081,
+        "secondsPerPossession": 12.052,
+        "transitionShare": 0.112,
+        "passesPerPossession": 3.267,
+        "assistsPerFgm": 0.508,
+        "drivesPerPossession": 0.758,
+        "screensPerPossession": 0.466,
+        "cutsPerPossession": 0.146,
+        "rimShare": 0.331,
+        "paintShare": 0.089,
+        "midShare": 0.041,
+        "threeShare": 0.539,
+        "catchShootShare": 0.51,
+        "pullUpShare": 0.055,
+        "prShare": 0.124,
+        "cutShare": 0,
+        "orebRate": 0.252,
+        "tovPerPossession": 0.144,
+        "stealsPerOppPossession": 0.159,
+        "blocksPerOppFga": 0.07,
+        "ftaPerFga": 0.203,
+        "coverageUsed": {
+          "drop": 0.108,
+          "hedge": 0.018,
+          "switch": 0.875
+        },
+        "switchesPerScreenFaced": 0.83,
+        "helpsPerDriveFaced": 0.929,
+        "topInitiatorShare": 0.325,
+        "topShooterShare": 0.35,
+        "rollShare": 0.569,
+        "playFamilies": {
+          "BALL_SCREEN": 0.311,
+          "CIRCULATION": 0.164,
+          "DRIVE_KICK": 0.125,
+          "EARLY_OFFENSE": 0.136,
+          "ISOLATION": 0.107,
+          "MOVEMENT": 0.116,
+          "POST": 0.041
+        },
+        "playLocations": {
+          "BALL_SCREEN@EMPTY_CORNER": 0.028,
+          "BALL_SCREEN@HIGH": 0.135,
+          "BALL_SCREEN@SIDE": 0.148,
+          "CIRCULATION@TOP": 0.164,
+          "DRIVE_KICK@TOP": 0.001,
+          "DRIVE_KICK@WING": 0.123,
+          "EARLY_OFFENSE@TRANSITION": 0.136,
+          "ISOLATION@ELBOW": 0.081,
+          "ISOLATION@TOP": 0.013,
+          "ISOLATION@WING": 0.013,
+          "MOVEMENT@WING": 0.116,
+          "POST@ELBOW": 0.041
+        },
+        "spacing": {
+          "4OUT1IN": 0.806,
+          "5OUT": 0.194
+        },
+        "adaptations": 0.833,
+        "offBallScreensPerPossession": 0.036,
+        "helpKinds": {
+          "help:DIG": 41.5,
+          "help:TAG": 4.667
+        },
+        "firstShotSecondsP50": 10.5,
+        "passesPerPossessionP90": 8
+      },
+      "score": [
+        {
+          "home": 64,
+          "away": 91
+        },
+        {
+          "home": 87,
+          "away": 100
+        },
+        {
+          "home": 111,
+          "away": 82
+        },
+        {
+          "home": 79,
+          "away": 90
+        },
+        {
+          "home": 100,
+          "away": 105
+        },
+        {
+          "home": 80,
+          "away": 103
+        }
+      ],
+      "adjustments": [
+        [
+          {
+            "t": 19441,
+            "side": "away",
+            "reason": "BALL_SCREEN produced 1.50 points per possession over 16 (offense 1.05): go back to it"
+          }
+        ],
+        [
+          {
+            "t": 13437,
+            "side": "away",
+            "reason": "CIRCULATION produced 0.40 points per possession over 10 (offense 0.94): run it less"
+          }
+        ],
+        [],
+        [
+          {
+            "t": 21133,
+            "side": "away",
+            "reason": "CIRCULATION produced 1.70 points per possession over 10 (offense 1.14): go back to it"
+          }
+        ],
+        [
+          {
+            "t": 9735,
+            "side": "away",
+            "reason": "switch conceded 2.00 points per possession over 9 (team 1.26): change to drop"
+          }
+        ],
+        [
+          {
+            "t": 10589,
+            "side": "away",
+            "reason": "BALL_SCREEN produced 0.64 points per possession over 11 (offense 1.14): run it less"
+          }
+        ]
+      ],
+      "familyPpp": {
+        "home": {
+          "DRIVE_KICK": "1.20 (n=79)",
+          "MOVEMENT": "0.93 (n=73)",
+          "BALL_SCREEN": "0.94 (n=171)",
+          "CIRCULATION": "0.93 (n=74)",
+          "ISOLATION": "1.05 (n=65)",
+          "EARLY_OFFENSE": "1.36 (n=39)",
+          "POST": "0.64 (n=11)"
+        },
+        "away": {
+          "MOVEMENT": "1.18 (n=57)",
+          "BALL_SCREEN": "1.05 (n=155)",
+          "EARLY_OFFENSE": "1.12 (n=93)",
+          "DRIVE_KICK": "1.02 (n=56)",
+          "ISOLATION": "1.10 (n=51)",
+          "CIRCULATION": "1.24 (n=80)",
+          "POST": "1.04 (n=25)"
+        }
+      }
+    }
+  },
+  "distances": {}
+}

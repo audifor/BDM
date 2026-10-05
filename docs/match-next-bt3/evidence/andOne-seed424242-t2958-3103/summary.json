@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "andOne",
+  "description": "Made basket with a foul: the AND-ONE free throw",
+  "seed": 424242,
+  "fromTick": 2958,
+  "toTick": 3103
+ },
+ "everyMs": 1208,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 2961,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4260599324474256
+    },
+    {
+     "frame": 1,
+     "tick": 2973,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.36650242725024607
+    },
+    {
+     "frame": 2,
+     "tick": 2985,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.33259878547330884
+    },
+    {
+     "frame": 3,
+     "tick": 2997,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.25663939541511577
+    },
+    {
+     "frame": 4,
+     "tick": 3009,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.11551600078794527
+    },
+    {
+     "frame": 5,
+     "tick": 3021,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12583413284950676
+    },
+    {
+     "frame": 6,
+     "tick": 3033,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.010484669321280147
+    },
+    {
+     "frame": 7,
+     "tick": 3045,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.02550508510703851
+    },
+    {
+     "frame": 8,
+     "tick": 3057,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.03440234678332588
+    },
+    {
+     "frame": 9,
+     "tick": 3070,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.31076449552521124
+    },
+    {
+     "frame": 10,
+     "tick": 3082,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1819365684460993
+    },
+    {
+     "frame": 11,
+     "tick": 3094,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.459396734450117
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 2961,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4260599324474256
+    },
+    {
+     "frame": 1,
+     "tick": 2973,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.36650242725024607
+    },
+    {
+     "frame": 2,
+     "tick": 2985,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.33259878547330884
+    },
+    {
+     "frame": 3,
+     "tick": 2997,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.25663939541511577
+    },
+    {
+     "frame": 4,
+     "tick": 3009,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.11551600078794527
+    },
+    {
+     "frame": 5,
+     "tick": 3021,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12583413284950676
+    },
+    {
+     "frame": 6,
+     "tick": 3033,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.010484669321280147
+    },
+    {
+     "frame": 7,
+     "tick": 3045,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.02550508510703851
+    },
+    {
+     "frame": 8,
+     "tick": 3057,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.03440234678332588
+    },
+    {
+     "frame": 9,
+     "tick": 3070,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.31076449552521124
+    },
+    {
+     "frame": 10,
+     "tick": 3082,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1819365684460993
+    },
+    {
+     "frame": 11,
+     "tick": 3094,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.459396734450117
+    }
+   ]
+  }
+ }
+}

@@ -3,19 +3,27 @@ import { createDevelopmentStimulusEvent } from '@/domain/development/Development
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import type { CanonicalRatingKey } from '@/domain/player'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { calculateFatigueAtEvents, calculateMatchPlayerStats, type MatchSimulation } from '@/engine/match'
+import { calculateFatigueAtEvents, calculateMatchPlayerStats, type FatigueByPlayerId, type MatchSimulation } from '@/engine/match'
+
+/** Career fatigue (0–100) enters the legacy session on its existing 0–100 scale at half strength. */
+export function careerFatigueToMatchSession(value: number): number {
+  if (!Number.isFinite(value)) throw new Error('Career fatigue must be finite')
+  return Math.min(100, Math.max(0, value)) * 0.5
+}
 
 /** Applies legacy match load at the canonical result boundary. */
-export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulation: MatchSimulation): GameWorld {
-  const finalFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events)
+export function applyPlayerMatchConsequences(worldBeforeMatch: GameWorld, completedWorld: GameWorld, simulation: MatchSimulation): GameWorld {
+  const initialFatigue = initialMatchFatigue(simulation.squads, worldBeforeMatch.careerFatigueByPlayerId)
+  const finalFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events, initialFatigue)
   const fatigue = { ...completedWorld.careerFatigueByPlayerId }
   const stimulus = { ...completedWorld.developmentStimulusByPlayerId }
   const stimulusEvents = [] as ReturnType<typeof createDevelopmentStimulusEvent>[]
   let changed = false
 
   for (const stats of calculateMatchPlayerStats(simulation)) {
-    const after = finalFatigue[stats.playerId] ?? 0
-    const careerDelta = after * 0.125
+    const before = initialFatigue[stats.playerId] ?? 0
+    const after = finalFatigue[stats.playerId] ?? before
+    const careerDelta = Math.max(0, after - before) * 0.125
     if (careerDelta > 0) {
       fatigue[stats.playerId] = clampCareerFatigue((fatigue[stats.playerId] ?? 0) + careerDelta)
       changed = true
@@ -29,6 +37,10 @@ export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulati
     }
   }
   return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, developmentStimulusEvents: [...Object.values(completedWorld.developmentStimulusEventsById), ...stimulusEvents] }) : completedWorld
+}
+
+export function initialMatchFatigue(squads: MatchSimulation['squads'], careerFatigueByPlayerId: GameWorld['careerFatigueByPlayerId']): FatigueByPlayerId {
+  return Object.fromEntries([...squads.home, ...squads.away].map((playerId) => [playerId, careerFatigueToMatchSession(careerFatigueByPlayerId[playerId] ?? 0)])) as FatigueByPlayerId
 }
 
 function deriveStimulus(minutes: number, threes: number, twos: number, offensiveRebounds: number, defensiveRebounds: number, assists: number, steals: number, blocks: number): Partial<Record<CanonicalRatingKey, number>> {

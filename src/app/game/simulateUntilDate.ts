@@ -1,8 +1,9 @@
+import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDay, advanceGameDayAsync } from './advanceGameDay'
 import { getContinueStopReason, type ContinueStopReason } from './ContinueFlow'
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
@@ -55,14 +56,26 @@ export interface SimulateUntilTick {
  * silently deleting its orphaned fixtures, or moving their dates -- see Paso 10.
  */
 export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed): SimulateUntilTick {
+  const plan = planSimulateUntilTick(world, targetDate)
+  return 'tick' in plan ? plan.tick : { world: advanceGameDay(world, createSeed, plan.advanceAllowing), event: { type: 'dayAdvanced' } }
+}
+
+/** ME-LOCK1.1: the same tick with the day's match simulations on `runner` (parallel workers in the app). */
+export async function tickSimulateUntilDateAsync(world: GameWorld, targetDate: GameDate, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed): Promise<SimulateUntilTick> {
+  const plan = planSimulateUntilTick(world, targetDate)
+  return 'tick' in plan ? plan.tick : { world: await advanceGameDayAsync(world, runner, createSeed, plan.advanceAllowing), event: { type: 'dayAdvanced' } }
+}
+
+/** What one tick does: a finished/rolled-over tick decided without advancing, or an ordinary day advance allowing these breakpoints. */
+function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readonly tick: SimulateUntilTick } | { readonly advanceAllowing: readonly string[] } {
   const target = parseGameDate(targetDate)
   if (compareGameDates(world.currentDate, target) >= 0) {
-    return { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } }
+    return { tick: { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } } }
   }
 
   const interruption = getContinueStopReason(world)
   if (interruption !== undefined && interruption.type !== 'seasonComplete') {
-    return { world, event: { type: 'finished', stopReason: interruption } }
+    return { tick: { world, event: { type: 'finished', stopReason: interruption } } }
   }
 
   // Checked every tick, not only when the primary (user-facing) competition happens to be
@@ -74,21 +87,21 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
   // can never overshoot `target` the way an eager clock jump could.
   const advanced = advanceCompetitionLifecycles(world)
   if (advanced.blockedOn !== undefined) {
-    return { world: advanced.world, event: { type: 'finished', stopReason: getContinueStopReason(advanced.world) ?? { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn }, transitions: advanced.transitions } }
+    return { tick: { world: advanced.world, event: { type: 'finished', stopReason: getContinueStopReason(advanced.world) ?? { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn }, transitions: advanced.transitions } } }
   }
   if (advanced.world !== world) {
-    return { world: advanced.world, event: { type: 'seasonRolledOver', previousSeasonId: world.currentSeasonId, nextSeasonId: advanced.world.currentSeasonId, transitions: advanced.transitions } }
+    return { tick: { world: advanced.world, event: { type: 'seasonRolledOver', previousSeasonId: world.currentSeasonId, nextSeasonId: advanced.world.currentSeasonId, transitions: advanced.transitions } } }
   }
 
   if (interruption?.type === 'seasonComplete') {
     // The primary's next edition already exists (rolled above, if it was FULLY_SUPPORTED) with a
     // future `startDate`; keep advancing one day at a time until the world clock reaches it and
     // `currentSeasonId` migrates naturally (see CalendarEngine.migrateCurrentSeasonIfElapsed).
-    return { world: advanceGameDay(world, createSeed, ['seasonComplete']), event: { type: 'dayAdvanced' } }
+    return { advanceAllowing: ['seasonComplete'] }
   }
-  if (interruption !== undefined) return { world, event: { type: 'finished', stopReason: interruption } }
+  if (interruption !== undefined) return { tick: { world, event: { type: 'finished', stopReason: interruption } } }
 
-  return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
+  return { advanceAllowing: ['userGame'] }
 }
 
 /** Advances the canonical daily pipeline until the chosen morning, simulating every pending event on the way. */

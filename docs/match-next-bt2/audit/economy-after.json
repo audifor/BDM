@@ -1,0 +1,585 @@
+{
+  "tag": "after",
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337,
+    11,
+    12
+  ],
+  "perGame": [
+    {
+      "seed": 424242,
+      "points": 176,
+      "shots": 201,
+      "possessions": 173,
+      "shotsPerPossession": 1.16,
+      "meanPossessionSeconds": 12.09,
+      "threeShare": 0.418,
+      "shotsOver9mShare": 0.02,
+      "offensiveReboundShare": 0.301,
+      "putbackShots": 31,
+      "turnovers": 7,
+      "fieldGoalPct": 0.378,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 7,
+      "points": 209,
+      "shots": 200,
+      "possessions": 190,
+      "shotsPerPossession": 1.05,
+      "meanPossessionSeconds": 10.8,
+      "threeShare": 0.395,
+      "shotsOver9mShare": 0.02,
+      "offensiveReboundShare": 0.239,
+      "putbackShots": 21,
+      "turnovers": 15,
+      "fieldGoalPct": 0.445,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 1,
+      "points": 201,
+      "shots": 192,
+      "possessions": 184,
+      "shotsPerPossession": 1.04,
+      "meanPossessionSeconds": 11.34,
+      "threeShare": 0.469,
+      "shotsOver9mShare": 0.01,
+      "offensiveReboundShare": 0.245,
+      "putbackShots": 15,
+      "turnovers": 16,
+      "fieldGoalPct": 0.438,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 99,
+      "points": 218,
+      "shots": 203,
+      "possessions": 193,
+      "shotsPerPossession": 1.05,
+      "meanPossessionSeconds": 10.62,
+      "threeShare": 0.433,
+      "shotsOver9mShare": 0.025,
+      "offensiveReboundShare": 0.224,
+      "putbackShots": 18,
+      "turnovers": 12,
+      "fieldGoalPct": 0.463,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 2024,
+      "points": 201,
+      "shots": 220,
+      "possessions": 178,
+      "shotsPerPossession": 1.24,
+      "meanPossessionSeconds": 11.7,
+      "threeShare": 0.418,
+      "shotsOver9mShare": 0.009,
+      "offensiveReboundShare": 0.393,
+      "putbackShots": 47,
+      "turnovers": 11,
+      "fieldGoalPct": 0.382,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 31337,
+      "points": 187,
+      "shots": 198,
+      "possessions": 184,
+      "shotsPerPossession": 1.08,
+      "meanPossessionSeconds": 11.45,
+      "threeShare": 0.49,
+      "shotsOver9mShare": 0.02,
+      "offensiveReboundShare": 0.212,
+      "putbackShots": 18,
+      "turnovers": 9,
+      "fieldGoalPct": 0.394,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 11,
+      "points": 222,
+      "shots": 192,
+      "possessions": 189,
+      "shotsPerPossession": 1.02,
+      "meanPossessionSeconds": 10.82,
+      "threeShare": 0.458,
+      "shotsOver9mShare": 0,
+      "offensiveReboundShare": 0.198,
+      "putbackShots": 17,
+      "turnovers": 14,
+      "fieldGoalPct": 0.474,
+      "shotClockViolations": 0
+    },
+    {
+      "seed": 12,
+      "points": 212,
+      "shots": 196,
+      "possessions": 185,
+      "shotsPerPossession": 1.06,
+      "meanPossessionSeconds": 11.22,
+      "threeShare": 0.515,
+      "shotsOver9mShare": 0.02,
+      "offensiveReboundShare": 0.234,
+      "putbackShots": 21,
+      "turnovers": 13,
+      "fieldGoalPct": 0.439,
+      "shotClockViolations": 0
+    }
+  ],
+  "distributions": {
+    "points": {
+      "n": 8,
+      "mean": 203.25,
+      "median": 209,
+      "p10": 176,
+      "p90": 222,
+      "min": 176,
+      "max": 222
+    },
+    "shots": {
+      "n": 8,
+      "mean": 200.25,
+      "median": 200,
+      "p10": 192,
+      "p90": 220,
+      "min": 192,
+      "max": 220
+    },
+    "possessions": {
+      "n": 8,
+      "mean": 184.5,
+      "median": 185,
+      "p10": 173,
+      "p90": 193,
+      "min": 173,
+      "max": 193
+    },
+    "shotsPerPossession": {
+      "n": 8,
+      "mean": 1.09,
+      "median": 1.06,
+      "p10": 1.02,
+      "p90": 1.24,
+      "min": 1.02,
+      "max": 1.24
+    },
+    "meanPossessionSeconds": {
+      "n": 8,
+      "mean": 11.26,
+      "median": 11.34,
+      "p10": 10.62,
+      "p90": 12.09,
+      "min": 10.62,
+      "max": 12.09
+    },
+    "threeShare": {
+      "n": 8,
+      "mean": 0.45,
+      "median": 0.46,
+      "p10": 0.4,
+      "p90": 0.52,
+      "min": 0.4,
+      "max": 0.52
+    },
+    "shotsOver9mShare": {
+      "n": 8,
+      "mean": 0.02,
+      "median": 0.02,
+      "p10": 0,
+      "p90": 0.03,
+      "min": 0,
+      "max": 0.03
+    },
+    "offensiveReboundShare": {
+      "n": 8,
+      "mean": 0.26,
+      "median": 0.24,
+      "p10": 0.2,
+      "p90": 0.39,
+      "min": 0.2,
+      "max": 0.39
+    },
+    "putbackShots": {
+      "n": 8,
+      "mean": 23.5,
+      "median": 21,
+      "p10": 15,
+      "p90": 47,
+      "min": 15,
+      "max": 47
+    },
+    "turnovers": {
+      "n": 8,
+      "mean": 12.13,
+      "median": 13,
+      "p10": 7,
+      "p90": 16,
+      "min": 7,
+      "max": 16
+    },
+    "fieldGoalPct": {
+      "n": 8,
+      "mean": 0.43,
+      "median": 0.44,
+      "p10": 0.38,
+      "p90": 0.47,
+      "min": 0.38,
+      "max": 0.47
+    },
+    "shotClockViolations": {
+      "n": 8,
+      "mean": 0,
+      "median": 0,
+      "p10": 0,
+      "p90": 0,
+      "min": 0,
+      "max": 0
+    }
+  },
+  "possessionLevel": {
+    "seconds": {
+      "n": 1476,
+      "mean": 11.24,
+      "median": 10.7,
+      "p10": 5.3,
+      "p90": 18.1,
+      "min": 0.3,
+      "max": 33.1
+    },
+    "decisions": {
+      "n": 1476,
+      "mean": 4.5,
+      "median": 4,
+      "p10": 2,
+      "p90": 7,
+      "min": 0,
+      "max": 13
+    },
+    "passes": {
+      "n": 1476,
+      "mean": 2.16,
+      "median": 2,
+      "p10": 1,
+      "p90": 3,
+      "min": 0,
+      "max": 6
+    },
+    "drives": {
+      "n": 1476,
+      "mean": 1.44,
+      "median": 1,
+      "p10": 1,
+      "p90": 2,
+      "min": 0,
+      "max": 3
+    },
+    "screens": {
+      "n": 1476,
+      "mean": 0.15,
+      "median": 0,
+      "p10": 0,
+      "p90": 1,
+      "min": 0,
+      "max": 2
+    },
+    "shots": {
+      "n": 1476,
+      "mean": 1.09,
+      "median": 1,
+      "p10": 1,
+      "p90": 2,
+      "min": 0,
+      "max": 5
+    },
+    "offensiveRebounds": {
+      "n": 1476,
+      "mean": 0.16,
+      "median": 0,
+      "p10": 0,
+      "p90": 1,
+      "min": 0,
+      "max": 4
+    },
+    "setupSeconds": {
+      "n": 1476,
+      "mean": 8.88,
+      "median": 8.6,
+      "p10": 2.1,
+      "p90": 16.9,
+      "min": 0,
+      "max": 32.7
+    },
+    "firstShotSecondsAfterSetup": {
+      "n": 1366,
+      "mean": 7.49,
+      "median": 7.2,
+      "p10": 0.6,
+      "p90": 14.9,
+      "min": 0.3,
+      "max": 21.3
+    },
+    "shotsPerPossessionHistogram": [
+      {
+        "shots": "0",
+        "share": 0.073
+      },
+      {
+        "shots": "1",
+        "share": 0.799
+      },
+      {
+        "shots": "2",
+        "share": 0.104
+      },
+      {
+        "shots": "3",
+        "share": 0.018
+      },
+      {
+        "shots": "4+",
+        "share": 0.005
+      }
+    ],
+    "endReasons": {
+      "made": 0.462,
+      "defensiveRebound": 0.454,
+      "turnover": 0.066,
+      "periodEnd": 0.018
+    }
+  },
+  "decisionGapsSeconds": {
+    "n": 6627,
+    "mean": 2.95,
+    "median": 1.5,
+    "p10": 1.1,
+    "p90": 8.2,
+    "min": 0.2,
+    "max": 16.3
+  },
+  "setupDecisionsPerSecond": {
+    "n": 8,
+    "mean": 0.51,
+    "median": 0.51,
+    "p10": 0.48,
+    "p90": 0.53,
+    "min": 0.48,
+    "max": 0.53
+  },
+  "shotDistanceMeters": {
+    "n": 1602,
+    "mean": 5.15,
+    "median": 4.53,
+    "p10": 1.74,
+    "p90": 7.8,
+    "min": 0.52,
+    "max": 26.21
+  },
+  "halfCourtSettlement": {
+    "samples": 38405,
+    "cornersOccupied": {
+      "n": 38405,
+      "mean": 0.84,
+      "median": 1,
+      "p10": 0,
+      "p90": 2,
+      "min": 0,
+      "max": 3
+    },
+    "cornersEmptyShare": 0.434,
+    "withinOneMeterOfSlotShare": 0.363,
+    "meanDistanceToSlot": {
+      "n": 38405,
+      "mean": 5.3,
+      "median": 3.53,
+      "p10": 0.59,
+      "p90": 14.02,
+      "min": 0.02,
+      "max": 23.58
+    },
+    "minPairDistance": {
+      "n": 38405,
+      "mean": 3.34,
+      "median": 3.06,
+      "p10": 0.94,
+      "p90": 6.23,
+      "min": 0,
+      "max": 7.63
+    },
+    "paintOccupants": {
+      "n": 38405,
+      "mean": 0.37,
+      "median": 0,
+      "p10": 0,
+      "p90": 1,
+      "min": 0,
+      "max": 5
+    },
+    "ballHeldSeconds": {
+      "n": 38405,
+      "mean": 1.85,
+      "median": 0.9,
+      "p10": 0,
+      "p90": 4.8,
+      "min": 0,
+      "max": 13.5
+    },
+    "guardDistance": {
+      "n": 38405,
+      "mean": 3.91,
+      "median": 3.66,
+      "p10": 2.14,
+      "p90": 6.32,
+      "min": 0.45,
+      "max": 11.13
+    },
+    "openAttackersShare": 0.634
+  },
+  "shotGeography": [
+    {
+      "bucket": "rim <2.2m",
+      "attempts": 354,
+      "share": 0.221,
+      "fgPct": 0.517,
+      "meanProbability": 0.534,
+      "meanContest": 0.794
+    },
+    {
+      "bucket": "paint 2.2-4.5m",
+      "attempts": 426,
+      "share": 0.266,
+      "fgPct": 0.448,
+      "meanProbability": 0.44,
+      "meanContest": 0.651
+    },
+    {
+      "bucket": "mid 4.5-6.5m",
+      "attempts": 98,
+      "share": 0.061,
+      "fgPct": 0.449,
+      "meanProbability": 0.469,
+      "meanContest": 0.517
+    },
+    {
+      "bucket": "three 6.5-8m",
+      "attempts": 682,
+      "share": 0.426,
+      "fgPct": 0.381,
+      "meanProbability": 0.348,
+      "meanContest": 0.308
+    },
+    {
+      "bucket": "three 8-9m",
+      "attempts": 17,
+      "share": 0.011,
+      "fgPct": 0.059,
+      "meanProbability": 0.325,
+      "meanContest": 0.311
+    },
+    {
+      "bucket": "deep >9m",
+      "attempts": 25,
+      "share": 0.016,
+      "fgPct": 0.12,
+      "meanProbability": 0.07,
+      "meanContest": 0.711
+    }
+  ],
+  "rebounds": {
+    "n": 916,
+    "offensiveShare": 0.258,
+    "meanOffenseNearest": 1.48,
+    "meanDefenseNearest": 0.77,
+    "meanOffenseWithin2m": 0.78,
+    "meanDefenseWithin2m": 2.03,
+    "meanLandingDistanceToRim": 2.45,
+    "meanShotDistance": 5.45,
+    "offensiveShareWhenOffenseNearer": 0.351,
+    "offensiveShareWhenDefenseNearer": 0.208,
+    "shareOffenseNearer": 0.348
+  },
+  "halfCourtSettled": {
+    "samples": 5063,
+    "cornersEmptyShare": 0.008,
+    "cornersOccupied": {
+      "n": 5063,
+      "mean": 1.77,
+      "median": 2,
+      "p10": 1,
+      "p90": 2,
+      "min": 0,
+      "max": 3
+    },
+    "inZoneShare": 0.848,
+    "meanGuardDistance": {
+      "n": 5063,
+      "mean": 3.12,
+      "median": 2.58,
+      "p10": 2.31,
+      "p90": 4.87,
+      "min": 1.05,
+      "max": 8.41
+    },
+    "minPairDistance": {
+      "n": 5063,
+      "mean": 5.32,
+      "median": 6.21,
+      "p10": 3.06,
+      "p90": 6.25,
+      "min": 0.06,
+      "max": 7.15
+    },
+    "paintOccupants": {
+      "n": 5063,
+      "mean": 0.11,
+      "median": 0,
+      "p10": 0,
+      "p90": 0,
+      "min": 0,
+      "max": 3
+    }
+  },
+  "eventCountsFirstGame": {
+    "periodStart": 4,
+    "jumpBallStarted": 1,
+    "jumpBallResolved": 1,
+    "possessionStart": 173,
+    "defensiveAssignmentsEstablished": 173,
+    "defensiveResponsibilityChanged": 4130,
+    "transitionStarted": 180,
+    "transitionAdvantageChanged": 275,
+    "possessionPhaseChanged": 1324,
+    "transitionResolved": 180,
+    "decisionSelected": 812,
+    "actionStarted": 1121,
+    "passReleased": 409,
+    "passReceived": 389,
+    "actionResolved": 1120,
+    "offBallMove": 394,
+    "shotReleased": 201,
+    "shotMade": 76,
+    "possessionEnd": 173,
+    "ballDead": 81,
+    "inboundStarted": 80,
+    "inboundReleased": 80,
+    "reboundResponsibilitiesAssigned": 125,
+    "shotMissed": 125,
+    "reboundBecameAvailable": 123,
+    "reboundSecured": 123,
+    "screenSet": 27,
+    "screenUsed": 27,
+    "screenEnded": 28,
+    "passBecameLoose": 17,
+    "looseBallCreated": 17,
+    "looseBallRecovered": 16,
+    "periodEnd": 4,
+    "substitution": 2,
+    "passIntercepted": 2,
+    "gameEnd": 1
+  }
+}

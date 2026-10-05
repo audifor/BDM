@@ -1,0 +1,9 @@
+{
+ "scen": "D4",
+ "wallMs": 12,
+ "notes": {
+  "threw": "PlayUserGameError: home team has 4 available players; 5 are required"
+ },
+ "failed": [],
+ "audits": []
+}

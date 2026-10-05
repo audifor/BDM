@@ -7,10 +7,15 @@ import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
-import { continueGame, createAcbTestGame, createNewGame, simulateUntilDate } from '@/app/game'
+import { continueGame, createAcbTestGame as createFullAcbTestGame, createNewGame as createFullNewGame, simulateUntilDate } from '@/app/game'
 import { useGameStore } from '@/stores/gameStore'
 import { SystemBar } from '@/ui-ng/system/SystemBar'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { withShortGameFormat } from '@/app/game/testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 afterEach(cleanup)
 
@@ -50,7 +55,7 @@ describe('SystemBar continue', () => {
     expect(new URL(window.location.href).searchParams.get('app')).toBe('contracts')
   })
 
-  it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, () => {
+  it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, async () => {
     const world = createAcbTestGame()
     const preview = continueGame(world)
     expect(preview.daysAdvanced).toBeGreaterThan(0)
@@ -58,7 +63,8 @@ describe('SystemBar continue', () => {
     mountBar()
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(useGameStore.getState().world?.currentDate).toBe(preview.finalDate)
+    // ME-LOCK1.1: Continue runs the day's matches on the match runner (workers in the app), so the world arrives asynchronously.
+    await waitFor(() => expect(useGameStore.getState().world?.currentDate).toBe(preview.finalDate), { timeout: 14_000 })
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
   })
 

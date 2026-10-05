@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "foulInbound",
+  "description": "Non-shooting foul: whistle, dead ball carried to the spot, throw-in",
+  "seed": 424242,
+  "fromTick": 1557,
+  "toTick": 1682
+ },
+ "everyMs": 1041,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1557,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.44002856602682094
+    },
+    {
+     "frame": 1,
+     "tick": 1567,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.16210183950257875
+    },
+    {
+     "frame": 2,
+     "tick": 1578,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.45503761476470883
+    },
+    {
+     "frame": 3,
+     "tick": 1588,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.28995947932795885
+    },
+    {
+     "frame": 4,
+     "tick": 1598,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.03701610374399825
+    },
+    {
+     "frame": 5,
+     "tick": 1609,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3179223308351983
+    },
+    {
+     "frame": 6,
+     "tick": 1619,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09279271335735816
+    },
+    {
+     "frame": 7,
+     "tick": 1630,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 8,
+     "tick": 1640,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.1370203736315057
+    },
+    {
+     "frame": 9,
+     "tick": 1650,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.004484893113106145
+    },
+    {
+     "frame": 10,
+     "tick": 1661,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3731132862549957
+    },
+    {
+     "frame": 11,
+     "tick": 1671,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.11439205055010696
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1557,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.44002856602682094
+    },
+    {
+     "frame": 1,
+     "tick": 1567,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.16210183950257875
+    },
+    {
+     "frame": 2,
+     "tick": 1578,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.45503761476470883
+    },
+    {
+     "frame": 3,
+     "tick": 1588,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.28995947932795885
+    },
+    {
+     "frame": 4,
+     "tick": 1598,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.03701610374399825
+    },
+    {
+     "frame": 5,
+     "tick": 1609,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3179223308351983
+    },
+    {
+     "frame": 6,
+     "tick": 1619,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09279271335735816
+    },
+    {
+     "frame": 7,
+     "tick": 1630,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 8,
+     "tick": 1640,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.1370203736315057
+    },
+    {
+     "frame": 9,
+     "tick": 1650,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.004484893113106145
+    },
+    {
+     "frame": 10,
+     "tick": 1661,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.3731132862549957
+    },
+    {
+     "frame": 11,
+     "tick": 1671,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.11439205055010696
+    }
+   ]
+  }
+ }
+}

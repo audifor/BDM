@@ -3,6 +3,9 @@ import { responsibilityDefinition, validateResponsibilityAssignment, type Respon
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type StaffRoleId, type StaffRoleSeniority } from '@/domain/staff'
 import type { GameWorld } from './GameWorld'
 import { getStaffAssignment, getStaffPerson, getTeamStaffAssignments } from './staff'
+import { responsibilityIndex, teamKindKey } from './collectionIndexes'
+
+// WSR2: the queries below read per-collection indexes (collectionIndexes.ts): the same elements in the same order as the scans they replace.
 
 /** Small closed lookup: capacity scales with role seniority. Never persisted — always derived. */
 const CAPACITY_LIMIT_BY_SENIORITY: Readonly<Record<StaffRoleSeniority, number>> = {
@@ -13,15 +16,15 @@ const CAPACITY_LIMIT_BY_SENIORITY: Readonly<Record<StaffRoleSeniority, number>> 
 }
 
 export function getTeamResponsibilities(world: GameWorld, teamId: TeamId): readonly Responsibility[] {
-  return Object.values(world.responsibilitiesById).filter((responsibility) => responsibility.teamId === teamId).sort((a, b) => a.kind.localeCompare(b.kind))
+  return [...(responsibilityIndex(world.responsibilitiesById).byTeam.get(teamId) ?? [])].sort((a, b) => a.kind.localeCompare(b.kind))
 }
 
 export function getResponsibilitiesHeldByStaff(world: GameWorld, staffId: StaffPersonId): readonly Responsibility[] {
-  return Object.values(world.responsibilitiesById).filter((responsibility) => responsibility.holderStaffId === staffId)
+  return responsibilityIndex(world.responsibilitiesById).byHolder.get(staffId) ?? []
 }
 
 export function getResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind): Responsibility | undefined {
-  return Object.values(world.responsibilitiesById).find((responsibility) => responsibility.teamId === teamId && responsibility.kind === kind)
+  return responsibilityIndex(world.responsibilitiesById).byTeamKind.get(teamKindKey(teamId, kind))
 }
 
 /**

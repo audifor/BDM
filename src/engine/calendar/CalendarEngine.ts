@@ -1,5 +1,5 @@
 import { addDays, compareGameDates } from '@/domain/date'
-import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld, type GameWorld } from '@/domain/world'
+import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { progressFormalOfferResponses, progressNegotiationContactResponses, reconcileExpiredPlayerContracts } from '@/engine/market'
@@ -94,7 +94,9 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     const before = current
     const startedAt = performance.now()
     try {
-      current = execute(before)
+      // WSR2: the whole world is validated once per phase that changed it (when the phase ends, before any later phase reads it),
+      // not after every intermediate update inside the phase; validation never alters a world, so valid days are unchanged.
+      current = withSingleWorldValidation(before, execute)
       const phaseDiagnostics = diagnostics(before, current)
       phases.push({ phaseId, order, date, ran: true, worldChanged: current !== before, diagnostics: phaseDiagnostics, summary: summarizePhase(current !== before, phaseDiagnostics), elapsedMs: Math.round((performance.now() - startedAt) * 100) / 100 })
     } catch (error) {

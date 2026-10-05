@@ -1,0 +1,387 @@
+[
+ {
+  "wallMs": 367,
+  "tick": 1158,
+  "sequence": 548,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1158,
+  "sequence": 549,
+  "type": "actionStarted",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1158,
+  "sequence": 550,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1160,
+  "sequence": 551,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1160,
+  "sequence": 552,
+  "type": "shotReleased",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1160,
+  "sequence": 553,
+  "type": "screenEnded",
+  "detail": "A. Bexley > B. Istra exit"
+ },
+ {
+  "wallMs": 367,
+  "tick": 1160,
+  "sequence": 554,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 873,
+  "tick": 1166,
+  "sequence": 555,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 873,
+  "tick": 1166,
+  "sequence": 556,
+  "type": "shotMissed",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 873,
+  "tick": 1166,
+  "sequence": 557,
+  "type": "actionResolved",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 558,
+  "type": "reboundBecameAvailable",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 559,
+  "type": "reboundSecured",
+  "detail": "H. Grove defensive"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 560,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 561,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 562,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1061,
+  "tick": 1178,
+  "sequence": 568,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1063,
+  "tick": 1182,
+  "sequence": 569,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1063,
+  "tick": 1182,
+  "sequence": 570,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1803,
+  "tick": 1235,
+  "sequence": 576,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1803,
+  "tick": 1235,
+  "sequence": 577,
+  "type": "actionStarted",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 1803,
+  "tick": 1235,
+  "sequence": 578,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1803,
+  "tick": 1235,
+  "sequence": 579,
+  "type": "passReleased",
+  "detail": "H. Grove > C. Dain"
+ },
+ {
+  "wallMs": 1806,
+  "tick": 1243,
+  "sequence": 580,
+  "type": "passReceived",
+  "detail": "C. Dain > C. Dain"
+ },
+ {
+  "wallMs": 1806,
+  "tick": 1243,
+  "sequence": 583,
+  "type": "actionResolved",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 1806,
+  "tick": 1243,
+  "sequence": 584,
+  "type": "actionStarted",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 1991,
+  "tick": 1248,
+  "sequence": 585,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 1991,
+  "tick": 1248,
+  "sequence": 586,
+  "type": "actionStarted",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 1991,
+  "tick": 1248,
+  "sequence": 587,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 1991,
+  "tick": 1248,
+  "sequence": 588,
+  "type": "offBallMove",
+  "detail": "G. Elian DRIFT"
+ },
+ {
+  "wallMs": 1991,
+  "tick": 1248,
+  "sequence": 589,
+  "type": "offBallMove",
+  "detail": "D. Corven DRIFT"
+ },
+ {
+  "wallMs": 1994,
+  "tick": 1255,
+  "sequence": 590,
+  "type": "actionResolved",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 1995,
+  "tick": 1260,
+  "sequence": 594,
+  "type": "actionResolved",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 1995,
+  "tick": 1260,
+  "sequence": 595,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2174,
+  "tick": 1263,
+  "sequence": 599,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 2174,
+  "tick": 1263,
+  "sequence": 600,
+  "type": "actionStarted",
+  "detail": "C. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 2174,
+  "tick": 1263,
+  "sequence": 601,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2174,
+  "tick": 1263,
+  "sequence": 602,
+  "type": "passReleased",
+  "detail": "C. Dain > D. Corven"
+ },
+ {
+  "wallMs": 2177,
+  "tick": 1270,
+  "sequence": 603,
+  "type": "passReceived",
+  "detail": "D. Corven > D. Corven"
+ },
+ {
+  "wallMs": 2177,
+  "tick": 1270,
+  "sequence": 606,
+  "type": "actionResolved",
+  "detail": "C. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 2177,
+  "tick": 1270,
+  "sequence": 607,
+  "type": "actionStarted",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 2178,
+  "tick": 1274,
+  "sequence": 608,
+  "type": "decisionSelected",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 2178,
+  "tick": 1274,
+  "sequence": 609,
+  "type": "actionStarted",
+  "detail": "D. Corven DRIVE"
+ },
+ {
+  "wallMs": 2179,
+  "tick": 1276,
+  "sequence": 610,
+  "type": "offBallMove",
+  "detail": "G. Elian DRIFT"
+ },
+ {
+  "wallMs": 2363,
+  "tick": 1287,
+  "sequence": 614,
+  "type": "actionResolved",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 2547,
+  "tick": 1291,
+  "sequence": 615,
+  "type": "actionResolved",
+  "detail": "D. Corven DRIVE"
+ },
+ {
+  "wallMs": 2547,
+  "tick": 1291,
+  "sequence": 616,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2548,
+  "tick": 1294,
+  "sequence": 620,
+  "type": "decisionSelected",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 2548,
+  "tick": 1294,
+  "sequence": 621,
+  "type": "actionStarted",
+  "detail": "D. Corven SHOOT"
+ },
+ {
+  "wallMs": 2548,
+  "tick": 1294,
+  "sequence": 622,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2549,
+  "tick": 1296,
+  "sequence": 623,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2549,
+  "tick": 1296,
+  "sequence": 624,
+  "type": "shotReleased",
+  "detail": "D. Corven +2"
+ },
+ {
+  "wallMs": 2550,
+  "tick": 1302,
+  "sequence": 625,
+  "type": "shotMade",
+  "detail": "D. Corven +2"
+ },
+ {
+  "wallMs": 2550,
+  "tick": 1302,
+  "sequence": 626,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2550,
+  "tick": 1302,
+  "sequence": 627,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 2550,
+  "tick": 1302,
+  "sequence": 628,
+  "type": "actionResolved",
+  "detail": "D. Corven SHOOT"
+ }
+]

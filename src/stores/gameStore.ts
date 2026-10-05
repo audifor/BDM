@@ -10,6 +10,10 @@ import {
   playUserGame,
   simulateRemainingGamesToday,
   advanceGameDayWithResult,
+  advanceGameDayWithResultAsync,
+  continueGameAsync,
+  simulateRemainingGamesTodayAsync,
+  getWorldMatchRunner,
 } from '@/app/game'
 import { releasePlayer } from '@/app/market'
 import { recordContractReviewDecision } from '@/app/contractReview'
@@ -74,6 +78,8 @@ import { setRehabilitationPlan as setRehabilitationPlanCommand, type SetRehabili
 interface GameStore {
   readonly world: GameWorld | null
   readonly lastDayAdvanceResult: WorldDayAdvanceResult | null
+  /** ME-LOCK1.1: a day is being simulated in the background (worker pool); world-changing actions wait for it. */
+  readonly simulationBusy: boolean
   newGame(): void
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
@@ -87,6 +93,10 @@ interface GameStore {
   playUserGame(): void
   simulateRemainingGamesToday(): void
   advanceDay(): WorldDayAdvanceResult
+  /** The same day boundary with the day's matches simulated in parallel workers; resolves when the world is updated. */
+  advanceDayAsync(): Promise<WorldDayAdvanceResult | null>
+  continueGameAsync(): Promise<ContinueResult | null>
+  simulateRemainingGamesTodayAsync(): Promise<void>
   continueGame(): ContinueResult
   simulateUntilDate(date: GameWorld['currentDate']): SimulateUntilResult
   startNextSeason(): void
@@ -170,6 +180,7 @@ let liveController: LiveMatchController | null = null
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
   lastDayAdvanceResult: null,
+  simulationBusy: false,
   newGame: () => set({ world: createNewGame(), lastDayAdvanceResult: null }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
   startLiveMatch: (tacticalPlan) => { const world = addPreMatchMedia(requireWorld(get().world)); set({ world }); liveController = createLiveUserMatch(world, tacticalPlan); return liveController.snapshot() },
@@ -200,6 +211,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const result = advanceGameDayWithResult(world)
     set({ world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, lastDayAdvanceResult: result })
     return result
+  },
+  advanceDayAsync: () => runBackgroundSimulation(get, set, async (world) => {
+    const result = await advanceGameDayWithResultAsync(world, getWorldMatchRunner())
+    return { world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, value: result, lastDayAdvanceResult: result }
+  }),
+  continueGameAsync: () => runBackgroundSimulation(get, set, async (world) => {
+    const result = await continueGameAsync(world, getWorldMatchRunner())
+    return { world: result.world, value: result }
+  }),
+  simulateRemainingGamesTodayAsync: async () => {
+    await runBackgroundSimulation(get, set, async (world) => ({ world: await simulateRemainingGamesTodayAsync(world, getWorldMatchRunner()), value: undefined }))
   },
   continueGame: () => {
     const result = runContinueGame(requireWorld(get().world))
@@ -457,3 +479,25 @@ export function selectUserNextGamePlanMatchups(world: GameWorld | null): readonl
 export function selectUserNextGamePlanTacticalOverride(world: GameWorld | null): MatchTacticalPlan | undefined { const team = world === null ? undefined : getUserTeam(world); const game = world === null ? undefined : getNextUserGame(world); if (team === undefined || game === undefined || world === null) return undefined; return world.gamePlansByKey[`${game.id}:${team.id}`]?.tacticalOverride as MatchTacticalPlan | undefined }
 export function selectDesignerPlays(world: GameWorld | null): readonly SavedPlay[] { return world === null ? [] : Object.values(world.savedPlaysById) }
 export function selectDesignerPlaybooks(world: GameWorld | null): readonly Playbook[] { return world === null ? [] : Object.values(world.playbooksById) }
+
+/**
+ * ME-LOCK1.1: one background simulation at a time. The world it started from must still be the store's world when it finishes;
+ * otherwise (the world was replaced meanwhile) its result is discarded rather than applied over a different world.
+ */
+async function runBackgroundSimulation<T>(
+  get: () => GameStore,
+  set: (partial: Partial<GameStore>) => void,
+  run: (world: GameWorld) => Promise<{ readonly world: GameWorld; readonly value: T; readonly lastDayAdvanceResult?: WorldDayAdvanceResult }>,
+): Promise<T | null> {
+  if (get().simulationBusy) return null
+  const start = requireWorld(get().world)
+  set({ simulationBusy: true })
+  try {
+    const outcome = await run(start)
+    if (get().world !== start) return null
+    set({ world: outcome.world, ...(outcome.lastDayAdvanceResult === undefined ? {} : { lastDayAdvanceResult: outcome.lastDayAdvanceResult }) })
+    return outcome.value
+  } finally {
+    set({ simulationBusy: false })
+  }
+}

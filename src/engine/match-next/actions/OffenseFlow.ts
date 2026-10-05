@@ -1,0 +1,161 @@
+import { teamOffensiveActions } from './ActionIndex'
+import { hashStringToSeed } from '@/engine/random'
+import type { PlayerId } from '@/domain/ids'
+import { activePossession, type MatchPlayerState, type MatchState, type OffenseFlowState, type OffenseStage } from '../state'
+import { distanceBetween, isBeyondThreePointLine } from '@/domain/court'
+import { attackingBasketForTeam } from '../structure/FiveOutStructure'
+import { tuning } from '../tuning'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
+import { isInsideZone } from '../structure/OffensiveStructure'
+import { emitEvent } from '../events'
+import { callPlay, spacingFor, type PlayCall } from '../tactics/PlayCalling'
+
+/** Share of the four off-ball players that must be in their zones for the half-court offense to count as set. */
+export const SETTLE_READY_SHARE = 0.75
+/** A rebounder needs this long to land, secure and square up before he can act again. */
+export const OFFENSIVE_REBOUND_GATHER_TICKS = 7
+/** After an advantage (help collapsed / finished drive) the next read is quick: the defense is still rotating. */
+const ADVANTAGE_WINDOW_TICKS = 20
+const POST_ACTION_READ_TICKS = 3
+
+/** Deterministic value in [0, 1) that depends only on match seed state, tick, player and a salt (no RNG stream advance). */
+export function decisionNoise(state: Pick<MatchState, 'rng' | 't'>, playerId: string, salt: string): number {
+  return hashStringToSeed(`bt2:${state.rng.decision}:${state.t}:${playerId}:${salt}`) / 0x1_0000_0000
+}
+
+/** How long a player needs to read the floor after gaining control. Better passers/readers see it sooner. */
+export function readTicksFor(state: MatchState, player: MatchPlayerState): number {
+  const reading = (player.passing.vision + player.passing.timing) / 2
+  const base = 3 + Math.round((100 - Math.max(0, Math.min(100, reading))) / 30)
+  // BT4.1: a catch on the run needs a gather before the next move, and a defender on top of him slows the read.
+  const speed = Math.hypot(player.velocity.x, player.velocity.y)
+  const nearest = Math.min(...state.players.filter((other) => other.active && other.teamId !== player.teamId).map((other) => distanceBetween(other.position, player.position)), Number.POSITIVE_INFINITY)
+  const gather = Math.round(speed * tuning().catchGatherTicksPerMps) + (nearest < 2 ? Math.round((2 - nearest) * tuning().catchPressureTicksPerMeter) : 0)
+  // BT6.26: in a system the team knows, the receiver already knows where the next action is; in a new one he looks for it.
+  const system = Math.round((1 - tacticalIntent(state, player.teamId).familiarity) * SYSTEM_READ_TICKS)
+  return base + gather + system + (decisionNoise(state, player.playerId, 'read') < 0.5 ? 0 : 1)
+}
+
+/** BT6.26: extra read ticks after a catch for a team with no familiarity with its system. */
+const SYSTEM_READ_TICKS = 3
+
+export function offenseSettlement(state: MatchState): { readonly inZone: number; readonly total: number; readonly share: number } {
+  const structure = state.offensiveStructure
+  if (structure === null) return { inZone: 0, total: 0, share: 0 }
+  let inZone = 0
+  let total = 0
+  for (const assignment of structure.assignments) {
+    if (assignment.slot === 'BALL') continue
+    const player = state.players.find((candidate) => candidate.playerId === assignment.playerId)
+    const slot = structure.slots.find((candidate) => candidate.slot === assignment.slot)
+    if (!player || !slot) continue
+    total += 1
+    if (isInsideZone(player.position, slot.position, structure.attackingBasket)) inZone += 1
+  }
+  return { inZone, total, share: total === 0 ? 0 : inZone / total }
+}
+
+function freshFlow(state: MatchState, possessionId: string, teamId: OffenseFlowState['teamId'], offensiveRebounds: number): OffenseFlowState {
+  return {
+    possessionId, teamId, stage: 'EARLY', stageStartedT: state.t, holderPlayerId: null, holderSinceT: state.t, caughtFromPass: false,
+    readyAtT: state.t, halfCourtSinceT: null, settledAtT: null, offensiveRebounds, lastResolvedT: state.t, resetPending: false, reads: 0, moves: [],
+  }
+}
+
+/** Owns the possession phase structure: EARLY -> HALF_COURT -> ACTION -> ADVANTAGE / RESET, and the decision clock. */
+export function reconcileOffenseFlow(state: MatchState): MatchState {
+  const possession = activePossession(state)
+  if (!possession) return state.offenseFlow === null ? state : { ...state, offenseFlow: null }
+  let flow = state.offenseFlow?.possessionId === possession.id ? state.offenseFlow : freshFlow(state, possession.id, possession.teamId, possession.offensiveRebounds)
+
+  // Ball control: whoever gains it needs a real read before the next decision.
+  if (state.ball.kind === 'HELD' && state.ball.ownerTeamId === possession.teamId && state.ball.ownerPlayerId !== flow.holderPlayerId) {
+    const ownerId: PlayerId = state.ball.ownerPlayerId
+    const owner = state.players.find((player) => player.playerId === ownerId)
+    if (owner) {
+      const caughtFromPass = state.actions.some((action) => (action.kind === 'PASS' || action.kind === 'KICK_OUT') && action.status === 'COMPLETED'
+        && action.outcome === 'CAUGHT' && action.targetPlayerId === ownerId && (action.resolvedT ?? -100) >= state.t - 1)
+      flow = { ...flow, holderPlayerId: ownerId, holderSinceT: state.t, caughtFromPass, readyAtT: state.t + readTicksFor(state, owner) }
+    }
+  }
+
+  // A finished action (drive, pass reception is handled above) leaves the handler a short read before the next one.
+  const offensive = teamOffensiveActions(state, possession.teamId)
+  const lastResolved = offensive.lastResolvedT
+  if (lastResolved > flow.lastResolvedT) {
+    const last = offensive.lastResolved
+    flow = { ...flow, lastResolvedT: lastResolved, readyAtT: Math.max(flow.readyAtT, lastResolved + (last?.kind === 'DRIVE' ? POST_ACTION_READ_TICKS : last?.kind === 'SCREEN' ? 2 : 0)) }
+  }
+
+  // Offensive rebound: gather and control first, then choose (putback is only one of the options).
+  if (possession.offensiveRebounds > flow.offensiveRebounds) {
+    flow = {
+      ...flow, offensiveRebounds: possession.offensiveRebounds, resetPending: true, settledAtT: null, halfCourtSinceT: state.t,
+      readyAtT: Math.max(flow.readyAtT, state.t + OFFENSIVE_REBOUND_GATHER_TICKS),
+    }
+  }
+
+  const early = state.transition?.teamId === possession.teamId && state.transition.advantage === 'ADVANTAGE'
+  const activeAction = offensive.anyActive
+  const lastAdvantage = offensive.lastAdvantageDriveT >= state.t - ADVANTAGE_WINDOW_TICKS
+  const inHalfCourt = possession.phase === 'SETUP' || possession.phase === 'ACTION' || (!early && possession.phase !== 'INBOUND' && possession.phase !== 'ADVANCE')
+  let stage: OffenseStage
+  if (possession.phase === 'INBOUND' || possession.phase === 'ADVANCE' || early) stage = 'EARLY'
+  else if (activeAction) stage = 'ACTION'
+  else if (flow.resetPending) stage = 'RESET'
+  else if (lastAdvantage) stage = 'ADVANTAGE'
+  else stage = 'HALF_COURT'
+  if (stage !== flow.stage) flow = { ...flow, stage, stageStartedT: state.t }
+
+  if (inHalfCourt && !early) {
+    const halfCourtSinceT = flow.halfCourtSinceT ?? state.t
+    const settlement = offenseSettlement(state)
+    // BT6.1: after a reset the floor is set again only when the man who took it back out is outside the arc (or no longer has the ball).
+    const resetHandler = flow.resetHandlerId == null ? undefined : state.players.find((player) => player.playerId === flow.resetHandlerId)
+    const resetting = resetHandler !== undefined && state.ball.kind === 'HELD' && state.ball.ownerPlayerId === resetHandler.playerId
+      && !isBeyondThreePointLine(resetHandler.position, attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court), state.court)
+    const settledAtT = flow.settledAtT ?? (!resetting && settlement.total > 0 && settlement.share >= SETTLE_READY_SHARE ? state.t : null)
+    if (halfCourtSinceT !== flow.halfCourtSinceT || settledAtT !== flow.settledAtT) flow = { ...flow, halfCourtSinceT, settledAtT, ...(settledAtT !== null ? { resetHandlerId: null } : {}) }
+    // BT5.6: the half court starts (or restarts after an offensive rebound): the bench calls the play.
+    if (tuning().playsEnabled !== 0 && (flow.call == null || flow.call.possessionId !== possession.id || flow.call.calledT < halfCourtSinceT || flow.call.family === 'EARLY_OFFENSE')) {
+      const call = callPlay(state, possession)
+      flow = { ...flow, call }
+      return announceCall({ ...state, offenseFlow: flow }, call)
+    }
+  }
+  return flow === state.offenseFlow ? state : { ...state, offenseFlow: flow }
+}
+
+export function announceCall(state: MatchState, call: PlayCall): MatchState {
+  return emitEvent(state, 'playCalled', {
+    possessionId: call.possessionId, teamId: state.offenseFlow?.teamId, ...(call.initiatorId === null ? {} : { playerId: call.initiatorId }),
+    ...(call.screenerId ?? call.targetId) === undefined ? {} : { receiverPlayerId: (call.screenerId ?? call.targetId)! },
+    playFamily: call.family, playLocation: call.location, spacing: call.spacing, tacticalReason: call.reason,
+  })
+}
+
+/** BT5.6: a possession attacked before any half court (a push, an early drive or shot) is the EARLY_OFFENSE family. */
+export function earlyOffenseCall(state: MatchState, initiatorId: PlayerId): PlayCall | null {
+  const possession = activePossession(state)
+  if (!possession) return null
+  return { possessionId: possession.id, family: 'EARLY_OFFENSE', location: 'TRANSITION', spacing: spacingFor(state, possession.teamId).spacing, initiatorId, calledT: state.t, weights: {}, reason: 'Attack before the defense is set' }
+}
+
+export function isSettled(flow: OffenseFlowState | null): boolean {
+  return flow === null || flow.settledAtT !== null
+}
+
+/**
+ * BT6.1 offensive reset: a contained handler takes the ball back out. The half court starts again (a new call), the floor has to set
+ * again with him outside the arc, and only then does the next action come: the possession continues with another action instead of
+ * a forced pass or shot from where the drive died.
+ */
+export function resetOffense(state: MatchState, handlerId: PlayerId): MatchState {
+  const flow = state.offenseFlow
+  if (flow === null) return state
+  const next: MatchState = { ...state, offenseFlow: { ...flow, settledAtT: null, halfCourtSinceT: state.t, resetHandlerId: handlerId, readyAtT: Math.max(flow.readyAtT, state.t + RESET_READ_TICKS) } }
+  return emitEvent(next, 'offenseReset', { possessionId: flow.possessionId, teamId: flow.teamId, playerId: handlerId })
+}
+
+/** Ticks before the reset handler reads again (he is turning and dribbling back out). */
+const RESET_READ_TICKS = 6

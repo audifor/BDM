@@ -1,0 +1,68 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1
+  ],
+  "decisions": 1659,
+  "decisionsPerPossession": 2.548,
+  "meanUtility": {
+    "shoot": 0.818,
+    "drive": 0.701,
+    "pass": 1.07,
+    "hold": 1.065,
+    "screen": 1.272
+  },
+  "chosenShare": {
+    "DRIVE": 0.274,
+    "PASS": 0.407,
+    "SCREEN": 0.036,
+    "CATCH_AND_SHOOT": 0.178,
+    "KICK_OUT": 0.066,
+    "SHOOT": 0.04
+  },
+  "utilityWhenChosen": {
+    "DRIVE": {
+      "n": 454,
+      "shoot": 0.761,
+      "drive": 1.176,
+      "pass": 0.934,
+      "hold": 1.114
+    },
+    "PASS": {
+      "n": 675,
+      "shoot": 0.583,
+      "drive": 0.384,
+      "pass": 1.151,
+      "hold": 1.081
+    },
+    "SCREEN": {
+      "n": 60,
+      "shoot": 0.93,
+      "drive": 1.017,
+      "pass": 0.957,
+      "hold": 1.022
+    },
+    "CATCH_AND_SHOOT": {
+      "n": 295,
+      "shoot": 1.35,
+      "drive": 0.977,
+      "pass": 1.061,
+      "hold": 1.001
+    },
+    "KICK_OUT": {
+      "n": 109,
+      "shoot": 0.929,
+      "drive": 0,
+      "pass": 1.261,
+      "hold": 1.037
+    },
+    "SHOOT": {
+      "n": 66,
+      "shoot": 0.947,
+      "drive": 0.309,
+      "pass": 1.013,
+      "hold": 0.927
+    }
+  }
+}

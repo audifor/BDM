@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "steal",
+  "description": "Clean steal or poke-loose by the on-ball defender",
+  "seed": 424242,
+  "fromTick": 8439,
+  "toTick": 8514
+ },
+ "everyMs": 625,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 8441,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4074109714285719
+    },
+    {
+     "frame": 1,
+     "tick": 8447,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.18350335893764302
+    },
+    {
+     "frame": 2,
+     "tick": 8453,
+     "ball": "INBOUND",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 3,
+     "tick": 8460,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.34751896296731566
+    },
+    {
+     "frame": 4,
+     "tick": 8466,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.30124706507083227
+    },
+    {
+     "frame": 5,
+     "tick": 8472,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.19877472376175592
+    },
+    {
+     "frame": 6,
+     "tick": 8478,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.10822389583614665
+    },
+    {
+     "frame": 7,
+     "tick": 8485,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.5854180594128651
+    },
+    {
+     "frame": 8,
+     "tick": 8491,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4314941271153942
+    },
+    {
+     "frame": 9,
+     "tick": 8497,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.22052611290501603
+    },
+    {
+     "frame": 10,
+     "tick": 8503,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.09311824770611984
+    },
+    {
+     "frame": 11,
+     "tick": 8510,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44230980048979257
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 8441,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4074109714285719
+    },
+    {
+     "frame": 1,
+     "tick": 8447,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.18350335893764302
+    },
+    {
+     "frame": 2,
+     "tick": 8453,
+     "ball": "INBOUND",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 3,
+     "tick": 8460,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.34751896296731566
+    },
+    {
+     "frame": 4,
+     "tick": 8466,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.30124706507083227
+    },
+    {
+     "frame": 5,
+     "tick": 8472,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.19877472376175592
+    },
+    {
+     "frame": 6,
+     "tick": 8478,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.10822389583614665
+    },
+    {
+     "frame": 7,
+     "tick": 8485,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.5854180594128651
+    },
+    {
+     "frame": 8,
+     "tick": 8491,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4314941271153942
+    },
+    {
+     "frame": 9,
+     "tick": 8497,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.22052611290501603
+    },
+    {
+     "frame": 10,
+     "tick": 8503,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.09311824770611984
+    },
+    {
+     "frame": 11,
+     "tick": 8510,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44230980048979257
+    }
+   ]
+  }
+ }
+}

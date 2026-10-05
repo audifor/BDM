@@ -1,0 +1,207 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337
+  ],
+  "actionSeconds": {
+    "DRIVE": {
+      "n": 883,
+      "mean": 1.61,
+      "median": 1.6,
+      "p10": 1,
+      "p90": 2.1,
+      "min": 0.1,
+      "max": 3.6
+    },
+    "SHOOT": {
+      "n": 657,
+      "mean": 0.86,
+      "median": 0.9,
+      "p10": 0.8,
+      "p90": 0.9,
+      "min": 0.2,
+      "max": 0.9
+    },
+    "PASS": {
+      "n": 1504,
+      "mean": 0.79,
+      "median": 0.8,
+      "p10": 0.5,
+      "p90": 0.8,
+      "min": 0.2,
+      "max": 41.3
+    },
+    "CLOSEOUT": {
+      "n": 1568,
+      "mean": 1.49,
+      "median": 1.1,
+      "p10": 0.8,
+      "p90": 2.3,
+      "min": 0,
+      "max": 19.5
+    },
+    "SCREEN": {
+      "n": 126,
+      "mean": 2.16,
+      "median": 2.1,
+      "p10": 1.5,
+      "p90": 3,
+      "min": 0.7,
+      "max": 4.1
+    },
+    "CATCH_AND_SHOOT": {
+      "n": 596,
+      "mean": 1.13,
+      "median": 1,
+      "p10": 1,
+      "p90": 1,
+      "min": 0.4,
+      "max": 78.8
+    },
+    "KICK_OUT": {
+      "n": 217,
+      "mean": 0.69,
+      "median": 0.7,
+      "p10": 0.5,
+      "p90": 0.8,
+      "min": 0.2,
+      "max": 0.8
+    }
+  },
+  "actionOutcomes": {
+    "DRIVE": {
+      "STOPPED": 201,
+      "FINISH": 297,
+      "CONTAINED": 93,
+      "ADVANTAGE": 249,
+      "CANCELLED": 21,
+      "FOULED": 22
+    },
+    "SHOOT": {
+      "MAKE": 261,
+      "MISS": 365,
+      "BLOCKED": 31
+    },
+    "PASS": {
+      "CAUGHT": 1370,
+      "BAD_PASS": 134
+    },
+    "CLOSEOUT": {
+      "CONTESTED": 1053,
+      "ARRIVED": 515
+    },
+    "SCREEN": {
+      "ARRIVED": 115,
+      "CANCELLED": 11
+    },
+    "CATCH_AND_SHOOT": {
+      "MAKE": 229,
+      "MISS": 365,
+      "BLOCKED": 2
+    },
+    "KICK_OUT": {
+      "BAD_PASS": 19,
+      "CAUGHT": 198
+    }
+  },
+  "gapSeconds": {
+    "rebound": {
+      "n": 677,
+      "mean": 1.57,
+      "median": 1.5,
+      "p10": 1.1,
+      "p90": 1.8,
+      "min": 1,
+      "max": 7.6
+    },
+    "screenSetup": {
+      "n": 115,
+      "mean": 2.04,
+      "median": 2.1,
+      "p10": 1.5,
+      "p90": 2.5,
+      "min": 0.7,
+      "max": 3.9
+    },
+    "screenUse": {
+      "n": 115,
+      "mean": 0.2,
+      "median": 0.2,
+      "p10": 0.2,
+      "p90": 0.2,
+      "min": 0.2,
+      "max": 0.2
+    },
+    "screenExit": {
+      "n": 115,
+      "mean": 2.67,
+      "median": 3.1,
+      "p10": 0.3,
+      "p90": 4.1,
+      "min": 0.3,
+      "max": 4.1
+    },
+    "inboundToFirstDecision": {
+      "n": 621,
+      "mean": 4.36,
+      "median": 4.1,
+      "p10": 2.8,
+      "p90": 6.3,
+      "min": 0.7,
+      "max": 17.5
+    },
+    "defensiveReboundToFirstDecision": {
+      "n": 582,
+      "mean": 4.84,
+      "median": 4.8,
+      "p10": 0.9,
+      "p90": 7.2,
+      "min": 0.4,
+      "max": 21.3
+    },
+    "offensiveReboundToNext": {
+      "n": 95,
+      "mean": 0.93,
+      "median": 0.7,
+      "p10": 0.7,
+      "p90": 1.3,
+      "min": 0.7,
+      "max": 7.4
+    },
+    "startToFirstShot": {
+      "n": 1138,
+      "mean": 8.72,
+      "median": 7.7,
+      "p10": 5.8,
+      "p90": 13.3,
+      "min": 0,
+      "max": 27.1
+    },
+    "startToFirstPass": {
+      "n": 1242,
+      "mean": 2.6,
+      "median": 0.9,
+      "p10": 0.4,
+      "p90": 6.2,
+      "min": 0.4,
+      "max": 15.6
+    }
+  },
+  "quickShots": {
+    "total": 1257,
+    "under1s": 6,
+    "under15s": 9,
+    "under1sShare": 0.005,
+    "under15sShare": 0.007
+  },
+  "clockTruth": {
+    "ticksChecked": 26213,
+    "gameClockDeltaViolations": 0,
+    "runningTicksWithoutDecrement": 0,
+    "shotClockBelowZero": 0
+  }
+}

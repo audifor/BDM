@@ -1,0 +1,310 @@
+[
+ {
+  "wallMs": 22441,
+  "tick": 14905,
+  "sequence": 7541,
+  "type": "possessionStart",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 22441,
+  "tick": 14905,
+  "sequence": 7542,
+  "type": "inboundStarted",
+  "detail": "A. Bexley INBOUND"
+ },
+ {
+  "wallMs": 22441,
+  "tick": 14905,
+  "sequence": 7543,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 22441,
+  "tick": 14905,
+  "sequence": 7544,
+  "type": "inboundReleased",
+  "detail": "A. Bexley > A. Dain"
+ },
+ {
+  "wallMs": 22441,
+  "tick": 14905,
+  "sequence": 7545,
+  "type": "passReleased",
+  "detail": "A. Bexley > A. Dain"
+ },
+ {
+  "wallMs": 22460,
+  "tick": 14912,
+  "sequence": 7546,
+  "type": "passReceived",
+  "detail": "A. Dain > A. Dain"
+ },
+ {
+  "wallMs": 22460,
+  "tick": 14912,
+  "sequence": 7547,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 22908,
+  "tick": 14940,
+  "sequence": 7553,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 22908,
+  "tick": 14940,
+  "sequence": 7554,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 22908,
+  "tick": 14940,
+  "sequence": 7555,
+  "type": "actionStarted",
+  "detail": "A. Dain DRIVE"
+ },
+ {
+  "wallMs": 22908,
+  "tick": 14940,
+  "sequence": 7556,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 22908,
+  "tick": 14940,
+  "sequence": 7557,
+  "type": "offBallMove",
+  "detail": "H. Corven DRIFT"
+ },
+ {
+  "wallMs": 23141,
+  "tick": 14950,
+  "sequence": 7561,
+  "type": "actionResolved",
+  "detail": "A. Dain DRIVE"
+ },
+ {
+  "wallMs": 23141,
+  "tick": 14950,
+  "sequence": 7562,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 23150,
+  "tick": 14953,
+  "sequence": 7566,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 23150,
+  "tick": 14953,
+  "sequence": 7567,
+  "type": "actionStarted",
+  "detail": "A. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 23150,
+  "tick": 14953,
+  "sequence": 7568,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 23150,
+  "tick": 14953,
+  "sequence": 7569,
+  "type": "passReleased",
+  "detail": "A. Dain > B. Istra"
+ },
+ {
+  "wallMs": 23163,
+  "tick": 14958,
+  "sequence": 7570,
+  "type": "passReceived",
+  "detail": "B. Istra > B. Istra"
+ },
+ {
+  "wallMs": 23163,
+  "tick": 14958,
+  "sequence": 7573,
+  "type": "actionResolved",
+  "detail": "A. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 23163,
+  "tick": 14958,
+  "sequence": 7574,
+  "type": "actionStarted",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 23163,
+  "tick": 14958,
+  "sequence": 7575,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 23404,
+  "tick": 14975,
+  "sequence": 7576,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 23404,
+  "tick": 14975,
+  "sequence": 7577,
+  "type": "actionStarted",
+  "detail": "B. Istra SCREEN"
+ },
+ {
+  "wallMs": 23889,
+  "tick": 15007,
+  "sequence": 7578,
+  "type": "screenSet",
+  "detail": "A. Dain > B. Istra"
+ },
+ {
+  "wallMs": 23889,
+  "tick": 15007,
+  "sequence": 7579,
+  "type": "actionResolved",
+  "detail": "B. Istra SCREEN"
+ },
+ {
+  "wallMs": 23894,
+  "tick": 15009,
+  "sequence": 7582,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 23894,
+  "tick": 15009,
+  "sequence": 7583,
+  "type": "actionStarted",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 23894,
+  "tick": 15009,
+  "sequence": 7584,
+  "type": "screenUsed",
+  "detail": "B. Istra > A. Dain"
+ },
+ {
+  "wallMs": 23903,
+  "tick": 15012,
+  "sequence": 7585,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 23903,
+  "tick": 15012,
+  "sequence": 7586,
+  "type": "offBallMove",
+  "detail": "B. Farrow DRIFT"
+ },
+ {
+  "wallMs": 23903,
+  "tick": 15012,
+  "sequence": 7587,
+  "type": "offBallMove",
+  "detail": "H. Corven DRIFT"
+ },
+ {
+  "wallMs": 24354,
+  "tick": 15037,
+  "sequence": 7591,
+  "type": "actionResolved",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 24354,
+  "tick": 15037,
+  "sequence": 7592,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 24363,
+  "tick": 15040,
+  "sequence": 7596,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 24363,
+  "tick": 15040,
+  "sequence": 7597,
+  "type": "actionStarted",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 24363,
+  "tick": 15040,
+  "sequence": 7598,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 24369,
+  "tick": 15042,
+  "sequence": 7599,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 24369,
+  "tick": 15042,
+  "sequence": 7600,
+  "type": "shotReleased",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 24369,
+  "tick": 15042,
+  "sequence": 7601,
+  "type": "screenEnded",
+  "detail": "A. Dain > B. Istra exit"
+ },
+ {
+  "wallMs": 24581,
+  "tick": 15048,
+  "sequence": 7602,
+  "type": "shotMade",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 24581,
+  "tick": 15048,
+  "sequence": 7603,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 24581,
+  "tick": 15048,
+  "sequence": 7604,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 24581,
+  "tick": 15048,
+  "sequence": 7605,
+  "type": "actionResolved",
+  "detail": "B. Istra SHOOT"
+ }
+]

@@ -2,10 +2,13 @@ export {
   GAME_WORLD_SCHEMA_VERSION,
   createGameWorld,
   updateGameWorld,
+  withSingleWorldValidation,
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
 export type { GMPlanState } from '@/domain/gmPlanning'
+export { resultRecordCopyCount, withDailyResultBatch, writableResultRecord } from './dailyResultBatch'
+export { cohesionUnitsByScope, conflictsByParticipant, contractsByPlayer, eligibilityProfileIndex, injuriesByPlayer, eligibilityProfileKey, eligibilityRestrictionsByPlayer, liveStaffContextByStaff, memoriesByOwner, reactionRecordsByContext, staffAssignmentIndex, staffContractsByStaff, teamsByRosterPlayer } from './collectionIndexes'
 export type { Organization, OrganizationSection } from '@/domain/organization'
 export type { Person } from '@/domain/person'
 export {

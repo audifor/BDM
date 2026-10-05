@@ -1,0 +1,618 @@
+[
+ {
+  "wallMs": 545,
+  "tick": 1710,
+  "sequence": 817,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 545,
+  "tick": 1710,
+  "sequence": 818,
+  "type": "actionStarted",
+  "detail": "A. Dain SHOOT"
+ },
+ {
+  "wallMs": 545,
+  "tick": 1710,
+  "sequence": 819,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 545,
+  "tick": 1712,
+  "sequence": 820,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 545,
+  "tick": 1712,
+  "sequence": 821,
+  "type": "shotReleased",
+  "detail": "A. Dain +2"
+ },
+ {
+  "wallMs": 545,
+  "tick": 1712,
+  "sequence": 822,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 1718,
+  "sequence": 823,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 1718,
+  "sequence": 824,
+  "type": "shotMissed",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 1718,
+  "sequence": 825,
+  "type": "actionResolved",
+  "detail": "A. Dain SHOOT"
+ },
+ {
+  "wallMs": 1046,
+  "tick": 1730,
+  "sequence": 826,
+  "type": "reboundBecameAvailable",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1046,
+  "tick": 1730,
+  "sequence": 827,
+  "type": "reboundSecured",
+  "detail": "D. Corven defensive"
+ },
+ {
+  "wallMs": 1047,
+  "tick": 1730,
+  "sequence": 828,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1047,
+  "tick": 1730,
+  "sequence": 829,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1047,
+  "tick": 1730,
+  "sequence": 830,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1047,
+  "tick": 1730,
+  "sequence": 836,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1049,
+  "tick": 1734,
+  "sequence": 837,
+  "type": "decisionSelected",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 1049,
+  "tick": 1734,
+  "sequence": 838,
+  "type": "actionStarted",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1049,
+  "tick": 1734,
+  "sequence": 839,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1049,
+  "tick": 1734,
+  "sequence": 840,
+  "type": "passReleased",
+  "detail": "D. Corven > G. Elian"
+ },
+ {
+  "wallMs": 1049,
+  "tick": 1734,
+  "sequence": 841,
+  "type": "transitionAdvantageChanged",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1244,
+  "tick": 1740,
+  "sequence": 842,
+  "type": "passReceived",
+  "detail": "G. Elian > G. Elian"
+ },
+ {
+  "wallMs": 1244,
+  "tick": 1740,
+  "sequence": 843,
+  "type": "actionResolved",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1244,
+  "tick": 1740,
+  "sequence": 844,
+  "type": "actionStarted",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 1249,
+  "tick": 1749,
+  "sequence": 845,
+  "type": "transitionAdvantageChanged",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1249,
+  "tick": 1749,
+  "sequence": 846,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1249,
+  "tick": 1749,
+  "sequence": 847,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1448,
+  "tick": 1768,
+  "sequence": 853,
+  "type": "actionResolved",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 2058,
+  "tick": 1835,
+  "sequence": 854,
+  "type": "decisionSelected",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 2058,
+  "tick": 1835,
+  "sequence": 855,
+  "type": "actionStarted",
+  "detail": "G. Elian PASS"
+ },
+ {
+  "wallMs": 2058,
+  "tick": 1835,
+  "sequence": 856,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2058,
+  "tick": 1835,
+  "sequence": 857,
+  "type": "passReleased",
+  "detail": "G. Elian > H. Grove"
+ },
+ {
+  "wallMs": 2252,
+  "tick": 1843,
+  "sequence": 858,
+  "type": "passReceived",
+  "detail": "H. Grove > H. Grove"
+ },
+ {
+  "wallMs": 2252,
+  "tick": 1843,
+  "sequence": 861,
+  "type": "actionResolved",
+  "detail": "G. Elian PASS"
+ },
+ {
+  "wallMs": 2252,
+  "tick": 1843,
+  "sequence": 862,
+  "type": "actionStarted",
+  "detail": "A. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 2253,
+  "tick": 1847,
+  "sequence": 863,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 2253,
+  "tick": 1847,
+  "sequence": 864,
+  "type": "actionStarted",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 2254,
+  "tick": 1848,
+  "sequence": 865,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 2254,
+  "tick": 1848,
+  "sequence": 866,
+  "type": "offBallMove",
+  "detail": "C. Dain DRIFT"
+ },
+ {
+  "wallMs": 2254,
+  "tick": 1848,
+  "sequence": 867,
+  "type": "offBallMove",
+  "detail": "D. Corven DRIFT"
+ },
+ {
+  "wallMs": 2255,
+  "tick": 1852,
+  "sequence": 868,
+  "type": "actionResolved",
+  "detail": "A. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 2258,
+  "tick": 1859,
+  "sequence": 872,
+  "type": "actionResolved",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 2258,
+  "tick": 1859,
+  "sequence": 873,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2259,
+  "tick": 1862,
+  "sequence": 877,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 2259,
+  "tick": 1862,
+  "sequence": 878,
+  "type": "actionStarted",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 2259,
+  "tick": 1862,
+  "sequence": 879,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2259,
+  "tick": 1862,
+  "sequence": 880,
+  "type": "passReleased",
+  "detail": "H. Grove > C. Dain"
+ },
+ {
+  "wallMs": 2441,
+  "tick": 1870,
+  "sequence": 881,
+  "type": "passReceived",
+  "detail": "C. Dain > C. Dain"
+ },
+ {
+  "wallMs": 2441,
+  "tick": 1870,
+  "sequence": 884,
+  "type": "actionResolved",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 2441,
+  "tick": 1870,
+  "sequence": 885,
+  "type": "actionStarted",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 2443,
+  "tick": 1875,
+  "sequence": 886,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 2443,
+  "tick": 1875,
+  "sequence": 887,
+  "type": "actionStarted",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 2444,
+  "tick": 1876,
+  "sequence": 888,
+  "type": "offBallMove",
+  "detail": "G. Elian DRIFT"
+ },
+ {
+  "wallMs": 2444,
+  "tick": 1876,
+  "sequence": 889,
+  "type": "offBallMove",
+  "detail": "D. Corven DRIFT"
+ },
+ {
+  "wallMs": 2628,
+  "tick": 1890,
+  "sequence": 893,
+  "type": "actionResolved",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 2629,
+  "tick": 1892,
+  "sequence": 894,
+  "type": "actionResolved",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 2629,
+  "tick": 1892,
+  "sequence": 895,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2631,
+  "tick": 1895,
+  "sequence": 899,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 2631,
+  "tick": 1895,
+  "sequence": 900,
+  "type": "actionStarted",
+  "detail": "C. Dain PASS"
+ },
+ {
+  "wallMs": 2631,
+  "tick": 1895,
+  "sequence": 901,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2631,
+  "tick": 1895,
+  "sequence": 902,
+  "type": "passReleased",
+  "detail": "C. Dain > G. Elian"
+ },
+ {
+  "wallMs": 2633,
+  "tick": 1901,
+  "sequence": 903,
+  "type": "passReceived",
+  "detail": "G. Elian > G. Elian"
+ },
+ {
+  "wallMs": 2633,
+  "tick": 1901,
+  "sequence": 906,
+  "type": "actionResolved",
+  "detail": "C. Dain PASS"
+ },
+ {
+  "wallMs": 2633,
+  "tick": 1901,
+  "sequence": 907,
+  "type": "actionStarted",
+  "detail": "B. Istra CLOSEOUT"
+ },
+ {
+  "wallMs": 2634,
+  "tick": 1904,
+  "sequence": 908,
+  "type": "offBallMove",
+  "detail": "H. Grove BASKET_CUT"
+ },
+ {
+  "wallMs": 2635,
+  "tick": 1906,
+  "sequence": 909,
+  "type": "decisionSelected",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 2635,
+  "tick": 1906,
+  "sequence": 910,
+  "type": "actionStarted",
+  "detail": "G. Elian PASS"
+ },
+ {
+  "wallMs": 2635,
+  "tick": 1906,
+  "sequence": 911,
+  "type": "passReleased",
+  "detail": "G. Elian > A. Bexley"
+ },
+ {
+  "wallMs": 2814,
+  "tick": 1909,
+  "sequence": 912,
+  "type": "actionResolved",
+  "detail": "B. Istra CLOSEOUT"
+ },
+ {
+  "wallMs": 2816,
+  "tick": 1914,
+  "sequence": 913,
+  "type": "passReceived",
+  "detail": "A. Bexley > A. Bexley"
+ },
+ {
+  "wallMs": 2816,
+  "tick": 1914,
+  "sequence": 916,
+  "type": "actionResolved",
+  "detail": "G. Elian PASS"
+ },
+ {
+  "wallMs": 2816,
+  "tick": 1914,
+  "sequence": 917,
+  "type": "actionStarted",
+  "detail": "A. Bexley CLOSEOUT"
+ },
+ {
+  "wallMs": 2819,
+  "tick": 1919,
+  "sequence": 918,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2819,
+  "tick": 1919,
+  "sequence": 919,
+  "type": "actionStarted",
+  "detail": "A. Bexley CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 2821,
+  "tick": 1923,
+  "sequence": 920,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2821,
+  "tick": 1923,
+  "sequence": 921,
+  "type": "shotReleased",
+  "detail": "A. Bexley +3"
+ },
+ {
+  "wallMs": 2821,
+  "tick": 1923,
+  "sequence": 922,
+  "type": "actionResolved",
+  "detail": "A. Bexley CLOSEOUT"
+ },
+ {
+  "wallMs": 2821,
+  "tick": 1923,
+  "sequence": 923,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2824,
+  "tick": 1929,
+  "sequence": 924,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 2824,
+  "tick": 1929,
+  "sequence": 925,
+  "type": "shotMissed",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2824,
+  "tick": 1929,
+  "sequence": 926,
+  "type": "actionResolved",
+  "detail": "A. Bexley CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 927,
+  "type": "reboundBecameAvailable",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 928,
+  "type": "reboundSecured",
+  "detail": "A. Dain defensive"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 929,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 930,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 931,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 3019,
+  "tick": 1941,
+  "sequence": 937,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 3021,
+  "tick": 1945,
+  "sequence": 938,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 3021,
+  "tick": 1945,
+  "sequence": 939,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ }
+]
