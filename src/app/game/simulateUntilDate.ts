@@ -79,7 +79,6 @@ function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readon
   if (advanceStop !== undefined && advanceStop.type !== 'seasonComplete') {
     return { tick: { world, event: { type: 'finished', stopReason: advanceStop } } }
   }
-  }
 
   // Checked every tick, not only when the primary (user-facing) competition happens to be
   // complete: a background competition (e.g. an NCAA-like season with no future-season
