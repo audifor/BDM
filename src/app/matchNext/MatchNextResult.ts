@@ -1,6 +1,6 @@
 import type { GameWorld } from '@/domain/world'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
+import type { MatchResolution, MatchStatLog, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import type { MatchNextEvent, MatchSetup, MatchState } from '@/engine/match-next'
 
 export type MatchNextTeamStats = Omit<PlayerGameStatsSnapshot, 'playerId' | 'secondsPlayed' | 'plusMinus'>
@@ -96,7 +96,7 @@ export function projectMatchNextPlayByPlay(events: readonly MatchNextEvent[]): r
   return lines
 }
 
-export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchNextResult) {
+export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchNextResult, resolution?: MatchResolution): MatchStatLog {
   const game = world.games[result.gameId]
   if (!game) throw new Error(`Cannot create Match Next stats for missing Game ${result.gameId}`)
   if (game.homeTeamId !== result.homeTeamId || game.awayTeamId !== result.awayTeamId) throw new Error('Match Next result does not match Game teams')
@@ -123,6 +123,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
         stats: { ...stats },
       }
     }),
+    ...(resolution === undefined ? {} : { resolution }),
   }
 }
 

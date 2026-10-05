@@ -56,7 +56,7 @@ export function MatchWorkspace() {
           setup={matchNextSession.setup}
           onComplete={(result: MatchNextResult) => {
             const current = useGameStore.getState().world
-            if (current !== null) replaceWorld(port.complete(current, result))
+            if (current !== null) replaceWorld(port.complete(current, result, 'FULL'))
           }}
           onContinue={() => setMatchNextSession(null)}
           world={world}

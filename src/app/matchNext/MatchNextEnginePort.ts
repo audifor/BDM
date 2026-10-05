@@ -44,7 +44,8 @@ export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNex
     return session.result()
   }
 
-  public complete(world: GameWorld, result: MatchNextResult): GameWorld {
-    return completeMatchNext(world, result)
+  /** Applies the result; `FULL` when the user watched it live (provenance only: the same canonical application). */
+  public complete(world: GameWorld, result: MatchNextResult, resolution: 'FULL' | 'FAST' = 'FAST'): GameWorld {
+    return completeMatchNext(world, result, resolution)
   }
 }

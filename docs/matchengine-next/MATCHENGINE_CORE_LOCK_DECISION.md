@@ -1,5 +1,18 @@
 # MatchEngine Next · Decisión de Core Lock
 
+## Actualización WSR1 (2026-10-05): resolución BACKGROUND del mundo
+
+Rama `world-sim-wsr1-background-resolution`, desde `4da33d1`. Documentación en `docs/world-simulation/WSR1_*`.
+
+- **El MatchEngine exacto queda bloqueado en `4da33d1`.** WSR1 no cambia nada en `src/engine/match-next/`: solo importa autoridades canónicas (intención táctica, roles, tiros libres, faltas, estado inicial).
+- **FULL y FAST siguen siendo exactos.** El mundo FAST tras días reales es idéntico a `4da33d1` en 250 de 251 dominios. El único distinto, `matchStatLogsByGameId`, lo es por el campo nuevo de procedencia (`resolution`).
+- **BACKGROUND pertenece a World Simulation, no a la autoridad de baloncesto del MatchEngine.**
+  - Es un nivel agregado (`src/engine/world-sim/background/`, modelo versionado `bg-v1`) que consume el mismo `MatchSetup` canónico.
+  - Entrega sus resultados por la misma frontera canónica (`completeResolvedMatch`).
+  - Está certificado estadísticamente contra FAST, no por igualdad exacta.
+- La decisión de qué partido usa cada nivel es de `SimulationResolutionPolicy` (`src/app/worldSim/`), fuera de Match Next.
+- El motor legado sigue en cuarentena: BACKGROUND no lo usa.
+
 ## Actualización ME-LOCK1.2 (2026-10-05)
 
 Rama `match-next-me-lock1-2-exact-execution`, desde `6492794`. Evidencia en:
