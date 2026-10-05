@@ -54,12 +54,12 @@ export async function continueGameAsync(world: GameWorld, runner: MatchSimulatio
   if (!Number.isInteger(dayLimit) || dayLimit < 1) throw new RangeError('Continue day limit must be a positive integer')
   let current = world; let daysAdvanced = 0
   while (daysAdvanced < dayLimit) {
-    const interruption = getContinueStopReason(current)
+    const interruption = getExplicitAdvanceStopReason(current)
     if (interruption !== undefined) return result(current, daysAdvanced, interruption)
     current = await advanceGameDayAsync(current, runner)
     daysAdvanced += 1
   }
-  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'safetyLimit' })
+  return result(current, daysAdvanced, getExplicitAdvanceStopReason(current) ?? { type: 'safetyLimit' })
 }
 
 export function getNextKnownEvent(world: GameWorld): NextKnownEvent | undefined {

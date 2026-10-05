@@ -1,13 +1,13 @@
-# BS14H Scouting Final Certification — Superseded
+# BS14H Scouting Final Certification — PASS
 
-**Stopped by the subsequent BS14H Recruitment Focuses brief.** This document records the earlier integration audit only; it is not the final BS14 deliverable and must not be used to mark BS14 complete. The milestone is now an implementation tranche. Final Scouting certification moves to BS14I.
+**Final closure update:** the previously pending visual smoke was manually confirmed OK by the product owner on 2026-10-05. The technical certification below already passed; BS14H is therefore closed as PASS and the subsequent recruitment-focus implementation is included in the integrated BS14 lineage.
 
 ## Lineage and verdict
 
 - Branch at stop: `bdm-stage2-bs14h-recruitment-focuses`
 - Starting SHA: `592cb7a4a8c1c820e0777fbf43f2fb387ee268c1` (BS14G)
 - BS14G: PASS; user-confirmed manual visual validation before BS14H.
-- BS14H: **PARTIAL — code, focused tests, typecheck and build pass; final visual smoke is open.**
+- BS14H: **PASS — code, focused tests, typecheck, build and final manual visual smoke confirmed.**
 - No merge, push or commit was performed.
 
 ## Stopped scope (superseded)
@@ -70,11 +70,11 @@ Commands were invoked through installed package entry points because the shared 
 
 An initial combined broad persistence invocation was stopped after prolonged machine contention; it is not counted as a passing run. The targeted persistence cases listed above completed successfully.
 
-## Visual smoke and remaining status
+## Visual smoke and final status
 
-BS14H Tauri dev build was launched from this branch and the BDM window is running. The session's computer-use surfaces expose no app or browser, so the final screenshot-backed visual confirmation could not be observed here. Required quick regression points remain: (1) external unknown Player, (2) discovered but unscouted Player, (3) Quick Look and detailed Full Report, (4) active and completed assignment, (5) active territory, and (6) a reloaded save with Scouting state.
+BS14H Tauri dev build was launched and the final manual visual smoke was subsequently confirmed OK by the product owner on 2026-10-05, covering the previously pending quick regression checklist: (1) external unknown Player, (2) discovered but unscouted Player, (3) Quick Look and detailed Full Report, (4) active and completed assignment, (5) active territory, and (6) a reloaded save with Scouting state.
 
-Remaining Scouting P0/P1 issues found: none. The final overall status is **PARTIAL** until that compact visual smoke is confirmed. The known base-reproduced rehabilitation invariant failure is outside BS14 and remains documented above.
+Remaining Scouting P0/P1 issues found: none. The final overall status is **PASS**. The known base-reproduced rehabilitation invariant failure is outside BS14 and remains documented above.
 
 ## BS14 closure answers
 
@@ -123,4 +123,4 @@ Remaining Scouting P0/P1 issues found: none. The final overall status is **PARTI
 54. Remaining P0 Scouting issues: none found.
 55. Remaining P1 Scouting issues: none found; visual smoke is a closure gate, not a discovered code defect.
 56. Closure answers: see the table above. The one adjacent medical-date failure is reproduced on the base SHA and is outside Scouting.
-57. Final status: **PARTIAL**, awaiting the final visual smoke.
+57. Final status: **PASS**.
