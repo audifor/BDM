@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { addDays, parseGameDate } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
 import { isSeasonComplete } from '@/engine/season'
+import { reviewReturnToPlay } from '@/engine/injury/ReturnToPlayEngine'
+import { skipMediaOpportunity } from '@/engine/media'
 import { simulateAndApplyGame } from './matchResolution'
 
 import { advanceGameDay } from './advanceGameDay'
@@ -123,21 +125,35 @@ describe('simulate until date', () => {
       const world = createAcbTestGame()
       const primarySeasonId = world.currentSeasonId
       let complete = world
+      let seed = 7_000_000
       for (const game of Object.values(world.games).filter((candidate) => candidate.seasonId === primarySeasonId)) {
-        complete = simulateAndApplyGame(complete, game)
+        complete = simulateAndApplyGame(complete, game, seed)
+        seed += 1
       }
       expect(isSeasonComplete(complete, primarySeasonId)).toBe(true)
 
       // startNextSeason's fallback (no calendarPolicy) moves the next edition about a year
-      // ahead. Explicit date advancement simulates fixtures on the way there.
+      // ahead. Explicit date advancement simulates fixtures on the way there, and -- exactly like the app --
+      // still pauses on a required decision, which the test resolves through its own canonical command.
       const target = addDays(complete.currentDate, 400)
-      const result = simulateUntilDate(complete, target)
+      const seedFactory = () => 20261001
+      let walk = complete
+      for (let guard = 0; guard < 30 && walk.currentDate !== target; guard += 1) {
+        const result = simulateUntilDate(walk, target, seedFactory)
+        walk = result.world
+        if (result.stopReason.type === 'arrived') break
+        if (result.stopReason.type === 'mediaOpportunity') { walk = skipMediaOpportunity(walk, result.stopReason.opportunityId); continue }
+        if (result.stopReason.type === 'breakpoint' && result.stopReason.breakpoint.reason === 'returnToPlayReview') {
+          const review = reviewReturnToPlay(walk, { injuryId: result.stopReason.breakpoint.sourceId as never, decision: 'CONTINUE_RECOVERY', actor: { kind: 'USER', coachId: walk.userCoachId } })
+          if (review.ok) { walk = review.world; continue }
+        }
+        break
+      }
 
-      expect(result.finalDate).toBe(target)
-      expect(result.stopReason).toEqual({ type: 'arrived' })
+      expect(walk.currentDate).toBe(target)
       // Rollover never moves currentSeasonId directly (see startNextSeason.ts): it only migrates
       // once the world clock naturally reaches the new edition's startDate, which 400 days does.
-      expect(result.world.currentSeasonId).not.toBe(primarySeasonId)
+      expect(walk.currentSeasonId).not.toBe(primarySeasonId)
       // ME-LOCK1: 306 ACB Games through Match Next FAST plus a 400-day walk: ~9 minutes alone, more under parallel load.
     }, 1_200_000)
 
@@ -145,8 +161,10 @@ describe('simulate until date', () => {
       const world = withNoRecruiting(createNewGame())
       const primarySeasonId = world.currentSeasonId
       let complete = world
+      let seed = 8_000_000
       for (const game of Object.values(world.games).filter((candidate) => candidate.seasonId === primarySeasonId)) {
-        complete = simulateAndApplyGame(complete, game)
+        complete = simulateAndApplyGame(complete, game, seed)
+        seed += 1
       }
       expect(isSeasonComplete(complete, primarySeasonId)).toBe(true)
 
@@ -155,12 +173,13 @@ describe('simulate until date', () => {
       // see startNextSeason.ts), but currentSeasonId only migrates once currentDate itself reaches
       // that startDate (CalendarEngine.migrateCurrentSeasonIfElapsed), which 10 days does not.
       const target = addDays(complete.currentDate, 10)
-      const result = simulateUntilDate(complete, target)
+      const result = simulateUntilDate(complete, target, () => 20261001)
 
       expect(result.finalDate).toBe(target)
       expect(result.world.currentSeasonId).toBe(primarySeasonId)
       expect(result.seasonTransitions).toEqual(expect.arrayContaining([expect.objectContaining({ sourceSeasonId: primarySeasonId, schedule: expect.objectContaining({ kind: 'generated' }) })]))
-    })
+      // ME-LOCK1: resolving a whole season through Match Next FAST needs more than the default test timeout.
+    }, 300_000)
 
     it('empty days with no games or events still advance correctly', () => {
       const world = createNewGame()

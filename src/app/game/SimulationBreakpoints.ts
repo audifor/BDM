@@ -14,6 +14,7 @@ import { tradeNegotiationResponseReadiness } from '@/app/trades'
 import { assessContractReviewOutlook, CONTRACT_REVIEW_HORIZON_DAYS } from '@/engine/clubNeeds'
 import { derivedRetentionStatus } from '@/engine/contractRetention/ContractRetentionEngine'
 import { injuryLifecycleStatus } from '@/domain/injury'
+import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -76,17 +77,26 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
       route: 'medical', actionTarget: { injuryId: injury.id, playerId: injury.playerId },
       diagnostic: `Return-to-Play review for injury ${injury.id} is due; clear the player or continue recovery before advancing.`,
     }))
-    if (userTeam.rosterPlayerIds.length < 5) {
+    // MX0.2 Blocker A (human-team safety): the user's Team keeps an explicit playable-minimum decision. A
+    // structurally valid squad can still be unable to dress five for today's Game; that is never an automatic
+    // repair and never a technical failure -- the same playable-minimum breakpoint stops the day so the user
+    // resolves it (normally through the Market, which adds an available body).
+    const userGameToday = userTeam.rosterPlayerIds.length < 5
+      ? undefined
+      : getGamesToday(world).find((game) => game.status === 'scheduled' && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))
+    const userAvailableForGame = userGameToday === undefined ? undefined : getAvailablePlayersForCompetition(world, userTeam.id, userGameToday.competitionId, userGameToday.seasonId, userGameToday.date).length
+    if (userTeam.rosterPlayerIds.length < 5 || (userAvailableForGame !== undefined && userAvailableForGame < 5)) {
       const ecosystem = getEcosystemForTeam(world, userTeam.id)
       const marketSupported = ecosystem !== undefined && ecosystem.kind !== 'ncaaLike'
         && assessRoutedFreeAgentOfferIntelligence(world, userTeam.id).some((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.contactReadiness === 'READY_TO_CONTACT')
+      const marketClause = marketSupported ? ' and an affordable free agent is available' : ' and no supported affordable signing is available'
       candidates.push(candidate({
         level: marketSupported ? 'ACTION_REQUIRED' : 'BLOCKING', reason: 'minimumRoster', sourceKind: 'TEAM_ROSTER_MINIMUM', sourceId: userTeam.id,
         effectiveDate: world.currentDate, ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
         ...(marketSupported ? { route: 'market', actionTarget: { teamId: userTeam.id } } : {}),
-        diagnostic: marketSupported
-          ? `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required and an affordable free agent is available.`
-          : `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required and no supported affordable signing is available.`,
+        diagnostic: userGameToday === undefined
+          ? `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required${marketClause}.`
+          : `User team ${userTeam.id} has ${userAvailableForGame} available players for its Game on ${userGameToday.date}; at least five are required${marketClause}.`,
       }))
     }
     const contractReviewsDue = assessContractReviewOutlook(world, userTeam.id).reviews.filter((review) => review.status === 'REVIEW_REQUIRED'

@@ -15,6 +15,7 @@ import { canTeamTrainOnDate } from './TrainingEngine'
 import { trainingParticipationForPlayer } from './TrainingParticipation'
 import { trainingInjuryProbability } from '@/engine/injury/TrainingInjuries'
 import { createDeterministicInjury, deterministicInjuryKind } from '@/engine/injury/InjuryCreation'
+import { canRecordInjuries } from '@/engine/injury/InjuryApplication'
 import { boundedInjuryProbability, recurrenceRiskMultiplier } from '@/engine/injury/InjuryRisk'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { InjuryRecord } from '@/domain/injury'
@@ -188,7 +189,10 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
       participationMultiplier,
     })
     if (new SeededRandomSource(hashStringToSeed(`training-injury-occurrence-v1:${session.id}:${playerId}`)).nextFloat(0, 1) < probability) {
-      trainingInjuries.push(createDeterministicInjury({ playerId, injuredOn: world.currentDate, source: 'TRAINING', sourceId: session.id }))
+      const injury = createDeterministicInjury({ playerId, injuredOn: world.currentDate, source: 'TRAINING', sourceId: session.id })
+      // MX0.2: Training honors the same canonical injury-application rules as a match result: no overlapping
+      // recovery window for one Player, and never fewer than five available Players at a club.
+      if (canRecordInjuries(world, [...trainingInjuries, injury], () => session.teamId, world.currentDate)) trainingInjuries.push(injury)
     }
     participantEvidence.push({
       playerId,

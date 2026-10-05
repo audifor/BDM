@@ -15,6 +15,9 @@ export function setRehabilitationPlan(
 ): SetRehabilitationPlanResult {
   const injury = world.injuriesById[request.injuryId]
   if (injury === undefined) return { ok: false, reason: 'INJURY_NOT_FOUND' }
+  // An InjuryRecord may exist before the day it happened (a Game resolved ahead of the world clock). Its
+  // rehabilitation cannot have a valid chronology yet, so no plan may be set until injuredOn comes.
+  if (compareGameDates(world.currentDate, injury.injuredOn) < 0) return { ok: false, reason: 'NOT_RECOVERING' }
   if (injuryLifecycleStatus(injury, world.currentDate) !== 'RECOVERING') return { ok: false, reason: 'NOT_RECOVERING' }
   if (!canMedicalActorActForPlayer(world, injury.playerId, request.actor)) return { ok: false, reason: 'NOT_AUTHORIZED' }
   const current = injury.rehabilitation ?? { mode: 'STANDARD_REHAB' as const, startedOn: injury.injuredOn, changedOn: injury.injuredOn, history: [] }

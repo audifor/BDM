@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { addDays } from '@/domain/date'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
@@ -53,6 +55,20 @@ describe('SystemBar continue', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open contracts requiring attention' }))
     expect(new URL(window.location.href).searchParams.get('app')).toBe('contracts')
+  })
+
+  it('routes a breakpoint to the app named by its canonical route', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    // Move today's user Game aside so the due Return-to-Play review is the highest-priority stop.
+    const moved = updateGameWorld(base, { games: Object.values(base.games).map((game) => game.date === base.currentDate && (game.homeTeamId === team.id || game.awayTeamId === team.id) ? { ...game, date: addDays(base.currentDate, 3) } : game) })
+    const injury = createInjury({ id: injuryIdFromString('system-bar-rtp'), playerId, kind: 'ankleSprain', severity: 'moderate', injuredOn: addDays(base.currentDate, -10), expectedReturnDate: base.currentDate })
+    useGameStore.getState().replaceWorld(updateGameWorld(moved, { injuries: [injury] }))
+    mountBar()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Medical' }))
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('medical')
   })
 
   it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, async () => {
