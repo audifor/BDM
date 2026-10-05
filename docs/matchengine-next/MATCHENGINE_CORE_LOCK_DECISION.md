@@ -1,5 +1,17 @@
 # MatchEngine Next · Decisión de Core Lock
 
+## Actualización WSR2 (2026-10-05): escala del ciclo diario
+
+Rama `world-sim-wsr2-daily-lifecycle-scaling`, desde `e75bbcf`. Documentación en `docs/world-simulation/WSR2_*`.
+
+- **El MatchEngine exacto sigue bloqueado en `4da33d1`.** WSR2 no cambia nada en `src/engine/match-next/` ni en `src/app/matchNext/`, y no toca la calibración BACKGROUND (`bg-v1`).
+- El ciclo diario fuera de los partidos pasa de cuadrático a lineal, con el mismo mundo exacto día a día que `e75bbcf`:
+  - índices efímeros por colección (`src/domain/world/collectionIndexes.ts`), nunca guardados;
+  - validación una vez por fase;
+  - trabajo de *scouting* por día.
+- A 528 equipos, el ciclo baja de 16–51 s a 0,15–0,36 s, y el día mixto de 71,2 s a 17,9 s. A 1.008 equipos, el día mixto mide 23,3 s.
+- **WORLD SIMULATION SCALE READY: YES.** P1 principal: lotes de aplicación de resultados por encima de ~1.000 equipos.
+
 ## Actualización WSR1 (2026-10-05): resolución BACKGROUND del mundo
 
 Rama `world-sim-wsr1-background-resolution`, desde `4da33d1`. Documentación en `docs/world-simulation/WSR1_*`.

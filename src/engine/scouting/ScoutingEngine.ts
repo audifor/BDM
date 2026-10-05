@@ -37,39 +37,72 @@ export function recordEvidence(world: GameWorld, evidence: Evidence): GameWorld 
   return updateGameWorld(world, { evidence: [...Object.values(world.evidenceById), evidence] })
 }
 
-/** Processes active work only. It intentionally never scans knowledge or report history. */
+/**
+ * Processes active work only. It intentionally never scans knowledge or report history.
+ *
+ * WSR2: the day's work is applied to a working copy (assignments by id in collection order, ACTIVE workload by evaluator) and committed
+ * as one world update, instead of rebuilding the whole assignment collection (and re-scanning it for every evaluator's workload) after
+ * each step. Steps run in the same order and read the same values, and evidence, reports and knowledge are appended in the same
+ * sequence, so the resulting world is the one the step-by-step updates produced.
+ */
 export function progressScoutingAssignments(world: GameWorld): GameWorld {
-  let next = world
   const priority = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
-  for (const assignment of Object.values(world.scoutingAssignmentsById).filter((item) => item.status !== 'COMPLETED' && item.status !== 'CANCELLED').sort((a, b) => priority[a.priority] - priority[b.priority] || a.id.localeCompare(b.id))) {
+  const open = Object.values(world.scoutingAssignmentsById).filter((item) => item.status !== 'COMPLETED' && item.status !== 'CANCELLED').sort((a, b) => priority[a.priority] - priority[b.priority] || a.id.localeCompare(b.id))
+  if (open.length === 0) return world
+  const assignments = new Map(Object.entries(world.scoutingAssignmentsById))
+  const workload = new Map<string, number>()
+  for (const item of assignments.values()) if (item.status === 'ACTIVE') workload.set(item.evaluatorStaffId, (workload.get(item.evaluatorStaffId) ?? 0) + missionUnits[item.missionType])
+  const evidence: Evidence[] = []
+  const reports: EvaluatorReport[] = []
+  let knowledge = world.organizationKnowledge
+  let changed = false
+  const complete = (assignmentId: string): void => {
+    const assignment = assignments.get(assignmentId)!
+    const completion = completionArtifacts(world, assignment, knowledge)
+    evidence.push(completion.evidence); reports.push(completion.report); knowledge = completion.knowledge
+    if (assignment.status === 'ACTIVE') workload.set(assignment.evaluatorStaffId, (workload.get(assignment.evaluatorStaffId) ?? 0) - missionUnits[assignment.missionType])
+    assignments.set(assignmentId, { ...assignment, status: 'COMPLETED', completedAt: world.currentDate })
+  }
+  for (const assignment of open) {
     if (assignment.status === 'QUEUED') {
       const capacity = assignment.missionType === 'QUICK_LOOK' ? 6 : 4
-      if (activeWorkload(next, assignment.evaluatorStaffId) + missionUnits[assignment.missionType] > capacity) continue
+      const evaluatorWorkload = workload.get(assignment.evaluatorStaffId) ?? 0
+      if (evaluatorWorkload + missionUnits[assignment.missionType] > capacity) continue
       if (assignment.missionType === 'LIVE_GAME' && (assignment.gameId === undefined || world.games[assignment.gameId as keyof typeof world.games]?.date !== world.currentDate)) continue
-      const expectedCompletionAt = addDays(world.currentDate, durationDays(next, assignment))
-      next = updateAssignment(next, { ...assignment, status: 'ACTIVE', startedAt: world.currentDate, expectedCompletionAt })
-      if (assignment.missionType === 'LIVE_GAME') next = completeAssignment(next, assignment.id)
+      const expectedCompletionAt = addDays(world.currentDate, durationDaysWithWorkload(world, assignment, evaluatorWorkload))
+      assignments.set(assignment.id, { ...assignment, status: 'ACTIVE', startedAt: world.currentDate, expectedCompletionAt })
+      workload.set(assignment.evaluatorStaffId, evaluatorWorkload + missionUnits[assignment.missionType])
+      changed = true
+      if (assignment.missionType === 'LIVE_GAME') complete(assignment.id)
       continue
     }
-    if (assignment.expectedCompletionAt === undefined || compareGameDates(next.currentDate, assignment.expectedCompletionAt) < 0) continue
-    next = completeAssignment(next, assignment.id)
+    if (assignment.expectedCompletionAt === undefined || compareGameDates(world.currentDate, assignment.expectedCompletionAt) < 0) continue
+    complete(assignment.id)
+    changed = true
   }
-  return next
+  if (!changed) return world
+  return updateGameWorld(world, {
+    ...(evidence.length === 0 ? {} : { evidence: [...Object.values(world.evidenceById), ...evidence], evaluatorReports: [...Object.values(world.evaluatorReportsById), ...reports], organizationKnowledge: knowledge }),
+    scoutingAssignments: [...assignments.values()],
+  })
 }
 
 export function durationDays(world: GameWorld, assignment: ScoutingAssignment): number {
+  return durationDaysWithWorkload(world, assignment, activeWorkload(world, assignment.evaluatorStaffId))
+}
+
+function durationDaysWithWorkload(world: GameWorld, assignment: ScoutingAssignment, workload: number): number {
   const staff = world.staffPeopleById[assignment.evaluatorStaffId]!
   const profile = evaluatorProfile(world, assignment.evaluatorStaffId)
   const relevant = assignment.missionType === 'POTENTIAL_EVALUATION' ? staff.professional.attributes.potentialEvaluation : assignment.missionType === 'TACTICAL_FIT' ? Math.round((staff.professional.attributes.tacticalKnowledge + staff.professional.attributes.analysis) / 2) : staff.professional.attributes.talentEvaluation
-  const workload = activeWorkload(world, assignment.evaluatorStaffId)
   return Math.max(1, missionDays[assignment.missionType] + (relevant < 50 ? 1 : 0) + (profile.experience < 30 ? 1 : 0) + (workload >= 4 ? 1 : 0))
 }
 export function activeWorkload(world: GameWorld, staffId: StaffPersonId): number { return Object.values(world.scoutingAssignmentsById).filter((item) => item.evaluatorStaffId === staffId && item.status === 'ACTIVE').reduce((sum, item) => sum + missionUnits[item.missionType], 0) }
 
-function completeAssignment(world: GameWorld, assignmentId: string): GameWorld {
-  const assignment = world.scoutingAssignmentsById[assignmentId]!; const evidence = createEvidence(world, assignment); const report = generateEvaluatorReport(world, assignment, evidence)
-  const knowledge = consolidateOrganizationKnowledge(world.organizationKnowledge, report, evidence, evaluatorProfile(world, assignment.evaluatorStaffId), world.currentDate)
-  return updateGameWorld(world, { evidence: [...Object.values(world.evidenceById), evidence], evaluatorReports: [...Object.values(world.evaluatorReportsById), report], organizationKnowledge: knowledge, scoutingAssignments: Object.values(world.scoutingAssignmentsById).map((item) => item.id === assignmentId ? { ...item, status: 'COMPLETED', completedAt: world.currentDate } : item) })
+/** The evidence, report and consolidated knowledge one completed assignment adds (the world's players, staff and evaluators are read only). */
+function completionArtifacts(world: GameWorld, assignment: ScoutingAssignment, knowledge: readonly OrganizationKnowledge[]): { readonly evidence: Evidence; readonly report: EvaluatorReport; readonly knowledge: readonly OrganizationKnowledge[] } {
+  const evidence = createEvidence(world, assignment); const report = generateEvaluatorReport(world, assignment, evidence)
+  return { evidence, report, knowledge: consolidateOrganizationKnowledge(knowledge, report, evidence, evaluatorProfile(world, assignment.evaluatorStaffId), world.currentDate) }
 }
 function createEvidence(world: GameWorld, assignment: ScoutingAssignment): Evidence { const source = assignment.missionType === 'LIVE_GAME' ? 'OPPONENT_GAME' : assignment.missionType === 'TACTICAL_FIT' ? 'VIDEO_SCOUTING' : 'LIVE_SCOUTING'; return { id: `evidence:${assignment.id}`, organizationId: assignment.organizationId, subjectPlayerId: assignment.subjectPlayerId, source, observedAt: world.currentDate, quality: missionUnits[assignment.missionType] / 4, dimensions: dimensionsFor(assignment), context: assignment.missionType, ...(assignment.gameId === undefined ? {} : { gameId: assignment.gameId }) } }
 /**
@@ -110,6 +143,5 @@ function score(world:GameWorld,id:StaffPersonId,mission:ScoutingMission):number 
 function dimensionsFor(a:ScoutingAssignment):readonly string[] { if(a.missionType==='SKILL_EVALUATION')return[a.targetDimension??'shooting'];if(a.missionType==='POTENTIAL_EVALUATION')return['potential:shooting','potential:finishing','potential:creation','potential:passing','potential:defense','potential:rebounding','potential:physical','potential:mental'];if(a.missionType==='TACTICAL_FIT')return['tacticalFit'];if(a.missionType==='QUICK_LOOK')return['shooting','physical'];return Object.keys(domains) }
 function truthForDimension(player:GameWorld['players'][PlayerId],dimension:string,mission:ScoutingMission):number { if(dimension.startsWith('potential:')) { const domain=dimension.slice(10) as keyof typeof player.development.ceilings; return player.development.ceilings[domain] ?? 50 } if(dimension==='tacticalFit')return 50; const keys=(domains as Record<string,readonly string[]>)[dimension]??[dimension]; return average(keys.map((key)=>player.basketball.ratings[key as typeof CANONICAL_RATING_KEYS[number]]??50)) }
 function deterministicError(key:string,ability:number,profile:EvaluatorProfile,dimension:string,source:string):number { let hash=2166136261;for(const char of key)hash=Math.imul(hash^char.charCodeAt(0),16777619);const perkReduction=profile.perks.includes('EYE_FOR_SHOOTERS')&&dimension==='shooting'||profile.perks.includes('PROJECTION_EXPERT')&&dimension.startsWith('potential:')||profile.perks.includes('TAPE_GRINDER')&&source==='VIDEO_SCOUTING'||profile.perks.includes('LIVE_SCOUT')&&source!=='VIDEO_SCOUTING'?2:0;const noise=((hash>>>0)%2001/1000-1)*Math.max(2,18-ability/10-profile.experience/25-perkReduction);const bias=(profile.biases.includes('UPSIDE_BIAS')&&dimension.startsWith('potential:')?3:0)+(profile.biases.includes('ATHLETICISM_BIAS')&&dimension==='physical'?3:0)+(profile.biases.includes('PRODUCTION_BIAS')&&dimension==='shooting'?2:0)+(profile.biases.includes('SIZE_BIAS')&&dimension==='physical'?1:0);return noise+bias }
-function updateAssignment(world:GameWorld,assignment:ScoutingAssignment):GameWorld{return updateGameWorld(world,{scoutingAssignments:Object.values(world.scoutingAssignmentsById).map(item=>item.id===assignment.id?assignment:item)})}
 function lazyFreshness(assessed:GameDate,now:GameDate):number { const days=Math.max(0,Math.round((Date.UTC(Number(now.slice(0,4)),Number(now.slice(5,7))-1,Number(now.slice(8,10)))-Date.UTC(Number(assessed.slice(0,4)),Number(assessed.slice(5,7))-1,Number(assessed.slice(8,10))))/86400000));return clamp01(1-days/365) }
 function average(values:readonly number[]):number{return values.length===0?0:values.reduce((a,b)=>a+b,0)/values.length}function clamp(value:number,min:number,max:number):number{return Math.max(min,Math.min(max,value))}function clamp01(value:number):number{return clamp(value,0,1)}

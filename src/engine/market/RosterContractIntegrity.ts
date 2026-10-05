@@ -2,7 +2,7 @@ import { getPlayerContractStatus } from '@/domain/contract'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { WorldRepairReport } from '@/domain/repair'
 import { clearPlayerFromLineup } from '@/domain/tactics'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld, contractsByPlayer, teamsByRosterPlayer } from '@/domain/world'
 
 export interface RosterContractIntegrityResult {
   readonly world: GameWorld
@@ -20,8 +20,9 @@ export function repairRosterContractIntegrity(world: GameWorld, teamIds?: readon
   ])].sort((a, b) => a.localeCompare(b))
 
   for (const playerId of playerIds) {
-    const rosterTeamIds = Object.values(current.teams).filter((team) => team.rosterPlayerIds.includes(playerId)).map((team) => team.id).sort((a, b) => a.localeCompare(b))
-    const activeContracts = Object.values(current.contractsById).filter((contract) => contract.playerId === playerId && getPlayerContractStatus(contract, current.currentDate) === 'active').sort((a, b) => a.id.localeCompare(b.id))
+    // WSR2: per-collection indexes (same elements and order as scanning every team and contract; rebuilt when a repair changes them).
+    const rosterTeamIds = (teamsByRosterPlayer(current.teams).get(playerId) ?? []).map((team) => team.id).sort((a, b) => a.localeCompare(b))
+    const activeContracts = (contractsByPlayer(current.contractsById).get(playerId) ?? []).filter((contract) => getPlayerContractStatus(contract, current.currentDate) === 'active').sort((a, b) => a.id.localeCompare(b.id))
     const rosterTeamId = rosterTeamIds[0]
     const contract = activeContracts[0]
 
@@ -97,7 +98,7 @@ function hasMatchingDeparture(world: GameWorld, playerId: PlayerId, teamId: Team
 }
 
 function hasFutureRosterContract(world: GameWorld, playerId: PlayerId, teamId: TeamId): boolean {
-  return Object.values(world.contractsById).some((contract) => contract.playerId === playerId && contract.teamId === teamId && getPlayerContractStatus(contract, world.currentDate) === 'scheduled')
+  return (contractsByPlayer(world.contractsById).get(playerId) ?? []).some((contract) => contract.teamId === teamId && getPlayerContractStatus(contract, world.currentDate) === 'scheduled')
 }
 
 function requiresProfessionalContract(world: GameWorld, teamId: TeamId): boolean {

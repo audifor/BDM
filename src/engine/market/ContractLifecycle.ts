@@ -2,12 +2,13 @@ import type { GameDate } from '@/domain/date'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { playerTransactionIdFromString, type PlayerId } from '@/domain/ids'
 import { clearPlayerFromLineup } from '@/domain/tactics'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { contractsByPlayer, updateGameWorld, type GameWorld } from '@/domain/world'
 export function reconcileExpiredPlayerContracts(world: GameWorld, onDate: GameDate): GameWorld {
   const removals = new Map<PlayerId, string>()
   const transactions = []
   for (const team of Object.values(world.teams)) for (const playerId of team.rosterPlayerIds) {
-    const contracts = Object.values(world.contractsById).filter((contract) => contract.playerId === playerId && contract.teamId === team.id)
+    // WSR2: the player's contracts from the per-collection index (same elements, same order as scanning every contract).
+    const contracts = (contractsByPlayer(world.contractsById).get(playerId) ?? []).filter((contract) => contract.teamId === team.id)
     if (contracts.some((contract) => ['active', 'scheduled'].includes(getPlayerContractStatus(contract, onDate)))) continue
     const expired = contracts.filter((contract) => getPlayerContractStatus(contract, onDate) === 'expired').sort((a, b) => b.term.expiresOn.localeCompare(a.term.expiresOn))[0]
     if (expired === undefined) continue

@@ -6,6 +6,7 @@ export {
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
+export { cohesionUnitsByScope, conflictsByParticipant, contractsByPlayer, eligibilityProfileIndex, eligibilityProfileKey, eligibilityRestrictionsByPlayer, liveStaffContextByStaff, memoriesByOwner, reactionRecordsByContext, staffAssignmentIndex, staffContractsByStaff, teamsByRosterPlayer } from './collectionIndexes'
 export type { Organization, OrganizationSection } from '@/domain/organization'
 export type { Person } from '@/domain/person'
 export {

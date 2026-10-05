@@ -1,15 +1,17 @@
 import { createNarrativeThread, NARRATIVE_THRESHOLDS, type NarrativeThread } from '@/domain/narrative'
-import { addNewsItem, updateGameWorld, type GameWorld } from '@/domain/world'
+import { addNewsItem, memoriesByOwner, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { GameId } from '@/domain/ids'
 
 export function refreshNarratives(world: GameWorld): GameWorld {
   let next = world
   for (const coachId of Object.keys(world.coaches)) {
-    const departures = Object.values(world.memoriesById).filter((memory) => memory.owner.id === coachId && (memory.type === 'fired' || memory.type === 'leftClub'))
+    // WSR2: the coach's memories from the per-collection index (same elements, same order) instead of every memory for every coach.
+    const owned = memoriesByOwner(world.memoriesById).get(coachId) ?? []
+    const departures = owned.filter((memory) => memory.type === 'fired' || memory.type === 'leftClub')
     for (const departure of departures) { const teamId = departure.entityRefs.find((entity) => entity.kind === 'team')?.id; if (teamId !== undefined) next = upsert(next, `narrative:${departure.type}:${coachId}:${teamId}`, departure.type === 'fired' ? 'revenge' : 'formerClub', [coachId], [teamId], departure.occurredOn, departure.id, departure.type === 'fired' ? 'dismissed' : 'departed') }
-    const promotions = Object.values(world.memoriesById).filter((memory) => memory.owner.id === coachId && memory.tags.includes('promotion'))
+    const promotions = owned.filter((memory) => memory.tags.includes('promotion'))
     if (promotions.length) next = upsert(next, `narrative:promotion:${coachId}`, 'promotionJourney', [coachId], promotions.flatMap((memory) => memory.entityRefs.filter((entity) => entity.kind === 'team').map((entity) => entity.id)).slice(0, 1), promotions[promotions.length - 1]!.occurredOn, promotions.map((memory) => memory.id).join(','), 'promotion', promotions.length * 15)
-    const titles = Object.values(world.memoriesById).filter((memory) => memory.owner.id === coachId && memory.type === 'championship')
+    const titles = owned.filter((memory) => memory.type === 'championship')
     if (titles.length >= NARRATIVE_THRESHOLDS.dynastyChampionships) next = upsert(next, `narrative:dynasty:${coachId}`, 'dynasty', [coachId], titles.flatMap((memory) => memory.entityRefs.filter((entity) => entity.kind === 'team').map((entity) => entity.id)).slice(0, 1), titles[titles.length - 1]!.occurredOn, titles.map((memory) => memory.id).join(','), 'championship', titles.length * 20)
   }
   return applyNarrativeDormancy(next)

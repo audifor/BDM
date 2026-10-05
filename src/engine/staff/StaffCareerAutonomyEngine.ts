@@ -1,4 +1,4 @@
-import type { GameWorld } from '@/domain/world'
+import { cohesionUnitsByScope, conflictsByParticipant, type GameWorld } from '@/domain/world'
 import type { StaffHumanContext, StaffHumanState } from '@/domain/staffHumanState'
 import type { StaffCareerAutonomyState, StaffCareerIntent, StaffCareerOutlook } from '@/domain/staffCareerAutonomy'
 import type { StaffJobOffer, StaffJobOpening } from '@/domain/staffCareer'
@@ -58,10 +58,11 @@ export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext
   const leadershipRelationship = leadershipId === undefined ? undefined : world.relationshipsByKey[`${context.staffId}->${leadershipId}`]
   const dimensions = getRelationshipDimensions(leadershipRelationship)
   const relationshipPressure = clamp((Math.max(0, -dimensions.trust) + Math.max(0, -dimensions.professionalRespect) + Math.max(0, -dimensions.communicationQuality) + Math.max(0, -dimensions.collaboration) + Math.max(0, -dimensions.perceivedSupport) + Math.max(0, -dimensions.reliability) + Math.max(0, -dimensions.professionalAlignment)) / 3)
-  const cohesionPressure = clamp(Object.values(world.staffUnitCohesionStatesByUnitKey).filter((unit) => unit.scopeKey === context.teamId).reduce((sum, unit) => sum + low(unit.current.mutualSupport) * 0.08 + low(unit.current.trustClimate) * 0.08, 0))
+  // WSR2: per-collection indexes; the same elements in the same order, so the same sums.
+  const cohesionPressure = clamp((cohesionUnitsByScope(world.staffUnitCohesionStatesByUnitKey).get(context.teamId) ?? []).reduce((sum, unit) => sum + low(unit.current.mutualSupport) * 0.08 + low(unit.current.trustClimate) * 0.08, 0))
   const belonging = clamp(low(state.organizationalCommitment) * 0.65 + relationshipPressure * 0.12 + cohesionPressure * 0.08 + (culture === undefined ? 0 : low(culture.current.collaboration) * 0.075 + low(culture.current.communicationOpenness) * 0.075))
-  const conflict = clamp(Object.values(world.staffConflictsById)
-    .filter((item) => item.status === 'ACTIVE' && item.participants.some((participant) => participant.actorId === context.staffId))
+  const conflict = clamp((conflictsByParticipant(world.staffConflictsById).get(context.staffId) ?? [])
+    .filter((item) => item.status === 'ACTIVE')
     .reduce((sum, item) => sum + ({ MINOR: 12, MODERATE: 25, SERIOUS: 42, SEVERE: 60, CRITICAL: 60 }[item.severity] ?? 0), 0))
   const reputation = world.staffReputationProfilesByStaffId[context.staffId]
   const opportunity = clamp((reputation === undefined ? 0 : Object.values(reputation.values).reduce((sum, value) => sum + value, 0) / 40) + ambition * 0.2)

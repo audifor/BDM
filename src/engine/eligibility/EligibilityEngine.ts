@@ -2,17 +2,18 @@ import { compareGameDates, type GameDate } from '@/domain/date'
 import type { CompetitionId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import { defaultEligibilityRules, type EligibilityProfile, type EligibilityResult } from '@/domain/eligibility'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { isPlayerAvailable } from '@/domain/world'
+import { eligibilityProfileIndex, eligibilityProfileKey, eligibilityRestrictionsByPlayer, isPlayerAvailable } from '@/domain/world'
 
 export function evaluatePlayerEligibility(world: GameWorld, input: { readonly playerId: PlayerId; readonly teamId: TeamId; readonly competitionId: CompetitionId; readonly seasonId: SeasonId; readonly onDate?: GameDate }): EligibilityResult {
   const competition = world.competitions[input.competitionId]; const season = world.seasons[input.seasonId]; const ecosystem = competition && world.ecosystems[competition.ecosystemId]
   if (!competition || !season || season.competitionId !== competition.id || !world.teams[input.teamId]?.rosterPlayerIds.includes(input.playerId)) return { eligible: false, status: 'ineligible', reasons: ['INVALID_SEASON_CONTEXT'], seasonsRemaining: 0 }
   if (ecosystem?.kind !== 'ncaaLike') return { eligible: true, status: 'eligible', reasons: [], seasonsRemaining: 0 }
-  const profile = Object.values(world.eligibilityProfilesById).find((item) => item.playerId === input.playerId && item.ecosystemId === ecosystem.id && item.programTeamId === input.teamId)
+  // WSR2: per-collection indexes (the same first profile, the same restrictions) instead of world scans for every rostered player.
+  const profile = eligibilityProfileIndex(world.eligibilityProfilesById).get(eligibilityProfileKey(input.playerId, ecosystem.id, input.teamId))
   if (!profile) return { eligible: false, status: 'ineligible', reasons: ['INVALID_SEASON_CONTEXT'], seasonsRemaining: 0 }
   const rules = world.eligibilityRulesByEcosystemId[ecosystem.id] ?? defaultEligibilityRules(ecosystem.id); const remaining = Math.max(0, rules.maximumEligibilitySeasons - profile.seasonsUsed)
   if (remaining === 0) return { eligible: false, status: 'exhausted', reasons: ['ELIGIBILITY_EXHAUSTED'], seasonsRemaining: 0 }
-  const date = input.onDate ?? world.currentDate; const restricted = Object.values(world.eligibilityRestrictionsById).some((item) => item.playerId === input.playerId && item.ecosystemId === ecosystem.id && compareGameDates(item.startsAt, date) <= 0 && (item.endsAt === undefined || compareGameDates(date, item.endsAt) <= 0))
+  const date = input.onDate ?? world.currentDate; const restricted = (eligibilityRestrictionsByPlayer(world.eligibilityRestrictionsById).get(input.playerId) ?? []).some((item) => item.ecosystemId === ecosystem.id && compareGameDates(item.startsAt, date) <= 0 && (item.endsAt === undefined || compareGameDates(date, item.endsAt) <= 0))
   return restricted ? { eligible: false, status: 'ineligible', reasons: ['ACTIVE_ELIGIBILITY_RESTRICTION'], seasonsRemaining: remaining } : { eligible: true, status: 'eligible', reasons: [], seasonsRemaining: remaining }
 }
 

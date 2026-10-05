@@ -52,7 +52,12 @@ export function progressStaffCareerAutonomyAppraisal(world: GameWorld): GameWorl
 /** Wave 5E weekly continuation of the canonical Human-State cadence. It is intentionally state-only: request execution remains an application concern. */
 function progressWeeklyStaffCareerAutonomy(world: GameWorld): GameWorld {
   const states = Object.values(world.staffCareerAutonomyByContextId)
+  // WSR2: position of each context's state in `states` (context ids are unique), instead of a findIndex scan per context.
+  const stateIndexByContext = new Map(states.map((item, index) => [item.contextId, index]))
   const requests = Object.values(world.staffCareerRequestsById) as StaffCareerRequest[]
+  const requestsByContext = new Map<string, StaffCareerRequest[]>()
+  for (const item of requests) { const list = requestsByContext.get(item.contextId); if (list === undefined) requestsByContext.set(item.contextId, [item]); else list.push(item) }
+  const lookup = careerRequestLookup(world)
   let changed = false
   for (const context of Object.values(world.staffHumanContextsById)) {
     if (context.endedOn !== undefined) continue
@@ -60,16 +65,38 @@ function progressWeeklyStaffCareerAutonomy(world: GameWorld): GameWorld {
     if (human === undefined) continue
     const prior = world.staffCareerAutonomyByContextId[context.id]
     const next = evolveStaffCareerAutonomy(prior, appraiseStaffCareer(world, context, human), context, world.currentDate)
-    const index = states.findIndex((item) => item.contextId === context.id)
-    if (index < 0) states.push(next); else states[index] = next
+    const index = stateIndexByContext.get(context.id) ?? -1
+    if (index < 0) { stateIndexByContext.set(context.id, states.length); states.push(next) } else states[index] = next
     changed ||= prior === undefined || prior.intensity !== next.intensity || prior.primaryIntent !== next.primaryIntent || prior.outlook !== next.outlook
-    const request = requestFor(world, context, next.primaryIntent)
-    if (request !== undefined && next.intensity >= STAFF_CAREER_AUTONOMY_TUNING.requestIntensity && canCreateRequest(requests, request, world.currentDate)) { requests.push(request); changed = true }
+    const request = requestFor(world, context, next.primaryIntent, lookup)
+    if (request !== undefined && next.intensity >= STAFF_CAREER_AUTONOMY_TUNING.requestIntensity && canCreateRequest(requestsByContext.get(request.contextId) ?? [], request, world.currentDate)) {
+      requests.push(request)
+      const list = requestsByContext.get(request.contextId)
+      if (list === undefined) requestsByContext.set(request.contextId, [request]); else list.push(request)
+      changed = true
+    }
   }
   return changed ? updateGameWorld(world, { staffCareerAutonomyStates: states, staffCareerRequests: requests }) : world
 }
 
-function requestFor(world: GameWorld, context: StaffHumanContext, intent: import('@/domain/staffCareerAutonomy').StaffCareerIntent): StaffCareerRequest | undefined {
+/**
+ * WSR2: lookups the weekly career pass made by scanning world collections for every Staff context, built once per pass. Each answers
+ * exactly what its scan answered: the first competition (collection order) listing a team, and the team's responsibilities in order.
+ */
+interface CareerRequestLookup {
+  readonly firstCompetitionByTeam: ReadonlyMap<string, GameWorld['competitions'][keyof GameWorld['competitions']]>
+  readonly responsibilitiesByTeam: ReadonlyMap<string, readonly GameWorld['responsibilitiesById'][keyof GameWorld['responsibilitiesById']][]>
+}
+
+function careerRequestLookup(world: GameWorld): CareerRequestLookup {
+  const firstCompetitionByTeam = new Map<string, GameWorld['competitions'][keyof GameWorld['competitions']]>()
+  for (const competition of Object.values(world.competitions)) for (const teamId of competition.participantTeamIds) if (!firstCompetitionByTeam.has(teamId)) firstCompetitionByTeam.set(teamId, competition)
+  const responsibilitiesByTeam = new Map<string, GameWorld['responsibilitiesById'][keyof GameWorld['responsibilitiesById']][]>()
+  for (const item of Object.values(world.responsibilitiesById)) { const list = responsibilitiesByTeam.get(item.teamId); if (list === undefined) responsibilitiesByTeam.set(item.teamId, [item]); else list.push(item) }
+  return { firstCompetitionByTeam, responsibilitiesByTeam }
+}
+
+function requestFor(world: GameWorld, context: StaffHumanContext, intent: import('@/domain/staffCareerAutonomy').StaffCareerIntent, lookup: CareerRequestLookup = careerRequestLookup(world)): StaffCareerRequest | undefined {
   const employment = world.staffEmploymentByStaffId[context.staffId]
   if (employment?.status !== 'employed') return undefined
   let kind: StaffCareerRequestKind | undefined
@@ -77,7 +104,7 @@ function requestFor(world: GameWorld, context: StaffHumanContext, intent: import
   let targetResponsibilityKind: StaffCareerRequest['targetResponsibilityKind']
   if (intent === 'PROMOTION' || intent === 'ROLE_CHANGE') {
     const current = STAFF_ROLE_REGISTRY[employment.roleId!]
-    const ecosystem = Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(context.teamId))
+    const ecosystem = lookup.firstCompetitionByTeam.get(context.teamId)
     if (ecosystem === undefined) return undefined
     const ecosystemKind = world.ecosystems[ecosystem.ecosystemId]!.kind
     const levels = ['junior', 'standard', 'senior', 'director']
@@ -87,7 +114,7 @@ function requestFor(world: GameWorld, context: StaffHumanContext, intent: import
     if (higher === undefined) return undefined
     kind = intent === 'PROMOTION' ? 'PROMOTION' : 'ROLE_CHANGE'; targetRoleId = higher.id
   } else if (intent === 'MORE_RESPONSIBILITY') {
-    const eligible = Object.values(RESPONSIBILITY_REGISTRY).filter((definition) => definition.eligibleRoleIds.includes(employment.roleId!) && !Object.values(world.responsibilitiesById).some((item) => item.teamId === context.teamId && item.kind === definition.kind && item.holderStaffId !== undefined)).sort((a, b) => a.kind.localeCompare(b.kind))[0]
+    const eligible = Object.values(RESPONSIBILITY_REGISTRY).filter((definition) => definition.eligibleRoleIds.includes(employment.roleId!) && !(lookup.responsibilitiesByTeam.get(context.teamId) ?? []).some((item) => item.kind === definition.kind && item.holderStaffId !== undefined)).sort((a, b) => a.kind.localeCompare(b.kind))[0]
     if (eligible === undefined) return undefined
     kind = 'MORE_RESPONSIBILITY'; targetResponsibilityKind = eligible.kind
   } else if (intent === 'CONTRACT_IMPROVEMENT') kind = 'CONTRACT_DISCUSSION'
@@ -137,8 +164,10 @@ function applyDailyRecovery(world: GameWorld): GameWorld {
     .map((state) => ({ state, recovered: applyHumanStateRecovery(state, world.personalitiesByPersonId[state.staffId]) }))
     .filter((item) => item.recovered.stress !== item.state.stress || item.recovered.frustration !== item.state.frustration)
   if (updates.length === 0) return world
+  // WSR2: context ids are unique, so a map answers exactly what `updates.find` by context id answered.
+  const recoveredByContext = new Map(updates.map((item) => [item.state.contextId, item.recovered]))
   return updateGameWorld(world, {
-    staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => updates.find((item) => item.state.contextId === state.contextId)?.recovered ?? state),
+    staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => recoveredByContext.get(state.contextId) ?? state),
   })
 }
 
