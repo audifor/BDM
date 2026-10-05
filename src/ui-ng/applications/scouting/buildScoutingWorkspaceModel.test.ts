@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game/createNewGame'
 import { addDays } from '@/domain/date'
-import { organizationIdForTeam } from '@/domain/ids'
+import { organizationIdForTeam, type PersonId, type PlayerId } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { getNextScheduledGameForTeam, getUserTeam } from '@/engine/calendar'
 import { progressScoutingAssignments, requestScouting } from '@/engine/scouting'
@@ -17,6 +17,34 @@ function completeAssignments(world: ReturnType<typeof createNewGame>) {
 }
 
 describe('buildScoutingWorkspaceModel', () => {
+  it('measures the representative addressable Scouting read model without scanning latent candidates', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const nextGame = getNextScheduledGameForTeam(base, team.id)!
+    const opponentId = nextGame.homeTeamId === team.id ? nextGame.awayTeamId : nextGame.homeTeamId
+    const opponent = base.teams[opponentId]!
+    const template = base.players[opponent.rosterPlayerIds[0]!]!
+    const additionalPlayers = Array.from({ length: 256 }, (_, index) => ({
+      ...template,
+      id: `player:performance:${index}` as PlayerId,
+      personId: `person:performance:${index}` as PersonId,
+      firstName: 'Performance',
+      lastName: `Candidate${index}`,
+    }))
+    const world = updateGameWorld(base, {
+      players: [...Object.values(base.players), ...additionalPlayers],
+      teams: Object.values(base.teams).map((candidate) => candidate.id === opponentId
+        ? { ...candidate, rosterPlayerIds: [...candidate.rosterPlayerIds, ...additionalPlayers.map((player) => player.id)] }
+        : candidate),
+    })
+    const startedAt = performance.now()
+    const model = buildScoutingWorkspaceModel(world)
+    const elapsedMs = performance.now() - startedAt
+
+    expect(model?.candidateCount).toBeGreaterThan(200)
+    console.info(`[BS15H performance] Scouting addressable list: ${model?.candidateCount} candidates in ${elapsedMs.toFixed(1)} ms`)
+  })
+
   it('lists own roster without leaking hidden ratings when no knowledge exists', () => {
     const world = createNewGame()
     const team = getUserTeam(world)!

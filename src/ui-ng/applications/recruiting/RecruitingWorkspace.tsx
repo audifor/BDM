@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
+import type { PlayerId } from '@/domain/ids'
 import { resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
-import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
+import { clearRecruitingPlayerFocus, navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
+import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
 
 const REASON_TEXT: Readonly<Record<string, string>> = {
   RECRUITING_NOT_OPEN: 'The recruiting window is closed.',
@@ -58,6 +60,17 @@ export function RecruitingWorkspace() {
   const respondToConcern = useGameStore((state) => state.respondToRecruitingConcern)
   const applyPressure = useGameStore((state) => state.applyRecruitingPressure)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const readFocus = () => new URLSearchParams(window.location.search).get('focusPlayerId')
+  const [focusPlayerId, setFocusPlayerId] = useState(readFocus)
+  useEffect(() => {
+    const sync = () => setFocusPlayerId(readFocus())
+    window.addEventListener('bdm-ng-nav', sync)
+    window.addEventListener('popstate', sync)
+    return () => {
+      window.removeEventListener('bdm-ng-nav', sync)
+      window.removeEventListener('popstate', sync)
+    }
+  }, [])
 
   if (world === null) {
     return <NgHoloShell appLabel="Recruiting" empty emptyMessage="No career loaded." region="recruiting-workspace" />
@@ -82,11 +95,11 @@ export function RecruitingWorkspace() {
     Object.values(world.competitions).some(
       (competition) => competition.participantTeamIds.includes(team.id) && world.ecosystems[competition.ecosystemId]?.kind === 'ncaaLike',
     )
-  const profiles = Object.values(world.recruitProfilesById).sort((left, right) => left.publicRank - right.publicRank)
+  const profiles = Object.values(world.recruitProfilesById).filter((profile) => focusPlayerId === null || profile.playerId === focusPlayerId).sort((left, right) => left.publicRank - right.publicRank)
   const cycle = Object.values(world.recruitingCyclesById).find((item) => item.status === 'open' || item.status === 'signing')
   const run = (callback: () => string | null) => {
     const reason = callback()
-    setFeedback(reason === null ? 'Action completed.' : (REASON_TEXT[reason] ?? reason))
+    setFeedback(reason === null ? 'Action completed.' : (REASON_TEXT[reason] ?? reason.toLocaleLowerCase().replaceAll('_', ' ')))
   }
 
   return (
@@ -101,6 +114,8 @@ export function RecruitingWorkspace() {
       teamId={team?.id}
       title="Recruiting center"
     >
+      <TalentOperationsNav current="recruiting" />
+      {focusPlayerId !== null ? <p className="ng-canon__note">Focused Portal Player: {world.players[focusPlayerId as PlayerId]?.firstName ?? ''} {world.players[focusPlayerId as PlayerId]?.lastName ?? 'record unavailable'} · <button className="ng-canon__link" onClick={() => { clearRecruitingPlayerFocus(); setFocusPlayerId(null) }} type="button">Show all recruiting profiles</button></p> : null}
       {feedback !== null ? <p className="ng-canon__note">{feedback}</p> : null}
       {controlled && cycle !== undefined ? (
         <button className="ng-canon__action" onClick={() => run(() => discoverRecruitingTalent(cycle.id))} type="button">
@@ -108,7 +123,7 @@ export function RecruitingWorkspace() {
         </button>
       ) : null}
       {profiles.length === 0 ? (
-        <p className="ng-canon__empty">No recruit profiles in the world.</p>
+        <p className="ng-canon__empty">{focusPlayerId === null ? 'No recruit profiles in the world.' : 'This Player is not in an active Recruiting cycle.'}</p>
       ) : (
         <div className="ng-canon__panel ng-holo-panel">
           <NgPrecisionTable

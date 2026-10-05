@@ -13,6 +13,8 @@ import {
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { findHistoryInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
 import { useGameStore } from '@/stores/gameStore'
+import { resolveTalentHistoryDestination } from '@/ui-ng/applications/talent/TalentHistoryRouteResolver'
+import { navigateToTalentDestination } from '@/ui-ng/workspace/workspaceApps'
 
 export function PlayerHistoryView() {
   const { model, playerId, session } = usePlayerWorkspace()
@@ -32,6 +34,10 @@ export function PlayerHistoryView() {
   return (
     <div className="po-hs-board" data-ng-region="player-history">
       <div className="po-hs-main">
+        {playerId ? (() => {
+          const actions = history.items.flatMap((item) => { const destination = resolveTalentHistoryDestination(item, playerId); return destination ? [{ item, destination }] : [] })
+          return actions.length > 0 ? <section aria-label="Pathway navigation" className="ng-canon__panel ng-holo-panel"><h2 className="ng-canon__title">Pathway destinations</h2><ul>{actions.map(({ item, destination }) => <li key={item.id}>{item.dateLabel} · {item.title} <button className="ng-canon__link" onClick={() => navigateToTalentDestination(destination)} type="button">Open {destination.app === 'player' ? `Player ${destination.playerView ?? 'overview'}` : destination.app}</button></li>)}</ul></section> : null
+        })() : null}
         <HistoryTimelinePanel
           events={history.timeline}
           onSelect={onSelect}

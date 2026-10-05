@@ -13,6 +13,19 @@ This map defines who owns a fact and who consumes it. It is a design contract, n
 | Pro employment/movement | `PlayerContract`, Team roster, `EcosystemTransition` | NCAA→NBA gateway preserves Player identity and college history. Full international eligibility and all undrafted/portal workflows remain open. |
 | Scouting knowledge | `OrganizationKnowledge` + organization evaluation policy | AI boards remain team-specific and do not rank from hidden PlayerTruth. |
 
+## BS15H UI consumer note
+
+Talent Operations, Scouting, Recruiting, Portal, Draft and Player workspaces are consumers of the authorities below; they own no player ratings, knowledge, eligibility, interest, Portal/Draft state, compensation, promises or movement decisions.
+
+| UI surface | Canonical reads / commands | Boundary |
+|---|---|---|
+| Talent Operations overview | Current user's org scouting assignments/awareness, recruiting board, authorized Portal entries, scheduled Draft state | A short, actionable projection. It does not materialize latent `TalentCohort` candidates or persist a duplicate alert state. |
+| Scouting | `OrganizationPlayerAwareness`, `OrganizationKnowledge`, evidence, reports, assignments and existing Scouting application commands | Discovery is not represented as a completed evaluation; knowledge confidence is derived from organization-scoped evidence. |
+| Recruiting | `RecruitProfile`, `RecruitingRpg`, permitted organization `RecruitingIntel`; existing Recruiting gateways | Relationship, priorities, promises and commitments remain Recruiting authority; do not reveal other programs' private relationship state. |
+| Transfer Portal | `TransferPortalEntry`, effective Portal rulesets, team-specific `CollegeEligibilityAssessment`; `addTransferRecruitToCycle` | Only authorized entries in the user's college ecosystem are offered as external targets. The source institution's recruiting context is not read. Own pending/authorized entries link to the same Player profile. |
+| Draft | `Draft`/`DraftEntry`, `DraftPick`, `PlayerRights`, contracts and team-specific organization knowledge; existing career/Draft gateways | Declaration deadlines, selection, rights and professional contract/roster state remain distinct canonical facts. |
+| Player pathway | `buildTalentPlayerViewModel` projects Player identity/current roster context and the user's organization knowledge, active Recruiting target, same-ecosystem Portal record, Draft entry and team-specific eligibility; existing Player history provides transitions | History is a projection of canonical events. Navigation links may route to an owning workspace without creating a second event ledger; the summary never reads `PlayerTruth`. |
+
 See the [BS15G authority audit](../research/DRAFT_INTEGRATION_AUDIT_BS15G.md) and [2026 Draft rule provenance](../research/NBA_DRAFT_PATHWAYS_2026.md). This note describes the current slice and does not certify the full BS15G gate.
 
 ## Canonical fact ownership

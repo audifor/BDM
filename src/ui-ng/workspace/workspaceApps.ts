@@ -33,6 +33,8 @@ export const WORKSPACE_APP_IDS = [
   'narratives',
   'media',
   'recruiting',
+  'talent',
+  'portal',
   'nil',
   'boosters',
 ] as const
@@ -71,6 +73,8 @@ export const WORKSPACE_TASKBAR_APPS: readonly WorkspaceTaskbarApp[] = [
   { id: 'narratives', label: 'Stories' },
   { id: 'media', label: 'Press' },
   { id: 'recruiting', label: 'Recruiting' },
+  { id: 'talent', label: 'Talent Operations' },
+  { id: 'portal', label: 'Transfer Portal' },
   { id: 'nil', label: 'NIL' },
   { id: 'boosters', label: 'Boosters' },
 ]
@@ -80,6 +84,29 @@ export function parseWorkspaceApp(value: string | null): WorkspaceAppId {
     return value as WorkspaceAppId
   }
   return 'home'
+}
+
+export function navigateToTalentApp(app: 'talent' | 'scouting' | 'recruiting' | 'portal' | 'draft' | 'player', playerId?: PlayerId) {
+  if (app !== 'talent' && playerId !== undefined) {
+    navigateToTalentDestination({ app, playerId, ...(app === 'player' ? {} : { focusPlayerId: playerId }) })
+    return
+  }
+  syncWorkspaceAppQuery(app, 'push')
+}
+
+export function navigateToTalentDestination(destination: { readonly app: 'player' | 'scouting' | 'recruiting' | 'portal' | 'draft'; readonly playerId: PlayerId; readonly playerView?: 'scouting' | 'history' | 'contract'; readonly focusPlayerId?: PlayerId }) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', destination.app)
+  url.searchParams.delete('playerId')
+  url.searchParams.delete('playerView')
+  url.searchParams.delete('focusPlayerId')
+  url.searchParams.set('playerId', destination.playerId)
+  if (destination.app === 'player') {
+    if (destination.playerView) url.searchParams.set('playerView', destination.playerView)
+  }
+  if (destination.focusPlayerId && ['recruiting', 'portal', 'draft', 'scouting'].includes(destination.app)) url.searchParams.set('focusPlayerId', destination.focusPlayerId)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
 }
 
 export function parseWorkspacePlayerId(value: string | null): PlayerId | null {
@@ -124,6 +151,7 @@ function clearEntityQuery(url: URL) {
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
+  url.searchParams.delete('focusPlayerId')
 }
 
 export function syncWorkspaceAppQuery(app: WorkspaceAppId, method: 'push' | 'replace' = 'replace') {
@@ -137,6 +165,7 @@ export function syncWorkspaceAppQuery(app: WorkspaceAppId, method: 'push' | 'rep
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
+  if (app !== 'recruiting') url.searchParams.delete('focusPlayerId')
   applyHistory(url, method)
   notifyNgNavigation()
 }
@@ -178,6 +207,23 @@ export function navigateToPlayer(playerId: PlayerId) {
   url.searchParams.set('app', 'player')
   url.searchParams.set('playerId', playerId)
   applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+export function navigateToRecruitingPlayer(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.set('app', 'recruiting')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.set('focusPlayerId', playerId)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+export function clearRecruitingPlayerFocus() {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('focusPlayerId')
+  applyHistory(url, 'replace')
   notifyNgNavigation()
 }
 

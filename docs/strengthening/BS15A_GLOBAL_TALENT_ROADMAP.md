@@ -102,6 +102,10 @@
 
 **Exit gate:** benchmark new and migrated saves for elapsed time, memory/save size, cohort inflow/outflow, unrostered prospects, age distribution, region share, position mix, rarity percentiles and ecosystem transitions; no runaway duplicate generation or dead-end cohort accumulation; results are reproducible by seed and documented.
 
+### BS15H scope clarification
+
+BS15H is the user-facing manifestation of the already-approved BS15B–G talent authorities. It may add UI read models, route wiring and explanations over existing canonical commands, but it does not add a new Talent authority or persisted domain state. BS15I remains responsible for population, save and long-horizon certification; none of those certification claims are advanced by UI work.
+
 ## Cross-milestone acceptance contract
 
 Every milestone that changes persisted data must include explicit save-version defaults/migration and same-identity checks. Every acquisition decision must use public signals or the acting organization’s knowledge rather than hidden Player Truth. Every movement must preserve one Player ID and update canonical current-state projections through one domain gateway. Generation tuning must report both supply counts and quality distributions; development tuning must report realized growth separately.

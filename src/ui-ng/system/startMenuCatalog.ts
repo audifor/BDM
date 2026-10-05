@@ -14,6 +14,7 @@ export const START_MENU_REQUIRED_CAPABILITY: Partial<Record<WorkspaceAppId, keyo
   draft: 'hasDraft',
   trades: 'hasTrades',
   recruiting: 'isNcaa',
+  portal: 'isNcaa',
   nil: 'isNcaa',
   boosters: 'isNcaa',
 }
@@ -32,6 +33,7 @@ export interface StartMenuGroup {
 
 export const START_MENU_RAIL_APPS: readonly WorkspaceAppId[] = [
   'home',
+  'talent',
   'roster',
   'player',
   'staff',
@@ -53,6 +55,12 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
     label: 'Equipo',
     description: 'Plantilla, jugador, staff, scouting, tácticas, entrenamiento, mentoring y medical',
     appIds: ['roster', 'player', 'staff', 'scouting', 'tactics', 'training', 'mentoring', 'medical'],
+  },
+  {
+    id: 'talent',
+    label: 'Talent Operations',
+    description: 'Scouting, recruiting, Transfer Portal and Draft pathways',
+    appIds: ['talent', 'scouting', 'recruiting', 'portal', 'draft'],
   },
   {
     id: 'partidos',

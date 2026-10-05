@@ -7,6 +7,9 @@ import {
   navigateToPlayer,
   navigateToPlayerFromRoster,
   navigateToPlayerMedical,
+  navigateToRecruitingPlayer,
+  navigateToTalentApp,
+  navigateToTalentDestination,
   navigateToStaff,
   navigateToTeamInNg,
   parseWorkspaceApp,
@@ -16,11 +19,46 @@ import {
 } from '@/ui-ng/workspace/workspaceApps'
 
 describe('workspaceApps navigation', () => {
+  it('deep links an attention action to the same Player and relevant view', () => {
+    const playerId = 'player:bs15h-route' as PlayerId
+    window.history.replaceState({}, '', '/?ui=ng&app=talent')
+    navigateToTalentDestination({ app: 'player', playerId, playerView: 'scouting' })
+    let params = new URL(window.location.href).searchParams
+    expect(params.get('app')).toBe('player')
+    expect(params.get('playerId')).toBe(playerId)
+    expect(params.get('playerView')).toBe('scouting')
+
+    navigateToTalentDestination({ app: 'recruiting', playerId, focusPlayerId: playerId })
+    params = new URL(window.location.href).searchParams
+    expect(params.get('app')).toBe('recruiting')
+    expect(params.get('playerId')).toBe(playerId)
+    expect(params.get('focusPlayerId')).toBe(playerId)
+
+    navigateToTalentDestination({ app: 'portal', playerId, focusPlayerId: playerId })
+    params = new URL(window.location.href).searchParams
+    expect(params.get('app')).toBe('portal')
+    expect(params.get('playerId')).toBe(playerId)
+    expect(params.get('focusPlayerId')).toBe(playerId)
+
+    navigateToTalentDestination({ app: 'draft', playerId, focusPlayerId: playerId })
+    params = new URL(window.location.href).searchParams
+    expect(params.get('app')).toBe('draft')
+    expect(params.get('playerId')).toBe(playerId)
+    expect(params.get('focusPlayerId')).toBe(playerId)
+
+    navigateToTalentApp('draft', playerId)
+    params = new URL(window.location.href).searchParams
+    expect(params.get('playerId')).toBe(playerId)
+    expect(params.get('focusPlayerId')).toBe(playerId)
+  })
+
   it('parses workspace app and player id from query params', () => {
     expect(parseWorkspaceApp('roster')).toBe('roster')
     expect(parseWorkspaceApp('staff')).toBe('staff')
     expect(parseWorkspaceApp('medical')).toBe('medical')
     expect(parseWorkspaceApp('recruiting')).toBe('recruiting')
+    expect(parseWorkspaceApp('talent')).toBe('talent')
+    expect(parseWorkspaceApp('portal')).toBe('portal')
     expect(parseWorkspaceApp('schedule')).toBe('schedule')
     expect(parseWorkspaceApp('invalid')).toBe('home')
     expect(parseWorkspaceApp(null)).toBe('home')
@@ -71,6 +109,25 @@ describe('workspaceApps navigation', () => {
     const url = new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('player')
     expect(url.searchParams.get('playerId')).toBe(playerId)
+  })
+
+  it('routes talent navigation to a connected workspace', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=scouting')
+    const pushState = vi.spyOn(window.history, 'pushState')
+
+    navigateToTalentApp('portal')
+
+    expect(pushState).toHaveBeenCalled()
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('portal')
+  })
+
+  it('deep-links an authorized Portal Player into their Recruiting profile', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=portal')
+    navigateToRecruitingPlayer('player:portal' as PlayerId)
+
+    const url = new URL(window.location.href)
+    expect(url.searchParams.get('app')).toBe('recruiting')
+    expect(url.searchParams.get('focusPlayerId')).toBe('player:portal')
   })
 
   it('navigateToPlayerMedical opens the player medical view', () => {

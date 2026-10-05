@@ -25,6 +25,8 @@ import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspa
 import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
+import { TalentOperationsWorkspace } from '@/ui-ng/applications/talent/TalentOperationsWorkspace'
+import { TransferPortalWorkspace } from '@/ui-ng/applications/talent/TransferPortalWorkspace'
 import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
 import { useGameStore } from '@/stores/gameStore'
 import { resolveGameCapabilities } from '@/ui/gameContext'
@@ -61,6 +63,8 @@ const WORKSPACES = {
   narratives: NarrativesWorkspace,
   media: MediaWorkspace,
   recruiting: RecruitingWorkspace,
+  talent: TalentOperationsWorkspace,
+  portal: TransferPortalWorkspace,
   nil: NilWorkspace,
   boosters: BoostersWorkspace,
 } as const

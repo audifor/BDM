@@ -1,0 +1,65 @@
+const REASONS: Readonly<Record<string, string>> = {
+  SCOUTING_ASSIGNMENT_UNAVAILABLE: 'This Scouting assignment is no longer available.',
+  SCOUTING_INVALID_TARGET: 'Choose an available Player and Scouting context.',
+  SCOUTING_TARGET_INVALID: 'Choose an available Player and Scouting context.',
+  SCOUTING_STAFF_CAPACITY_EXHAUSTED: 'Scouting staff capacity is fully committed.',
+  STAFF_SCOUTING_CAPACITY_EXHAUSTED: 'Scouting staff capacity is fully committed.',
+  RECRUITING_SHUTDOWN: 'Recruiting is shut down for this period.',
+  COMMUNICATION_BEFORE_START_DATE: 'The communication window has not opened.',
+  DEAD_PERIOD_IN_PERSON_BLOCKED: 'In-person contact is not allowed during the dead period.',
+  DEAD_PERIOD_EVALUATION_BLOCKED: 'Evaluations are not allowed during the dead period.',
+  RECRUITING_OPPORTUNITY_LIMIT: 'The annual recruiting opportunity limit has been reached.',
+  INSUFFICIENT_RECRUITING_CAPACITY: 'The program has reached its recruiting opportunity limit.',
+  RECRUITING_PERSON_DAY_LIMIT: 'The annual recruiting person-day limit has been reached.',
+  STAFF_RECRUITING_CAPACITY_EXHAUSTED: 'Recruiting staff capacity is fully committed.',
+  STAFF_WORKLOAD_CAPACITY_EXHAUSTED: 'Recruiting staff workload capacity is fully committed.',
+  JULY_VISIT_RESTRICTION: 'Visits are restricted during this period.',
+  VISIT_NOT_ALLOWED_IN_PERIOD: 'Visits are not allowed during this recruiting period.',
+  OFFICIAL_VISIT_COUNT_LIMIT: 'The program has reached its official visit limit.',
+  OFFICIAL_VISIT_LODGING_LIMIT: 'This visit exceeds the permitted lodging limit.',
+  SIGNED_WITH_OTHER_PROGRAM: 'This Player has signed with another program.',
+  TRANSFER_PORTAL_AUTHORIZATION_REQUIRED: 'The Player is not authorized for recruitment by your program.',
+  OWN_PLAYER_RECRUITING_PROHIBITED: 'Your program cannot recruit its own rostered Player.',
+  TRANSFER_DESTINATION_UNAVAILABLE: 'Your program is not an available destination for this transfer.',
+  RECRUITING_NOT_OPEN: 'The Recruiting cycle is not open.',
+  INVALID_RECRUIT: 'This Recruiting target is unavailable.',
+  OFFER_LIMIT_REACHED: 'The program has reached its offer limit.',
+  NOTIFICATION_WINDOW_CLOSED: 'The Transfer Portal notification window is closed.',
+  PORTAL_WINDOW_CLOSED: 'The Transfer Portal notification window is closed.',
+  PORTAL_REQUIREMENTS_INCOMPLETE: 'Complete the required education module before processing this notice.',
+  PROCESSING_PENDING: 'Institutional processing is still pending.',
+  PROCESSING_DEADLINE_EXCEEDED: 'The institution processing deadline has passed.',
+  PORTAL_NOTICE_NOT_PENDING: 'This Portal notice is no longer pending.',
+  PORTAL_ENTRY_NOT_ACTIVE: 'This Portal entry is no longer active.',
+  ACTIVE_SOURCE_ENROLLMENT_REQUIRED: 'An active source enrollment is required for this Portal action.',
+  SIGNED_TRANSFER_COMPLETION_REQUIRED: 'The transfer requires the canonical signing step before completion.',
+  ACADEMIC_REQUIREMENT_NOT_MET: 'The Player does not meet the current academic eligibility requirement.',
+  NOT_ENROLLED: 'No active enrollment is recorded for this Player.',
+  CAP_EXCEEDED: 'The proposed benefits exceed the institution’s available cap.',
+  INSTITUTION_BENEFITS_CAP_EXCEEDED: 'The proposed benefits exceed the institution’s available cap.',
+  CAP_UNAVAILABLE: 'The institution benefits cap is unavailable for this agreement.',
+  AGREEMENT_UNAVAILABLE: 'The compensation agreement or its required context is unavailable.',
+  AGREEMENT_ALREADY_SIGNED: 'This benefits agreement has already been signed.',
+  DRAFT_NOT_ELIGIBLE: 'The Player does not meet Draft eligibility requirements.',
+  DRAFT_DECLARATION_DEADLINE_PASSED: 'The declaration deadline has passed.',
+  NCAA_WITHDRAWAL_DEADLINE_MISSED: 'The NCAA return deadline passed; withdrawal cannot restore college eligibility.',
+  NBA_WITHDRAWAL_DEADLINE_MISSED: 'The NBA withdrawal deadline passed.',
+  DRAFT_ENTRY_WITHDRAWN: 'This Draft entry has already been withdrawn.',
+  DRAFT_PLAYER_ALREADY_SELECTED: 'This Player has already been selected.',
+  DRAFT_RIGHTS_UNSIGNED: 'Draft rights are held, but no professional contract is signed.',
+  SOURCE_CONTRACT_BLOCKS_ARRIVAL: 'The active source contract must be released before the Player can arrive.',
+  PLAYER_NOT_FOUND: 'The Player record is unavailable.',
+  PLAYER_NOT_ON_TEAM_ROSTER: 'The Player is not on this team’s roster.',
+  TEAM_NOT_FOUND: 'The team record is unavailable.',
+  RULESET_UNAVAILABLE: 'The applicable ruleset is unavailable.',
+}
+
+export function toUserFacingTalentBlockedReason(reasonCode: string, context?: string): string {
+  const explicit = REASONS[reasonCode]
+  if (explicit) return context ? `${explicit} ${context}` : explicit
+  const readable = reasonCode.trim().replaceAll(/([a-z0-9])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toLocaleLowerCase()
+  const sentence = readable ? readable[0]!.toLocaleUpperCase() + readable.slice(1) + '.' : 'This action is unavailable.'
+  return context ? `${sentence} ${context}` : sentence
+}
+
+export const TALENT_BLOCKED_REASON_COUNT = Object.keys(REASONS).length
