@@ -1,5 +1,5 @@
 import type { Game } from '@/domain/game'
-import { withSingleWorldValidation, type GameWorld } from '@/domain/world'
+import { withDailyResultBatch, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import type { WorldRepairReport } from '@/domain/repair'
 import type { MatchTacticalPlan } from '@/engine/match'
 import { createMatchEnginePort, prepareMatchSetupWithReports, type MatchNextResult } from '@/app/matchNext'
@@ -114,12 +114,15 @@ function completeMatchNextFast(world: GameWorld, result: MatchNextResult): GameW
 export function applyDayOutcomes(world: GameWorld, prepared: readonly PreparedDayGame[], outcomes: readonly DayOutcome[]): GameWorld {
   if (outcomes.length !== prepared.length) throw new Error(`Expected ${prepared.length} match results, received ${outcomes.length}`)
   // One day's applications are one operation: the whole world is validated once, on the day's final world (fails closed as a whole).
-  return withSingleWorldValidation(world, (start) => prepared.reduce((current, item, index) => {
+  // WSR2.1: and one result batch (`withDailyResultBatch`): every result still runs the canonical chain in schedule order on the world the
+  // previous one left, while the world-sized records the chain rewrites are copied once per day instead of once per result. Outcomes are
+  // indexed by `prepared` (schedule order), never by the order simulations finished.
+  return withDailyResultBatch(() => withSingleWorldValidation(world, (start) => prepared.reduce((current, item, index) => {
     const outcome = outcomes[index]!
     if (outcome.result.gameId !== item.game.id) throw new Error(`Match result ${outcome.result.gameId} does not belong to Game ${item.game.id}`)
     if (outcome.resolution !== (item.resolution ?? 'FAST')) throw new Error(`Game ${item.game.id} was prepared for ${item.resolution ?? 'FAST'} but resolved ${outcome.resolution}`)
     return applyDayOutcome(current, outcome)
-  }, start))
+  }, start)))
 }
 
 /** Phase 3 for FAST results only (callers that simulate exact Games themselves). */

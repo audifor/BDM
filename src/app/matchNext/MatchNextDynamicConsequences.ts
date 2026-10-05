@@ -1,8 +1,8 @@
-import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
+import { addDevelopmentStimulus, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import type { PlayerId } from '@/domain/ids'
 import type { CanonicalRatingKey } from '@/domain/player'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, writableResultRecord, type GameWorld } from '@/domain/world'
 import { matchEventFatigueIncrement, matchSessionFatigueDeltaToCareer } from '@/engine/match-next'
 import type { MatchNextResult } from './MatchNextResult'
 
@@ -58,11 +58,15 @@ export function applyMatchNextDynamicConsequences(world: GameWorld, result: Matc
 
 /** WSR1: applies per-player match load and learning, whichever resolution derived them (the one fatigue/development boundary). */
 export function applyDynamicConsequences(world: GameWorld, consequences: readonly MatchNextPlayerDynamicConsequence[]): GameWorld {
-  const fatigue = { ...world.careerFatigueByPlayerId }
-  const stimulus = { ...world.developmentStimulusByPlayerId }
+  // WSR2.1: the records are taken writable on the first change (inside a day's result batch, the batch's own copy; otherwise a fresh
+  // copy as before), so a result without consequences copies nothing and a batch copies each record once.
+  let fatigue: Record<string, number> | undefined
+  let stimulus: Record<string, PlayerDevelopmentStimulus> | undefined
   let changed = false
   for (const consequence of consequences) {
     if (consequence.careerFatigueDelta <= 0 && Object.keys(consequence.developmentStimulusDelta).length === 0) continue
+    fatigue ??= writableResultRecord(world.careerFatigueByPlayerId)
+    stimulus ??= writableResultRecord(world.developmentStimulusByPlayerId)
     if (consequence.careerFatigueDelta > 0) {
       fatigue[consequence.playerId] = clampCareerFatigue((fatigue[consequence.playerId] ?? 0) + consequence.careerFatigueDelta)
     }
@@ -72,7 +76,7 @@ export function applyDynamicConsequences(world: GameWorld, consequences: readonl
     }
     changed = true
   }
-  return changed ? updateGameWorld(world, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus }) : world
+  return changed ? updateGameWorld(world, { careerFatigueByPlayerId: fatigue!, developmentStimulusByPlayerId: stimulus! }) : world
 }
 
 /**

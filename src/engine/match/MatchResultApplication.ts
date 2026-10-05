@@ -1,5 +1,5 @@
 import { createGame } from '@/domain/game'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, writableResultRecord, type GameWorld } from '@/domain/world'
 import { applyMoraleEvent } from '@/domain/morale'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { applyCoachExperienceGain, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
@@ -67,7 +67,8 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
 }
 
 function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld {
-  const morale = { ...world.moraleByPersonId }
+  // WSR2.1: inside a day's result batch the batch's own copy is written instead of a whole new copy per result.
+  const morale = writableResultRecord(world.moraleByPersonId)
   for (const teamId of [game.homeTeamId, game.awayTeamId]) {
     const won = teamId === game.homeTeamId ? game.result!.homeScore > game.result!.awayScore : game.result!.awayScore > game.result!.homeScore
     for (const personId of [...world.teams[teamId]!.rosterPlayerIds, world.teams[teamId]!.coachId].filter((id): id is NonNullable<typeof id> => id !== undefined)) {

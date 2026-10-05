@@ -301,3 +301,23 @@ export function memoriesByOwner(collection: GameWorld['memoriesById']): Readonly
   }
   return index
 }
+
+type InjuryEntry = GameWorld['injuriesById'][keyof GameWorld['injuriesById']]
+
+const injuryIndexes = new WeakMap<object, ReadonlyMap<string, readonly InjuryEntry[]>>()
+
+/** Injury records of each player, in collection order (WSR2.1: availability was a scan of every injury for every player). */
+export function injuriesByPlayer(collection: GameWorld['injuriesById']): ReadonlyMap<string, readonly InjuryEntry[]> {
+  let index = injuryIndexes.get(collection)
+  if (index === undefined) {
+    const built = new Map<string, InjuryEntry[]>()
+    for (const injury of Object.values(collection)) {
+      let list = built.get(injury.playerId)
+      if (list === undefined) { list = []; built.set(injury.playerId, list) }
+      list.push(injury)
+    }
+    index = built
+    injuryIndexes.set(collection, index)
+  }
+  return index
+}

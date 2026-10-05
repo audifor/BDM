@@ -22,7 +22,8 @@ import { createWorldScaleFixture } from './wsr1WorldFixture'
 const [copiesArg = '1', daysArg = '3', out = 'lifecycle.json', runnerArg = 'inline'] = process.argv.slice(2)
 const copies = Number(copiesArg)
 const days = Number(daysArg)
-const settings = { ...DEFAULT_SIMULATION_DETAIL, level: 'MINIMAL' as const }
+// WSR2_DETAIL=STANDARD: the user's competition and 12 more Games a day exact (FAST), the rest BACKGROUND (mixed result batches).
+const settings = process.env.WSR2_DETAIL === 'STANDARD' ? { ...DEFAULT_SIMULATION_DETAIL, exactBudgetPerDay: 12 } : { ...DEFAULT_SIMULATION_DETAIL, level: 'MINIMAL' as const }
 const hash = (value: unknown): string => createHash('sha256').update(canonicalJson(value)).digest('hex').slice(0, 16)
 
 export function worldCensus(world: GameWorld): Record<string, number> {

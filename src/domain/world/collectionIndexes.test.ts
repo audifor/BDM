@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { advanceDay } from '@/engine/calendar'
 import {
-  cohesionUnitsByScope, conflictsByParticipant, contractsByPlayer, eligibilityProfileIndex, eligibilityProfileKey, eligibilityRestrictionsByPlayer,
+  cohesionUnitsByScope, conflictsByParticipant, contractsByPlayer, eligibilityProfileIndex, eligibilityProfileKey, eligibilityRestrictionsByPlayer, injuriesByPlayer,
   liveStaffContextByStaff, responsibilityIndex, staffAssignmentIndex, staffContractsByStaff, teamIndex, teamsByRosterPlayer,
 } from './collectionIndexes'
 import { updateGameWorld, type GameWorld } from './GameWorld'
@@ -52,6 +52,8 @@ function expectIndexesMatchScans(world: GameWorld): void {
     expect(eligibilityProfileIndex(world.eligibilityProfilesById).get(eligibilityProfileKey(profile.playerId, profile.ecosystemId, profile.programTeamId)))
       .toBe(profiles.find((item) => item.playerId === profile.playerId && item.ecosystemId === profile.ecosystemId && item.programTeamId === profile.programTeamId))
   }
+  const injuries = Object.values(world.injuriesById)
+  for (const playerId of Object.keys(world.players)) expect(injuriesByPlayer(world.injuriesById).get(playerId) ?? []).toEqual(injuries.filter((item) => item.playerId === playerId))
   const restrictions = Object.values(world.eligibilityRestrictionsById)
   for (const playerId of Object.keys(world.players)) expect(eligibilityRestrictionsByPlayer(world.eligibilityRestrictionsById).get(playerId) ?? []).toEqual(restrictions.filter((item) => item.playerId === playerId))
 }
