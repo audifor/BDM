@@ -17,6 +17,7 @@ import type { StaffAppointmentReason, StaffCareerHistoryEntry, StaffDepartureRea
 import { staffReputationScore, type StaffReputationProfile } from '@/domain/staffReputation'
 import { calculateStaffWorkload, getEligibleResponsibilityCandidates as getEligibleStaffCandidates, getStaffAssignment, getStaffPerson, getTeamStaffAssignments, getTeamResponsibilities, getResponsibilitiesHeldByStaff, projectStaffWorkloadForResponsibility, type GameWorld } from '@/domain/world'
 import {
+  isResponsibilityConnected,
   RESPONSIBILITY_DOMAINS,
   RESPONSIBILITY_KINDS,
   responsibilityDefinition,
