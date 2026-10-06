@@ -1,3 +1,5 @@
 export * from './TradeEngine'
-export { createNbaLikeTradeRules } from './NbaLikeTradeRules'
+export { createNbaLikeTradeRules, NBA_LIKE_TRADE_DEADLINE_POLICY, WNBA_LIKE_TRADE_DEADLINE_POLICY } from './NbaLikeTradeRules'
 export { materializeFutureDraftPickOwnership, resolveDraftPickSwapRight, resolveFuturePickProtections } from './DraftPickRightsResolution'
+export { resolveSharedTradeSeasonAuthority, resolveTradeSeasonAuthorityForTeam } from './TradeSeasonAuthority'
+export type { TradeSeasonAuthority } from './TradeSeasonAuthority'

@@ -1,13 +1,12 @@
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { getMarketKnowledge } from '@/domain/market'
-import { compareGameDates } from '@/domain/date'
 import { type EcosystemId, type OrganizationId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
 import { basketballOperationsQuality, resolveAdvisoryResponsibility } from '@/engine/staff'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { TradeProposal } from '@/domain/trade'
-import { validateTrade } from '@/engine/trade'
+import { resolveTradeSeasonAuthorityForTeam, validateTrade } from '@/engine/trade'
 
 const KINDS = ['recommendSignings', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation'] as const
 const MAX_SHORTLIST = 8
@@ -201,35 +200,13 @@ function need(world: GameWorld, teamId: TeamId, position: string): number { retu
  * BDM is multi-competition: a team may participate in more than one Season's competition
  * simultaneously (`docs/ARCHITECTURE.md` — "a Team may occur in multiple Competition participant
  * lists"), so `Object.values(world.seasons).find(...)` picking the first season by insertion order
- * is ambiguous and fragile, and picking the lexicographically-first SeasonId is equally wrong once
- * two TradeRules-backed seasons for the same team/ecosystem coexist (e.g. an old and a current
- * season). Resolution order:
- *   1. Team-specific membership: prefer the season's own `participantTeamIds` snapshot when present
- *      (a Competition may currently list the team even though a specific season never did); only
- *      fall back to `Competition.participantTeamIds` when the season has no snapshot.
- *   2. Ecosystem match: the season's competition's `ecosystemId` equals the team's canonical
- *      `getEcosystemForTeam` resolution.
- *   3. TradeRules configured for that season (FIBA-like ecosystems intentionally have none).
- *   4. Lifecycle: `world.currentDate` falls within `[season.startDate, season.endDate]` — this is
- *      what actually disambiguates two TradeRules-backed seasons (e.g. 2032 vs 2033) for the same
- *      team/ecosystem, not lexicographic SeasonId order.
- *   5. Deterministic tie-break (SeasonId string order) only if more than one season still qualifies
- *      after all of the above — stable regardless of `world.seasons` key insertion/iteration order.
- * Never depends on `world.currentSeasonId`.
+ * is ambiguous and fragile. This delegates to the canonical club-scoped authority
+ * (`resolveTradeSeasonAuthorityForTeam`): the club's own competition participation, a GameDate
+ * inside the edition's window, a configured TradeRules entry for that edition, and a deterministic
+ * tie-break when several editions qualify. Never depends on `world.currentSeasonId`.
  */
 function seasonForTeam(world: GameWorld, teamId: TeamId): SeasonId | undefined {
-  const ecosystem = getEcosystemForTeam(world, teamId)
-  if (ecosystem === undefined) return undefined
-  return Object.values(world.seasons)
-    .filter((season) => {
-      const competition = world.competitions[season.competitionId]
-      if (competition === undefined || competition.ecosystemId !== ecosystem.id) return false
-      const membership = season.participantTeamIds ?? competition.participantTeamIds
-      if (!membership.includes(teamId)) return false
-      if (world.tradeRulesBySeasonId[season.id] === undefined) return false
-      return compareGameDates(world.currentDate, season.startDate) >= 0 && compareGameDates(world.currentDate, season.endDate) <= 0
-    })
-    .sort((a, b) => a.id.localeCompare(b.id))[0]?.id
+  return resolveTradeSeasonAuthorityForTeam(world, teamId)?.season.id
 }
 
 export type AcceptTradeRecommendationFailureReason = 'notFound' | 'invalidKind' | 'alreadyApplied' | 'negotiationRequired'

@@ -1,4 +1,5 @@
 import { getContractYearCapHit, getPlayerContractStatus } from '@/domain/contract'
+import { compareGameDates } from '@/domain/date'
 import { consumeSalaryException, createTeamSalaryException } from '@/domain/salary'
 import type { RetainedSalaryTerm, TradeAssetMovement, TradeProposal, TradeRules } from '@/domain/trade'
 import type { TeamId } from '@/domain/ids'
@@ -9,8 +10,8 @@ import { calculateTeamPayroll, calculateTeamSalaryStatus, getIncomingSalaryLimit
 import { clearPlayerFromLineup } from '@/domain/tactics'
 import { assessActiveContractRosterIntegrity } from '@/engine/market/RosterContractIntegrity'
 
-export type TradeWindowStatus = 'OPEN' | 'CLOSED' | 'NOT_CONFIGURED'
-export type TradeValidationReason = 'RULES_UNAVAILABLE' | 'TRADE_WINDOW_CLOSED' | 'TRADE_WINDOW_NOT_CONFIGURED' | 'INVALID_PARTICIPANT' | 'TOO_MANY_TEAMS' | 'EMPTY_PARTICIPANT' | 'ASSET_TYPE_NOT_ALLOWED' | 'ASSET_NOT_OWNED' | 'PLAYER_NOT_ON_TEAM' | 'PLAYER_CONTRACT_NOT_ACTIVE' | 'PLAYER_CONTRACT_ROSTER_INTEGRITY' | 'BINDING_SUCCESSOR_UNRESOLVED' | 'DUPLICATE_ASSET' | 'SAME_TEAM_MOVEMENT' | 'INVALID_FUTURE_PICK' | 'FUTURE_PICK_HORIZON_EXCEEDED' | 'INVALID_SWAP_RIGHT' | 'CASH_NOT_ALLOWED' | 'CASH_LIMIT_EXCEEDED' | 'CASH_SETTLEMENT_UNAVAILABLE' | 'RETAINED_SALARY_NOT_ALLOWED' | 'RETAINED_SALARY_LIMIT_EXCEEDED' | 'EXCEPTION_UNAVAILABLE' | 'SALARY_MATCHING_FAILED'
+export type TradeWindowStatus = 'OPEN' | 'NOT_OPEN' | 'CLOSED' | 'NOT_CONFIGURED'
+export type TradeValidationReason = 'RULES_UNAVAILABLE' | 'TRADE_WINDOW_NOT_OPEN' | 'TRADE_WINDOW_CLOSED' | 'TRADE_WINDOW_NOT_CONFIGURED' | 'INVALID_PARTICIPANT' | 'TOO_MANY_TEAMS' | 'EMPTY_PARTICIPANT' | 'ASSET_TYPE_NOT_ALLOWED' | 'ASSET_NOT_OWNED' | 'PLAYER_NOT_ON_TEAM' | 'PLAYER_CONTRACT_NOT_ACTIVE' | 'PLAYER_CONTRACT_ROSTER_INTEGRITY' | 'BINDING_SUCCESSOR_UNRESOLVED' | 'DUPLICATE_ASSET' | 'SAME_TEAM_MOVEMENT' | 'INVALID_FUTURE_PICK' | 'FUTURE_PICK_HORIZON_EXCEEDED' | 'INVALID_SWAP_RIGHT' | 'CASH_NOT_ALLOWED' | 'CASH_LIMIT_EXCEEDED' | 'CASH_SETTLEMENT_UNAVAILABLE' | 'RETAINED_SALARY_NOT_ALLOWED' | 'RETAINED_SALARY_LIMIT_EXCEEDED' | 'EXCEPTION_UNAVAILABLE' | 'SALARY_MATCHING_FAILED'
 export interface TeamTradeValidation { readonly teamId: string; readonly outgoingSalary: number; readonly incomingSalary: number; readonly incomingSalaryLimit?: number; readonly projectedPayroll?: number; readonly reasons: readonly TradeValidationReason[] }
 export interface TradeValidationResult { readonly allowed: boolean; readonly globalReasons: readonly TradeValidationReason[]; readonly teamResults: readonly TeamTradeValidation[] }
 export interface TradeExecutionResult { readonly validation: TradeValidationResult; readonly world: GameWorld }
@@ -20,8 +21,8 @@ export function validateTrade(world: GameWorld, proposal: TradeProposal): TradeV
   const globalReasons: TradeValidationReason[] = []
   if (rules === undefined || rules.ecosystemId !== proposal.ecosystemId) globalReasons.push('RULES_UNAVAILABLE')
   const windowStatus = getTradeWindowStatus(world, proposal)
-  if (windowStatus === 'NOT_CONFIGURED') globalReasons.push('TRADE_WINDOW_NOT_CONFIGURED')
-  if (windowStatus === 'CLOSED') globalReasons.push('TRADE_WINDOW_CLOSED')
+  const windowBlocker = tradeWindowBlocker(windowStatus)
+  if (windowBlocker !== undefined) globalReasons.push(windowBlocker)
   const participants = [...new Set(proposal.participantTeamIds)]
   if (participants.length < 2 || participants.length !== proposal.participantTeamIds.length) globalReasons.push('INVALID_PARTICIPANT')
   if (rules !== undefined && participants.length > rules.maxTeamsPerTrade) globalReasons.push('TOO_MANY_TEAMS')
@@ -46,14 +47,28 @@ export function validateTrade(world: GameWorld, proposal: TradeProposal): TradeV
   return { allowed: globalReasons.length === 0 && teamResults.every((result) => result.reasons.length === 0), globalReasons: Object.freeze(globalReasons), teamResults: Object.freeze(teamResults) }
 }
 
+/**
+ * The Trade engine consumes only the CompetitionSeason's own materialized `tradeWindow`: trading is
+ * NOT_OPEN before `opensOn`, OPEN through `closesOn` (the Trade Deadline date itself is tradable)
+ * and CLOSED from the following GameDate onwards. A season whose window was never materialized with
+ * both explicit dates is NOT_CONFIGURED -- the engine never infers a deadline from season boundaries.
+ * Deadline derivation belongs to competition/season generation (`materializeTradeWindows`).
+ */
 export function getTradeWindowStatus(world: GameWorld, proposal: Pick<TradeProposal, 'seasonId' | 'ecosystemId'>): TradeWindowStatus {
   const rules = world.tradeRulesBySeasonId[proposal.seasonId]
-  if (rules === undefined || rules.ecosystemId !== proposal.ecosystemId || rules.tradeWindow === undefined) return 'NOT_CONFIGURED'
-  const season = world.seasons[proposal.seasonId]
-  if (season === undefined || world.currentDate < season.startDate || world.currentDate > season.endDate) return 'CLOSED'
-  const opensOn = rules.tradeWindow.opensOn ?? season.startDate
-  const closesOn = rules.tradeWindow.closesOn ?? season.endDate
-  return world.currentDate >= opensOn && world.currentDate <= closesOn ? 'OPEN' : 'CLOSED'
+  if (rules === undefined || rules.ecosystemId !== proposal.ecosystemId) return 'NOT_CONFIGURED'
+  const window = rules.tradeWindow
+  if (window?.opensOn === undefined || window.closesOn === undefined) return 'NOT_CONFIGURED'
+  if (compareGameDates(world.currentDate, window.opensOn) < 0) return 'NOT_OPEN'
+  return compareGameDates(world.currentDate, window.closesOn) <= 0 ? 'OPEN' : 'CLOSED'
+}
+
+/** Canonical validation reason for a window status, or `undefined` while trading is OPEN. */
+export function tradeWindowBlocker(status: TradeWindowStatus): TradeValidationReason | undefined {
+  if (status === 'NOT_CONFIGURED') return 'TRADE_WINDOW_NOT_CONFIGURED'
+  if (status === 'NOT_OPEN') return 'TRADE_WINDOW_NOT_OPEN'
+  if (status === 'CLOSED') return 'TRADE_WINDOW_CLOSED'
+  return undefined
 }
 
 export function executeTrade(world: GameWorld, proposal: TradeProposal): TradeExecutionResult {

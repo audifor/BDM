@@ -3,7 +3,7 @@ import type { TeamId } from '@/domain/ids'
 import { createGovernanceDecision, createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle, type GovernanceActor, type GovernanceDecision, type GovernanceDecisionEvent, type GovernanceDecisionEventKind } from '@/domain/governance'
 import { getResponsibility, getStaffAssignment, getStaffPerson, updateGameWorld, type GameWorld } from '@/domain/world'
 import { validateResponsibilityAssignment } from '@/domain/responsibility'
-import { executeTrade, getTradeWindowStatus, validateTrade } from '@/engine/trade'
+import { executeTrade, getTradeWindowStatus, resolveSharedTradeSeasonAuthority, tradeWindowBlocker, validateTrade } from '@/engine/trade'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import { createTradeNegotiation, createTradeRecord, type TradeNegotiation } from '@/domain/trade'
 
@@ -31,6 +31,10 @@ export interface TradeCommitmentResult { readonly status: TradeCommitmentStatus;
 const decisionRef = (negotiationId: string, revisionId: string, teamId: TeamId) => `trade-commitment:${encodeURIComponent(negotiationId)}:${encodeURIComponent(revisionId)}:${encodeURIComponent(teamId)}`
 const decisionId = (institutionId: string, negotiationId: string, revisionId: string, teamId: TeamId) => `governance:PLAYER_TRADE_COMMITMENT:${encodeURIComponent(institutionId)}:${encodeURIComponent(negotiationId)}:${encodeURIComponent(revisionId)}:${encodeURIComponent(teamId)}`
 
+const TRADE_WINDOW_REASONS: readonly string[] = ['TRADE_WINDOW_CLOSED', 'TRADE_WINDOW_NOT_OPEN', 'TRADE_WINDOW_NOT_CONFIGURED']
+/** `WINDOW_CLOSED` groups every window state that does not currently permit a commitment. */
+const windowClosed = (reasons: readonly string[]) => reasons.some((reason) => TRADE_WINDOW_REASONS.includes(reason))
+
 export function startUserTradeCommitment(world: GameWorld, input: { readonly negotiationId: string; readonly expectedRevisionId: string; readonly teamId: TeamId; readonly proposerBodyId?: string }): TradeCommitmentResult {
   const team = world.teams[input.teamId]
   if (team?.coachId !== world.userCoachId) return result('NO_AUTHORITY', world, 'TEAM_IS_NOT_USER_CONTROLLED')
@@ -43,7 +47,7 @@ export function ensureTradeCommitmentDecision(world: GameWorld, input: { readonl
   const { negotiation, revision } = checked
   if (!negotiation.participantTeamIds.includes(input.teamId)) return result('CONFLICT', world, 'TEAM_NOT_IN_NEGOTIATION')
   const packageBlockers = tradeBlockers(world, negotiation, revision)
-  if (packageBlockers.length > 0) return result(packageBlockers.includes('TRADE_WINDOW_CLOSED') ? 'WINDOW_CLOSED' : 'STALE_PACKAGE', world, ...packageBlockers)
+  if (packageBlockers.length > 0) return result(windowClosed(packageBlockers) ? 'WINDOW_CLOSED' : 'STALE_PACKAGE', world, ...packageBlockers)
   const institutions = Object.values(world.governanceInstitutionsById).filter((item) => item.teamIds.includes(input.teamId))
   if (institutions.length !== 1) return result('NO_AUTHORITY', world, 'PARTICIPANT_GOVERNANCE_INSTITUTION_NOT_UNIQUE')
   const institution = institutions[0]!
@@ -100,7 +104,7 @@ export function assessTradeCommitmentReadiness(world: GameWorld, negotiationId: 
   const base = tradeBlockers(world, negotiation, revision)
   const participants = negotiation.participantTeamIds.map((teamId) => participantReadiness(world, negotiation, revision.id, teamId))
   const blockers = [...base, ...participants.flatMap((participant) => participant.blockers.map((reason) => `${teamIdLabel(participant.teamId)}:${reason}`))]
-  const status: TradeCommitmentStatus = base.includes('TRADE_WINDOW_CLOSED') ? 'WINDOW_CLOSED'
+  const status: TradeCommitmentStatus = windowClosed(base) ? 'WINDOW_CLOSED'
     : base.includes('CASH_SETTLEMENT_UNAVAILABLE') ? 'BLOCKED'
       : base.some((reason) => reason.includes('CHANGED') || reason.includes('NOT_OWNED') || reason.includes('NOT_ON_TEAM')) ? 'ASSET_CONFLICT'
         : base.some((reason) => reason.includes('SALARY') || reason.includes('FINANCIAL')) ? 'FINANCIAL_BLOCK'
@@ -188,8 +192,13 @@ function checkAgreedRevision(world: GameWorld, negotiationId: string, revisionId
 function tradeBlockers(world: GameWorld, negotiation: TradeNegotiation, revision: TradeNegotiation['revisions'][number]): string[] {
   const proposal = { id: 'revalidation', ecosystemId: negotiation.ecosystemId, seasonId: negotiation.seasonId, participantTeamIds: negotiation.participantTeamIds, movements: revision.movements, ...(revision.exceptionUses === undefined ? {} : { exceptionUses: revision.exceptionUses }), ...(revision.retainedSalary === undefined ? {} : { retainedSalary: revision.retainedSalary }) }
   const reasons: string[] = [...validateTrade(world, proposal).globalReasons, ...validateTrade(world, proposal).teamResults.flatMap((item) => item.reasons)]
-  if (world.currentSeasonId !== negotiation.seasonId || world.teams[negotiation.participantTeamIds[0]!] === undefined || !negotiation.participantTeamIds.every((teamId) => world.teams[teamId] !== undefined && Object.values(world.competitions).some((competition) => competition.ecosystemId === negotiation.ecosystemId && competition.participantTeamIds.includes(teamId)))) reasons.push('PARTICIPANTS_OR_ECOSYSTEM_CHANGED')
-  if (getTradeWindowStatus(world, proposal) !== 'OPEN') reasons.push('TRADE_WINDOW_CLOSED')
+  // The agreed edition must still be the trade authority of every club in the package: a manager
+  // move, promotion, or competition change invalidates stale authority even when the global season
+  // pointer still names the old edition.
+  const authority = resolveSharedTradeSeasonAuthority(world, negotiation.participantTeamIds)
+  if (authority === undefined || authority.season.id !== negotiation.seasonId || world.teams[negotiation.participantTeamIds[0]!] === undefined || !negotiation.participantTeamIds.every((teamId) => world.teams[teamId] !== undefined && Object.values(world.competitions).some((competition) => competition.ecosystemId === negotiation.ecosystemId && competition.participantTeamIds.includes(teamId)))) reasons.push('PARTICIPANTS_OR_ECOSYSTEM_CHANGED')
+  const windowBlocker = tradeWindowBlocker(getTradeWindowStatus(world, proposal))
+  if (windowBlocker !== undefined) reasons.push(windowBlocker)
   for (const snapshot of revision.contractSnapshots) {
     const current = world.contractsById[snapshot.id]
     if (current === undefined || JSON.stringify(current) !== JSON.stringify(snapshot)) reasons.push('PLAYER_CONTRACT_CHANGED')

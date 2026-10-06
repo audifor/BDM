@@ -30,7 +30,7 @@ import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
 import { createStaffPerson, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
-import { createNbaLikeTradeRules } from '@/engine/trade'
+import { createNbaLikeTradeRules, NBA_LIKE_TRADE_DEADLINE_POLICY, WNBA_LIKE_TRADE_DEADLINE_POLICY } from '@/engine/trade'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 
 const FIBA_TEAM_COUNT = 8
@@ -212,7 +212,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     players,
     teams,
     competitions: [competition, ...(nbaCompetition === undefined ? [] : [nbaCompetition]), ...(ncaaCompetition === undefined ? [] : [ncaaCompetition])],
-    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender), draftRules: { rounds: 2, orderMethod: 'reverseStandings', scheduledAfterDays: 7 } })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender), recruitingRules: defaultRecruitingRules })])],
+    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender), draftRules: { rounds: 2, orderMethod: 'reverseStandings', scheduledAfterDays: 7 }, tradeDeadlinePolicy: gender === 'female' ? WNBA_LIKE_TRADE_DEADLINE_POLICY : NBA_LIKE_TRADE_DEADLINE_POLICY })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender), recruitingRules: defaultRecruitingRules })])],
     conferences, conferenceMemberships: ncaaMemberships,
     seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],

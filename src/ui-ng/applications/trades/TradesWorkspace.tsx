@@ -5,7 +5,7 @@ import type { TeamId } from '@/domain/ids'
 import { resolveGovernanceDecisionRights } from '@/domain/governance'
 import type { TradeAsset, TradeAssetKind, TradeNegotiation, TradeNegotiationRevision, TradeRules } from '@/domain/trade'
 import { getUserTeam } from '@/engine/calendar'
-import type { TradeValidationReason } from '@/engine/trade'
+import { resolveTradeSeasonAuthorityForTeam, type TradeValidationReason } from '@/engine/trade'
 import { useGameStore } from '@/stores/gameStore'
 import {
   addTradeMovement,
@@ -35,7 +35,10 @@ function assetsFor(world: NonNullable<ReturnType<typeof useGameStore.getState>['
 export function TradesWorkspace() {
   const world = useGameStore((state) => state.world)
   const team = world === null ? undefined : getUserTeam(world)
-  const rules = world === null ? undefined : world.tradeRulesBySeasonId[world.currentSeasonId]
+  // Club-season authority: the user's own club decides which competition's TradeRules apply today
+  // (`world.currentSeasonId` is only a UI selection and may name another competition entirely).
+  const authority = world === null || team === undefined ? undefined : resolveTradeSeasonAuthorityForTeam(world, team.id)
+  const rules = authority?.rules
   const eligibleTeams =
     world === null || rules === undefined
       ? []

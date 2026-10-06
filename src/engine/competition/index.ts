@@ -1,4 +1,6 @@
 export { getCompetitionSeason, getCompetitionTemporalStatus, isCompetitionActiveOnDate } from './CompetitionLifecycle'
+export { resolveActiveCompetitionSeasonForTeam, resolveActiveCompetitionSeasonsForTeam } from './ActiveCompetitionSeason'
+export { deriveTradeWindowFromSchedule, materializeTradeWindows, regularSeasonGamesOfSeason } from './TradeWindowMaterialization'
 export { areTierMovementDependenciesResolved, buildNextCompetitionParticipants, getCompetitionTier, getLowerDomesticCompetition, getPromotionRelegationResolution, getUpperDomesticCompetition, resolvePromotionRelegation } from './PromotionRelegation'
 export { createWorldCompetitionCatalog, listWorldCompetitionFormats, requireWorldCompetitionFormat } from './WorldCompetitionCatalog'
 export type { WorldCompetitionCatalog } from './WorldCompetitionCatalog'

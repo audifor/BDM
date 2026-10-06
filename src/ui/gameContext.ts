@@ -2,6 +2,7 @@ import { getCurrentSeason } from '@/app/game'
 import type { CompetitionId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { resolveTradeSeasonAuthorityForTeam } from '@/engine/trade'
 
 export interface GameContext {
   readonly clubName?: string
@@ -43,12 +44,22 @@ export function resolveGameContext(world: GameWorld, competitionId?: Competition
   }
 }
 
-/** Facts backed by currently configured world data; no ecosystem rule is inferred here. */
+/**
+ * Facts backed by currently configured world data; no ecosystem rule is inferred here.
+ * `hasTrades` follows the user club's own trade authority (`resolveTradeSeasonAuthorityForTeam`),
+ * so a manager in an NBA-like/WNBA-like competition keeps the Trades app even when the world's
+ * `currentSeasonId` pointer selects another competition; it falls back to that pointer's season
+ * when the club has no trade-enabled edition.
+ */
 export function resolveGameCapabilities(world: GameWorld, competitionId?: CompetitionId): GameCapabilities {
   const ecosystemId = competitionId === undefined
     ? world.competitions[getCurrentSeason(world).competitionId]?.ecosystemId
     : world.competitions[competitionId]?.ecosystemId
-  const seasonId = competitionId === undefined ? world.currentSeasonId : Object.values(world.seasons).find((season) => season.competitionId === competitionId)?.id
+  const userTeam = getUserTeam(world)
+  const clubSeasonId = competitionId === undefined && userTeam !== undefined
+    ? resolveTradeSeasonAuthorityForTeam(world, userTeam.id)?.season.id
+    : undefined
+  const seasonId = competitionId === undefined ? clubSeasonId ?? world.currentSeasonId : Object.values(world.seasons).find((season) => season.competitionId === competitionId)?.id
   return {
     hasDraft: ecosystemId !== undefined && Object.values(world.draftsById).some((draft) => draft.ecosystemId === ecosystemId),
     hasTrades: seasonId !== undefined && world.tradeRulesBySeasonId[seasonId] !== undefined,
