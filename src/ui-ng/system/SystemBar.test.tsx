@@ -204,6 +204,14 @@ describe('SystemBar breakpoint resolver eligibility', () => {
     expect(continueAction({ type: 'userGame', gameId: 'g-1' as never, breakpoint: breakpoint({ reason: 'userGame', route: 'match' }) })).toEqual({ label: 'Match', app: 'match' })
     expect(continueAction({ type: 'mediaOpportunity', opportunityId: 'm-1', breakpoint: breakpoint({ reason: 'mediaOpportunity', route: 'media' }) })).toEqual({ label: 'Press', app: 'media' })
   })
+
+  it('forwards the canonical breakpoint context the destination workspace can select', () => {
+    // MX0.5: the trade response breakpoint already publishes the negotiation and revision it is about.
+    expect(continueAction({ type: 'breakpoint', breakpoint: breakpoint({ reason: 'tradeNegotiationResponse', route: 'trades', actionTarget: { negotiationId: 'trade-negotiation:a:b', revisionId: 'trade-revision:a:0' } }) }))
+      .toEqual({ label: 'Trades', app: 'trades', context: { negotiationId: 'trade-negotiation:a:b' } })
+    // A breakpoint without context keeps the exact shape it had before, so no resolver gains an empty context.
+    expect(continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'medical' }) })).toEqual({ label: 'Medical', app: 'medical' })
+  })
 })
 
 /*
