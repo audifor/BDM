@@ -6,7 +6,7 @@ import type { TeamId } from '@/domain/ids'
 import type { TradeAssetMovement, TradeProposal } from '@/domain/trade'
 import { getStaffAssignment, getStaffPerson, getResponsibility, updateGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
-import { getTradeWindowStatus, validateTrade } from '@/engine/trade'
+import { getTradeWindowStatus, resolveSharedTradeSeasonAuthority, tradeWindowBlocker, validateTrade } from '@/engine/trade'
 
 export type TradeNegotiationCommandStatus = 'PROPOSED' | 'ALREADY_PROPOSED' | 'COUNTERED' | 'ACCEPTED' | 'ALREADY_APPLIED' | 'AGREED' | 'EXECUTED' | 'REJECTED' | 'WITHDRAWN' | 'BLOCKED' | 'NOT_AUTHORIZED' | 'STALE' | 'CONFLICT'
 export type TradeNegotiationResponseKind = 'ACCEPT' | 'REJECT' | 'COUNTER' | 'WITHDRAW'
@@ -130,13 +130,16 @@ function packageBlockers(world: GameWorld, proposal: TradeProposal): string[] {
   const season = world.seasons[proposal.seasonId]
   const competition = season === undefined ? undefined : world.competitions[season.competitionId]
   const rules = world.tradeRulesBySeasonId[proposal.seasonId]
-  if (season === undefined || competition === undefined || world.currentSeasonId !== season.id
-    || proposal.ecosystemId !== competition.ecosystemId || rules?.ecosystemId !== proposal.ecosystemId) return ['TRADE_SEASON_OR_ECOSYSTEM_UNAVAILABLE']
+  if (season === undefined || competition === undefined || proposal.ecosystemId !== competition.ecosystemId || rules === undefined || rules.ecosystemId !== proposal.ecosystemId) return ['TRADE_SEASON_OR_ECOSYSTEM_UNAVAILABLE']
+  // Club-season authority: the package's edition must be the one that actually governs both clubs
+  // today, resolved from their own competition participation -- never from `world.currentSeasonId`.
+  const authority = resolveSharedTradeSeasonAuthority(world, proposal.participantTeamIds)
+  if (authority === undefined || authority.season.id !== season.id) return ['TRADE_SEASON_OR_ECOSYSTEM_UNAVAILABLE']
   const eligibleTeams = new Set(season.participantTeamIds?.length ? season.participantTeamIds : competition.participantTeamIds)
   if (proposal.participantTeamIds.some((teamId) => !eligibleTeams.has(teamId))) return ['TRADE_PARTICIPANT_OUTSIDE_SEASON']
   const window = getTradeWindowStatus(world, proposal)
-  if (window === 'NOT_CONFIGURED') return ['TRADE_WINDOW_NOT_CONFIGURED']
-  if (window === 'CLOSED') return ['TRADE_WINDOW_CLOSED']
+  const windowBlocker = tradeWindowBlocker(window)
+  if (windowBlocker !== undefined) return [windowBlocker]
   const validation = validateTrade(world, proposal)
   return validation.allowed ? [] : [...validation.globalReasons, ...validation.teamResults.flatMap((result) => result.reasons)]
 }

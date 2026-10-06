@@ -4,6 +4,7 @@ import type { TeamId } from '@/domain/ids'
 import type { TradeAsset, TradeAssetKind, TradeAssetMovement } from '@/domain/trade'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { resolveTradeSeasonAuthorityForTeam } from '@/engine/trade'
 import { BdmButton, Dialog, Divider, EmptyState, Feedback, IconAction, Input, Select, Surface } from '@/ui/components/designSystem'
 import { formatMoney } from '@/ui/formatters'
 import { useGameStore } from '@/stores/gameStore'
@@ -21,8 +22,10 @@ function tradeActorLabel(world: GameWorld, actor: import('@/domain/trade').Trade
 }
 
 export function TradeCenterScreen({ world }: { readonly world: GameWorld }) {
-  const rules = world.tradeRulesBySeasonId[world.currentSeasonId]
   const userTeam = getUserTeam(world)
+  // Club-season authority: the user's own club picks the competition whose TradeRules apply today.
+  const authority = userTeam === undefined ? undefined : resolveTradeSeasonAuthorityForTeam(world, userTeam.id)
+  const rules = authority?.rules
   const teams = useMemo(() => rules === undefined ? [] : Object.values(world.teams).filter((team) => Object.values(world.competitions).some((competition) => competition.ecosystemId === rules.ecosystemId && competition.participantTeamIds.includes(team.id))), [rules, world.competitions, world.teams])
   const [draft, setDraft] = useState<TradeDraft>(() => createTradeDraft(world))
   const [teamPickerMode, setTeamPickerMode] = useState<'partner' | 'add' | null>(null)
@@ -46,7 +49,7 @@ export function TradeCenterScreen({ world }: { readonly world: GameWorld }) {
   const assessPackage = () => setFeedback(presentation.allowed
     ? 'Configured trade checks pass. This is a read-only assessment; negotiation and execution are not available.'
     : 'This package does not pass the current trade checks. No trade was proposed or executed.')
-  const packageProposal = () => ({ id: `trade-center:${userTeam.id}:${world.currentDate}`, ecosystemId: rules.ecosystemId, seasonId: world.currentSeasonId, participantTeamIds: [...draft.participantTeamIds], movements: [...draft.movements] })
+  const packageProposal = () => ({ id: `trade-center:${userTeam.id}:${world.currentDate}`, ecosystemId: rules.ecosystemId, seasonId: authority!.season.id, participantTeamIds: [...draft.participantTeamIds], movements: [...draft.movements] })
   const sendProposal = () => {
     const result = proposeNegotiation(packageProposal())
     setFeedback(result.status === 'PROPOSED' || result.status === 'ALREADY_PROPOSED' ? 'The package is now recorded as a nonbinding proposal.' : `${result.status}: ${(result.reasons ?? []).join(', ')}`)

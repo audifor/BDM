@@ -1103,8 +1103,9 @@ are closed franchise leagues: they own ordinary Teams and Competitions but canno
 have domestic tiers or promotion/relegation rules. They reuse the shared schedule,
 calendar, standings, champion, roster and match systems while retaining independent
 competition windows. New games generate a deterministic, separate franchise league;
-legacy saves do not receive one implicitly. Draft, salary-cap and trade rules remain
-future ecosystem extensions.
+legacy saves do not receive one implicitly. NBA-like seasons carry their own
+salary rules and TradeRules with an explicit, schedule-derived TradeWindow (see
+Trade system v1).
 
 ## NCAA-like ecosystem v1
 
@@ -1189,10 +1190,30 @@ pick ownership and resolve once both concrete pick orders exist, preserving pick
 
 Trade validation reuses Salary Engine matching and salary exceptions. Retained salary
 is a distinct persistent obligation, never dead money. Rules are season/ecosystem
-scoped, so NBA-like and future WNBA-like ecosystems can share infrastructure while
-using different `TradeRules`; FIBA-like competitions receive no trade rules by default.
+scoped, so NBA-like and WNBA-like ecosystems can share infrastructure while using
+different `TradeRules`; FIBA-like competitions receive no trade rules by default.
 Save V1 persists trade state; legacy saves retain empty trade collections and invent
 no historical trades or rights.
+
+Trade is competition-driven. Competition/season generation owns the Trade Deadline:
+each NBA-like/WNBA-like ecosystem carries its own `tradeDeadlinePolicy`
+(`REGULAR_SEASON_GAME_FRACTION`, currently 0.65 for both, configured independently),
+and every CompetitionSeason that carries TradeRules materializes its own explicit
+`tradeWindow.opensOn`/`closesOn` from its own ordered regular-season schedule
+(`index = ceil(gameCount * fraction) - 1`, clamped; stage scope reuses the canonical
+regular-season rule that standings use). No real-world month/day, wall-clock time or
+NBA data is involved, and a successor edition derives new dates from its own schedule
+instead of rolling the previous edition's dates forward. The Trade engine never
+recomputes a deadline: it consumes the materialized window, reporting NOT_OPEN before
+`opensOn`, OPEN through `closesOn` (the deadline date itself is tradable) and CLOSED
+from the following GameDate; a season without a materialized window is NOT_CONFIGURED.
+Trade authority follows the coached club, never `world.currentSeasonId`: a club's own
+active CompetitionSeason (participation plus edition dates) selects the `TradeRules`
+that govern its trades, so a manager moving between competitions gains the new club's
+authority and loses the old one. FIBA-like/ACB ecosystems declare no deadline policy
+and stay outside the NBA/WNBA-style Trade mechanism entirely
+(`TRADE_SEASON_OR_ECOSYSTEM_UNAVAILABLE`), keeping roster movement in Market,
+contracts and registration.
 
 ## NCAA-like eligibility v1
 

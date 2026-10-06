@@ -98,6 +98,18 @@ export function parseWorkspaceCompetitionId(value: string | null): CompetitionId
   return value === null || value.trim() === '' ? null : (value as CompetitionId)
 }
 
+/**
+ * Extra canonical context a resolver can carry into a workspace through the existing NG query. It is deliberately
+ * narrow: each field is a canonical entity id a workspace already knows how to select.
+ */
+export interface NgWorkspaceContext {
+  readonly negotiationId?: string
+}
+
+export function parseWorkspaceNegotiationId(value: string | null): string | null {
+  return value === null || value.trim() === '' ? null : value
+}
+
 export function readNgWorkspaceNavigation() {
   const params = new URLSearchParams(window.location.search)
   return {
@@ -108,6 +120,7 @@ export function readNgWorkspaceNavigation() {
     staffView: parseStaffPersonView(params.get('staffView')),
     teamId: parseWorkspaceTeamId(params.get('teamId')),
     competitionId: parseWorkspaceCompetitionId(params.get('competitionId')),
+    negotiationId: parseWorkspaceNegotiationId(params.get('negotiationId')),
   }
 }
 
@@ -124,9 +137,18 @@ function clearEntityQuery(url: URL) {
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
+  url.searchParams.delete('negotiationId')
 }
 
-export function syncWorkspaceAppQuery(app: WorkspaceAppId, method: 'push' | 'replace' = 'replace') {
+/**
+ * Opens a workspace app. `context` carries canonical entity context a resolver already knows (see
+ * `NgWorkspaceContext`); every call replaces it, so navigating without context can never leave a stale one behind.
+ */
+export function syncWorkspaceAppQuery(
+  app: WorkspaceAppId,
+  method: 'push' | 'replace' = 'replace',
+  context: NgWorkspaceContext = {},
+) {
   const url = new URL(window.location.href)
   if (app === 'home') {
     url.searchParams.delete('app')
@@ -137,6 +159,10 @@ export function syncWorkspaceAppQuery(app: WorkspaceAppId, method: 'push' | 'rep
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
+  url.searchParams.delete('negotiationId')
+  if (context.negotiationId !== undefined && context.negotiationId !== '') {
+    url.searchParams.set('negotiationId', context.negotiationId)
+  }
   applyHistory(url, method)
   notifyNgNavigation()
 }
@@ -247,6 +273,7 @@ export function navigateToTeamInNg(
   url.searchParams.delete('staffId')
   url.searchParams.delete('staffView')
   url.searchParams.delete('competitionId')
+  url.searchParams.delete('negotiationId')
   applyHistory(url, method)
   notifyNgNavigation()
 }
@@ -263,6 +290,7 @@ export function navigateToCompetitionInNg(
   url.searchParams.delete('staffId')
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
+  url.searchParams.delete('negotiationId')
   applyHistory(url, method)
   notifyNgNavigation()
 }

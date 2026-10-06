@@ -6,7 +6,7 @@ import { createFutureDraftPickRight, createPlayerRights, createTradeRules } from
 import { calculateTeamPayroll, getTeamRetainedSalary } from '@/engine/salary'
 import { updateGameWorld } from '@/domain/world'
 import { createPlayerContract } from '@/domain/contract'
-import { addYears } from '@/domain/date'
+import { addDays, addYears } from '@/domain/date'
 
 import { executeTrade, getTradeWindowStatus, validateTrade } from './TradeEngine'
 import { materializeFutureDraftPickOwnership, resolveDraftPickSwapRight } from './DraftPickRightsResolution'
@@ -15,10 +15,11 @@ function tradeWorld() {
   const base = createNewGame()
   const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
   const teams = Object.values(base.teams).filter((team) => base.competitions[season.competitionId]!.participantTeamIds.includes(team.id))
+  // No window is injected: the shipped NBA-like season materializes its own explicit TradeWindow
+  // from its own schedule, and season.startDate is that window's opening date.
   const world = updateGameWorld(base, {
     currentSeasonId: season.id,
     currentDate: season.startDate,
-    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
   })
   return { world, season, teams }
 }
@@ -88,14 +89,22 @@ describe('TradeEngine', () => {
     expect(retainedCap.totalCapHit).toBe(500_000)
   })
 
-  it('fails closed when no trade window is configured and reports configured windows open or closed', () => {
+  it('fails closed when no explicit trade window exists and reports materialized windows open or closed', () => {
     const { world, season, teams } = tradeWorld(); const [a, b] = teams; const playerA = a!.rosterPlayerIds[0]!; const playerB = b!.rosterPlayerIds[0]!
     const proposal = { id: 'window-state', ecosystemId: world.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id], movements: [{ asset: { kind: 'player' as const, playerId: playerA }, fromTeamId: a!.id, toTeamId: b!.id }, { asset: { kind: 'player' as const, playerId: playerB }, fromTeamId: b!.id, toTeamId: a!.id }] }
     const noWindow = updateGameWorld(world, { tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: undefined }) } })
     expect(getTradeWindowStatus(noWindow, proposal)).toBe('NOT_CONFIGURED')
     expect(validateTrade(noWindow, proposal).globalReasons).toContain('TRADE_WINDOW_NOT_CONFIGURED')
     expect(executeTrade(noWindow, proposal).world).toBe(noWindow)
-    const closed = updateGameWorld(world, { currentDate: season.endDate, tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: { closesOn: season.startDate } }) } })
+    // A partially materialized window is not a deadline either: the engine never infers the missing bound.
+    const partial = updateGameWorld(world, { tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: { closesOn: season.startDate } }) } })
+    expect(getTradeWindowStatus(partial, proposal)).toBe('NOT_CONFIGURED')
+    const notOpen = updateGameWorld(world, { currentDate: addDays(season.startDate, -1) })
+    expect(getTradeWindowStatus(notOpen, proposal)).toBe('NOT_OPEN')
+    expect(validateTrade(notOpen, proposal).globalReasons).toContain('TRADE_WINDOW_NOT_OPEN')
+    const deadline = world.tradeRulesBySeasonId[season.id]!.tradeWindow!.closesOn!
+    expect(getTradeWindowStatus(updateGameWorld(world, { currentDate: deadline }), proposal)).toBe('OPEN')
+    const closed = updateGameWorld(world, { currentDate: addDays(deadline, 1) })
     expect(getTradeWindowStatus(closed, proposal)).toBe('CLOSED')
     expect(validateTrade(closed, proposal).globalReasons).toContain('TRADE_WINDOW_CLOSED')
   })

@@ -23,6 +23,8 @@ interface NgWorkspaceNavigationValue {
   readonly app: WorkspaceAppId
   readonly teamId: TeamId | null
   readonly competitionId: CompetitionId | null
+  /** Canonical context carried by a resolver (for example a trade negotiation selected by a breakpoint). */
+  readonly negotiationId: string | null
   readonly openApps: readonly WorkspaceAppId[]
   readonly setActiveApp: (app: WorkspaceAppId) => void
   readonly closeApp: (app: WorkspaceAppId) => void
@@ -37,6 +39,7 @@ function readNavigation() {
     app: snapshot.app,
     teamId: snapshot.teamId,
     competitionId: snapshot.competitionId,
+    negotiationId: snapshot.negotiationId,
   }
 }
 

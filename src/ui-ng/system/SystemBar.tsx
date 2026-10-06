@@ -6,18 +6,29 @@ import { useGameStore } from '@/stores/gameStore'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { SimulateUntilControl } from '@/ui-ng/system/SimulateUntilControl'
 import { breakpointActionLabel, resolveBreakpointDestination } from '@/ui-ng/system/breakpointRouting'
-import { syncWorkspaceAppQuery, type WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
+import { syncWorkspaceAppQuery, type NgWorkspaceContext, type WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
 /** The action the Continue control offers for the current stop. */
 export interface ContinueAction {
   readonly label: string
   readonly app?: WorkspaceAppId
+  /** Canonical context the resolver carries into the destination workspace (for example a trade negotiation). */
+  readonly context?: NgWorkspaceContext
   readonly startNextSeason?: true
   /**
    * Set when the stop has no actionable destination: the bar surfaces this (with the breakpoint's own diagnostic)
    * instead of a resolver that would open nothing or the wrong surface.
    */
   readonly unresolvedDiagnostic?: string
+}
+
+/**
+ * The canonical context a breakpoint already carries for its destination workspace. The breakpoint, not the bar,
+ * owns these identifiers: this only forwards what `SimulationBreakpoint.actionTarget` published.
+ */
+function breakpointContext(actionTarget: Readonly<Record<string, string>> | undefined): NgWorkspaceContext | undefined {
+  const negotiationId = actionTarget?.negotiationId
+  return negotiationId === undefined ? undefined : { negotiationId }
 }
 
 /**
@@ -32,7 +43,8 @@ export function continueAction(stop: ContinueStopReason | undefined): ContinueAc
   if (stop?.type === 'breakpoint') {
     const destination = resolveBreakpointDestination(stop.breakpoint.route)
     if (destination.actionable && destination.appId !== undefined) {
-      return { label: breakpointActionLabel(destination.route) ?? 'Continue', app: destination.appId }
+      const context = breakpointContext(stop.breakpoint.actionTarget)
+      return { label: breakpointActionLabel(destination.route) ?? 'Continue', app: destination.appId, ...(context === undefined ? {} : { context }) }
     }
     const suggested = destination.appId === undefined ? undefined : breakpointActionLabel(destination.route) ?? destination.appId
     const diagnostic = [stop.breakpoint.diagnostic, suggested === undefined ? undefined : `Suggested destination: ${suggested}.`, destination.reasonUnavailable]
@@ -91,7 +103,7 @@ export function SystemBar() {
               return
             }
             if (action.app !== undefined) {
-              syncWorkspaceAppQuery(action.app)
+              syncWorkspaceAppQuery(action.app, 'replace', action.context)
               return
             }
             void continueGame()

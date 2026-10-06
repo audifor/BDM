@@ -7,6 +7,7 @@ import { createCompetition } from '@/domain/competition'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { materializeTradeWindows } from '@/engine/competition'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
@@ -89,7 +90,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   })
   if (existingSuccessors.every((season) => season !== undefined)) {
     const target = existingSuccessors[0]!
-    const rolledWorld = rollForwardTradeRules(rollForwardSalaryRules(world, [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)]), [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)])
+    const rolledWorld = materializeTradeWindows(rollForwardTradeRules(rollForwardSalaryRules(world, [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)]), [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)]))
     const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
     return {
       world: rolledWorld,
@@ -190,9 +191,15 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     diagnostics: Object.freeze([]),
     repairReports: repair.reports,
   }
-  return { world: next, result }
+  return { world: materializeTradeWindows(next), result }
 }
 
+/**
+ * A successor edition gets its own TradeRules configuration, never the source edition's absolute
+ * TradeWindow: the Trade Deadline belongs to the generated schedule, so `materializeTradeWindows`
+ * derives the successor's explicit `opensOn`/`closesOn` from the successor's own schedule once it
+ * exists. Rolling stale dates forward is not sufficient (and not canonical) once windows are real.
+ */
 export function rollForwardTradeRules(world: GameWorld, successors: readonly (readonly [Season, Season])[]): GameWorld {
   let current = world
   for (const [source, target] of successors) {
@@ -202,18 +209,8 @@ export function rollForwardTradeRules(world: GameWorld, successors: readonly (re
     if (sourceRules === undefined || current.tradeRulesBySeasonId[target.id] !== undefined
       || source.competitionId !== target.competitionId || sourceCompetition === undefined || targetCompetition === undefined
       || sourceCompetition.ecosystemId !== targetCompetition.ecosystemId || sourceRules.ecosystemId !== targetCompetition.ecosystemId) continue
-    const { tradeWindow: sourceWindow, ...baseRules } = sourceRules
-    let tradeWindow = sourceWindow
-    if (sourceWindow !== undefined && (sourceWindow.opensOn !== undefined || sourceWindow.closesOn !== undefined)) {
-      const yearShift = Number(target.startDate.slice(0, 4)) - Number(source.startDate.slice(0, 4))
-      const shifted = {
-        ...(sourceWindow.opensOn === undefined ? {} : { opensOn: addYears(sourceWindow.opensOn, yearShift) }),
-        ...(sourceWindow.closesOn === undefined ? {} : { closesOn: addYears(sourceWindow.closesOn, yearShift) }),
-      }
-      tradeWindow = (shifted.opensOn === undefined || shifted.opensOn >= target.startDate)
-        && (shifted.closesOn === undefined || shifted.closesOn <= target.endDate) ? shifted : undefined
-    }
-    const successorRules: TradeRules = createTradeRules({ ...baseRules, seasonId: target.id, ...(tradeWindow === undefined ? {} : { tradeWindow }) })
+    const { tradeWindow: _tradeWindow, ...baseRules } = sourceRules
+    const successorRules: TradeRules = createTradeRules({ ...baseRules, seasonId: target.id })
     current = updateGameWorld(current, { tradeRulesBySeasonId: { ...current.tradeRulesBySeasonId, [target.id]: successorRules } })
   }
   return current

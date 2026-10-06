@@ -13,6 +13,8 @@ import {
   parseWorkspacePlayerId,
   parseWorkspaceStaffId,
   parseWorkspaceTeamId,
+  readNgWorkspaceNavigation,
+  syncWorkspaceAppQuery,
 } from '@/ui-ng/workspace/workspaceApps'
 
 describe('workspaceApps navigation', () => {
@@ -111,5 +113,21 @@ describe('workspaceApps navigation', () => {
     const url = new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('roster')
     expect(url.searchParams.get('teamId')).toBe(teamId)
+  })
+
+  // MX0.5: a resolver carries the canonical entity a workspace must select (the trade negotiation being answered).
+  it('carries and clears the negotiation context of a resolver', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=home')
+
+    syncWorkspaceAppQuery('trades', 'replace', { negotiationId: 'trade-negotiation:a:b' })
+
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('trades')
+    expect(new URL(window.location.href).searchParams.get('negotiationId')).toBe('trade-negotiation:a:b')
+    expect(readNgWorkspaceNavigation().negotiationId).toBe('trade-negotiation:a:b')
+
+    // Any later navigation without context drops it, so a stale negotiation can never leak into another workspace.
+    syncWorkspaceAppQuery('contracts')
+    expect(new URL(window.location.href).searchParams.get('negotiationId')).toBeNull()
+    expect(readNgWorkspaceNavigation().negotiationId).toBeNull()
   })
 })

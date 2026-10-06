@@ -58,7 +58,6 @@ function fixture() {
   const staffPeople = [...staffByTeam.values()].flatMap(({ proposer, approver }) => [proposer, approver].map((id) => ({ id, identity: { firstName: 'Trade', lastName: 'Officer' }, professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number> } })))
   const opened = updateGameWorld(base, {
     userCoachId: userTeam.coachId!, currentSeasonId: season.id, currentDate: season.startDate,
-    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
     contracts: Object.values(base.contractsById).map((contract) => players.includes(contract.playerId) ? { ...contract, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 1_000_000 }] } } : contract),
     governanceInstitutions: institutions, governanceBodies: bodies, governanceAppointments: appointments, governanceAuthorityGrants: grants, governanceDecisionParticipationGrants: participations,
     staffPeople: [...Object.values(base.staffPeopleById), ...staffPeople], teamStaffAssignments: [...Object.values(base.teamStaffAssignmentsById), ...assignments],
@@ -122,8 +121,9 @@ describe('trade Governance and atomic execution', () => {
 
   it('blocks a closed window, changed contract or stale revision without mutating the world', () => {
     const f = fixture()
-    const rules = f.world.tradeRulesBySeasonId[f.world.currentSeasonId]!
-    const closed = updateGameWorld(f.world, { currentDate: addDays(f.world.currentDate, 1), tradeRulesBySeasonId: { ...f.world.tradeRulesBySeasonId, [rules.seasonId]: createTradeRules({ ...rules, tradeWindow: { closesOn: f.world.currentDate } }) } })
+    // The negotiation's own edition carries the authority; a window that ended before today is CLOSED.
+    const rules = f.world.tradeRulesBySeasonId[f.negotiation.seasonId]!
+    const closed = updateGameWorld(f.world, { currentDate: addDays(f.world.currentDate, 1), tradeRulesBySeasonId: { ...f.world.tradeRulesBySeasonId, [rules.seasonId]: createTradeRules({ ...rules, tradeWindow: { opensOn: rules.tradeWindow!.opensOn!, closesOn: f.world.currentDate } }) } })
     expect(completeAgreedTrade(closed, { negotiationId: f.negotiation.id, expectedRevisionId: f.negotiation.currentRevisionId }).status).toBe('WINDOW_CLOSED')
     const snapshot = f.negotiation.revisions[0]!.contractSnapshots[0]!
     const changed = updateGameWorld(f.world, { contracts: Object.values(f.world.contractsById).map((contract) => contract.id === snapshot.id ? { ...contract, compensation: { ...contract.compensation, annualSalary: contract.compensation.annualSalary + 1 } } : contract) })

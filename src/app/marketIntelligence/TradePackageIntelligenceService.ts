@@ -9,7 +9,8 @@ import type { GameWorld } from '@/domain/world'
 import { assessRoutedAcquisitionProposalIntelligence } from './AcquisitionProposalIntelligenceService'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning/GMPlanWorkflowService'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
-import { getTradeWindowStatus, validateTrade, type TradeValidationReason, type TradeWindowStatus } from '@/engine/trade'
+import { resolveActiveCompetitionSeasonsForTeam } from '@/engine/competition'
+import { getTradeWindowStatus, tradeWindowBlocker, validateTrade, type TradeValidationReason, type TradeWindowStatus } from '@/engine/trade'
 import type { AcquisitionProposalIntelligence } from '@/engine/marketIntelligence'
 import type { ClubNeed } from '@/engine/clubNeeds'
 
@@ -152,8 +153,9 @@ export function assessTradePackageIntelligence(world: GameWorld, teamId: TeamId)
           const contractCheck: TradePackageCheck = incomingContract !== undefined && outgoingContract !== undefined && contractReasons.length === 0 ? 'PASS' : 'FAIL'
           const salaryRulesAvailable = world.salaryRulesBySeasonId[seasonId] !== undefined
           const tradeWindow = getTradeWindowStatus(world, { seasonId, ecosystemId })
+          const windowBlocker = tradeWindowBlocker(tradeWindow)
           const salaryReasons = validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason === 'SALARY_MATCHING_FAILED' || reason === 'EXCEPTION_UNAVAILABLE'))
-          const assetReasons = [...validation.globalReasons.filter((reason) => reason !== 'TRADE_WINDOW_CLOSED' && reason !== 'TRADE_WINDOW_NOT_CONFIGURED'), ...validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason !== 'SALARY_MATCHING_FAILED' && reason !== 'EXCEPTION_UNAVAILABLE' && reason !== 'PLAYER_CONTRACT_NOT_ACTIVE'))]
+          const assetReasons = [...validation.globalReasons.filter((reason) => reason !== 'TRADE_WINDOW_CLOSED' && reason !== 'TRADE_WINDOW_NOT_OPEN' && reason !== 'TRADE_WINDOW_NOT_CONFIGURED'), ...validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason !== 'SALARY_MATCHING_FAILED' && reason !== 'EXCEPTION_UNAVAILABLE' && reason !== 'PLAYER_CONTRACT_NOT_ACTIVE'))]
           const assetCheck: TradePackageCheck = assetReasons.length > 0 ? 'FAIL' : 'PASS'
           const salaryCheck: TradePackageCheck = !salaryRulesAvailable ? 'NOT_ASSESSED' : salaryReasons.length > 0 ? 'FAIL' : 'PASS'
           const market = marketObservation(world.marketKnowledge, team.organizationId, target.playerId)
@@ -164,8 +166,7 @@ export function assessTradePackageIntelligence(world: GameWorld, teamId: TeamId)
             ...(assetCheck === 'FAIL' ? assetReasons : []),
             ...(salaryCheck === 'FAIL' ? salaryReasons : []),
             ...(!salaryRulesAvailable ? ['SALARY_CAP_RULES_NOT_ASSESSED'] : []),
-            ...(tradeWindow === 'NOT_CONFIGURED' ? ['TRADE_WINDOW_NOT_CONFIGURED'] : []),
-            ...(tradeWindow === 'CLOSED' ? ['TRADE_WINDOW_CLOSED'] : []),
+            ...(windowBlocker === undefined ? [] : [windowBlocker]),
             ...(market?.availability === undefined ? ['SELLER_AVAILABILITY_UNKNOWN'] : []),
             ...(market?.availability === 'NOT_FOR_SALE' ? ['SELLER_KNOWN_NOT_FOR_SALE'] : []),
             ...(market?.sellerWillingness === undefined ? ['SELLER_WILLINGNESS_UNKNOWN'] : []),
@@ -230,14 +231,13 @@ export function assessTradePackageIntelligence(world: GameWorld, teamId: TeamId)
 function resolveActiveTradeSeasons(world: GameWorld, teamId: TeamId, counterpartyTeamId: TeamId, acquisition: AcquisitionProposalIntelligence): readonly { readonly ecosystemId: EcosystemId; readonly seasonId: SeasonId }[] {
   const player = acquisition.preferredCandidate
   if (player === undefined || player.feasibility.route !== 'TRADE' || player.feasibility.routeSupport !== 'SUPPORTED') return []
-  return Object.values(world.seasons).flatMap((season) => {
+  const candidateSeasons = resolveActiveCompetitionSeasonsForTeam(world, teamId, world.currentDate)
+  const counterpartySeasonIds = new Set(resolveActiveCompetitionSeasonsForTeam(world, counterpartyTeamId, world.currentDate).map((season) => season.id))
+  return candidateSeasons.flatMap((season) => {
     const competition = world.competitions[season.competitionId]
     const rules = world.tradeRulesBySeasonId[season.id]
-    const participants = season.participantTeamIds ?? competition?.participantTeamIds ?? []
-    if (competition === undefined || rules === undefined || rules.seasonId !== season.id
+    if (competition === undefined || rules === undefined || !counterpartySeasonIds.has(season.id) || rules.seasonId !== season.id
       || rules.ecosystemId !== competition.ecosystemId || !rules.allowedAssetKinds.includes('player')
-      || !participants.includes(teamId) || !participants.includes(counterpartyTeamId)
-      || world.currentDate < season.startDate || world.currentDate > season.endDate
       || player.currentTeam?.teamId !== counterpartyTeamId) return []
     return [{ ecosystemId: competition.ecosystemId, seasonId: season.id }]
   }).sort((a, b) => a.seasonId.localeCompare(b.seasonId))
