@@ -12,7 +12,7 @@ import {
   unassignResponsibility,
 } from '@/app/staffAssignments'
 import { getUserTeam } from '@/engine/calendar'
-import { responsibilityDefinition, responsibilityIdForTeam, RESPONSIBILITY_KINDS, type ResponsibilityKind } from '@/domain/responsibility'
+import { isResponsibilityConnected, responsibilityDefinition, responsibilityIdForTeam, RESPONSIBILITY_KINDS, type ResponsibilityKind } from '@/domain/responsibility'
 import { calculateStaffWorkload, getTeamStaffAssignments, getTeamResponsibilities } from '@/domain/world'
 
 function newGame() {
@@ -125,7 +125,9 @@ describe('planStaffAssignments', () => {
   it('counts unchanged and overload warnings into the program result', () => {
     const { world, teamId } = newGame()
     const program = planStaffAssignments(world, teamId, 'delegateMore')
-    const delegable = RESPONSIBILITY_KINDS.filter((kind) => responsibilityDefinition(kind).eligibleParticipant === 'staff')
+    // MX0.3: only ACTIVE (connected) staff-eligible responsibilities are ever considered by the planner — a retired
+    // kind is skipped outright instead of being counted, so the program's reach is the assignable set.
+    const delegable = RESPONSIBILITY_KINDS.filter((kind) => isResponsibilityConnected(kind) && responsibilityDefinition(kind).eligibleParticipant === 'staff')
     expect(program.changes.length + program.unchanged).toBeGreaterThanOrEqual(delegable.length - 1)
     expect(program.workloadWarnings).toBe(program.changes.filter((change) => change.overloadWarning).length)
   })

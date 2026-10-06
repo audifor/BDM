@@ -217,11 +217,14 @@ describe('CASO 7 — WORKLOAD', () => {
     const base = createAcbTestGame({ userTeamKey: 'caz' })
     const team = getUserTeam(base)!
     const staffId = pickStaff(base, team.id, 'assistantCoach')
-    // Stack several delegated Responsibilities on the same holder to force overload.
+    // Stack several Responsibilities on the same holder to force overload. `defensiveGamePlan` /
+    // `offensivePreparation` are retired / deferred in the canonical registry and can no longer be assigned, so the
+    // ACTIVE kinds an assistantCoach may hold are used instead (advisory where the kind forbids delegated).
     let world = base
-    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment', 'defensiveGamePlan', 'offensivePreparation'] as const) {
+    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment'] as const) {
       world = setTeamResponsibility(world, { teamId: team.id, kind, mode: 'delegated', holderStaffId: staffId })
     }
+    world = setTeamResponsibility(world, { teamId: team.id, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: staffId })
     const { world: withContext } = ensureContext(world, staffId, team.id)
     world = withContext
     const contextId = staffHumanContextIdFor(staffId, team.id, world.staffEmploymentByStaffId[staffId]!.startedOn!)
@@ -233,7 +236,7 @@ describe('CASO 7 — WORKLOAD', () => {
     expect(overloadedState.stress).toBeGreaterThan(20)
 
     // Relieve the overload by removing responsibilities, then advance again.
-    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment', 'defensiveGamePlan'] as const) {
+    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment', 'oppositionScouting'] as const) {
       world = setTeamResponsibility(world, { teamId: team.id, kind, mode: 'userControlled' })
     }
     for (let day = 0; day < 14; day += 1) world = advanceGameDay(world)

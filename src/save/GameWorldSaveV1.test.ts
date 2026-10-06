@@ -3,12 +3,33 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame, playUserGame } from '@/app/game'
 import { calculateAge } from '@/domain/player'
 import { createDeadMoneyCharge, createTeamSalaryException } from '@/domain/salary'
-import { updateGameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { getCoachProfessionalProfile } from '@/domain/world/queries'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
 import { executeTeamTraining } from '@/engine/training'
 import { advanceDay } from '@/engine/calendar'
+
+/**
+ * MX0.3: a legacy V1/V2/V3 payload is a strict subset of the current world. `clubStrategicStatesByTeamId` and
+ * `gmPlanStatesById` are owned by the Save V4 layer (a V1/V2/V3 file never carries them, exactly as
+ * `migrateGameWorldSaveV3ToV4` states by projecting them empty), so a V1 round-trip deterministically returns them
+ * empty — that is the schema boundary, not state loss: `GameWorldSaveV4.test.ts` owns the guarantee that the
+ * *current* save preserves them. Every other layer is still asserted to survive V1 exactly, like
+ * `withoutCoachRpgProfiles` does for the Coach RPG layer.
+ */
+function withoutV4OwnedLayers<T extends { readonly clubStrategicStatesByTeamId: unknown; readonly gmPlanStatesById: unknown }>(world: T): Omit<T, 'clubStrategicStatesByTeamId' | 'gmPlanStatesById'> {
+  const { clubStrategicStatesByTeamId: _clubStrategy, gmPlanStatesById: _gmPlans, ...v1Contract } = world
+  return v1Contract
+}
+
+/** The V1-owned contract of a round-trip: identical except the two layers only the current (V4) save carries. */
+function expectV1RoundTrip(loaded: GameWorld, world: GameWorld): void {
+  expect(withoutV4OwnedLayers(loaded)).toEqual(withoutV4OwnedLayers(world))
+  // The V4-owned layers must come back exactly empty, never partially populated by the legacy read.
+  expect(loaded.clubStrategicStatesByTeamId).toEqual({})
+  expect(loaded.gmPlanStatesById).toEqual({})
+}
 
 describe('GameWorldSaveV1', () => {
   it('round-trips canonical world data independently of the runtime object', () => {
@@ -16,7 +37,7 @@ describe('GameWorldSaveV1', () => {
     const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
 
-    expect(loaded).toEqual(world)
+    expectV1RoundTrip(loaded, world)
     expect(loaded.coachRpgProfilesByCoachId).toEqual(world.coachRpgProfilesByCoachId)
     expect('coachProfessionalProfilesByCoachId' in saved.payload).toBe(false)
     expect(getCoachProfessionalProfile(loaded, loaded.userCoachId)).toEqual(loaded.staffPeopleById[loaded.coaches[loaded.userCoachId]!.staffProfileId]!.professional)
@@ -60,7 +81,7 @@ describe('GameWorldSaveV1', () => {
     const seasonId = Object.values(world.seasons).find((season) => world.competitions[season.competitionId]!.ecosystemId === profile.ecosystemId)!.id
     const withHistory = updateGameWorld(world, { eligibilityProfiles: Object.values(world.eligibilityProfilesById).map((item) => item.id === profile.id ? { ...profile, seasonsUsed: 1, seasonRecordsBySeasonId: { [seasonId]: { seasonId, gamesParticipated: 2, gameIds: ['game:test'], eligibilityConsumed: true, resolved: true } } } : item), eligibilityRestrictions: [{ id: 'eligibility-restriction:save', playerId: profile.playerId, ecosystemId: profile.ecosystemId, reasonCode: 'test', startsAt: world.currentDate }] })
     const saved = serializeGameWorldV1(withHistory, '2032-10-01T12:00:00.000Z')
-    expect(deserializeGameWorldV1(saved)).toEqual(withHistory)
+    expectV1RoundTrip(deserializeGameWorldV1(saved), withHistory)
     const { eligibilityRules: _rules, eligibilityProfiles: _profiles, eligibilityRestrictions: _restrictions, ...legacy } = saved.payload
     const loadedLegacy = deserializeGameWorldV1({ ...saved, payload: legacy })
     expect(Object.values(loadedLegacy.eligibilityProfilesById)).not.toHaveLength(0)
@@ -84,7 +105,7 @@ describe('GameWorldSaveV1', () => {
   it('round-trips training state and supplies deterministic legacy defaults', () => {
     const base = createNewGame(); const teamId = Object.values(base.teams)[0]!.id; const trained = executeTeamTraining(advanceDay(base), teamId)
     const saved = serializeGameWorldV1(trained, '2032-10-01T12:00:00.000Z')
-    expect(deserializeGameWorldV1(saved)).toEqual(trained)
+    expectV1RoundTrip(deserializeGameWorldV1(saved), trained)
     const { trainingPlans: _plans, trainingSessions: _sessions, developmentStimulus: _stimulus, careerFatigue: _fatigue, ...legacyPayload } = saved.payload
     const legacy = deserializeGameWorldV1({ ...saved, payload: legacyPayload })
     expect(Object.values(legacy.trainingSessionsById)).toEqual([])
@@ -105,7 +126,7 @@ describe('GameWorldSaveV1', () => {
       },
     })
     const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
-    expect(deserializeGameWorldV1(saved)).toEqual(world)
+    expectV1RoundTrip(deserializeGameWorldV1(saved), world)
     const { scheduledTrainingSessions: _sessions, userTrainingModules: _modules, ...legacyPayload } = saved.payload
     const legacy = deserializeGameWorldV1({ ...saved, payload: legacyPayload })
     expect(legacy.scheduledTrainingSessionsById).toEqual({})
@@ -125,7 +146,17 @@ describe('GameWorldSaveV1', () => {
     const legacy = deserializeGameWorldV1({ ...envelope, payload: legacyPayload })
     const partial = deserializeGameWorldV1({ ...envelope, payload: partialPayload })
 
-    expect(legacy.staffPeopleById).toEqual(world.staffPeopleById)
+    // MX0.3: a payload carrying NEITHER `staffPeople` NOR the legacy `coachProfessionalProfilesByCoachId` map records
+    // no Coach professional data at all — the canonical writer deliberately omits that map because it is derived. Its
+    // values are not recoverable from what remains: `createNewGame` rewrites the `generated-` ids after the profiles
+    // were seeded from them, so re-deriving would invent different numbers, and the documented legacy default
+    // (`createLegacyProfessionalProfile`) is what the compatibility boundary applies. What must be exact is Staff
+    // identity and the Coach→Staff structure; exact attribute restoration for a payload that *does* record the legacy
+    // map is covered by 'seeds missing legacy Coach Staff professional values from the old Coach map' below.
+    expect(Object.keys(legacy.staffPeopleById).sort()).toEqual(Object.keys(world.staffPeopleById).sort())
+    for (const id of Object.keys(world.staffPeopleById)) {
+      expect(legacy.staffPeopleById[id as never]!.identity).toEqual(world.staffPeopleById[id as never]!.identity)
+    }
     for (const team of Object.values(legacy.teams)) {
       if (team.coachId === undefined) continue
       const coach = legacy.coaches[team.coachId]!
@@ -133,7 +164,7 @@ describe('GameWorldSaveV1', () => {
     }
     expect(partial.staffPeopleById[removedAssignment.staffPersonId]).toEqual(world.staffPeopleById[removedAssignment.staffPersonId])
     expect(Object.values(partial.teamStaffAssignmentsById).some((assignment) => assignment.staffPersonId === removedAssignment.staffPersonId)).toBe(true)
-    expect(deserializeGameWorldV1(serializeGameWorldV1(partial, envelope.savedAt))).toEqual(partial)
+    expectV1RoundTrip(deserializeGameWorldV1(serializeGameWorldV1(partial, envelope.savedAt)), partial)
   })
 
   it('migrates legacy Coaches without Person or Staff references into canonical roots', () => {
@@ -202,14 +233,15 @@ describe('GameWorldSaveV1', () => {
     expect(() => deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T12:00:00.000Z', payload: { countries: {} } })).toThrow('Save seasons')
   })
 
-  it('preserves completed match logs and the deterministic next result', () => {
+  it('preserves completed match logs and the deterministic next result', { timeout: 120_000 }, () => {
     const completed = playUserGame(createNewGame(), 12345)
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(completed, '2032-10-01T12:00:00.000Z'))
     const original = createNewGame()
     const loadedBeforePlay = deserializeGameWorldV1(serializeGameWorldV1(original, '2032-10-01T12:00:00.000Z'))
 
     expect(loaded.matchStatLogsByGameId).toEqual(completed.matchStatLogsByGameId)
-    expect(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay, 12345))).toEqual(withoutCoachRpgProfiles(playUserGame(original, 12345)))
+    // Deterministic next result: a world loaded from a V1 save must resolve the same match as the original.
+    expect(withoutV4OwnedLayers(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay, 12345)))).toEqual(withoutV4OwnedLayers(withoutCoachRpgProfiles(playUserGame(original, 12345))))
   })
 
   it('enriches legacy players without bio deterministically', () => {

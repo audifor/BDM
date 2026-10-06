@@ -120,6 +120,10 @@ export function staffAssignmentSuitability(proficiency: number, projectedUtiliza
  */
 export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, mode: 'delegated' | 'advisory'): readonly EligibleResponsibilityCandidate[] {
   const definition = responsibilityDefinition(kind)
+  // MX0.3: the registry disposition is the one canonical answer to "is this responsibility assignable now?" — a
+  // retired / deferred kind must never receive a candidate, or the UI, recommendations and the auto-assign planner
+  // (which commit through `setTeamResponsibility`) would keep trying to hand out a retired responsibility.
+  if (!isResponsibilityConnected(kind)) return []
   if (definition.eligibleParticipant !== 'staff') return []
 
   return getTeamStaffAssignments(world, teamId)
