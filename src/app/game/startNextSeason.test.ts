@@ -4,7 +4,6 @@ import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { addYears } from '@/domain/date'
 import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
-import { createTradeRules } from '@/domain/trade'
 import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
@@ -37,10 +36,10 @@ function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId:
 }
 
 describe('startNextSeason', () => {
-  it('materializes equivalent trade rules for a successor in the same competition and ecosystem', () => {
+  it('configures a successor in the same competition and ecosystem without rolling window dates forward', () => {
     const base = createNewGame()
     const source = Object.values(base.seasons).find((season) => base.tradeRulesBySeasonId[season.id] !== undefined)!
-    const sourceRules = createTradeRules({ ...base.tradeRulesBySeasonId[source.id]!, tradeWindow: {} })
+    const sourceRules = base.tradeRulesBySeasonId[source.id]!
     const successor = createSeason({
       id: seasonIdFromString('test-trade-rules-successor'),
       competitionId: source.competitionId,
@@ -49,9 +48,15 @@ describe('startNextSeason', () => {
       endDate: addYears(source.endDate, 1),
       participantTeamIds: source.participantTeamIds ?? base.competitions[source.competitionId]!.participantTeamIds,
     })
-    const withSuccessor = updateGameWorld(base, { seasons: [...Object.values(base.seasons), successor], tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [source.id]: sourceRules } })
+    const withSuccessor = updateGameWorld(base, { seasons: [...Object.values(base.seasons), successor] })
     const rolled = rollForwardTradeRules(withSuccessor, [[source, successor]])
-    expect(rolled.tradeRulesBySeasonId[successor.id]).toEqual({ ...sourceRules, seasonId: successor.id })
+    const { tradeWindow: _staleWindow, ...expectedRules } = sourceRules
+
+    // The successor's Trade Deadline belongs to the successor's own schedule: the previous edition's
+    // absolute dates are never copied, and `materializeTradeWindows` fills the new window once the
+    // new schedule exists.
+    expect(rolled.tradeRulesBySeasonId[successor.id]).toEqual({ ...expectedRules, seasonId: successor.id })
+    expect(rolled.tradeRulesBySeasonId[successor.id]!.tradeWindow).toBeUndefined()
   })
 
   it('requires a finalized current season', () => {

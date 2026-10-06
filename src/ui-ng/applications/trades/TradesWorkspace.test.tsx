@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame, evaluateSimulationBreakpoints, getContinueStopReason } from '@/app/game'
+import { acceptCoachJobOffer, applyUserCoachForJob } from '@/app/coachCareer'
 import { proposeTradeNegotiation, respondToTradeNegotiation, tradeNegotiationResponseReadiness } from '@/app/trades'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
@@ -21,6 +22,7 @@ import type { TradeProposal } from '@/domain/trade'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
 import { useGameStore } from '@/stores/gameStore'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
 import { SystemBar } from '@/ui-ng/system/SystemBar'
@@ -34,20 +36,23 @@ beforeEach(() => {
 })
 
 /**
- * The shipped NBA-like competition, a user club, and a rival club that can negotiate through delegated staff. No
- * trade rule is injected: the season-scoped window the shipped NBA-like rule preset declares is what makes the season
- * tradeable. The fixture only selects which club is the user's (the shipped world starts in the FIBA-like
- * competition) and moves the world clock to that season's own opening day.
+ * The shipped NBA-like (or WNBA-like) competition, a user club, and a rival club that can negotiate through delegated
+ * staff. No trade rule is injected: each generated season materializes its own explicit window from its own schedule,
+ * which is what makes the season tradeable. The fixture only selects which club is the user's (the shipped world starts
+ * in the FIBA-like competition) and moves the world clock to that season's own opening day; `world.currentSeasonId` is
+ * deliberately left alone, because a club's trade authority must never depend on the global season pointer.
  */
-function createTradeScenario() {
+function createTradeScenario(category: 'men' | 'women' = 'men') {
   const base = createNewGame()
-  const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+  const season = Object.values(base.seasons).find((item) => {
+    const competition = base.competitions[item.competitionId]
+    return base.tradeRulesBySeasonId[item.id] !== undefined && competition !== undefined && base.ecosystems[competition.ecosystemId]!.category === category
+  })!
   const competition = base.competitions[season.competitionId]!
   const userTeamId = competition.participantTeamIds.find((teamId) => base.teams[teamId]!.coachId !== undefined)!
-  if (base.tradeRulesBySeasonId[season.id]!.tradeWindow === undefined) throw new Error('The shipped NBA-like season must activate trading on its own')
+  if (base.tradeRulesBySeasonId[season.id]!.tradeWindow === undefined) throw new Error('The shipped NBA-like/WNBA-like season must activate trading on its own')
   const initial = updateGameWorld(base, {
     userCoachId: base.teams[userTeamId]!.coachId!,
-    currentSeasonId: season.id,
     currentDate: season.startDate,
     // The generated fixture keeps scheduled games from before this season's start; they are a schedule-integrity
     // breakpoint of their own and would outrank the trade response this suite certifies.
@@ -87,8 +92,8 @@ function createTradeScenario() {
 }
 
 /** The canonical incoming package: the rival club proposes to the user through its delegated negotiator. */
-function createIncomingProposal() {
-  const scenario = createTradeScenario()
+function createIncomingProposal(category: 'men' | 'women' = 'men') {
+  const scenario = createTradeScenario(category)
   const incoming = proposeTradeNegotiation(scenario.delegated, scenario.proposal(), scenario.partner.id, { kind: 'STAFF', staffPersonId: scenario.staffPersonId })
   if (incoming.status !== 'PROPOSED' || incoming.negotiation === undefined) throw new Error(`Fixture could not propose a trade: ${incoming.status} ${(incoming.reasons ?? []).join(', ')}`)
   return { ...scenario, world: incoming.world, negotiation: incoming.negotiation }
@@ -299,5 +304,40 @@ describe('TradesWorkspace trade negotiation closure', () => {
     expect(url.searchParams.get('app')).toBe('trades')
     expect(url.searchParams.get('negotiationId')).toBe(scenario.negotiation.id)
     expect(await screen.findByText(/Opened from your trade response/)).toBeInTheDocument()
+  })
+
+  it('hosts a WNBA-like negotiation from the shipped WNBA season and lets Continue resume', () => {
+    const scenario = createIncomingProposal('women')
+    const stop = getContinueStopReason(scenario.world)
+    expect(stop?.type === 'breakpoint' && stop.breakpoint.reason === 'tradeNegotiationResponse').toBe(true)
+
+    mountTrades(scenario.world, tradesUrl(scenario.negotiation.id))
+    expect(within(userResponseCard()).getByText(/Opened from your trade response/)).toBeInTheDocument()
+    fireEvent.click(within(userResponseCard()).getByRole('button', { name: 'Reject' }))
+
+    const after = useGameStore.getState().world!
+    expect(after.tradeNegotiationsById[scenario.negotiation.id]!.status).toBe('REJECTED')
+    expect(evaluateSimulationBreakpoints(after).candidates.some((candidate) => candidate.reason === 'tradeNegotiationResponse')).toBe(false)
+    const resumed = getContinueStopReason(after)
+    expect(resumed?.type === 'breakpoint' && resumed.breakpoint.reason === 'tradeNegotiationResponse').toBe(false)
+  })
+
+  it('stops treating a stored package as the user authority after a canonical move out of the competition', () => {
+    const scenario = createIncomingProposal()
+    expect(getContinueStopReason(scenario.world)).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'tradeNegotiationResponse' } })
+    const europeanOpening = Object.values(scenario.world.coachJobOpeningsById).find((opening) => opening.status === 'open' && opening.ecosystemId !== undefined && scenario.world.ecosystems[opening.ecosystemId]?.kind === 'fibaLike')!
+    const applied = applyUserCoachForJob(scenario.world, europeanOpening.id)
+    const offer = Object.values(applied.world.coachJobOffersById).find((item) => item.jobOpeningId === europeanOpening.id && item.coachId === applied.world.userCoachId && item.status === 'pending')!
+    const moved = acceptCoachJobOffer(applied.world, offer.id)
+
+    // The manager now coaches in a FIBA/European competition: the NBA package is no longer their authority,
+    // so Continue no longer stops for it and the Trades workspace is unavailable for the new club.
+    expect(getUserTeam(moved)!.id).toBe(europeanOpening.teamId)
+    expect(evaluateSimulationBreakpoints(moved).candidates.some((candidate) => candidate.reason === 'tradeNegotiationResponse' && candidate.sourceId === scenario.negotiation.id)).toBe(false)
+    const stop = getContinueStopReason(moved)
+    expect(stop?.type === 'breakpoint' && stop.breakpoint.reason === 'tradeNegotiationResponse').toBe(false)
+    mountTrades(moved, tradesUrl(scenario.negotiation.id))
+    expect(screen.getByText(UNAVAILABLE_SECTION_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument()
   })
 })

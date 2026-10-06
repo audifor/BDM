@@ -869,12 +869,15 @@ describe('BasketballOperationsAdvisory', () => {
       // Preserve every other pre-existing season (conference memberships / games reference them by
       // id) and just add the two new trade-context seasons in the desired insertion order. Strip
       // TradeRules from the ORIGINAL season (its id/dates are otherwise still a qualifying
-      // duplicate of `currentSeason`) so only the two synthetic seasons under test can win.
+      // duplicate of `currentSeason` and `olderSeason`) so only the two synthetic seasons under test
+      // can win. The source edition's materialized TradeWindow is not copied: an absolute deadline
+      // belongs to the edition whose schedule produced it, and these synthetic seasons have no schedule.
       const { [season.id]: _removedTradeRules, ...tradeRulesWithoutOriginal } = base.tradeRulesBySeasonId
+      const { tradeWindow: _sourceSeasonWindow, ...tradeRuleConfiguration } = tradeRules
       const withSeasons = {
         ...base,
         seasons: { ...newSeasonsInOrder, ...base.seasons },
-        tradeRulesBySeasonId: { ...tradeRulesWithoutOriginal, [olderSeason.id]: { ...tradeRules, seasonId: olderSeason.id }, [currentSeason.id]: { ...tradeRules, seasonId: currentSeason.id } },
+        tradeRulesBySeasonId: { ...tradeRulesWithoutOriginal, [olderSeason.id]: { ...tradeRuleConfiguration, seasonId: olderSeason.id }, [currentSeason.id]: { ...tradeRuleConfiguration, seasonId: currentSeason.id } },
         currentSeasonId: currentSeason.id,
         currentDate: currentSeason.startDate,
       }

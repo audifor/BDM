@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
+import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { createTradeRules } from '@/domain/trade'
@@ -20,7 +21,6 @@ function setup() {
     userCoachId: base.teams[userTeamId]!.coachId!,
     currentSeasonId: season.id,
     currentDate: season.startDate,
-    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
   })
   const user = getUserTeam(initial)!
   const partner = competition.participantTeamIds.map((teamId) => initial.teams[teamId]!).find((team) => team.id !== user.id)!
@@ -87,10 +87,20 @@ describe('TradeNegotiationService', () => {
     expect(restored.tradeNegotiationsById[negotiation.id]).toEqual(agreed.negotiation)
   })
 
+  it('allows a new negotiation on the trade deadline and blocks one after it', () => {
+    const { delegatedWorld, user, proposal, players, season } = setup()
+    const deadline = delegatedWorld.tradeRulesBySeasonId[season.id]!.tradeWindow!.closesOn!
+    const onDeadline = proposeTradeNegotiation(updateGameWorld(delegatedWorld, { currentDate: deadline }), proposal(players[0]!, players[2]!), user.id, { kind: 'USER' }, 'trade-pursuit:deadline')
+    expect(onDeadline, JSON.stringify(onDeadline.reasons)).toMatchObject({ status: 'PROPOSED' })
+    const afterDeadline = proposeTradeNegotiation(updateGameWorld(delegatedWorld, { currentDate: addDays(deadline, 1) }), proposal(players[0]!, players[2]!), user.id, { kind: 'USER' }, 'trade-pursuit:deadline')
+    expect(afterDeadline.status).toBe('BLOCKED')
+    expect(afterDeadline.reasons).toEqual(['TRADE_WINDOW_CLOSED'])
+  })
+
   it('blocks a response after a trade window closes and preserves an explicit rejection', () => {
     const { world, delegatedWorld, user, partner, assignment, proposal, players, season } = setup()
     const created = proposeTradeNegotiation(delegatedWorld, proposal(players[0]!, players[2]!), user.id, { kind: 'USER' })
-    const closedRules = createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: { closesOn: season.startDate } })
+    const closedRules = createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: { opensOn: season.startDate, closesOn: season.startDate } })
     const closed = updateGameWorld(created.world, { currentDate: season.endDate, tradeRulesBySeasonId: { ...created.world.tradeRulesBySeasonId, [season.id]: closedRules } })
     const closedResponse = respondToTradeNegotiation(closed, { negotiationId: created.negotiation!.id, expectedRevisionId: created.negotiation!.currentRevisionId, teamId: partner.id, actor: { kind: 'STAFF', staffPersonId: assignment.staffPersonId }, action: 'REJECT' })
     expect(closedResponse.reasons).toContain('TRADE_WINDOW_CLOSED')

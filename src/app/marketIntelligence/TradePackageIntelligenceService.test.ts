@@ -32,7 +32,6 @@ function configuredTradeWorld(): { readonly world: GameWorld; readonly teamId: T
     currentSeasonId: season.id,
     players,
     clubStrategicStatesByTeamId: { ...base.clubStrategicStatesByTeamId, [team.id]: strategy },
-    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
   })
   const context = assessGMDecisionContext(world, team.id)
   const outgoingNeed = context.needsAssessment.needs.find((need) => need.kind === 'POSITION_SURPLUS' && context.options.some((option) => option.needId === need.id && option.kind === 'OUTGOING_MARKET_REVIEW'))!
