@@ -9,6 +9,7 @@ import { CompetitionWorkspace } from '@/ui-ng/applications/competition/Competiti
 import { ContractsWorkspace } from '@/ui-ng/applications/contracts/ContractsWorkspace'
 import { DraftWorkspace } from '@/ui-ng/applications/draft/DraftWorkspace'
 import { EnforcementWorkspace } from '@/ui-ng/applications/enforcement/EnforcementWorkspace'
+import { FacilitiesWorkspace } from '@/ui-ng/applications/facilities/FacilitiesWorkspace'
 import { FinancesWorkspace } from '@/ui-ng/applications/finances/FinancesWorkspace'
 import { HomeWorkspace } from '@/ui-ng/applications/home/HomeWorkspace'
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
@@ -67,6 +68,7 @@ export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType
   board: BoardWorkspace,
   finances: FinancesWorkspace,
   enforcement: EnforcementWorkspace,
+  facilities: FacilitiesWorkspace,
   coach: CoachWorkspace,
   'coach-finances': CoachFinancesWorkspace,
   memories: MemoriesWorkspace,

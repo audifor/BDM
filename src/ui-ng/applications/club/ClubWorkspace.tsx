@@ -46,6 +46,7 @@ export function ClubWorkspace() {
         { id: 'board', label: 'Board' },
         { id: 'finances', label: 'Finances' },
         { id: 'enforcement', label: 'Compliance' },
+        { id: 'facilities', label: 'Facilities' },
       ]
     : []
 

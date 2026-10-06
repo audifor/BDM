@@ -143,6 +143,13 @@ export function TaskbarIcon({ id }: { readonly id: WorkspaceAppId }) {
           <path d="M8 2.8 L13 5.2 V8.6 C13 11.2 10.8 13 8 13.4 C5.2 13 3 11.2 3 8.6 V5.2 Z" />
         </svg>
       )
+    case 'facilities':
+      return (
+        <svg aria-hidden {...common}>
+          <path d="M2.8 13 V5.4 L8 2.6 L13.2 5.4 V13" />
+          <path d="M6.2 13 V9.4 H9.8 V13" />
+        </svg>
+      )
     case 'coach':
       return (
         <svg aria-hidden {...common}>
