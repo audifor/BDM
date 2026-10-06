@@ -25,8 +25,8 @@
  *                         [buildCoachLegacyModel]
  *   · Timeline          → the non-mock entries of the legacy timeline
  *
- * MOCK (no canonical source; kept from `COACH_OVERVIEW_MOCK` and labelled `· MOCK` in the model where
- * they surface as copy, so they can never be mistaken for runtime data):
+ * MOCK (no canonical source; kept from `COACH_OVERVIEW_MOCK`, listed in the model's `mockRegions` and given a
+ * visible Mock chip by `CoachOverviewPanels`, so they can never be mistaken for runtime data):
  *   · identity.level / identity.careerXp — the RPG profile stores progress points, never a level.
  *   · identity.rows — archetype, shadow archetype and moral alignment are not modelled.
  *   · personality — the display labels do not map 1:1 onto the current `Personality` dimensions.
@@ -64,6 +64,7 @@ import {
   type CoachOverviewAllocationSlice,
   type CoachOverviewFinanceRow,
   type CoachOverviewMetric,
+  type CoachOverviewMockRegion,
   type CoachOverviewModel,
   type CoachOverviewStatusRow,
   type CoachOverviewSummary,
@@ -75,6 +76,22 @@ type CoachCareerModel = ReturnType<typeof buildCoachCareerModel>
 
 /** Suffix appended to every label whose value still comes from `COACH_OVERVIEW_MOCK`. */
 const MOCK_SUFFIX = ' · MOCK'
+/**
+ * MX0.4: the Overview regions the domain still has no source for. Surfaced on the model as `mockRegions` so the
+ * board can label them (Mock chip / `MOCK_SUFFIX`), instead of leaving an illustrative value looking measured.
+ * Remove an entry the day its canonical selector lands.
+ */
+const OVERVIEW_MOCK_REGIONS: readonly CoachOverviewMockRegion[] = [
+  'level',
+  'careerXp',
+  'identityRows',
+  'personality',
+  'risks',
+  'favors',
+  'network',
+  'power',
+]
+
 /** Window the reputation card reports; the Overview is a six-month snapshot. */
 const REPUTATION_WINDOW_MONTHS = 6
 
@@ -621,5 +638,7 @@ export function buildCoachOverviewModel(
     power: mock.power,
     summaries,
     timeline,
+    // Still illustrative on a live career: the board renders a Mock chip on each of these regions.
+    mockRegions: OVERVIEW_MOCK_REGIONS,
   }
 }

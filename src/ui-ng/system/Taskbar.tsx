@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import './Taskbar.css'
 
+import { useGameStore } from '@/stores/gameStore'
 import { NgStartMenu } from '@/ui-ng/system/NgStartMenu'
 import { TaskbarIcon } from '@/ui-ng/system/TaskbarIcon'
 import { isClosableTaskbarApp, taskbarAppLabel } from '@/ui-ng/workspace/taskbarOpenApps'
@@ -19,6 +20,9 @@ function StartMenuMark() {
 
 export function Taskbar() {
   const { app, closeApp, openApps, setActiveApp } = useNgWorkspaceNavigation()
+  // MX0.4: the status is a canonical signal, not a static caption, so it cannot claim the simulation is idle
+  // while a background day advance is running.
+  const simulationBusy = useGameStore((state) => state.simulationBusy)
   const [startOpen, setStartOpen] = useState(false)
   const [menu, setMenu] = useState<WorkspaceAppId | null>(null)
   const activeApp = app === 'player' ? 'player' : app
@@ -113,7 +117,7 @@ export function Taskbar() {
           )
         })}
       </div>
-      <span className="ng-taskbar__status">Simulation idle</span>
+      <span className="ng-taskbar__status">{simulationBusy ? 'Simulation running' : 'Simulation idle'}</span>
     </footer>
   )
 }

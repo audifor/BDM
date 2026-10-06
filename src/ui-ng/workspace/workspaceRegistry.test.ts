@@ -1,4 +1,12 @@
-import type { ComponentType } from 'react'
+// @vitest-environment jsdom
+/*
+ * MX0.4 — NG runtime truth.
+ *
+ * These tests certify registry *authority*: which component an available BDM OS workspace app mounts, that no
+ * launcher/taskbar/breakpoint surface can name an app outside that registry, and that every canonical area is
+ * wired to its canonical workspace. They deliberately assert component identity instead of scanning file names.
+ */
+import { describe, expect, it } from 'vitest'
 
 import { BoardWorkspace } from '@/ui-ng/applications/board/BoardWorkspace'
 import { BoostersWorkspace } from '@/ui-ng/applications/boosters/BoostersWorkspace'
@@ -28,25 +36,13 @@ import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
 import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
+import { resolveBreakpointDestination } from '@/ui-ng/system/breakpointRouting'
+import { allStartMenuApps } from '@/ui-ng/system/startMenuCatalog'
+import { WORKSPACE_COMPONENTS } from '@/ui-ng/workspace/WorkspaceHost'
+import { WORKSPACE_APP_IDS, WORKSPACE_TASKBAR_APPS, type WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
-import { useGameStore } from '@/stores/gameStore'
-import { resolveGameCapabilities } from '@/ui/gameContext'
-import { isWorkspaceApplicable } from '@/ui-ng/system/startMenuCatalog'
-import { NgSectionUnavailable } from '@/ui-ng/workspace/NgSectionUnavailable'
-import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
-import type { WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
-
-import './workspace.css'
-
-/**
- * MX0.4: the BDM OS workspace registry. It is the single product authority for "which workspace does an app id
- * mount", so it is exported (instead of staying a module-local lookup) for the runtime-truth suite to certify
- * registry authority rather than infer it from file names.
- *
- * The `Record<WorkspaceAppId, ...>` type keeps the registry total over `WORKSPACE_APP_IDS` at compile time: an
- * available app id can never resolve to `undefined`.
- */
-export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType>> = {
+/** The canonical workspace each audited area must mount. A mismatch is a rewire, never a test tweak. */
+const CANONICAL_WORKSPACE: Readonly<Record<WorkspaceAppId, unknown>> = {
   home: HomeWorkspace,
   roster: RosterWorkspace,
   player: PlayerWorkspace,
@@ -75,18 +71,56 @@ export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType
   recruiting: RecruitingWorkspace,
   nil: NilWorkspace,
   boosters: BoostersWorkspace,
-} as const
-
-export function WorkspaceHost() {
-  const { app } = useNgWorkspaceNavigation()
-  const world = useGameStore((state) => state.world)
-  const Workspace = WORKSPACE_COMPONENTS[app]
-  const unavailable =
-    world !== null && !isWorkspaceApplicable(app, resolveGameCapabilities(world))
-
-  return (
-    <main className="ng-workspace-host" data-ng-region="workspace-host">
-      {unavailable ? <NgSectionUnavailable app={app} /> : <Workspace />}
-    </main>
-  )
 }
+
+/** Every canonical `SimulationBreakpoint.route` with a resolver, and the app it must open. */
+const BREAKPOINT_ROUTE_APP: Readonly<Record<string, WorkspaceAppId>> = {
+  match: 'match',
+  medical: 'medical',
+  market: 'market',
+  draft: 'draft',
+  media: 'media',
+  coach: 'coach',
+  trades: 'trades',
+  competition: 'competition',
+  contracts: 'contracts',
+  schedule: 'schedule',
+}
+
+describe('MX0.4 NG workspace registry truth', () => {
+  it('resolves every declared workspace app id to exactly one real component', () => {
+    for (const id of WORKSPACE_APP_IDS) {
+      expect(typeof WORKSPACE_COMPONENTS[id], `no component registered for "${id}"`).toBe('function')
+    }
+  })
+
+  it('registers exactly the declared app ids, with no duplicates or unregistered extras', () => {
+    expect(new Set(WORKSPACE_APP_IDS).size).toBe(WORKSPACE_APP_IDS.length)
+    expect(Object.keys(WORKSPACE_COMPONENTS).sort()).toEqual([...WORKSPACE_APP_IDS].sort())
+  })
+
+  it('mounts the canonical workspace for every audited area', () => {
+    for (const id of WORKSPACE_APP_IDS) {
+      expect(WORKSPACE_COMPONENTS[id], `workspace "${id}" is not the canonical component`).toBe(CANONICAL_WORKSPACE[id])
+    }
+  })
+
+  it('keeps the taskbar and the start menu inside the registry', () => {
+    for (const entry of WORKSPACE_TASKBAR_APPS) {
+      expect(WORKSPACE_APP_IDS).toContain(entry.id)
+    }
+    for (const id of allStartMenuApps()) {
+      expect(WORKSPACE_APP_IDS).toContain(id)
+    }
+  })
+
+  it('resolves every actionable breakpoint route to a registered workspace', () => {
+    for (const [route, appId] of Object.entries(BREAKPOINT_ROUTE_APP)) {
+      const destination = resolveBreakpointDestination(route)
+      expect(destination.actionable, `breakpoint route "${route}" is not actionable`).toBe(true)
+      expect(destination.appId).toBe(appId)
+      expect(WORKSPACE_APP_IDS).toContain(destination.appId)
+      expect(typeof WORKSPACE_COMPONENTS[appId]).toBe('function')
+    }
+  })
+})

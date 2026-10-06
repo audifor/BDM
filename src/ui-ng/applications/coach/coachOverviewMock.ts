@@ -181,6 +181,20 @@ export interface CoachOverviewTimelineEvent {
   readonly mock?: boolean
 }
 
+/**
+ * Regions of the Overview board the simulation domain has no source for. The board labels every one of them
+ * with a visible Mock chip so an illustrative value can never read as measured runtime data.
+ */
+export type CoachOverviewMockRegion =
+  | 'level'
+  | 'careerXp'
+  | 'identityRows'
+  | 'personality'
+  | 'risks'
+  | 'favors'
+  | 'network'
+  | 'power'
+
 export interface CoachOverviewModel {
   readonly identity: CoachOverviewIdentity
   /** Canonical Staff source for live profiles; absent only from the design fixture. */
@@ -203,6 +217,11 @@ export interface CoachOverviewModel {
   readonly power: CoachOverviewPower
   readonly summaries: readonly CoachOverviewSummary[]
   readonly timeline: readonly CoachOverviewTimelineEvent[]
+  /**
+   * Which regions of this board are still illustrative. Required (not optional) so a new model literal has to
+   * state its provenance, and so the board can label them without inferring mock-ness from a file name.
+   */
+  readonly mockRegions: readonly CoachOverviewMockRegion[]
 }
 
 export const COACH_OVERVIEW_MOCK: CoachOverviewModel = {
@@ -572,4 +591,6 @@ export const COACH_OVERVIEW_MOCK: CoachOverviewModel = {
       tone: 'positive',
     },
   ],
+  // The design fixture predates every canonical selector, so all eight regions are illustrative here.
+  mockRegions: ['level', 'careerXp', 'identityRows', 'personality', 'risks', 'favors', 'network', 'power'],
 }

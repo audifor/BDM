@@ -76,10 +76,6 @@ export function SystemBar() {
       </div>
 
       <div className="ng-system-bar__right">
-        <input aria-label="Search BDM" className="ng-system-bar__search" placeholder="Search" type="search" />
-        <button className="ng-btn ng-btn--ghost" type="button">
-          Inbox
-        </button>
         {contractAttention && <button aria-label="Open contracts requiring attention" className="ng-btn ng-btn--ghost" onClick={() => syncWorkspaceAppQuery('contracts')} type="button">Contracts</button>}
         {action.unresolvedDiagnostic !== undefined && (
           <span className="ng-system-bar__diagnostic" data-ng-region="continue-diagnostic" role="status">{action.unresolvedDiagnostic}</span>

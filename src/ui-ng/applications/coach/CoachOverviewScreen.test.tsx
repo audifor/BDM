@@ -221,4 +221,28 @@ describe('CoachOverviewScreen', () => {
       fireEvent.click(button)
     }
   })
+
+  // MX0.4: the board reports the regions the domain cannot back, and every one of them must be visible as
+  // illustrative where it is drawn. A fabricated level, XP pool, personality or network must never read as
+  // measured career data.
+  it('labels every region the model reports as illustrative', () => {
+    const { container } = renderScreen()
+    const core = panel(container, /Character core/)
+    const status = panel(container, /Current status/)
+    const economy = panel(container, /Personal economy/)
+
+    // Level, Career XP, personality and one chip per fabricated identity row (archetype, shadow, alignment).
+    expect(core.getAllByText('Mock')).toHaveLength(COACH_OVERVIEW_MOCK.identity.rows.length + 3)
+    // The heat/risk monitor is the only illustrative block of the status panel.
+    expect(status.getAllByText('Mock')).toHaveLength(1)
+    // Favors owed and held, every network row, and the power standing.
+    expect(economy.getAllByText('Mock')).toHaveLength(2 + COACH_OVERVIEW_MOCK.network.length + 1)
+  })
+
+  it('drops every illustrative chip when the model has no mock regions', () => {
+    const { container, model } = renderScreen({ mockRegions: [] })
+
+    expect(model.mockRegions).toEqual([])
+    expect(container.querySelectorAll('.co-mock')).toHaveLength(0)
+  })
 })
