@@ -4,12 +4,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { addDays } from '@/domain/date'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
 import { continueGame, createAcbTestGame as createFullAcbTestGame, createNewGame as createFullNewGame, simulateUntilDate } from '@/app/game'
+import type { SimulationBreakpoint } from '@/app/game'
 import { useGameStore } from '@/stores/gameStore'
-import { SystemBar } from '@/ui-ng/system/SystemBar'
+import { SystemBar, continueAction } from '@/ui-ng/system/SystemBar'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { withShortGameFormat } from '@/app/game/testFixtures'
 
@@ -53,6 +56,20 @@ describe('SystemBar continue', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open contracts requiring attention' }))
     expect(new URL(window.location.href).searchParams.get('app')).toBe('contracts')
+  })
+
+  it('routes a breakpoint to the app named by its canonical route', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    // Move today's user Game aside so the due Return-to-Play review is the highest-priority stop.
+    const moved = updateGameWorld(base, { games: Object.values(base.games).map((game) => game.date === base.currentDate && (game.homeTeamId === team.id || game.awayTeamId === team.id) ? { ...game, date: addDays(base.currentDate, 3) } : game) })
+    const injury = createInjury({ id: injuryIdFromString('system-bar-rtp'), playerId, kind: 'ankleSprain', severity: 'moderate', injuredOn: addDays(base.currentDate, -10), expectedReturnDate: base.currentDate })
+    useGameStore.getState().replaceWorld(updateGameWorld(moved, { injuries: [injury] }))
+    mountBar()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Medical' }))
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('medical')
   })
 
   it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, async () => {
@@ -144,5 +161,47 @@ describe('SystemBar continue', () => {
     }
 
     expect(screen.getByRole('button', { name: `Choose ${target}` })).toBeEnabled()
+  })
+})
+
+/** The routing contract: a resolver is offered only for a route whose workspace app is really registered. */
+function breakpoint(overrides: Partial<SimulationBreakpoint>): SimulationBreakpoint {
+  return {
+    level: 'ACTION_REQUIRED', reason: 'test', sourceKind: 'TEST', sourceId: 'test',
+    ownership: { kind: 'USER_TEAM' }, diagnostic: 'Test breakpoint diagnostic.', orderingKey: 'test', ...overrides,
+  }
+}
+
+describe('SystemBar breakpoint resolver eligibility', () => {
+  it('offers the registered workspace resolver for an actionable route', () => {
+    expect(continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'medical' }) })).toEqual({ label: 'Medical', app: 'medical' })
+    expect(continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'contracts' }) })).toEqual({ label: 'Contracts', app: 'contracts' })
+  })
+
+  it('keeps the diagnostic and offers no resolver for a route with no workspace app', () => {
+    const action = continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'governance', diagnostic: 'Governance request g-1 is due.' }) })
+
+    expect(action.app).toBeUndefined()
+    expect(action.unresolvedDiagnostic).toContain('Governance request g-1 is due.')
+    expect(action.unresolvedDiagnostic).toContain('No workspace app is mapped to breakpoint route "governance".')
+  })
+
+  it('keeps the diagnostic and offers no resolver for a route-less blocking breakpoint', () => {
+    const action = continueAction({ type: 'breakpoint', breakpoint: breakpoint({ level: 'BLOCKING', reason: 'minimumRoster', diagnostic: 'User team t-1 has 4 rostered players.' }) })
+
+    expect(action).toEqual({ label: 'Continue', unresolvedDiagnostic: 'User team t-1 has 4 rostered players. The breakpoint carries no route.' })
+  })
+
+  it('offers no action at all when there is no stop', () => {
+    expect(continueAction(undefined)).toEqual({ label: 'Continue' })
+  })
+
+  it('keeps the season checkpoint on the canonical startNextSeason action', () => {
+    expect(continueAction({ type: 'seasonComplete', breakpoint: breakpoint({ reason: 'seasonComplete', route: 'competition' }) })).toEqual({ label: 'Start next season', startNextSeason: true })
+  })
+
+  it('keeps the user game and the media stop on their own canonical routes', () => {
+    expect(continueAction({ type: 'userGame', gameId: 'g-1' as never, breakpoint: breakpoint({ reason: 'userGame', route: 'match' }) })).toEqual({ label: 'Match', app: 'match' })
+    expect(continueAction({ type: 'mediaOpportunity', opportunityId: 'm-1', breakpoint: breakpoint({ reason: 'mediaOpportunity', route: 'media' }) })).toEqual({ label: 'Press', app: 'media' })
   })
 })

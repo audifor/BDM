@@ -1,4 +1,4 @@
-import { injuryLifecycleStatus } from '@/domain/injury'
+import { isInjuryActive, injuryLifecycleStatus } from '@/domain/injury'
 import type { GameWorld } from '@/domain/world'
 import { acceptMedicalRecommendation } from './MedicalAdvisory'
 import { reviewReturnToPlay } from './ReturnToPlayEngine'
@@ -32,8 +32,11 @@ export function progressAiMedicalLifecycle(world: GameWorld): { readonly world: 
   }
 
   for (const injury of Object.values(next.injuriesById).sort((a, b) => a.id.localeCompare(b.id))) {
+    // isInjuryActive also excludes a not-yet-occurred injury (a Game resolved ahead of the clock), whose
+    // rehabilitation chronology cannot begin before its injuredOn.
+    if (!isInjuryActive(injury, next.currentDate)) continue
     const team = Object.values(next.teams).find((candidate) => candidate.rosterPlayerIds.includes(injury.playerId))
-    if (team === undefined || team.coachId === next.userCoachId || injuryLifecycleStatus(injury, next.currentDate) !== 'RECOVERING') continue
+    if (team === undefined || team.coachId === next.userCoachId) continue
     const mode = chooseAiRehabilitationMode(next, injury.id)
     if (mode === undefined || injury.rehabilitation?.mode === mode) continue
     const result = setRehabilitationPlan(next, { injuryId: injury.id, mode, actor: { kind: 'AI', teamId: team.id } })

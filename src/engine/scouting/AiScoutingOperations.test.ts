@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game/createNewGame'
+import { createAcbTestGame } from '@/app/game/createAcbTestGame'
 import { addDays, parseGameDate } from '@/domain/date'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { updateGameWorld } from '@/domain/world'
 import { progressAiScoutingOperations } from './AiScoutingOperations'
-import { progressScoutingAssignments, requestScouting } from './ScoutingEngine'
+import { isScoutingEvaluatorEligible, progressScoutingAssignments, requestScouting } from './ScoutingEngine'
 import { progressScoutingTerritoryAssignments } from './ScoutingTerritoryOperations'
 
 function aiTeam(world: ReturnType<typeof createNewGame>) {
@@ -68,6 +69,21 @@ describe('AI Scouting operations', () => {
     const offCycle = updateGameWorld(base, { currentDate: parseGameDate(`${base.currentDate.slice(0, 8)}03`) })
     expect(progressAiScoutingOperations(offCycle)).toBe(offCycle)
   })
+
+  // MX0.1 career-loop repair: the AI evaluator pool must honour the same eligibility contract `requestScouting`
+  // enforces. A world whose scouting staff is only an advance scout used to reject the AI's own choice mid-request
+  // and fail the whole day transition.
+  it('never selects an evaluator the scouting engine would reject, even with an advance-scout-only department', () => {
+    const base = createAcbTestGame()
+    const world = updateGameWorld(base, { currentDate: parseGameDate(`${base.currentDate.slice(0, 8)}01`) })
+
+    const planned = progressAiScoutingOperations(world)
+
+    for (const assignment of Object.values(planned.scoutingAssignmentsById)) {
+      if (assignment.teamContextId === undefined) continue
+      expect(isScoutingEvaluatorEligible(planned, assignment.teamContextId, assignment.evaluatorStaffId, assignment.missionType)).toBe(true)
+    }
+  }, 60_000)
 
   it('feeds completed scouting knowledge into the existing acquisition valuation', () => {
     const base = createNewGame()

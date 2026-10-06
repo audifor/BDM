@@ -22,7 +22,7 @@ const YEAR_RANGE = 100
  * way (see CompetitionLifecycleCoordinator), and reports an explicit diagnostic rather than
  * silently stopping if an UNSUPPORTED_FUTURE_LIFECYCLE competition would need one.
  */
-export function SimulateUntilDateControl({ world, onSimulateUntilDate }: { readonly world: GameWorld; readonly onSimulateUntilDate: (date: GameDate) => SimulateUntilResult }) {
+export function SimulateUntilDateControl({ world, onSimulateUntilDate, onOutcome }: { readonly world: GameWorld; readonly onSimulateUntilDate: (date: GameDate) => SimulateUntilResult; readonly onOutcome?: (result: SimulateUntilResult) => void }) {
   const [open, setOpen] = useState(false)
   const [isSimulating, setIsSimulating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +57,7 @@ export function SimulateUntilDateControl({ world, onSimulateUntilDate }: { reado
     try {
       const result = onSimulateUntilDate(parseGameDate(targetDate))
       setLastResult(result)
+      onOutcome?.(result)
       if (result.stopReason.type !== 'unsupportedLifecycle') setOpen(false)
     } catch (thrown) {
       setError(thrown instanceof Error ? thrown.message : 'No se pudo simular hasta esa fecha.')

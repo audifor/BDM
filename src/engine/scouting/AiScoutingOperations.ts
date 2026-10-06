@@ -7,7 +7,7 @@ import { calculateStaffRoleProficiencyByRoleId, staffRoleIdsInDepartment, type S
 import { calculateStaffWorkload, getFreeAgents, getNextScheduledGame, getPlayersInScoutingTerritory, isStaffRoleSuitableForScoutingTerritory, type GameWorld } from '@/domain/world'
 import { getNextScheduledGameForTeam } from '@/engine/calendar/CalendarQueries'
 import { getAvailableDraftProspects } from '@/engine/draft'
-import { getPlayerKnowledgeSummary, hasScoutingCapacityForMission, activeWorkload, requestScouting } from './ScoutingEngine'
+import { getPlayerKnowledgeSummary, hasScoutingCapacityForMission, activeWorkload, isScoutingEvaluatorEligible, requestScouting } from './ScoutingEngine'
 import { createScoutingTerritoryAssignment, endScoutingTerritoryAssignment, getScoutingTerritoryCoverage } from './ScoutingTerritoryOperations'
 
 const PLAN_DAYS = new Set([1, 8, 15, 22, 29])
@@ -247,7 +247,9 @@ function chooseMission(world: GameWorld, organizationId: OrganizationId, candida
 
 function chooseEvaluator(world: GameWorld, slots: readonly ScoutSlot[], mission: ScoutingMission): ScoutSlot | undefined {
   const attribute = mission === 'POTENTIAL_EVALUATION' ? 'potentialEvaluation' : 'talentEvaluation'
-  return slots.filter((slot) => !calculateStaffWorkload(world, slot.staffId).overloaded && hasScoutingCapacityForMission(world, slot.staffId, mission))
+  // The pool must honour the same evaluator-eligibility contract `requestScouting` enforces (role, employment and the
+  // advance-scout mission restriction); otherwise a chosen slot is rejected mid-request and the day transition fails.
+  return slots.filter((slot) => isScoutingEvaluatorEligible(world, slot.teamId, slot.staffId, mission) && !calculateStaffWorkload(world, slot.staffId).overloaded && hasScoutingCapacityForMission(world, slot.staffId, mission))
     .map((slot) => {
       const staff = world.staffPeopleById[slot.staffId]!
       const roleFit = calculateStaffRoleProficiencyByRoleId(staff, slot.roleId)
