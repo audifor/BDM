@@ -17,7 +17,7 @@ import { proposeTradeNegotiation, respondToTradeNegotiation, tradeNegotiationRes
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { createTradeRules, type TradeProposal } from '@/domain/trade'
+import type { TradeProposal } from '@/domain/trade'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -33,17 +33,22 @@ beforeEach(() => {
   useGameStore.getState().resetGame()
 })
 
-/** An open trade window, a user club, and a rival club that can negotiate through delegated staff. */
+/**
+ * The shipped NBA-like competition, a user club, and a rival club that can negotiate through delegated staff. No
+ * trade rule is injected: the season-scoped window the shipped NBA-like rule preset declares is what makes the season
+ * tradeable. The fixture only selects which club is the user's (the shipped world starts in the FIBA-like
+ * competition) and moves the world clock to that season's own opening day.
+ */
 function createTradeScenario() {
   const base = createNewGame()
   const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
   const competition = base.competitions[season.competitionId]!
   const userTeamId = competition.participantTeamIds.find((teamId) => base.teams[teamId]!.coachId !== undefined)!
+  if (base.tradeRulesBySeasonId[season.id]!.tradeWindow === undefined) throw new Error('The shipped NBA-like season must activate trading on its own')
   const initial = updateGameWorld(base, {
     userCoachId: base.teams[userTeamId]!.coachId!,
     currentSeasonId: season.id,
     currentDate: season.startDate,
-    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
     // The generated fixture keeps scheduled games from before this season's start; they are a schedule-integrity
     // breakpoint of their own and would outrank the trade response this suite certifies.
     games: Object.values(base.games).filter((game) => game.status !== 'scheduled' || game.date >= season.startDate),
@@ -229,34 +234,39 @@ describe('TradesWorkspace trade negotiation closure', () => {
     const scenario = createIncomingProposal()
     const pending = deserializeGameWorldV4(serializeGameWorldV4(scenario.world, '2032-10-01T00:00:00.000Z'))
 
-    // The canonical negotiation itself survives the round trip, revisions, actions and all.
+    // The negotiation, the season-scoped window it is legal under, and both rosters are canonical world state.
     expect(pending.tradeNegotiationsById[scenario.negotiation.id]).toEqual(scenario.negotiation)
+    expect(pending.tradeRulesBySeasonId[scenario.negotiation.seasonId]).toEqual(scenario.world.tradeRulesBySeasonId[scenario.negotiation.seasonId])
     expect(pending.teams[scenario.user.id]!.rosterPlayerIds).toEqual(scenario.world.teams[scenario.user.id]!.rosterPlayerIds)
 
-    /*
-     * The stored package still identifies itself as awaiting the user response as soon as the season's trade window
-     * is present, which proves the loss below is the rule's, not the negotiation's: `GameWorldSaveV1.readTradeRules`
-     * writes `tradeWindow` but never reads it back (see the MX0.5 report), so a loaded game reports
-     * TRADE_WINDOW_NOT_CONFIGURED until that save-layer omission is fixed.
-     */
-    const seasonRules = pending.tradeRulesBySeasonId[scenario.negotiation.seasonId]!
-    expect(tradeNegotiationResponseReadiness(pending, pending.tradeNegotiationsById[scenario.negotiation.id]!, scenario.user.id).status).toBe('BLOCKED')
-    expect(tradeNegotiationResponseReadiness(pending, pending.tradeNegotiationsById[scenario.negotiation.id]!, scenario.user.id).reasons).toContain('TRADE_WINDOW_NOT_CONFIGURED')
-    const windowRestored = updateGameWorld(pending, {
-      tradeRulesBySeasonId: { ...pending.tradeRulesBySeasonId, [scenario.negotiation.seasonId]: createTradeRules({ ...seasonRules, tradeWindow: {} }) },
-    })
-    expect(evaluateSimulationBreakpoints(windowRestored).candidates.some((candidate) => candidate.reason === 'tradeNegotiationResponse' && candidate.sourceId === scenario.negotiation.id)).toBe(true)
+    // A reloaded game still asks the user, so Continue still stops on the stored package.
+    expect(tradeNegotiationResponseReadiness(pending, pending.tradeNegotiationsById[scenario.negotiation.id]!, scenario.user.id).status).toBe('READY')
+    expect(evaluateSimulationBreakpoints(pending).candidates.some((candidate) => candidate.reason === 'tradeNegotiationResponse' && candidate.sourceId === scenario.negotiation.id)).toBe(true)
+    const stop = getContinueStopReason(pending)
+    expect(stop?.type === 'breakpoint' && stop.breakpoint.reason === 'tradeNegotiationResponse').toBe(true)
 
-    const resolved = respondToTradeNegotiation(windowRestored, {
+    const resolved = respondToTradeNegotiation(pending, {
       negotiationId: scenario.negotiation.id,
-      expectedRevisionId: windowRestored.tradeNegotiationsById[scenario.negotiation.id]!.currentRevisionId,
+      expectedRevisionId: pending.tradeNegotiationsById[scenario.negotiation.id]!.currentRevisionId,
       teamId: scenario.user.id,
       actor: { kind: 'USER' },
       action: 'ACCEPT',
     })
     const restored = deserializeGameWorldV4(serializeGameWorldV4(resolved.world, '2032-10-02T00:00:00.000Z'))
+
     expect(restored.tradeNegotiationsById[scenario.negotiation.id]!.actions.some((action) => action.kind === 'ACCEPT' && action.teamId === scenario.user.id)).toBe(true)
     expect(restored.tradeNegotiationsById[scenario.negotiation.id]!.revisions.length).toBe(scenario.negotiation.revisions.length)
+    // The answered revision is not offered again after the reload.
+    expect(evaluateSimulationBreakpoints(restored).candidates.some((candidate) => candidate.reason === 'tradeNegotiationResponse' && candidate.sourceId === scenario.negotiation.id)).toBe(false)
+  })
+
+  it('leaves the autonomous response to the user: an AI-run club still has no response policy', () => {
+    const scenario = createIncomingProposal()
+
+    // Activation enables the user's side of trading only: the AI club that opened this discussion cannot answer it.
+    expect(tradeNegotiationResponseReadiness(scenario.world, scenario.negotiation, scenario.partner.id)).toEqual({ status: 'MORE_INFORMATION_REQUIRED', reasons: ['NO_DEFENSIBLE_AUTONOMOUS_TRADE_RESPONSE_POLICY'] })
+    // The revision is waiting for the club that actually has an authority to answer it.
+    expect(tradeNegotiationResponseReadiness(scenario.world, scenario.negotiation, scenario.user.id).status).toBe('READY')
   })
 
   it('works from the launcher without a breakpoint and lists the pending response', () => {
