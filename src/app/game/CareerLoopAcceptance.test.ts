@@ -40,6 +40,9 @@ interface CareerMetrics {
   aiEmergencyRosterRecoveries: number
   technicalFailures: string[]
   noProgressStops: number
+  /** MX0.2 closure: committed states whose clock had not reached a completed Game (or its stat log); must stay 0. */
+  futureCompletedGamesObserved: number
+  readonly futureCompletedGameSamples: string[]
 }
 
 interface CareerEvidence {
@@ -54,16 +57,47 @@ function newCareer(initial: GameWorld): CareerEvidence {
       startDate: initial.currentDate, endDate: initial.currentDate, calendarDaysAdvanced: 0, gameDaysProcessed: 0,
       userGamesResolved: 0, aiGamesResolved: 0, injuriesCreated: 0, rehabsCreated: 0, rtpReviewsEncountered: 0,
       breakpointsByReason: {}, seasonTransitions: 0, aiEmergencyRosterRecoveries: 0, technicalFailures: [], noProgressStops: 0,
+      futureCompletedGamesObserved: 0, futureCompletedGameSamples: [],
     },
     seenInjuries: new Set(), seenRehabs: new Set(),
   }
 }
 
 /**
+ * MX0.2 closure (temporal causality). The career loop resolves a day's Games before the canonical calendar advances,
+ * so a committed state must never contain sporting truth from a date the world clock has not reached: no Game is
+ * `completed` after `world.currentDate`, no Game dated in the future is anything but `scheduled`, and no MatchStatLog
+ * records a date the clock has not reached. A Game can be resolved ahead of the clock only as an internal/helper
+ * capability (`simulateAndApplyGame` with an explicit future Game), which this asserts never leaks through the
+ * canonical career flow.
+ */
+function observeTemporalCausality(world: GameWorld, metrics: CareerMetrics): void {
+  const violations: string[] = []
+  for (const game of Object.values(world.games)) {
+    if (compareGameDates(game.date, world.currentDate) <= 0) continue
+    if (game.status !== 'scheduled') violations.push(`Game ${game.id} is ${game.status} on ${game.date} while the world clock is ${world.currentDate}`)
+  }
+  for (const log of Object.values(world.matchStatLogsByGameId)) {
+    if (compareGameDates(log.gameDate, world.currentDate) > 0) violations.push(`MatchStatLog ${log.gameId} records ${log.gameDate} while the world clock is ${world.currentDate}`)
+  }
+  if (violations.length === 0) return
+  metrics.futureCompletedGamesObserved += violations.length
+  metrics.futureCompletedGameSamples.push(...violations)
+  expect(violations, 'no committed career state may contain completed future Games or their consequences').toEqual([])
+}
+
+/**
  * One canonical career step: the Continue stop policy, then exactly one canonical day. Every step is
- * attributable -- a stop is resolved through its canonical command, or recorded with its reason.
+ * attributable -- a stop is resolved through its canonical command, or recorded with its reason. Every committed
+ * state is checked for temporal causality before it is handed back.
  */
 function careerStep(world: GameWorld, evidence: CareerEvidence): GameWorld {
+  const next = careerStepUnchecked(world, evidence)
+  observeTemporalCausality(next, evidence.metrics)
+  return next
+}
+
+function careerStepUnchecked(world: GameWorld, evidence: CareerEvidence): GameWorld {
   const { metrics } = evidence
   const stop = getContinueStopReason(world)
   if (stop !== undefined) {
@@ -165,6 +199,10 @@ describe('MX0.2 career loop acceptance', () => {
 
     expect(metrics.technicalFailures).toEqual([])
     expect(metrics.noProgressStops).toBe(0)
+    // MX0.2 closure: no committed career state (30 days, 90 days, the season boundary, the next season +30) may
+    // contain a completed future Game or a MatchStatLog dated after the world clock.
+    expect(metrics.futureCompletedGameSamples).toEqual([])
+    expect(metrics.futureCompletedGamesObserved).toBe(0)
     expect(metrics.gameDaysProcessed).toBeGreaterThan(0)
     expect(metrics.userGamesResolved).toBeGreaterThan(0)
     expect(metrics.aiGamesResolved).toBeGreaterThan(0)

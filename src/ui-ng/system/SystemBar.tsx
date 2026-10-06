@@ -5,17 +5,40 @@ import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { SimulateUntilControl } from '@/ui-ng/system/SimulateUntilControl'
-import { breakpointActionLabel, workspaceAppForBreakpointRoute } from '@/ui-ng/system/breakpointRouting'
+import { breakpointActionLabel, resolveBreakpointDestination } from '@/ui-ng/system/breakpointRouting'
 import { syncWorkspaceAppQuery, type WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
-/** MX0.2: the canonical Continue action for the current stop, using SimulationBreakpoint.route metadata. */
-function continueAction(stop: ContinueStopReason | undefined): { readonly label: string; readonly app?: WorkspaceAppId; readonly startNextSeason?: true } {
+/** The action the Continue control offers for the current stop. */
+export interface ContinueAction {
+  readonly label: string
+  readonly app?: WorkspaceAppId
+  readonly startNextSeason?: true
+  /**
+   * Set when the stop has no actionable destination: the bar surfaces this (with the breakpoint's own diagnostic)
+   * instead of a resolver that would open nothing or the wrong surface.
+   */
+  readonly unresolvedDiagnostic?: string
+}
+
+/**
+ * MX0.2 closure: the canonical Continue action for the current stop, using `SimulationBreakpoint.route` metadata.
+ * A route is only turned into a resolver when it resolves to an *actionable* workspace destination; a route-less or
+ * unregistered blocking breakpoint keeps its diagnostic visible and offers no resolver. Exported for its contract test.
+ */
+export function continueAction(stop: ContinueStopReason | undefined): ContinueAction {
   if (stop?.type === 'seasonComplete') return { label: 'Start next season', startNextSeason: true }
   if (stop?.type === 'userGame') return { label: 'Match', app: 'match' }
   if (stop?.type === 'mediaOpportunity') return { label: 'Press', app: 'media' }
   if (stop?.type === 'breakpoint') {
-    const app = workspaceAppForBreakpointRoute(stop.breakpoint.route)
-    if (app !== undefined) return { label: breakpointActionLabel(stop.breakpoint.route) ?? 'Continue', app }
+    const destination = resolveBreakpointDestination(stop.breakpoint.route)
+    if (destination.actionable && destination.appId !== undefined) {
+      return { label: breakpointActionLabel(destination.route) ?? 'Continue', app: destination.appId }
+    }
+    const suggested = destination.appId === undefined ? undefined : breakpointActionLabel(destination.route) ?? destination.appId
+    const diagnostic = [stop.breakpoint.diagnostic, suggested === undefined ? undefined : `Suggested destination: ${suggested}.`, destination.reasonUnavailable]
+      .filter((part): part is string => part !== undefined)
+      .join(' ')
+    return { label: 'Continue', unresolvedDiagnostic: diagnostic }
   }
   return { label: 'Continue' }
 }
@@ -31,8 +54,11 @@ export function SystemBar() {
   const competition = season === undefined || world === null ? undefined : world.competitions[season.competitionId]
   const stop = world === null ? undefined : getContinueStopReason(world)
   const action = continueAction(stop)
-  const contractAttention = world !== null && evaluateSimulationBreakpoints(world).candidates.some((item) => item.route === 'contracts')
-  const blocked = world === null || simulationBusy
+  const contractAttention = world !== null && resolveBreakpointDestination('contracts').actionable && evaluateSimulationBreakpoints(world).candidates.some((item) => item.route === 'contracts')
+  const busy = world === null || simulationBusy
+  // A blocking stop without an actionable destination cannot be resolved through Continue: disabling the control is
+  // honest where the previous behaviour offered a button that did nothing.
+  const blocked = busy || action.unresolvedDiagnostic !== undefined
 
   return (
     <header className="ng-system-bar" data-ng-region="system-bar">
@@ -55,6 +81,9 @@ export function SystemBar() {
           Inbox
         </button>
         {contractAttention && <button aria-label="Open contracts requiring attention" className="ng-btn ng-btn--ghost" onClick={() => syncWorkspaceAppQuery('contracts')} type="button">Contracts</button>}
+        {action.unresolvedDiagnostic !== undefined && (
+          <span className="ng-system-bar__diagnostic" data-ng-region="continue-diagnostic" role="status">{action.unresolvedDiagnostic}</span>
+        )}
         <button
           aria-label={action.label}
           className="ng-btn ng-btn--primary"
@@ -75,7 +104,7 @@ export function SystemBar() {
         >
           {action.label}
         </button>
-        {world !== null ? <SimulateUntilControl blocked={blocked} world={world} /> : null}
+        {world !== null ? <SimulateUntilControl blocked={busy} world={world} /> : null}
         <svg aria-hidden className="ng-system-bar__orbit" viewBox="0 0 28 28">
           <circle cx="14" cy="14" fill="none" r="4.5" stroke="currentColor" strokeWidth="1.2" />
           <ellipse cx="14" cy="14" fill="none" rx="11" ry="5" stroke="currentColor" strokeWidth="1" transform="rotate(-24 14 14)" />

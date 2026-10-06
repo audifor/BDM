@@ -11,10 +11,23 @@ import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
  *   may be resolved while the world clock is on an earlier date, so injury windows are not necessarily produced
  *   in chronological order; the producer must check the same overlap in both directions instead of only
  *   "is the Player injured on the Game date".
- * - BDM already refuses to let an injury drop a club below five available Players (`applyPostMatchInjuries`);
- *   Training must honor the same playable-minimum rule, or an otherwise valid club becomes unable to dress five
- *   and the canonical result-application chain (which re-derives TeamStrength from availability) fails the day.
+ * - No producer may record an injury that drops a club below the playable minimum: see PLAYABLE_MINIMUM_SAFETY.
  */
+
+/**
+ * PLAYABLE_MINIMUM_SAFETY — the career-loop playable-minimum injury floor.
+ *
+ * BDM refuses to record an injury that would leave a club below `MINIMUM_MATCH_SQUAD_SIZE` available Players.
+ * This prevents career-loop dead ends while BDM has no canonical emergency player / replacement / forfeit
+ * mechanism: without it, a structurally valid club becomes unable to dress five, and the canonical result chain
+ * (which re-derives TeamStrength from availability) fails the whole day.
+ *
+ * It is a product safety policy, not a Basketball Truth rule. The canonical replacement — emergency signing,
+ * reserve/youth call-up, temporary replacement, postponement, forfeit, or a competition-specific rule — is explicit
+ * future product work.
+ */
+export const PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS = MINIMUM_MATCH_SQUAD_SIZE
+
 export function overlapsRecordedInjury(world: GameWorld, candidate: InjuryRecord): boolean {
   return Object.values(world.injuriesById).some((existing) => existing.playerId === candidate.playerId
     && existing.id !== candidate.id
@@ -41,7 +54,8 @@ export function selectRecordableInjuries(
     const teamId = teamIdForInjury(injury)
     if (teamId === undefined) return true
     const available = remaining.get(teamId) ?? getAvailableRosterPlayers(world, teamId, onDate).length
-    if (available <= MINIMUM_MATCH_SQUAD_SIZE) return false
+    // PLAYABLE_MINIMUM_SAFETY: never leave a club below the playable minimum (see above).
+    if (available <= PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS) return false
     remaining.set(teamId, available - 1)
     return true
   })

@@ -14,6 +14,7 @@ import { tradeNegotiationResponseReadiness } from '@/app/trades'
 import { assessContractReviewOutlook, CONTRACT_REVIEW_HORIZON_DAYS } from '@/engine/clubNeeds'
 import { derivedRetentionStatus } from '@/engine/contractRetention/ContractRetentionEngine'
 import { injuryLifecycleStatus } from '@/domain/injury'
+import { PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS } from '@/engine/injury/InjuryApplication'
 import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
@@ -77,15 +78,16 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
       route: 'medical', actionTarget: { injuryId: injury.id, playerId: injury.playerId },
       diagnostic: `Return-to-Play review for injury ${injury.id} is due; clear the player or continue recovery before advancing.`,
     }))
-    // MX0.2 Blocker A (human-team safety): the user's Team keeps an explicit playable-minimum decision. A
-    // structurally valid squad can still be unable to dress five for today's Game; that is never an automatic
-    // repair and never a technical failure -- the same playable-minimum breakpoint stops the day so the user
-    // resolves it (normally through the Market, which adds an available body).
-    const userGameToday = userTeam.rosterPlayerIds.length < 5
+    // MX0.2 Blocker A (human-team safety): the user's Team keeps an explicit PLAYABLE_MINIMUM_SAFETY decision (the
+    // career-loop playable-minimum policy, see engine/injury/InjuryApplication). A structurally valid squad can still
+    // be unable to dress five for today's Game; that is never an automatic repair and never a technical failure --
+    // the same playable-minimum breakpoint stops the day so the user resolves it (normally through the Market, which
+    // adds an available body).
+    const userGameToday = userTeam.rosterPlayerIds.length < PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS
       ? undefined
       : getGamesToday(world).find((game) => game.status === 'scheduled' && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))
     const userAvailableForGame = userGameToday === undefined ? undefined : getAvailablePlayersForCompetition(world, userTeam.id, userGameToday.competitionId, userGameToday.seasonId, userGameToday.date).length
-    if (userTeam.rosterPlayerIds.length < 5 || (userAvailableForGame !== undefined && userAvailableForGame < 5)) {
+    if (userTeam.rosterPlayerIds.length < PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS || (userAvailableForGame !== undefined && userAvailableForGame < PLAYABLE_MINIMUM_SAFETY_AVAILABLE_PLAYERS)) {
       const ecosystem = getEcosystemForTeam(world, userTeam.id)
       const marketSupported = ecosystem !== undefined && ecosystem.kind !== 'ncaaLike'
         && assessRoutedFreeAgentOfferIntelligence(world, userTeam.id).some((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.contactReadiness === 'READY_TO_CONTACT')
