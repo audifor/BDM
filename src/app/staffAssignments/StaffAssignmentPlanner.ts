@@ -1,4 +1,4 @@
-import { RESPONSIBILITY_KINDS, responsibilityDefinition, type ResponsibilityDomain, type ResponsibilityKind, type ResponsibilityMode } from '@/domain/responsibility'
+import { isResponsibilityConnected, RESPONSIBILITY_KINDS, responsibilityDefinition, type ResponsibilityDomain, type ResponsibilityKind, type ResponsibilityMode } from '@/domain/responsibility'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import {
   calculateStaffWorkload,
@@ -93,9 +93,15 @@ export function staffAssignmentDomainOf(kind: ResponsibilityKind): Responsibilit
  * Delegation posture used by the bulk strategies: `delegated` when the Responsibility supports it
  * (the holder performs the work), otherwise `advisory` (the holder only recommends). Kinds that
  * support neither — or that belong to the Head Coach rather than to Staff — are never assigned.
+ *
+ * MX0.3: a retired or deferred kind is never assignable either. This is the same canonical
+ * `isResponsibilityConnected` authority `setTeamResponsibility` and the Staff workspace rows use, so
+ * the auto-assign planner and the UI candidate list can never offer a responsibility the assignment
+ * boundary would reject.
  */
 export function delegationModeForResponsibility(kind: ResponsibilityKind): 'delegated' | 'advisory' | undefined {
   const definition = responsibilityDefinition(kind)
+  if (!isResponsibilityConnected(kind)) return undefined
   if (definition.eligibleParticipant !== 'staff') return undefined
   if (definition.supportedModes.includes('delegated')) return 'delegated'
   if (definition.supportedModes.includes('advisory')) return 'advisory'

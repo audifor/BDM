@@ -61,8 +61,11 @@ describe('setTeamResponsibility', () => {
   it('rejects assignment of retired and deferred responsibility kinds', () => {
     const w = world()
     const teamId = userTeamId(w)
+    // MX0.3: the message names the registry's own disposition, so retired and deferred kinds are both refused and
+    // never reach a runtime assignment.
     expect(() => setTeamResponsibility(w, { teamId, kind: 'manageRecovery', mode: 'userControlled' })).toThrow(/retired/)
-    expect(() => setTeamResponsibility(w, { teamId, kind: 'defensiveGamePlan', mode: 'userControlled' })).toThrow(/deferred with owner/)
+    expect(() => setTeamResponsibility(w, { teamId, kind: 'defensiveGamePlan', mode: 'userControlled' })).toThrow(/retired/)
+    expect(() => setTeamResponsibility(w, { teamId, kind: 'offensivePreparation', mode: 'userControlled' })).toThrow(/deferred to non bs13 owner/)
   })
 
   it('advisory with a valid eligible holder assigns the holder', () => {

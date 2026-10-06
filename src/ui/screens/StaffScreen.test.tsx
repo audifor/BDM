@@ -297,7 +297,7 @@ describe("StaffScreen", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "DELEGATED" }));
     fireEvent.doubleClick(
-      screen.getAllByText(RESPONSIBILITY_KIND_LABELS.defensiveGamePlan)[0]!,
+      screen.getAllByText(RESPONSIBILITY_KIND_LABELS.assignIndividualDevelopment)[0]!,
     );
     expect(
       screen

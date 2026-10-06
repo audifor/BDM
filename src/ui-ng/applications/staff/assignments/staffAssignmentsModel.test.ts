@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { runStaffAssignmentStrategy } from '@/app/staffAssignments'
 import type { TeamId } from '@/domain/ids'
+import { isResponsibilityConnected } from '@/domain/responsibility'
 import { staffAssignmentSuitability } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import {
@@ -68,14 +69,13 @@ describe('buildStaffAssignmentsModel', () => {
     expect(model.kpis.find((kpi) => kpi.id === 'vacancies')?.value).toBeGreaterThan(0)
   })
 
-  it('never offers candidates for Head-Coach-only responsibilities', () => {
+  it('never exposes a retired Head-Coach-only responsibility as a row', () => {
     const model = build()
-    const rotation = model.rowsByKind.get('rotationPlanning')!
-    expect(rotation.assignable).toBe(false)
-    expect(rotation.recommendations).toEqual([])
-    expect(rotation.managerOption).toBeUndefined()
-    expect(rotation.statusLabel).toBe('OK')
-    expect(rotation.postureLabel).toBe('HEAD COACH')
+    // MX0.3: `rotationPlanning` is Head-Coach-only *and* retired, and the workspace only ever presents ACTIVE
+    // (connected) responsibilities — so it has no row at all rather than a non-assignable 'HEAD COACH' one. The
+    // candidate side is covered by 'returns nothing for a Head-Coach-only responsibility'.
+    expect(model.rowsByKind.has('rotationPlanning')).toBe(false)
+    for (const row of model.rowsByKind.values()) expect(isResponsibilityConnected(row.kind)).toBe(true)
   })
 
   it('excludes the current holder from the quick assign list and flags them separately', () => {

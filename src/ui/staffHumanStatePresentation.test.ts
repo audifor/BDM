@@ -60,11 +60,15 @@ describe('getStaffDynamicsForTeam', () => {
     const world = baseWorld()
     const teamId = Object.values(world.teams)[0]!.id
     const staffId = pickStaff(world, teamId, 'assistantCoach')
-    // Stack real delegated Responsibilities to force genuine overload (calculateStaffWorkload-derived).
+    // Stack real Responsibilities to force genuine overload (calculateStaffWorkload-derived). `defensiveGamePlan`
+    // and `offensivePreparation` are retired / deferred in the canonical registry, so no product path may assign
+    // them any more; the ACTIVE kinds an assistantCoach may hold are used instead (advisory where delegated is
+    // unsupported by the kind itself).
     let overloaded = world
-    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment', 'defensiveGamePlan', 'offensivePreparation'] as const) {
+    for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment'] as const) {
       overloaded = setTeamResponsibility(overloaded, { teamId, kind, mode: 'delegated', holderStaffId: staffId })
     }
+    overloaded = setTeamResponsibility(overloaded, { teamId, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: staffId })
     const contextId = staffHumanContextIdFor(staffId, teamId, overloaded.currentDate)
     const context = createStaffHumanContext({ id: contextId, staffId, teamId, startedOn: overloaded.currentDate })
     const expectations = { ...initializeStaffExpectationProfile(overloaded, context), establishedOn: addYears(overloaded.currentDate, -1) }
