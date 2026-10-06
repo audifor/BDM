@@ -205,3 +205,20 @@ describe('SystemBar breakpoint resolver eligibility', () => {
     expect(continueAction({ type: 'mediaOpportunity', opportunityId: 'm-1', breakpoint: breakpoint({ reason: 'mediaOpportunity', route: 'media' }) })).toEqual({ label: 'Press', app: 'media' })
   })
 })
+
+/*
+ * MX0.4 shell truth: the bar may only offer controls that open a registered BDM OS workspace. A dead affordance
+ * (an Inbox button or a search box with no canonical surface behind it) claims a workspace the product does not
+ * manifest, so it must not be rendered at all.
+ */
+describe('SystemBar production shell truth', () => {
+  it('renders no control for a surface the NG registry does not implement', () => {
+    useGameStore.getState().replaceWorld(createNewGame())
+    mountBar()
+
+    expect(screen.queryByRole('button', { name: 'Inbox' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    // The canonical controls are still there: this only removed the dead affordances.
+    expect(screen.getByRole('button', { name: 'Simulate until date' })).toBeInTheDocument()
+  })
+})

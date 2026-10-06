@@ -3,7 +3,7 @@
  * Character Core is the visual anchor; Current Status and Personal Economy & Power support it.
  */
 
-import type { CoachOverviewModel } from '@/ui-ng/applications/coach/coachOverviewMock'
+import type { CoachOverviewMockRegion, CoachOverviewModel } from '@/ui-ng/applications/coach/coachOverviewMock'
 import {
   HorizontalValueBar,
   MiniDonutChart,
@@ -12,6 +12,20 @@ import {
   SegmentedMeter,
 } from '@/ui-ng/applications/coach/CoachOverviewCharts'
 import { OverviewGlyph } from '@/ui-ng/applications/coach/CoachOverviewGlyph'
+
+/* MX0.4 runtime truth: the same chip the timeline rail uses, so every region `mockRegions` names is marked as
+   illustrative where it is rendered instead of reading as a measured career fact. */
+function MockTag() {
+  return (
+    <span className="co-mock" title="Illustrative value: not backed by the simulation domain yet.">
+      Mock
+    </span>
+  )
+}
+
+function mockTagFor(model: CoachOverviewModel, region: CoachOverviewMockRegion) {
+  return model.mockRegions.includes(region) ? <MockTag /> : null
+}
 
 export function CharacterCorePanel({ model }: { readonly model: CoachOverviewModel }) {
   const { identity, attributes, personality } = model
@@ -24,7 +38,7 @@ export function CharacterCorePanel({ model }: { readonly model: CoachOverviewMod
         <div className="co-core__identity">
           <div className="co-identity__top">
             <span className="co-identity__name">{identity.name}</span>
-            <span className="co-identity__level">Lv {identity.level}</span>
+            <span className="co-identity__level">Lv {identity.level}{mockTagFor(model, 'level')}</span>
           </div>
           <p className="co-identity__role">
             {identity.role}
@@ -35,7 +49,7 @@ export function CharacterCorePanel({ model }: { readonly model: CoachOverviewMod
           <dl className="co-identity__rows">
             {identity.rows.map((row) => (
               <div className="co-identity__row" key={row.id} title={row.tooltip}>
-                <dt>{row.label}</dt>
+                <dt>{row.label}{mockTagFor(model, 'identityRows')}</dt>
                 <dd className={row.tone === undefined ? undefined : `co-tone-text--${row.tone}`}>
                   {row.value}
                 </dd>
@@ -45,7 +59,7 @@ export function CharacterCorePanel({ model }: { readonly model: CoachOverviewMod
 
           <div className="co-identity__xp">
             <div className="co-identity__xp-head">
-              <span className="co-block__title">Career XP</span>
+              <span className="co-block__title">Career XP{mockTagFor(model, 'careerXp')}</span>
               <span className="co-identity__xp-value">
                 {identity.careerXp.current.toLocaleString('en-US')}
                 <span className="co-identity__xp-max">
@@ -75,7 +89,7 @@ export function CharacterCorePanel({ model }: { readonly model: CoachOverviewMod
         </div>
 
         <div className="co-core__personality">
-          <p className="co-block__title">Personality dimensions</p>
+          <p className="co-block__title">Personality dimensions{mockTagFor(model, 'personality')}</p>
           <div className="co-core__traits">
             {personality.traits.map((trait) => (
               <HorizontalValueBar
@@ -131,7 +145,7 @@ export function CurrentStatusPanel({
         ))}
       </ul>
       <div className="co-status__risk">
-        <p className="co-block__title">Heat / Risk monitor</p>
+        <p className="co-block__title">Heat / Risk monitor{mockTagFor(model, 'risks')}</p>
         <div className="co-status__risk-rows">
           {model.risks.map((risk) => (
             <SegmentedMeter
@@ -176,11 +190,11 @@ export function PersonalEconomyPowerPanel({ model }: { readonly model: CoachOver
 
           <div className="co-favors">
             <div className="co-favors__item">
-              <span className="co-favors__label">Favors Owed</span>
+              <span className="co-favors__label">Favors Owed{mockTagFor(model, 'favors')}</span>
               <span className="co-favors__value">{model.favors.owed}</span>
             </div>
             <div className="co-favors__item">
-              <span className="co-favors__label">Favors Held</span>
+              <span className="co-favors__label">Favors Held{mockTagFor(model, 'favors')}</span>
               <span className="co-favors__value co-tone-text--gold">{model.favors.held}</span>
             </div>
           </div>
@@ -188,7 +202,7 @@ export function PersonalEconomyPowerPanel({ model }: { readonly model: CoachOver
           <ul className="co-network-list">
             {model.network.map((row) => (
               <li className="co-network" key={row.id} title={row.tooltip}>
-                <span className="co-network__label">{row.label}</span>
+                <span className="co-network__label">{row.label}{mockTagFor(model, 'network')}</span>
                 <span className={`co-network__value co-tone-text--${row.tone}`}>{row.value}</span>
               </li>
             ))}
@@ -205,7 +219,7 @@ export function PersonalEconomyPowerPanel({ model }: { readonly model: CoachOver
           />
           <div className="co-power">
             <div className="co-power__head">
-              <span className="co-block__title">Power status</span>
+              <span className="co-block__title">Power status{mockTagFor(model, 'power')}</span>
               <span className="co-power__standing co-tone-text--gold">{model.power.label}</span>
             </div>
             <SegmentedMeter
