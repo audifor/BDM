@@ -132,7 +132,6 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
     const assignment = assignmentsByStaffId.get(person.id)
     return [person.id, assignment === undefined ? [] : [{ kind: 'appointment' as const, staffId: person.id, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' as const }]]
   }))
-  const staffReputationProfilesByStaffId = Object.fromEntries(staffSandbox.people.map((person) => [person.id, createDefaultStaffReputationProfile()]))
   const staffContracts = staffSandbox.assignments.map((assignment) => {
     const staff = staffSandbox.people.find((person) => person.id === assignment.staffPersonId)!
     return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
@@ -143,6 +142,10 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   })
   const coachProfiles = generateCoachRpgProfiles(coaches, USER_COACH_ID, options.coachRpgPreset)
   const coachStaffProfiles = coaches.map((coach) => ({ id: coach.staffProfileId, personId: coach.personId, identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: coach.nationalityId }, professional: coachProfiles.professionalProfiles[coach.id]!, marketRole: 'headCoach' as const, roleFamily: 'coaching' as const }))
+  // MX0.3: every Staff person carries a reputation profile, coach-derived Staff included — the canonical model gives
+  // one to every StaffPerson, and a save/load of an incomplete map would otherwise silently backfill the missing
+  // entries (see `ensureStaffReputationStructure`), making the ACB world stop being a fixed point of its own save.
+  const staffReputationProfilesByStaffId = Object.fromEntries([...staffSandbox.people, ...coachStaffProfiles].map((person) => [person.id, createDefaultStaffReputationProfile()]))
   const coachAssignments = teams.flatMap((team) => team.coachId === undefined ? [] : [{ id: teamStaffAssignmentIdFromString(`staff-assignment:${team.coachId}:headCoach:${team.id}:${CURRENT_DATE}`), staffPersonId: coaches.find((coach) => coach.id === team.coachId)!.staffProfileId, teamId: team.id, role: 'headCoach' as const, assignedOn: CURRENT_DATE }])
   const coachStaffEmployment = Object.fromEntries(coaches.map((coach) => {
     const assignment = coachAssignments.find((item) => item.staffPersonId === coach.staffProfileId)

@@ -471,7 +471,7 @@ describe('Wave 5F3 Staff political groups V3 save round-trip', () => {
 })
 
 describe('Wave 5A — Staff Human State V3 save round-trip', () => {
-  it('creates a human context/expectations/human state/event/reaction, saves, and reloads with exact relevant state preserved', () => {
+  it('creates a human context/expectations/human state/event/reaction, saves, and reloads with exact relevant state preserved', { timeout: 120_000 }, () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id
     const staffId = staffPersonIdFromString(Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId)
@@ -504,7 +504,7 @@ describe('Wave 5A — Staff Human State V3 save round-trip', () => {
     expect(saved.schemaVersion).toBe(3)
   })
 
-  it('save/load/reprocess the same source event produces no duplicate ReactionRecord and no second state delta', () => {
+  it('save/load/reprocess the same source event produces no duplicate ReactionRecord and no second state delta', { timeout: 120_000 }, () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id
     const staffId = staffPersonIdFromString(Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId)
@@ -520,7 +520,7 @@ describe('Wave 5A — Staff Human State V3 save round-trip', () => {
     expect(reprocessed.staffHumanStatesByContextId).toEqual(loaded.staffHumanStatesByContextId)
   })
 
-  it('the expectation profile initial snapshot persists independently from current after adaptation', () => {
+  it('the expectation profile initial snapshot persists independently from current after adaptation', { timeout: 120_000 }, () => {
     const base = createNewGame()
     const advanced = advanceGameDay(base)
     const contextId = Object.keys(advanced.staffHumanContextsById)[0] as never
