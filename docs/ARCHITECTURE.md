@@ -1245,11 +1245,23 @@ engine accepts. Nothing is persisted: the workspace is recomputed from `GameWorl
 save/load round-trip cannot desynchronize it.
 
 Deliberate gaps, reported rather than implemented: no world generates Facilities (the shipped
-prototype has none), no project planning/blueprint authority exists (a manager cannot yet commission
-a project), no policy maps a maintenance need to an intervention (type, outcome, resulting
-condition), and no canonical ledger account catalog exists for capital payments or funded
-maintenance. Until an approved milestone adds facility generation, the Facilities workspace presents
+prototype has none, and the canonical World DB bootstrap projects neither `places` nor `facilities`
+even though the source DB carries `organization.primary_place_id` and `match.facility_id`
+references), no project planning/blueprint authority exists (a manager cannot yet commission a
+project), no policy maps a maintenance need to an intervention (type, outcome, resulting condition),
+and no canonical ledger account catalog exists for capital payments or funded maintenance. Until an
+approved milestone adds that projection and generation authority, the Facilities workspace presents
 an honest empty state instead of fabricated data.
+
+## Board confidence initialization
+
+`initializeBoardState` is the canonical authority for a club's Board truth (profile, expectation,
+objective, initial confidence), and every career entry path must run it before the Board workspace is
+reachable: `createNewGame` and the ACB test universe always did, and MX0.6 closure added the World DB
+Spain career and the save/load seam through `ensureUserClubBoardState` (idempotent; a no-op when the
+club already has state or the user coach manages no club). Board content is never invented by the
+product layer — the guard only invokes the engine initializer — and the Board workspace's empty state
+is reserved for the genuine "no club assigned to the user coach" case.
 
 ## NCAA-like eligibility v1
 
