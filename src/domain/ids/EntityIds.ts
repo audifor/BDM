@@ -83,6 +83,8 @@ export type RevenueRecognitionId = EntityId<'RevenueRecognitionId'>
 export type ExpenseRecognitionId = EntityId<'ExpenseRecognitionId'>
 export type FinancialCommitmentId = EntityId<'FinancialCommitmentId'>
 export type FinancialEntitlementId = EntityId<'FinancialEntitlementId'>
+/** BS16C — a claim of financial capacity that blocks later commitments from spending the same money twice. */
+export type FinancialReservationId = EntityId<'FinancialReservationId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -167,6 +169,7 @@ export const revenueRecognitionIdFromString = (value: string): RevenueRecognitio
 export const expenseRecognitionIdFromString = (value: string): ExpenseRecognitionId => idFromString<ExpenseRecognitionId>(value, 'ExpenseRecognitionId')
 export const financialCommitmentIdFromString = (value: string): FinancialCommitmentId => idFromString<FinancialCommitmentId>(value, 'FinancialCommitmentId')
 export const financialEntitlementIdFromString = (value: string): FinancialEntitlementId => idFromString<FinancialEntitlementId>(value, 'FinancialEntitlementId')
+export const financialReservationIdFromString = (value: string): FinancialReservationId => idFromString<FinancialReservationId>(value, 'FinancialReservationId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

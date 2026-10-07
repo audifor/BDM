@@ -74,6 +74,7 @@ export {
   expenseRecognitionIdFromString,
   financialCommitmentIdFromString,
   financialEntitlementIdFromString,
+  financialReservationIdFromString,
 } from './EntityIds'
 
 export type {
@@ -143,4 +144,5 @@ export type {
   ExpenseRecognitionId,
   FinancialCommitmentId,
   FinancialEntitlementId,
+  FinancialReservationId,
 } from './EntityIds'
