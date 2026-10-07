@@ -124,6 +124,24 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
 
   it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(world.organizationKnowledge).toEqual([]); expect(world).not.toHaveProperty('playerKnowledgeById'); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
+  it('projects no canonical Place or Facility from the canonical World DB slice', async () => {
+    // MX0.6 closure audit: the World DB carries `organization.primary_place_id` and `match.facility_id`
+    // references, but the canonical bootstrap projects neither a `places` nor a `facilities` collection
+    // (and the Rust read-side has no facility projection), so a Spain ACB career starts with zero
+    // canonical infrastructure. Facilities gameplay is unreachable until an approved milestone adds
+    // that projection/generation authority.
+    const session = openSession()
+    await session.open()
+    const world = await session.bootstrapGameWorld(selection)
+    expect(Object.keys(world.placesById)).toEqual([])
+    expect(Object.keys(world.facilitiesById)).toEqual([])
+    expect(Object.keys(world.facilityComponentsById)).toEqual([])
+    expect(Object.keys(world.facilityDevelopmentProjectsById)).toEqual([])
+    // The slice itself does carry canonical place references for those organizations: the data exists
+    // upstream, only the projection is missing.
+    expect(Object.values(world.organizationsById).filter((organization) => organization.primaryPlaceId !== null).length).toBeGreaterThan(0)
+  })
+
   it('preserves shared organization identity, section records and their IDs through save/load', () => {
     const sourceSlice = slice()
     const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
