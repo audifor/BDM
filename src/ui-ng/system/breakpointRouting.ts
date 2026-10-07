@@ -2,9 +2,9 @@ import { WORKSPACE_APP_IDS, WORKSPACE_TASKBAR_APPS, type WorkspaceAppId } from '
 
 /**
  * MX0.2: the canonical `SimulationBreakpoint.route` values and the BDM OS workspace app that can resolve them.
- * The mapping is one-directional and deliberately explicit: a route without a current resolver (for example
- * Governance, which has no workspace) stays absent so the continue surface keeps an explicit diagnostic instead of
- * faking a destination.
+ * The mapping is one-directional and deliberately explicit: a route without a current resolver stays absent so the
+ * continue surface keeps an explicit diagnostic instead of faking a destination.
+ * MX0.7 maps `governance` to the Board workspace, the surface that owns canonical board/governance matters.
  */
 const BREAKPOINT_ROUTE_APPS: Readonly<Record<string, WorkspaceAppId>> = {
   match: 'match',
@@ -17,6 +17,7 @@ const BREAKPOINT_ROUTE_APPS: Readonly<Record<string, WorkspaceAppId>> = {
   competition: 'competition',
   contracts: 'contracts',
   schedule: 'schedule',
+  governance: 'board',
 }
 
 const WORKSPACE_APP_LABELS: ReadonlyMap<WorkspaceAppId, string> = new Map(

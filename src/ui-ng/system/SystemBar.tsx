@@ -28,7 +28,11 @@ export interface ContinueAction {
  */
 function breakpointContext(actionTarget: Readonly<Record<string, string>> | undefined): NgWorkspaceContext | undefined {
   const negotiationId = actionTarget?.negotiationId
-  return negotiationId === undefined ? undefined : { negotiationId }
+  const decisionId = actionTarget?.decisionId
+  const requestId = actionTarget?.requestId
+  return negotiationId === undefined && decisionId === undefined && requestId === undefined
+    ? undefined
+    : { ...(negotiationId === undefined ? {} : { negotiationId }), ...(decisionId === undefined ? {} : { decisionId }), ...(requestId === undefined ? {} : { requestId }) }
 }
 
 /**

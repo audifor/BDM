@@ -25,6 +25,10 @@ interface NgWorkspaceNavigationValue {
   readonly competitionId: CompetitionId | null
   /** Canonical context carried by a resolver (for example a trade negotiation selected by a breakpoint). */
   readonly negotiationId: string | null
+  /** Canonical Governance decision selected by a `governanceApproval` breakpoint (or a deep link). */
+  readonly decisionId: string | null
+  /** Canonical Governance request selected by a `governanceRequest` breakpoint (or a deep link). */
+  readonly requestId: string | null
   readonly openApps: readonly WorkspaceAppId[]
   readonly setActiveApp: (app: WorkspaceAppId) => void
   readonly closeApp: (app: WorkspaceAppId) => void
@@ -40,6 +44,8 @@ function readNavigation() {
     teamId: snapshot.teamId,
     competitionId: snapshot.competitionId,
     negotiationId: snapshot.negotiationId,
+    decisionId: snapshot.decisionId,
+    requestId: snapshot.requestId,
   }
 }
 

@@ -80,6 +80,12 @@ import {
   type ClubFacilityCommandResult,
   type ClubFacilityCommitmentInput,
 } from '@/app/facilities'
+import {
+  executeClubGovernanceDecision,
+  recordClubGovernanceDecisionEvent,
+  type GovernanceCommandResult,
+  type GovernanceDecisionEventChoice,
+} from '@/app/governance'
 import type { TradeProposal } from '@/domain/trade'
 import { reviewReturnToPlay as reviewReturnToPlayCommand, type ReturnToPlayReviewResult } from '@/engine/injury/ReturnToPlayEngine'
 import type { ReturnToPlayDecision } from '@/domain/injury'
@@ -196,6 +202,8 @@ interface GameStore {
   resumeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
   completeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
   cancelFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
+  recordGovernanceDecisionEvent(decisionId: string, kind: GovernanceDecisionEventChoice, bodyId: string): GovernanceCommandResult
+  executeGovernanceDecision(decisionId: string, executorBodyId: string): GovernanceCommandResult
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
   resetGame(): void
@@ -213,6 +221,23 @@ function applyClubFacilityCommand(
   const world = requireWorld(get().world)
   const team = getUserTeam(world)
   if (team === undefined) return blockedClubFacilityCommand(world, 'UNKNOWN_TEAM')
+  const result = run(world, team.id)
+  if (result.world !== world) set({ world: result.world })
+  return result
+}
+
+/** MX0.7: governance commands need the same club-authority prelude as facilities commands. */
+function applyClubGovernanceCommand(
+  get: () => GameStore,
+  set: (partial: Partial<GameStore>) => void,
+  run: (world: GameWorld, teamId: TeamId) => GovernanceCommandResult,
+  decisionId: string,
+): GovernanceCommandResult {
+  const world = requireWorld(get().world)
+  const team = getUserTeam(world)
+  if (team === undefined) {
+    return Object.freeze({ status: 'BLOCKED' as const, world, decisionId, reasons: Object.freeze(['UNKNOWN_TEAM' as const]), canonicalStatus: null, canonicalReasons: Object.freeze([]), decisionStatus: undefined })
+  }
   const result = run(world, team.id)
   if (result.world !== world) set({ world: result.world })
   return result
@@ -410,6 +435,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resumeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => resumeClubFacilityProject(world, { teamId, projectId })),
   completeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => completeClubFacilityProject(world, { teamId, projectId })),
   cancelFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => cancelClubFacilityProject(world, { teamId, projectId })),
+  recordGovernanceDecisionEvent: (decisionId, kind, bodyId) =>
+    applyClubGovernanceCommand(get, set, (world, teamId) => recordClubGovernanceDecisionEvent(world, { teamId, decisionId, kind, bodyId }), decisionId),
+  executeGovernanceDecision: (decisionId, executorBodyId) =>
+    applyClubGovernanceCommand(get, set, (world, teamId) => executeClubGovernanceDecision(world, { teamId, decisionId, executorBodyId }), decisionId),
   grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },

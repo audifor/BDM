@@ -106,9 +106,16 @@ export function parseWorkspaceCompetitionId(value: string | null): CompetitionId
  */
 export interface NgWorkspaceContext {
   readonly negotiationId?: string
+  readonly decisionId?: string
+  readonly requestId?: string
 }
 
 export function parseWorkspaceNegotiationId(value: string | null): string | null {
+  return value === null || value.trim() === '' ? null : value
+}
+
+/** Canonical opaque ids a Governance breakpoint publishes (decision/request) — never a fetched state snapshot. */
+export function parseWorkspaceGovernanceId(value: string | null): string | null {
   return value === null || value.trim() === '' ? null : value
 }
 
@@ -123,6 +130,8 @@ export function readNgWorkspaceNavigation() {
     teamId: parseWorkspaceTeamId(params.get('teamId')),
     competitionId: parseWorkspaceCompetitionId(params.get('competitionId')),
     negotiationId: parseWorkspaceNegotiationId(params.get('negotiationId')),
+    decisionId: parseWorkspaceGovernanceId(params.get('decisionId')),
+    requestId: parseWorkspaceGovernanceId(params.get('requestId')),
   }
 }
 
@@ -140,6 +149,8 @@ function clearEntityQuery(url: URL) {
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
   url.searchParams.delete('negotiationId')
+  url.searchParams.delete('decisionId')
+  url.searchParams.delete('requestId')
 }
 
 /**
@@ -162,8 +173,16 @@ export function syncWorkspaceAppQuery(
   url.searchParams.delete('teamId')
   url.searchParams.delete('competitionId')
   url.searchParams.delete('negotiationId')
+  url.searchParams.delete('decisionId')
+  url.searchParams.delete('requestId')
   if (context.negotiationId !== undefined && context.negotiationId !== '') {
     url.searchParams.set('negotiationId', context.negotiationId)
+  }
+  if (context.decisionId !== undefined && context.decisionId !== '') {
+    url.searchParams.set('decisionId', context.decisionId)
+  }
+  if (context.requestId !== undefined && context.requestId !== '') {
+    url.searchParams.set('requestId', context.requestId)
   }
   applyHistory(url, method)
   notifyNgNavigation()

@@ -1263,6 +1263,57 @@ club already has state or the user coach manages no club). Board content is neve
 product layer — the guard only invokes the engine initializer — and the Board workspace's empty state
 is reserved for the genuine "no club assigned to the user coach" case.
 
+## Governance / Board gameplay surface
+
+Governance is canonical world truth: `GovernanceInstitution` (the club's own governance scope, keyed
+by `teamIds`), `GovernanceBody`, `GovernanceAppointment` (which actor holds a role in which body over
+which dates), `GovernanceAuthorityGrant` and `GovernanceDecisionParticipationGrant` (who may PROPOSE
+/ REVIEW / APPROVE / VETO / EXECUTE a decision type). `GovernanceDecision` plus its append-only
+`GovernanceDecisionEvent` stream is the authoritative lifecycle: `resolveGovernanceDecisionRights`
+resolves the rights at a date and `deriveGovernanceDecisionStatus` derives the status from the
+events, so nothing in the product layer re-implements either rule. Requests (`GovernanceRequest` +
+its event stream), meetings and commitments follow the same pattern.
+
+MX0.7 exposes that truth through the application boundary `src/app/governance`:
+
+- `BoardGovernanceReadModel.buildClubGovernanceModel(world, teamId)` projects the club's institutions,
+  bodies, decisions (status, proposals, approvals, vetoes, executors, approved/missing approvers, the
+  bodies the user coach is appointed to, event trail), requests (status, due date, overdue,
+  `addressedToUser`, `responseCommandAvailable`) and a merged history, resolving subjects from
+  canonically referenced entities (`retention:` negociations, `trade-commitment:` references, market
+  negotiations, coaches, facilities, teams) and showing the raw canonical reference when nothing is
+  resolvable.
+- `BoardGovernanceCommands` is the club-scoped command boundary. It resolves the club institution,
+  checks the user's active appointment in the acting body and a terminal-state guard, then delegates
+  to the canonical per-type service that owns that decision's rules: `PLAYER_CONTRACT_SIGNING` to
+  `recordPlayerContractSigningDecisionEvent`, `PLAYER_TRADE_COMMITMENT` to
+  `recordTradeCommitmentEvent` and `COACH_FIRING` to `executeGovernanceCoachFiringDecision`. A type
+  without a canonical command is reported as `DECISION_TYPE_NOT_ACTIONABLE` (read-only) instead of
+  being implemented at this layer. Canonical status/reason codes are passed through verbatim next to
+  the stable `GOVERNANCE_COMMAND_REASONS` vocabulary.
+
+The NG `Board` workspace (`src/ui-ng/applications/board`) is the single board/governance surface: an
+Overview (Board confidence, mandate, objectives, reasons, governance attention), a Governance tab
+(pending matters with their canonical ownership and only the actions canon actually allows, requests
+read-only while no response command exists) and a History tab. Its tab and selection come from the
+workspace query (`decisionId`/`requestId`), which is how a `governanceApproval` or `governanceRequest`
+breakpoint resolves: `SimulationBreakpoints` publishes `route: 'governance'` with the canonical
+decision/request id, `breakpointRouting` maps that route to the `board` workspace and `SystemBar`
+forwards the ids as navigation context. Governance breakpoints stay `IMPORTANT`: they never
+dead-lock Continue.
+
+Governance truth is persisted by Save V3's runtime section (V4 layers through it) with empty legacy
+defaults, and the workspace is always recomputed from `GameWorld`, so nothing derived is stored.
+
+Deliberate gap, reported rather than implemented: no shipped universe instantiates a governance
+institution, so a new career (prototype, World DB Spain or the ACB test universe) has zero
+institutions, bodies, appointments, decisions and requests. The canonical instantiation authority
+(`planGovernanceStructureInstantiation` over a `GovernanceUniverseProfile`) exists but has no caller,
+profile or seed data, and the canonical club commands therefore refuse with
+`GOVERNANCE_INSTITUTION_UNAVAILABLE` / `PARTICIPANT_GOVERNANCE_INSTITUTION_NOT_UNIQUE` instead of
+inventing a structure. Until an approved milestone adds that content authority and projection, club
+governance gameplay is reachable only in constructed worlds.
+
 ## NCAA-like eligibility v1
 
 Eligibility is normalized NCAA-like canonical state: rules are ecosystem-scoped,
