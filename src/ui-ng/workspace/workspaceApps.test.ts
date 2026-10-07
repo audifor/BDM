@@ -130,4 +130,24 @@ describe('workspaceApps navigation', () => {
     expect(new URL(window.location.href).searchParams.get('negotiationId')).toBeNull()
     expect(readNgWorkspaceNavigation().negotiationId).toBeNull()
   })
+
+  // MX0.7: a governance breakpoint carries the exact decision/request the Board workspace must select.
+  it('carries and clears the governance context of a resolver', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=home')
+
+    syncWorkspaceAppQuery('board', 'replace', { decisionId: 'governance:PLAYER_CONTRACT_SIGNING:inst:neg', requestId: 'request:operating-plan' })
+
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('board')
+    expect(readNgWorkspaceNavigation()).toMatchObject({ decisionId: 'governance:PLAYER_CONTRACT_SIGNING:inst:neg', requestId: 'request:operating-plan' })
+
+    // A plain navigation must never leak a stale governance matter into another workspace.
+    syncWorkspaceAppQuery('home')
+    expect(new URL(window.location.href).searchParams.get('decisionId')).toBeNull()
+    expect(new URL(window.location.href).searchParams.get('requestId')).toBeNull()
+    expect(readNgWorkspaceNavigation()).toMatchObject({ decisionId: null, requestId: null })
+
+    // An empty context is ignored rather than written as an empty parameter.
+    syncWorkspaceAppQuery('board', 'replace', { decisionId: '' })
+    expect(new URL(window.location.href).searchParams.get('decisionId')).toBeNull()
+  })
 })

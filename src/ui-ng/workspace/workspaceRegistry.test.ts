@@ -87,6 +87,7 @@ const BREAKPOINT_ROUTE_APP: Readonly<Record<string, WorkspaceAppId>> = {
   competition: 'competition',
   contracts: 'contracts',
   schedule: 'schedule',
+  governance: 'board',
 }
 
 describe('MX0.4 NG workspace registry truth', () => {

@@ -20,6 +20,7 @@ import { updateGameWorld } from '@/domain/world'
 import { getBoardSummary } from '@/engine/board'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
+import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
 import { BoardWorkspace } from './BoardWorkspace'
 
@@ -29,6 +30,14 @@ beforeEach(() => {
   window.history.replaceState({}, '', '/?ui=ng&app=board')
   useGameStore.getState().resetGame()
 })
+
+function mountBoard() {
+  return render(
+    <NgWorkspaceNavigationProvider>
+      <BoardWorkspace />
+    </NgWorkspaceNavigationProvider>,
+  )
+}
 
 function repository(initial = ''): GameSaveRepository & { value: string } {
   return {
@@ -59,7 +68,7 @@ describe('MX0.6 closure — BoardWorkspace production initialization', () => {
     expect(summary!.state.objectives).toHaveLength(1)
 
     useGameStore.getState().replaceWorld(restored)
-    render(<BoardWorkspace />)
+    mountBoard()
 
     expect(screen.queryByText('The board will initialize when this project starts.')).toBeNull()
     expect(screen.getByText('Confidence')).toBeInTheDocument()
@@ -88,7 +97,7 @@ describe('MX0.6 closure — BoardWorkspace production initialization', () => {
     const summary = getBoardSummary(world, userTeam.id)!
 
     useGameStore.getState().replaceWorld(world)
-    render(<BoardWorkspace />)
+    mountBoard()
 
     expect(screen.queryByText('The board will initialize when this project starts.')).toBeNull()
     expect(screen.getByText('Mandate')).toBeInTheDocument()
@@ -110,7 +119,7 @@ describe('MX0.6 closure — BoardWorkspace production initialization', () => {
     expect(restored.boardStatesByTeamId).toEqual(departed.boardStatesByTeamId)
 
     useGameStore.getState().replaceWorld(restored)
-    render(<BoardWorkspace />)
+    mountBoard()
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 })
