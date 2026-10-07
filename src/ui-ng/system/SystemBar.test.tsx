@@ -179,11 +179,19 @@ describe('SystemBar breakpoint resolver eligibility', () => {
   })
 
   it('keeps the diagnostic and offers no resolver for a route with no workspace app', () => {
-    const action = continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'governance', diagnostic: 'Governance request g-1 is due.' }) })
+    const action = continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'unmapped-route', diagnostic: 'An unmapped route is due.' }) })
 
     expect(action.app).toBeUndefined()
-    expect(action.unresolvedDiagnostic).toContain('Governance request g-1 is due.')
-    expect(action.unresolvedDiagnostic).toContain('No workspace app is mapped to breakpoint route "governance".')
+    expect(action.unresolvedDiagnostic).toContain('An unmapped route is due.')
+    expect(action.unresolvedDiagnostic).toContain('No workspace app is mapped to breakpoint route "unmapped-route".')
+  })
+
+  // MX0.7: a governance matter resolves to the Board workspace and carries its canonical ids forward.
+  it('offers the Board resolver for a governance breakpoint and forwards its decision context', () => {
+    expect(continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'governance' }) })).toEqual({ label: 'Board', app: 'board' })
+
+    const action = continueAction({ type: 'breakpoint', breakpoint: breakpoint({ route: 'governance', reason: 'governanceApproval', actionTarget: { decisionId: 'decision:1', bodyId: 'body:board' } }) })
+    expect(action).toMatchObject({ label: 'Board', app: 'board', context: { decisionId: 'decision:1' } })
   })
 
   it('keeps the diagnostic and offers no resolver for a route-less blocking breakpoint', () => {

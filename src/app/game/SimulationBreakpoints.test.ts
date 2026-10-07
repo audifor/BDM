@@ -131,7 +131,7 @@ describe('simulation breakpoints', () => {
     expect(evaluateSimulationBreakpoints(selected).candidates.some((item) => item.reason === 'draftPick')).toBe(false)
   }, 20_000)
 
-  it('keeps a Governance request visible without hard-locking when no resolver exists', () => {
+  it('keeps a Governance request visible without hard-locking and routes it to the Board surface', () => {
     const base = createAcbTestGame()
     const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
     const issuerId = Object.values(base.coaches).find((coach) => coach.id !== base.userCoachId)!.id
@@ -141,7 +141,7 @@ describe('simulation breakpoints', () => {
     const world = updateGameWorld(base, { governanceInstitutions: [{ id: institutionId, universe: 'PROFESSIONAL_CLUB', name: 'Test club', teamIds: [userTeam.id] }], governanceRequests: [request], governanceRequestEvents: [issued] })
     const projected = evaluateSimulationBreakpoints(world)
     expect(projected).toMatchObject({ mayAdvance: true })
-    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceRequest', sourceId: request.id, deadline: request.dueOn, ownership: { kind: 'USER_COACH', coachId: world.userCoachId } }))
+    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceRequest', sourceId: request.id, deadline: request.dueOn, route: 'governance', actionTarget: { requestId: request.id }, ownership: { kind: 'USER_COACH', coachId: world.userCoachId } }))
     expect(getContinueStopReason(world)).toBeUndefined()
     expect(simulateUntilDate(world, addDays(world.currentDate, 1))).toMatchObject({ daysAdvanced: 1, stopReason: { type: 'arrived' } })
     const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2032-01-02T00:00:00.000Z'))
@@ -150,7 +150,7 @@ describe('simulation breakpoints', () => {
     expect(evaluateSimulationBreakpoints(updateGameWorld(world, { governanceRequestEvents: [...Object.values(world.governanceRequestEventsById), resolved] })).candidates.some((item) => item.sourceId === request.id)).toBe(false)
   })
 
-  it('keeps an attributable Governance approval visible without hard-locking when no resolver exists', () => {
+  it('keeps an attributable Governance approval visible without hard-locking and routes it to the Board surface', () => {
     const base = createNewGame()
     const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
     const institutionId = 'institution:approval-test'
@@ -171,7 +171,7 @@ describe('simulation breakpoints', () => {
     const withoutTodayGames = updateGameWorld(world, { games: Object.values(world.games).map((game) => game.status === 'scheduled' && game.date === world.currentDate ? { ...game, date: addDays(game.date, 1) } : game) })
     const projected = evaluateSimulationBreakpoints(withoutTodayGames)
     expect(projected).toMatchObject({ mayAdvance: true })
-    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceApproval', sourceId: decision.id, actionTarget: expect.objectContaining({ decisionId: decision.id }), ownership: expect.objectContaining({ kind: 'USER_COACH', coachId: world.userCoachId }) }))
+    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceApproval', sourceId: decision.id, route: 'governance', actionTarget: expect.objectContaining({ decisionId: decision.id, bodyId: 'body:approver' }), ownership: expect.objectContaining({ kind: 'USER_COACH', coachId: world.userCoachId }) }))
     expect(getContinueStopReason(withoutTodayGames)).toBeUndefined()
     expect(simulateUntilDate(withoutTodayGames, addDays(withoutTodayGames.currentDate, 1))).toMatchObject({ daysAdvanced: 1 })
   })

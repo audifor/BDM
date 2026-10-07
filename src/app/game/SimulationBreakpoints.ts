@@ -241,10 +241,9 @@ function governanceCandidates(world: GameWorld): SimulationBreakpoint[] {
     const status = deriveGovernanceRequestStatus(events)
     if (status !== 'ISSUED' && status !== 'ACKNOWLEDGED' && status !== 'ACCEPTED') continue
     results.push(candidate({
-      // Governance has no current user workspace/action path for this breakpoint.
       level: 'IMPORTANT', reason: 'governanceRequest', sourceKind: 'GOVERNANCE_REQUEST', sourceId: request.id,
       effectiveDate: events.find((event) => event.kind === 'ISSUED')?.effectiveOn ?? date, ...(request.dueOn === undefined ? {} : { deadline: request.dueOn }),
-      ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, actionTarget: { requestId: request.id },
+      ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, route: 'governance', actionTarget: { requestId: request.id },
       diagnostic: `Governance request ${request.id} is addressed to the user coach${request.dueOn === undefined ? '' : ` and is due ${request.dueOn}`}.`,
     }))
   }
@@ -260,9 +259,9 @@ function governanceCandidates(world: GameWorld): SimulationBreakpoint[] {
     const missingUserApprovals = rights.approverBodyIds.filter((bodyId) => activeUserBodies.has(bodyId) && !events.some((event) => event.kind === 'APPROVED' && event.bodyId === bodyId))
     if (missingUserApprovals.length === 0) continue
     results.push(candidate({
-      // Preserve the attributable approval as a candidate; no current Governance resolver exists.
       level: 'IMPORTANT', reason: 'governanceApproval', sourceKind: 'GOVERNANCE_DECISION', sourceId: decision.id,
-      effectiveDate: decision.proposedOn, ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, actionTarget: { decisionId: decision.id, bodyId: missingUserApprovals[0]! },
+      effectiveDate: decision.proposedOn, ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, route: 'governance',
+      actionTarget: { decisionId: decision.id, bodyId: missingUserApprovals[0]! },
       diagnostic: `Governance decision ${decision.id} is waiting for the user's approval as an appointed member of body ${missingUserApprovals.join(', ')}.`,
     }))
   }

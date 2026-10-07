@@ -35,10 +35,16 @@ describe('MX0.2 breakpoint routing', () => {
     expect(resolveBreakpointDestination(undefined)).toEqual({
       routable: false, actionable: false, reasonUnavailable: 'The breakpoint carries no route.',
     })
-    expect(resolveBreakpointDestination('governance')).toEqual({
-      route: 'governance', routable: false, actionable: false,
-      reasonUnavailable: 'No workspace app is mapped to breakpoint route "governance".',
+    expect(resolveBreakpointDestination('unmapped-route')).toEqual({
+      route: 'unmapped-route', routable: false, actionable: false,
+      reasonUnavailable: 'No workspace app is mapped to breakpoint route "unmapped-route".',
     })
-    expect(breakpointActionLabel('governance')).toBeUndefined()
+    expect(breakpointActionLabel('unmapped-route')).toBeUndefined()
+  })
+
+  // MX0.7: Governance decisions and requests are real surfaces — the Board workspace resolves them.
+  it('resolves the governance route to the Board workspace', () => {
+    expect(resolveBreakpointDestination('governance')).toEqual({ route: 'governance', appId: 'board', routable: true, actionable: true })
+    expect(breakpointActionLabel('governance')).toBe('Board')
   })
 })
