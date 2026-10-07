@@ -1,6 +1,7 @@
 import { createBoardState, getJobSecurity, type BoardObjective, type BoardOutcome, type BoardProfile, type BoardState } from '@/domain/board'
 import type { TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
 import { calculateStandings } from '@/engine/competition/standings'
 import { recordMemory } from '@/engine/memory'
 
@@ -17,3 +18,15 @@ export function applyBoardTierMovement(world:GameWorld,teamId:TeamId):GameWorld{
 export function evaluateFiringRisk(state:BoardState):boolean{return getJobSecurity(state)==='critical'&&state.objectives.some((item)=>item.priority==='critical'&&item.outcome==='severelyFailed')}
 export function evaluateRenewalRecommendation(state:BoardState):BoardRecommendation{return state.confidence>=75&&state.objectives.some((item)=>['met','exceeded','exceptional'].includes(item.outcome))?'renew':getJobSecurity(state)==='critical'?'doNotRenew':'wait'}
 export function getBoardSummary(world:GameWorld,teamId:TeamId){const state=world.boardStatesByTeamId[teamId];return state===undefined?undefined:{state,jobSecurity:getJobSecurity(state)}}
+
+/**
+ * MX0.6 closure: canonical, idempotent guard for every career entry path. A world in which the user
+ * coach is attached to a club must carry that club's Board truth, otherwise the Board surface shows
+ * an initialization placeholder for a career that is already running. Delegates to
+ * `initializeBoardState` — no Board content is invented here, and a world that already has the state
+ * (or whose club has no Season) is returned unchanged.
+ */
+export function ensureUserClubBoardState(world:GameWorld):GameWorld{
+  const team=getUserTeam(world)
+  return team===undefined?world:initializeBoardState(world,team.id)
+}

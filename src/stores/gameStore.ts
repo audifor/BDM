@@ -26,7 +26,7 @@ import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEven
 import { executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
 import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
 import type { ClubCounterDecision } from '@/app/marketIntelligence'
-import { type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type FacilityDevelopmentProjectId, type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import type { ScoutingTerritory } from '@/domain/scouting'
@@ -70,6 +70,16 @@ import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
 import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
 import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitmentResult } from '@/app/trades'
+import {
+  blockedClubFacilityCommand,
+  cancelClubFacilityProject,
+  completeClubFacilityProject,
+  pauseClubFacilityProject,
+  resumeClubFacilityProject,
+  startClubFacilityProject,
+  type ClubFacilityCommandResult,
+  type ClubFacilityCommitmentInput,
+} from '@/app/facilities'
 import type { TradeProposal } from '@/domain/trade'
 import { reviewReturnToPlay as reviewReturnToPlayCommand, type ReturnToPlayReviewResult } from '@/engine/injury/ReturnToPlayEngine'
 import type { ReturnToPlayDecision } from '@/domain/injury'
@@ -181,9 +191,31 @@ interface GameStore {
   respondToMedia(opportunityId: string, stance: MediaStance): void
   skipMedia(opportunityId: string): void
   executeEntityAction(result: CommandResult): EntityActionExecution
+  startFacilityProject(projectId: FacilityDevelopmentProjectId, commitment?: ClubFacilityCommitmentInput): ClubFacilityCommandResult
+  pauseFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
+  resumeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
+  completeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
+  cancelFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
   resetGame(): void
+}
+
+/**
+ * MX0.6: every Facilities command needs the same club authority prelude, so the bridge keeps it in
+ * one place: resolve the user club, block canonically when there is none, apply the returned world.
+ */
+function applyClubFacilityCommand(
+  get: () => GameStore,
+  set: (partial: Partial<GameStore>) => void,
+  run: (world: GameWorld, teamId: TeamId) => ClubFacilityCommandResult,
+): ClubFacilityCommandResult {
+  const world = requireWorld(get().world)
+  const team = getUserTeam(world)
+  if (team === undefined) return blockedClubFacilityCommand(world, 'UNKNOWN_TEAM')
+  const result = run(world, team.id)
+  if (result.world !== world) set({ world: result.world })
+  return result
 }
 
 /** UI bridge only: game operations remain in Application services. */
@@ -370,6 +402,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (result.ok) set({ world: result.world })
     return result
   },
+  startFacilityProject: (projectId, commitment) =>
+    applyClubFacilityCommand(get, set, (world, teamId) =>
+      startClubFacilityProject(world, { teamId, projectId, ...(commitment === undefined ? {} : { commitment }) }),
+    ),
+  pauseFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => pauseClubFacilityProject(world, { teamId, projectId })),
+  resumeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => resumeClubFacilityProject(world, { teamId, projectId })),
+  completeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => completeClubFacilityProject(world, { teamId, projectId })),
+  cancelFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => cancelClubFacilityProject(world, { teamId, projectId })),
   grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },

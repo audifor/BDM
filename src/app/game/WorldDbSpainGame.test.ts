@@ -18,7 +18,9 @@ import { WorldDbSessionV1 } from './WorldDbSession'
 import { createConfiguredGameAsync } from './createConfiguredGame'
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
 import { createNewGame } from './createNewGame'
-import { attachWorldDbCompetitionRuntime } from '@/domain/world'
+import { attachWorldDbCompetitionRuntime, updateGameWorld } from '@/domain/world'
+import { getBoardSummary } from '@/engine/board'
+import { getUserTeam } from '@/engine/calendar'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -127,6 +129,21 @@ describe('World DB Spain ACB new-game selection', () => {
         seasonWindow: expect.objectContaining({ startDate: '2025-10-01', endDate: '2026-06-30' }),
       }),
     )
+  })
+
+  it('gives the selected World DB club canonical Board truth instead of leaving the Board surface uninitialized', async () => {
+    // The canonical World DB bootstrap attaches the user coach to the selected club but creates no
+    // Board state (verified against the real bootstrap projection), which used to leave the Board
+    // workspace on its initialization placeholder in an already-running Spain ACB career.
+    const withoutBoardTruth = updateGameWorld(worldWithRuntime(), { boardStatesByTeamId: {} })
+    vi.spyOn(WorldDbSessionV1.prototype, 'bootstrapGameWorld').mockResolvedValue(withoutBoardTruth)
+    const access = { repository: repository(), databasePath: 'world.db', runtimeBundlePath: 'runtime.json' }
+
+    const world = await createWorldDbSpainGame(catalog().teamMemberships[11]!.teamId, access)
+    const userTeam = getUserTeam(world)
+    expect(userTeam).toBeDefined()
+    expect(getBoardSummary(world, userTeam!.id)?.state.confidence).toBe(60)
+    expect(Object.keys(world.boardStatesByTeamId)).toEqual([userTeam!.id])
   })
 
   it('keeps the session open through asynchronous bootstrap and closes it after success', async () => {

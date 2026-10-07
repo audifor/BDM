@@ -69,8 +69,8 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'club',
     label: 'Gestión del club',
-    description: 'Club, directiva, finanzas y compliance',
-    appIds: ['club', 'contracts', 'board', 'finances', 'enforcement'],
+    description: 'Club, directiva, finanzas, compliance e instalaciones',
+    appIds: ['club', 'contracts', 'board', 'finances', 'enforcement', 'facilities'],
   },
   {
     id: 'carrera',

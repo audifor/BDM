@@ -1215,6 +1215,54 @@ and stay outside the NBA/WNBA-style Trade mechanism entirely
 (`TRADE_SEASON_OR_ECOSYSTEM_UNAVAILABLE`), keeping roster movement in Market,
 contracts and registration.
 
+## Facilities system (CFI) and its product surface
+
+Facilities are canonical world truth (CFI1-CFI5): `Facility`, `FacilityComponent` anatomy,
+`FacilityComponentConditionRecord`/`FacilityConditionRecord` condition history,
+`FacilityMaintenanceNeed`/`FacilityMaintenanceAction`, `FacilityDevelopmentProject` (with phase and
+scope), `FacilityUsageRight`/ownership/control/operator relationships and `FacilityFinancialBinding`.
+Condition truth is primary at component level; a missing condition record or `physicalCondition:
+null` means "not recorded", never 100, and `componentServiceabilityAt` defaults to `FULL` only for
+"never recorded as impaired" (physical condition itself stays unknown). Deterioration runs in the
+CalendarEngine `FACILITY_CONDITION` phase on the first of each month and opens maintenance needs.
+The engine never invents a project, an intervention, or its cost.
+
+CFI6 owns the project lifecycle commands (`start`, `pause`, `resume`, `cancel`, `complete` in
+`src/engine/facilities`) driven by an explicit transition graph. CFI7
+(`src/integration/facilitiesFinance`) is the only layer allowed to combine Facilities with Finance
+(commitments, bindings, ledger) and never invents a cost: a funded project start commits an amount
+the caller supplies. CFI8 (`src/integration/facilitiesSporting`) derives what physical capability a
+club can actually reach today. Recurring facility operating costs are not generated yet.
+
+MX0.6 exposes that truth as product gameplay through the application boundary
+`src/app/facilities` (club read model plus club-scoped commands) and the NG `Facilities` workspace
+(`src/ui-ng/applications/facilities`). That layer adds no rule of its own: it resolves the club's
+Organization from `Team.organizationId`, reads the facilities the Organization is canonically
+involved with (ownership, operation, usage rights, or its own projects), translates canonical
+blocker facts into reason codes, and delegates every command. Project action availability is read
+from `FACILITY_DEVELOPMENT_PROJECT_ALLOWED_TRANSITIONS`, so a manager can only be offered what the
+engine accepts. Nothing is persisted: the workspace is recomputed from `GameWorld` on demand, so a
+save/load round-trip cannot desynchronize it.
+
+Deliberate gaps, reported rather than implemented: no world generates Facilities (the shipped
+prototype has none, and the canonical World DB bootstrap projects neither `places` nor `facilities`
+even though the source DB carries `organization.primary_place_id` and `match.facility_id`
+references), no project planning/blueprint authority exists (a manager cannot yet commission a
+project), no policy maps a maintenance need to an intervention (type, outcome, resulting condition),
+and no canonical ledger account catalog exists for capital payments or funded maintenance. Until an
+approved milestone adds that projection and generation authority, the Facilities workspace presents
+an honest empty state instead of fabricated data.
+
+## Board confidence initialization
+
+`initializeBoardState` is the canonical authority for a club's Board truth (profile, expectation,
+objective, initial confidence), and every career entry path must run it before the Board workspace is
+reachable: `createNewGame` and the ACB test universe always did, and MX0.6 closure added the World DB
+Spain career and the save/load seam through `ensureUserClubBoardState` (idempotent; a no-op when the
+club already has state or the user coach manages no club). Board content is never invented by the
+product layer — the guard only invokes the engine initializer — and the Board workspace's empty state
+is reserved for the genuine "no club assigned to the user coach" case.
+
 ## NCAA-like eligibility v1
 
 Eligibility is normalized NCAA-like canonical state: rules are ecosystem-scoped,

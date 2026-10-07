@@ -1,6 +1,7 @@
 import type { GameWorld } from '@/domain/world'
 import { deserializeGameWorldSaveV4, deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { repairRosterContractIntegrity } from '@/engine/market/RosterContractIntegrity'
+import { ensureUserClubBoardState } from '@/engine/board'
 import type { GameSaveRepository } from './GameSaveRepository'
 
 export async function saveCurrentGame(world: GameWorld, repository: GameSaveRepository, savedAt: string): Promise<void> {
@@ -16,7 +17,9 @@ export async function loadSavedGame(repository: GameSaveRepository): Promise<Gam
   const restored = deserializeGameWorldSaveV4(parsed)
   const integrity = repairRosterContractIntegrity(restored)
   if (integrity.reports.some((report) => report.classification === 'UNRECOVERABLE')) throw new Error('Saved game has unresolved roster/contract integrity; no authority was selected')
-  return integrity.world
+  // MX0.6 closure: careers saved before Board initialization (or by a universe that never ran it)
+  // must still open with canonical Board truth for the club the user coach is attached to.
+  return ensureUserClubBoardState(integrity.world)
 }
 
 function assertNoUnresolvedRosterContractIntegrity(world: GameWorld): void {
