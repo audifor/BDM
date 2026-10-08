@@ -3,6 +3,7 @@ import { fiscalPeriodIdFromString, organizationIdFromString, type FiscalPeriodId
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createBudgetLine, createFinancialBudget, type BudgetLine, type FinancialBudget } from './BudgetForecasting'
 import { financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceFiscalYearFor, provisionOrganizationFinanceFoundation } from './FinanceFoundation'
+import { getOrganizationOpeningEconomicStateStatus, materializeOrganizationOpeningEconomicState, type OpeningEconomicStateSource, type OpeningEconomicStateStatus } from './FinanceOpeningState'
 import { legacyMajorUnitsToMoney, resolveOrganizationCurrency, type FinanceCurrencyUnavailableReason } from './FinanceCurrencyPolicy'
 import { createFiscalPeriod, type FiscalPeriod } from './FinancialLedger'
 
@@ -42,6 +43,8 @@ export interface OrganizationFinanceActivation {
   /** Populated only for `CURRENCY_POLICY_CONFLICT`: the currency the provisioning policy derives. */
   readonly policyCurrencyCode: string | null
   readonly authorizedMinorUnits: number
+  /** BS16H opening economic state: `OPENING_ECONOMIC_STATE_UNAVAILABLE` whenever no source explains cash. */
+  readonly openingEconomicState: OpeningEconomicStateStatus
 }
 
 export interface FinanceActivationReport {
@@ -56,6 +59,12 @@ export interface EnsureCanonicalFinanceFoundationOptions {
    * materializing a new period's authorization is opt-in only (BS16G+).
    */
   readonly allowNewPeriodMaterialization?: boolean
+  /**
+   * BS16H explicit opening economic sources. No shipped ecosystem declares one, so careers pass nothing and
+   * keep truthful zero cash; a future legitimate authority (World DB financial data, an explicit owner capital
+   * action) supplies its own source instead of a hidden initialization shortcut.
+   */
+  readonly openingEconomicStates?: readonly OpeningEconomicStateSource[]
 }
 
 export const LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE = Object.freeze({
@@ -76,7 +85,10 @@ export function getFinanceActivationReport(world: GameWorld, options: EnsureCano
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
   return Object.freeze({
     asOfDate,
-    organizations: Object.freeze(financeBearingOrganizationIds(world).map((organizationId) => plan(world, organizationId, asOfDate, allowNewPeriodMaterialization).activation)),
+    organizations: Object.freeze(financeBearingOrganizationIds(world).map((organizationId) => Object.freeze({
+      ...plan(world, organizationId, asOfDate, allowNewPeriodMaterialization).activation,
+      openingEconomicState: getOrganizationOpeningEconomicStateStatus(world, organizationId),
+    }))),
   })
 }
 
@@ -89,10 +101,15 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
   const asOfDate = parseGameDate(options.asOfDate ?? world.currentDate)
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
   let current = world
-  let provisionedAny = false
+  let changedAny = false
   const budgetAdds: FinancialBudget[] = []
   const lineAdds: BudgetLine[] = []
   const periodAdds: FiscalPeriod[] = []
+  const openingSourcesByOrganization = new Map<string, OpeningEconomicStateSource[]>()
+  for (const source of options.openingEconomicStates ?? []) {
+    const key = String(organizationIdFromString(source.organizationId))
+    openingSourcesByOrganization.set(key, [...(openingSourcesByOrganization.get(key) ?? []), source])
+  }
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
     const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization)
@@ -102,8 +119,16 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
         fiscalYearStartMonth: planned.provision.fiscalYearStartMonth,
         asOfDate,
       })
-      if (provisioned !== current) provisionedAny = true
+      if (provisioned !== current) changedAny = true
       current = provisioned
+    }
+    // BS16H: a legitimate opening source is materialized through the ledger, never as a cash field.
+    for (const source of openingSourcesByOrganization.get(String(organizationId)) ?? []) {
+      const opening = materializeOrganizationOpeningEconomicState(current, source)
+      if (opening.world !== current) {
+        current = opening.world
+        changedAny = true
+      }
     }
     if (!planned.materializeAuthorization || planned.fiscalPeriodId === null || planned.currencyCode === null) continue
     const profile = current.organizationFinancialProfilesById[organizationId]!
@@ -117,7 +142,7 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
     lineAdds.push(...materialized.lines)
   }
 
-  if (!provisionedAny && budgetAdds.length === 0) return world
+  if (!changedAny && budgetAdds.length === 0) return world
   return updateGameWorld(current, {
     ...(periodAdds.length === 0 ? {} : { fiscalPeriods: [...Object.values(current.fiscalPeriodsById), ...periodAdds] }),
     ...(budgetAdds.length === 0 ? {} : { financialBudgets: [...Object.values(current.financialBudgetsById), ...budgetAdds] }),
@@ -211,6 +236,7 @@ function activationOf(organizationId: OrganizationId, status: FinanceActivationS
     currencyUnavailableReason: null,
     policyCurrencyCode: null,
     authorizedMinorUnits: 0,
+    openingEconomicState: 'OPENING_ECONOMIC_STATE_UNAVAILABLE',
     ...overrides,
   })
 }
