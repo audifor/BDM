@@ -54,7 +54,9 @@ describe('CalendarEngine', () => {
     expect(first.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
       .toEqual(second.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
     expect(first.phases.map((phase) => phase.order)).toEqual(first.phases.map((_, index) => index + 1))
-    expect(first.phases.find((phase) => phase.phaseId === 'CLUB_FINANCE_V2')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
+    // BS16I: Club Finance is now a real daily phase (it materializes source-backed Finance facts), while
+    // GOVERNANCE still has no automatic calendar-resolution processor.
+    expect(first.phases.find((phase) => phase.phaseId === 'CLUB_FINANCE_V2')).toMatchObject({ ran: true })
     expect(first.phases.find((phase) => phase.phaseId === 'GOVERNANCE')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
     expect(first.phases.at(-1)?.phaseId).toBe('EVENT_COLLECTION')
   })
