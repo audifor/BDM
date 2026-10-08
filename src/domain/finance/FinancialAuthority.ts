@@ -28,6 +28,12 @@ export type FinancialReasonCode =
   | 'FINANCE_PROFILE_UNAVAILABLE'
   | 'REQUIRES_FINANCING'
   | 'BUDGET_AUTHORIZATION_NOT_MODELLED'
+  | 'AUTHORIZATION_OUT_OF_PERIOD'
+
+export interface FinancialAuthorizationReference {
+  readonly state: 'ACTIVE' | 'NOT_PROVISIONED' | 'OUT_OF_PERIOD'
+  readonly budgetId?: string
+}
 
 /**
  * `FinancialReservation` protects available financial capacity for a business operation that has been
@@ -82,6 +88,12 @@ export interface EvaluateFinancialCommitmentInput {
   readonly authorizedHeadroom?: Money | { readonly currencyCode: string; readonly minorUnits: number } | null
   readonly activeReservations?: readonly FinancialReservation[]
   readonly commitmentCategory?: string
+  /**
+   * Canonical authorization resolution result. When no authorization is in effect the decision keeps
+   * `BUDGET_AUTHORIZATION_NOT_MODELLED`; an approved budget that is simply not in effect for the
+   * effective date additionally reports `AUTHORIZATION_OUT_OF_PERIOD`.
+   */
+  readonly authorization?: FinancialAuthorizationReference | null
 }
 
 export type FinancialReservationOutcome = 'CREATED' | 'REPLAYED' | 'REJECTED'
@@ -262,7 +274,9 @@ export function evaluateFinancialCommitment(input: EvaluateFinancialCommitmentIn
   const availableCapacity = currentCash === null
     ? null
     : createMoney({ currencyCode: currency, minorUnits: Math.max(currentCash.minorUnits - committedCapacity.minorUnits - reservedCapacity.minorUnits, 0) })
-  const reasons: FinancialReasonCode[] = authorizedHeadroom === null ? ['BUDGET_AUTHORIZATION_NOT_MODELLED'] : []
+  const reasons: FinancialReasonCode[] = authorizedHeadroom === null
+    ? ['BUDGET_AUTHORIZATION_NOT_MODELLED', ...(input.authorization?.state === 'OUT_OF_PERIOD' ? ['AUTHORIZATION_OUT_OF_PERIOD' as const] : [])]
+    : []
   const liquidity: FinancialCommitmentLiquidity = {
     availableCash: currentCash,
     existingCommitments,
