@@ -6,7 +6,7 @@ import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameDate } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { generateRecruitingPool, addRecruitingBoardEntry, rankAiRecruitingTargets } from './RecruitingEngine'
+import { generateLegacyFixtureRecruitingPool as generateRecruitingPool, addRecruitingBoardEntry, rankAiRecruitingTargets } from './RecruitingEngine'
 import { progressRecruitingAdvisories, acceptRecruitingRecommendation } from './RecruitingAdvisory'
 
 type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>

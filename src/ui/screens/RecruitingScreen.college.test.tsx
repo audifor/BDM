@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createNcaaSimulatedGame } from '@/app/game/createNcaaSimulatedGame'
 import { createTransferPortalEntry } from '@/domain/eligibility'
 import { updateGameWorld } from '@/domain/world'
-import { generateRecruitingPool } from '@/engine/recruiting'
+import { generateLegacyFixtureRecruitingPool } from '@/engine/recruiting'
 import { RecruitingScreen } from './RecruitingScreen'
 
 afterEach(cleanup)
@@ -31,7 +31,7 @@ describe('College Recruiting UI', () => {
   ])('shows blocked action reason %s', (reason, expected) => {
     const base = createNcaaSimulatedGame()
     const cycle = Object.values(base.recruitingCyclesById).find((item) => base.ecosystems[item.ecosystemId]?.kind === 'ncaaLike' && base.ecosystems[item.ecosystemId]?.category === 'men')!
-    const world = generateRecruitingPool(base, cycle.id)
+    const world = generateLegacyFixtureRecruitingPool(base, cycle.id)
     render(<RecruitingScreen world={world} onAddTarget={vi.fn()} onRemoveTarget={vi.fn()} onAction={vi.fn(() => reason)} onOffer={vi.fn(() => null)} />)
     fireEvent.click(screen.getAllByRole('button', { name: /CONTACT/ })[0]!)
     expect(screen.getByRole('status').textContent).toContain(expected)

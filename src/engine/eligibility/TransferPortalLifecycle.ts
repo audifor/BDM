@@ -5,6 +5,7 @@ import type { TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createTeam } from '@/domain/team'
 import { executeAutomaticEnforcementRemedies } from '@/engine/enforcement/EnforcementRemedies'
+import { isPlayerCareerActive } from '@/engine/career/PlayerCareerLifecycle'
 
 export type TransferPortalActionResult = { readonly ok: true; readonly world: GameWorld } | { readonly ok: false; readonly reason: string }
 
@@ -51,7 +52,7 @@ export function submitTransferNotice(world: GameWorld, entry: Omit<TransferPorta
   if (compareGameDates(world.currentDate, window.opensOn) < 0 || compareGameDates(world.currentDate, window.closesOn) > 0) return { ok: false, reason: 'NOTIFICATION_WINDOW_CLOSED' }
   const source = world.teams[entry.sourceTeamId]
   const ruleset = world.transferPortalRulesetsById[entry.rulesetId]
-  if (!source?.rosterPlayerIds.includes(entry.playerId) || ruleset?.ecosystemId !== entry.ecosystemId || ruleset.effectiveFrom > world.currentDate || (ruleset.effectiveTo !== undefined && ruleset.effectiveTo < world.currentDate)) return { ok: false, reason: 'TRANSFER_SOURCE_OR_RULESET_INVALID' }
+  if (!isPlayerCareerActive(world, entry.playerId) || !source?.rosterPlayerIds.includes(entry.playerId) || ruleset?.ecosystemId !== entry.ecosystemId || ruleset.effectiveFrom > world.currentDate || (ruleset.effectiveTo !== undefined && ruleset.effectiveTo < world.currentDate)) return { ok: false, reason: 'TRANSFER_SOURCE_OR_RULESET_INVALID' }
   if (!Object.values(world.playerEnrollmentsById).some((item) => item.playerId === entry.playerId && item.teamId === entry.sourceTeamId && item.ecosystemId === entry.ecosystemId && item.status === 'active')) return { ok: false, reason: 'ACTIVE_SOURCE_ENROLLMENT_REQUIRED' }
   if (world.transferPortalEntriesById[entry.id] !== undefined || Object.values(world.transferPortalEntriesById).some((item) => item.playerId === entry.playerId && item.ecosystemId === entry.ecosystemId && (item.status === 'noticePending' || item.status === 'authorized'))) return { ok: false, reason: 'PORTAL_ENTRY_ALREADY_ACTIVE' }
   const record = createTransferPortalEntry({ ...entry, notifiedOn: world.currentDate, status: 'noticePending' })
@@ -88,6 +89,7 @@ export function withdrawTransferPortalEntry(world: GameWorld, entryId: string): 
 
 /** Authorization remains a precondition for every destination recruiting action. */
 export function canRecruitTransferPlayer(world: GameWorld, playerId: string, destinationTeamId: TeamId): boolean {
+  if (!isPlayerCareerActive(world, playerId)) return false
   const entry = Object.values(world.transferPortalEntriesById).find((item) => item.playerId === playerId && item.status === 'authorized')
   const sourceCompetitions = entry === undefined ? [] : Object.values(world.competitions).filter((competition) => competition.ecosystemId === entry.ecosystemId && competition.participantTeamIds.includes(entry.sourceTeamId))
   return entry !== undefined && entry.sourceTeamId !== destinationTeamId && world.teams[entry.sourceTeamId]?.rosterPlayerIds.includes(entry.playerId) === true && world.teams[destinationTeamId]?.rosterPlayerIds.includes(entry.playerId) !== true && Object.values(world.playerEnrollmentsById).some((item) => item.playerId === entry.playerId && item.teamId === entry.sourceTeamId && item.ecosystemId === entry.ecosystemId && item.status === 'active') && sourceCompetitions.some((competition) => competition.participantTeamIds.includes(destinationTeamId))
@@ -97,8 +99,25 @@ export type TransferDownstreamAction = 'AID_SIGNING' | 'BENEFITS_SIGNING' | 'ROS
 export type TransferAuthorizationResult = { readonly ok: true; readonly world: GameWorld; readonly authorized: boolean; readonly violationId?: string } | { readonly ok: false; readonly world: GameWorld; readonly reason: string }
 
 /** Shared destination guard; a deliberate prohibited action records automatic canonical remedies. */
+const activeEnrollmentsByPlayer = new WeakMap<GameWorld['playerEnrollmentsById'], ReadonlyMap<string, readonly GameWorld['playerEnrollmentsById'][string][]>>()
+function activePlayerEnrollments(world: GameWorld, playerId: string) {
+  let index = activeEnrollmentsByPlayer.get(world.playerEnrollmentsById)
+  if (index === undefined) {
+    const players = new Map<string, GameWorld['playerEnrollmentsById'][string][]>()
+    for (const enrollment of Object.values(world.playerEnrollmentsById)) {
+      if (enrollment.status !== 'active') continue
+      const records = players.get(enrollment.playerId) ?? []
+      records.push(enrollment)
+      players.set(enrollment.playerId, records)
+    }
+    index = players
+    activeEnrollmentsByPlayer.set(world.playerEnrollmentsById, index)
+  }
+  return index.get(playerId) ?? []
+}
+
 export function validateTransferAuthorization(world: GameWorld, playerId: import('@/domain/ids').PlayerId, destinationTeamId: TeamId, action: TransferDownstreamAction, commitUnauthorized = false): TransferAuthorizationResult {
-  const source = Object.values(world.playerEnrollmentsById).find((item) => item.playerId === playerId && item.status === 'active' && item.teamId !== destinationTeamId)
+  const source = activePlayerEnrollments(world, playerId).find(item => item.teamId !== destinationTeamId)
   if (source === undefined) return { ok: true, world, authorized: true }
   const competition = Object.values(world.competitions).find((item) => item.ecosystemId === source.ecosystemId && item.participantTeamIds.includes(destinationTeamId))
   if (competition === undefined) return { ok: true, world, authorized: true }

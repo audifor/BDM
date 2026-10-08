@@ -43,7 +43,7 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     const profile = world.recruitProfilesById[board.recruitId]
     if (profile?.status === 'open') ids.add(profile.playerId)
   }
-  return [...ids].filter((playerId) => world.players[playerId] !== undefined).sort((a, b) => a.localeCompare(b))
+  return [...ids].filter((playerId) => world.players[playerId] !== undefined && world.players[playerId]!.careerEnd === undefined).sort((a, b) => a.localeCompare(b))
 }
 
 export function getScoutingCandidatesForUser(world: GameWorld): readonly PlayerId[] {

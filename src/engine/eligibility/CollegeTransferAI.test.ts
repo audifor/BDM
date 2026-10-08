@@ -11,6 +11,9 @@ import { ensureNcaaSportBudgets } from '@/engine/enforcement/EnforcementRemedies
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { calculateStandings } from '@/engine/competition/standings'
 import { runCollegeRosterContinuationAndTransferAI } from './CollegeTransferAI'
+import { completeCollegeTransfer } from '@/engine/recruiting/RecruitingEngine'
+import { assessCollegeEligibility, ensureNcaaEligibility } from './EligibilityEngine'
+import { assignAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 
 describe('College transfer AI', () => {
   it.each([false, true])('runs canonical AI transfer lifecycle in %s future season', (future) => {
@@ -22,13 +25,13 @@ describe('College transfer AI', () => {
       const priorFinal = Object.values(initial.games).find((game) => game.seasonId === prior.id && game.stakes === 'final')!
       const futureFinal = createGame({ ...priorFinal, id: `${priorFinal.id}:2045-46` as never, seasonId: futureSeason.id, date: '2046-03-30' as never, status: 'scheduled', result: null })
       initial = updateGameWorld(initial, { currentDate: '2046-03-31' as never, currentSeasonId: futureSeason.id, seasons: [...Object.values(initial.seasons), futureSeason], games: [...Object.values(initial.games), futureFinal], recruitingCycles: [...Object.values(initial.recruitingCyclesById), { ...priorCycle, id: `${priorCycle.id}:2045-46`, sourceSeasonId: futureSeason.id, targetSeasonId: `${futureSeason.id}:next` as never, opensOn: '2045-10-01' as never, signingOn: '2046-06-01' as never, closesOn: '2046-08-01' as never, status: 'open' as const }] })
-      initial = ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(ensureTransferPortalRuleset(initial, futureSeason.id)))
+      initial = ensureNcaaEligibility(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(ensureTransferPortalRuleset(initial, futureSeason.id))))
     }
     const cycle = Object.values(initial.recruitingCyclesById).find((item) => item.sourceSeasonId === initial.currentSeasonId && initial.ecosystems[item.ecosystemId]?.kind === 'ncaaLike' && initial.ecosystems[item.ecosystemId]?.category === 'men')!
     const season = initial.seasons[cycle.sourceSeasonId]!
     const competition = initial.competitions[season.competitionId]!
     const source = competition.participantTeamIds.map((id) => initial.teams[id]!).find((team) => team.coachId !== initial.userCoachId && team.rosterPlayerIds.length > 0)!
-    const playerId = source.rosterPlayerIds[0]!
+    const playerId = source.rosterPlayerIds.find(id => assessCollegeEligibility(initial, { playerId: id, teamId: source.id, ecosystemId: cycle.ecosystemId })?.eligible)!
     const final = Object.values(initial.games).find((game) => game.seasonId === season.id && game.stakes === 'final')!
     const date = addDays(final.date, 1)
     const profile = {
@@ -60,7 +63,8 @@ describe('College transfer AI', () => {
     expect(availableInstitutionBenefitsRoom(sourceCap, Object.values(progressed.settlementBenefitsAgreementsById))).toBe(50_000)
     const alternativeTransferOffer = createSettlementBenefitsAgreement({ id: 'ai-cap-choice:large-transfer', playerId: competition.participantTeamIds.map((id) => progressed.teams[id]!).find((item) => item.id !== source.id && item.rosterPlayerIds.length > 0)!.rosterPlayerIds[0]!, teamId: source.id, institutionId: source.organizationId, capYear, valueMinorUnits: 150_000, effectiveFrom: date, effectiveTo: season.endDate, status: 'draft', reportingStatus: 'notSigned', provenance: 'CAP_CHOICE_SCENARIO' })
     expect(signInstitutionBenefits(progressed, alternativeTransferOffer)).toMatchObject({ ok: false, reason: 'CAP_EXCEEDED' })
-    expect(entry?.status).toBe('completed')
+    const movement = completeCollegeTransfer(progressed, `transfer-recruit:${entry!.id}`)
+    expect(entry?.status, movement.ok ? undefined : movement.reason).toBe('completed')
     expect(entry?.movement?.playerId).toBe(playerId)
     expect(progressed.players[playerId]).toEqual(initial.players[playerId])
     expect(progressed.recruitSigningsById[`signing:${cycle.id}:transfer-recruit:${entry?.id}`]).toBeDefined()
@@ -83,5 +87,16 @@ describe('College transfer AI', () => {
     expect(restored.settlementBenefitsAgreementsById[`ai-transfer-benefits:${cycle.id}:${playerId}:${destinationId}`]?.financeTransactionId).toBe(progressed.settlementBenefitsAgreementsById[`ai-transfer-benefits:${cycle.id}:${playerId}:${destinationId}`]?.financeTransactionId)
     expect(runCollegeRosterContinuationAndTransferAI(restored, cycle.id)).toBe(restored)
     expect(runCollegeRosterContinuationAndTransferAI(progressed, cycle.id)).toBe(progressed)
+    const supportTerm = `portal-academic:${future}`
+    const supported = assignAcademicSupport(restored, playerId, supportTerm, 'tutoring')
+    expect(supported.ok).toBe(true)
+    if (!supported.ok) throw new Error(supported.reason)
+    expect(supported.value.academicSupportPlansById[`academic-support:${supportTerm}:${playerId}`]!.programTeamId).toBe(destinationId)
+    const oldAcademic = Object.values(restored.academicProfilesById).find(item => item.playerId === playerId && item.programTeamId === source.id)!
+    const destinationAcademic = Object.values(restored.academicProfilesById).find(item => item.playerId === playerId && item.programTeamId === destinationId)!
+    const termWorld = resolveAcademicTerm(supported.value, supportTerm)
+    expect(termWorld.academicProfilesById[oldAcademic.id]).toEqual(oldAcademic)
+    expect(termWorld.academicProfilesById[destinationAcademic.id]!.performance).toBe(Math.min(100, destinationAcademic.performance + 5))
+    expect(Object.values(termWorld.academicTermRecordsById).filter(item => item.playerId === playerId && item.termId === supportTerm)).toHaveLength(1)
   }, 30_000)
 })

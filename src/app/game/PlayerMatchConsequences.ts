@@ -6,7 +6,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateFatigueAtEvents, calculateMatchPlayerStats, type MatchSimulation } from '@/engine/match'
 
 /** Applies legacy match load at the canonical result boundary. */
-export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulation: MatchSimulation): GameWorld {
+export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulation: MatchSimulation, pendingEvidence?: ReturnType<typeof createDevelopmentStimulusEvent>[]): GameWorld {
   const finalFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events)
   const fatigue = { ...completedWorld.careerFatigueByPlayerId }
   const stimulus = { ...completedWorld.developmentStimulusByPlayerId }
@@ -28,7 +28,8 @@ export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulati
       changed = true
     }
   }
-  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, developmentStimulusEvents: [...Object.values(completedWorld.developmentStimulusEventsById), ...stimulusEvents] }) : completedWorld
+  pendingEvidence?.push(...stimulusEvents)
+  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, ...(pendingEvidence === undefined ? { developmentStimulusEventAdditions: stimulusEvents } : {}) }) : completedWorld
 }
 
 function deriveStimulus(minutes: number, threes: number, twos: number, offensiveRebounds: number, defensiveRebounds: number, assists: number, steals: number, blocks: number): Partial<Record<CanonicalRatingKey, number>> {

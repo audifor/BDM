@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { addDays, createGameDate } from '@/domain/date'
+import { addDays, addYears, createGameDate } from '@/domain/date'
 import { DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
-import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, teamIdFromString } from '@/domain/ids'
+import { contractIdFromString, organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, teamIdFromString } from '@/domain/ids'
+import { createPlayerContract } from '@/domain/contract'
 import { createCountry } from '@/domain/country'
 import { createNewGame } from '@/app/game'
 import { type EcosystemId } from '@/domain/ids'
@@ -24,7 +25,7 @@ import { finalizeSeason } from '@/engine/season'
 import { applyMatchResult } from '@/engine/match'
 import { signDraftRightsToNba } from '@/engine/career'
 import { getEligibleScoutingEvaluators, progressScoutingAssignments, requestScouting } from '@/engine/scouting/ScoutingEngine'
-import { decommitRecruitingProspect, designateOffCampusRecruiter, discoverRecruitingTalentCandidate, evaluateRecruitingChoice, generateRecruitingPool, performRecruitingAction, recordRecruitingEvaluation, promiseRecruitingRole, resolveRecruitingCommitments, makeRecruitingOffer, materializeRecruitingTalentCandidate, signCommittedRecruit, arriveSignedRecruits, selectAiNegotiationResponse, rankAiRecruitingTargets } from './RecruitingEngine'
+import { decommitRecruitingProspect, designateOffCampusRecruiter, discoverRecruitingTalentCandidate, evaluateRecruitingChoice, generateLegacyFixtureRecruitingPool as generateRecruitingPool, performRecruitingAction, recordRecruitingEvaluation, promiseRecruitingRole, resolveRecruitingCommitments, makeRecruitingOffer, materializeRecruitingTalentCandidate, signCommittedRecruit, arriveSignedRecruits, selectAiNegotiationResponse, rankAiRecruitingTargets } from './RecruitingEngine'
 import { applyRecruitingPressure, openAiRecruitingNegotiation, openRecruitingNegotiation, respondToRecruitingConcern } from './RecruitingNegotiationEngine'
 import { performRecruitingGrayAction } from './RecruitingGrayActionEngine'
 import { buildPlayerHistoryModel } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
@@ -260,12 +261,16 @@ describe('Recruiting RPG authority', () => {
     world = updateGameWorld(world, { countries: [...Object.values(world.countries), foreignCountry] })
     const place = createPlace({ id: 'intl-place', kind: 'CITY', name: 'International academy', countryId: foreignCountry.id })
     world = updateGameWorld(world, { places: [...Object.values(world.placesById), place] })
-    world = createTalentSupplyCohort(world, createTalentCohort({ id: 'intl-cohort', placeId: place.id, birthYear: 2009, generationYear: 2032, gender: 'male', seed: 812, inputVersion: 'fixture-v1', inputs: { ageCohortPopulation: 20000, basketballParticipationPerThousand: 60, accessOpportunityBasisPoints: 9000 } }))
+    world = createTalentSupplyCohort(world, createTalentCohort({ id: 'intl-cohort', placeId: place.id, birthYear: 2009, generationYear: 2032, gender: 'male', seed: 812, inputVersion: 'fixture-v1', pathwaySource: 'INTERNATIONAL_CLUB', inputs: { ageCohortPopulation: 20000, basketballParticipationPerThousand: 60, accessOpportunityBasisPoints: 9000 } }))
     const discovered = materializeRecruitingTalentCandidate(world, 'rpg-cycle', 'intl-cohort', 1)
     expect(discovered.ok).toBe(true)
     if (!discovered.ok) return
     const profile = Object.values(discovered.value.recruitProfilesById).find((item) => item.playerId === discovered.value.talentMaterializationsByCandidateKey['intl-cohort:candidate:000001']!.playerId)!
     expect(profile.origin).toBe('international')
+    expect(discovered.value.players[profile.playerId]!.pathwayHistory?.at(-1)?.source).toBe('INTERNATIONAL_CLUB')
+    const saved = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(discovered.value, `${discovered.value.currentDate}T00:00:00.000Z`))))
+    expect(saved.talentCohortsById['intl-cohort']!.pathwaySource).toBe('INTERNATIONAL_CLUB')
+    expect(saved.players[profile.playerId]!.pathwayHistory?.at(-1)?.source).toBe('INTERNATIONAL_CLUB')
     const repeated = materializeRecruitingTalentCandidate(discovered.value, 'rpg-cycle', 'intl-cohort', 1)
     expect(repeated.ok && Object.values(repeated.value.recruitProfilesById).filter((item) => item.playerId === profile.playerId)).toHaveLength(1)
   })
@@ -293,6 +298,7 @@ describe('Recruiting RPG authority', () => {
     expect(first.value.recruitingBoards.some((item) => item.programTeamId === program)).toBe(true)
     expect(Object.keys(first.value.talentMaterializationsByCandidateKey)).toHaveLength(1)
     const materialization = Object.values(first.value.talentMaterializationsByCandidateKey)[0]!
+    expect(['INTERNATIONAL_CLUB', 'OTHER_PRECOLLEGE']).toContain(first.value.players[materialization.playerId]!.pathwayHistory?.at(-1)?.source)
     const recruit = Object.values(first.value.recruitProfilesById).find((item) => item.playerId === materialization.playerId)!
     expect(first.value.players[materialization.playerId]!.personId).toBe(first.value.personsById[first.value.players[materialization.playerId]!.personId!]!.id)
     expect(materialization.materializationCause).toBe('RECRUITING_POOL')
@@ -387,6 +393,9 @@ describe('Recruiting RPG authority', () => {
     expect(restored.playerEnrollmentsById).toEqual(persistedFixture.playerEnrollmentsById)
     expect(restored.collegeEligibilityAssessmentsById).toEqual(persistedFixture.collegeEligibilityAssessmentsById)
     expect(restored.talentMaterializationsByCandidateKey).toEqual(persistedFixture.talentMaterializationsByCandidateKey)
+    expect(restored.players[materialization.playerId]!.id).toBe(materialization.playerId)
+    expect(restored.players[materialization.playerId]!.personId).toBe(personId)
+    expect(restored.players[materialization.playerId]!.pathwayHistory).toEqual(persistedFixture.players[materialization.playerId]!.pathwayHistory)
 
     const oldV4 = structuredClone(v4) as { payload: { recruitProfiles: Record<string, unknown>[]; recruitingCycles: Record<string, unknown>[] } }
     oldV4.payload.recruitProfiles = oldV4.payload.recruitProfiles.map(({ recruitingRpg: _rpg, ...profile }) => profile)
@@ -652,15 +661,18 @@ describe('Recruiting RPG authority', () => {
   })
 
   it('enrolls one signed NCAA Player and performs one idempotent roster arrival', () => {
-    let world = updateGameWorld(createNewGame(), { currentDate: createGameDate(2026, 11, 11) })
+    let world = createNewGame()
     const season = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!
     const competition = world.competitions[season.competitionId]!
     const ecosystemId = competition.ecosystemId
-    const cycle = { id: 'same-id-ncaa-cycle', ecosystemId: ecosystemId as EcosystemId, sourceSeasonId: season.id, targetSeasonId: season.id, opensOn: world.currentDate, signingOn: world.currentDate, closesOn: season.endDate, status: 'open' as const, rules: { ...defaultRecruitingRules, poolSize: 1, commitmentThreshold: 1 }, calendar: recruitingRulesetForSeason('men', 2026) }
+    const year = Number(season.startDate.slice(0, 4))
+    const signingDay = Array.from({ length: 14 }, (_, index) => index + 1).filter(day => new Date(Date.UTC(year, 10, day)).getUTCDay() === 3)[1]!
+    world = updateGameWorld(world, { currentDate: createGameDate(year, 11, signingDay) })
+    const cycle = { id: 'same-id-ncaa-cycle', ecosystemId: ecosystemId as EcosystemId, sourceSeasonId: season.id, targetSeasonId: season.id, opensOn: world.currentDate, signingOn: world.currentDate, closesOn: season.endDate, status: 'open' as const, rules: { ...defaultRecruitingRules, poolSize: 1, commitmentThreshold: 1 }, calendar: recruitingRulesetForSeason('men', year) }
     world = updateGameWorld(world, { currentSeasonId: season.id, recruitingCycles: [...Object.values(world.recruitingCyclesById), cycle] })
     world = generateRecruitingPool(world, cycle.id)
     let recruit = Object.values(world.recruitProfilesById).find((item) => item.cycleId === cycle.id)!
-    world = updateGameWorld(world, { recruitProfiles: Object.values(world.recruitProfilesById).map((profile) => profile.id === recruit.id ? { ...profile, education: { highSchoolGraduationYear: 2028 } } : profile) })
+    world = updateGameWorld(world, { recruitProfiles: Object.values(world.recruitProfilesById).map((profile) => profile.id === recruit.id ? { ...profile, education: { highSchoolGraduationYear: year } } : profile) })
     recruit = world.recruitProfilesById[recruit.id]!
     const program = competition.participantTeamIds[0]!
     const offer = makeRecruitingOffer(world, cycle.id, recruit.id, program)
@@ -668,11 +680,49 @@ describe('Recruiting RPG authority', () => {
     let committed = resolveRecruitingCommitments(offer.value, cycle.id)
     const signed = signCommittedRecruit(committed, cycle.id, recruit.id)
     if (!signed.ok) throw new Error('signing failed')
-    const arrived = arriveSignedRecruits(signed.value)
-    expect(arrived.teams[program]!.rosterPlayerIds.filter((id) => id === recruit.playerId)).toHaveLength(1)
+    const arrived = arriveSignedRecruits(updateGameWorld(signed.value, { currentDate: season.startDate }))
+    expect(arrived.teams[program]!.rosterPlayerIds.filter((id) => id === recruit.playerId), JSON.stringify({ profile: arrived.recruitProfilesById[recruit.id], assessments: Object.values(arrived.collegeEligibilityAssessmentsById).filter(item => item.playerId === recruit.playerId) })).toHaveLength(1)
     expect(Object.values(arrived.playerEnrollmentsById).filter((item) => item.playerId === recruit.playerId && item.status === 'active')).toHaveLength(1)
     expect(Object.values(arrived.collegeEligibilityAssessmentsById).find((item) => item.playerId === recruit.playerId)?.eligible).toBe(true)
     expect(arriveSignedRecruits(arrived).teams[program]!.rosterPlayerIds.filter((id) => id === recruit.playerId)).toHaveLength(1)
+  })
+
+  it('holds a signed NCAA arrival when the Player already has another active roster owner', () => {
+    let world = createNewGame()
+    const season = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!
+    const competition = world.competitions[season.competitionId]!
+    const ecosystemId = competition.ecosystemId
+    const year = Number(season.startDate.slice(0, 4))
+    const signingDay = Array.from({ length: 14 }, (_, index) => index + 1).filter(day => new Date(Date.UTC(year, 10, day)).getUTCDay() === 3)[1]!
+    world = updateGameWorld(world, { currentDate: createGameDate(year, 11, signingDay) })
+    const cycle = { id: 'roster-conflict-ncaa-cycle', ecosystemId: ecosystemId as EcosystemId, sourceSeasonId: season.id, targetSeasonId: season.id, opensOn: world.currentDate, signingOn: world.currentDate, closesOn: season.endDate, status: 'open' as const, rules: { ...defaultRecruitingRules, poolSize: 1, commitmentThreshold: 1 }, calendar: recruitingRulesetForSeason('women', year) }
+    world = updateGameWorld(world, { currentSeasonId: season.id, recruitingCycles: [...Object.values(world.recruitingCyclesById), cycle] })
+    world = generateRecruitingPool(world, cycle.id)
+    const recruit = Object.values(world.recruitProfilesById).find((item) => item.cycleId === cycle.id)!
+    const player = world.players[recruit.playerId]!
+    const program = competition.participantTeamIds[0]!
+    const sourceTeam = Object.values(world.teams).find((team) => team.gender === player.gender && !competition.participantTeamIds.includes(team.id) && Object.values(world.competitions).some((candidate) => candidate.participantTeamIds.includes(team.id) && world.ecosystems[candidate.ecosystemId]?.kind !== 'ncaaLike'))!
+    const offer = makeRecruitingOffer(world, cycle.id, recruit.id, program)
+    if (!offer.ok) throw new Error(`offer failed: ${offer.reason}`)
+    const committed = resolveRecruitingCommitments(offer.value, cycle.id)
+    const signed = signCommittedRecruit(committed, cycle.id, recruit.id)
+    if (!signed.ok) throw new Error(`signing failed: ${signed.reason}`)
+    const arrivalDate = season.startDate
+    const contract = createPlayerContract({ id: contractIdFromString(`active-contract:${player.id}`), playerId: player.id, teamId: sourceTeam.id, kind: 'standard', term: { startsOn: arrivalDate, expiresOn: addYears(arrivalDate, 3) }, compensation: { annualSalary: 110_000 } })
+    const withExistingRosterOwner = updateGameWorld(signed.value, {
+      currentDate: arrivalDate,
+      teams: Object.values(signed.value.teams).map((team) => team.id === sourceTeam.id ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, player.id] } : team),
+      contracts: [...Object.values(signed.value.contractsById), contract],
+    })
+
+    const arrived = arriveSignedRecruits(withExistingRosterOwner)
+    expect(arrived.recruitProfilesById[recruit.id]!.status).toBe('ineligible')
+    expect(arrived.recruitProfilesById[recruit.id]!.recruitingRpg!.story.at(-1)).toContain(`already rostered with ${sourceTeam.id}`)
+    expect(Object.values(arrived.teams).filter((team) => team.rosterPlayerIds.includes(player.id)).map((team) => team.id)).toEqual([sourceTeam.id])
+    expect(arrived.contractsById[contract.id]).toEqual(contract)
+    expect(Object.values(arrived.playerEnrollmentsById).filter((enrollment) => enrollment.playerId === player.id && enrollment.status === 'active')).toHaveLength(0)
+    expect(arrived.players[player.id]!.personId).toBe(player.personId)
+    expect(arriveSignedRecruits(arrived).recruitProfilesById[recruit.id]!.status).toBe('ineligible')
   })
 
   it('preserves formal signing while rolling back an ineligible BS15D arrival', () => {

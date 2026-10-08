@@ -6,7 +6,7 @@ import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
-import { addRecruitingBoardEntry, arriveSignedRecruits, generateRecruitingPool, getRecruitingClass, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry, resolveRecruitingCommitments, signCommittedRecruit } from './RecruitingEngine'
+import { addRecruitingBoardEntry, arriveSignedRecruits, generateLegacyFixtureRecruitingPool as generateRecruitingPool, getRecruitingClass, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry, resolveRecruitingCommitments, signCommittedRecruit } from './RecruitingEngine'
 
 const program = teamIdFromString('team-home')
 function base(status: 'open'|'signing' = 'open') {

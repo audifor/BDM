@@ -13,7 +13,7 @@ import { calculateShotLocation, calculateShotMakeProbability, calculateShotZoneW
 import { calculateTurnoverProbability } from './TurnoverResolution'
 import { chooseWeighted } from './WeightedChoice'
 import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan } from './tactics/MatchTacticalPlan'
-import { applyPaceToPossessionDuration, spatialShotAttemptWeight, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
+import { applyPaceToPossessionDuration, spatialShotAttemptWeight, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
@@ -217,6 +217,7 @@ export interface MatchSimulation {
 }
 
 export interface SimulateMatchOptions {
+  readonly simulationDetail?: 'FULL' | 'STANDARD' | 'BACKGROUND'
   readonly world: GameWorld
   readonly gameId: GameId
   readonly matchSeed?: number
@@ -276,6 +277,7 @@ export interface MatchSessionState {
 
 /** Transient runtime retaining the externally supplied mutable RNG streams between steps. */
 export interface MatchSession {
+  readonly simulationDetail?: SimulateMatchOptions['simulationDetail']
   readonly state: MatchSessionState
   readonly random: RandomSource
   readonly decisionRandom: RandomSource
@@ -342,6 +344,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       period: 1, clockSecondsRemaining: clockRules.periodSeconds, possessionDurationApplied: false, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, passesThisPossession: 0, nextSequence: 2, events: [initialEvent], isComplete: false,
     },
+    simulationDetail: options.simulationDetail,
     random: options.random,
     decisionRandom: options.decisionRandom,
     actorRandom: options.actorRandom,
@@ -379,6 +382,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
 /** Advances one possession action or one period transition. RNG streams mutate only inside this runtime. */
 export function stepMatchSession(session: MatchSession): MatchSessionStepResult {
   if (session.state.isComplete) throw new MatchSimulationError('Cannot step a completed MatchSession')
+  if (session.simulationDetail !== undefined && session.simulationDetail !== 'FULL') return stepNonSpatialMatchSession(session)
   const state = session.state
   const transitionMovementActive = state.transitionIntent?.attackingTeamId === state.attackingTeamId
   const newEvents: MatchEvent[] = []
@@ -729,107 +733,12 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       : activeHandoff !== undefined && !activeHandoff.transferred
         ? handoffTransferReady ? 'handoff' : 'handoffApproach'
         : choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
-  let attackingTeamId = state.attackingTeamId
-  let passesThisPossession = state.passesThisPossession ?? 0
-  let nextCatchContext: PlayerId | undefined
-
-  if (outcome === 'transitionAttack' || outcome === 'transitionSettle') {
-    // The selected authority runs through its existing movement and execution path on the next step.
-  } else if (outcome === 'handoff') {
-    const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
-    if (transferred === undefined) throw new MatchSimulationError('A ready handoff failed canonical ball transfer validation')
-    spatial = transferred
-  } else if (outcome === 'handoffApproach') {
-    // Keep the handoff primary while MG6 advances the receiver toward the giver.
-  } else if (outcome === 'shootingFoul') {
-    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'foul', teamId: defendingTeamId, playerId: primaryDefenderId, foulType: 'shooting', homeScore, awayScore })
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      if (session.random.chance(FREE_THROW_MADE_PROBABILITY)) {
-        if (attackingTeamId === state.homeTeamId) homeScore += 1
-        else awayScore += 1
-        newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'freeThrowMade', teamId: attackingTeamId, playerId, homeScore, awayScore })
-      } else {
-        newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'freeThrowMissed', teamId: attackingTeamId, playerId, homeScore, awayScore })
-      }
-    }
-    attackingTeamId = defendingTeamId
-    spatial = releaseSpatialBall(spatial)
-    passesThisPossession = 0
-  } else if (outcome === 'passAttempt') {
-    const receiverCandidates = lineup.filter((candidateId) => candidateId !== playerId)
-    const receiverPlayerId = transitionContinuation === 'PASS_AHEAD'
-      ? transitionPassTargetId
-      : pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
-      ? screenForMovement?.screenerId
-      : cutterIsAvailableReceiver && cutForMovement !== undefined && receiverCandidates.includes(cutForMovement.playerId)
-        ? cutForMovement.playerId
-        : session.decisionRandom.pick(receiverCandidates)
-    if (receiverPlayerId === undefined || !receiverCandidates.includes(receiverPlayerId)) throw new MatchSimulationError('Selected pass target must be an active teammate')
-    const passerSpatial = spatial.players.find((player) => player.playerId === playerId)
-    const receiverSpatial = spatial.players.find((player) => player.playerId === receiverPlayerId)
-    if (passerSpatial === undefined || receiverSpatial === undefined) throw new MatchSimulationError('Pass actors must both have active SpatialState positions')
-    const laneDefenders: PassingLaneDefender[] = spatial.players
-      .filter((player) => player.teamId === defendingTeamId)
-      .map((player) => {
-        const defenderProfile = profileForPlayer(defendingProfiles, player.playerId)
-        return { playerId: player.playerId, position: player.position, stealAbility: defenderProfile.defense.steal ?? defenderProfile.defense.pointOfAttack }
-      })
-    const laneContext = calculatePassingLaneContext(passerSpatial.position, receiverSpatial.position, laneDefenders)
-    const completionProbability = calculatePassCompletionProbability({ passer: offensiveActor, passLengthMeters: laneContext.passLengthMeters, lanePressure: laneContext.lanePressure })
-    if (session.random.chance(completionProbability)) {
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'passCompleted', teamId: attackingTeamId, passerPlayerId: playerId, receiverPlayerId, homeScore, awayScore })
-      spatial = controlBallByPlayer(spatial, receiverPlayerId)
-      nextCatchContext = receiverPlayerId
-      passesThisPossession += 1
-    } else {
-      const interceptorId = laneContext.mostDangerousDefenderId
-      const stealPlayerId = interceptorId !== undefined && session.decisionRandom.chance(calculateStealCreditProbability(profileForPlayer(defendingProfiles, interceptorId)))
-        ? interceptorId
-        : undefined
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, turnoverType: 'failedPass', passTargetPlayerId: receiverPlayerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
-      attackingTeamId = defendingTeamId
-      spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
-      passesThisPossession = 0
-    }
-  } else if (outcome === 'fieldGoalAttempt') {
-    const defenderSpatial = spatial.players.find((player) => player.playerId === primaryDefenderId)
-    const defenderDistanceMeters = defenderSpatial === undefined ? undefined : distanceBetween(shooterSpatial.position, defenderSpatial.position)
-    const made = session.random.chance(calculateShotMakeProbability({ shotZone, shotDistanceMeters: shotLocation.distanceMeters, defenderDistanceMeters, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0, tacticalDefenseModifier: calculateTacticalDefenseModifier(defendingPlan, shotZone) }))
-    const points = pointsForShotZone(shotZone)
-    if (made) {
-      const assistCandidates = lineup.filter((candidateId) => candidateId !== playerId).map((candidateId) => profileForPlayer(profiles, candidateId))
-      const assistPlayerId = !session.actorRandom.chance(calculateAssistProbability({ shotZone, teammateProfiles: assistCandidates })) ? undefined : selectAssister(assistCandidates, session.actorRandom).playerId
-      if (attackingTeamId === state.homeTeamId) homeScore += points
-      else awayScore += points
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
-      attackingTeamId = otherTeamId(attackingTeamId, state)
-      spatial = releaseSpatialBall(spatial)
-      passesThisPossession = 0
-    } else {
-      const blockedByPlayerId = session.actorRandom.chance(calculateBlockCreditProbability(primaryDefender, shotZone)) ? primaryDefenderId : undefined
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(blockedByPlayerId === undefined ? {} : { blockedByPlayerId }), shotZone, homeScore, awayScore })
-      const distanceToBasketMetersByPlayerId = Object.fromEntries(spatial.players.map((player) => [player.playerId, distanceBetween(player.position, attackingBasket)]))
-      const reboundSpatialContext = { distanceToBasketMetersByPlayerId }
-      const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)), ...reboundSpatialContext })
-      const reboundType = session.random.chance(offensiveReboundProbability) ? 'offensive' : 'defensive'
-      const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
-      const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
-      const reboundProfiles = reboundTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
-      // The rebounder becomes the spatial ball owner, so selecting one belongs to the decision
-      // stream; stat attribution draws must not alter possession geometry or match outcomes.
-      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.decisionRandom, reboundSpatialContext).playerId
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
-      attackingTeamId = reboundTeamId
-      spatial = controlBallByPlayer(spatial, reboundPlayerId)
-      if (reboundTeamId !== state.attackingTeamId) passesThisPossession = 0
-    }
-  } else {
-    const stealPlayerId = session.decisionRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
-    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
-    attackingTeamId = otherTeamId(attackingTeamId, state)
-    spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
-    passesThisPossession = 0
-  }
+  const executed = executeMatchAction(session, { outcome, clockSecondsRemaining, lineup, profiles, playerId, offensiveActor, defendingTeamId, defendingLineup, defendingProfiles, defendingPlan, primaryDefenderId, primaryDefender, shooterSpatial, shotLocation, shotZone, attackingBasket, spatial, spatialDetail: true, activeHandoff, transitionContinuation, transitionPassTargetId, pickAndRollContinuation, screenForMovement, cutterIsAvailableReceiver, cutForMovement }, newEvents)
+  const { attackingTeamId, passesThisPossession, nextCatchContext } = executed
+  homeScore = executed.homeScore
+  awayScore = executed.awayScore
+  sequence = executed.sequence
+  spatial = executed.spatial
 
   const cutRemainsOffBall = spatial.ball.kind !== 'playerControlled' || spatial.ball.playerId !== progressedCut?.playerId
   const offBallCut = attackingTeamId === state.attackingTeamId && cutRemainsOffBall ? progressedCut : undefined
@@ -894,6 +803,191 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
   return { session: { ...fatiguedSession, state: nextState }, newEvents }
+}
+
+/** One sporting execution authority for spatial and non-spatial preparation. */
+function executeMatchAction(session: MatchSession, context: {
+  readonly outcome: PossessionOutcome
+  readonly clockSecondsRemaining: number
+  readonly lineup: readonly PlayerId[]
+  readonly profiles: readonly MatchPlayerProfile[]
+  readonly playerId: PlayerId
+  readonly offensiveActor: MatchPlayerProfile
+  readonly defendingTeamId: TeamId
+  readonly defendingLineup: readonly PlayerId[]
+  readonly defendingProfiles: readonly MatchPlayerProfile[]
+  readonly defendingPlan: MatchTacticalPlan
+  readonly primaryDefenderId: PlayerId
+  readonly primaryDefender: MatchPlayerProfile
+  readonly shooterSpatial: SpatialState['players'][number]
+  readonly shotLocation: ReturnType<typeof calculateShotLocation>
+  readonly shotZone: ShotZone
+  readonly attackingBasket: { readonly x: number; readonly y: number }
+  readonly spatial: SpatialState
+  readonly spatialDetail: boolean
+  readonly activeHandoff?: ReturnType<typeof validateHandoff>
+  readonly transitionContinuation?: TransitionContinuation
+  readonly transitionPassTargetId?: PlayerId
+  readonly pickAndRollContinuation?: PickAndRollHandlerContinuation
+  readonly screenForMovement?: ScreenIntent
+  readonly cutterIsAvailableReceiver?: boolean
+  readonly cutForMovement?: OffBallCutIntent
+}, newEvents: MatchEvent[]) {
+  const state = session.state
+  const { outcome, clockSecondsRemaining, lineup, profiles, playerId, offensiveActor, defendingTeamId, defendingLineup, defendingProfiles, defendingPlan, primaryDefenderId, primaryDefender, shooterSpatial, shotLocation, shotZone, attackingBasket, spatialDetail, activeHandoff, transitionContinuation, transitionPassTargetId, pickAndRollContinuation, screenForMovement, cutterIsAvailableReceiver, cutForMovement } = context
+  let spatial = context.spatial
+  let homeScore = state.homeScore
+  let awayScore = state.awayScore
+  let sequence = state.nextSequence
+  let attackingTeamId = state.attackingTeamId
+  let passesThisPossession = state.passesThisPossession ?? 0
+  let nextCatchContext: PlayerId | undefined
+
+  if (outcome === 'transitionAttack' || outcome === 'transitionSettle') {
+    // The selected authority runs through its existing movement and execution path on the next step.
+  } else if (outcome === 'handoff') {
+    const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
+    if (transferred === undefined) throw new MatchSimulationError('A ready handoff failed canonical ball transfer validation')
+    spatial = transferred
+  } else if (outcome === 'handoffApproach') {
+    // Keep the handoff primary while MG6 advances the receiver toward the giver.
+  } else if (outcome === 'shootingFoul') {
+    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'foul', teamId: defendingTeamId, playerId: primaryDefenderId, foulType: 'shooting', homeScore, awayScore })
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (session.random.chance(FREE_THROW_MADE_PROBABILITY)) {
+        if (attackingTeamId === state.homeTeamId) homeScore += 1
+        else awayScore += 1
+        newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'freeThrowMade', teamId: attackingTeamId, playerId, homeScore, awayScore })
+      } else {
+        newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'freeThrowMissed', teamId: attackingTeamId, playerId, homeScore, awayScore })
+      }
+    }
+    attackingTeamId = defendingTeamId
+    spatial = releaseSpatialBall(spatial)
+    passesThisPossession = 0
+  } else if (outcome === 'passAttempt') {
+    const receiverCandidates = lineup.filter((candidateId) => candidateId !== playerId)
+    const receiverPlayerId = transitionContinuation === 'PASS_AHEAD'
+      ? transitionPassTargetId
+      : pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
+      ? screenForMovement?.screenerId
+      : cutterIsAvailableReceiver && cutForMovement !== undefined && receiverCandidates.includes(cutForMovement.playerId)
+        ? cutForMovement.playerId
+        : session.decisionRandom.pick(receiverCandidates)
+    if (receiverPlayerId === undefined || !receiverCandidates.includes(receiverPlayerId)) throw new MatchSimulationError('Selected pass target must be an active teammate')
+    const passerSpatial = spatial.players.find((player) => player.playerId === playerId)
+    const receiverSpatial = spatial.players.find((player) => player.playerId === receiverPlayerId)
+    if (passerSpatial === undefined || receiverSpatial === undefined) throw new MatchSimulationError('Pass actors must both have active SpatialState positions')
+    const laneDefenders: PassingLaneDefender[] = spatial.players
+      .filter((player) => player.teamId === defendingTeamId)
+      .map((player) => {
+        const defenderProfile = profileForPlayer(defendingProfiles, player.playerId)
+        return { playerId: player.playerId, position: player.position, stealAbility: defenderProfile.defense.steal ?? defenderProfile.defense.pointOfAttack }
+      })
+    const laneContext = spatialDetail ? calculatePassingLaneContext(passerSpatial.position, receiverSpatial.position, laneDefenders) : { passLengthMeters: 0, lanePressure: 0, mostDangerousDefenderId: primaryDefenderId }
+    const completionProbability = calculatePassCompletionProbability({ passer: offensiveActor, passLengthMeters: laneContext.passLengthMeters, lanePressure: laneContext.lanePressure })
+    if (session.random.chance(completionProbability)) {
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'passCompleted', teamId: attackingTeamId, passerPlayerId: playerId, receiverPlayerId, homeScore, awayScore })
+      spatial = controlBallByPlayer(spatial, receiverPlayerId)
+      nextCatchContext = receiverPlayerId
+      passesThisPossession += 1
+    } else {
+      const interceptorId = laneContext.mostDangerousDefenderId
+      const stealPlayerId = interceptorId !== undefined && session.decisionRandom.chance(calculateStealCreditProbability(profileForPlayer(defendingProfiles, interceptorId)))
+        ? interceptorId
+        : undefined
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, turnoverType: 'failedPass', passTargetPlayerId: receiverPlayerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
+      attackingTeamId = defendingTeamId
+      spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
+      passesThisPossession = 0
+    }
+  } else if (outcome === 'fieldGoalAttempt') {
+    const defenderSpatial = spatial.players.find((player) => player.playerId === primaryDefenderId)
+    const defenderDistanceMeters = !spatialDetail || defenderSpatial === undefined ? undefined : distanceBetween(shooterSpatial.position, defenderSpatial.position)
+    const made = session.random.chance(calculateShotMakeProbability({ shotZone, shotDistanceMeters: spatialDetail ? shotLocation.distanceMeters : undefined, defenderDistanceMeters, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0, tacticalDefenseModifier: calculateTacticalDefenseModifier(defendingPlan, shotZone) }))
+    const points = pointsForShotZone(shotZone)
+    if (made) {
+      const assistCandidates = lineup.filter((candidateId) => candidateId !== playerId).map((candidateId) => profileForPlayer(profiles, candidateId))
+      const assistPlayerId = !session.actorRandom.chance(calculateAssistProbability({ shotZone, teammateProfiles: assistCandidates })) ? undefined : selectAssister(assistCandidates, session.actorRandom).playerId
+      if (attackingTeamId === state.homeTeamId) homeScore += points
+      else awayScore += points
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
+      attackingTeamId = otherTeamId(attackingTeamId, state)
+      spatial = releaseSpatialBall(spatial)
+      passesThisPossession = 0
+    } else {
+      const blockedByPlayerId = session.actorRandom.chance(calculateBlockCreditProbability(primaryDefender, shotZone)) ? primaryDefenderId : undefined
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(blockedByPlayerId === undefined ? {} : { blockedByPlayerId }), shotZone, homeScore, awayScore })
+      const distanceToBasketMetersByPlayerId = Object.fromEntries(spatial.players.map((player) => [player.playerId, distanceBetween(player.position, attackingBasket)]))
+      const reboundSpatialContext = spatialDetail ? { distanceToBasketMetersByPlayerId } : {}
+      const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)), ...reboundSpatialContext })
+      const reboundType = session.random.chance(offensiveReboundProbability) ? 'offensive' : 'defensive'
+      const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
+      const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+      const reboundProfiles = reboundTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
+      // The rebounder becomes the spatial ball owner, so selecting one belongs to the decision
+      // stream; stat attribution draws must not alter possession geometry or match outcomes.
+      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.decisionRandom, reboundSpatialContext).playerId
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
+      attackingTeamId = reboundTeamId
+      spatial = controlBallByPlayer(spatial, reboundPlayerId)
+      if (reboundTeamId !== state.attackingTeamId) passesThisPossession = 0
+    }
+  } else {
+    const stealPlayerId = session.decisionRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
+    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
+    attackingTeamId = otherTeamId(attackingTeamId, state)
+    spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
+    passesThisPossession = 0
+  }
+
+  return { homeScore, awayScore, sequence, attackingTeamId, passesThisPossession, nextCatchContext, spatial }
+}
+
+/** Lower-detail preparation, with the same action execution, clocks, rotations, fatigue and result authority. */
+function stepNonSpatialMatchSession(session: MatchSession): MatchSessionStepResult {
+  const state = session.state
+  const newEvents: MatchEvent[] = []
+  const homeAttacks = state.attackingTeamId === state.homeTeamId
+  const lineup = homeAttacks ? state.activeLineups.home : state.activeLineups.away
+  const profiles = homeAttacks ? state.playerProfiles.home : state.playerProfiles.away
+  const defendingLineup = homeAttacks ? state.activeLineups.away : state.activeLineups.home
+  const defendingProfiles = homeAttacks ? state.playerProfiles.away : state.playerProfiles.home
+  const attackingPlan = homeAttacks ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
+  const defendingPlan = homeAttacks ? state.coachingState.away.currentTacticalPlan : state.coachingState.home.currentTacticalPlan
+  const possessionInterval = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
+  const actionDurationSeconds = state.possessionDurationApplied ? Math.max(1, Math.ceil(possessionInterval / 6)) : possessionInterval
+  if (actionDurationSeconds > state.clockSecondsRemaining) {
+    const fatigued = updateSessionFatigue(session, state, state.clockSecondsRemaining)
+    return finishPeriod(fatigued, { ...fatigued.state, clockSecondsRemaining: 0 }, newEvents)
+  }
+  const controlled = state.spatial.ball
+  const handler = controlled.kind === 'playerControlled' && controlled.teamId === state.attackingTeamId && lineup.includes(controlled.playerId)
+    ? profiles.find(profile => profile.playerId === controlled.playerId) : undefined
+  const offensiveActor = handler ?? chooseWeighted(lineup.map(playerId => ({ item: profileForPlayer(profiles, playerId), weight: tacticalUsageWeight(playerId, profileForPlayer(profiles, playerId).offense.usage, lineup, attackingPlan) })), session.decisionRandom)
+  const playerId = offensiveActor.playerId
+  const defendingTeamId = otherTeamId(state.attackingTeamId, state)
+  const overrides = homeAttacks ? state.defensiveMatchups?.away : state.defensiveMatchups?.home
+  const assignments = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles], overrides ?? [])
+  const primaryDefenderId = assignments.find(assignment => assignment.offensivePlayerId === playerId)?.defensivePlayerId
+  if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
+  const primaryDefender = profileForPlayer(defendingProfiles, primaryDefenderId)
+  const weights = applyShotProfile(calculateShotZoneWeights(offensiveActor), attackingPlan)
+  const shotZone = chooseWeighted((['rim', 'midRange', 'threePoint'] as const).map(zone => ({ item: zone, weight: weights[zone] })), session.decisionRandom)
+  const turnover = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
+  const pass = calculatePassActionProbability(offensiveActor.tendencies.PASS_FIRST_BIAS ?? 0, state.passesThisPossession ?? 0)
+  const outcome = choosePossessionOutcome(turnover, pass, 1, session.random)
+  const clockSecondsRemaining = state.clockSecondsRemaining - actionDurationSeconds
+  const spatial = controlBallByPlayer(state.spatial, playerId)
+  const shooterSpatial = spatial.players.find(player => player.playerId === playerId)!
+  const attackingBasket = getSpatialPossessionView({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, spatial }).attackingBasket
+  const executed = executeMatchAction(session, { outcome, clockSecondsRemaining, lineup, profiles, playerId, offensiveActor, defendingTeamId, defendingLineup, defendingProfiles, defendingPlan, primaryDefenderId, primaryDefender, shooterSpatial, shotLocation: { shotZone, distanceMeters: 0 }, shotZone, attackingBasket, spatial, spatialDetail: false }, newEvents)
+  const possessionDurationApplied = executed.attackingTeamId === state.attackingTeamId && !newEvents.some(event => event.type === 'rebound' && event.reboundType === 'offensive')
+  const { sequence, nextCatchContext: _catchContext, ...resolvedState } = executed
+  const nextState = { ...state, ...resolvedState, clockSecondsRemaining, possessionDurationApplied, nextSequence: sequence, catchContext: undefined }
+  const fatigued = updateSessionFatigue(session, nextState, actionDurationSeconds)
+  if (clockSecondsRemaining === 0) return finishPeriod(fatigued, fatigued.state, newEvents)
+  return { session: { ...fatigued, state: { ...fatigued.state, events: [...state.events, ...newEvents] } }, newEvents }
 }
 
 function updateSessionFatigue(session: MatchSession, state: MatchSessionState, elapsedSeconds: number): MatchSession {

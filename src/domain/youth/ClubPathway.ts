@@ -11,7 +11,7 @@ export interface TeamPathwayRelation {
   readonly category?: string
   readonly movementTargetTeamIds: readonly TeamId[]
 }
-export type RegistrationCause = 'ACADEMY_INTAKE' | 'AGE_GROUP_PROMOTION' | 'RESERVE_PROMOTION' | 'SENIOR_PROMOTION' | 'RELEASE'
+export type RegistrationCause = 'ACADEMY_INTAKE' | 'AGE_GROUP_PROMOTION' | 'RESERVE_PROMOTION' | 'SENIOR_PROMOTION' | 'RELEASE' | 'NCAA_WALK_ON'
 export interface PlayerRegistration {
   readonly id: string
   readonly playerId: PlayerId
@@ -33,6 +33,6 @@ export function createTeamPathwayRelation(value: TeamPathwayRelation): TeamPathw
 export function createPlayerRegistration(value: PlayerRegistration): PlayerRegistration {
   if (!value.id || !value.playerId || !value.teamId || !value.organizationId || !value.startsOn || !value.sourceActionId) throw new TypeError('Invalid player registration')
   if (value.endsOn !== undefined && value.endsOn < value.startsOn) throw new RangeError('Registration end precedes start')
-  if (!['ACADEMY_INTAKE', 'AGE_GROUP_PROMOTION', 'RESERVE_PROMOTION', 'SENIOR_PROMOTION', 'RELEASE'].includes(value.cause)) throw new TypeError('Invalid player registration cause')
+  if (!['ACADEMY_INTAKE', 'AGE_GROUP_PROMOTION', 'RESERVE_PROMOTION', 'SENIOR_PROMOTION', 'RELEASE', 'NCAA_WALK_ON'].includes(value.cause)) throw new TypeError('Invalid player registration cause')
   return Object.freeze({ ...value, startsOn: parseGameDate(value.startsOn), ...(value.endsOn ? { endsOn: parseGameDate(value.endsOn) } : {}) })
 }

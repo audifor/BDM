@@ -1,0 +1,349 @@
+{
+  "date": "2035-10-05",
+  "reports": [
+    {
+      "repairKind": "MINIMUM_PLAYABLE_ROSTER",
+      "sourceDomain": "WORLD_REPAIR",
+      "targetEntity": "generated-team-0004",
+      "classification": "RECOVERABLE",
+      "previousStateSummary": "available=4; required=5",
+      "actionApplied": "Signed only affordable same-gender free agents until the playable minimum was reached.",
+      "resultingStateSummary": "available=5; required=5",
+      "diagnostics": [],
+      "worldChanged": true,
+      "userActionRequired": false
+    }
+  ],
+  "teams": [
+    {
+      "gameId": "schedule-generated-season-0023-game-0005",
+      "teamId": "generated-team-0001",
+      "roster": [
+        "generated-player-0004",
+        "generated-player-0008",
+        "generated-player-0009",
+        "generated-player-0010",
+        "generated-player-0012"
+      ],
+      "available": [
+        "generated-player-0004",
+        "generated-player-0008",
+        "generated-player-0009",
+        "generated-player-0010",
+        "generated-player-0012"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0005",
+      "teamId": "generated-team-0007",
+      "roster": [
+        "generated-player-0074",
+        "generated-player-0075",
+        "generated-player-0076",
+        "generated-player-0077",
+        "generated-player-0079",
+        "generated-player-0080",
+        "generated-player-0081",
+        "generated-player-0082"
+      ],
+      "available": [
+        "generated-player-0074",
+        "generated-player-0075",
+        "generated-player-0076",
+        "generated-player-0077",
+        "generated-player-0079",
+        "generated-player-0080",
+        "generated-player-0081",
+        "generated-player-0082"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0006",
+      "teamId": "generated-team-0008",
+      "roster": [
+        "generated-player-0088",
+        "generated-player-0089",
+        "generated-player-0090",
+        "generated-player-0094",
+        "generated-player-0095"
+      ],
+      "available": [
+        "generated-player-0088",
+        "generated-player-0089",
+        "generated-player-0090",
+        "generated-player-0094",
+        "generated-player-0095"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0006",
+      "teamId": "generated-team-0006",
+      "roster": [
+        "generated-player-0062",
+        "generated-player-0065",
+        "generated-player-0069",
+        "generated-player-0070",
+        "generated-player-0071",
+        "generated-player-0072"
+      ],
+      "available": [
+        "generated-player-0062",
+        "generated-player-0069",
+        "generated-player-0070",
+        "generated-player-0071",
+        "generated-player-0072"
+      ],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0065",
+          "eligibility": {
+            "eligible": true,
+            "status": "eligible",
+            "reasons": [],
+            "seasonsRemaining": 0
+          },
+          "injuries": [
+            {
+              "id": "injury:ai-training:generated-team-0006:2034-04-20:generated-player-0065",
+              "playerId": "generated-player-0065",
+              "kind": "hamstringStrain",
+              "severity": "minor",
+              "injuredOn": "2034-04-20",
+              "expectedReturnDate": "2034-04-27",
+              "source": "TRAINING",
+              "sourceTrainingSessionId": "ai-training:generated-team-0006:2034-04-20",
+              "returnToPlay": {
+                "reviewDueOn": "2034-04-27",
+                "clearedOn": "2034-04-26",
+                "reviews": [
+                  {
+                    "reviewedOn": "2034-04-26",
+                    "decision": "CLEAR_FOR_PLAY",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0006"
+                    }
+                  }
+                ]
+              },
+              "rehabilitation": {
+                "mode": "ACCELERATED_REHAB",
+                "startedOn": "2034-04-20",
+                "changedOn": "2034-04-20",
+                "history": [
+                  {
+                    "changedOn": "2034-04-20",
+                    "mode": "ACCELERATED_REHAB",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0006"
+                    }
+                  }
+                ]
+              },
+              "rehabilitationSetbacks": [],
+              "fitnessTests": []
+            },
+            {
+              "id": "injury:schedule-generated-season-0023-game-0003:generated-player-0065",
+              "playerId": "generated-player-0065",
+              "kind": "handInjury",
+              "severity": "minor",
+              "injuredOn": "2035-10-01",
+              "expectedReturnDate": "2035-10-08",
+              "sourceGameId": "schedule-generated-season-0023-game-0003",
+              "source": "MATCH",
+              "returnToPlay": {
+                "reviewDueOn": "2035-10-08",
+                "reviews": []
+              },
+              "rehabilitation": {
+                "mode": "ACCELERATED_REHAB",
+                "startedOn": "2035-10-01",
+                "changedOn": "2035-10-02",
+                "history": [
+                  {
+                    "changedOn": "2035-10-02",
+                    "mode": "ACCELERATED_REHAB",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0006"
+                    }
+                  }
+                ]
+              },
+              "rehabilitationSetbacks": [],
+              "fitnessTests": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0007",
+      "teamId": "generated-team-0002",
+      "roster": [
+        "generated-player-0014",
+        "generated-player-0016",
+        "generated-player-0021",
+        "generated-player-0022",
+        "generated-player-0023",
+        "generated-player-0024"
+      ],
+      "available": [
+        "generated-player-0014",
+        "generated-player-0016",
+        "generated-player-0021",
+        "generated-player-0022",
+        "generated-player-0023",
+        "generated-player-0024"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0007",
+      "teamId": "generated-team-0005",
+      "roster": [
+        "generated-player-0052",
+        "generated-player-0054",
+        "generated-player-0058",
+        "generated-player-0060",
+        "generated-player-0061"
+      ],
+      "available": [
+        "generated-player-0052",
+        "generated-player-0054",
+        "generated-player-0058",
+        "generated-player-0060",
+        "generated-player-0061"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0008",
+      "teamId": "generated-team-0003",
+      "roster": [
+        "generated-player-0026",
+        "generated-player-0027",
+        "generated-player-0030",
+        "generated-player-0033",
+        "generated-player-0011"
+      ],
+      "available": [
+        "generated-player-0026",
+        "generated-player-0027",
+        "generated-player-0030",
+        "generated-player-0033",
+        "generated-player-0011"
+      ],
+      "unavailable": []
+    },
+    {
+      "gameId": "schedule-generated-season-0023-game-0008",
+      "teamId": "generated-team-0004",
+      "roster": [
+        "generated-player-0037",
+        "generated-player-0039",
+        "generated-player-0045",
+        "generated-player-0047",
+        "generated-player-0048",
+        "generated-player-0040"
+      ],
+      "available": [
+        "generated-player-0037",
+        "generated-player-0045",
+        "generated-player-0047",
+        "generated-player-0048",
+        "generated-player-0040"
+      ],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0039",
+          "eligibility": {
+            "eligible": true,
+            "status": "eligible",
+            "reasons": [],
+            "seasonsRemaining": 0
+          },
+          "injuries": [
+            {
+              "id": "injury:ai-training:generated-team-0004:2034-06-10:generated-player-0039",
+              "playerId": "generated-player-0039",
+              "kind": "shoulderStrain",
+              "severity": "minor",
+              "injuredOn": "2034-06-10",
+              "expectedReturnDate": "2034-06-17",
+              "source": "TRAINING",
+              "sourceTrainingSessionId": "ai-training:generated-team-0004:2034-06-10",
+              "returnToPlay": {
+                "reviewDueOn": "2034-06-17",
+                "clearedOn": "2034-06-16",
+                "reviews": [
+                  {
+                    "reviewedOn": "2034-06-16",
+                    "decision": "CLEAR_FOR_PLAY",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0004"
+                    }
+                  }
+                ]
+              },
+              "rehabilitation": {
+                "mode": "ACCELERATED_REHAB",
+                "startedOn": "2034-06-10",
+                "changedOn": "2034-06-10",
+                "history": [
+                  {
+                    "changedOn": "2034-06-10",
+                    "mode": "ACCELERATED_REHAB",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0004"
+                    }
+                  }
+                ]
+              },
+              "rehabilitationSetbacks": [],
+              "fitnessTests": []
+            },
+            {
+              "id": "injury:ai-training:generated-team-0004:2035-10-02:generated-player-0039",
+              "playerId": "generated-player-0039",
+              "kind": "ankleSprain",
+              "severity": "minor",
+              "injuredOn": "2035-10-02",
+              "expectedReturnDate": "2035-10-07",
+              "source": "TRAINING",
+              "sourceTrainingSessionId": "ai-training:generated-team-0004:2035-10-02",
+              "returnToPlay": {
+                "reviewDueOn": "2035-10-07",
+                "reviews": []
+              },
+              "rehabilitation": {
+                "mode": "ACCELERATED_REHAB",
+                "startedOn": "2035-10-02",
+                "changedOn": "2035-10-02",
+                "history": [
+                  {
+                    "changedOn": "2035-10-02",
+                    "mode": "ACCELERATED_REHAB",
+                    "actor": {
+                      "kind": "AI",
+                      "teamId": "generated-team-0004"
+                    }
+                  }
+                ]
+              },
+              "rehabilitationSetbacks": [],
+              "fitnessTests": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

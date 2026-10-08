@@ -2,6 +2,15 @@
 
 This map defines who owns a fact and who consumes it. It is a design contract, not an implementation request. Preserve current domain boundaries and add only the smallest missing authorities after each product/rules decision.
 
+## BS15I long-horizon lifecycle authority
+
+| Fact | Canonical owner | Integration |
+|---|---|---|
+| Annual latent supply | `TalentCohort` + annual supply lifecycle | Creates deterministic, explicitly simulated yearly cohorts. It stores quantity/provenance only and materializes no Player by itself. |
+| Career end | `Player.careerEnd` via `endPlayerCareer` | Preserves Player/Person and history while closing current membership, enrollment, registration, Portal, Recruiting and active contract state. Ended Players are not free agents or acquisition targets. |
+| Future College rule carry-forward | `CollegeRuleset` | New seasons identify the source ruleset and `SIMULATED_CARRY_FORWARD` provenance. Rules remain season-effective; historical and official-source records are not relabeled. |
+| Career-end persistence | Save V4 `playerCareerEnds` | Optional additive collection; pre-BS15I V4 payloads load with active careers and unchanged legacy Player shapes. |
+
 ## BS15G Draft and professional movement authority note
 
 | Fact | Canonical owner | Integration |

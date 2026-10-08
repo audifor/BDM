@@ -1,3 +1,5 @@
+import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
+import { resolveSimulationDetail, type SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import type { Game } from '@/domain/game'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { TeamRotationIntent } from '@/domain/tactics'
@@ -195,9 +197,9 @@ function availableSquads(world: GameWorld, game: Game) {
 
 
 /** Applies a completed viewer simulation to GameWorld exactly through the result boundary. */
-export function completeMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
+export function completeMatch(world: GameWorld, simulation: MatchSimulation, pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
   const completed = applyCompletedMatch(world, simulation)
-  return applyPostMatchInjuries(applyPlayerMatchConsequences(completed, simulation), simulation.gameId)
+  return applyPostMatchInjuries(applyPlayerMatchConsequences(completed, simulation, pendingEvidence), simulation.gameId)
 }
 
 /** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */
@@ -210,8 +212,8 @@ export function playUserGame(world: GameWorld, matchSeed?: number): GameWorld {
   return instantResult(world, undefined, matchSeed)
 }
 
-export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[]): GameWorld {
+export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[], context: SimulationResolutionContext = {}, pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
   const options = prepareMatchOptions(world, game, undefined, matchSeed)
   repairReports?.push(...options.repairReports)
-  return completeMatch(world, simulateMatchWithRotations(options))
+  return completeMatch(world, simulateMatchWithRotations({ ...options, simulationDetail: resolveSimulationDetail(world, game, context) }), pendingEvidence)
 }

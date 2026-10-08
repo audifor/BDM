@@ -1,19 +1,48 @@
 import { addDays, type GameDate } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
-import { isPlayerAvailable, type GameWorld } from '@/domain/world'
+import { isPlayerAvailable, updateGameWorldBatch, type GameWorld } from '@/domain/world'
 import { getTeamRoster } from '@/domain/world'
 import { isStaffWeeklyCheckpoint, resolveDelegatedResponsibility } from '@/engine/staff'
 import { automaticTeamTrainingDefinitionId } from './AutomaticTeamTraining'
-import { dailyScheduledLoad } from './ScheduledTrainingEngine'
-import { assignTrainingModuleToPlayer, scheduleTeamModuleSession } from './TrainingModuleEngine'
+import { createIndividualTrainingModuleSession, createTeamModuleTrainingSession } from './TrainingModuleEngine'
+import { scheduleTrainingSessionsBatch } from './ScheduledTrainingEngine'
 import { recommendTrainingParticipation } from './TrainingParticipation'
 import { hashStringToSeed } from '@/engine/random'
-import { trainingDefinitionById, type TrainingIntensity } from '@/domain/training'
+import { dailyWorkloadScore, trainingDefinitionById, type ScheduledTrainingSession, type TrainingIntensity } from '@/domain/training'
 
 const PLANNING_HORIZON_DAYS = 7
 const HIGH_FATIGUE = 70
 const VERY_HIGH_FATIGUE = 85
 const MODERATE_FATIGUE = 50
+
+interface TrainingPlanningIndexes {
+  readonly gamesByTeamId: Map<TeamId, GameWorld['games'][keyof GameWorld['games']][]>
+  readonly sessionsByTeamId: Map<TeamId, ScheduledTrainingSession[]>
+}
+
+function createTrainingPlanningIndexes(world: GameWorld): TrainingPlanningIndexes {
+  const indexes: TrainingPlanningIndexes = { gamesByTeamId: new Map(), sessionsByTeamId: new Map() }
+  for (const game of Object.values(world.games)) {
+    for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+      const games = indexes.gamesByTeamId.get(teamId) ?? []
+      games.push(game)
+      indexes.gamesByTeamId.set(teamId, games)
+    }
+  }
+  for (const session of Object.values(world.scheduledTrainingSessionsById)) {
+    if (session.status !== 'scheduled') continue
+    const sessions = indexes.sessionsByTeamId.get(session.teamId) ?? []
+    sessions.push(session)
+    indexes.sessionsByTeamId.set(session.teamId, sessions)
+  }
+  return indexes
+}
+
+function addPlannedSession(indexes: TrainingPlanningIndexes, session: ScheduledTrainingSession): void {
+  const sessions = indexes.sessionsByTeamId.get(session.teamId) ?? []
+  sessions.push(session)
+  indexes.sessionsByTeamId.set(session.teamId, sessions)
+}
 
 export type TrainingFatigueBand = 'LOW' | 'MODERATE' | 'HIGH' | 'VERY_HIGH'
 export type TrainingPlanningWarningCode =
@@ -71,12 +100,12 @@ export interface AiTrainingPlanningResult {
 }
 
 /** Pure fixture, fatigue, and scheduled-session context used by both the planner and NG Training UI. */
-export function buildTrainingPlanningContext(world: GameWorld, teamId: TeamId, asOfDate: GameDate = world.currentDate): TrainingPlanningContext {
+export function buildTrainingPlanningContext(world: GameWorld, teamId: TeamId, asOfDate: GameDate = world.currentDate, indexes = createTrainingPlanningIndexes(world)): TrainingPlanningContext {
   const team = world.teams[teamId]
   const plan = world.trainingPlansByTeamId[teamId]
   if (team === undefined || plan === undefined) throw new RangeError(`Unknown team training plan: ${teamId}`)
 
-  const games = Object.values(world.games).filter((game) => game.homeTeamId === teamId || game.awayTeamId === teamId)
+  const games = indexes.gamesByTeamId.get(teamId) ?? []
   const today = games.some((game) => game.date === asOfDate)
   const tomorrow = addDays(asOfDate, 1)
   const yesterday = addDays(asOfDate, -1)
@@ -101,17 +130,24 @@ export function buildTrainingPlanningContext(world: GameWorld, teamId: TeamId, a
   const band: TrainingFatigueBand = average >= 80 || veryHighCount > 0 ? 'VERY_HIGH' : average >= HIGH_FATIGUE ? 'HIGH' : average >= 35 || highCount > 0 ? 'MODERATE' : 'LOW'
 
   const horizonDates = Array.from({ length: PLANNING_HORIZON_DAYS }, (_, index) => addDays(asOfDate, index + 1))
-  const pendingSessions = Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === teamId && session.status === 'scheduled')
+  const pendingSessions = indexes.sessionsByTeamId.get(teamId) ?? []
   const sessionsInHorizon = pendingSessions.filter((session) => horizonDates.includes(session.date))
   const matchConflictCount = pendingSessions.filter((session) => games.some((game) => game.date === session.date)).length
-  const scheduledLoadNext7Days = horizonDates.reduce((sum, date) => sum + dailyScheduledLoad(world, teamId, date), 0)
+  const scheduledLoadByDate = new Map<GameDate, number>()
+  for (const session of pendingSessions) {
+    if (!horizonDates.includes(session.date)) continue
+    const definition = trainingDefinitionById(session.definitionId)
+    scheduledLoadByDate.set(session.date, (scheduledLoadByDate.get(session.date) ?? 0)
+      + dailyWorkloadScore(session.intensity, session.durationMinutes, definition.effects.fatigueMultiplier))
+  }
+  const scheduledLoadNext7Days = horizonDates.reduce((sum, date) => sum + (scheduledLoadByDate.get(date) ?? 0), 0)
 
   const reasons: TrainingPlanningWarningCode[] = []
   if (today) reasons.push('MATCH_TODAY')
   if (scheduledGames.some((game) => game.date === tomorrow)) reasons.push('MATCH_TOMORROW')
   if (isDense) reasons.push('DENSE_FIXTURE_WINDOW')
   if (highCount > 0) reasons.push('HIGH_PLAYER_FATIGUE')
-  if (horizonDates.some((date) => dailyScheduledLoad(world, teamId, date) >= 80)) reasons.push('HIGH_SCHEDULED_LOAD')
+  if (horizonDates.some((date) => (scheduledLoadByDate.get(date) ?? 0) >= 80)) reasons.push('HIGH_SCHEDULED_LOAD')
   if (matchConflictCount > 0) reasons.push('MATCH_TRAINING_CONFLICT')
 
   const recoveryBias = average >= HIGH_FATIGUE || veryHighCount > 0 || (games.some((game) => game.status === 'completed' && game.date === yesterday) && average >= MODERATE_FATIGUE)
@@ -173,84 +209,92 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
   if (!isStaffWeeklyCheckpoint(world.currentDate)) return { world, decisions: [] }
 
   const userTeamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)?.id
-  let next = world
   const decisions: AiTrainingTeamDecision[] = []
-  for (const team of Object.values(world.teams).sort((a, b) => a.id.localeCompare(b.id))) {
-    if (team.id === userTeamId) continue
-    const context = buildTrainingPlanningContext(next, team.id)
-    const weekStart = addDays(next.currentDate, 1)
-    const weekEnd = addDays(next.currentDate, PLANNING_HORIZON_DAYS)
-    const alreadyPlannedThisHorizon = Object.values(next.scheduledTrainingSessionsById).some((session) =>
-      session.teamId === team.id && session.status === 'scheduled' && session.id.startsWith(`ai-training:${team.id}:`) && session.date >= weekStart && session.date <= weekEnd,
-    )
-    if (alreadyPlannedThisHorizon) {
-      decisions.push({ teamId: team.id, action: 'NO_CHANGE', reason: 'Existing AI week plan preserved; no re-planning.', sessionIds: [] })
-      continue
-    }
-    const plan = next.trainingPlansByTeamId[team.id]!
-    const severeFatigue = context.fatigue.average >= HIGH_FATIGUE || context.fatigue.veryHighCount > 0
-    const loadNeedsRecovery = context.fatigue.average >= MODERATE_FATIGUE || context.fatigue.highCount > 0
-    const recoveryDueToRecentGame = context.fixtureDensity.gameYesterday && loadNeedsRecovery
-    const targetSessions = severeFatigue ? 2 : context.fixtureDensity.isDense || loadNeedsRecovery ? 1 : 3
-    const sessionsToAdd = Math.max(0, targetSessions - context.scheduledSessionsNext7Days)
-    const candidates = eligibleTrainingDates(next, team.id)
-    const selected: GameDate[] = []
-    for (const date of candidates) {
-      if (selected.length >= sessionsToAdd) break
-      if (selected.length > 0 && daysBetween(selected[selected.length - 1]!, date) < 2) continue
-      selected.push(date)
-    }
+  const scheduledSessions: ScheduledTrainingSession[] = []
+  const indexes = createTrainingPlanningIndexes(world)
+  const planned = updateGameWorldBatch(world, (initial, update) => {
+    let next = initial
+    for (const team of Object.values(world.teams).sort((a, b) => a.id.localeCompare(b.id))) {
+      if (team.id === userTeamId) continue
+      const weekStart = addDays(next.currentDate, 1)
+      const weekEnd = addDays(next.currentDate, PLANNING_HORIZON_DAYS)
+      const teamSessions = indexes.sessionsByTeamId.get(team.id) ?? []
+      const alreadyPlannedThisHorizon = teamSessions.some((session) => session.id.startsWith(`ai-training:${team.id}:`) && session.date >= weekStart && session.date <= weekEnd)
+      if (alreadyPlannedThisHorizon) {
+        decisions.push({ teamId: team.id, action: 'NO_CHANGE', reason: 'Existing AI week plan preserved; no re-planning.', sessionIds: [] })
+        continue
+      }
+      const context = buildTrainingPlanningContext(next, team.id, next.currentDate, indexes)
+      const plan = next.trainingPlansByTeamId[team.id]!
+      const severeFatigue = context.fatigue.average >= HIGH_FATIGUE || context.fatigue.veryHighCount > 0
+      const loadNeedsRecovery = context.fatigue.average >= MODERATE_FATIGUE || context.fatigue.highCount > 0
+      const recoveryDueToRecentGame = context.fixtureDensity.gameYesterday && loadNeedsRecovery
+      const targetSessions = severeFatigue ? 2 : context.fixtureDensity.isDense || loadNeedsRecovery ? 1 : 3
+      const sessionsToAdd = Math.max(0, targetSessions - context.scheduledSessionsNext7Days)
+      const candidates = eligibleTrainingDates(next, team.id, indexes)
+      const selected: GameDate[] = []
+      for (const date of candidates) {
+        if (selected.length >= sessionsToAdd) break
+        if (selected.length > 0 && daysBetween(selected[selected.length - 1]!, date) < 2) continue
+        selected.push(date)
+      }
 
-    const resolvedStaff = resolveDelegatedResponsibility(next, team.id, 'createTeamTrainingPlan')
-    const employment = resolvedStaff === undefined ? undefined : next.staffEmploymentByStaffId[resolvedStaff.staffId]
-    const staff = employment?.status === 'employed' && employment.teamId === team.id ? resolvedStaff : undefined
-    const sessionIds: string[] = []
-    for (const date of selected) {
-      const dayAfterGame = Object.values(next.games).some((game) => game.status === 'completed' && game.date === addDays(date, -1) && (game.homeTeamId === team.id || game.awayTeamId === team.id))
-      const recovery = severeFatigue || context.fixtureDensity.isDense || context.fatigue.highCount > 0 || (dayAfterGame && context.fatigue.average >= MODERATE_FATIGUE)
-      const moduleId = recovery
-        ? severeFatigue ? 'lowLoadRecovery' : 'activeRecovery'
-        : aiTrainingModuleId(team.id, plan.focus)
-      const definition = trainingDefinitionById(moduleId)
-      const reducedIntensity = severeFatigue || context.fatigue.average >= MODERATE_FATIGUE || context.fatigue.highCount > 0
-      const intensity: TrainingIntensity = recovery || reducedIntensity ? 'light' : plan.intensity
-      const sessionId = `ai-training:${team.id}:${date}`
-      next = scheduleTeamModuleSession(next, {
-        teamId: team.id,
-        moduleId,
-        date,
-        startTime: '09:00',
-        durationMinutes: definition.durationMinutes,
-        sessionId,
-        intensity,
-        participationByPlayerId: Object.fromEntries(getTeamRoster(next, team.id).map((player) => [player.id, recommendTrainingParticipation(next, team.id, player.id, date)])),
-        ...(staff === undefined ? {} : { assignedStaffPersonIds: [staff.staffId] }),
-      })
-      sessionIds.push(sessionId)
-    }
-    if (sessionIds.length > 0 && !context.fixtureDensity.isDense && context.fatigue.band === 'LOW' && context.fatigue.unavailableCount === 0) {
-      const individualDate = candidates.find((date) => !selected.includes(date) && selected.every((teamDate) => Math.abs(daysBetween(teamDate, date)) >= 2))
-      const moduleId = individualDevelopmentModuleId(team.id, plan.focus)
-      const definition = trainingDefinitionById(moduleId)
-      const targetRatings = definition.effects.targetRatings
-      const player = getTeamRoster(next, team.id)
-        .filter((candidate) => definition.eligiblePositions === undefined || definition.eligiblePositions.includes(candidate.basketball.primaryPosition))
-        .sort((left, right) => developmentNeed(left, targetRatings) - developmentNeed(right, targetRatings) || left.id.localeCompare(right.id))[0]
-      if (individualDate !== undefined && player !== undefined) {
-        const sessionId = `ai-training-individual:${team.id}:${individualDate}:${player.id}`
-        next = assignTrainingModuleToPlayer(next, { teamId: team.id, playerId: player.id, moduleId, date: individualDate, startTime: '11:00', sessionId })
+      const resolvedStaff = resolveDelegatedResponsibility(next, team.id, 'createTeamTrainingPlan')
+      const employment = resolvedStaff === undefined ? undefined : next.staffEmploymentByStaffId[resolvedStaff.staffId]
+      const staff = employment?.status === 'employed' && employment.teamId === team.id ? resolvedStaff : undefined
+      const sessionIds: string[] = []
+      for (const date of selected) {
+        const dayAfterGame = Object.values(next.games).some((game) => game.status === 'completed' && game.date === addDays(date, -1) && (game.homeTeamId === team.id || game.awayTeamId === team.id))
+        const recovery = severeFatigue || context.fixtureDensity.isDense || context.fatigue.highCount > 0 || (dayAfterGame && context.fatigue.average >= MODERATE_FATIGUE)
+        const moduleId = recovery
+          ? severeFatigue ? 'lowLoadRecovery' : 'activeRecovery'
+          : aiTrainingModuleId(team.id, plan.focus)
+        const definition = trainingDefinitionById(moduleId)
+        const reducedIntensity = severeFatigue || context.fatigue.average >= MODERATE_FATIGUE || context.fatigue.highCount > 0
+        const intensity: TrainingIntensity = recovery || reducedIntensity ? 'light' : plan.intensity
+        const sessionId = `ai-training:${team.id}:${date}`
+        const session = createTeamModuleTrainingSession(next, {
+          teamId: team.id,
+          moduleId,
+          date,
+          startTime: '09:00',
+          durationMinutes: definition.durationMinutes,
+          sessionId,
+          intensity,
+          participationByPlayerId: Object.fromEntries(getTeamRoster(next, team.id).map((player) => [player.id, recommendTrainingParticipation(next, team.id, player.id, date)])),
+          ...(staff === undefined ? {} : { assignedStaffPersonIds: [staff.staffId] }),
+        })
+        scheduledSessions.push(session)
+        addPlannedSession(indexes, session)
         sessionIds.push(sessionId)
       }
+      if (sessionIds.length > 0 && !context.fixtureDensity.isDense && context.fatigue.band === 'LOW' && context.fatigue.unavailableCount === 0) {
+        const individualDate = candidates.find((date) => !selected.includes(date) && selected.every((teamDate) => Math.abs(daysBetween(teamDate, date)) >= 2))
+        const moduleId = individualDevelopmentModuleId(team.id, plan.focus)
+        const definition = trainingDefinitionById(moduleId)
+        const targetRatings = definition.effects.targetRatings
+        const player = getTeamRoster(next, team.id)
+          .filter((candidate) => definition.eligiblePositions === undefined || definition.eligiblePositions.includes(candidate.basketball.primaryPosition))
+          .sort((left, right) => developmentNeed(left, targetRatings) - developmentNeed(right, targetRatings) || left.id.localeCompare(right.id))[0]
+        if (individualDate !== undefined && player !== undefined) {
+          const sessionId = `ai-training-individual:${team.id}:${individualDate}:${player.id}`
+          const session = createIndividualTrainingModuleSession(next, { teamId: team.id, playerId: player.id, moduleId, date: individualDate, startTime: '11:00', sessionId })
+          scheduledSessions.push(session)
+          addPlannedSession(indexes, session)
+          sessionIds.push(sessionId)
+        }
+      }
+      decisions.push({
+        teamId: team.id,
+        action: sessionIds.length === 0 ? 'NO_CHANGE' : 'SCHEDULED',
+        reason: sessionIds.length === 0 ? noSessionReason(context) : reasonForPlan(context, severeFatigue),
+        sessionIds,
+        ...(staff === undefined ? {} : { delegatedStaffId: staff.staffId }),
+      })
     }
-    decisions.push({
-      teamId: team.id,
-      action: sessionIds.length === 0 ? 'NO_CHANGE' : 'SCHEDULED',
-      reason: sessionIds.length === 0 ? noSessionReason(context) : reasonForPlan(context, severeFatigue),
-      sessionIds,
-      ...(staff === undefined ? {} : { delegatedStaffId: staff.staffId }),
-    })
-  }
-  return { world: next, decisions }
+    return scheduleTrainingSessionsBatch(next, scheduledSessions, {}, update)
+  })
+  return { world: planned, decisions }
 }
 
 /** Balanced plans vary by stable team identity while explicit team focus remains authoritative. */
@@ -270,9 +314,9 @@ function developmentNeed(player: import('@/domain/player').Player, targetRatings
   return targetRatings.length === 0 ? Number.POSITIVE_INFINITY : targetRatings.reduce((total, key) => total + player.basketball.ratings[key], 0) / targetRatings.length
 }
 
-function eligibleTrainingDates(world: GameWorld, teamId: TeamId): readonly GameDate[] {
-  const games = Object.values(world.games).filter((game) => game.homeTeamId === teamId || game.awayTeamId === teamId)
-  const pendingDates = new Set(Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === teamId && session.status === 'scheduled').map((session) => session.date))
+function eligibleTrainingDates(world: GameWorld, teamId: TeamId, indexes: TrainingPlanningIndexes): readonly GameDate[] {
+  const games = indexes.gamesByTeamId.get(teamId) ?? []
+  const pendingDates = new Set((indexes.sessionsByTeamId.get(teamId) ?? []).map((session) => session.date))
   return Array.from({ length: PLANNING_HORIZON_DAYS }, (_, index) => addDays(world.currentDate, index + 1))
     .filter((date) => !games.some((game) => game.date === date))
     .filter((date) => !games.some((game) => game.status === 'scheduled' && game.date === addDays(date, 1)))

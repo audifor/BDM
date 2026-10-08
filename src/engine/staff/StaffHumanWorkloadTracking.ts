@@ -37,13 +37,21 @@ export function emitWorkloadTransitionEvents(world: GameWorld): GameWorld {
   if (isoWeekday(world.currentDate) !== 1) return world // same weekly checkpoint as appraisal — see module doc comment
 
   const events: StaffHumanEvent[] = []
+  // Read the historical stream once per weekly checkpoint, not once per staff context.
+  const latestByContext = new Map<string, GameWorld['staffReactionRecordsById'][keyof GameWorld['staffReactionRecordsById']]>()
+  for (const record of Object.values(world.staffReactionRecordsById)) {
+    if (!record.sourceEventId.startsWith(`workload-checkpoint:${record.contextId}`)) continue
+    const prior = latestByContext.get(record.contextId)
+    if (prior === undefined || record.occurredOn > prior.occurredOn || (record.occurredOn === prior.occurredOn && record.id.localeCompare(prior.id) > 0)) latestByContext.set(record.contextId, record)
+  }
   for (const context of Object.values(world.staffHumanContextsById)) {
     if (context.endedOn !== undefined) continue
     const assignment = getStaffAssignment(world, context.staffId)
     if (assignment === undefined || assignment.teamId !== context.teamId) continue
 
     const band = classifyWorkloadBand(calculateStaffWorkload(world, context.staffId).utilization)
-    const previousBand = lastRecordedBand(world, context)
+    const latest = latestByContext.get(context.id)
+    const previousBand = latest === undefined || latest.eventKind === 'workloadRelief' ? undefined : bandFromEventKind(latest.eventKind)
 
     if (previousBand === 'OVERLOADED' && band !== 'OVERLOADED') events.push(buildReliefEvent(world, context))
     // Always record this week's checkpoint (via a sustained* event whose importance reflects
@@ -52,16 +60,6 @@ export function emitWorkloadTransitionEvents(world: GameWorld): GameWorld {
     events.push(buildSustainedEvent(world, context, band, previousBand === band))
   }
   return applyStaffHumanEventsBatch(world, events)
-}
-
-/** Reads the band recorded by the most recent weekly workload checkpoint reaction for this context — never a new persisted field, purely a query over existing `StaffReactionRecord` history. */
-function lastRecordedBand(world: GameWorld, context: StaffHumanContext): StaffWorkloadBand | undefined {
-  const checkpoints = Object.values(world.staffReactionRecordsById)
-    .filter((record) => record.contextId === context.id && record.sourceEventId.startsWith(checkpointSourceId(context)))
-    .sort((a, b) => b.occurredOn.localeCompare(a.occurredOn) || b.id.localeCompare(a.id))
-  const latest = checkpoints[0]
-  if (latest === undefined) return undefined
-  return latest.eventKind === 'workloadRelief' ? undefined : bandFromEventKind(latest.eventKind)
 }
 
 function bandFromEventKind(kind: StaffHumanEventKind): StaffWorkloadBand | undefined {

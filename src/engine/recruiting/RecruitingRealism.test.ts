@@ -27,7 +27,7 @@ describe('Recruiting three-program realism certification', () => {
     world = discovered.value
     const recruit = Object.values(world.recruitProfilesById).find((item) => item.cycleId === cycle.id)!
     expect(Object.keys(recruit.recruitingRpg!.preferenceProfile.importance).length).toBeGreaterThanOrEqual(4)
-    expect(['early', 'balanced', 'visitDriven']).toContain(recruit.recruitingRpg!.preferenceProfile.decisionStyle)
+    expect(['early', 'deliberate', 'visitDriven', 'deadlineDriven', 'volatile', 'loyal']).toContain(recruit.recruitingRpg!.preferenceProfile.decisionStyle)
     expect(Object.keys(recruit.recruitingRpg!.intel.find((item) => item.programTeamId === programB)?.beliefs ?? {})).toHaveLength(0)
     world = updateGameWorld(world, { recruitProfiles: Object.values(world.recruitProfilesById).map((item) => item.id === recruit.id ? { ...item, recruitingRpg: { ...item.recruitingRpg!, preferenceProfile: { importance: { playingTime: 10, roleClarity: 9, coachTrust: 10, familyTrust: 8, development: 3, winning: 1, prestige: 1, distance: 5, academics: 3, professionalPathway: 2, internationalSupport: 2 }, dealbreakers: [], decisionStyle: 'visitDriven' as const }, stakeholders: [{ id: 'three-program-parent', role: 'parent' as const, influence: 70, preference: 'familyTrust' as const, attitudeByProgram: { [String(programA)]: -20, [String(programB)]: 25, [String(programC)]: 0 } }] } } : item) })
 

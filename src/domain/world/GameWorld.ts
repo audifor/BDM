@@ -1,3 +1,4 @@
+import { WorldValidationScope, type WorldValidationMode } from './WorldValidationScope'
 import { createFacilityFinancialBinding, validateFacilityFinancialBindingCollection, type FacilityFinancialBinding } from '@/domain/facilities/FacilityFinancialBinding'
 import type { Coach } from '@/domain/coach'
 import type { Person } from '@/domain/person'
@@ -174,7 +175,7 @@ export interface GameWorld {
   readonly facilityOperationalIncidentsById: Readonly<Record<FacilityOperationalIncidentId, FacilityOperationalIncident>>
   readonly facilityDevelopmentProjectsById: Readonly<Record<FacilityDevelopmentProjectId, FacilityDevelopmentProject>>
   readonly facilityDevelopmentProjectPhasesById: Readonly<Record<FacilityDevelopmentProjectPhaseId, FacilityDevelopmentProjectPhase>>
-  /** CFI7 â€” non-monetary cross-references from a Facilities fact (maintenance action / development project) to a Finance fact. No amount lives here; see src/integration/facilitiesFinance. */
+  /** CFI7 Ã¢â‚¬â€ non-monetary cross-references from a Facilities fact (maintenance action / development project) to a Finance fact. No amount lives here; see src/integration/facilitiesFinance. */
   readonly facilityFinancialBindingsById: Readonly<Record<string, FacilityFinancialBinding>>
   readonly facilityOrganizationRelationshipsById: Readonly<Record<FacilityOrganizationRelationshipId, FacilityOrganizationRelationship>>
   readonly facilityTeamRelationshipsById: Readonly<Record<FacilityTeamRelationshipId, FacilityTeamRelationship>>
@@ -265,9 +266,9 @@ export interface GameWorld {
   readonly staffHumanStatesByContextId: Readonly<Record<StaffHumanContextId, StaffHumanState>>
   readonly staffExpectationProfilesByContextId: Readonly<Record<StaffHumanContextId, StaffExpectationProfile>>
   readonly staffReactionRecordsById: Readonly<Record<StaffReactionRecordId, StaffReactionRecord>>
-  /** Wave 5C â€” Organizational Culture, keyed by opaque `scopeKey` (= `TeamId` for this wave). Distinct from `teamCohesionByTeamId`. */
+  /** Wave 5C Ã¢â‚¬â€ Organizational Culture, keyed by opaque `scopeKey` (= `TeamId` for this wave). Distinct from `teamCohesionByTeamId`. */
   readonly staffCultureStatesByScopeKey: Readonly<Record<string, StaffCultureState>>
-  /** Wave 5C â€” Staff Unit Cohesion, keyed by `${teamId}:${department}`. Never the tactical/training `teamCohesionByTeamId`. */
+  /** Wave 5C Ã¢â‚¬â€ Staff Unit Cohesion, keyed by `${teamId}:${department}`. Never the tactical/training `teamCohesionByTeamId`. */
   readonly staffUnitCohesionStatesByUnitKey: Readonly<Record<string, StaffUnitCohesionState>>
   readonly staffConflictsById: Readonly<Record<string, StaffConflict>>
   readonly staffCareerAutonomyByContextId: Readonly<Record<StaffHumanContextId, StaffCareerAutonomyState>>
@@ -993,12 +994,167 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   return world
 }
 
+interface WorldValidationTransaction extends WeakSet<object> {
+  readonly scheduledChanges: Map<number, ScheduledTrainingSessionMapMetadata>
+  readonly stimulusAppends: Map<number, { readonly previousRevision: number; readonly additions: readonly DevelopmentStimulusEvent[] }>
+}
+const worldValidationTransactions: WorldValidationTransaction[] = []
+
+/** One atomic operation: append guards still run on every update; validate the final
+ * world before publication. Provisional worlds are owned by this synchronous scope. */
+export function withSingleWorldValidation(world: GameWorld, execute: (world: GameWorld) => GameWorld, options: { readonly validationMode?: WorldValidationMode } = {}): GameWorld {
+  const transaction = Object.assign(new WeakSet<object>([world]), { scheduledChanges: new Map<number, ScheduledTrainingSessionMapMetadata>(), stimulusAppends: new Map<number, { readonly previousRevision: number; readonly additions: readonly DevelopmentStimulusEvent[] }>() })
+  worldValidationTransactions.push(transaction)
+  let updated: GameWorld
+  try { updated = execute(world) }
+  finally { worldValidationTransactions.pop() }
+  // Collapse only this operation's append lineage; retain scalar revisions/new records,
+  // never the provisional worlds or historical maps after this synchronous scope ends.
+  const originalRevision = stimulusRevision(world.developmentStimulusEventsById)
+  const finalMetadata = stimulusAppendMetadata.get(updated.developmentStimulusEventsById)
+  let revision = finalMetadata?.revision
+  const additions: DevelopmentStimulusEvent[][] = []
+  while (revision !== undefined && revision !== originalRevision) {
+    const append = transaction.stimulusAppends.get(revision)
+    if (append === undefined) break
+    additions.push([...append.additions])
+    revision = append.previousRevision
+  }
+  if (finalMetadata !== undefined && revision === originalRevision && additions.length > 0) stimulusAppendMetadata.set(updated.developmentStimulusEventsById, { revision: finalMetadata.revision, previousRevision: originalRevision, additions: additions.reverse().flat() })
+  const originalScheduledRevision = scheduledRevision(world.scheduledTrainingSessionsById)
+  const finalScheduled = scheduledTrainingSessionMapMetadata.get(updated.scheduledTrainingSessionsById)
+  let scheduledCurrent = finalScheduled?.revision
+  const changedSessions = new Map<string, { readonly id: string; readonly previousSession?: ScheduledTrainingSession }>()
+  const scheduledBatches: ScheduledTrainingSessionMapMetadata[] = []
+  while (scheduledCurrent !== undefined && scheduledCurrent !== originalScheduledRevision) {
+    const change = transaction.scheduledChanges.get(scheduledCurrent)
+    if (change === undefined) break
+    scheduledBatches.push(change)
+    scheduledCurrent = change.previousRevision
+  }
+  for (const batch of scheduledBatches.reverse()) for (const change of batch.changedSessions ?? []) if (!changedSessions.has(change.id)) changedSessions.set(change.id, change)
+  if (finalScheduled && scheduledCurrent === originalScheduledRevision) scheduledTrainingSessionMapMetadata.set(updated.scheduledTrainingSessionsById, { revision: finalScheduled.revision, previousRevision: originalScheduledRevision, changedSessions: [...changedSessions.values()] })
+  const parent = worldValidationTransactions.at(-1)
+  if (parent?.has(world)) {
+    parent.add(updated)
+    for (const [revision, changes] of transaction.scheduledChanges) parent.scheduledChanges.set(revision, changes)
+    for (const [revision, append] of transaction.stimulusAppends) parent.stimulusAppends.set(revision, append)
+  }
+  else if (updated !== world) validateUpdatedGameWorld(updated, world, options.validationMode)
+  return updated
+}
+
 /** Rebuilds through the canonical validator while preserving unrelated world state. */
-export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
+export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput> & { readonly developmentStimulusEventAdditions?: readonly DevelopmentStimulusEvent[] }): GameWorld {
+  const updated = buildGameWorldUpdate(world, patch)
+  const transaction = worldValidationTransactions.at(-1)
+  if (transaction?.has(world)) transaction.add(updated)
+  else validateUpdatedGameWorld(updated, world)
+  return updated
+}
+
+// Append lineage contains only scalar revisions and new records, never old worlds/maps.
+const stimulusAppendMetadata = new WeakMap<object, { readonly revision: number; readonly previousRevision?: number; readonly additions?: readonly DevelopmentStimulusEvent[] }>()
+let nextStimulusRevision = 1
+function stimulusRevision(events: GameWorld['developmentStimulusEventsById']): number {
+  let metadata = stimulusAppendMetadata.get(events)
+  if (metadata === undefined) {
+    metadata = { revision: nextStimulusRevision++ }
+    stimulusAppendMetadata.set(events, metadata)
+  }
+  return metadata.revision
+}
+
+interface ScheduledTrainingSessionMapMetadata {
+  readonly revision: number
+  readonly previousRevision?: number
+  readonly changedSessions?: readonly { readonly id: string; readonly previousSession?: ScheduledTrainingSession }[]
+}
+
+const scheduledTrainingSessionMapMetadata = new WeakMap<object, ScheduledTrainingSessionMapMetadata>()
+let nextScheduledTrainingSessionMapRevision = 1
+
+function scheduledRevision(sessions: GameWorld['scheduledTrainingSessionsById']): number {
+  let metadata = scheduledTrainingSessionMapMetadata.get(sessions)
+  if (!metadata) { metadata = { revision: nextScheduledTrainingSessionMapRevision++ }; scheduledTrainingSessionMapMetadata.set(sessions, metadata) }
+  return metadata.revision
+}
+
+/** Copies one canonical session update while recording only scalar revision data and that session's prior value. */
+export function updateScheduledTrainingSessionRecord(
+  sessionsById: GameWorld['scheduledTrainingSessionsById'],
+  session: ScheduledTrainingSession,
+): GameWorld['scheduledTrainingSessionsById'] {
+  return updateScheduledTrainingSessionRecords(sessionsById, [session])
+}
+
+/** Copies the canonical scheduled-session Record once and tracks only changed entries for validation. */
+export function updateScheduledTrainingSessionRecords(
+  sessionsById: GameWorld['scheduledTrainingSessionsById'],
+  sessions: readonly ScheduledTrainingSession[],
+): GameWorld['scheduledTrainingSessionsById'] {
+  if (sessions.length === 0) return sessionsById
+  let previousMetadata = scheduledTrainingSessionMapMetadata.get(sessionsById as object)
+  if (previousMetadata === undefined) {
+    previousMetadata = { revision: nextScheduledTrainingSessionMapRevision++ }
+    scheduledTrainingSessionMapMetadata.set(sessionsById as object, previousMetadata)
+  }
+  const updated: Record<string, ScheduledTrainingSession> = {}
+  for (const id of Object.keys(sessionsById)) updated[id] = sessionsById[id]!
+  const changedById = new Map<string, ScheduledTrainingSession | undefined>()
+  for (const session of sessions) {
+    if (!changedById.has(session.id)) changedById.set(session.id, sessionsById[session.id])
+    updated[session.id] = session
+  }
+  scheduledTrainingSessionMapMetadata.set(updated, {
+    revision: nextScheduledTrainingSessionMapRevision++,
+    previousRevision: previousMetadata.revision,
+    changedSessions: [...changedById].map(([id, previousSession]) => ({ id, previousSession })),
+  })
+  return updated
+}
+
+/** Executes ordered updates with append guards, then validates the complete result before exposing it. */
+export function updateGameWorldBatch(world: GameWorld, execute: (initial: GameWorld, update: typeof updateGameWorld) => GameWorld): GameWorld {
+  const transaction = worldValidationTransactions.at(-1)
+  const updated = execute(world, (current, patch) => {
+    const next = buildGameWorldUpdate(current, patch)
+    if (transaction?.has(current)) transaction.add(next)
+    return next
+  })
+  if (transaction?.has(world)) transaction.add(updated)
+  else if (updated !== world) validateUpdatedGameWorld(updated, world)
+  return updated
+}
+
+function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldInput> & { readonly developmentStimulusEventAdditions?: readonly DevelopmentStimulusEvent[] }): GameWorld {
   const remainingPatch = { ...patch } as Record<string, unknown>
   const worldPatch: Record<string, unknown> = {}
+  const additions = remainingPatch.developmentStimulusEventAdditions as readonly DevelopmentStimulusEvent[] | undefined
+  delete remainingPatch.developmentStimulusEventAdditions
+  if (additions !== undefined && additions.length > 0) {
+    if (remainingPatch.developmentStimulusEvents !== undefined) throw new GameWorldValidationError('Use either complete stimulus history or additions')
+    const events: Record<string, DevelopmentStimulusEvent> = {}
+    for (const id of Object.keys(world.developmentStimulusEventsById)) events[id] = world.developmentStimulusEventsById[id]!
+    const validated = additions.map(createDevelopmentStimulusEvent)
+    for (const event of validated) {
+      if (events[event.id] !== undefined) throw new GameWorldValidationError(`Development stimulus event ${event.id} already exists`)
+      events[event.id] = event
+    }
+    Object.freeze(events)
+    const metadata = { revision: nextStimulusRevision++, previousRevision: stimulusRevision(world.developmentStimulusEventsById), additions: validated }
+    stimulusAppendMetadata.set(events, metadata)
+    for (const transaction of worldValidationTransactions) transaction.stimulusAppends.set(metadata.revision, metadata)
+    worldPatch.developmentStimulusEventsById = events
+  }
 
-  if (remainingPatch.scheduledTrainingSessionsById !== undefined) assertTrainingSessionsAppendOnly(world.scheduledTrainingSessionsById, remainingPatch.scheduledTrainingSessionsById as Readonly<Record<string, ScheduledTrainingSession>>)
+
+  if (remainingPatch.scheduledTrainingSessionsById !== undefined) {
+    const proposed = remainingPatch.scheduledTrainingSessionsById as GameWorld['scheduledTrainingSessionsById']
+    assertTrainingSessionsAppendOnly(world.scheduledTrainingSessionsById, proposed)
+    const change = scheduledTrainingSessionMapMetadata.get(proposed)
+    if (change) for (const transaction of worldValidationTransactions) transaction.scheduledChanges.set(change.revision, change)
+  }
   if (remainingPatch.playerRatingHistoryByPlayerId !== undefined) assertRatingHistoryAppendOnly(world.playerRatingHistoryByPlayerId, remainingPatch.playerRatingHistoryByPlayerId as Readonly<Record<string, PlayerRatingHistory>>)
 
   for (const [inputKey, worldKey] of Object.entries(collectionPatchTargets)) {
@@ -1006,7 +1162,14 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
     if (value === undefined) continue
     delete remainingPatch[inputKey]
     if (inputKey === 'financialTransactions') assertFinancialTransactionsAppendOnly(world, value as readonly FinancialTransaction[])
-    if (inputKey === 'developmentStimulusEvents') assertImmutableCollection(world.developmentStimulusEventsById, (value as readonly DevelopmentStimulusEvent[]).map(createDevelopmentStimulusEvent), 'Development stimulus event')
+    if (inputKey === 'developmentStimulusEvents') {
+      // Historical evidence is already canonical and immutable. Validate only replacements/new records.
+      const events = (value as readonly DevelopmentStimulusEvent[]).map((event) =>
+        world.developmentStimulusEventsById[event.id] === event ? event : createDevelopmentStimulusEvent(event),
+      )
+      worldPatch[worldKey] = assertImmutableCollection(world.developmentStimulusEventsById, events, 'Development stimulus event')
+      continue
+    }
   if (inputKey === 'treasuryApplications') assertTreasurySettlementsAppendOnly(world, value as readonly TreasurySettlement[])
     if (inputKey === 'revenueRecognitions') assertRevenueRecognitionsAppendOnly(world, value as readonly RevenueRecognition[])
     if (inputKey === 'expenseRecognitions') assertExpenseRecognitionsAppendOnly(world, value as readonly ExpenseRecognition[])
@@ -1040,15 +1203,21 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
         moraleByPersonId: peopleProfiles([...Object.values(withPersonRoots.coaches), ...Object.values(withPersonRoots.players), ...Object.values(withPersonRoots.staffPeopleById)], withPersonRoots.moraleByPersonId, createMoraleProfile),
       }
     : withPersonRoots
-  validateFinancialPlanningCollections(Object.values(updated.financialBudgetsById), Object.values(updated.budgetLinesById), Object.values(updated.budgetRevisionsById), Object.values(updated.budgetAllocationsById), Object.values(updated.forecastAssumptionsById))
-  validateRevenueSources(Object.values(updated.revenueSourcesById), updated)
-  validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated)
-  validateDebtInstrumentCollections(Object.values(updated.debtInstrumentsById), updated)
-  validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated)
-  validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated)
-  validateWorld(updated)
   return updated
 }
+
+function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | undefined, mode: WorldValidationMode = 'full'): void {
+  const scope = new WorldValidationScope(canonical, previous, mode)
+  const updated = scope.world
+  scope.run('boundary:validateFinancialPlanningCollections', () => { validateFinancialPlanningCollections(Object.values(updated.financialBudgetsById), Object.values(updated.budgetLinesById), Object.values(updated.budgetRevisionsById), Object.values(updated.budgetAllocationsById), Object.values(updated.forecastAssumptionsById)) })
+  scope.run('boundary:validateRevenueSources', () => { validateRevenueSources(Object.values(updated.revenueSourcesById), updated) })
+  scope.run('boundary:validateOperatingCostCollections', () => { validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated) })
+  scope.run('boundary:validateDebtInstrumentCollections', () => { validateDebtInstrumentCollections(Object.values(updated.debtInstrumentsById), updated) })
+  scope.run('boundary:validateCompetitionDistributionFacts', () => { validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated) })
+  scope.run('boundary:validateFacilityFinancialBindingCollection', () => { validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated) })
+  validateWorld(canonical, previous, scope)
+}
+export function validateGameWorld(world: GameWorld): void { validateUpdatedGameWorld(world, undefined) }
 
 /** Adds validated memory records through an indexed immutable merge without rebuilding the existing memory collection. */
 export function addMemoriesToGameWorld(world: GameWorld, additions: readonly MemoryRecord[]): GameWorld {
@@ -1062,7 +1231,9 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
   }
   if (!changed) return world
   const updated = { ...world, memoriesById: Object.freeze(memoriesById) }
-  validateWorld(updated)
+  const transaction = worldValidationTransactions.at(-1)
+  if (transaction?.has(world)) transaction.add(updated)
+  else validateWorld(updated, world)
   return updated
 }
 
@@ -1188,105 +1359,106 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   staffConflicts: (value) => indexById(value as readonly StaffConflict[], 'Staff conflict'),
 }
 
-function validateWorld(world: GameWorld): void {
-  assertActiveNegotiationUniqueness(Object.values(world.negotiationsById))
-  assertActiveRetentionUniqueness(Object.values(world.retentionNegotiationsById))
-  requireEntity(world.seasons, world.currentSeasonId, 'Current season')
-  requireEntity(world.coaches, world.userCoachId, 'User coach')
-  validatePersons(world)
-
-  for (const organization of Object.values(world.organizationsById)) createOrganization(organization)
-  for (const section of Object.values(world.organizationSectionsById)) {
-    createOrganizationSection(section)
-    requireEntity(world.organizationsById, section.organizationId, `Organization section ${section.id} organization`)
-  }
-  for (const team of Object.values(world.teams)) {
-    requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
-    const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
-    if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
-  }
-  for (const [teamId, state] of Object.entries(world.clubStrategicStatesByTeamId)) {
-    if (teamId !== state.teamId || !world.teams[teamId as TeamId]) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
-    createClubStrategicState(state)
-  }
-  const gmPlanKeys = new Set<string>()
-  for (const plan of Object.values(world.gmPlanStatesById)) {
-    createGMPlanState(plan)
-    const planTeam = requireEntity(world.teams, plan.teamId, `GM plan ${plan.id} team`)
-    if (planTeam.coachId === world.userCoachId) throw new GameWorldValidationError(`GM plan ${plan.id} cannot be persisted for the user team`)
-    const key = `${plan.teamId}:${plan.needId}`
-    if (gmPlanKeys.has(key) || plan.id !== key) throw new GameWorldValidationError(`Duplicate or invalid GM plan for ${key}`)
-    gmPlanKeys.add(key)
-  }
-  validateOrganizationOwnershipAndControl(world)
-  validateOrganizationOwnershipTransactions(world)
-  validateOrganizationInvestments(world)
-  validateFacilities(world)
-  validateTalentSupply(world)
-  validateYouthPathway(world)
-  validateCollegeEligibility(world)
-  validateTransferPortal(world)
-  validateMultiClubOwnershipPolicies(world)
-  validateStructuralRegulation(world)
-  validateGovernance(world)
-  validateInstitutionalSupport(world)
-
-  for (const coach of Object.values(world.coaches)) {
-    requireEntity(world.countries, coach.nationalityId, `Coach ${coach.id} nationality`)
-  }
-
-  for (const player of Object.values(world.players)) {
-    requireEntity(world.countries, player.nationalityId, `Player ${player.id} nationality`)
-    if (compareGameDates(player.bio.dateOfBirth, world.currentDate) >= 0) throw new GameWorldValidationError(`Player ${player.id} date of birth must be before current date`)
-  }
-
-  for (const negotiation of Object.values(world.retentionNegotiationsById)) {
-    requireEntity(world.teams, negotiation.teamId, `Retention negotiation ${negotiation.id} Team`)
-    requireEntity(world.organizationsById, negotiation.organizationId, `Retention negotiation ${negotiation.id} Organization`)
-    requireEntity(world.players, negotiation.playerId, `Retention negotiation ${negotiation.id} Player`)
-    const predecessor = requireEntity(world.contractsById, negotiation.predecessorContractId, `Retention negotiation ${negotiation.id} predecessor contract`)
-    if (predecessor.playerId !== negotiation.playerId) throw new GameWorldValidationError(`Retention negotiation ${negotiation.id} references a different contract player`)
-  }
-
-  const rosteredPlayerIds = new Set<PlayerId>()
-  const assignedCoachIds = new Set<CoachId>()
-
-  for (const team of Object.values(world.teams)) {
-    requireEntity(world.countries, team.countryId, `Team ${team.id} country`)
-
-    for (const playerId of team.rosterPlayerIds) {
-      const player = requireEntity(world.players, playerId, `Team ${team.id} roster`)
-      if (player.gender !== team.gender) {
-        throw new GameWorldValidationError(
-          `Team ${team.id} has Player ${player.id} with a different gender`,
-        )
-      }
-      if (rosteredPlayerIds.has(playerId)) {
-        throw new GameWorldValidationError(`Player ${playerId} belongs to more than one team roster`)
-      }
-      rosteredPlayerIds.add(playerId)
+interface TrainingValidationIndex {
+  readonly revision: number
+  readonly dates: ReadonlyMap<string, readonly ScheduledTrainingSession[]>
+  readonly pending: ReadonlyMap<string, ScheduledTrainingSession>
+  readonly assigned: ReadonlyMap<string, ScheduledTrainingSession>
+  readonly injuries: ReadonlyMap<string, ReadonlySet<string>>
+}
+const trainingValidationIndexes = new WeakMap<GameWorld['scheduledTrainingSessionsById'], TrainingValidationIndex>()
+function trainingValidationIndex(records: GameWorld['scheduledTrainingSessionsById'], previous?: GameWorld['scheduledTrainingSessionsById']): TrainingValidationIndex {
+  const cached = trainingValidationIndexes.get(records)
+  if (cached) return cached
+  const prior = previous && trainingValidationIndexes.get(previous)
+  const change = scheduledTrainingSessionMapMetadata.get(records)
+  const reuse = prior && change?.previousRevision === prior.revision
+    && change.changedSessions!.every(item => item.previousSession === undefined || item.previousSession.date === records[item.id]?.date)
+  const dates = new Map(reuse ? prior.dates : undefined)
+  const pending = new Map(reuse ? prior.pending : undefined)
+  const assigned = new Map(reuse ? prior.assigned : undefined)
+  const injuries = new Map(reuse ? prior.injuries : undefined)
+  const sessions = reuse ? change.changedSessions!.map(item => records[item.id]!).filter(Boolean) : Object.values(records)
+  for (const session of sessions) {
+    const old = reuse ? previous![session.id] : undefined
+    if (old && old.date !== session.date) dates.set(old.date, (dates.get(old.date) ?? []).filter(item => item.id !== session.id))
+    const day = [...(dates.get(session.date) ?? [])]
+    const position = day.findIndex(item => item.id === session.id)
+    if (position >= 0) day[position] = session
+    else day.push(session)
+    dates.set(session.date, day)
+    if (session.status === 'completed') pending.delete(session.id)
+    else pending.set(session.id, session)
+    if ((session.assignedStaffPersonIds?.length ?? 0) > 0) assigned.set(session.id, session)
+    else assigned.delete(session.id)
+    for (const participant of old?.execution?.participants ?? []) for (const id of participant.injuryIds) {
+      const ids = new Set(injuries.get(id)); ids.delete(session.id); injuries.set(id, ids)
     }
-
-    if (team.coachId !== undefined) {
-      requireEntity(world.coaches, team.coachId, `Team ${team.id} coach`)
-      if (assignedCoachIds.has(team.coachId)) {
-        throw new GameWorldValidationError(`Coach ${team.coachId} is assigned to more than one team`)
-      }
-      assignedCoachIds.add(team.coachId)
-    }
-
-    const lineup = world.lineupsByTeamId[team.id]
-    if (lineup !== undefined) {
-      try {
-        validateTeamLineup(lineup, team.rosterPlayerIds)
-      } catch (error) {
-        throw new GameWorldValidationError(error instanceof Error ? error.message : `Team ${team.id} has an invalid lineup`)
-      }
+    for (const participant of session.execution?.participants ?? []) for (const id of participant.injuryIds) {
+      const ids = new Set(injuries.get(id)); ids.add(session.id); injuries.set(id, ids)
     }
   }
+  const index = { revision: scheduledRevision(records), dates, pending, assigned, injuries }
+  trainingValidationIndexes.set(records, index)
+  return index
+}
+function incrementalTrainingCandidates(world: GameWorld, previous: GameWorld | undefined): { sessions: readonly ScheduledTrainingSession[]; collisions: readonly ScheduledTrainingSession[] } | undefined {
+  if (!previous || !preservesEntityIds(previous.players, world.players) || !preservesEntityIds(previous.teams, world.teams) || !preservesEntityIds(previous.staffPeopleById, world.staffPeopleById)) return undefined
+  const events = stimulusAppendMetadata.get(world.developmentStimulusEventsById)
+  if (world.developmentStimulusEventsById !== previous.developmentStimulusEventsById && events?.previousRevision !== stimulusRevision(previous.developmentStimulusEventsById)) return undefined
+  const change = scheduledTrainingSessionMapMetadata.get(world.scheduledTrainingSessionsById)
+  if (world.scheduledTrainingSessionsById !== previous.scheduledTrainingSessionsById && change?.previousRevision !== scheduledRevision(previous.scheduledTrainingSessionsById)) return undefined
+  const index = trainingValidationIndex(world.scheduledTrainingSessionsById, previous.scheduledTrainingSessionsById)
+  const candidates = new Map(index.pending)
+  for (const item of change?.previousRevision === scheduledRevision(previous.scheduledTrainingSessionsById) ? change.changedSessions ?? [] : []) {
+    const session = world.scheduledTrainingSessionsById[item.id]
+    if (session) candidates.set(session.id, session)
+  }
+  if (previous.staffEmploymentByStaffId !== world.staffEmploymentByStaffId || previous.teamStaffAssignmentsById !== world.teamStaffAssignmentsById) for (const [id, session] of index.assigned) candidates.set(id, session)
+  if (previous.injuriesById !== world.injuriesById) {
+    for (const id of new Set([...Object.keys(previous.injuriesById), ...Object.keys(world.injuriesById)])) {
+      if (previous.injuriesById[id as InjuryId] === world.injuriesById[id as InjuryId]) continue
+      for (const sessionId of index.injuries.get(id) ?? []) candidates.set(sessionId, world.scheduledTrainingSessionsById[sessionId]!)
+    }
+  }
+  const sessions = [...candidates.values()]
+  const dates = new Set(sessions.map(session => session.date))
+  return { sessions, collisions: [...dates].flatMap(date => index.dates.get(date) ?? []) }
+}
 
-  const scheduledSessions = Object.values(world.scheduledTrainingSessionsById)
-  for (const session of scheduledSessions) {
+function validateScheduledTrainingHistory(world: GameWorld, previous: GameWorld | undefined, reusableTrainingHistory: boolean, incremental = false): void {
+  if (reusableTrainingHistory && previous?.scheduledTrainingSessionsById === world.scheduledTrainingSessionsById
+    && previous?.developmentStimulusEventsById === world.developmentStimulusEventsById
+    && previous?.staffEmploymentByStaffId === world.staffEmploymentByStaffId
+    && previous?.teamStaffAssignmentsById === world.teamStaffAssignmentsById) return
+  const staffAssignmentsChanged = previous?.staffEmploymentByStaffId !== world.staffEmploymentByStaffId || previous?.teamStaffAssignmentsById !== world.teamStaffAssignmentsById
+  const indexed = incremental ? incrementalTrainingCandidates(world, previous) : undefined
+  const scheduledSessions = indexed === undefined ? Object.values(world.scheduledTrainingSessionsById) : []
+  const sessionsToValidate = indexed?.sessions ?? (reusableTrainingHistory ? scheduledSessions.filter(session => session.status !== 'completed' || previous?.scheduledTrainingSessionsById[session.id] !== session || (staffAssignmentsChanged && (session.assignedStaffPersonIds?.length ?? 0) > 0)) : scheduledSessions)
+  const relevantDates = new Set(sessionsToValidate.map(session => session.date))
+  const collisionSessions = indexed?.collisions ?? (reusableTrainingHistory ? scheduledSessions.filter(session => relevantDates.has(session.date)) : scheduledSessions)
+  const trainingSessionsByTeamAndDate = new Map<string, ScheduledTrainingSession[]>()
+  const trainingSessionsByPlayerAndDate = new Map<string, ScheduledTrainingSession[]>()
+  const trainingSessionOrder = new Map(collisionSessions.map((session, index) => [session.id, index]))
+  for (const session of collisionSessions) {
+    const teamKey = `${session.date}:${session.teamId}`
+    const teamSessions = trainingSessionsByTeamAndDate.get(teamKey) ?? []
+    teamSessions.push(session)
+    trainingSessionsByTeamAndDate.set(teamKey, teamSessions)
+    if (session.scope === 'individual') {
+      const playerKey = `${session.date}:${session.playerId}`
+      const playerSessions = trainingSessionsByPlayerAndDate.get(playerKey) ?? []
+      playerSessions.push(session)
+      trainingSessionsByPlayerAndDate.set(playerKey, playerSessions)
+    }
+  }
+  const teamStaffAssignments = new Map<string, Set<StaffPersonId>>()
+  for (const assignment of Object.values(world.teamStaffAssignmentsById)) {
+    const staffIds = teamStaffAssignments.get(assignment.teamId) ?? new Set<StaffPersonId>()
+    staffIds.add(assignment.staffPersonId)
+    teamStaffAssignments.set(assignment.teamId, staffIds)
+  }
+  for (const session of sessionsToValidate) {
     requireEntity(world.teams, session.teamId, `Scheduled training session ${session.id} team`)
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
     if (session.execution !== undefined) {
@@ -1305,7 +1477,13 @@ function validateWorld(world: GameWorld): void {
         }
       }
     }
-    const collision = findCollidingSession(session, scheduledSessions)
+    const candidates = new Map<string, ScheduledTrainingSession>()
+    for (const candidate of trainingSessionsByTeamAndDate.get(`${session.date}:${session.teamId}`) ?? []) candidates.set(candidate.id, candidate)
+    if (session.scope === 'individual') {
+      for (const candidate of trainingSessionsByPlayerAndDate.get(`${session.date}:${session.playerId}`) ?? []) candidates.set(candidate.id, candidate)
+    }
+    const collisionCandidates = [...candidates.values()].sort((a, b) => trainingSessionOrder.get(a.id)! - trainingSessionOrder.get(b.id)!)
+    const collision = findCollidingSession(session, collisionCandidates)
     if (collision !== undefined) throw new GameWorldValidationError(`Scheduled training session ${session.id} collides with session ${collision.id}`)
     const assigned = session.assignedStaffPersonIds
     if (assigned !== undefined) {
@@ -1313,102 +1491,36 @@ function validateWorld(world: GameWorld): void {
       for (const staffId of assigned) {
         requireEntity(world.staffPeopleById, staffId, `Scheduled training session ${session.id} staff`)
         const employment = world.staffEmploymentByStaffId[staffId]
-        const assignment = Object.values(world.teamStaffAssignmentsById).some((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
+        const assignment = teamStaffAssignments.get(session.teamId)?.has(staffId) ?? false
         if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !assignment) throw new GameWorldValidationError(`Scheduled training session ${session.id} staff ${staffId} is not actively assigned to its team`)
       }
     }
   }
 
-  for (const playbook of Object.values(world.playbooksById)) {
-    for (const playId of playbook.playIds) requireEntity(world.savedPlaysById, playId, `Playbook ${playbook.id} play`)
-  }
+  trainingValidationIndex(world.scheduledTrainingSessionsById)
+}
 
-  for (const competition of Object.values(world.competitions)) {
-    requireEntity(world.ecosystems, competition.ecosystemId, `Competition ${competition.id} ecosystem`)
-    for (const teamId of competition.participantTeamIds) {
-      const team = requireEntity(world.teams, teamId, `Competition ${competition.id} participant`)
-      if (team.gender !== competition.gender) {
-        throw new GameWorldValidationError(
-          `Competition ${competition.id} has Team ${team.id} with a different gender`,
-        )
-      }
-    }
-  }
-
-  for (const transition of Object.values(world.ecosystemTransitionsById)) {
-    requireEntity(world.players, transition.playerId, `Ecosystem transition ${transition.id} player`)
-    if (transition.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(transition.contractId), `Ecosystem transition ${transition.id} Contract`); if (contract.playerId !== transition.playerId) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} Contract belongs to another Player`) }
-    requireEntity(world.ecosystems, transition.fromEcosystemId, `Ecosystem transition ${transition.id} origin ecosystem`)
-    requireEntity(world.ecosystems, transition.toEcosystemId, `Ecosystem transition ${transition.id} destination ecosystem`)
-    if (transition.fromTeamId !== undefined) requireEntity(world.teams, transition.fromTeamId, `Ecosystem transition ${transition.id} origin team`)
-    if (transition.toTeamId !== undefined) requireEntity(world.teams, transition.toTeamId, `Ecosystem transition ${transition.id} destination team`)
-    if (transition.fromEcosystemId === transition.toEcosystemId) {
-      const fibaClubMove = transition.transitionType === 'fibaToFiba' && transition.fromTeamId !== undefined && transition.toTeamId !== undefined && transition.fromTeamId !== transition.toTeamId && world.ecosystems[transition.fromEcosystemId]?.kind === 'fibaLike' && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.fromEcosystemId && competition.participantTeamIds.includes(transition.fromTeamId!)) && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.toEcosystemId && competition.participantTeamIds.includes(transition.toTeamId!))
-      if (!fibaClubMove) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} must cross ecosystems or record a FIBA club move`)
-    }
-  }
-
-  for (const conference of Object.values(world.conferencesById)) {
-    createConference(conference)
-    const ecosystem = requireEntity(world.ecosystems, conference.ecosystemId, `Conference ${conference.id} ecosystem`)
-    if (ecosystem.kind !== 'ncaaLike') throw new GameWorldValidationError(`Conference ${conference.id} must belong to an NCAA-like ecosystem`)
-  }
-  const membershipKeys = new Set<string>()
-  for (const membership of world.conferenceMemberships) {
-    createConferenceMembership(membership); const conference = requireEntity(world.conferencesById, membership.conferenceId, 'Conference membership conference'); const season = requireEntity(world.seasons, membership.seasonId, 'Conference membership season'); const competition = requireEntity(world.competitions, season.competitionId, 'Conference membership competition')
-    if (competition.ecosystemId !== conference.ecosystemId || !((season.participantTeamIds ?? competition.participantTeamIds).includes(membership.teamId)) || !membershipKeys.add(`${membership.seasonId}:${membership.teamId}`)) throw new GameWorldValidationError('Conference membership is invalid or not unique')
-  }
-
-  for (const ecosystem of Object.values(world.ecosystems)) {
-    for (const tier of ecosystem.domesticTiers) requireEntity(world.competitions, tier.competitionId, `Domestic tier ${tier.level} competition`)
-    for (const rule of ecosystem.tierMovementRules) {
-      const upper = requireEntity(world.competitions, rule.upperCompetitionId, 'Tier movement upper competition'); const lower = requireEntity(world.competitions, rule.lowerCompetitionId, 'Tier movement lower competition')
-      const upperTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === upper.id); const lowerTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === lower.id)
-      if (upper.ecosystemId !== ecosystem.id || lower.ecosystemId !== ecosystem.id || upperTier === undefined || lowerTier === undefined || lowerTier.level !== upperTier.level + 1 || rule.exchangeCount > upper.participantTeamIds.length || rule.exchangeCount > lower.participantTeamIds.length) throw new GameWorldValidationError('Tier movement rule is invalid for ecosystem hierarchy')
-    }
-  }
-
-  for (const season of Object.values(world.seasons)) {
-    requireEntity(world.competitions, season.competitionId, `Season ${season.id} competition`)
-    const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
-    if (new Set(participants).size !== participants.length) throw new GameWorldValidationError(`Season ${season.id} has duplicate participants`)
-    for (const teamId of participants) requireEntity(world.teams, teamId, `Season ${season.id} participant`)
-  }
-
-  for (const game of Object.values(world.games)) {
-    const season = requireEntity(world.seasons, game.seasonId, `Game ${game.id} season`)
-    const competition = requireEntity(world.competitions, game.competitionId, `Game ${game.id} competition`)
-    const homeTeam = requireEntity(world.teams, game.homeTeamId, `Game ${game.id} home team`)
-    const awayTeam = requireEntity(world.teams, game.awayTeamId, `Game ${game.id} away team`)
-
-    if (season.competitionId !== competition.id) {
-      throw new GameWorldValidationError(`Game ${game.id} competition does not match its season`)
-    }
-    const participants = season.participantTeamIds ?? competition.participantTeamIds
-    if (!participants.includes(homeTeam.id)) {
-      throw new GameWorldValidationError(`Game ${game.id} home Team ${homeTeam.id} is not a participant`)
-    }
-    if (!participants.includes(awayTeam.id)) {
-      throw new GameWorldValidationError(`Game ${game.id} away Team ${awayTeam.id} is not a participant`)
-    }
-    if (homeTeam.gender !== competition.gender || awayTeam.gender !== competition.gender) {
-      throw new GameWorldValidationError(`Game ${game.id} teams must match the competition gender`)
-    }
-    if (
-      compareGameDates(game.date, season.startDate) < 0 ||
-      compareGameDates(game.date, season.endDate) > 0
-    ) {
-      throw new GameWorldValidationError(`Game ${game.id} date is outside its season range`)
-    }
-  }
-  const teamDates = new Set<string>()
-  for (const game of Object.values(world.games)) for (const teamId of [game.homeTeamId, game.awayTeamId]) {
-    const key = `${teamId}:${game.date}`
-    if (teamDates.has(key)) throw new GameWorldValidationError(`Team ${teamId} has multiple Games on ${game.date}`)
-    teamDates.add(key)
-  }
-  for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
-  for (const event of Object.values(world.developmentStimulusEventsById)) {
+function validateDevelopmentStimulusHistory(world: GameWorld, previous: GameWorld | undefined, preservedPlayers: boolean): void {
+  // Only a previously completed source can invalidate existing evidence. Completing a
+  // scheduled game/session cannot affect prior valid stimulus records for that source.
+  const changedCompletedGames = previous === undefined || (previous.games !== world.games
+    && Object.values(previous.games).some(game => game.status === 'completed' && world.games[game.id] !== game))
+  const scheduledChange = scheduledTrainingSessionMapMetadata.get(world.scheduledTrainingSessionsById)
+  const knownScheduledChanges = previous !== undefined && scheduledChange?.previousRevision === scheduledRevision(previous.scheduledTrainingSessionsById)
+  const changedCompletedSessions = previous === undefined || (previous.scheduledTrainingSessionsById !== world.scheduledTrainingSessionsById
+    && (knownScheduledChanges
+      ? scheduledChange!.changedSessions!.some(change => change.previousSession?.status === 'completed' && world.scheduledTrainingSessionsById[change.id] !== change.previousSession)
+      : Object.values(previous.scheduledTrainingSessionsById).some(session => session.status === 'completed' && world.scheduledTrainingSessionsById[session.id] !== session)))
+  const dependenciesPreserved = preservedPlayers && !changedCompletedGames && !changedCompletedSessions
+  if (dependenciesPreserved && previous?.developmentStimulusEventsById === world.developmentStimulusEventsById) return
+  const metadata = stimulusAppendMetadata.get(world.developmentStimulusEventsById)
+  const appended = dependenciesPreserved && previous !== undefined && metadata?.previousRevision === stimulusRevision(previous.developmentStimulusEventsById)
+  const candidates = appended ? metadata!.additions! : Object.values(world.developmentStimulusEventsById)
+  for (const event of candidates) {
+    if (preservedPlayers && previous?.developmentStimulusEventsById[event.id] === event
+      && (event.sourceType === 'training'
+        ? previous.scheduledTrainingSessionsById[event.sourceId] === world.scheduledTrainingSessionsById[event.sourceId]
+        : previous.games[event.sourceId as GameId] === world.games[event.sourceId as GameId])) continue
     requireEntity(world.players, event.playerId, `Development stimulus event ${event.id} player`)
     if (event.sourceType === 'training') {
       const session = requireEntity(world.scheduledTrainingSessionsById, event.sourceId, `Development stimulus event ${event.id} Training session`)
@@ -1419,316 +1531,813 @@ function validateWorld(world: GameWorld): void {
       if (game.status !== 'completed' || game.date !== event.date) throw new GameWorldValidationError(`Development stimulus event ${event.id} does not match completed Match`)
     }
   }
-  for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
-  for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
-  const successorByPredecessor = new Map<string, string>()
-  for (const contract of Object.values(world.contractsById)) if (contract.predecessorContractId !== undefined) {
-    const predecessor = requireEntity(world.contractsById, contract.predecessorContractId, `Contract ${contract.id} predecessor`)
-    if (predecessor.playerId !== contract.playerId || predecessor.teamId !== contract.teamId || predecessor.term.expiresOn !== contract.term.startsOn) throw new GameWorldValidationError(`Contract ${contract.id} does not continue its predecessor`)
-    if (predecessor.termination?.reason === 'released' && (contract.termination?.reason !== 'released' || contract.termination.terminatedOn !== predecessor.termination.terminatedOn)) throw new GameWorldValidationError(`Contract ${contract.id} was not terminated with its released predecessor`)
-    if (successorByPredecessor.has(predecessor.id)) throw new GameWorldValidationError(`Contract ${predecessor.id} has multiple explicit successors`)
-    successorByPredecessor.set(predecessor.id, contract.id)
-  }
-  for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
-  validateFinancialState(world)
-  validateTreasuryState(world)
-  validateRecognitionState(world)
-  for (const transaction of Object.values(world.playerTransactionsById)) {
-    requireEntity(world.players, transaction.playerId, `Transaction ${transaction.id} Player`)
-    if (transaction.fromTeamId) requireEntity(world.teams, transaction.fromTeamId, `Transaction ${transaction.id} from Team`)
-    if (transaction.toTeamId) requireEntity(world.teams, transaction.toTeamId, `Transaction ${transaction.id} to Team`)
-    if (transaction.contractId) requireEntity(world.contractsById, transaction.contractId, `Transaction ${transaction.id} Contract`)
-    if (transaction.kind === 'traded') {
-      if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined) throw new GameWorldValidationError(`Trade transaction ${transaction.id} requires both teams and the transferred contract`)
-      if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Trade transaction ${transaction.id} contract belongs to another player`)
-    }
-  }
-  for (const knowledge of world.organizationKnowledge) { createOrganizationKnowledge(knowledge); requireEntity(world.players, knowledge.subjectPlayerId, 'Organization knowledge subject Player') }
-  for (const evidence of Object.values(world.evidenceById)) { requireEntity(world.players, evidence.subjectPlayerId, 'Evidence subject Player') }
-  for (const [staffId, profile] of Object.entries(world.evaluatorProfilesByStaffId) as [StaffPersonId, EvaluatorProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Evaluator profile staff'); createEvaluatorProfile(profile) }
-  for (const assignment of Object.values(world.scoutingAssignmentsById)) { requireEntity(world.players, assignment.subjectPlayerId, 'Scouting assignment subject Player'); requireEntity(world.staffPeopleById, assignment.evaluatorStaffId, 'Scouting assignment evaluator') }
-  for (const report of Object.values(world.evaluatorReportsById)) { requireEntity(world.players, report.subjectPlayerId, 'Evaluator report subject Player'); requireEntity(world.staffPeopleById, report.evaluatorStaffId, 'Evaluator report evaluator'); for (const evidenceId of report.evidenceIds) requireEntity(world.evidenceById, evidenceId, 'Evaluator report Evidence') }
-  for (const assignment of Object.values(world.scoutingTerritoryAssignmentsById)) {
-    const team = world.teams[assignment.requestingTeamId]
-    if (team === undefined || team.organizationId !== assignment.organizationId) throw new GameWorldValidationError(`Scouting territory assignment ${assignment.id} has an invalid requesting Team`)
-    requireEntity(world.staffPeopleById, assignment.scoutStaffId, 'Scouting territory assignment Scout')
-    if (assignment.territory.kind === 'COUNTRY') requireEntity(world.countries, assignment.territory.countryId, 'Scouting territory Country')
-    else requireEntity(world.competitions, assignment.territory.competitionId, 'Scouting territory Competition')
-  }
-  for (const focus of Object.values(world.scoutingRecruitmentFocusesById)) {
-    createScoutingRecruitmentFocus(focus)
-    const team = world.teams[focus.requestingTeamId]
-    if (team === undefined || team.organizationId !== focus.organizationId) throw new GameWorldValidationError(`Scouting Recruitment Focus ${focus.id} has an invalid requesting Team`)
-    for (const staffId of focus.scoutStaffIds) requireEntity(world.staffPeopleById, staffId, 'Recruitment Focus Scout')
-    for (const territory of focus.territories) {
-      if (territory.kind === 'COUNTRY') requireEntity(world.countries, territory.countryId, 'Recruitment Focus Country')
-      else requireEntity(world.competitions, territory.competitionId, 'Recruitment Focus Competition')
-    }
-    for (const playerId of focus.dismissedPlayerIds ?? []) requireEntity(world.players, playerId, 'Recruitment Focus dismissed Player')
-    if (focus.completedAt !== undefined) parseGameDate(focus.completedAt)
-    if (focus.cancelledAt !== undefined) parseGameDate(focus.cancelledAt)
-  }
+}
+
+function validateOrganizationPlayerAwareness(world: GameWorld, previous: GameWorld | undefined, preservedPlayers: boolean): void {
+  const organizationIds = new Set(Object.values(world.teams).map((team) => team.organizationId))
+  if (previous !== undefined && preservedPlayers
+    && previous.organizationPlayerAwarenessById === world.organizationPlayerAwarenessById
+    && preservesEntityIds(previous.countries, world.countries)
+    && preservesEntityIds(previous.competitions, world.competitions)
+    && Object.values(previous.teams).every((team) => organizationIds.has(team.organizationId))) return
   for (const awareness of Object.values(world.organizationPlayerAwarenessById)) {
     requireEntity(world.players, awareness.playerId, 'Organization player awareness Player')
-    if (!Object.values(world.teams).some((team) => team.organizationId === awareness.organizationId)) throw new GameWorldValidationError(`Organization player awareness ${awareness.id} has an unknown Organization`)
+    if (!organizationIds.has(awareness.organizationId)) throw new GameWorldValidationError(`Organization player awareness ${awareness.id} has an unknown Organization`)
     if (awareness.territory.kind === 'COUNTRY') requireEntity(world.countries, awareness.territory.countryId, 'Awareness territory Country')
     else requireEntity(world.competitions, awareness.territory.competitionId, 'Awareness territory Competition')
   }
-  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => team.organizationId === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
-  const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
+}
+
+function preservesEntityIds(previous: Readonly<Record<string, unknown>>, current: Readonly<Record<string, unknown>>): boolean {
+  return previous === current || Object.keys(previous).every((id) => current[id] !== undefined)
+}
+
+function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new WorldValidationScope(canonical, previous, 'full')): void {
+  const world = scope.world
+  // Reuse validated historical links only while their referenced entities still exist.
+  // Changed evidence and changed dependencies always take the full validation path.
+  const preservedPlayers = previous !== undefined && preservesEntityIds(previous.players, world.players)
+  const preservedTrainingEntities = preservedPlayers && previous !== undefined
+    && preservesEntityIds(previous.teams, world.teams)
+    && preservesEntityIds(previous.staffPeopleById, world.staffPeopleById)
+  const unchangedHistoricalInjuries = previous !== undefined && (previous.injuriesById === world.injuriesById
+    || Object.entries(previous.injuriesById).every(([id, injury]) => world.injuriesById[id as InjuryId] === injury))
+  const reusableTrainingHistory = preservedTrainingEntities && unchangedHistoricalInjuries
+    && previous?.teamStaffAssignmentsById === world.teamStaffAssignmentsById
+
+  scope.run('1:negotiationsById', () => {
+    assertActiveNegotiationUniqueness(Object.values(world.negotiationsById))
+  })
+  scope.run('2:retentionNegotiationsById', () => {
+    assertActiveRetentionUniqueness(Object.values(world.retentionNegotiationsById))
+  })
+  scope.run('3:seasons', () => {
+    requireEntity(world.seasons, world.currentSeasonId, 'Current season')
+  })
+  scope.run('4:coaches', () => {
+    requireEntity(world.coaches, world.userCoachId, 'User coach')
+  })
+  scope.run('5:validatePersons', () => {
+    validatePersons(world)
+  })
+
+  scope.run('6:organizationsById', () => {
+    for (const organization of Object.values(world.organizationsById)) createOrganization(organization)
+  })
+  scope.run('7:organizationSectionsById', () => {
+    for (const section of Object.values(world.organizationSectionsById)) {
+      createOrganizationSection(section)
+      requireEntity(world.organizationsById, section.organizationId, `Organization section ${section.id} organization`)
+    }
+  })
+  scope.run('8:teams', () => {
+    for (const team of Object.values(world.teams)) {
+      requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
+      const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
+      if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
+    }
+  })
+  scope.run('9:clubStrategicStatesByTeamId', () => {
+    for (const [teamId, state] of Object.entries(world.clubStrategicStatesByTeamId)) {
+      if (teamId !== state.teamId || !world.teams[teamId as TeamId]) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
+      createClubStrategicState(state)
+    }
+  })
+  const gmPlanKeys = new Set<string>()
+  scope.run('10:gmPlanStatesById', () => {
+    for (const plan of Object.values(world.gmPlanStatesById)) {
+      createGMPlanState(plan)
+      const planTeam = requireEntity(world.teams, plan.teamId, `GM plan ${plan.id} team`)
+      if (planTeam.coachId === world.userCoachId) throw new GameWorldValidationError(`GM plan ${plan.id} cannot be persisted for the user team`)
+      const key = `${plan.teamId}:${plan.needId}`
+      if (gmPlanKeys.has(key) || plan.id !== key) throw new GameWorldValidationError(`Duplicate or invalid GM plan for ${key}`)
+      gmPlanKeys.add(key)
+    }
+  })
+  scope.run('11:validateOrganizationOwnershipAndControl', () => {
+    validateOrganizationOwnershipAndControl(world)
+  })
+  scope.run('12:validateOrganizationOwnershipTransactions', () => {
+    validateOrganizationOwnershipTransactions(world)
+  })
+  scope.run('13:validateOrganizationInvestments', () => {
+    validateOrganizationInvestments(world)
+  })
+  scope.run('14:validateFacilities', () => {
+    validateFacilities(world)
+  })
+  scope.run('15:validateTalentSupply', () => {
+    validateTalentSupply(world)
+  })
+  scope.run('16:validateYouthPathway', () => {
+    validateYouthPathway(world)
+  })
+  scope.run('17:validateCollegeEligibility', () => {
+    validateCollegeEligibility(world)
+  })
+  scope.run('18:validateTransferPortal', () => {
+    validateTransferPortal(world)
+  })
+  scope.run('19:validateMultiClubOwnershipPolicies', () => {
+    validateMultiClubOwnershipPolicies(world)
+  })
+  scope.run('20:validateStructuralRegulation', () => {
+    validateStructuralRegulation(world)
+  })
+  scope.run('21:validateGovernance', () => {
+    validateGovernance(world)
+  })
+  scope.run('22:validateInstitutionalSupport', () => {
+    validateInstitutionalSupport(world)
+  })
+
+  scope.run('23:coaches', () => {
+    for (const coach of Object.values(world.coaches)) {
+      requireEntity(world.countries, coach.nationalityId, `Coach ${coach.id} nationality`)
+    }
+  })
+
+  scope.run('24:players', () => {
+    for (const player of Object.values(world.players)) {
+      requireEntity(world.countries, player.nationalityId, `Player ${player.id} nationality`)
+      if (compareGameDates(player.bio.dateOfBirth, world.currentDate) >= 0) throw new GameWorldValidationError(`Player ${player.id} date of birth must be before current date`)
+    }
+  })
+
+  scope.run('25:retentionNegotiationsById', () => {
+    for (const negotiation of Object.values(world.retentionNegotiationsById)) {
+      requireEntity(world.teams, negotiation.teamId, `Retention negotiation ${negotiation.id} Team`)
+      requireEntity(world.organizationsById, negotiation.organizationId, `Retention negotiation ${negotiation.id} Organization`)
+      requireEntity(world.players, negotiation.playerId, `Retention negotiation ${negotiation.id} Player`)
+      const predecessor = requireEntity(world.contractsById, negotiation.predecessorContractId, `Retention negotiation ${negotiation.id} predecessor contract`)
+      if (predecessor.playerId !== negotiation.playerId) throw new GameWorldValidationError(`Retention negotiation ${negotiation.id} references a different contract player`)
+    }
+  })
+
+  const rosteredPlayerIds = new Set<PlayerId>()
+  const assignedCoachIds = new Set<CoachId>()
+
+  scope.run('26:validateTeamLineup', () => {
+    for (const team of Object.values(world.teams)) {
+      requireEntity(world.countries, team.countryId, `Team ${team.id} country`)
+
+      for (const playerId of team.rosterPlayerIds) {
+        const player = requireEntity(world.players, playerId, `Team ${team.id} roster`)
+        if (player.gender !== team.gender) {
+          throw new GameWorldValidationError(
+            `Team ${team.id} has Player ${player.id} with a different gender`,
+          )
+        }
+        if (rosteredPlayerIds.has(playerId)) {
+          throw new GameWorldValidationError(`Player ${playerId} belongs to more than one team roster`)
+        }
+        rosteredPlayerIds.add(playerId)
+      }
+
+      if (team.coachId !== undefined) {
+        requireEntity(world.coaches, team.coachId, `Team ${team.id} coach`)
+        if (assignedCoachIds.has(team.coachId)) {
+          throw new GameWorldValidationError(`Coach ${team.coachId} is assigned to more than one team`)
+        }
+        assignedCoachIds.add(team.coachId)
+      }
+
+      const lineup = world.lineupsByTeamId[team.id]
+      if (lineup !== undefined) {
+        try {
+          validateTeamLineup(lineup, team.rosterPlayerIds)
+        } catch (error) {
+          throw new GameWorldValidationError(error instanceof Error ? error.message : `Team ${team.id} has an invalid lineup`)
+        }
+      }
+    }
+  })
+
+  scope.run('27:validateScheduledTrainingHistory', () => {
+    validateScheduledTrainingHistory(world, previous, reusableTrainingHistory, scope.mode === 'incremental')
+  }, ["players","teams","staffPeopleById","injuriesById","teamStaffAssignmentsById"])
+
+  scope.run('28:playbooksById', () => {
+    for (const playbook of Object.values(world.playbooksById)) {
+      for (const playId of playbook.playIds) requireEntity(world.savedPlaysById, playId, `Playbook ${playbook.id} play`)
+    }
+  })
+
+  scope.run('29:competitions', () => {
+    for (const competition of Object.values(world.competitions)) {
+      requireEntity(world.ecosystems, competition.ecosystemId, `Competition ${competition.id} ecosystem`)
+      for (const teamId of competition.participantTeamIds) {
+        const team = requireEntity(world.teams, teamId, `Competition ${competition.id} participant`)
+        if (team.gender !== competition.gender) {
+          throw new GameWorldValidationError(
+            `Competition ${competition.id} has Team ${team.id} with a different gender`,
+          )
+        }
+      }
+    }
+  })
+
+  scope.run('30:ecosystemTransitionsById', () => {
+    for (const transition of Object.values(world.ecosystemTransitionsById)) {
+      requireEntity(world.players, transition.playerId, `Ecosystem transition ${transition.id} player`)
+      if (transition.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(transition.contractId), `Ecosystem transition ${transition.id} Contract`); if (contract.playerId !== transition.playerId) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} Contract belongs to another Player`) }
+      requireEntity(world.ecosystems, transition.fromEcosystemId, `Ecosystem transition ${transition.id} origin ecosystem`)
+      requireEntity(world.ecosystems, transition.toEcosystemId, `Ecosystem transition ${transition.id} destination ecosystem`)
+      if (transition.fromTeamId !== undefined) requireEntity(world.teams, transition.fromTeamId, `Ecosystem transition ${transition.id} origin team`)
+      if (transition.toTeamId !== undefined) requireEntity(world.teams, transition.toTeamId, `Ecosystem transition ${transition.id} destination team`)
+      if (transition.fromEcosystemId === transition.toEcosystemId) {
+        const fibaClubMove = transition.transitionType === 'fibaToFiba' && transition.fromTeamId !== undefined && transition.toTeamId !== undefined && transition.fromTeamId !== transition.toTeamId && world.ecosystems[transition.fromEcosystemId]?.kind === 'fibaLike' && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.fromEcosystemId && competition.participantTeamIds.includes(transition.fromTeamId!)) && Object.values(world.competitions).some((competition) => competition.ecosystemId === transition.toEcosystemId && competition.participantTeamIds.includes(transition.toTeamId!))
+        if (!fibaClubMove) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} must cross ecosystems or record a FIBA club move`)
+      }
+    }
+  })
+
+  scope.run('31:conferencesById', () => {
+    for (const conference of Object.values(world.conferencesById)) {
+      createConference(conference)
+      const ecosystem = requireEntity(world.ecosystems, conference.ecosystemId, `Conference ${conference.id} ecosystem`)
+      if (ecosystem.kind !== 'ncaaLike') throw new GameWorldValidationError(`Conference ${conference.id} must belong to an NCAA-like ecosystem`)
+    }
+  })
+  const membershipKeys = new Set<string>()
+  scope.run('32:conferenceMemberships', () => {
+    for (const membership of world.conferenceMemberships) {
+      createConferenceMembership(membership); const conference = requireEntity(world.conferencesById, membership.conferenceId, 'Conference membership conference'); const season = requireEntity(world.seasons, membership.seasonId, 'Conference membership season'); const competition = requireEntity(world.competitions, season.competitionId, 'Conference membership competition')
+      if (competition.ecosystemId !== conference.ecosystemId || !((season.participantTeamIds ?? competition.participantTeamIds).includes(membership.teamId)) || !membershipKeys.add(`${membership.seasonId}:${membership.teamId}`)) throw new GameWorldValidationError('Conference membership is invalid or not unique')
+    }
+  })
+
+  scope.run('33:ecosystems', () => {
+    for (const ecosystem of Object.values(world.ecosystems)) {
+      for (const tier of ecosystem.domesticTiers) requireEntity(world.competitions, tier.competitionId, `Domestic tier ${tier.level} competition`)
+      for (const rule of ecosystem.tierMovementRules) {
+        const upper = requireEntity(world.competitions, rule.upperCompetitionId, 'Tier movement upper competition'); const lower = requireEntity(world.competitions, rule.lowerCompetitionId, 'Tier movement lower competition')
+        const upperTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === upper.id); const lowerTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === lower.id)
+        if (upper.ecosystemId !== ecosystem.id || lower.ecosystemId !== ecosystem.id || upperTier === undefined || lowerTier === undefined || lowerTier.level !== upperTier.level + 1 || rule.exchangeCount > upper.participantTeamIds.length || rule.exchangeCount > lower.participantTeamIds.length) throw new GameWorldValidationError('Tier movement rule is invalid for ecosystem hierarchy')
+      }
+    }
+  })
+
+  scope.run('34:seasons', () => {
+    for (const season of Object.values(world.seasons)) {
+      requireEntity(world.competitions, season.competitionId, `Season ${season.id} competition`)
+      const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
+      if (new Set(participants).size !== participants.length) throw new GameWorldValidationError(`Season ${season.id} has duplicate participants`)
+      for (const teamId of participants) requireEntity(world.teams, teamId, `Season ${season.id} participant`)
+    }
+  })
+
+  scope.run('35:games', () => {
+    for (const game of Object.values(world.games)) {
+      const season = requireEntity(world.seasons, game.seasonId, `Game ${game.id} season`)
+      const competition = requireEntity(world.competitions, game.competitionId, `Game ${game.id} competition`)
+      const homeTeam = requireEntity(world.teams, game.homeTeamId, `Game ${game.id} home team`)
+      const awayTeam = requireEntity(world.teams, game.awayTeamId, `Game ${game.id} away team`)
+
+      if (season.competitionId !== competition.id) {
+        throw new GameWorldValidationError(`Game ${game.id} competition does not match its season`)
+      }
+      const participants = season.participantTeamIds ?? competition.participantTeamIds
+      if (!participants.includes(homeTeam.id)) {
+        throw new GameWorldValidationError(`Game ${game.id} home Team ${homeTeam.id} is not a participant`)
+      }
+      if (!participants.includes(awayTeam.id)) {
+        throw new GameWorldValidationError(`Game ${game.id} away Team ${awayTeam.id} is not a participant`)
+      }
+      if (homeTeam.gender !== competition.gender || awayTeam.gender !== competition.gender) {
+        throw new GameWorldValidationError(`Game ${game.id} teams must match the competition gender`)
+      }
+      if (
+        compareGameDates(game.date, season.startDate) < 0 ||
+        compareGameDates(game.date, season.endDate) > 0
+      ) {
+        throw new GameWorldValidationError(`Game ${game.id} date is outside its season range`)
+      }
+    }
+  })
+  const teamDates = new Set<string>()
+  scope.run('36:games', () => {
+    for (const game of Object.values(world.games)) for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+      const key = `${teamId}:${game.date}`
+      if (teamDates.has(key)) throw new GameWorldValidationError(`Team ${teamId} has multiple Games on ${game.date}`)
+      teamDates.add(key)
+    }
+  })
+  const reusableMatchLogs = previous !== undefined && preservedPlayers
+  scope.run('37:validateMatchStatLog', () => {
+    if (!reusableMatchLogs || previous.matchStatLogsByGameId !== world.matchStatLogsByGameId || previous.games !== world.games) {
+      for (const log of Object.values(world.matchStatLogsByGameId)) {
+        if (reusableMatchLogs && previous.matchStatLogsByGameId[log.gameId] === log && previous.games[log.gameId] === world.games[log.gameId]) continue
+        validateMatchStatLog(world, log)
+      }
+    }
+  }, ["players"])
+  scope.run('38:validateDevelopmentStimulusHistory', () => {
+    validateDevelopmentStimulusHistory(world, previous, preservedPlayers)
+  }, ["players","games","scheduledTrainingSessionsById","developmentStimulusEventsById"])
+  const injuriesToValidate = Object.values(world.injuriesById).filter(injury => {
+    if (previous === undefined || !preservedPlayers || previous.injuriesById[injury.id] !== injury) return true
+    if (injury.sourceGameId !== undefined && previous.games[injury.sourceGameId] !== world.games[injury.sourceGameId]) return true
+    return injury.sourceTrainingSessionId !== undefined && previous.scheduledTrainingSessionsById[injury.sourceTrainingSessionId] !== world.scheduledTrainingSessionsById[injury.sourceTrainingSessionId]
+  })
+  scope.run('39:validateInjury', () => {
+    if (injuriesToValidate.length > 0) {
+      const affectedPlayers = new Set(injuriesToValidate.map(injury => injury.playerId))
+      const injuriesByPlayer = new Map<InjuryRecord['playerId'], InjuryRecord[]>()
+      for (const injury of Object.values(world.injuriesById)) {
+        const records = injuriesByPlayer.get(injury.playerId) ?? []
+        records.push(injury)
+        injuriesByPlayer.set(injury.playerId, records)
+      }
+      for (const injury of Object.values(world.injuriesById)) if (affectedPlayers.has(injury.playerId)) validateInjury(world, injury, injuriesByPlayer.get(injury.playerId) ?? [])
+    }
+  }, ["players","injuriesById","games","scheduledTrainingSessionsById"])
+  scope.run('40:contractsById', () => {
+    for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
+  })
+  const successorByPredecessor = new Map<string, string>()
+  scope.run('41:contractsById', () => {
+    for (const contract of Object.values(world.contractsById)) if (contract.predecessorContractId !== undefined) {
+      const predecessor = requireEntity(world.contractsById, contract.predecessorContractId, `Contract ${contract.id} predecessor`)
+      if (predecessor.playerId !== contract.playerId || predecessor.teamId !== contract.teamId || predecessor.term.expiresOn !== contract.term.startsOn) throw new GameWorldValidationError(`Contract ${contract.id} does not continue its predecessor`)
+      if (predecessor.termination?.reason === 'released' && (contract.termination?.reason !== 'released' || contract.termination.terminatedOn !== predecessor.termination.terminatedOn)) throw new GameWorldValidationError(`Contract ${contract.id} was not terminated with its released predecessor`)
+      if (successorByPredecessor.has(predecessor.id)) throw new GameWorldValidationError(`Contract ${predecessor.id} has multiple explicit successors`)
+      successorByPredecessor.set(predecessor.id, contract.id)
+    }
+  })
+  scope.run('42:teamFinancesByTeamId', () => {
+    for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
+  })
+  scope.run('43:validateFinancialState', () => {
+    validateFinancialState(world)
+  })
+  scope.run('44:validateTreasuryState', () => {
+    validateTreasuryState(world)
+  })
+  scope.run('45:validateRecognitionState', () => {
+    validateRecognitionState(world)
+  })
+  scope.run('46:playerTransactionsById', () => {
+    for (const transaction of Object.values(world.playerTransactionsById)) {
+      requireEntity(world.players, transaction.playerId, `Transaction ${transaction.id} Player`)
+      if (transaction.fromTeamId) requireEntity(world.teams, transaction.fromTeamId, `Transaction ${transaction.id} from Team`)
+      if (transaction.toTeamId) requireEntity(world.teams, transaction.toTeamId, `Transaction ${transaction.id} to Team`)
+      if (transaction.contractId) requireEntity(world.contractsById, transaction.contractId, `Transaction ${transaction.id} Contract`)
+      if (transaction.kind === 'traded') {
+        if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined) throw new GameWorldValidationError(`Trade transaction ${transaction.id} requires both teams and the transferred contract`)
+        if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Trade transaction ${transaction.id} contract belongs to another player`)
+      }
+    }
+  })
+  // Scouting ledgers can contain years of evidence IDs. Revalidating immutable,
+  // unchanged records on every date, training or scouting commit copied the entire
+  // ledger repeatedly. Entity removal still invalidates reuse, and new/replaced
+  // knowledge always takes the canonical validation path.
+  scope.run('47:organizationKnowledge', () => {
+    if (!previous || !preservedPlayers || previous.organizationKnowledge !== world.organizationKnowledge) {
+      const priorKnowledge = previous && preservedPlayers ? new Set(previous.organizationKnowledge) : undefined
+      for (const knowledge of world.organizationKnowledge) {
+        if (priorKnowledge?.has(knowledge)) continue
+        createOrganizationKnowledge(knowledge)
+        requireEntity(world.players, knowledge.subjectPlayerId, 'Organization knowledge subject Player')
+      }
+    }
+  }, ["players"])
+  scope.run('48:evidenceById', () => {
+    for (const evidence of Object.values(world.evidenceById)) { requireEntity(world.players, evidence.subjectPlayerId, 'Evidence subject Player') }
+  })
+  scope.run('49:evaluatorProfilesByStaffId', () => {
+    for (const [staffId, profile] of Object.entries(world.evaluatorProfilesByStaffId) as [StaffPersonId, EvaluatorProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Evaluator profile staff'); createEvaluatorProfile(profile) }
+  })
+  scope.run('50:scoutingAssignmentsById', () => {
+    for (const assignment of Object.values(world.scoutingAssignmentsById)) { requireEntity(world.players, assignment.subjectPlayerId, 'Scouting assignment subject Player'); requireEntity(world.staffPeopleById, assignment.evaluatorStaffId, 'Scouting assignment evaluator') }
+  })
+  scope.run('51:evaluatorReportsById', () => {
+    for (const report of Object.values(world.evaluatorReportsById)) { requireEntity(world.players, report.subjectPlayerId, 'Evaluator report subject Player'); requireEntity(world.staffPeopleById, report.evaluatorStaffId, 'Evaluator report evaluator'); for (const evidenceId of report.evidenceIds) requireEntity(world.evidenceById, evidenceId, 'Evaluator report Evidence') }
+  })
+  scope.run('52:scoutingTerritoryAssignmentsById', () => {
+    for (const assignment of Object.values(world.scoutingTerritoryAssignmentsById)) {
+      const team = world.teams[assignment.requestingTeamId]
+      if (team === undefined || team.organizationId !== assignment.organizationId) throw new GameWorldValidationError(`Scouting territory assignment ${assignment.id} has an invalid requesting Team`)
+      requireEntity(world.staffPeopleById, assignment.scoutStaffId, 'Scouting territory assignment Scout')
+      if (assignment.territory.kind === 'COUNTRY') requireEntity(world.countries, assignment.territory.countryId, 'Scouting territory Country')
+      else requireEntity(world.competitions, assignment.territory.competitionId, 'Scouting territory Competition')
+    }
+  })
+  scope.run('53:scoutingRecruitmentFocusesById', () => {
+    for (const focus of Object.values(world.scoutingRecruitmentFocusesById)) {
+      createScoutingRecruitmentFocus(focus)
+      const team = world.teams[focus.requestingTeamId]
+      if (team === undefined || team.organizationId !== focus.organizationId) throw new GameWorldValidationError(`Scouting Recruitment Focus ${focus.id} has an invalid requesting Team`)
+      for (const staffId of focus.scoutStaffIds) requireEntity(world.staffPeopleById, staffId, 'Recruitment Focus Scout')
+      for (const territory of focus.territories) {
+        if (territory.kind === 'COUNTRY') requireEntity(world.countries, territory.countryId, 'Recruitment Focus Country')
+        else requireEntity(world.competitions, territory.competitionId, 'Recruitment Focus Competition')
+      }
+      for (const playerId of focus.dismissedPlayerIds ?? []) requireEntity(world.players, playerId, 'Recruitment Focus dismissed Player')
+      if (focus.completedAt !== undefined) parseGameDate(focus.completedAt)
+      if (focus.cancelledAt !== undefined) parseGameDate(focus.cancelledAt)
+    }
+  })
+  scope.run('54:validateOrganizationPlayerAwareness', () => {
+    validateOrganizationPlayerAwareness(world, previous, preservedPlayers)
+  }, ["players"])
+  scope.run('55:organizationEvaluationPoliciesById', () => {
+    for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => team.organizationId === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
+  })
+  const assignedStaff = new Set<StaffPersonId>()
+  scope.run('56:staffPeopleById', () => {
+    for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person);
+  })
+  scope.run('57:teamStaffAssignmentsById', () => {
+    for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
+  })
   const responsibilityKeys = new Set<string>()
-  for (const responsibility of Object.values(world.responsibilitiesById)) {
-    createResponsibility(responsibility)
-    requireEntity(world.teams, responsibility.teamId, `Responsibility ${responsibility.id} Team`)
-    const key = `${responsibility.teamId}:${responsibility.kind}`
-    if (responsibilityKeys.has(key)) throw new GameWorldValidationError(`Team ${responsibility.teamId} has more than one Responsibility of kind ${responsibility.kind}`)
-    responsibilityKeys.add(key)
-    if (responsibility.holderStaffId !== undefined) {
-      const holder = requireEntity(world.staffPeopleById, responsibility.holderStaffId, `Responsibility ${responsibility.id} holder`)
-      const holderAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === responsibility.holderStaffId)
-      if (holderAssignment === undefined || holderAssignment.teamId !== responsibility.teamId) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is not on Team ${responsibility.teamId}`)
-      const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, holderAssignment.role, holder)
-      if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is ineligible: ${result.reason}`)
-    } else {
-      const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, undefined, undefined)
-      if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} is invalid: ${result.reason}`)
+  scope.run('58:validateResponsibilityAssignment', () => {
+    for (const responsibility of Object.values(world.responsibilitiesById)) {
+      createResponsibility(responsibility)
+      requireEntity(world.teams, responsibility.teamId, `Responsibility ${responsibility.id} Team`)
+      const key = `${responsibility.teamId}:${responsibility.kind}`
+      if (responsibilityKeys.has(key)) throw new GameWorldValidationError(`Team ${responsibility.teamId} has more than one Responsibility of kind ${responsibility.kind}`)
+      responsibilityKeys.add(key)
+      if (responsibility.holderStaffId !== undefined) {
+        const holder = requireEntity(world.staffPeopleById, responsibility.holderStaffId, `Responsibility ${responsibility.id} holder`)
+        const holderAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === responsibility.holderStaffId)
+        if (holderAssignment === undefined || holderAssignment.teamId !== responsibility.teamId) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is not on Team ${responsibility.teamId}`)
+        const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, holderAssignment.role, holder)
+        if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is ineligible: ${result.reason}`)
+      } else {
+        const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, undefined, undefined)
+        if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} is invalid: ${result.reason}`)
+      }
     }
-  }
-  for (const outcome of Object.values(world.delegationOutcomesById)) {
-    createDelegationOutcome(outcome)
-    requireEntity(world.responsibilitiesById, outcome.responsibilityId, `Delegation outcome ${outcome.id} Responsibility`)
-    requireEntity(world.staffPeopleById, outcome.staffId, `Delegation outcome ${outcome.id} Staff`)
-  }
-  for (const context of Object.values(world.staffHumanContextsById)) {
-    createStaffHumanContext(context)
-    requireEntity(world.staffPeopleById, context.staffId, `Staff human context ${context.id} Staff`)
-    requireEntity(world.teams, context.teamId, `Staff human context ${context.id} Team`)
-  }
-  for (const state of Object.values(world.staffCareerAutonomyByContextId)) {
-    createStaffCareerAutonomyState(state)
-    const context = requireEntity(world.staffHumanContextsById, state.contextId, `Staff career autonomy ${state.contextId} context`)
-    if (context.staffId !== state.staffId || context.teamId !== state.teamId) throw new GameWorldValidationError(`Staff career autonomy ${state.contextId} does not match its employment context`)
-  }
-  for (const request of Object.values(world.staffCareerRequestsById)) {
-    createStaffCareerRequest(request)
-    const context = requireEntity(world.staffHumanContextsById, request.contextId, `Staff career request ${request.id} context`)
-    if (context.staffId !== request.staffId || context.teamId !== request.teamId) throw new GameWorldValidationError(`Staff career request ${request.id} does not match its context`)
-    if (request.status === 'OPEN' && context.endedOn !== undefined) throw new GameWorldValidationError(`Open Staff career request ${request.id} has ended context`)
-  }
-  for (const politicalCase of Object.values(world.staffPoliticalCasesById)) {
-    createStaffPoliticalCase(politicalCase)
-    requireEntity(world.teams, politicalCase.teamId, `Staff political case ${politicalCase.id} Team`)
-    if (politicalCase.subjectStaffId !== undefined) requireEntity(world.staffPeopleById, politicalCase.subjectStaffId, `Staff political case ${politicalCase.id} Staff`)
-    for (const position of politicalCase.positions ?? []) requireEntity(world.staffPeopleById, position.actorId, `Staff political case ${politicalCase.id} position actor`)
-  }
-  for (const action of Object.values(world.staffPoliticalActionsById)) {
-    createStaffPoliticalAction(action)
-    const politicalCase = requireEntity(world.staffPoliticalCasesById, action.caseId, `Staff political action ${action.id} case`)
-    if (action.teamId !== politicalCase.teamId) throw new GameWorldValidationError(`Staff political action ${action.id} team does not match its case`)
-    if (politicalCase.subjectStaffId !== undefined && action.actorIds.includes(politicalCase.subjectStaffId)) throw new GameWorldValidationError(`Staff political action ${action.id} cannot include its case subject`)
-    if (action.performedOn < politicalCase.openedOn || (politicalCase.resolution !== undefined && action.performedOn > politicalCase.resolution.resolvedOn)) throw new GameWorldValidationError(`Staff political action ${action.id} has invalid date`)
-    for (const actorId of action.actorIds) requireEntity(world.staffPeopleById, actorId, `Staff political action ${action.id} actor`)
-    if (action.target?.kind === 'COACH') requireEntity(world.coaches, action.target.id as never, `Staff political action ${action.id} coach target`)
-    if (action.target?.kind === 'STAFF') requireEntity(world.staffPeopleById, action.target.id, `Staff political action ${action.id} staff target`)
-  }
-  for (const alliance of Object.values(world.staffPoliticalAlliancesById)) {
-    createStaffPoliticalAlliance(alliance)
-    requireEntity(world.teams, alliance.teamId, `Staff political alliance ${alliance.id} Team`)
-    for (const memberId of alliance.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political alliance ${alliance.id} member`)
-  }
-  for (const faction of Object.values(world.staffPoliticalFactionsById)) {
-    createStaffPoliticalFaction(faction)
-    requireEntity(world.teams, faction.teamId, `Staff political faction ${faction.id} Team`)
-    for (const memberId of faction.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political faction ${faction.id} member`)
-  }
+  })
+  scope.run('59:delegationOutcomesById', () => {
+    for (const outcome of Object.values(world.delegationOutcomesById)) {
+      createDelegationOutcome(outcome)
+      requireEntity(world.responsibilitiesById, outcome.responsibilityId, `Delegation outcome ${outcome.id} Responsibility`)
+      requireEntity(world.staffPeopleById, outcome.staffId, `Delegation outcome ${outcome.id} Staff`)
+    }
+  })
+  scope.run('60:staffHumanContextsById', () => {
+    for (const context of Object.values(world.staffHumanContextsById)) {
+      createStaffHumanContext(context)
+      requireEntity(world.staffPeopleById, context.staffId, `Staff human context ${context.id} Staff`)
+      requireEntity(world.teams, context.teamId, `Staff human context ${context.id} Team`)
+    }
+  })
+  scope.run('61:staffCareerAutonomyByContextId', () => {
+    for (const state of Object.values(world.staffCareerAutonomyByContextId)) {
+      createStaffCareerAutonomyState(state)
+      const context = requireEntity(world.staffHumanContextsById, state.contextId, `Staff career autonomy ${state.contextId} context`)
+      if (context.staffId !== state.staffId || context.teamId !== state.teamId) throw new GameWorldValidationError(`Staff career autonomy ${state.contextId} does not match its employment context`)
+    }
+  })
+  scope.run('62:staffCareerRequestsById', () => {
+    for (const request of Object.values(world.staffCareerRequestsById)) {
+      createStaffCareerRequest(request)
+      const context = requireEntity(world.staffHumanContextsById, request.contextId, `Staff career request ${request.id} context`)
+      if (context.staffId !== request.staffId || context.teamId !== request.teamId) throw new GameWorldValidationError(`Staff career request ${request.id} does not match its context`)
+      if (request.status === 'OPEN' && context.endedOn !== undefined) throw new GameWorldValidationError(`Open Staff career request ${request.id} has ended context`)
+    }
+  })
+  scope.run('63:staffPoliticalCasesById', () => {
+    for (const politicalCase of Object.values(world.staffPoliticalCasesById)) {
+      createStaffPoliticalCase(politicalCase)
+      requireEntity(world.teams, politicalCase.teamId, `Staff political case ${politicalCase.id} Team`)
+      if (politicalCase.subjectStaffId !== undefined) requireEntity(world.staffPeopleById, politicalCase.subjectStaffId, `Staff political case ${politicalCase.id} Staff`)
+      for (const position of politicalCase.positions ?? []) requireEntity(world.staffPeopleById, position.actorId, `Staff political case ${politicalCase.id} position actor`)
+    }
+  })
+  scope.run('64:staffPoliticalActionsById', () => {
+    for (const action of Object.values(world.staffPoliticalActionsById)) {
+      createStaffPoliticalAction(action)
+      const politicalCase = requireEntity(world.staffPoliticalCasesById, action.caseId, `Staff political action ${action.id} case`)
+      if (action.teamId !== politicalCase.teamId) throw new GameWorldValidationError(`Staff political action ${action.id} team does not match its case`)
+      if (politicalCase.subjectStaffId !== undefined && action.actorIds.includes(politicalCase.subjectStaffId)) throw new GameWorldValidationError(`Staff political action ${action.id} cannot include its case subject`)
+      if (action.performedOn < politicalCase.openedOn || (politicalCase.resolution !== undefined && action.performedOn > politicalCase.resolution.resolvedOn)) throw new GameWorldValidationError(`Staff political action ${action.id} has invalid date`)
+      for (const actorId of action.actorIds) requireEntity(world.staffPeopleById, actorId, `Staff political action ${action.id} actor`)
+      if (action.target?.kind === 'COACH') requireEntity(world.coaches, action.target.id as never, `Staff political action ${action.id} coach target`)
+      if (action.target?.kind === 'STAFF') requireEntity(world.staffPeopleById, action.target.id, `Staff political action ${action.id} staff target`)
+    }
+  })
+  scope.run('65:staffPoliticalAlliancesById', () => {
+    for (const alliance of Object.values(world.staffPoliticalAlliancesById)) {
+      createStaffPoliticalAlliance(alliance)
+      requireEntity(world.teams, alliance.teamId, `Staff political alliance ${alliance.id} Team`)
+      for (const memberId of alliance.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political alliance ${alliance.id} member`)
+    }
+  })
+  scope.run('66:staffPoliticalFactionsById', () => {
+    for (const faction of Object.values(world.staffPoliticalFactionsById)) {
+      createStaffPoliticalFaction(faction)
+      requireEntity(world.teams, faction.teamId, `Staff political faction ${faction.id} Team`)
+      for (const memberId of faction.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political faction ${faction.id} member`)
+    }
+  })
   const openCareerRequests = new Set<string>()
-  for (const request of Object.values(world.staffCareerRequestsById)) if (request.status === 'OPEN') {
-    const key = `${request.contextId}:${request.kind}:${request.targetRoleId ?? request.targetResponsibilityKind ?? ''}`
-    if (openCareerRequests.has(key)) throw new GameWorldValidationError(`Duplicate open Staff career request ${key}`)
-    openCareerRequests.add(key)
-  }
-  for (const state of Object.values(world.staffHumanStatesByContextId)) {
-    createStaffHumanState(state)
-    requireEntity(world.staffHumanContextsById, state.contextId, `Staff human state context`)
-    requireEntity(world.staffPeopleById, state.staffId, `Staff human state ${state.contextId} Staff`)
-  }
-  for (const profile of Object.values(world.staffExpectationProfilesByContextId)) {
-    createStaffExpectationProfile(profile)
-    requireEntity(world.staffHumanContextsById, profile.contextId, `Staff expectation profile context`)
-    requireEntity(world.staffPeopleById, profile.staffId, `Staff expectation profile ${profile.contextId} Staff`)
-  }
-  for (const reaction of Object.values(world.staffReactionRecordsById)) {
-    createStaffReactionRecord(reaction)
-    requireEntity(world.staffHumanContextsById, reaction.contextId, `Staff reaction record ${reaction.id} context`)
-    requireEntity(world.staffPeopleById, reaction.staffId, `Staff reaction record ${reaction.id} Staff`)
-  }
-  // Wave 5C â€” shape validation only. Culture/Cohesion scope keys are opaque adapter strings
-  // (Team-as-Organization / TeamÃ—Department proxies), so no cross-referential Team lookup is asserted:
+  scope.run('67:staffCareerRequestsById', () => {
+    for (const request of Object.values(world.staffCareerRequestsById)) if (request.status === 'OPEN') {
+      const key = `${request.contextId}:${request.kind}:${request.targetRoleId ?? request.targetResponsibilityKind ?? ''}`
+      if (openCareerRequests.has(key)) throw new GameWorldValidationError(`Duplicate open Staff career request ${key}`)
+      openCareerRequests.add(key)
+    }
+  })
+  scope.run('68:staffHumanStatesByContextId', () => {
+    for (const state of Object.values(world.staffHumanStatesByContextId)) {
+      createStaffHumanState(state)
+      requireEntity(world.staffHumanContextsById, state.contextId, `Staff human state context`)
+      requireEntity(world.staffPeopleById, state.staffId, `Staff human state ${state.contextId} Staff`)
+    }
+  })
+  scope.run('69:staffExpectationProfilesByContextId', () => {
+    for (const profile of Object.values(world.staffExpectationProfilesByContextId)) {
+      createStaffExpectationProfile(profile)
+      requireEntity(world.staffHumanContextsById, profile.contextId, `Staff expectation profile context`)
+      requireEntity(world.staffPeopleById, profile.staffId, `Staff expectation profile ${profile.contextId} Staff`)
+    }
+  })
+  const reusableStaffReactions = previous !== undefined
+    && preservesEntityIds(previous.staffHumanContextsById, world.staffHumanContextsById)
+    && preservesEntityIds(previous.staffPeopleById, world.staffPeopleById)
+  scope.run('70:staffReactionRecordsById', () => {
+    if (!reusableStaffReactions || previous.staffReactionRecordsById !== world.staffReactionRecordsById) for (const reaction of Object.values(world.staffReactionRecordsById)) {
+      if (reusableStaffReactions && previous.staffReactionRecordsById[reaction.id] === reaction) continue
+      createStaffReactionRecord(reaction)
+      requireEntity(world.staffHumanContextsById, reaction.contextId, `Staff reaction record ${reaction.id} context`)
+      requireEntity(world.staffPeopleById, reaction.staffId, `Staff reaction record ${reaction.id} Staff`)
+    }
+  }, ['staffHumanContextsById', 'staffPeopleById'])
+  // Wave 5C Ã¢â‚¬â€ shape validation only. Culture/Cohesion scope keys are opaque adapter strings
+  // (Team-as-Organization / TeamÃƒâ€”Department proxies), so no cross-referential Team lookup is asserted:
   // a Team removal must never invalidate an otherwise well-formed save.
-  for (const state of Object.values(world.staffCultureStatesByScopeKey)) createStaffCultureState(state)
-  for (const state of Object.values(world.staffUnitCohesionStatesByUnitKey)) createStaffUnitCohesionState(state)
-  for (const conflict of Object.values(world.staffConflictsById)) createStaffConflict(conflict)
+  scope.run('71:staffCultureStatesByScopeKey', () => {
+    for (const state of Object.values(world.staffCultureStatesByScopeKey)) createStaffCultureState(state)
+  })
+  scope.run('72:staffUnitCohesionStatesByUnitKey', () => {
+    for (const state of Object.values(world.staffUnitCohesionStatesByUnitKey)) createStaffUnitCohesionState(state)
+  })
+  scope.run('73:staffConflictsById', () => {
+    for (const conflict of Object.values(world.staffConflictsById)) createStaffConflict(conflict)
+  })
   const oppositionReportKeys = new Set<string>()
-  for (const report of Object.values(world.oppositionScoutingReportsById)) {
-    createOppositionScoutingReport(report)
-    if (report.id !== oppositionScoutingReportId(report.teamId, report.gameId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} id does not match its (team, game) identity`)
-    const key = `${report.teamId}:${report.gameId}`
-    if (oppositionReportKeys.has(key)) throw new GameWorldValidationError(`Team ${report.teamId} has more than one Opposition scouting report for Game ${report.gameId}`)
-    oppositionReportKeys.add(key)
-    requireEntity(world.teams, report.teamId, `Opposition scouting report ${report.id} Team`)
-    requireEntity(world.teams, report.opponentTeamId, `Opposition scouting report ${report.id} opponent Team`)
-    const game = requireEntity(world.games, report.gameId, `Opposition scouting report ${report.id} Game`)
-    if (!((game.homeTeamId === report.teamId && game.awayTeamId === report.opponentTeamId) || (game.awayTeamId === report.teamId && game.homeTeamId === report.opponentTeamId))) throw new GameWorldValidationError(`Opposition scouting report ${report.id} team/opponent do not match Game ${report.gameId} participants`)
-    requireEntity(world.staffPeopleById, report.authoredByStaffId, `Opposition scouting report ${report.id} author`)
-    const authorAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === report.authoredByStaffId)
-    if (authorAssignment === undefined || authorAssignment.teamId !== report.teamId) throw new GameWorldValidationError(`Opposition scouting report ${report.id} author is not Staff assigned to Team ${report.teamId}`)
-    const opponentRoster = new Set(world.teams[report.opponentTeamId]!.rosterPlayerIds)
-    for (const playerId of report.flaggedPlayerIds) if (!opponentRoster.has(playerId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} flagged Player ${playerId} is not on opponent Team ${report.opponentTeamId}'s roster`)
-  }
-  for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
-  for (const [coachId, profile] of Object.entries(world.coachFinancesByCoachId) as [CoachId, CoachFinanceProfile][]) { requireEntity(world.coaches, coachId, 'Coach finance profile'); createCoachFinanceProfile(profile) }
-  for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
-  for (const memory of Object.values(world.memoriesById)) validateMemory(world, memory)
-  for (const narrative of Object.values(world.narrativesById)) createNarrativeThread(narrative)
-  for (const [key, profile] of Object.entries(world.relationshipsByKey)) {
-    validateRelationshipProfile(profile)
-    if (key !== relationshipKey(profile.sourceId, profile.targetId)) throw new GameWorldValidationError(`Relationship key does not match people: ${key}`)
-    if (!hasRelationshipPerson(world, profile.sourceId) || !hasRelationshipPerson(world, profile.targetId)) throw new GameWorldValidationError(`Relationship references missing person: ${key}`)
-  }
-  for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
-    const coach = requireEntity(world.coaches, coachId, 'Coach employment')
-    createCoachEmployment(employment)
-    const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coachId)
-    if (employment.status === 'employed' && (assignedTeam === undefined || employment.teamId !== assignedTeam.id)) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
-    if (employment.status === 'unemployed' && assignedTeam !== undefined) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
-    const headCoachAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId === coach.staffProfileId)
-    if (employment.status === 'employed') {
-      const assignment = headCoachAssignments[0]
-      if (headCoachAssignments.length !== 1 || assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== 'headCoach') throw new GameWorldValidationError(`Coach ${coachId} employment requires one matching headCoach Staff assignment`)
-      const staffEmployment = world.staffEmploymentByStaffId[coach.staffProfileId]
-      if (staffEmployment !== undefined && (staffEmployment.status !== 'employed' || staffEmployment.teamId !== employment.teamId || staffEmployment.roleId !== 'headCoach')) throw new GameWorldValidationError(`Coach ${coachId} Staff employment does not match Coach employment`)
-    } else if (headCoachAssignments.length !== 0) {
-      throw new GameWorldValidationError(`Unemployed Coach ${coachId} cannot retain a headCoach Staff assignment`)
+  scope.run('74:oppositionScoutingReportsById', () => {
+    for (const report of Object.values(world.oppositionScoutingReportsById)) {
+      createOppositionScoutingReport(report)
+      if (report.id !== oppositionScoutingReportId(report.teamId, report.gameId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} id does not match its (team, game) identity`)
+      const key = `${report.teamId}:${report.gameId}`
+      if (oppositionReportKeys.has(key)) throw new GameWorldValidationError(`Team ${report.teamId} has more than one Opposition scouting report for Game ${report.gameId}`)
+      oppositionReportKeys.add(key)
+      requireEntity(world.teams, report.teamId, `Opposition scouting report ${report.id} Team`)
+      requireEntity(world.teams, report.opponentTeamId, `Opposition scouting report ${report.id} opponent Team`)
+      const game = requireEntity(world.games, report.gameId, `Opposition scouting report ${report.id} Game`)
+      if (!((game.homeTeamId === report.teamId && game.awayTeamId === report.opponentTeamId) || (game.awayTeamId === report.teamId && game.homeTeamId === report.opponentTeamId))) throw new GameWorldValidationError(`Opposition scouting report ${report.id} team/opponent do not match Game ${report.gameId} participants`)
+      requireEntity(world.staffPeopleById, report.authoredByStaffId, `Opposition scouting report ${report.id} author`)
+      const authorAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === report.authoredByStaffId)
+      if (authorAssignment === undefined || authorAssignment.teamId !== report.teamId) throw new GameWorldValidationError(`Opposition scouting report ${report.id} author is not Staff assigned to Team ${report.teamId}`)
+      const opponentRoster = new Set(world.teams[report.opponentTeamId]!.rosterPlayerIds)
+      for (const playerId of report.flaggedPlayerIds) if (!opponentRoster.has(playerId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} flagged Player ${playerId} is not on opponent Team ${report.opponentTeamId}'s roster`)
     }
-  }
-  for (const [coachId, history] of Object.entries(world.coachCareerHistoryByCoachId) as [CoachId, readonly CoachCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) { const entry = history[index]!; if (entry.coachId !== coachId || (entry.kind === 'appointment' && entry.reason !== 'initialAppointment' && entry.reason !== 'hired') || (entry.kind === 'departure' && entry.reason !== 'fired' && entry.reason !== 'acceptedOtherJob')) throw new GameWorldValidationError(`Coach career history does not match Coach ${coachId}`); if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Coach career history is not ordered for Coach ${coachId}`); requireEntity(world.teams, entry.teamId, 'Coach career history Team') }
-  for (const opening of Object.values(world.coachJobOpeningsById)) { createCoachJobOpening(opening); requireEntity(world.teams, opening.teamId, 'Coach job opening Team') }
-  for (const candidacy of Object.values(world.coachJobCandidaciesById)) { requireEntity(world.coaches, candidacy.coachId, 'Coach candidacy Coach'); requireEntity(world.coachJobOpeningsById, candidacy.jobOpeningId, 'Coach candidacy opening') }
-  for (const [candidacyId, interview] of Object.entries(world.coachInterviewsByCandidacyId) as [CoachJobCandidacyId, CoachInterview][]) if (interview.candidacyId !== candidacyId || world.coachJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Coach interview references missing candidacy ${candidacyId}`)
-  for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
-  for (const [staffId, employment] of Object.entries(world.staffEmploymentByStaffId) as [StaffPersonId, StaffEmployment][]) {
-    requireEntity(world.staffPeopleById, staffId, 'Staff employment')
-    createStaffEmployment(employment)
-    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId)
-    if (employment.status === 'employed') {
-      if (assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== employment.roleId) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
-    } else if (assignment !== undefined) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
-  }
-  for (const [staffId, history] of Object.entries(world.staffCareerHistoryByStaffId) as [StaffPersonId, readonly StaffCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) {
-    const entry = history[index]!
-    if (entry.staffId !== staffId) throw new GameWorldValidationError(`Staff career history does not match Staff ${staffId}`)
-    if (entry.kind === 'appointment' && !(['initialAppointment', 'hired', 'promoted', 'reassigned'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid appointment reason for Staff ${staffId}`)
-    if (entry.kind === 'departure' && !(['fired', 'resigned', 'acceptedOtherJob', 'retired'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid departure reason for Staff ${staffId}`)
-    if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Staff career history is not ordered for Staff ${staffId}`)
-    requireEntity(world.teams, entry.teamId, 'Staff career history Team')
-    if (entry.kind === 'appointment') staffRoleDefinition(entry.roleId) // throws RangeError if unknown
-  }
-  for (const opening of Object.values(world.staffJobOpeningsById)) { createStaffJobOpening(opening); requireEntity(world.teams, opening.teamId, `Staff job opening ${opening.id} Team`); staffRoleDefinition(opening.roleId) }
+  })
+  scope.run('75:coachRpgProfilesByCoachId', () => {
+    for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
+  })
+  scope.run('76:coachFinancesByCoachId', () => {
+    for (const [coachId, profile] of Object.entries(world.coachFinancesByCoachId) as [CoachId, CoachFinanceProfile][]) { requireEntity(world.coaches, coachId, 'Coach finance profile'); createCoachFinanceProfile(profile) }
+  })
+  scope.run('77:coachReputationProfilesByCoachId', () => {
+    for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
+  })
+  scope.run('78:validateMemory', () => {
+    for (const memory of Object.values(world.memoriesById)) validateMemory(world, memory)
+  })
+  scope.run('79:narrativesById', () => {
+    for (const narrative of Object.values(world.narrativesById)) createNarrativeThread(narrative)
+  })
+  scope.run('80:validateRelationshipProfile', () => {
+    for (const [key, profile] of Object.entries(world.relationshipsByKey)) {
+      validateRelationshipProfile(profile)
+      if (key !== relationshipKey(profile.sourceId, profile.targetId)) throw new GameWorldValidationError(`Relationship key does not match people: ${key}`)
+      if (!hasRelationshipPerson(world, profile.sourceId) || !hasRelationshipPerson(world, profile.targetId)) throw new GameWorldValidationError(`Relationship references missing person: ${key}`)
+    }
+  })
+  scope.run('81:coachEmploymentByCoachId', () => {
+    for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
+      const coach = requireEntity(world.coaches, coachId, 'Coach employment')
+      createCoachEmployment(employment)
+      const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coachId)
+      if (employment.status === 'employed' && (assignedTeam === undefined || employment.teamId !== assignedTeam.id)) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
+      if (employment.status === 'unemployed' && assignedTeam !== undefined) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
+      const headCoachAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId === coach.staffProfileId)
+      if (employment.status === 'employed') {
+        const assignment = headCoachAssignments[0]
+        if (headCoachAssignments.length !== 1 || assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== 'headCoach') throw new GameWorldValidationError(`Coach ${coachId} employment requires one matching headCoach Staff assignment`)
+        const staffEmployment = world.staffEmploymentByStaffId[coach.staffProfileId]
+        if (staffEmployment !== undefined && (staffEmployment.status !== 'employed' || staffEmployment.teamId !== employment.teamId || staffEmployment.roleId !== 'headCoach')) throw new GameWorldValidationError(`Coach ${coachId} Staff employment does not match Coach employment`)
+      } else if (headCoachAssignments.length !== 0) {
+        throw new GameWorldValidationError(`Unemployed Coach ${coachId} cannot retain a headCoach Staff assignment`)
+      }
+    }
+  })
+  scope.run('82:coachCareerHistoryByCoachId', () => {
+    for (const [coachId, history] of Object.entries(world.coachCareerHistoryByCoachId) as [CoachId, readonly CoachCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) { const entry = history[index]!; if (entry.coachId !== coachId || (entry.kind === 'appointment' && entry.reason !== 'initialAppointment' && entry.reason !== 'hired') || (entry.kind === 'departure' && entry.reason !== 'fired' && entry.reason !== 'acceptedOtherJob')) throw new GameWorldValidationError(`Coach career history does not match Coach ${coachId}`); if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Coach career history is not ordered for Coach ${coachId}`); requireEntity(world.teams, entry.teamId, 'Coach career history Team') }
+  })
+  scope.run('83:coachJobOpeningsById', () => {
+    for (const opening of Object.values(world.coachJobOpeningsById)) { createCoachJobOpening(opening); requireEntity(world.teams, opening.teamId, 'Coach job opening Team') }
+  })
+  scope.run('84:coachJobCandidaciesById', () => {
+    for (const candidacy of Object.values(world.coachJobCandidaciesById)) { requireEntity(world.coaches, candidacy.coachId, 'Coach candidacy Coach'); requireEntity(world.coachJobOpeningsById, candidacy.jobOpeningId, 'Coach candidacy opening') }
+  })
+  scope.run('85:coachInterviewsByCandidacyId', () => {
+    for (const [candidacyId, interview] of Object.entries(world.coachInterviewsByCandidacyId) as [CoachJobCandidacyId, CoachInterview][]) if (interview.candidacyId !== candidacyId || world.coachJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Coach interview references missing candidacy ${candidacyId}`)
+  })
+  scope.run('86:coachJobOffersById', () => {
+    for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
+  })
+  scope.run('87:staffEmploymentByStaffId', () => {
+    for (const [staffId, employment] of Object.entries(world.staffEmploymentByStaffId) as [StaffPersonId, StaffEmployment][]) {
+      requireEntity(world.staffPeopleById, staffId, 'Staff employment')
+      createStaffEmployment(employment)
+      const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId)
+      if (employment.status === 'employed') {
+        if (assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== employment.roleId) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
+      } else if (assignment !== undefined) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
+    }
+  })
+  scope.run('88:staffCareerHistoryByStaffId', () => {
+    for (const [staffId, history] of Object.entries(world.staffCareerHistoryByStaffId) as [StaffPersonId, readonly StaffCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) {
+      const entry = history[index]!
+      if (entry.staffId !== staffId) throw new GameWorldValidationError(`Staff career history does not match Staff ${staffId}`)
+      if (entry.kind === 'appointment' && !(['initialAppointment', 'hired', 'promoted', 'reassigned'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid appointment reason for Staff ${staffId}`)
+      if (entry.kind === 'departure' && !(['fired', 'resigned', 'acceptedOtherJob', 'retired'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid departure reason for Staff ${staffId}`)
+      if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Staff career history is not ordered for Staff ${staffId}`)
+      requireEntity(world.teams, entry.teamId, 'Staff career history Team')
+      if (entry.kind === 'appointment') staffRoleDefinition(entry.roleId) // throws RangeError if unknown
+    }
+  })
+  scope.run('89:staffJobOpeningsById', () => {
+    for (const opening of Object.values(world.staffJobOpeningsById)) { createStaffJobOpening(opening); requireEntity(world.teams, opening.teamId, `Staff job opening ${opening.id} Team`); staffRoleDefinition(opening.roleId) }
+  })
   const staffJobOpeningOpenKeys = new Set<string>()
-  for (const opening of Object.values(world.staffJobOpeningsById)) {
-    if (opening.status !== 'open') continue
-    const key = `${opening.teamId}:${opening.roleId}`
-    if (staffJobOpeningOpenKeys.has(key)) throw new GameWorldValidationError(`Team ${opening.teamId} has more than one open Staff job opening for role ${opening.roleId}`)
-    staffJobOpeningOpenKeys.add(key)
-  }
-  for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`); if (candidacy.origin !== undefined && candidacy.origin !== 'teamIdentified' && candidacy.origin !== 'staffApplied') throw new GameWorldValidationError(`Staff candidacy ${candidacy.id} has invalid origin`) }
-  for (const [candidacyId, interview] of Object.entries(world.staffInterviewsByCandidacyId) as [StaffJobCandidacyId, StaffInterview][]) if (interview.candidacyId !== candidacyId || world.staffJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Staff interview references missing candidacy ${candidacyId}`)
-  for (const offer of Object.values(world.staffJobOffersById)) {
-    requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`)
-    requireEntity(world.teams, offer.teamId, `Staff offer ${offer.id} Team`)
-    const opening = requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`)
-    // Full semantic consistency (Issue #19 review Blocker 6): an offer must genuinely belong to the
-    // opening it references (same Team) and to a real candidacy for the same (opening, Staff) pair
-    // â€” never a combination the state machine could not have legitimately produced.
-    if (opening.teamId !== offer.teamId) throw new GameWorldValidationError(`Staff offer ${offer.id} Team does not match its opening's Team`)
-    const candidacy = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === offer.jobOpeningId && item.staffId === offer.staffId)
-    if (candidacy === undefined) throw new GameWorldValidationError(`Staff offer ${offer.id} has no matching Staff candidacy for the same opening and Staff`)
-    // Issue #19 review Blocker 2: the offer's status must be one the state machine could actually
-    // have produced together with its candidacy's current status â€” see the centralized
-    // `isStaffOfferCandidacyStateConsistent` matrix.
-    if (!isStaffOfferCandidacyStateConsistent(offer.status, candidacy.status)) throw new GameWorldValidationError(`Staff offer ${offer.id} status ${offer.status} is inconsistent with its Staff candidacy ${candidacy.id} status ${candidacy.status}`)
-  }
+  scope.run('90:staffJobOpeningsById', () => {
+    for (const opening of Object.values(world.staffJobOpeningsById)) {
+      if (opening.status !== 'open') continue
+      const key = `${opening.teamId}:${opening.roleId}`
+      if (staffJobOpeningOpenKeys.has(key)) throw new GameWorldValidationError(`Team ${opening.teamId} has more than one open Staff job opening for role ${opening.roleId}`)
+      staffJobOpeningOpenKeys.add(key)
+    }
+  })
+  scope.run('91:staffJobCandidaciesById', () => {
+    for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`); if (candidacy.origin !== undefined && candidacy.origin !== 'teamIdentified' && candidacy.origin !== 'staffApplied') throw new GameWorldValidationError(`Staff candidacy ${candidacy.id} has invalid origin`) }
+  })
+  scope.run('92:staffInterviewsByCandidacyId', () => {
+    for (const [candidacyId, interview] of Object.entries(world.staffInterviewsByCandidacyId) as [StaffJobCandidacyId, StaffInterview][]) if (interview.candidacyId !== candidacyId || world.staffJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Staff interview references missing candidacy ${candidacyId}`)
+  })
+  scope.run('93:staffJobOffersById', () => {
+    for (const offer of Object.values(world.staffJobOffersById)) {
+      requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`)
+      requireEntity(world.teams, offer.teamId, `Staff offer ${offer.id} Team`)
+      const opening = requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`)
+      // Full semantic consistency (Issue #19 review Blocker 6): an offer must genuinely belong to the
+      // opening it references (same Team) and to a real candidacy for the same (opening, Staff) pair
+      // Ã¢â‚¬â€ never a combination the state machine could not have legitimately produced.
+      if (opening.teamId !== offer.teamId) throw new GameWorldValidationError(`Staff offer ${offer.id} Team does not match its opening's Team`)
+      const candidacy = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === offer.jobOpeningId && item.staffId === offer.staffId)
+      if (candidacy === undefined) throw new GameWorldValidationError(`Staff offer ${offer.id} has no matching Staff candidacy for the same opening and Staff`)
+      // Issue #19 review Blocker 2: the offer's status must be one the state machine could actually
+      // have produced together with its candidacy's current status Ã¢â‚¬â€ see the centralized
+      // `isStaffOfferCandidacyStateConsistent` matrix.
+      if (!isStaffOfferCandidacyStateConsistent(offer.status, candidacy.status)) throw new GameWorldValidationError(`Staff offer ${offer.id} status ${offer.status} is inconsistent with its Staff candidacy ${candidacy.id} status ${candidacy.status}`)
+    }
+  })
   const staffPendingOfferKeys = new Set<StaffPersonId>()
-  for (const offer of Object.values(world.staffJobOffersById)) {
-    if (offer.status !== 'pending') continue
-    if (staffPendingOfferKeys.has(offer.staffId)) throw new GameWorldValidationError(`Staff ${offer.staffId} has more than one pending Staff job offer`)
-    staffPendingOfferKeys.add(offer.staffId)
-  }
+  scope.run('94:staffJobOffersById', () => {
+    for (const offer of Object.values(world.staffJobOffersById)) {
+      if (offer.status !== 'pending') continue
+      if (staffPendingOfferKeys.has(offer.staffId)) throw new GameWorldValidationError(`Staff ${offer.staffId} has more than one pending Staff job offer`)
+      staffPendingOfferKeys.add(offer.staffId)
+    }
+  })
   const staffActiveContractKeys = new Set<StaffPersonId>()
-  for (const contract of Object.values(world.staffContractsById)) {
-    createStaffContract(contract)
-    requireEntity(world.staffPeopleById, contract.staffId, `Staff contract ${contract.id} Staff`)
-    requireEntity(world.teams, contract.teamId, `Staff contract ${contract.id} Team`)
-    // Active-on-the-CURRENT-date, via the single canonical `isStaffContractActiveOn` semantics â€”
-    // never `termination === undefined` alone, which would wrongly treat a lapsed (past-expiresOn)
-    // contract as active and a scheduled-but-not-yet-effective termination as inactive.
-    if (isStaffContractActiveOn(contract, world.currentDate)) {
-      if (staffActiveContractKeys.has(contract.staffId)) throw new GameWorldValidationError(`Staff ${contract.staffId} has more than one active Staff contract`)
-      staffActiveContractKeys.add(contract.staffId)
-      const employment = world.staffEmploymentByStaffId[contract.staffId]
-      if (employment?.status !== 'employed' || employment.teamId !== contract.teamId) throw new GameWorldValidationError(`Staff contract ${contract.id} does not match Staff ${contract.staffId} employment`)
+  scope.run('95:staffContractsById', () => {
+    for (const contract of Object.values(world.staffContractsById)) {
+      createStaffContract(contract)
+      requireEntity(world.staffPeopleById, contract.staffId, `Staff contract ${contract.id} Staff`)
+      requireEntity(world.teams, contract.teamId, `Staff contract ${contract.id} Team`)
+      // Active-on-the-CURRENT-date, via the single canonical `isStaffContractActiveOn` semantics Ã¢â‚¬â€
+      // never `termination === undefined` alone, which would wrongly treat a lapsed (past-expiresOn)
+      // contract as active and a scheduled-but-not-yet-effective termination as inactive.
+      if (isStaffContractActiveOn(contract, world.currentDate)) {
+        if (staffActiveContractKeys.has(contract.staffId)) throw new GameWorldValidationError(`Staff ${contract.staffId} has more than one active Staff contract`)
+        staffActiveContractKeys.add(contract.staffId)
+        const employment = world.staffEmploymentByStaffId[contract.staffId]
+        if (employment?.status !== 'employed' || employment.teamId !== contract.teamId) throw new GameWorldValidationError(`Staff contract ${contract.id} does not match Staff ${contract.staffId} employment`)
+      }
     }
-  }
-  for (const [staffId, profile] of Object.entries(world.staffReputationProfilesByStaffId) as [StaffPersonId, StaffReputationProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Staff reputation profile'); createStaffReputationProfile(profile) }
-  for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
-  for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
-  for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
-  for (const pick of Object.values(world.draftPicksById)) validateDraftPick(world, pick)
+  })
+  scope.run('96:staffReputationProfilesByStaffId', () => {
+    for (const [staffId, profile] of Object.entries(world.staffReputationProfilesByStaffId) as [StaffPersonId, StaffReputationProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Staff reputation profile'); createStaffReputationProfile(profile) }
+  })
+  scope.run('97:validateSeasonHistory', () => {
+    if (!previous || previous.seasonHistoryBySeasonId !== world.seasonHistoryBySeasonId
+      || previous.games !== world.games || previous.seasons !== world.seasons || previous.competitions !== world.competitions) {
+      const changedGameSeasons = new Set<string>()
+      if (previous && previous.games !== world.games) {
+        for (const game of Object.values(world.games)) if (previous.games[game.id] !== game) {
+          changedGameSeasons.add(game.seasonId)
+          const prior = previous.games[game.id]
+          if (prior) changedGameSeasons.add(prior.seasonId)
+        }
+        for (const game of Object.values(previous.games)) if (!world.games[game.id]) changedGameSeasons.add(game.seasonId)
+      }
+      for (const history of Object.values(world.seasonHistoryBySeasonId)) {
+        if (previous && previous.seasonHistoryBySeasonId[history.seasonId] === history
+          && previous.seasons[history.seasonId] === world.seasons[history.seasonId]
+          && previous.competitions[history.competitionId] === world.competitions[history.competitionId]
+          && !changedGameSeasons.has(history.seasonId)) continue
+        validateSeasonHistory(world, history)
+      }
+    }
+  })
+  scope.run('98:validatePromotionRelegationResolution', () => {
+    for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
+  })
+  scope.run('99:validateDraft', () => {
+    for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
+  })
+  scope.run('100:validateDraftPick', () => {
+    for (const pick of Object.values(world.draftPicksById)) validateDraftPick(world, pick)
+  })
   const baselineKeys = new Set<string>()
-  for (const baseline of Object.values(world.contractServiceTimeBaselinesById)) { createContractServiceTimeBaseline(baseline); requireEntity(world.players, baseline.playerId, 'Service-time baseline Player'); requireEntity(world.ecosystems, baseline.jurisdictionId, 'Service-time baseline jurisdiction'); const key = `${baseline.playerId}:${baseline.jurisdictionId}`; if (baselineKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time baselines for a jurisdiction'); baselineKeys.add(key) }
+  scope.run('101:contractServiceTimeBaselinesById', () => {
+    for (const baseline of Object.values(world.contractServiceTimeBaselinesById)) { createContractServiceTimeBaseline(baseline); requireEntity(world.players, baseline.playerId, 'Service-time baseline Player'); requireEntity(world.ecosystems, baseline.jurisdictionId, 'Service-time baseline jurisdiction'); const key = `${baseline.playerId}:${baseline.jurisdictionId}`; if (baselineKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time baselines for a jurisdiction'); baselineKeys.add(key) }
+  })
   const creditKeys = new Set<string>()
-  for (const credit of Object.values(world.contractServiceTimeCreditsById)) { createContractServiceTimeCredit(credit); requireEntity(world.players, credit.playerId, 'Service-time credit Player'); requireEntity(world.ecosystems, credit.jurisdictionId, 'Service-time credit jurisdiction'); const season = requireEntity(world.seasons, credit.seasonId, 'Service-time credit season'); const competition = requireEntity(world.competitions, season.competitionId, 'Service-time credit competition'); if (competition.id !== credit.competitionId || competition.ecosystemId !== credit.jurisdictionId) throw new GameWorldValidationError('Service-time credit jurisdiction does not match competition'); const key = `${credit.playerId}:${credit.jurisdictionId}:${credit.serviceYear}`; if (creditKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time credits for a jurisdiction/year'); creditKeys.add(key); if (new Set(credit.qualifyingGameIds).size !== credit.qualifyingGameIds.length || credit.qualifyingGameIds.some((id) => world.games[id as GameId]?.seasonId !== credit.seasonId)) throw new GameWorldValidationError('Service-time credit evidence is invalid') }
-  for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key'); if (rules.serviceTimePolicy !== undefined) requireEntity(world.ecosystems, rules.serviceTimePolicy.jurisdictionId, 'Salary service-time jurisdiction') }
-  for (const exception of Object.values(world.salaryExceptionsById)) { createTeamSalaryException(exception); requireEntity(world.teams, exception.teamId, 'Salary exception Team'); requireEntity(world.seasons, exception.seasonId, 'Salary exception season') }
-  for (const charge of Object.values(world.deadMoneyChargesById)) { createDeadMoneyCharge(charge); requireEntity(world.teams, charge.teamId, 'Dead money Team'); requireEntity(world.seasons, charge.seasonId, 'Dead money season') }
-  for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) {
-    const season = requireEntity(world.seasons, seasonId, 'Trade rules season')
-    createTradeRules(rules)
-    if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key')
-    requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem')
-    if ((rules.tradeWindow?.opensOn !== undefined && (compareGameDates(rules.tradeWindow.opensOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.opensOn, season.endDate) > 0))
-      || (rules.tradeWindow?.closesOn !== undefined && (compareGameDates(rules.tradeWindow.closesOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.closesOn, season.endDate) > 0))) throw new GameWorldValidationError('Trade window must stay within its season')
-  }
-  for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem'); if (rights.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(rights.contractId), 'Player rights Contract'); if (contract.playerId !== rights.playerId) throw new GameWorldValidationError(`Player rights ${rights.id} Contract belongs to another Player`) } }
-  for (const right of Object.values(world.futureDraftPickRightsById)) { createFutureDraftPickRight(right); requireEntity(world.teams, right.originalTeamId, 'Future pick original Team'); requireEntity(world.teams, right.ownerTeamId, 'Future pick owner Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Future pick ecosystem'); if (right.conditionalRecipientTeamId !== undefined) requireEntity(world.teams, right.conditionalRecipientTeamId, 'Future pick conditional Team') }
-  for (const right of Object.values(world.draftPickSwapRightsById)) { createDraftPickSwapRight(right); requireEntity(world.teams, right.holderTeamId, 'Swap right holder Team'); requireEntity(world.teams, right.counterpartTeamId, 'Swap right counterpart Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Swap right ecosystem') }
-  for (const obligation of Object.values(world.retainedSalaryObligationsById)) { createRetainedSalaryObligation(obligation); requireEntity(world.players, obligation.playerId, 'Retained salary Player'); requireEntity(world.teams, obligation.retainingTeamId, 'Retained salary retaining Team'); requireEntity(world.teams, obligation.receivingTeamId, 'Retained salary receiving Team'); requireEntity(world.seasons, obligation.seasonId, 'Retained salary season') }
-  for (const trade of Object.values(world.tradeHistoryById)) { createTradeRecord(trade); requireEntity(world.ecosystems, trade.ecosystemId, 'Trade ecosystem'); requireEntity(world.seasons, trade.seasonId, 'Trade season'); for (const teamId of trade.participantTeamIds) requireEntity(world.teams, teamId, 'Trade participant Team') }
-  for (const negotiation of Object.values(world.tradeNegotiationsById)) {
-    createTradeNegotiation(negotiation)
-    requireEntity(world.ecosystems, negotiation.ecosystemId, `Trade negotiation ${negotiation.id} ecosystem`)
-    requireEntity(world.seasons, negotiation.seasonId, `Trade negotiation ${negotiation.id} season`)
-    for (const teamId of negotiation.participantTeamIds) requireEntity(world.teams, teamId, `Trade negotiation ${negotiation.id} participant`)
-    for (const revision of negotiation.revisions) {
-      for (const movement of revision.movements) {
-        if (movement.asset.kind === 'player') requireEntity(world.players, movement.asset.playerId, `Trade negotiation ${negotiation.id} Player`)
-        if (movement.asset.kind === 'draftPick') requireEntity(world.draftPicksById, movement.asset.draftPickId, `Trade negotiation ${negotiation.id} Draft pick`)
-        if (movement.asset.kind === 'futureDraftPick') requireEntity(world.futureDraftPickRightsById, movement.asset.futureDraftPickRightId, `Trade negotiation ${negotiation.id} Future pick`)
-        if (movement.asset.kind === 'playerRights') requireEntity(world.playerRightsById, movement.asset.playerRightsId, `Trade negotiation ${negotiation.id} Player rights`)
-        if (movement.asset.kind === 'draftPickSwapRight') requireEntity(world.draftPickSwapRightsById, movement.asset.draftPickSwapRightId, `Trade negotiation ${negotiation.id} Swap right`)
-      }
-      for (const snapshot of revision.contractSnapshots) requireEntity(world.players, snapshot.playerId, `Trade negotiation ${negotiation.id} contract snapshot Player`)
-      if (revision.proposedByActor.kind === 'STAFF') requireEntity(world.staffPeopleById, revision.proposedByActor.staffPersonId, `Trade negotiation ${negotiation.id} proposer Staff`)
+  scope.run('102:contractServiceTimeCreditsById', () => {
+    for (const credit of Object.values(world.contractServiceTimeCreditsById)) { createContractServiceTimeCredit(credit); requireEntity(world.players, credit.playerId, 'Service-time credit Player'); requireEntity(world.ecosystems, credit.jurisdictionId, 'Service-time credit jurisdiction'); const season = requireEntity(world.seasons, credit.seasonId, 'Service-time credit season'); const competition = requireEntity(world.competitions, season.competitionId, 'Service-time credit competition'); if (competition.id !== credit.competitionId || competition.ecosystemId !== credit.jurisdictionId) throw new GameWorldValidationError('Service-time credit jurisdiction does not match competition'); const key = `${credit.playerId}:${credit.jurisdictionId}:${credit.serviceYear}`; if (creditKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time credits for a jurisdiction/year'); creditKeys.add(key); if (new Set(credit.qualifyingGameIds).size !== credit.qualifyingGameIds.length || credit.qualifyingGameIds.some((id) => world.games[id as GameId]?.seasonId !== credit.seasonId)) throw new GameWorldValidationError('Service-time credit evidence is invalid') }
+  })
+  scope.run('103:salaryRulesBySeasonId', () => {
+    for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key'); if (rules.serviceTimePolicy !== undefined) requireEntity(world.ecosystems, rules.serviceTimePolicy.jurisdictionId, 'Salary service-time jurisdiction') }
+  })
+  scope.run('104:salaryExceptionsById', () => {
+    for (const exception of Object.values(world.salaryExceptionsById)) { createTeamSalaryException(exception); requireEntity(world.teams, exception.teamId, 'Salary exception Team'); requireEntity(world.seasons, exception.seasonId, 'Salary exception season') }
+  })
+  scope.run('105:deadMoneyChargesById', () => {
+    for (const charge of Object.values(world.deadMoneyChargesById)) { createDeadMoneyCharge(charge); requireEntity(world.teams, charge.teamId, 'Dead money Team'); requireEntity(world.seasons, charge.seasonId, 'Dead money season') }
+  })
+  scope.run('106:tradeRulesBySeasonId', () => {
+    for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) {
+      const season = requireEntity(world.seasons, seasonId, 'Trade rules season')
+      createTradeRules(rules)
+      if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key')
+      requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem')
+      if ((rules.tradeWindow?.opensOn !== undefined && (compareGameDates(rules.tradeWindow.opensOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.opensOn, season.endDate) > 0))
+        || (rules.tradeWindow?.closesOn !== undefined && (compareGameDates(rules.tradeWindow.closesOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.closesOn, season.endDate) > 0))) throw new GameWorldValidationError('Trade window must stay within its season')
     }
-    for (const action of negotiation.actions) if (action.actor.kind === 'STAFF') requireEntity(world.staffPeopleById, action.actor.staffPersonId, `Trade negotiation ${negotiation.id} action Staff`)
-    if (negotiation.status === 'EXECUTED') {
-      const decisionIds = negotiation.governanceDecisionIdsByTeamId!
-      for (const teamId of negotiation.participantTeamIds) {
-        const decision = requireEntity(world.governanceDecisionsById, decisionIds[teamId]!, `Executed trade negotiation ${negotiation.id} Governance decision`)
-        assertPlayerTradeCommitmentEffect(world, decision, negotiation.completedOn!)
+  })
+  scope.run('107:playerRightsById', () => {
+    for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem'); if (rights.contractId !== undefined) { const contract = requireEntity(world.contractsById, contractIdFromString(rights.contractId), 'Player rights Contract'); if (contract.playerId !== rights.playerId) throw new GameWorldValidationError(`Player rights ${rights.id} Contract belongs to another Player`) } }
+  })
+  scope.run('108:futureDraftPickRightsById', () => {
+    for (const right of Object.values(world.futureDraftPickRightsById)) { createFutureDraftPickRight(right); requireEntity(world.teams, right.originalTeamId, 'Future pick original Team'); requireEntity(world.teams, right.ownerTeamId, 'Future pick owner Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Future pick ecosystem'); if (right.conditionalRecipientTeamId !== undefined) requireEntity(world.teams, right.conditionalRecipientTeamId, 'Future pick conditional Team') }
+  })
+  scope.run('109:draftPickSwapRightsById', () => {
+    for (const right of Object.values(world.draftPickSwapRightsById)) { createDraftPickSwapRight(right); requireEntity(world.teams, right.holderTeamId, 'Swap right holder Team'); requireEntity(world.teams, right.counterpartTeamId, 'Swap right counterpart Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Swap right ecosystem') }
+  })
+  scope.run('110:retainedSalaryObligationsById', () => {
+    for (const obligation of Object.values(world.retainedSalaryObligationsById)) { createRetainedSalaryObligation(obligation); requireEntity(world.players, obligation.playerId, 'Retained salary Player'); requireEntity(world.teams, obligation.retainingTeamId, 'Retained salary retaining Team'); requireEntity(world.teams, obligation.receivingTeamId, 'Retained salary receiving Team'); requireEntity(world.seasons, obligation.seasonId, 'Retained salary season') }
+  })
+  scope.run('111:tradeHistoryById', () => {
+    for (const trade of Object.values(world.tradeHistoryById)) { createTradeRecord(trade); requireEntity(world.ecosystems, trade.ecosystemId, 'Trade ecosystem'); requireEntity(world.seasons, trade.seasonId, 'Trade season'); for (const teamId of trade.participantTeamIds) requireEntity(world.teams, teamId, 'Trade participant Team') }
+  })
+  scope.run('112:tradeNegotiationsById', () => {
+    for (const negotiation of Object.values(world.tradeNegotiationsById)) {
+      createTradeNegotiation(negotiation)
+      requireEntity(world.ecosystems, negotiation.ecosystemId, `Trade negotiation ${negotiation.id} ecosystem`)
+      requireEntity(world.seasons, negotiation.seasonId, `Trade negotiation ${negotiation.id} season`)
+      for (const teamId of negotiation.participantTeamIds) requireEntity(world.teams, teamId, `Trade negotiation ${negotiation.id} participant`)
+      for (const revision of negotiation.revisions) {
+        for (const movement of revision.movements) {
+          if (movement.asset.kind === 'player') requireEntity(world.players, movement.asset.playerId, `Trade negotiation ${negotiation.id} Player`)
+          if (movement.asset.kind === 'draftPick') requireEntity(world.draftPicksById, movement.asset.draftPickId, `Trade negotiation ${negotiation.id} Draft pick`)
+          if (movement.asset.kind === 'futureDraftPick') requireEntity(world.futureDraftPickRightsById, movement.asset.futureDraftPickRightId, `Trade negotiation ${negotiation.id} Future pick`)
+          if (movement.asset.kind === 'playerRights') requireEntity(world.playerRightsById, movement.asset.playerRightsId, `Trade negotiation ${negotiation.id} Player rights`)
+          if (movement.asset.kind === 'draftPickSwapRight') requireEntity(world.draftPickSwapRightsById, movement.asset.draftPickSwapRightId, `Trade negotiation ${negotiation.id} Swap right`)
+        }
+        for (const snapshot of revision.contractSnapshots) requireEntity(world.players, snapshot.playerId, `Trade negotiation ${negotiation.id} contract snapshot Player`)
+        if (revision.proposedByActor.kind === 'STAFF') requireEntity(world.staffPeopleById, revision.proposedByActor.staffPersonId, `Trade negotiation ${negotiation.id} proposer Staff`)
+      }
+      for (const action of negotiation.actions) if (action.actor.kind === 'STAFF') requireEntity(world.staffPeopleById, action.actor.staffPersonId, `Trade negotiation ${negotiation.id} action Staff`)
+      if (negotiation.status === 'EXECUTED') {
+        const decisionIds = negotiation.governanceDecisionIdsByTeamId!
+        for (const teamId of negotiation.participantTeamIds) {
+          const decision = requireEntity(world.governanceDecisionsById, decisionIds[teamId]!, `Executed trade negotiation ${negotiation.id} Governance decision`)
+          assertPlayerTradeCommitmentEffect(world, decision, negotiation.completedOn!)
+        }
       }
     }
-  }
+  })
+  scope.complete(previous)
 }
 
 function validateOrganizationOwnershipAndControl(world: GameWorld): void {
@@ -2379,12 +2988,12 @@ function partyKey(p:GovernanceInteractionParty):string{return p.kind==='BODY'?`B
 function validateParty(world:GameWorld,owner:{readonly institutionId:string},p:GovernanceInteractionParty,on?:GameDate):void{if(p.kind==='BODY'){if(requireEntity(world.governanceBodiesById,p.bodyId,'Governance party body').institutionId!==owner.institutionId)throw new GameWorldValidationError('Governance party body crosses institution');return}if(p.kind==='APPOINTMENT'){const a=requireEntity(world.governanceAppointmentsById,p.appointmentId,'Governance party appointment');if(requireEntity(world.governanceBodiesById,a.bodyId,'Governance party appointment body').institutionId!==owner.institutionId||(on!==undefined&&(a.startedOn>on||(a.endedOn!==undefined&&a.endedOn<on))))throw new GameWorldValidationError('Governance party appointment inactive');return}if(p.actor.kind==='COACH')requireEntity(world.coaches,p.actor.id as CoachId,'Governance party coach');else requireEntity(world.staffPeopleById,p.actor.id as StaffPersonId,'Governance party staff')}
 function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }
 
-function validateInjury(world: GameWorld, injury: InjuryRecord): void {
+function validateInjury(world: GameWorld, injury: InjuryRecord, samePlayerInjuries: readonly InjuryRecord[]): void {
   createInjury(injury)
   requireEntity(world.players, injury.playerId, `Injury ${injury.id} Player`)
   if (injury.sourceGameId !== undefined) { const game = requireEntity(world.games, injury.sourceGameId, `Injury ${injury.id} Game`); if (game.date !== injury.injuredOn) throw new GameWorldValidationError(`Injury ${injury.id} date does not match source Game`) }
   if (injury.sourceTrainingSessionId !== undefined) { const session = requireEntity(world.scheduledTrainingSessionsById, injury.sourceTrainingSessionId, `Injury ${injury.id} Training session`); if (session.date !== injury.injuredOn || session.status !== 'completed') throw new GameWorldValidationError(`Injury ${injury.id} date does not match completed Training session`) }
-  for (const other of Object.values(world.injuriesById)) if (other.id !== injury.id && other.playerId === injury.playerId && isInjuryActive(other, injury.injuredOn)) throw new GameWorldValidationError(`Injury ${injury.playerId} overlaps another injury`)
+  for (const other of samePlayerInjuries) if (other.id !== injury.id && isInjuryActive(other, injury.injuredOn)) throw new GameWorldValidationError(`Injury ${injury.playerId} overlaps another injury`)
 }
 
 function selectLegacyCurrentSeasonId(seasons: Readonly<Record<SeasonId, Season>>): SeasonId {
@@ -3057,7 +3666,7 @@ function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: reado
   for (const existing of Object.values(world.financialTransactionsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Financial transaction ${existing.id} cannot be removed from the ledger`)
-    if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Financial transaction ${existing.id} is immutable`)
+    if (next !== existing && JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Financial transaction ${existing.id} is immutable`)
   }
 }
 
@@ -3066,7 +3675,7 @@ function assertTreasurySettlementsAppendOnly(world: GameWorld, proposed: readonl
   for (const existing of Object.values(world.treasuryApplicationsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Treasury settlement ${existing.id} cannot be removed`)
-    if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Treasury settlement ${existing.id} is immutable`)
+    if (next !== existing && JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Treasury settlement ${existing.id} is immutable`)
   }
 }
 
@@ -3117,25 +3726,38 @@ function assertPlanningCollectionsAppendOnly(world: GameWorld, inputKey: string,
   assertImmutableCollection(existing, proposed, `Financial planning ${inputKey}`)
 }
 
-function assertImmutableCollection<T extends { readonly id: string }>(existingById: Readonly<Record<string, T>>, proposed: readonly T[], label: string): void {
-  const nextById = new Map(proposed.map((item) => [String(item.id), item] as const))
-  for (const existing of Object.values(existingById)) {
-    const next = nextById.get(String(existing.id))
+function assertImmutableCollection<T extends { readonly id: string }>(existingById: Readonly<Record<string, T>>, proposed: readonly T[], label: string): Readonly<Record<string, T>> {
+  const nextById = indexById(proposed, label)
+  for (const id in existingById) {
+    const existing = existingById[id]!
+    const next = nextById[id]
     if (next === undefined) throw new GameWorldValidationError(`${label} ${existing.id} cannot be removed`)
-    if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`${label} ${existing.id} is immutable`)
+    if (next !== existing && JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`${label} ${existing.id} is immutable`)
   }
+  return nextById
 }
 
 function assertTrainingSessionsAppendOnly(existing: Readonly<Record<string, ScheduledTrainingSession>>, proposed: Readonly<Record<string, ScheduledTrainingSession>>): void {
-  for (const [id, session] of Object.entries(existing)) {
-    const next = proposed[id]
-    if (session.status === 'completed' && (next === undefined || JSON.stringify(next) !== JSON.stringify(session))) throw new GameWorldValidationError(`Completed Training session ${id} is immutable`)
-    if (session.execution !== undefined && next?.execution !== undefined && JSON.stringify(next.execution) !== JSON.stringify(session.execution)) throw new GameWorldValidationError(`Training execution evidence ${id} is immutable`)
-    if (session.status === 'scheduled' && next?.status === 'completed') {
-      const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, ...oldSchedule } = session
-      const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, ...newSchedule } = next
-      if (JSON.stringify(oldSchedule) !== JSON.stringify(newSchedule) || next.execution === undefined || JSON.stringify(next.execution.executingStaffPersonIds) !== JSON.stringify(session.assignedStaffPersonIds ?? [])) throw new GameWorldValidationError(`Completed Training session ${id} does not preserve its scheduled identity and executor`)
-    }
+  const changes = scheduledTrainingSessionMapMetadata.get(proposed as object)
+  const existingMetadata = scheduledTrainingSessionMapMetadata.get(existing as object)
+  if (changes?.changedSessions !== undefined && changes.previousRevision === existingMetadata?.revision
+    && changes.changedSessions.every(({ id, previousSession }) => previousSession === existing[id])) {
+    for (const { id, previousSession } of changes.changedSessions) assertTrainingSessionAppendOnly(previousSession, proposed[id], id)
+    return
+  }
+  for (const id in existing) {
+    assertTrainingSessionAppendOnly(existing[id], proposed[id], id)
+  }
+}
+
+function assertTrainingSessionAppendOnly(session: ScheduledTrainingSession | undefined, next: ScheduledTrainingSession | undefined, id: string): void {
+  if (session === undefined || next === session) return
+  if (session.status === 'completed' && (next === undefined || JSON.stringify(next) !== JSON.stringify(session))) throw new GameWorldValidationError(`Completed Training session ${id} is immutable`)
+  if (session.execution !== undefined && next?.execution !== undefined && JSON.stringify(next.execution) !== JSON.stringify(session.execution)) throw new GameWorldValidationError(`Training execution evidence ${id} is immutable`)
+  if (session.status === 'scheduled' && next?.status === 'completed') {
+    const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, ...oldSchedule } = session
+    const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, ...newSchedule } = next
+    if (JSON.stringify(oldSchedule) !== JSON.stringify(newSchedule) || next.execution === undefined || JSON.stringify(next.execution.executingStaffPersonIds) !== JSON.stringify(session.assignedStaffPersonIds ?? [])) throw new GameWorldValidationError(`Completed Training session ${id} does not preserve its scheduled identity and executor`)
   }
 }
 

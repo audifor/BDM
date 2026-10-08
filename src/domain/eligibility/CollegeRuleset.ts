@@ -13,6 +13,7 @@ export interface CollegeRuleset {
   readonly maximumEligibilitySeasons: number
   readonly participationThreshold: number
   readonly provenance: string
+  readonly basedOnRulesetId?: string
   readonly eligibilityClock?: { readonly model: 'AGE_OR_ENROLLMENT_FIVE_YEAR'; readonly effectiveFrom: GameDate; readonly periodYears: 5; readonly ageTriggerYears: 19; readonly academicYearStartMonthDay: '09-01'; readonly source: string; readonly transitionSource: string }
 }
 

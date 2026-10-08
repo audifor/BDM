@@ -18,6 +18,8 @@ import { assessCollegeEligibility } from '@/engine/eligibility'
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { assessNbaDraftEligibility } from '@/engine/draft/DraftEligibility'
 import { calculatePlayerStatAverages, getPlayerCareerStats } from '@/engine/stats/PlayerHistory'
+import { isPlayerCareerActive } from '@/engine/career/PlayerCareerLifecycle'
+import { sportsCategoryForGender } from '@/domain/primitives'
 
 export function createDraftForCompletedSeason(world: GameWorld, ecosystemId: EcosystemId, sourceSeasonId: SeasonId, rules: DraftRules, prospectPlayerIds: readonly PlayerId[]): GameWorld {
   const ecosystem = world.ecosystems[ecosystemId]; const season = world.seasons[sourceSeasonId]
@@ -125,21 +127,21 @@ export function generateDraftProspects(world: GameWorld, draftId: string, count:
   return updateGameWorld(world, { players: [...Object.values(world.players), ...prospects], drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, prospectPlayerIds: prospects.map((player) => player.id) } : item) })
 }
 export interface AiDraftBoardRow { readonly playerId: PlayerId; readonly rank: number; readonly priorityScore: number; readonly knowledgeConfidence: number; readonly publicProduction: number; readonly positionalNeed: number }
+/** Shared organization/public-evidence evaluation, including Players already selected. */
+export function evaluateAiDraftProspect(world: GameWorld, teamId: TeamId, playerId: PlayerId): Omit<AiDraftBoardRow, 'rank'> {
+  const team = world.teams[teamId]!, player = world.players[playerId]!
+  const valuation = deriveOrganizationPlayerValuation({ organizationId: team.organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'DRAFT', publicPosition: player.basketball.primaryPosition, policy: world.organizationEvaluationPoliciesById[team.organizationId] })
+  const stats = calculatePlayerStatAverages(getPlayerCareerStats(world, playerId))
+  const publicProduction = Math.min(10, stats.ppg * 0.2 + stats.rpg * 0.12 + stats.apg * 0.16 + stats.spg * 0.1 + stats.bpg * 0.1)
+  const count = team.rosterPlayerIds.filter(id => world.players[id]?.basketball.primaryPosition === player.basketball.primaryPosition).length
+  const positionalNeed = Math.max(0, 3 - count)
+  return { playerId, priorityScore: valuation.priorityScore + Math.round(publicProduction * 4 + positionalNeed * 1.5), knowledgeConfidence: valuation.certainty, publicProduction: Math.round(publicProduction * 10) / 10, positionalNeed }
+}
 export function getAiDraftBoard(world: GameWorld, draftId: string, organizationTeamId?: TeamId): readonly AiDraftBoardRow[] {
   const teamId = organizationTeamId ?? getCurrentDraftPick(world, draftId)?.ownerTeamId
   const team = teamId === undefined ? undefined : world.teams[teamId]
   if (!team) return []
-  const organizationId = team.organizationId, policy = world.organizationEvaluationPoliciesById[organizationId]
-  const countsByPosition = new Map<string, number>()
-  for (const rosteredId of team.rosterPlayerIds) { const position = world.players[rosteredId]?.basketball.primaryPosition; if (position) countsByPosition.set(position, (countsByPosition.get(position) ?? 0) + 1) }
-  return getAvailableDraftProspects(world, draftId).map((playerId) => {
-    const player = world.players[playerId]!
-    const valuation = deriveOrganizationPlayerValuation({ organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'DRAFT', publicPosition: player.basketball.primaryPosition, policy })
-    const stats = calculatePlayerStatAverages(getPlayerCareerStats(world, playerId))
-    const publicProduction = Math.min(10, stats.ppg * 0.2 + stats.rpg * 0.12 + stats.apg * 0.16 + stats.spg * 0.1 + stats.bpg * 0.1)
-    const positionalNeed = Math.max(0, 3 - (countsByPosition.get(player.basketball.primaryPosition) ?? 0))
-    return { playerId, rank: 0, priorityScore: valuation.priorityScore + Math.round(publicProduction * 4 + positionalNeed * 1.5), knowledgeConfidence: valuation.certainty, publicProduction: Math.round(publicProduction * 10) / 10, positionalNeed }
-  }).sort((a, b) => b.priorityScore - a.priorityScore || a.playerId.localeCompare(b.playerId)).map((row, index) => ({ ...row, rank: index + 1 }))
+  return getAvailableDraftProspects(world, draftId).map(playerId => evaluateAiDraftProspect(world, team.id, playerId)).sort((a, b) => b.priorityScore - a.priorityScore || a.playerId.localeCompare(b.playerId)).map((row, index) => ({ ...row, rank: index + 1 }))
 }
 export function chooseAiDraftProspect(world: GameWorld, draftId: string, organizationTeamId?: TeamId): PlayerId | undefined { return getAiDraftBoard(world, draftId, organizationTeamId)[0]?.playerId }
 export function progressDraftAi(world: GameWorld, draftId: string): GameWorld { let current = world; const userTeamId = Object.values(current.teams).find((team) => team.coachId === current.userCoachId)?.id; for (;;) { const pick = getCurrentDraftPick(current, draftId); if (!pick || pick.ownerTeamId === userTeamId) return current; const prospect = chooseAiDraftProspect(current, draftId,pick.ownerTeamId); if (!prospect) return current; current = makeDraftSelection(current, draftId, pick.ownerTeamId, prospect) } }
@@ -157,9 +159,10 @@ export function projectDraftCandidates(world: GameWorld, draftId: string, date =
   if (!draft) throw new Error('Draft does not exist')
   const playersBefore = Object.keys(world.players).length
   if (draft.status === 'completed') return { playerIds: [], automaticPlayerIds: [], earlyEntryPlayerIds: [], playersBefore, playersAfter: playersBefore }
+  const category = world.ecosystems[draft.ecosystemId]!.category
   const entries = new Map((draft.entries ?? []).map((entry) => [entry.playerId, entry]))
   const withdrawn = new Set((draft.entries ?? []).filter((entry) => ['withdrawnNCAAEligible', 'withdrawnNCAAIneligible', 'withdrawnNBA'].includes(entry.status)).map((entry) => entry.playerId))
-  const selected = new Set(getDraftPicks(world, draftId).flatMap((pick) => pick.selection === undefined ? [] : [pick.selection.playerId]))
+  const selected = new Set(Object.values(world.draftPicksById).flatMap((pick) => pick.selection === undefined ? [] : [pick.selection.playerId]))
   const automatic = new Set<PlayerId>()
   const declared = new Set<PlayerId>()
 
@@ -167,7 +170,8 @@ export function projectDraftCandidates(world: GameWorld, draftId: string, date =
     const sourceKind = getTeamEcosystemKind(world, team.id)
     if (sourceKind !== 'ncaaLike' && sourceKind !== 'fibaLike') continue
     for (const playerId of team.rosterPlayerIds) {
-      if (world.players[playerId] === undefined || withdrawn.has(playerId)) continue
+      if (world.players[playerId] === undefined || !isPlayerCareerActive(world, playerId) || withdrawn.has(playerId)) continue
+      if (sportsCategoryForGender(world.players[playerId]!.gender) !== category) continue
       if (sourceKind === 'ncaaLike' && !Object.values(world.playerEnrollmentsById).some((enrollment) => enrollment.playerId === playerId && enrollment.teamId === team.id && enrollment.status === 'active')) continue
       const eligibility = assessNbaDraftEligibility(world, playerId, draft)
       if (eligibility.eligible && eligibility.automatic) automatic.add(playerId)
@@ -184,7 +188,7 @@ export function projectDraftCandidates(world: GameWorld, draftId: string, date =
 
   const legacy = draft.prospectPlayerIds.filter((playerId) => {
     const entry = entries.get(playerId)
-    if (world.players[playerId] === undefined || withdrawn.has(playerId) || entry?.status === 'considering' || entry?.status === 'drafted' || entry?.status === 'undrafted') return false
+    if (world.players[playerId] === undefined || !isPlayerCareerActive(world, playerId) || withdrawn.has(playerId) || entry?.status === 'considering' || entry?.status === 'drafted' || entry?.status === 'undrafted') return false
     if (entry === undefined) return true // Save V4 legacy classes and fixture-only synthetic classes.
     const eligibility = assessNbaDraftEligibility(world, playerId, draft)
     if (entry.entryType === 'automatic') return eligibility.eligible && eligibility.automatic
@@ -194,10 +198,10 @@ export function projectDraftCandidates(world: GameWorld, draftId: string, date =
     }
     return draft.rules.provenance === undefined || draft.rules.provenance === 'PRODUCT_ABSTRACTION'
   })
-  const playerIds = [...new Set([...legacy, ...automatic, ...declared])].filter((playerId) => !selected.has(playerId) && !withdrawn.has(playerId))
+  const playerIds = [...new Set([...legacy, ...automatic, ...declared])].filter((playerId) => !selected.has(playerId) && !withdrawn.has(playerId) && sportsCategoryForGender(world.players[playerId]!.gender) === category)
   const playersAfter = Object.keys(world.players).length
   if (playersAfter !== playersBefore || playerIds.some((playerId) => world.players[playerId] === undefined)) throw new Error('Draft candidate projection must preserve Player count and existing identities')
-  return { playerIds, automaticPlayerIds: [...automatic].filter((playerId) => !selected.has(playerId)), earlyEntryPlayerIds: [...declared].filter((playerId) => !selected.has(playerId)), playersBefore, playersAfter }
+  return { playerIds, automaticPlayerIds: [...automatic].filter((playerId) => !selected.has(playerId)), earlyEntryPlayerIds: [...declared].filter((playerId) => !selected.has(playerId) && sportsCategoryForGender(world.players[playerId]!.gender) === category), playersBefore, playersAfter }
 }
 
 export function getDraftCandidates(world: GameWorld, draftId: string, date = world.currentDate): readonly PlayerId[] { return projectDraftCandidates(world, draftId, date).playerIds }

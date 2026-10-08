@@ -1,6 +1,7 @@
 import type { Gender } from '@/domain/primitives'
 import { requireGender } from '@/domain/primitives'
 import type { PlaceId } from '@/domain/ids'
+import type { PlayerPathwaySource } from '@/domain/player'
 import { placeIdFromString } from '@/domain/ids'
 import { requireNonEmptyString } from '@/domain/validation'
 
@@ -23,6 +24,7 @@ export interface TalentCohort {
   readonly candidateCapacity: number
   readonly inputs: TalentSupplyInputs
   readonly inputVersion: string
+  readonly pathwaySource?: PlayerPathwaySource
 }
 
 export interface CreateTalentCohortInput {
@@ -34,6 +36,7 @@ export interface CreateTalentCohortInput {
   readonly seed: number
   readonly inputs: TalentSupplyInputs
   readonly inputVersion: string
+  readonly pathwaySource?: PlayerPathwaySource
 }
 
 export const MAX_TALENT_COHORT_CAPACITY = 100_000
@@ -66,7 +69,13 @@ export function createTalentCohort(input: CreateTalentCohortInput): TalentCohort
     candidateCapacity,
     inputs: Object.freeze({ ...input.inputs }),
     inputVersion: requireNonEmptyString(input.inputVersion, 'Talent cohort input version'),
+    ...(input.pathwaySource === undefined ? {} : { pathwaySource: requirePathwaySource(input.pathwaySource) }),
   })
+}
+
+function requirePathwaySource(source: PlayerPathwaySource): PlayerPathwaySource {
+  if (!['US_HIGH_SCHOOL', 'JUCO', 'INTERNATIONAL_CLUB', 'ACADEMY_YOUTH', 'OTHER_PRECOLLEGE'].includes(source)) throw new TypeError('Talent cohort pathway source is invalid')
+  return source
 }
 
 function requireInteger(value: number, label: string, minimum: number, maximum: number): void {

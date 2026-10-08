@@ -1,0 +1,6536 @@
+[
+  {
+    "date": "2032-10-01",
+    "rostered": 168,
+    "enrolled": 84,
+    "academicEligible": 168,
+    "academicIneligible": 0,
+    "eligible": 84,
+    "incomingSigned": 0,
+    "signedTotal": 0,
+    "successfulArrivals": 0,
+    "transfersOut": 0,
+    "transfersIn": 0,
+    "proExits": 0,
+    "exhausted": 0,
+    "missingAcademicProfiles": 0,
+    "staleAcademicProfiles": 0,
+    "activeAcademicRestrictions": 0,
+    "academicProfileCount": 168,
+    "academicTermRecordCount": 0,
+    "recruitingPoolSize": 0,
+    "materializedRecruitPlayers": 0,
+    "recruitingStatus": {},
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "sourceSeasonId": "generated-season-0005",
+        "targetSeasonId": "generated-season-0005:next",
+        "status": "scheduled",
+        "opensOn": "2032-12-30",
+        "signingOn": "2033-03-31",
+        "closesOn": "2033-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "sourceSeasonId": "women-season-0005",
+        "targetSeasonId": "women-season-0005:next",
+        "status": "scheduled",
+        "opensOn": "2033-01-06",
+        "signingOn": "2033-04-07",
+        "closesOn": "2033-05-06",
+        "institutionalPolicies": 0
+      }
+    ],
+    "reasons": [
+      {
+        "reason": "NOT_ENROLLED",
+        "count": 84,
+        "percentOfIneligible": 100
+      }
+    ],
+    "teams": [
+      {
+        "teamId": "generated-team-0013",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0145",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0146",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0147",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0148",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0149",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0150",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0151",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0014",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0157",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0158",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0159",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0160",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0161",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0162",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0163",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0015",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0169",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0170",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0171",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0172",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0173",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0174",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0175",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0016",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0181",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0182",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0183",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0184",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0185",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0186",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0187",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0017",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0193",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0194",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0195",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0196",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0197",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0198",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0199",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0018",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0205",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0206",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0207",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0208",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0209",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0210",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0211",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0019",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0217",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0218",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0219",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0220",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0221",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0222",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0223",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0020",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0229",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0230",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0231",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0232",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0233",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0234",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0235",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0021",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0241",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0242",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0243",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0244",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0245",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0246",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0247",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0022",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0253",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0254",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0255",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0256",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0257",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0258",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0259",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0023",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0265",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0266",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0267",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0268",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0269",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0270",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0271",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0024",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0277",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0278",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0279",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0280",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0281",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0282",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0283",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0013",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0014",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0015",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0016",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0017",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0018",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0019",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0020",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0021",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0022",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0023",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      },
+      {
+        "teamId": "women-team-0024",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 0,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "NOT_ENROLLED": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": []
+      }
+    ]
+  },
+  {
+    "date": "2033-10-01",
+    "rostered": 168,
+    "enrolled": 168,
+    "academicEligible": 168,
+    "academicIneligible": 0,
+    "eligible": 168,
+    "incomingSigned": 0,
+    "signedTotal": 0,
+    "successfulArrivals": 0,
+    "transfersOut": 0,
+    "transfersIn": 0,
+    "proExits": 0,
+    "exhausted": 0,
+    "missingAcademicProfiles": 0,
+    "staleAcademicProfiles": 0,
+    "activeAcademicRestrictions": 0,
+    "academicProfileCount": 168,
+    "academicTermRecordCount": 336,
+    "recruitingPoolSize": 144,
+    "materializedRecruitPlayers": 144,
+    "recruitingStatus": {
+      "open": 132,
+      "committed": 12
+    },
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "sourceSeasonId": "generated-season-0005",
+        "targetSeasonId": "generated-season-0011",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "signingOn": "2033-03-31",
+        "closesOn": "2033-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "sourceSeasonId": "women-season-0005",
+        "targetSeasonId": "generated-season-0012",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "signingOn": "2033-04-07",
+        "closesOn": "2033-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "sourceSeasonId": "generated-season-0011",
+        "targetSeasonId": "generated-season-0011:next",
+        "status": "scheduled",
+        "opensOn": "2033-12-30",
+        "signingOn": "2034-03-31",
+        "closesOn": "2034-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "sourceSeasonId": "generated-season-0012",
+        "targetSeasonId": "generated-season-0012:next",
+        "status": "scheduled",
+        "opensOn": "2034-01-06",
+        "signingOn": "2034-04-07",
+        "closesOn": "2034-05-06",
+        "institutionalPolicies": 0
+      }
+    ],
+    "reasons": [],
+    "teams": [
+      {
+        "teamId": "generated-team-0013",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0145",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0146",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0147",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0148",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0149",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0150",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0151",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0014",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0157",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0158",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0159",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0160",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0161",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0162",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0163",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0015",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0169",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0170",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0171",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0172",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0173",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0174",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0175",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0016",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0181",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0182",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0183",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0184",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0185",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0186",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0187",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0017",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0193",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0194",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0195",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0196",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0197",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0198",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0199",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0018",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0205",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0206",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0207",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0208",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0209",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0210",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0211",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0019",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0217",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0218",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0219",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0220",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0221",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0222",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0223",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0020",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0229",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0230",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0231",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0232",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0233",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0234",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0235",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0021",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0241",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0242",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0243",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0244",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0245",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0246",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0247",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0022",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0253",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0254",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0255",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0256",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0257",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0258",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0259",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0023",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0265",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0266",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0267",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0268",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0269",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0270",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0271",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0024",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0277",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0278",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0279",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0280",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0281",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0282",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0283",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0013",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0145",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0146",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0147",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0148",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0149",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0150",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0151",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0014",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0157",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0158",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0159",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0160",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0161",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0162",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0163",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0015",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0169",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0170",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0171",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0172",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0173",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0174",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0175",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0016",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0181",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0182",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0183",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0184",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0185",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0186",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0187",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0017",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0193",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0194",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0195",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0196",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0197",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0198",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0199",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0018",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0205",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0206",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0207",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0208",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0209",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0210",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0211",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0019",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0217",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0218",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0219",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0220",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0221",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0222",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0223",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0020",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0229",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0230",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0231",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0232",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0233",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0234",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0235",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0021",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0241",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0242",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0243",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0244",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0245",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0246",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0247",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0022",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0253",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0254",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0255",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0256",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0257",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0258",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0259",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0023",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0265",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0266",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0267",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0268",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0269",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0270",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0271",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0024",
+        "competitionId": "women-competition-0004",
+        "seasonId": "women-season-0005",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0277",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0278",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0279",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0280",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0281",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0282",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0283",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      }
+    ],
+    "rawTalentCapacity": 1600,
+    "talentMaterializations": 0
+  },
+  {
+    "date": "2034-10-01",
+    "rostered": 168,
+    "enrolled": 168,
+    "academicEligible": 168,
+    "academicIneligible": 0,
+    "eligible": 168,
+    "incomingSigned": 0,
+    "signedTotal": 0,
+    "successfulArrivals": 0,
+    "transfersOut": 0,
+    "transfersIn": 0,
+    "proExits": 0,
+    "exhausted": 0,
+    "missingAcademicProfiles": 0,
+    "staleAcademicProfiles": 0,
+    "activeAcademicRestrictions": 0,
+    "academicProfileCount": 168,
+    "academicTermRecordCount": 672,
+    "recruitingPoolSize": 296,
+    "materializedRecruitPlayers": 296,
+    "recruitingStatus": {
+      "open": 275,
+      "committed": 21
+    },
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "sourceSeasonId": "generated-season-0005",
+        "targetSeasonId": "generated-season-0011",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "signingOn": "2033-03-31",
+        "closesOn": "2033-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "sourceSeasonId": "women-season-0005",
+        "targetSeasonId": "generated-season-0012",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "signingOn": "2033-04-07",
+        "closesOn": "2033-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "sourceSeasonId": "generated-season-0011",
+        "targetSeasonId": "generated-season-0019",
+        "status": "completed",
+        "opensOn": "2033-12-30",
+        "signingOn": "2034-03-31",
+        "closesOn": "2034-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "sourceSeasonId": "generated-season-0012",
+        "targetSeasonId": "generated-season-0020",
+        "status": "completed",
+        "opensOn": "2034-01-06",
+        "signingOn": "2034-04-07",
+        "closesOn": "2034-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0019",
+        "sourceSeasonId": "generated-season-0019",
+        "targetSeasonId": "generated-season-0019:next",
+        "status": "scheduled",
+        "opensOn": "2034-12-30",
+        "signingOn": "2035-03-31",
+        "closesOn": "2035-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0020",
+        "sourceSeasonId": "generated-season-0020",
+        "targetSeasonId": "generated-season-0020:next",
+        "status": "scheduled",
+        "opensOn": "2035-01-06",
+        "signingOn": "2035-04-07",
+        "closesOn": "2035-05-06",
+        "institutionalPolicies": 0
+      }
+    ],
+    "reasons": [],
+    "teams": [
+      {
+        "teamId": "generated-team-0013",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0145",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0146",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0147",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0148",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0149",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0150",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0151",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0014",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0157",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0158",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0159",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0160",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0161",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0162",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0163",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0015",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0169",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0170",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0171",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0172",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0173",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0174",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0175",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0016",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0181",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0182",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0183",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0184",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0185",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0186",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0187",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0017",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0193",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0194",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0195",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0196",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0197",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0198",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0199",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0018",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0205",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0206",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0207",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0208",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0209",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0210",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0211",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0019",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0217",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0218",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0219",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0220",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0221",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0222",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0223",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0020",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0229",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0230",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0231",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0232",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0233",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0234",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0235",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0021",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0241",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0242",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0243",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0244",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0245",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0246",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0247",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0022",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0253",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0254",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0255",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0256",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0257",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0258",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0259",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0023",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0265",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0266",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0267",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0268",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0269",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0270",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0271",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0024",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0011",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0277",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0278",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0279",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0280",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0281",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0282",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0283",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0013",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0145",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0146",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0147",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0148",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0149",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0150",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0151",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0014",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0157",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0158",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0159",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0160",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0161",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0162",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0163",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0015",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0169",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0170",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0171",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0172",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0173",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0174",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0175",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0016",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0181",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0182",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0183",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0184",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0185",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0186",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0187",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0017",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0193",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0194",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0195",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0196",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0197",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0198",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0199",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0018",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0205",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0206",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0207",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0208",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0209",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0210",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0211",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0019",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0217",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0218",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0219",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0220",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0221",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0222",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0223",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0020",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0229",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0230",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0231",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0232",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0233",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0234",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0235",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0021",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0241",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0242",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0243",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0244",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0245",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0246",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0247",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0022",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0253",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0254",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0255",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0256",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0257",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0258",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0259",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0023",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0265",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0266",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0267",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0268",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0269",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0270",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0271",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0024",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0012",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0277",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0278",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0279",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0280",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0281",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0282",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0283",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      }
+    ],
+    "rawTalentCapacity": 3200,
+    "talentMaterializations": 8
+  },
+  {
+    "date": "2035-10-01",
+    "rostered": 168,
+    "enrolled": 168,
+    "academicEligible": 122,
+    "academicIneligible": 46,
+    "eligible": 122,
+    "incomingSigned": 0,
+    "signedTotal": 0,
+    "successfulArrivals": 0,
+    "transfersOut": 0,
+    "transfersIn": 0,
+    "proExits": 0,
+    "exhausted": 0,
+    "missingAcademicProfiles": 0,
+    "staleAcademicProfiles": 0,
+    "activeAcademicRestrictions": 0,
+    "academicProfileCount": 168,
+    "academicTermRecordCount": 1008,
+    "recruitingPoolSize": 448,
+    "materializedRecruitPlayers": 448,
+    "recruitingStatus": {
+      "open": 416,
+      "committed": 32
+    },
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "sourceSeasonId": "generated-season-0005",
+        "targetSeasonId": "generated-season-0011",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "signingOn": "2033-03-31",
+        "closesOn": "2033-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "sourceSeasonId": "women-season-0005",
+        "targetSeasonId": "generated-season-0012",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "signingOn": "2033-04-07",
+        "closesOn": "2033-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "sourceSeasonId": "generated-season-0011",
+        "targetSeasonId": "generated-season-0019",
+        "status": "completed",
+        "opensOn": "2033-12-30",
+        "signingOn": "2034-03-31",
+        "closesOn": "2034-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "sourceSeasonId": "generated-season-0012",
+        "targetSeasonId": "generated-season-0020",
+        "status": "completed",
+        "opensOn": "2034-01-06",
+        "signingOn": "2034-04-07",
+        "closesOn": "2034-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0019",
+        "sourceSeasonId": "generated-season-0019",
+        "targetSeasonId": "generated-season-0027",
+        "status": "completed",
+        "opensOn": "2034-12-30",
+        "signingOn": "2035-03-31",
+        "closesOn": "2035-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0020",
+        "sourceSeasonId": "generated-season-0020",
+        "targetSeasonId": "generated-season-0028",
+        "status": "completed",
+        "opensOn": "2035-01-06",
+        "signingOn": "2035-04-07",
+        "closesOn": "2035-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0027",
+        "sourceSeasonId": "generated-season-0027",
+        "targetSeasonId": "generated-season-0027:next",
+        "status": "scheduled",
+        "opensOn": "2035-12-30",
+        "signingOn": "2036-03-31",
+        "closesOn": "2036-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0028",
+        "sourceSeasonId": "generated-season-0028",
+        "targetSeasonId": "generated-season-0028:next",
+        "status": "scheduled",
+        "opensOn": "2036-01-06",
+        "signingOn": "2036-04-07",
+        "closesOn": "2036-05-06",
+        "institutionalPolicies": 0
+      }
+    ],
+    "reasons": [
+      {
+        "reason": "ACADEMIC_REQUIREMENT_NOT_MET",
+        "count": 46,
+        "percentOfIneligible": 100
+      }
+    ],
+    "teams": [
+      {
+        "teamId": "generated-team-0013",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 6,
+        "academicIneligible": 1,
+        "eligible": 6,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 1
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0145",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0146",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0147",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0148",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0149",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0150",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0151",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0014",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0157",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0158",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0159",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0160",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0161",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0162",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0163",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0015",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0169",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0170",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0171",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0172",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0173",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0174",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0175",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0016",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 1,
+        "academicIneligible": 6,
+        "eligible": 1,
+        "minimumRequired": 5,
+        "deficit": 4,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 6
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0181",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0182",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0183",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0184",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0185",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0186",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0187",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0017",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0193",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0194",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0195",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0196",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0197",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0198",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0199",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0018",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0205",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0206",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0207",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0208",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0209",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0210",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0211",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0019",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 0,
+        "academicIneligible": 7,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0217",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0218",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0219",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0220",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0221",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0222",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0223",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0020",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 6,
+        "academicIneligible": 1,
+        "eligible": 6,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 1
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0229",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0230",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0231",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0232",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0233",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0234",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0235",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0021",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0241",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0242",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0243",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0244",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0245",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0246",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0247",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0022",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0253",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0254",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0255",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0256",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0257",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0258",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0259",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0023",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 2,
+        "academicIneligible": 5,
+        "eligible": 2,
+        "minimumRequired": 5,
+        "deficit": 3,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 5
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0265",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0266",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0267",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0268",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0269",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0270",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0271",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0024",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0019",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0277",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0278",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0279",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0280",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0281",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0282",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0283",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0013",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 6,
+        "academicIneligible": 1,
+        "eligible": 6,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 1
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0145",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0146",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0147",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0148",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0149",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0150",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0151",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0014",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0157",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0158",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0159",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0160",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0161",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0162",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0163",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0015",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0169",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0170",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0171",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0172",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0173",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0174",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0175",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0016",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 1,
+        "academicIneligible": 6,
+        "eligible": 1,
+        "minimumRequired": 5,
+        "deficit": 4,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 6
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0181",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0182",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0183",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0184",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0185",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0186",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0187",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0017",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0193",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0194",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0195",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0196",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0197",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0198",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0199",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0018",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0205",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0206",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0207",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0208",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0209",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0210",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0211",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0019",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 0,
+        "academicIneligible": 7,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0217",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0218",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0219",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0220",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0221",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0222",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0223",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0020",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 6,
+        "academicIneligible": 1,
+        "eligible": 6,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 1
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0229",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0230",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0231",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0232",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0233",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0234",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0235",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0021",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0241",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0242",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0243",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0244",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0245",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0246",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0247",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0022",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0253",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0254",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0255",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0256",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0257",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0258",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0259",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0023",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 2,
+        "academicIneligible": 5,
+        "eligible": 2,
+        "minimumRequired": 5,
+        "deficit": 3,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 5
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0265",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0266",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0267",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0268",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0269",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0270",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0271",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0024",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0020",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0277",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0278",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0279",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0280",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0281",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0282",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0283",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      }
+    ],
+    "rawTalentCapacity": 4800,
+    "talentMaterializations": 16
+  },
+  {
+    "date": "2036-02-03",
+    "rostered": 168,
+    "enrolled": 168,
+    "academicEligible": 132,
+    "academicIneligible": 36,
+    "eligible": 132,
+    "incomingSigned": 0,
+    "signedTotal": 0,
+    "successfulArrivals": 0,
+    "transfersOut": 0,
+    "transfersIn": 0,
+    "proExits": 0,
+    "exhausted": 0,
+    "missingAcademicProfiles": 0,
+    "staleAcademicProfiles": 0,
+    "activeAcademicRestrictions": 0,
+    "academicProfileCount": 168,
+    "academicTermRecordCount": 1176,
+    "recruitingPoolSize": 597,
+    "materializedRecruitPlayers": 597,
+    "recruitingStatus": {
+      "open": 560,
+      "committed": 37
+    },
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "sourceSeasonId": "generated-season-0005",
+        "targetSeasonId": "generated-season-0011",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "signingOn": "2033-03-31",
+        "closesOn": "2033-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "sourceSeasonId": "women-season-0005",
+        "targetSeasonId": "generated-season-0012",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "signingOn": "2033-04-07",
+        "closesOn": "2033-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "sourceSeasonId": "generated-season-0011",
+        "targetSeasonId": "generated-season-0019",
+        "status": "completed",
+        "opensOn": "2033-12-30",
+        "signingOn": "2034-03-31",
+        "closesOn": "2034-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "sourceSeasonId": "generated-season-0012",
+        "targetSeasonId": "generated-season-0020",
+        "status": "completed",
+        "opensOn": "2034-01-06",
+        "signingOn": "2034-04-07",
+        "closesOn": "2034-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0019",
+        "sourceSeasonId": "generated-season-0019",
+        "targetSeasonId": "generated-season-0027",
+        "status": "completed",
+        "opensOn": "2034-12-30",
+        "signingOn": "2035-03-31",
+        "closesOn": "2035-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0020",
+        "sourceSeasonId": "generated-season-0020",
+        "targetSeasonId": "generated-season-0028",
+        "status": "completed",
+        "opensOn": "2035-01-06",
+        "signingOn": "2035-04-07",
+        "closesOn": "2035-05-06",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0027",
+        "sourceSeasonId": "generated-season-0027",
+        "targetSeasonId": "generated-season-0027:next",
+        "status": "open",
+        "opensOn": "2035-12-30",
+        "signingOn": "2036-03-31",
+        "closesOn": "2036-04-29",
+        "institutionalPolicies": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0028",
+        "sourceSeasonId": "generated-season-0028",
+        "targetSeasonId": "generated-season-0028:next",
+        "status": "open",
+        "opensOn": "2036-01-06",
+        "signingOn": "2036-04-07",
+        "closesOn": "2036-05-06",
+        "institutionalPolicies": 0
+      }
+    ],
+    "reasons": [
+      {
+        "reason": "ACADEMIC_REQUIREMENT_NOT_MET",
+        "count": 36,
+        "percentOfIneligible": 100
+      }
+    ],
+    "teams": [
+      {
+        "teamId": "generated-team-0013",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0145",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0146",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0147",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0148",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0149",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0150",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0151",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0014",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0157",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0158",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0159",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0160",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0161",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0162",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0163",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0015",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0169",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0170",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0171",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0172",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0173",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0174",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0175",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0016",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 2,
+        "academicIneligible": 5,
+        "eligible": 2,
+        "minimumRequired": 5,
+        "deficit": 3,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 5
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0181",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0182",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0183",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0184",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0185",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0186",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0187",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0017",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0193",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0194",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0195",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0196",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0197",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0198",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0199",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0018",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0205",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0206",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0207",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0208",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0209",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0210",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0211",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0019",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 0,
+        "academicIneligible": 7,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0217",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0218",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0219",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0220",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0221",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0222",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0223",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0020",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0229",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0230",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0231",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0232",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0233",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0234",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0235",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0021",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0241",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0242",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0243",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0244",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0245",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0246",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0247",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0022",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0253",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0254",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0255",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0256",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0257",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0258",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0259",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0023",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0265",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0266",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0267",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0268",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0269",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0270",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0271",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "generated-team-0024",
+        "competitionId": "generated-competition-0004",
+        "seasonId": "generated-season-0027",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "generated-player-0277",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0278",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0279",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0280",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0281",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0282",
+            "startsOn": "2032-10-01"
+          },
+          {
+            "playerId": "generated-player-0283",
+            "startsOn": "2032-10-01"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0013",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0145",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0146",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0147",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0148",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0149",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0150",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0151",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0014",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0157",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0158",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0159",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0160",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0161",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0162",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0163",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0015",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0169",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0170",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0171",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0172",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0173",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0174",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0175",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0016",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 2,
+        "academicIneligible": 5,
+        "eligible": 2,
+        "minimumRequired": 5,
+        "deficit": 3,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 5
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0181",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0182",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0183",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0184",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0185",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0186",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0187",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0017",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0193",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0194",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0195",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0196",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0197",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0198",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0199",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0018",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0205",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0206",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0207",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0208",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0209",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0210",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0211",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0019",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 0,
+        "academicIneligible": 7,
+        "eligible": 0,
+        "minimumRequired": 5,
+        "deficit": 5,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 7
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0217",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0218",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0219",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0220",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0221",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0222",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0223",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0020",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0229",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0230",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0231",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0232",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0233",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0234",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0235",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0021",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0241",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0242",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0243",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0244",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0245",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0246",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0247",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0022",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0253",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0254",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0255",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0256",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0257",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0258",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0259",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0023",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 4,
+        "academicIneligible": 3,
+        "eligible": 4,
+        "minimumRequired": 5,
+        "deficit": 1,
+        "reasons": {
+          "ACADEMIC_REQUIREMENT_NOT_MET": 3
+        },
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0265",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0266",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0267",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0268",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0269",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0270",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0271",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      },
+      {
+        "teamId": "women-team-0024",
+        "competitionId": "women-competition-0004",
+        "seasonId": "generated-season-0028",
+        "rostered": 7,
+        "enrolled": 7,
+        "academicEligible": 7,
+        "academicIneligible": 0,
+        "eligible": 7,
+        "minimumRequired": 5,
+        "deficit": 0,
+        "reasons": {},
+        "missingAcademicProfiles": 0,
+        "staleAcademicProfiles": 0,
+        "activeAcademicRestrictions": 0,
+        "incomingSigned": 0,
+        "signedTotal": 0,
+        "successfulArrivals": 0,
+        "transfersOut": 0,
+        "transfersIn": 0,
+        "proExits": 0,
+        "exhausted": 0,
+        "activeEnrollments": [
+          {
+            "playerId": "women-player-0277",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0278",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0279",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0280",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0281",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0282",
+            "startsOn": "2032-10-08"
+          },
+          {
+            "playerId": "women-player-0283",
+            "startsOn": "2032-10-08"
+          }
+        ]
+      }
+    ],
+    "rawTalentCapacity": 4800,
+    "talentMaterializations": 21
+  }
+]

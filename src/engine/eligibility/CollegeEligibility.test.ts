@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame, prepareMatch, simulateAndApplyGame } from '@/app/game'
 import { startNextSeasonFor } from '@/app/game/startNextSeason'
 import { createGameDate } from '@/domain/date'
+import { createSeason } from '@/domain/season'
+import { seasonIdFromString } from '@/domain/ids'
 import { createPlayerRegistration } from '@/domain/youth/ClubPathway'
 import { updateGameWorld } from '@/domain/world'
 import { createCollegeRuleset } from '@/domain/eligibility'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { assignAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
-import { assessCollegeEligibility, endPlayerEnrollment, enrollPlayer, evaluatePlayerEligibility, getAvailablePlayersForCompetition, recordCollegeEligibilityAssessment, resolveCollegeRuleset } from './EligibilityEngine'
+import { assessCollegeEligibility, endPlayerEnrollment, enrollPlayer, ensureNcaaEligibility, evaluatePlayerEligibility, getAvailablePlayersForCompetition, recordCollegeEligibilityAssessment, resolveCollegeRuleset } from './EligibilityEngine'
 
 function collegeFixture() {
   const world = createNewGame()
@@ -21,6 +23,18 @@ function collegeFixture() {
 }
 
 describe('BS15D college enrollment and eligibility', () => {
+  it('derives future NCAA rules with explicit carry-forward provenance', () => {
+    const world = createNewGame()
+    const source = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!
+    const competition = world.competitions[source.competitionId]!
+    const future = createSeason({ id: seasonIdFromString('bs15i-college-2055'), competitionId: competition.id, label: '2055-56', startDate: createGameDate(2055, 8, 1), endDate: createGameDate(2056, 7, 31), participantTeamIds: competition.participantTeamIds })
+    const futureWorld = ensureNcaaEligibility(updateGameWorld(world, { seasons: [...Object.values(world.seasons), future] }))
+    const ruleset = resolveCollegeRuleset(futureWorld, competition.ecosystemId, future.startDate)!
+    expect(ruleset).toMatchObject({ provenance: 'SIMULATED_CARRY_FORWARD', effectiveFrom: future.startDate, basedOnRulesetId: expect.any(String) })
+    expect(ruleset.version).toContain('2055-56')
+    expect(ruleset.provenance).not.toBe('OFFICIAL_SOURCE')
+  })
+
   it('uses versioned effective rules and keeps historical assessment provenance', () => {
     const { world, season, game, team, playerId, ecosystemId } = collegeFixture()
     const academic = Object.values(world.academicProfilesById).find((item) => item.playerId === playerId)!

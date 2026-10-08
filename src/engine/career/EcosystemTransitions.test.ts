@@ -1,3 +1,4 @@
+import { progressCollegeEligibilityExits } from '@/engine/eligibility/CollegeEligibilityLifecycle'
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
@@ -139,6 +140,14 @@ describe('EcosystemTransitions', () => {
     expect(Object.values(moved.contractsById).some((contract) => contract.playerId === prospects[4] && contract.teamId === target.id)).toBe(true)
     expect(moved.ecosystemTransitionsById['transition:undrafted-nba']?.transitionType).toBe('ncaaToNbaUndrafted')
     expect(moved.ecosystemTransitionsById['transition:undrafted-nba']?.contractId).toBeDefined()
+    const exhausted = updateGameWorld(world, { eligibilityProfiles: Object.values(world.eligibilityProfilesById).map(item => item.playerId === prospects[4] ? { ...item, seasonsUsed: 4 } : item) })
+    const released = progressCollegeEligibilityExits(exhausted)
+    expect(released.teams[source.id]!.rosterPlayerIds).not.toContain(prospects[4])
+    const signedFormer = signUndraftedPlayerToNba(released, { id: 'transition:former-undrafted', playerId: prospects[4]!, draftId: draft.id, toTeamId: target.id })
+    expect(signedFormer.players[prospects[4]!]!.personId).toBe(personId)
+    expect(signedFormer.teams[target.id]!.rosterPlayerIds).toContain(prospects[4])
+    expect(signedFormer.ecosystemTransitionsById['transition:former-undrafted']).toMatchObject({ fromTeamId: source.id, toTeamId: target.id, transitionType: 'ncaaToNbaUndrafted' })
+
   })
 
   it('runs a simulated 2045 Draft with one international signing and an undrafted professional route', () => {

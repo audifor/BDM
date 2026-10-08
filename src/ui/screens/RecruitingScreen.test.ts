@@ -6,7 +6,7 @@ import { DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
-import { generateRecruitingPool } from '@/engine/recruiting'
+import { generateLegacyFixtureRecruitingPool as generateRecruitingPool } from '@/engine/recruiting'
 import { RecruitingScreen } from './RecruitingScreen'
 
 function fixture(controlled: boolean): GameWorld {

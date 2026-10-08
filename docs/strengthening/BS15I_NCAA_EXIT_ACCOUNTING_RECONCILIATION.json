@@ -1,0 +1,3377 @@
+{
+  "sourcePath": "C:/Temp/BS15I-final-y30-save-v4.json",
+  "baselinePath": "C:/Temp/BS15I-final-y7-save-v4.json",
+  "rejectedAdmissionsExcluded": true,
+  "simulationYearsReplayed": 0,
+  "sourceConfirmedLegacyExits": 128,
+  "events": [
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0013:generated-player-0146:2032-10-01",
+      "playerId": "generated-player-0146",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0013:generated-player-0147:2032-10-01",
+      "playerId": "generated-player-0147",
+      "endedOn": "2041-01-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0013:generated-player-0148:2032-10-01",
+      "playerId": "generated-player-0148",
+      "endedOn": "2057-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0157:2032-10-01",
+      "playerId": "generated-player-0157",
+      "endedOn": "2043-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0158:2032-10-01",
+      "playerId": "generated-player-0158",
+      "endedOn": "2043-03-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0159:2032-10-01",
+      "playerId": "generated-player-0159",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0160:2032-10-01",
+      "playerId": "generated-player-0160",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0161:2032-10-01",
+      "playerId": "generated-player-0161",
+      "endedOn": "2052-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0162:2032-10-01",
+      "playerId": "generated-player-0162",
+      "endedOn": "2050-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0014:generated-player-0163:2032-10-01",
+      "playerId": "generated-player-0163",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0015:generated-player-0170:2032-10-01",
+      "playerId": "generated-player-0170",
+      "endedOn": "2052-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0015:generated-player-0173:2032-10-01",
+      "playerId": "generated-player-0173",
+      "endedOn": "2061-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0015:generated-player-0174:2032-10-01",
+      "playerId": "generated-player-0174",
+      "endedOn": "2057-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0015:generated-player-0175:2032-10-01",
+      "playerId": "generated-player-0175",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0016:generated-player-0182:2032-10-01",
+      "playerId": "generated-player-0182",
+      "endedOn": "2051-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0016:generated-player-0184:2032-10-01",
+      "playerId": "generated-player-0184",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0016:generated-player-0187:2032-10-01",
+      "playerId": "generated-player-0187",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0017:generated-player-0195:2032-10-01",
+      "playerId": "generated-player-0195",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0017:generated-player-0197:2032-10-01",
+      "playerId": "generated-player-0197",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0017:generated-player-0199:2032-10-01",
+      "playerId": "generated-player-0199",
+      "endedOn": "2055-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0018:generated-player-0205:2032-10-01",
+      "playerId": "generated-player-0205",
+      "endedOn": "2043-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0018:generated-player-0207:2032-10-01",
+      "playerId": "generated-player-0207",
+      "endedOn": "2050-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0018:generated-player-0209:2032-10-01",
+      "playerId": "generated-player-0209",
+      "endedOn": "2056-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0018:generated-player-0210:2032-10-01",
+      "playerId": "generated-player-0210",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0019:generated-player-0217:2032-10-01",
+      "playerId": "generated-player-0217",
+      "endedOn": "2058-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0019:generated-player-0218:2032-10-01",
+      "playerId": "generated-player-0218",
+      "endedOn": "2055-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0019:generated-player-0220:2032-10-01",
+      "playerId": "generated-player-0220",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0019:generated-player-0222:2032-10-01",
+      "playerId": "generated-player-0222",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0019:generated-player-0223:2032-10-01",
+      "playerId": "generated-player-0223",
+      "endedOn": "2050-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0229:2032-10-01",
+      "playerId": "generated-player-0229",
+      "endedOn": "2059-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0230:2032-10-01",
+      "playerId": "generated-player-0230",
+      "endedOn": "2043-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0232:2032-10-01",
+      "playerId": "generated-player-0232",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0233:2032-10-01",
+      "playerId": "generated-player-0233",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0234:2032-10-01",
+      "playerId": "generated-player-0234",
+      "endedOn": "2042-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0020:generated-player-0235:2032-10-01",
+      "playerId": "generated-player-0235",
+      "endedOn": "2048-01-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0021:generated-player-0241:2032-10-01",
+      "playerId": "generated-player-0241",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0021:generated-player-0242:2032-10-01",
+      "playerId": "generated-player-0242",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0021:generated-player-0244:2032-10-01",
+      "playerId": "generated-player-0244",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0021:generated-player-0245:2032-10-01",
+      "playerId": "generated-player-0245",
+      "endedOn": "2060-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0021:generated-player-0246:2032-10-01",
+      "playerId": "generated-player-0246",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0022:generated-player-0253:2032-10-01",
+      "playerId": "generated-player-0253",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0022:generated-player-0254:2032-10-01",
+      "playerId": "generated-player-0254",
+      "endedOn": "2057-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0022:generated-player-0255:2032-10-01",
+      "playerId": "generated-player-0255",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0022:generated-player-0257:2032-10-01",
+      "playerId": "generated-player-0257",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0022:generated-player-0259:2032-10-01",
+      "playerId": "generated-player-0259",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0023:generated-player-0265:2032-10-01",
+      "playerId": "generated-player-0265",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0023:generated-player-0266:2032-10-01",
+      "playerId": "generated-player-0266",
+      "endedOn": "2060-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0023:generated-player-0268:2032-10-01",
+      "playerId": "generated-player-0268",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0023:generated-player-0269:2032-10-01",
+      "playerId": "generated-player-0269",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0023:generated-player-0271:2032-10-01",
+      "playerId": "generated-player-0271",
+      "endedOn": "2043-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0024:generated-player-0277:2032-10-01",
+      "playerId": "generated-player-0277",
+      "endedOn": "2041-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0024:generated-player-0278:2032-10-01",
+      "playerId": "generated-player-0278",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0024:generated-player-0279:2032-10-01",
+      "playerId": "generated-player-0279",
+      "endedOn": "2044-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0024:generated-player-0280:2032-10-01",
+      "playerId": "generated-player-0280",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:generated-ecosystem-0003:generated-team-0024:generated-player-0282:2032-10-01",
+      "playerId": "generated-player-0282",
+      "endedOn": "2040-10-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0013:women-player-0146:2032-10-08",
+      "playerId": "women-player-0146",
+      "endedOn": "2045-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0013:women-player-0148:2032-10-08",
+      "playerId": "women-player-0148",
+      "endedOn": "2058-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0013:women-player-0149:2032-10-08",
+      "playerId": "women-player-0149",
+      "endedOn": "2040-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0013:women-player-0150:2032-10-08",
+      "playerId": "women-player-0150",
+      "endedOn": "2047-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0157:2032-10-08",
+      "playerId": "women-player-0157",
+      "endedOn": "2040-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0158:2032-10-08",
+      "playerId": "women-player-0158",
+      "endedOn": "2049-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0159:2032-10-08",
+      "playerId": "women-player-0159",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0160:2032-10-08",
+      "playerId": "women-player-0160",
+      "endedOn": "2045-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0161:2032-10-08",
+      "playerId": "women-player-0161",
+      "endedOn": "2052-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0162:2032-10-08",
+      "playerId": "women-player-0162",
+      "endedOn": "2050-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0014:women-player-0163:2032-10-08",
+      "playerId": "women-player-0163",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0015:women-player-0169:2032-10-08",
+      "playerId": "women-player-0169",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0015:women-player-0172:2032-10-08",
+      "playerId": "women-player-0172",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0015:women-player-0173:2032-10-08",
+      "playerId": "women-player-0173",
+      "endedOn": "2041-02-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0015:women-player-0174:2032-10-08",
+      "playerId": "women-player-0174",
+      "endedOn": "2057-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0015:women-player-0175:2032-10-08",
+      "playerId": "women-player-0175",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0181:2032-10-08",
+      "playerId": "women-player-0181",
+      "endedOn": "2046-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0182:2032-10-08",
+      "playerId": "women-player-0182",
+      "endedOn": "2043-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0183:2032-10-08",
+      "playerId": "women-player-0183",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0184:2032-10-08",
+      "playerId": "women-player-0184",
+      "endedOn": "2048-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0185:2032-10-08",
+      "playerId": "women-player-0185",
+      "endedOn": "2040-03-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0186:2032-10-08",
+      "playerId": "women-player-0186",
+      "endedOn": "2040-11-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0016:women-player-0187:2032-10-08",
+      "playerId": "women-player-0187",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0017:women-player-0193:2032-10-08",
+      "playerId": "women-player-0193",
+      "endedOn": "2046-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0017:women-player-0194:2032-10-08",
+      "playerId": "women-player-0194",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0017:women-player-0195:2032-10-08",
+      "playerId": "women-player-0195",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0017:women-player-0197:2032-10-08",
+      "playerId": "women-player-0197",
+      "endedOn": "2046-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0017:women-player-0198:2032-10-08",
+      "playerId": "women-player-0198",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0205:2032-10-08",
+      "playerId": "women-player-0205",
+      "endedOn": "2045-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0206:2032-10-08",
+      "playerId": "women-player-0206",
+      "endedOn": "2052-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0207:2032-10-08",
+      "playerId": "women-player-0207",
+      "endedOn": "2050-02-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0208:2032-10-08",
+      "playerId": "women-player-0208",
+      "endedOn": "2041-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0209:2032-10-08",
+      "playerId": "women-player-0209",
+      "endedOn": "2045-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0210:2032-10-08",
+      "playerId": "women-player-0210",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0018:women-player-0211:2032-10-08",
+      "playerId": "women-player-0211",
+      "endedOn": "2041-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0019:women-player-0218:2032-10-08",
+      "playerId": "women-player-0218",
+      "endedOn": "2043-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0019:women-player-0220:2032-10-08",
+      "playerId": "women-player-0220",
+      "endedOn": "2058-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0019:women-player-0221:2032-10-08",
+      "playerId": "women-player-0221",
+      "endedOn": "2049-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0019:women-player-0222:2032-10-08",
+      "playerId": "women-player-0222",
+      "endedOn": "2048-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0229:2032-10-08",
+      "playerId": "women-player-0229",
+      "endedOn": "2059-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0230:2032-10-08",
+      "playerId": "women-player-0230",
+      "endedOn": "2050-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0231:2032-10-08",
+      "playerId": "women-player-0231",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0232:2032-10-08",
+      "playerId": "women-player-0232",
+      "endedOn": "2048-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0233:2032-10-08",
+      "playerId": "women-player-0233",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0234:2032-10-08",
+      "playerId": "women-player-0234",
+      "endedOn": "2044-02-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0020:women-player-0235:2032-10-08",
+      "playerId": "women-player-0235",
+      "endedOn": "2045-02-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0241:2032-10-08",
+      "playerId": "women-player-0241",
+      "endedOn": "2044-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0242:2032-10-08",
+      "playerId": "women-player-0242",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0243:2032-10-08",
+      "playerId": "women-player-0243",
+      "endedOn": "2043-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0244:2032-10-08",
+      "playerId": "women-player-0244",
+      "endedOn": "2046-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0245:2032-10-08",
+      "playerId": "women-player-0245",
+      "endedOn": "2041-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0246:2032-10-08",
+      "playerId": "women-player-0246",
+      "endedOn": "2056-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0021:women-player-0247:2032-10-08",
+      "playerId": "women-player-0247",
+      "endedOn": "2041-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0253:2032-10-08",
+      "playerId": "women-player-0253",
+      "endedOn": "2047-02-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0254:2032-10-08",
+      "playerId": "women-player-0254",
+      "endedOn": "2057-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0255:2032-10-08",
+      "playerId": "women-player-0255",
+      "endedOn": "2048-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0256:2032-10-08",
+      "playerId": "women-player-0256",
+      "endedOn": "2048-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0257:2032-10-08",
+      "playerId": "women-player-0257",
+      "endedOn": "2045-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0258:2032-10-08",
+      "playerId": "women-player-0258",
+      "endedOn": "2055-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0022:women-player-0259:2032-10-08",
+      "playerId": "women-player-0259",
+      "endedOn": "2046-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0265:2032-10-08",
+      "playerId": "women-player-0265",
+      "endedOn": "2053-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0266:2032-10-08",
+      "playerId": "women-player-0266",
+      "endedOn": "2040-08-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0267:2032-10-08",
+      "playerId": "women-player-0267",
+      "endedOn": "2043-11-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0268:2032-10-08",
+      "playerId": "women-player-0268",
+      "endedOn": "2045-11-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0269:2032-10-08",
+      "playerId": "women-player-0269",
+      "endedOn": "2048-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0270:2032-10-08",
+      "playerId": "women-player-0270",
+      "endedOn": "2059-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0023:women-player-0271:2032-10-08",
+      "playerId": "women-player-0271",
+      "endedOn": "2052-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0277:2032-10-08",
+      "playerId": "women-player-0277",
+      "endedOn": "2047-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0278:2032-10-08",
+      "playerId": "women-player-0278",
+      "endedOn": "2044-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0279:2032-10-08",
+      "playerId": "women-player-0279",
+      "endedOn": "2047-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0280:2032-10-08",
+      "playerId": "women-player-0280",
+      "endedOn": "2059-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0281:2032-10-08",
+      "playerId": "women-player-0281",
+      "endedOn": "2045-07-01",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "enrollment:women-ecosystem-0003:women-team-0024:women-player-0283:2032-10-08",
+      "playerId": "women-player-0283",
+      "endedOn": "2042-06-23",
+      "evidence": "sourceMembershipAndExit"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000007",
+      "endedOn": "2040-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000019",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000021",
+      "endedOn": "2045-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000005",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000010",
+      "endedOn": "2043-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000002",
+      "endedOn": "2045-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000024",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000010",
+      "endedOn": "2042-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000017",
+      "endedOn": "2040-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000030",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000006",
+      "endedOn": "2052-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000064",
+      "endedOn": "2045-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000056",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000047",
+      "endedOn": "2051-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000053",
+      "endedOn": "2043-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000038",
+      "endedOn": "2050-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000043",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000046",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000058",
+      "endedOn": "2041-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0012:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0012:annual-talent:2032:generated-country-0001:female:candidate:000037",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000037",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0012:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0012:annual-talent:2032:generated-country-0001:female:candidate:000050",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000050",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0012:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0012:annual-talent:2032:generated-country-0001:female:candidate:000051",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000051",
+      "endedOn": "2042-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0012:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0012:annual-talent:2032:generated-country-0001:female:candidate:000042",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000042",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0012:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0012:annual-talent:2032:generated-country-0001:female:candidate:000045",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000045",
+      "endedOn": "2054-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0019:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:annual-talent:2032:generated-country-0001:male:candidate:000071",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000071",
+      "endedOn": "2055-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0019:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:annual-talent:2032:generated-country-0001:male:candidate:000095",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000095",
+      "endedOn": "2055-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0019:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:annual-talent:2032:generated-country-0001:male:candidate:000072",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000072",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0019:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:annual-talent:2032:generated-country-0001:male:candidate:000104",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000104",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0019:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:annual-talent:2032:generated-country-0001:male:candidate:000135",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000135",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000092",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000092",
+      "endedOn": "2042-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000134",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000134",
+      "endedOn": "2042-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000133",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000133",
+      "endedOn": "2041-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000127",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000127",
+      "endedOn": "2057-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000083",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000083",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000119",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000119",
+      "endedOn": "2056-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000122",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000122",
+      "endedOn": "2044-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0020:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:annual-talent:2032:generated-country-0001:female:candidate:000123",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000123",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0027:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:annual-talent:2032:generated-country-0001:male:candidate:000181",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000181",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0027:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:annual-talent:2032:generated-country-0001:male:candidate:000143",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000143",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0027:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:annual-talent:2032:generated-country-0001:male:candidate:000188",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000188",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0027:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:annual-talent:2032:generated-country-0001:male:candidate:000142",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000142",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0027:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:annual-talent:2032:generated-country-0001:male:candidate:000185",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000185",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0028:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0028:annual-talent:2032:generated-country-0001:female:candidate:000168",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000168",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0028:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0028:annual-talent:2032:generated-country-0001:female:candidate:000162",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000162",
+      "endedOn": "2057-12-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0035:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0035:annual-talent:2032:generated-country-0001:male:candidate:000265",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000265",
+      "endedOn": "2057-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0035:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0035:annual-talent:2032:generated-country-0001:male:candidate:000233",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000233",
+      "endedOn": "2045-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0035:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0035:annual-talent:2032:generated-country-0001:male:candidate:000227",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000227",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0035:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0035:annual-talent:2032:generated-country-0001:male:candidate:000262",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000262",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0035:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0035:annual-talent:2032:generated-country-0001:male:candidate:000272",
+      "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000272",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0044:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0044:annual-talent:2037:generated-country-0001:female:candidate:000003",
+      "playerId": "player:talent:annual-talent:2037:generated-country-0001:female:000003",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0044:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0044:annual-talent:2037:generated-country-0001:female:candidate:000051",
+      "playerId": "player:talent:annual-talent:2037:generated-country-0001:female:000051",
+      "endedOn": "2042-08-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2038:generated-country-0001:male:000032:2039-09-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000032",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2038:generated-country-0001:male:000029:2039-09-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000029",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2038:generated-country-0001:male:000001:2039-09-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000001",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2038:generated-country-0001:male:000065:2039-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000065",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2038:generated-country-0001:male:000068:2039-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000068",
+      "endedOn": "2044-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2038:generated-country-0001:male:000002:2039-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000002",
+      "endedOn": "2044-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0052:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0052:annual-talent:2038:generated-country-0001:female:candidate:000034",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000034",
+      "endedOn": "2059-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0052:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0052:annual-talent:2038:generated-country-0001:female:candidate:000042",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000042",
+      "endedOn": "2059-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0052:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0052:annual-talent:2038:generated-country-0001:female:candidate:000026",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000026",
+      "endedOn": "2060-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0059:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0059:annual-talent:2039:generated-country-0001:male:candidate:000033",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000033",
+      "endedOn": "2046-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2039:generated-country-0001:male:000060:2041-01-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000060",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2038:generated-country-0001:male:000031:2041-01-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000031",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2038:generated-country-0001:male:000036:2041-01-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000036",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0060:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0060:annual-talent:2039:generated-country-0001:female:candidate:000041",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000041",
+      "endedOn": "2053-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2040:generated-country-0001:female:000018:2041-01-16",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000018",
+      "endedOn": "2046-01-16",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2040:generated-country-0001:female:000065:2041-01-16",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000065",
+      "endedOn": "2046-01-16",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2040:generated-country-0001:female:000013:2041-01-16",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000013",
+      "endedOn": "2046-01-16",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2039:generated-country-0001:male:000018:2041-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000018",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2038:generated-country-0001:male:000033:2041-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000033",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2039:generated-country-0001:male:000019:2041-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000019",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2038:generated-country-0001:male:000066:2041-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000066",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2039:generated-country-0001:male:000024:2041-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000024",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2039:generated-country-0001:male:000029:2041-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000029",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0068:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0068:annual-talent:2040:generated-country-0001:female:candidate:000008",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000008",
+      "endedOn": "2047-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0068:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0068:annual-talent:2040:generated-country-0001:female:candidate:000060",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000060",
+      "endedOn": "2054-12-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2037:generated-country-0001:female:000029:2042-01-24",
+      "playerId": "player:talent:annual-talent:2037:generated-country-0001:female:000029",
+      "endedOn": "2043-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2040:generated-country-0001:female:000014:2042-01-24",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000014",
+      "endedOn": "2047-01-24",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2040:generated-country-0001:female:000027:2042-01-24",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000027",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0075:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0075:annual-talent:2041:generated-country-0001:male:candidate:000047",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000047",
+      "endedOn": "2047-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0075:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0075:annual-talent:2041:generated-country-0001:male:candidate:000056",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000056",
+      "endedOn": "2049-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0075:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0075:annual-talent:2041:generated-country-0001:male:candidate:000017",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000017",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0076:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0076:annual-talent:2041:generated-country-0001:female:candidate:000018",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000018",
+      "endedOn": "2050-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0076:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0076:annual-talent:2041:generated-country-0001:female:candidate:000008",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000008",
+      "endedOn": "2048-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2041:generated-country-0001:male:000044:2043-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000044",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2038:generated-country-0001:male:000028:2043-10-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:male:000028",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2039:generated-country-0001:male:000057:2043-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000057",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0083:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0083:annual-talent:2042:generated-country-0001:male:candidate:000045",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000045",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0084:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0084:annual-talent:2042:generated-country-0001:female:candidate:000057",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000057",
+      "endedOn": "2058-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0084:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0084:annual-talent:2042:generated-country-0001:female:candidate:000011",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000011",
+      "endedOn": "2048-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0084:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0084:annual-talent:2042:generated-country-0001:female:candidate:000021",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000021",
+      "endedOn": "2053-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2038:generated-country-0001:female:000039:2044-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000039",
+      "endedOn": "2045-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2038:generated-country-0001:female:000037:2044-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000037",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2038:generated-country-0001:female:000041:2044-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000041",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2037:generated-country-0001:female:000033:2044-07-01",
+      "playerId": "player:talent:annual-talent:2037:generated-country-0001:female:000033",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2041:generated-country-0001:female:000046:2044-07-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000046",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2042:generated-country-0001:female:000054:2044-07-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000054",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2041:generated-country-0001:female:000009:2044-07-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000009",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2038:generated-country-0001:female:000038:2044-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000038",
+      "endedOn": "2044-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2038:generated-country-0001:female:000040:2044-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000040",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2041:generated-country-0001:male:000039:2044-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000039",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2041:generated-country-0001:male:000045:2044-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000045",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2043:generated-country-0001:male:000035:2044-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000035",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2041:generated-country-0001:male:000046:2044-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000046",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2041:generated-country-0001:male:000057:2044-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000057",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2041:generated-country-0001:male:000055:2044-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000055",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2041:generated-country-0001:male:000010:2044-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000010",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2043:generated-country-0001:male:000026:2044-10-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000026",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2039:generated-country-0001:male:000028:2044-10-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:male:000028",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2041:generated-country-0001:male:000016:2044-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000016",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0091:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0091:annual-talent:2043:generated-country-0001:male:candidate:000028",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000028",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0092:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0092:annual-talent:2043:generated-country-0001:female:candidate:000053",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000053",
+      "endedOn": "2053-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2041:generated-country-0001:male:000043:2045-06-23",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000043",
+      "endedOn": "2047-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2041:generated-country-0001:male:000014:2045-06-23",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000014",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2041:generated-country-0001:male:000020:2045-06-23",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000020",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2040:generated-country-0001:female:000061:2045-07-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000061",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2039:generated-country-0001:female:000035:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000035",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2040:generated-country-0001:female:000055:2045-07-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000055",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2041:generated-country-0001:female:000014:2045-07-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000014",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2040:generated-country-0001:female:000049:2045-07-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000049",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2042:generated-country-0001:female:000010:2045-07-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000010",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2039:generated-country-0001:female:000044:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000044",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2042:generated-country-0001:female:000006:2045-07-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000006",
+      "endedOn": "2047-10-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2039:generated-country-0001:female:000033:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000033",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2039:generated-country-0001:female:000038:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000038",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2038:generated-country-0001:female:000044:2045-07-01",
+      "playerId": "player:talent:annual-talent:2038:generated-country-0001:female:000044",
+      "endedOn": "2045-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2040:generated-country-0001:female:000017:2045-07-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000017",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0018:player:talent:annual-talent:2040:generated-country-0001:female:000066:2045-07-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000066",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0018:player:talent:annual-talent:2043:generated-country-0001:female:000048:2045-07-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000048",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0018:player:talent:annual-talent:2043:generated-country-0001:female:000054:2045-07-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000054",
+      "endedOn": "2050-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2039:generated-country-0001:female:000030:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000030",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2041:generated-country-0001:female:000021:2045-07-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000021",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2039:generated-country-0001:female:000042:2045-07-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000042",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2041:generated-country-0001:male:000048:2045-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000048",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2042:generated-country-0001:male:000036:2045-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000036",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2044:generated-country-0001:male:000055:2045-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000055",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2043:generated-country-0001:male:000025:2045-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000025",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2040:generated-country-0001:female:000059:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000059",
+      "endedOn": "2046-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2040:generated-country-0001:female:000063:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000063",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2040:generated-country-0001:female:000064:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000064",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2040:generated-country-0001:female:000054:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000054",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2041:generated-country-0001:female:000019:2045-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000019",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2041:generated-country-0001:female:000053:2045-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000053",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2040:generated-country-0001:female:000031:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000031",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2039:generated-country-0001:female:000037:2045-09-01",
+      "playerId": "player:talent:annual-talent:2039:generated-country-0001:female:000037",
+      "endedOn": "2046-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2040:generated-country-0001:female:000026:2045-09-01",
+      "playerId": "player:talent:annual-talent:2040:generated-country-0001:female:000026",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2041:generated-country-0001:male:000061:2045-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000061",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2043:generated-country-0001:male:000030:2045-10-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000030",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2041:generated-country-0001:male:000049:2045-10-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000049",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0099:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0099:annual-talent:2044:generated-country-0001:male:candidate:000009",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000009",
+      "endedOn": "2062-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2044:generated-country-0001:male:000023:2046-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000023",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2041:generated-country-0001:male:000050:2046-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:male:000050",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2042:generated-country-0001:male:000010:2046-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000010",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2045:generated-country-0001:female:000061:2046-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000061",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2041:generated-country-0001:female:000049:2046-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000049",
+      "endedOn": "2047-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2041:generated-country-0001:female:000058:2046-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000058",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2042:generated-country-0001:female:000008:2046-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000008",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2042:generated-country-0001:female:000022:2046-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000022",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2041:generated-country-0001:female:000011:2046-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000011",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2042:generated-country-0001:female:000013:2046-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000013",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2043:generated-country-0001:female:000056:2046-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000056",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2041:generated-country-0001:female:000054:2046-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000054",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2042:generated-country-0001:female:000058:2046-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000058",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0107:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0107:annual-talent:2045:generated-country-0001:male:candidate:000048",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000048",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0107:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0107:annual-talent:2045:generated-country-0001:male:candidate:000007",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000007",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0107:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0107:annual-talent:2045:generated-country-0001:male:candidate:000017",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000017",
+      "endedOn": "2061-07-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0108:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0108:annual-talent:2045:generated-country-0001:female:candidate:000007",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000007",
+      "endedOn": "2054-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0108:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0108:annual-talent:2045:generated-country-0001:female:candidate:000014",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000014",
+      "endedOn": "2059-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0108:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0108:annual-talent:2045:generated-country-0001:female:candidate:000012",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000012",
+      "endedOn": "2058-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2045:generated-country-0001:female:000013:2047-01-24",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000013",
+      "endedOn": "2052-01-24",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2046:generated-country-0001:female:000002:2047-01-24",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000002",
+      "endedOn": "2052-01-24",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2042:generated-country-0001:female:000020:2047-01-24",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000020",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2041:generated-country-0001:female:000059:2047-06-23",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000059",
+      "endedOn": "2047-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2042:generated-country-0001:female:000019:2047-06-23",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000019",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2042:generated-country-0001:female:000051:2047-06-23",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000051",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2042:generated-country-0001:male:000038:2047-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000038",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2044:generated-country-0001:male:000014:2047-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000014",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2045:generated-country-0001:male:000044:2047-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000044",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2043:generated-country-0001:male:000003:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000003",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2043:generated-country-0001:female:000003:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000003",
+      "endedOn": "2049-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2043:generated-country-0001:female:000063:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000063",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2043:generated-country-0001:female:000060:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000060",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2041:generated-country-0001:female:000016:2047-09-01",
+      "playerId": "player:talent:annual-talent:2041:generated-country-0001:female:000016",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2042:generated-country-0001:female:000017:2047-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000017",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2042:generated-country-0001:female:000049:2047-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000049",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2043:generated-country-0001:female:000010:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000010",
+      "endedOn": "2050-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2043:generated-country-0001:female:000045:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000045",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2043:generated-country-0001:female:000009:2047-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000009",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2045:generated-country-0001:female:000047:2047-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000047",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2045:generated-country-0001:female:000017:2048-02-10",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000017",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2045:generated-country-0001:female:000049:2048-02-10",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000049",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2045:generated-country-0001:female:000064:2048-02-10",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000064",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2042:generated-country-0001:female:000012:2048-02-10",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000012",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2042:generated-country-0001:female:000025:2048-02-10",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000025",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2047:generated-country-0001:female:000016:2048-02-10",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000016",
+      "endedOn": "2053-02-10",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2043:generated-country-0001:female:000055:2048-06-23",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000055",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2047:generated-country-0001:female:000003:2048-06-23",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000003",
+      "endedOn": "2053-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0013:player:talent:annual-talent:2042:generated-country-0001:female:000016:2048-06-23",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000016",
+      "endedOn": "2048-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2045:generated-country-0001:male:000045:2048-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000045",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2045:generated-country-0001:male:000056:2048-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000056",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2042:generated-country-0001:male:000035:2048-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000035",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2042:generated-country-0001:male:000046:2048-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:male:000046",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2042:generated-country-0001:female:000052:2048-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000052",
+      "endedOn": "2049-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2043:generated-country-0001:female:000051:2048-09-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000051",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2045:generated-country-0001:female:000059:2048-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000059",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2047:generated-country-0001:female:000057:2048-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000057",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2047:generated-country-0001:female:000018:2048-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000018",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2042:generated-country-0001:female:000053:2048-09-01",
+      "playerId": "player:talent:annual-talent:2042:generated-country-0001:female:000053",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2047:generated-country-0001:female:000048:2048-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000048",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2043:generated-country-0001:female:000046:2049-01-01",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:female:000046",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2047:generated-country-0001:female:000051:2049-01-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000051",
+      "endedOn": "2054-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2045:generated-country-0001:female:000052:2049-01-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000052",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0124:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0124:annual-talent:2047:generated-country-0001:female:candidate:000009",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000009",
+      "endedOn": "2054-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2048:generated-country-0001:male:000014:2049-02-03",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000014",
+      "endedOn": "2054-02-03",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2043:generated-country-0001:male:000039:2049-02-03",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000039",
+      "endedOn": "2049-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2043:generated-country-0001:male:000066:2049-02-03",
+      "playerId": "player:talent:annual-talent:2043:generated-country-0001:male:000066",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2044:generated-country-0001:male:000020:2049-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000020",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2045:generated-country-0001:male:000046:2049-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000046",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0021:player:talent:annual-talent:2046:generated-country-0001:male:000046:2049-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000046",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2044:generated-country-0001:male:000012:2049-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000012",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2044:generated-country-0001:male:000061:2049-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000061",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2044:generated-country-0001:male:000056:2049-09-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000056",
+      "endedOn": "2050-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2045:generated-country-0001:female:000015:2049-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000015",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2046:generated-country-0001:female:000010:2049-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000010",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2045:generated-country-0001:female:000057:2049-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000057",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2045:generated-country-0001:female:000058:2049-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000058",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2046:generated-country-0001:female:000056:2049-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000056",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2046:generated-country-0001:female:000005:2049-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000005",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2046:generated-country-0001:female:000043:2049-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000043",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0131:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0131:annual-talent:2048:generated-country-0001:male:candidate:000056",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000056",
+      "endedOn": "2061-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0022:player:talent:annual-talent:2046:generated-country-0001:male:000043:2050-01-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000043",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0022:player:talent:annual-talent:2044:generated-country-0001:male:000008:2050-01-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000008",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0022:player:talent:annual-talent:2044:generated-country-0001:male:000021:2050-01-01",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000021",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2047:generated-country-0001:female:000052:2050-03-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000052",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2045:generated-country-0001:female:000009:2050-03-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000009",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2046:generated-country-0001:female:000058:2050-03-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000058",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2045:generated-country-0001:male:000010:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000010",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2048:generated-country-0001:male:000055:2050-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000055",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2045:generated-country-0001:male:000014:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000014",
+      "endedOn": "2051-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2046:generated-country-0001:male:000034:2050-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000034",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2045:generated-country-0001:male:000003:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000003",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2046:generated-country-0001:male:000028:2050-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000028",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2045:generated-country-0001:male:000055:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000055",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2046:generated-country-0001:male:000002:2050-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000002",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2045:generated-country-0001:male:000020:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000020",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2045:generated-country-0001:female:000048:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000048",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2048:generated-country-0001:female:000017:2050-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000017",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2045:generated-country-0001:female:000050:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000050",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2045:generated-country-0001:female:000065:2050-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000065",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0140:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0140:annual-talent:2049:generated-country-0001:female:candidate:000004",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000004",
+      "endedOn": "2054-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2046:generated-country-0001:male:000027:2051-02-03",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000027",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2044:generated-country-0001:male:000060:2051-02-03",
+      "playerId": "player:talent:annual-talent:2044:generated-country-0001:male:000060",
+      "endedOn": "2051-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2045:generated-country-0001:male:000049:2051-02-03",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000049",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2049:generated-country-0001:male:000042:2051-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:male:000042",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2046:generated-country-0001:male:000035:2051-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000035",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2047:generated-country-0001:male:000018:2051-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:male:000018",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2048:generated-country-0001:female:000060:2051-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000060",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2049:generated-country-0001:female:000051:2051-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000051",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2045:generated-country-0001:female:000051:2051-09-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:female:000051",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2049:generated-country-0001:female:000044:2051-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000044",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2046:generated-country-0001:female:000021:2051-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000021",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2048:generated-country-0001:female:000005:2051-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000005",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2049:generated-country-0001:female:000042:2051-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000042",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2047:generated-country-0001:female:000015:2051-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000015",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2046:generated-country-0001:female:000039:2051-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000039",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2047:generated-country-0001:female:000046:2051-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000046",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2046:generated-country-0001:female:000051:2051-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000051",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2046:generated-country-0001:female:000006:2051-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000006",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2047:generated-country-0001:female:000007:2051-09-01",
+      "playerId": "player:talent:annual-talent:2047:generated-country-0001:female:000007",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0147:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0147:annual-talent:2050:generated-country-0001:male:candidate:000011",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000011",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0147:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0147:annual-talent:2050:generated-country-0001:male:candidate:000046",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000046",
+      "endedOn": "2062-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0147:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0147:annual-talent:2050:generated-country-0001:male:candidate:000015",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000015",
+      "endedOn": "2059-01-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0148:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0148:annual-talent:2050:generated-country-0001:female:candidate:000030",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000030",
+      "endedOn": "2056-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2051:generated-country-0001:male:000035:2052-01-09",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:male:000035",
+      "endedOn": "2057-01-09",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2046:generated-country-0001:male:000001:2052-01-09",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000001",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2046:generated-country-0001:male:000029:2052-01-09",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:male:000029",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2048:generated-country-0001:male:000005:2052-07-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000005",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2050:generated-country-0001:male:000006:2052-07-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000006",
+      "endedOn": "2055-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2045:generated-country-0001:male:000047:2052-07-01",
+      "playerId": "player:talent:annual-talent:2045:generated-country-0001:male:000047",
+      "endedOn": "2052-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2048:generated-country-0001:male:000016:2052-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000016",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2048:generated-country-0001:male:000054:2052-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000054",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2049:generated-country-0001:male:000049:2052-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:male:000049",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2046:generated-country-0001:female:000047:2052-09-01",
+      "playerId": "player:talent:annual-talent:2046:generated-country-0001:female:000047",
+      "endedOn": "2053-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2049:generated-country-0001:female:000008:2052-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000008",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2051:generated-country-0001:female:000021:2052-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000021",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2048:generated-country-0001:female:000016:2052-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000016",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2048:generated-country-0001:female:000023:2052-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000023",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2048:generated-country-0001:female:000010:2052-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000010",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:generated-season-0156:recruit-profile:recruiting:women-ecosystem-0003:generated-season-0156:annual-talent:2051:generated-country-0001:female:candidate:000022",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000022",
+      "endedOn": "2059-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2048:generated-country-0001:male:000023:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000023",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2048:generated-country-0001:male:000047:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000047",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2048:generated-country-0001:male:000062:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000062",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2048:generated-country-0001:male:000011:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000011",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2048:generated-country-0001:male:000018:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000018",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2048:generated-country-0001:male:000059:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000059",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2048:generated-country-0001:female:000020:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000020",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2050:generated-country-0001:female:000035:2053-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000035",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2048:generated-country-0001:female:000021:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000021",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2048:generated-country-0001:female:000047:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000047",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2048:generated-country-0001:female:000048:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000048",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2048:generated-country-0001:female:000022:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000022",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2048:generated-country-0001:female:000064:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000064",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2048:generated-country-0001:female:000011:2053-09-01",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:female:000011",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2049:generated-country-0001:male:000060:2054-02-03",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:male:000060",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2050:generated-country-0001:male:000014:2054-02-03",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000014",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0016:player:talent:annual-talent:2048:generated-country-0001:male:000009:2054-02-03",
+      "playerId": "player:talent:annual-talent:2048:generated-country-0001:male:000009",
+      "endedOn": "2054-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2049:generated-country-0001:male:000052:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:male:000052",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2050:generated-country-0001:male:000042:2054-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000042",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2050:generated-country-0001:male:000045:2054-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000045",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2050:generated-country-0001:male:000002:2054-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000002",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2053:generated-country-0001:male:000014:2054-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000014",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2050:generated-country-0001:male:000044:2054-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000044",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2049:generated-country-0001:female:000016:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000016",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2049:generated-country-0001:female:000050:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000050",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2053:generated-country-0001:female:000033:2054-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000033",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2049:generated-country-0001:female:000056:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000056",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2049:generated-country-0001:female:000061:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000061",
+      "endedOn": "2055-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2049:generated-country-0001:female:000060:2054-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000060",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2051:generated-country-0001:female:000025:2054-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000025",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2051:generated-country-0001:female:000019:2054-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000019",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2051:generated-country-0001:female:000058:2054-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000058",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2050:generated-country-0001:male:000053:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000053",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2050:generated-country-0001:male:000001:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000001",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2051:generated-country-0001:male:000028:2055-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:male:000028",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2053:generated-country-0001:female:000019:2055-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000019",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2053:generated-country-0001:female:000032:2055-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000032",
+      "endedOn": "2059-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2050:generated-country-0001:female:000041:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000041",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2050:generated-country-0001:female:000038:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000038",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2053:generated-country-0001:female:000031:2055-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000031",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2054:generated-country-0001:female:000032:2055-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:female:000032",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2051:generated-country-0001:female:000033:2055-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000033",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2051:generated-country-0001:female:000018:2055-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000018",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2049:generated-country-0001:female:000011:2055-09-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000011",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2050:generated-country-0001:female:000026:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000026",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2051:generated-country-0001:female:000024:2055-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000024",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2054:generated-country-0001:female:000022:2055-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:female:000022",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2050:generated-country-0001:female:000029:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000029",
+      "endedOn": "2057-02-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2053:generated-country-0001:female:000030:2055-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000030",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2050:generated-country-0001:female:000034:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000034",
+      "endedOn": "2057-03-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2053:generated-country-0001:female:000034:2055-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000034",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2050:generated-country-0001:female:000002:2055-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000002",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2050:generated-country-0001:female:000039:2056-03-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000039",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2049:generated-country-0001:female:000045:2056-03-01",
+      "playerId": "player:talent:annual-talent:2049:generated-country-0001:female:000045",
+      "endedOn": "2056-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2051:generated-country-0001:female:000032:2056-03-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000032",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2050:generated-country-0001:male:000048:2056-09-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:male:000048",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2053:generated-country-0001:male:000046:2056-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000046",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2051:generated-country-0001:male:000032:2056-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:male:000032",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0187:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0187:annual-talent:2055:generated-country-0001:male:candidate:000001",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000001",
+      "endedOn": "2061-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2056:generated-country-0001:female:000028:2057-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:female:000028",
+      "endedOn": "2061-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2050:generated-country-0001:female:000040:2057-07-01",
+      "playerId": "player:talent:annual-talent:2050:generated-country-0001:female:000040",
+      "endedOn": "2057-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2053:generated-country-0001:female:000038:2057-07-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000038",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2053:generated-country-0001:male:000047:2057-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000047",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2051:generated-country-0001:male:000040:2057-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:male:000040",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2054:generated-country-0001:male:000003:2057-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000003",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2054:generated-country-0001:male:000034:2057-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000034",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2051:generated-country-0001:male:000041:2057-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:male:000041",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2053:generated-country-0001:male:000016:2057-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000016",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2051:generated-country-0001:female:000031:2057-09-01",
+      "playerId": "player:talent:annual-talent:2051:generated-country-0001:female:000031",
+      "endedOn": "2058-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2054:generated-country-0001:female:000017:2057-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:female:000017",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2056:generated-country-0001:female:000037:2057-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:female:000037",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2056:generated-country-0001:female:000030:2057-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:female:000030",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2053:generated-country-0001:female:000036:2057-09-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000036",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0020:player:talent:annual-talent:2055:generated-country-0001:female:000018:2057-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000018",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2054:generated-country-0001:male:000036:2058-02-03",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000036",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2056:generated-country-0001:male:000019:2058-02-03",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000019",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0018:player:talent:annual-talent:2053:generated-country-0001:male:000050:2058-02-03",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000050",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2055:generated-country-0001:female:000033:2058-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000033",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0016:player:talent:annual-talent:2054:generated-country-0001:female:000016:2058-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:female:000016",
+      "endedOn": "2059-06-23",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2055:generated-country-0001:female:000034:2059-01-20",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000034",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2055:generated-country-0001:female:000024:2059-01-20",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000024",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0021:player:talent:annual-talent:2055:generated-country-0001:female:000063:2059-01-20",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000063",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2053:generated-country-0001:female:000042:2059-02-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:female:000042",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0015:player:talent:annual-talent:2054:generated-country-0001:female:000024:2059-03-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:female:000024",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2053:generated-country-0001:male:000007:2059-07-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000007",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2053:generated-country-0001:male:000021:2059-07-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000021",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2053:generated-country-0001:male:000048:2059-07-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000048",
+      "endedOn": "2059-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2055:generated-country-0001:male:000038:2059-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000038",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2054:generated-country-0001:male:000010:2059-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000010",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2054:generated-country-0001:male:000012:2059-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000012",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0014:player:talent:annual-talent:2054:generated-country-0001:male:000037:2060-07-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000037",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0014:player:talent:annual-talent:2055:generated-country-0001:male:000032:2060-07-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000032",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0014:player:talent:annual-talent:2056:generated-country-0001:male:000017:2060-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000017",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0023:player:talent:annual-talent:2056:generated-country-0001:male:000060:2060-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000060",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0023:player:talent:annual-talent:2055:generated-country-0001:male:000030:2060-07-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000030",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0023:player:talent:annual-talent:2053:generated-country-0001:male:000058:2060-07-01",
+      "playerId": "player:talent:annual-talent:2053:generated-country-0001:male:000058",
+      "endedOn": "2060-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2055:generated-country-0001:male:000043:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000043",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0013:player:talent:annual-talent:2054:generated-country-0001:male:000051:2060-09-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000051",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2055:generated-country-0001:male:000026:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000026",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2055:generated-country-0001:male:000036:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000036",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2055:generated-country-0001:male:000041:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000041",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2056:generated-country-0001:female:000041:2060-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:female:000041",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0014:player:talent:annual-talent:2055:generated-country-0001:female:000064:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000064",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0017:player:talent:annual-talent:2056:generated-country-0001:female:000040:2060-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:female:000040",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0024:player:talent:annual-talent:2055:generated-country-0001:female:000027:2060-09-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000027",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2055:generated-country-0001:male:000031:2061-01-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000031",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2055:generated-country-0001:male:000033:2061-01-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000033",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:women-team-0023:player:talent:annual-talent:2055:generated-country-0001:female:000058:2061-02-10",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:female:000058",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0015:player:talent:annual-talent:2055:generated-country-0001:male:000027:2061-06-23",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000027",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0019:player:talent:annual-talent:2054:generated-country-0001:male:000039:2061-07-01",
+      "playerId": "player:talent:annual-talent:2054:generated-country-0001:male:000039",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0019:player:talent:annual-talent:2056:generated-country-0001:male:000021:2061-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000021",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0019:player:talent:annual-talent:2055:generated-country-0001:male:000028:2061-07-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000028",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0019:player:talent:annual-talent:2056:generated-country-0001:male:000049:2061-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000049",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2055:generated-country-0001:male:000035:2061-07-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000035",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2056:generated-country-0001:male:000022:2061-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000022",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2056:generated-country-0001:male:000055:2061-07-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000055",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0024:player:talent:annual-talent:2055:generated-country-0001:male:000042:2061-07-01",
+      "playerId": "player:talent:annual-talent:2055:generated-country-0001:male:000042",
+      "endedOn": "2061-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0017:player:talent:annual-talent:2056:generated-country-0001:male:000024:2061-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000024",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2056:generated-country-0001:male:000058:2061-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000058",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0020:player:talent:annual-talent:2056:generated-country-0001:male:000061:2061-09-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000061",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    },
+    {
+      "enrollmentId": "ncaa-walk-on:generated-team-0014:player:talent:annual-talent:2056:generated-country-0001:male:000063:2062-01-01",
+      "playerId": "player:talent:annual-talent:2056:generated-country-0001:male:000063",
+      "endedOn": "2062-09-01",
+      "evidence": "admissionAssessment"
+    }
+  ],
+  "annualCounts": [
+    {
+      "year": 8,
+      "assessmentConfirmed": 2,
+      "sourceConfirmedLegacy": 10,
+      "total": 12
+    },
+    {
+      "year": 9,
+      "assessmentConfirmed": 2,
+      "sourceConfirmedLegacy": 17,
+      "total": 19
+    },
+    {
+      "year": 10,
+      "assessmentConfirmed": 5,
+      "sourceConfirmedLegacy": 2,
+      "total": 7
+    },
+    {
+      "year": 11,
+      "assessmentConfirmed": 3,
+      "sourceConfirmedLegacy": 8,
+      "total": 11
+    },
+    {
+      "year": 12,
+      "assessmentConfirmed": 14,
+      "sourceConfirmedLegacy": 19,
+      "total": 33
+    },
+    {
+      "year": 13,
+      "assessmentConfirmed": 17,
+      "sourceConfirmedLegacy": 20,
+      "total": 37
+    },
+    {
+      "year": 14,
+      "assessmentConfirmed": 20,
+      "sourceConfirmedLegacy": 6,
+      "total": 26
+    },
+    {
+      "year": 15,
+      "assessmentConfirmed": 24,
+      "sourceConfirmedLegacy": 4,
+      "total": 28
+    },
+    {
+      "year": 16,
+      "assessmentConfirmed": 23,
+      "sourceConfirmedLegacy": 7,
+      "total": 30
+    },
+    {
+      "year": 17,
+      "assessmentConfirmed": 24,
+      "sourceConfirmedLegacy": 2,
+      "total": 26
+    },
+    {
+      "year": 18,
+      "assessmentConfirmed": 14,
+      "sourceConfirmedLegacy": 6,
+      "total": 20
+    },
+    {
+      "year": 19,
+      "assessmentConfirmed": 26,
+      "sourceConfirmedLegacy": 1,
+      "total": 27
+    },
+    {
+      "year": 20,
+      "assessmentConfirmed": 20,
+      "sourceConfirmedLegacy": 5,
+      "total": 25
+    },
+    {
+      "year": 21,
+      "assessmentConfirmed": 20,
+      "sourceConfirmedLegacy": 1,
+      "total": 21
+    },
+    {
+      "year": 22,
+      "assessmentConfirmed": 25,
+      "sourceConfirmedLegacy": 0,
+      "total": 25
+    },
+    {
+      "year": 23,
+      "assessmentConfirmed": 22,
+      "sourceConfirmedLegacy": 3,
+      "total": 25
+    },
+    {
+      "year": 24,
+      "assessmentConfirmed": 16,
+      "sourceConfirmedLegacy": 2,
+      "total": 18
+    },
+    {
+      "year": 25,
+      "assessmentConfirmed": 18,
+      "sourceConfirmedLegacy": 5,
+      "total": 23
+    },
+    {
+      "year": 26,
+      "assessmentConfirmed": 11,
+      "sourceConfirmedLegacy": 3,
+      "total": 14
+    },
+    {
+      "year": 27,
+      "assessmentConfirmed": 17,
+      "sourceConfirmedLegacy": 4,
+      "total": 21
+    },
+    {
+      "year": 28,
+      "assessmentConfirmed": 26,
+      "sourceConfirmedLegacy": 2,
+      "total": 28
+    },
+    {
+      "year": 29,
+      "assessmentConfirmed": 37,
+      "sourceConfirmedLegacy": 1,
+      "total": 38
+    },
+    {
+      "year": 30,
+      "assessmentConfirmed": 24,
+      "sourceConfirmedLegacy": 0,
+      "total": 24
+    }
+  ]
+}

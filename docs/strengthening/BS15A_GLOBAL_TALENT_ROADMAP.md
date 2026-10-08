@@ -102,6 +102,8 @@
 
 **Exit gate:** benchmark new and migrated saves for elapsed time, memory/save size, cohort inflow/outflow, unrostered prospects, age distribution, region share, position mix, rarity percentiles and ecosystem transitions; no runaway duplicate generation or dead-end cohort accumulation; results are reproducible by seed and documented.
 
+**BS15I implementation status:** annual latent-cohort replenishment, a shared persisted Player career-end marker, retired-candidate exclusion, and future CollegeRuleset carry-forward were added in isolated worktree `C:\BDM-BS15I`. The career-end Save V4 migration is additive. The final certification is PASS at 2062-10-01: accepted Y7 was preserved, with LIGHT annual gates and DEEP Y10/Y20/Y30 exact V4 reloads. Population, real career turnover, storage, performance and coverage limits are recorded in [BS15I final long-horizon closure](BS15I_LONG_HORIZON_CLOSURE.md); the earlier certification report is retained as historical evidence.
+
 ### BS15H scope clarification
 
 BS15H is the user-facing manifestation of the already-approved BS15B–G talent authorities. It may add UI read models, route wiring and explanations over existing canonical commands, but it does not add a new Talent authority or persisted domain state. BS15I remains responsible for population, save and long-horizon certification; none of those certification claims are advanced by UI work.

@@ -15,7 +15,7 @@ export function setRehabilitationPlan(
 ): SetRehabilitationPlanResult {
   const injury = world.injuriesById[request.injuryId]
   if (injury === undefined) return { ok: false, reason: 'INJURY_NOT_FOUND' }
-  if (injuryLifecycleStatus(injury, world.currentDate) !== 'RECOVERING') return { ok: false, reason: 'NOT_RECOVERING' }
+  if (compareGameDates(world.currentDate, injury.injuredOn) < 0 || injuryLifecycleStatus(injury, world.currentDate) !== 'RECOVERING') return { ok: false, reason: 'NOT_RECOVERING' }
   if (!canMedicalActorActForPlayer(world, injury.playerId, request.actor)) return { ok: false, reason: 'NOT_AUTHORIZED' }
   const current = injury.rehabilitation ?? { mode: 'STANDARD_REHAB' as const, startedOn: injury.injuredOn, changedOn: injury.injuredOn, history: [] }
   if (current.mode === request.mode) return { ok: true, world }

@@ -6,7 +6,7 @@ import { DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameDate } from '@/domain/date'
 import { organizationIdForTeam, teamIdFromString } from '@/domain/ids'
-import { generateRecruitingPool, makeRecruitingOffer, performRecruitingAction, rankAiRecruitingTargets, resolveRecruitingCommitments } from './RecruitingEngine'
+import { generateLegacyFixtureRecruitingPool as generateLegacyFixtureRecruitingPool, generateRecruitingPool, makeRecruitingOffer, performRecruitingAction, rankAiRecruitingTargets, resolveRecruitingCommitments } from './RecruitingEngine'
 import { addTransferRecruitToCycle, completeCollegeTransfer, signCommittedRecruit } from './RecruitingEngine'
 import { createTransferPortalEntry } from '@/domain/eligibility'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -18,17 +18,22 @@ import { signDraftRightsToNba } from '@/engine/career'
 function world() { return updateGameWorld(createGameWorld(createValidGameWorldInput()), { recruitingCycles: [{ id: 'cycle-1', ecosystemId: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, sourceSeasonId: 'season-a' as never, targetSeasonId: 'season-a' as never, opensOn: createGameDate(2032, 10, 1), signingOn: createGameDate(2032, 11, 1), closesOn: createGameDate(2032, 12, 1), status: 'open', rules: { ...defaultRecruitingRules, poolSize: 5, commitmentThreshold: 1 } }] }) }
 
 describe('RecruitingEngine canonical operations', () => {
-  it('generates deterministic canonical unrostered players', () => {
-    const first = generateRecruitingPool(world(), 'cycle-1'); const second = generateRecruitingPool(world(), 'cycle-1')
+  it('keeps the legacy synthetic generator behind its explicit fixture path', () => {
+    const initial = world()
+    expect(generateRecruitingPool(initial, 'cycle-1')).toBe(initial)
+    expect(Object.values(generateLegacyFixtureRecruitingPool(initial, 'cycle-1').recruitProfilesById)).toHaveLength(5)
+  })
+  it('keeps the explicit legacy fixture pool deterministic for compatibility tests', () => {
+    const first = generateLegacyFixtureRecruitingPool(world(), 'cycle-1'); const second = generateLegacyFixtureRecruitingPool(world(), 'cycle-1')
     expect(Object.values(first.recruitProfilesById).map((profile) => profile.playerId)).toEqual(Object.values(second.recruitProfilesById).map((profile) => profile.playerId))
     expect(Object.values(first.recruitProfilesById)).toHaveLength(5)
     expect(first.teams[teamIdFromString('team-home')]!.rosterPlayerIds).toHaveLength(1)
   })
   it('keeps deterministic player IDs globally unique across recruiting cycles', () => {
-    const firstCycleWorld = generateRecruitingPool(world(), 'cycle-1')
+    const firstCycleWorld = generateLegacyFixtureRecruitingPool(world(), 'cycle-1')
     const cycleTwo = { ...firstCycleWorld.recruitingCyclesById['cycle-1']!, id: 'cycle-2', sourceSeasonId: 'season-b' as never, targetSeasonId: 'season-b' as never }
     const withSecondCycle = updateGameWorld(firstCycleWorld, { recruitingCycles: [...Object.values(firstCycleWorld.recruitingCyclesById), cycleTwo] })
-    const generated = generateRecruitingPool(withSecondCycle, 'cycle-2')
+    const generated = generateLegacyFixtureRecruitingPool(withSecondCycle, 'cycle-2')
     const firstCyclePlayerIds = Object.values(firstCycleWorld.recruitProfilesById).map((profile) => profile.playerId)
     const playerIds = Object.values(generated.recruitProfilesById).map((profile) => profile.playerId)
     expect(new Set(playerIds).size).toBe(playerIds.length)
@@ -37,7 +42,7 @@ describe('RecruitingEngine canonical operations', () => {
     expect(new Set(Object.keys(generated.players)).size).toBe(Object.keys(generated.players).length)
   })
   it('consumes capacity, records actions and commits only after competition', () => {
-    const generated = generateRecruitingPool(world(), 'cycle-1'); const recruit = Object.values(generated.recruitProfilesById)[0]!; const program = 'team-home' as never
+    const generated = generateLegacyFixtureRecruitingPool(world(), 'cycle-1'); const recruit = Object.values(generated.recruitProfilesById)[0]!; const program = 'team-home' as never
     const contacted = performRecruitingAction(generated, 'cycle-1', recruit.id, program, 'contact'); expect(contacted.ok).toBe(true)
     if (!contacted.ok) return
     const offered = makeRecruitingOffer(contacted.value, 'cycle-1', recruit.id, program); expect(offered.ok).toBe(true)
@@ -47,7 +52,7 @@ describe('RecruitingEngine canonical operations', () => {
     expect(Object.values(committed.recruitingActionHistoryById)).toHaveLength(1)
   })
   it('assigns a new identity when a withdrawn offer is made again', () => {
-    const generated = generateRecruitingPool(world(), 'cycle-1')
+    const generated = generateLegacyFixtureRecruitingPool(world(), 'cycle-1')
     const recruit = Object.values(generated.recruitProfilesById)[0]!
     const program = teamIdFromString('team-home')
     const first = makeRecruitingOffer(generated, 'cycle-1', recruit.id, program)
@@ -61,14 +66,14 @@ describe('RecruitingEngine canonical operations', () => {
     expect(Object.values(reopened.value.recruitingOffersById).map((item) => item.id)).toContain(`${first.value.recruitingOffersById[Object.keys(first.value.recruitingOffersById)[0]!]!.id}:attempt:2`)
   })
   it('keeps AI target ordering invariant when only hidden prospect truth changes', () => {
-    const generated = generateRecruitingPool(world(), 'cycle-1'); const program = teamIdFromString('team-home')
+    const generated = generateLegacyFixtureRecruitingPool(world(), 'cycle-1'); const program = teamIdFromString('team-home')
     const before = rankAiRecruitingTargets(generated, 'cycle-1', program).map((profile) => profile.id)
     const prospect = Object.values(generated.recruitProfilesById)[0]!
     const changed = updateGameWorld(generated, { players: Object.values(generated.players).map((player) => player.id !== prospect.playerId ? player : { ...player, basketball: { ...player.basketball, ratings: { ...player.basketball.ratings, threePointShooting: 100, passing: 100 } } }) })
     expect(rankAiRecruitingTargets(changed, 'cycle-1', program).map((profile) => profile.id)).toEqual(before)
   })
   it('uses only the recruiting organization knowledge for its target ordering', () => {
-    const generated = generateRecruitingPool(world(), 'cycle-1'); const program = teamIdFromString('team-home'); const other = teamIdFromString('team-away'); const prospect = Object.values(generated.recruitProfilesById)[0]!
+    const generated = generateLegacyFixtureRecruitingPool(world(), 'cycle-1'); const program = teamIdFromString('team-home'); const other = teamIdFromString('team-away'); const prospect = Object.values(generated.recruitProfilesById)[0]!
     const before = rankAiRecruitingTargets(generated, 'cycle-1', program).map((profile) => profile.id)
     const changed = updateGameWorld(generated, { organizationKnowledge: [{ organizationId: organizationIdForTeam(other), subjectPlayerId: prospect.playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: generated.currentDate, provenance: 'scoutReport', estimate: 100, uncertainty: 1 } } }] })
     expect(rankAiRecruitingTargets(changed, 'cycle-1', program).map((profile) => profile.id)).toEqual(before)

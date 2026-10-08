@@ -1,9 +1,10 @@
-import { addDays, type GameDate } from '@/domain/date'
+import { addDays, addYears, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { assessNbaDraftEligibility, createDraftForCompletedSeason } from '@/engine/draft'
 import { nbaDraftRulesForYear } from '@/domain/draft'
 import { resolveFuturePickProtections } from '@/engine/trade'
 import { defaultRecruitingRules, recruitingRulesetForSeason, type RecruitingCycle } from '@/domain/recruiting'
+import { sportsCategoryForGender } from '@/domain/primitives'
 
 export interface ProductionDraftPoolProjection { readonly playerIds: readonly import('@/domain/ids').PlayerId[]; readonly playersBefore: number; readonly playersAfter: number }
 
@@ -12,13 +13,16 @@ export function projectProductionDraftPool(world: GameWorld, seasonId: keyof Gam
   const playersBefore = Object.keys(world.players).length
   const season = world.seasons[seasonId]
   if (season === undefined) return { playerIds: [], playersBefore, playersAfter: playersBefore }
+  const category = world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!.category
   const draftYear = Number(season.startDate.slice(0, 4)) + 1
   const date = scheduledOn ?? rules.draftDate ?? addDays(season.endDate, rules.scheduledAfterDays)
+  const selected = new Set(Object.values(world.draftPicksById).flatMap(pick => pick.selection === undefined ? [] : [pick.selection.playerId]))
   const candidates = Object.values(world.teams)
     .filter((team) => Object.values(world.competitions).some((competition) => competition.participantTeamIds.includes(team.id) && world.ecosystems[competition.ecosystemId]?.kind !== 'nbaLike'))
     .flatMap((team) => team.rosterPlayerIds)
     .filter((id, index, ids) => {
-      if (ids.indexOf(id) !== index || world.players[id] === undefined) return false
+      if (ids.indexOf(id) !== index || world.players[id] === undefined || selected.has(id)) return false
+      if (sportsCategoryForGender(world.players[id]!.gender) !== category) return false
       const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(id))
       const ecosystemId = team === undefined ? undefined : Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(team.id))?.ecosystemId
       const kind = ecosystemId === undefined ? undefined : world.ecosystems[ecosystemId]?.kind
@@ -62,7 +66,8 @@ export function initializeRecruitingCycle(world: GameWorld, seasonId: keyof Game
     ? latestCycle.calendar.template
     : undefined
   const calendar = recruitingRulesetForSeason(ecosystem.category, Number(season.startDate.slice(0, 4)), priorTemplate)
-  const institutionalSigningPolicies = latestCycle?.institutionalSigningPolicies?.map((policy) => ({ ...policy, seasonId: season.id, provenance: 'SIMULATED_CARRY_FORWARD' as const, basedOnSeasonId: latestCycle.sourceSeasonId }))
+  const yearsElapsed = latestCycle === undefined ? 0 : Number(season.startDate.slice(0, 4)) - Number(world.seasons[latestCycle.sourceSeasonId]!.startDate.slice(0, 4))
+  const institutionalSigningPolicies = latestCycle?.institutionalSigningPolicies?.map((policy) => ({ ...policy, seasonId: season.id, finalAidSigningDate: addYears(policy.finalAidSigningDate, yearsElapsed), provenance: 'SIMULATED_CARRY_FORWARD' as const, basedOnSeasonId: latestCycle.sourceSeasonId }))
   return updateGameWorld(world, { recruitingCycles: [...Object.values(world.recruitingCyclesById), { id, ecosystemId: ecosystem.id, sourceSeasonId: season.id, targetSeasonId: `${season.id}:next` as never, opensOn: season.startDate, signingOn: addDays(season.endDate, 1), closesOn, status: 'scheduled', rules, calendar, ...(institutionalSigningPolicies === undefined ? {} : { institutionalSigningPolicies }) }] })
 }
 

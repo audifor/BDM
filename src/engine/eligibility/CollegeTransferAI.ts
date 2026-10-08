@@ -4,7 +4,7 @@ import { availableInstitutionBenefitsRoom, createAthleticsAidAgreement, type Set
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { getPlayerSeasonStats, calculatePlayerStatAverages } from '@/engine/stats/PlayerHistory'
-import { addTransferRecruitToCycle, completeCollegeTransfer, makeRecruitingOffer, performRecruitingAction, progressAiNegotiation, promiseRecruitingRole, rankAiRecruitingTargets, resolveRecruitingCommitments, signCommittedRecruit, getTeamRecruitingNeeds } from '@/engine/recruiting/RecruitingEngine'
+import { addTransferRecruitToCycle, completeCollegeTransfer, makeRecruitingOffer, performRecruitingAction, progressAiNegotiation, promiseRecruitingRole, rankAiRecruitingTargets, resolveRecruitingCommitments, signCommittedRecruit, getTeamRecruitingNeeds, resolveBasketballChampionshipDate } from '@/engine/recruiting/RecruitingEngine'
 import { assessCollegeContinuation, recordCollegeContinuationAssessment } from './CollegeContinuationAssessment'
 import { signInstitutionBenefits, signInstitutionalAthleticsAid } from './CollegeCompensationEngine'
 import { completeTransferEducationModule, processTransferPortalEntry, submitTransferNotice } from './TransferPortalLifecycle'
@@ -20,9 +20,9 @@ export function runCollegeRosterContinuationAndTransferAI(world: GameWorld, cycl
   const season = cycle === undefined ? undefined : world.seasons[cycle.sourceSeasonId]
   const competition = season === undefined ? undefined : world.competitions[season.competitionId]
   const rules = cycle === undefined ? undefined : Object.values(world.transferPortalRulesetsById).filter((item) => item.ecosystemId === cycle.ecosystemId && item.effectiveFrom <= world.currentDate).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0]
-  const final = season === undefined ? undefined : Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionId === competition?.id && game.stakes === 'final' && game.status === 'completed').sort((a, b) => b.date.localeCompare(a.date))[0]
-  if (cycle?.status !== 'open' || season === undefined || competition === undefined || world.ecosystems[cycle.ecosystemId]?.kind !== 'ncaaLike' || rules === undefined || final === undefined) return world
-  const window = basketballTransferWindow(final.date, rules)
+  const championshipDate = cycle === undefined ? undefined : resolveBasketballChampionshipDate(world, cycle)
+  if (cycle?.status !== 'open' || season === undefined || competition === undefined || world.ecosystems[cycle.ecosystemId]?.kind !== 'ncaaLike' || rules === undefined || championshipDate === undefined) return world
+  const window = basketballTransferWindow(championshipDate, rules)
   if (!isWithinTransferWindow(world.currentDate, window)) return world
   const userTeamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)?.id
   let next = world
@@ -77,9 +77,11 @@ export function runCollegeRosterContinuationAndTransferAI(world: GameWorld, cycl
     for (const destinationId of destinations) {
       if (Object.values(next.recruitingOffersById).some((item) => item.recruitId === recruitId && item.programTeamId === destinationId)) continue
       const contact = performRecruitingAction(next, cycleId, recruitId, destinationId, 'contact')
-      if (!contact.ok) continue
-      const pitch = performRecruitingAction(contact.value, cycleId, recruitId, destinationId, 'pitch')
-      next = pitch.ok ? pitch.value : contact.value
+      // As in ordinary AI Recruiting, exhausted contact capacity does not prohibit
+      // a separately permitted offer to an already authorized transfer candidate.
+      if (contact.ok) next = contact.value
+      const pitch = performRecruitingAction(next, cycleId, recruitId, destinationId, 'pitch')
+      if (pitch.ok) next = pitch.value
       const offer = makeRecruitingOffer(next, cycleId, recruitId, destinationId)
       if (!offer.ok) continue
       next = offer.value

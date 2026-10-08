@@ -13,16 +13,35 @@ const CAPACITY_LIMIT_BY_SENIORITY: Readonly<Record<StaffRoleSeniority, number>> 
   director: 9,
 }
 
+const responsibilityIndexes = new WeakMap<GameWorld['responsibilitiesById'], { readonly byTeam: ReadonlyMap<TeamId, readonly Responsibility[]>; readonly byStaff: ReadonlyMap<StaffPersonId, readonly Responsibility[]> }>()
+function responsibilityIndex(world: GameWorld) {
+  let index = responsibilityIndexes.get(world.responsibilitiesById)
+  if (index === undefined) {
+    const byTeam = new Map<TeamId, Responsibility[]>()
+    const byStaff = new Map<StaffPersonId, Responsibility[]>()
+    for (const responsibility of Object.values(world.responsibilitiesById)) {
+      const team = byTeam.get(responsibility.teamId) ?? []
+      team.push(responsibility)
+      byTeam.set(responsibility.teamId, team)
+      if (responsibility.holderStaffId !== undefined) {
+        const staff = byStaff.get(responsibility.holderStaffId) ?? []
+        staff.push(responsibility)
+        byStaff.set(responsibility.holderStaffId, staff)
+      }
+    }
+    index = { byTeam, byStaff }
+    responsibilityIndexes.set(world.responsibilitiesById, index)
+  }
+  return index
+}
 export function getTeamResponsibilities(world: GameWorld, teamId: TeamId): readonly Responsibility[] {
-  return Object.values(world.responsibilitiesById).filter((responsibility) => responsibility.teamId === teamId).sort((a, b) => a.kind.localeCompare(b.kind))
+  return [...(responsibilityIndex(world).byTeam.get(teamId) ?? [])].sort((a, b) => a.kind.localeCompare(b.kind))
 }
-
 export function getResponsibilitiesHeldByStaff(world: GameWorld, staffId: StaffPersonId): readonly Responsibility[] {
-  return Object.values(world.responsibilitiesById).filter((responsibility) => responsibility.holderStaffId === staffId)
+  return responsibilityIndex(world).byStaff.get(staffId) ?? []
 }
-
 export function getResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind): Responsibility | undefined {
-  return Object.values(world.responsibilitiesById).find((responsibility) => responsibility.teamId === teamId && responsibility.kind === kind)
+  return responsibilityIndex(world).byTeam.get(teamId)?.find(responsibility => responsibility.kind === kind)
 }
 
 /**

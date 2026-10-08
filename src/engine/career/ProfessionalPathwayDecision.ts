@@ -1,6 +1,7 @@
 import type { PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getPlayerAge } from '@/domain/player'
+import { calculateAge } from '@/domain/player'
+import type { GameDate } from '@/domain/date'
 import { getPlayerSeasonStats, calculatePlayerStatAverages } from '@/engine/stats/PlayerHistory'
 import { assessCollegeContinuation } from '@/engine/eligibility/CollegeContinuationAssessment'
 export type DraftOutlookBand = 'lottery' | 'firstRound' | 'secondRound' | 'borderline' | 'likelyUndrafted'
@@ -21,13 +22,13 @@ export function chooseCareerPathwayFromContext(context: CareerPathwayDecisionCon
 }
 
 /** A broad player-facing outlook from public production, deliberately separate from team scouting boards. */
-export function estimatePlayerDraftOutlook(world: GameWorld, playerId: PlayerId, seasonId: SeasonId = world.currentSeasonId): { readonly band: DraftOutlookBand; readonly reasons: readonly string[] } {
+export function estimatePlayerDraftOutlook(world: GameWorld, playerId: PlayerId, seasonId: SeasonId = world.currentSeasonId, ageOnDate: GameDate = world.currentDate): { readonly band: DraftOutlookBand; readonly reasons: readonly string[] } {
   const player = world.players[playerId]
   if (!player) return { band: 'likelyUndrafted', reasons: ['Player record is unavailable.'] }
   const seasonStats = getPlayerSeasonStats(world, playerId, seasonId)
   const stats = calculatePlayerStatAverages(seasonStats)
   const production = stats.ppg + stats.rpg * 0.55 + stats.apg * 0.75 + stats.spg * 0.3 + stats.bpg * 0.25
-  const age = getPlayerAge(world, playerId)
+  const age = calculateAge(player.bio.dateOfBirth, ageOnDate)
   const ageContext = age >= 21 ? 1.5 : age <= 19 ? 1 : 0
   const score = production + ageContext
   const band: DraftOutlookBand = score >= 24 ? 'lottery' : score >= 18 ? 'firstRound' : score >= 12 ? 'secondRound' : score >= 7 ? 'borderline' : 'likelyUndrafted'
@@ -38,10 +39,10 @@ export function estimatePlayerDraftOutlook(world: GameWorld, playerId: PlayerId,
 }
 
 /** Uses continuation context, recruiting preferences, role, trust, eligibility and compensation to explain a player choice. */
-export function advisePlayerCareerPathway(world: GameWorld, playerId: PlayerId, teamId: TeamId, seasonId: SeasonId = world.currentSeasonId): PlayerCareerAdvice {
+export function advisePlayerCareerPathway(world: GameWorld, playerId: PlayerId, teamId: TeamId, seasonId: SeasonId = world.currentSeasonId, ageOnDate: GameDate = world.currentDate): PlayerCareerAdvice {
   const player = world.players[playerId]
   if (!player) return { decision: 'directProfessional', outlook: 'likelyUndrafted', reasons: ['Player record is unavailable.'], alternatives: [] }
-  const outlook = estimatePlayerDraftOutlook(world, playerId, seasonId)
+  const outlook = estimatePlayerDraftOutlook(world, playerId, seasonId, ageOnDate)
   const continuation = assessCollegeContinuation(world, playerId, teamId, seasonId)
   const recruitingProfile = Object.values(world.recruitProfilesById).filter((profile) => profile.playerId === playerId).sort((a, b) => b.id.localeCompare(a.id))[0]
   const preferences = recruitingProfile?.recruitingRpg?.preferenceProfile
@@ -58,7 +59,7 @@ export function advisePlayerCareerPathway(world: GameWorld, playerId: PlayerId, 
   const collegeSupport = Math.min(3, continuation.compensationContext.athleticsAidMinorUnits / 1_000_000 + continuation.compensationContext.institutionalBenefitsMinorUnits / 2_000_000 + continuation.compensationContext.activeNilDeals * 0.5)
   const activeDraftEntry = Object.values(world.draftsById).flatMap((draft) => (draft.entries ?? []).map((entry) => ({ draft, entry }))).find(({ entry }) => entry.playerId === playerId && (entry.status === 'declaredEarlyEntry' || entry.status === 'finalPool'))
   const canWithdraw = activeDraftEntry === undefined || activeDraftEntry.draft.rules.finalWithdrawalDeadline === undefined || world.currentDate <= activeDraftEntry.draft.rules.finalWithdrawalDeadline
-  const decision = chooseCareerPathwayFromContext({ stayPressure: continuation.stayPressure, leavePressure: continuation.leavePressure, role, trust, collegeSupport, compensationImportance, seasonsRemaining, professionalImportance, outlook: outlook.band, age: getPlayerAge(world, playerId) ?? 20, seriouslyConsideringPortal: continuation.tone === 'seriouslyConsideringPortal', isDeclared: activeDraftEntry !== undefined, canWithdraw })
+  const decision = chooseCareerPathwayFromContext({ stayPressure: continuation.stayPressure, leavePressure: continuation.leavePressure, role, trust, collegeSupport, compensationImportance, seasonsRemaining, professionalImportance, outlook: outlook.band, age: calculateAge(player.bio.dateOfBirth, ageOnDate), seriouslyConsideringPortal: continuation.tone === 'seriouslyConsideringPortal', isDeclared: activeDraftEntry !== undefined, canWithdraw })
   reasons.push(...(decision === 'stayCollege' || decision === 'withdrawDraft' ? continuation.stayReasons : continuation.leaveReasons))
   if (outlook.band === 'secondRound' || outlook.band === 'borderline') reasons.push('The professional outlook is uncertain, so role, trust, compensation and remaining college eligibility may outweigh testing the market now.')
   if (activeDraftEntry !== undefined) {

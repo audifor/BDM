@@ -5,6 +5,7 @@ import { updateGameWorld } from '@/domain/world'
 import { canRecruitTransferPlayer } from '@/engine/eligibility'
 import { canPerformRecruitingAction } from './RecruitingPermission'
 import { recruitingStaffActionBlock, recruitingStaffActors, recordRecruitingStaffAction } from './RecruitingStaffAuthority'
+import { getRecruitingRoleOpportunity } from './RecruitingRosterPlanning'
 
 export type RecruitingNegotiationResult = { readonly ok: true; readonly world: GameWorld; readonly negotiation: RecruitingNegotiation } | { readonly ok: false; readonly reason: string }
 
@@ -178,8 +179,7 @@ function findNegotiation(world: GameWorld, id: string) {
 
 function factualSupport(world: GameWorld, profile: RecruitProfile, teamId: TeamId, topic: RecruitingNegotiationTopic): boolean {
   if (['role', 'playingOpportunity', 'starterCompetition', 'rosterCompetition'].includes(topic)) {
-    const count = world.teams[teamId]?.rosterPlayerIds.filter((id) => world.players[id]?.basketball.primaryPosition === profile.position).length ?? 0
-    return 90 - count * 22 >= 54
+    return getRecruitingRoleOpportunity(world, profile, teamId) >= 54
   }
   if (topic === 'headCoachInvolvement') return world.teams[teamId]?.coachId !== undefined
   if (topic === 'visit') return true

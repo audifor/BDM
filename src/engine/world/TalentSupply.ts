@@ -1,5 +1,6 @@
 import { createPerson } from '@/domain/person'
-import { createPlayer, calculateAge, type Player } from '@/domain/player'
+import { parseGameDate } from '@/domain/date'
+import { createPlayer, calculateAge, type Player, type PlayerPathwaySource } from '@/domain/player'
 import type { Place } from '@/domain/facilities'
 import { countryIdFromString, personIdFromString, playerIdFromString } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
@@ -40,6 +41,7 @@ export interface TalentCandidateRequest {
   readonly cohortId: TalentCohortId | string
   readonly candidateIndex: number
   readonly cause: TalentMaterializationCause
+  readonly pathwaySource?: PlayerPathwaySource
 }
 
 export interface MaterializeTalentCandidatesResult {
@@ -78,6 +80,7 @@ export function materializeTalentCandidates(world: GameWorld, requests: readonly
     const position = random.pick(['PG', 'SG', 'SF', 'PF', 'C'] as const)
     const bio = generatePlayerBio(playerId, position, world.currentDate, cohort.birthYear)
     const ratings = generateCanonicalRatings(cohort.seed, playerId, position, 35, 82, 'globalTalentRareTailV1')
+    const pathwayHistory = generatedPathwayHistory(world, cohort, request, candidateKey, nationalityId)
     const player = createPlayer({
       id: playerId,
       ...generatePersonName(random),
@@ -86,6 +89,7 @@ export function materializeTalentCandidates(world: GameWorld, requests: readonly
       basketball: { primaryPosition: position, ratings },
       bio,
       development: generateCanonicalDevelopmentProfile(cohort.seed, playerId, ratings, calculateAge(bio.dateOfBirth, world.currentDate)),
+      pathwayHistory,
     })
     const person = createPerson({
       id: personIdFromString(player.personId!),
@@ -121,6 +125,56 @@ export function materializeTalentCandidates(world: GameWorld, requests: readonly
     talentMaterializations: Object.values(materializations),
   })
   return { world: next, players: resolved, createdCount }
+}
+
+function generatedPathwayHistory(
+  world: GameWorld,
+  cohort: GameWorld['talentCohortsById'][string],
+  request: TalentCandidateRequest,
+  candidateKey: string,
+  nationalityId: ReturnType<typeof countryIdFromString>,
+): Player['pathwayHistory'] {
+  const source = request.cause === 'ACADEMY_INTAKE'
+    ? 'ACADEMY_YOUTH'
+    : request.pathwaySource ?? cohort.pathwaySource ?? sourceFromContext(world, cohort, candidateKey, nationalityId)
+  const record = (recordSource: PlayerPathwaySource, occurredOn: string) => ({
+    id: `pathway:${candidateKey}:${recordSource}:${occurredOn}`,
+    source: recordSource,
+    occurredOn: parseGameDate(occurredOn),
+    placeId: cohort.placeId,
+    evidenceId: `talent-materialization:${candidateKey}:${recordSource}`,
+  })
+  if (source === 'JUCO') {
+    if (Number(world.currentDate.slice(0, 4)) - cohort.birthYear < 19) throw new RangeError('JUCO pathway requires a candidate age of at least 19')
+    const highSchoolDate = `${cohort.birthYear + 18}-06-30`
+    return [record('US_HIGH_SCHOOL', highSchoolDate), record('JUCO', world.currentDate)]
+  }
+  return [record(source, world.currentDate)]
+}
+
+function sourceFromContext(
+  world: GameWorld,
+  cohort: GameWorld['talentCohortsById'][string],
+  candidateKey: string,
+  nationalityId: ReturnType<typeof countryIdFromString>,
+): PlayerPathwaySource {
+  const country = world.countries[nationalityId]
+  if (country?.code.toUpperCase() === 'USA') {
+    const age = Number(world.currentDate.slice(0, 4)) - cohort.birthYear
+    if (age < 19) return 'US_HIGH_SCHOOL'
+    // Older U.S. candidates can arrive through high school or the distinct two-year route.
+    // The cohort seed makes that upstream pathway choice repeatable without a recruiting quota.
+    const routeRandom = new SeededRandomSource(hashStringToSeed(`talent-pathway:${cohort.seed}:${candidateKey}:v1`))
+    return routeRandom.pick(['US_HIGH_SCHOOL', 'JUCO'] as const)
+  }
+  const hasLocalInternationalEcosystem = Object.values(world.teams).some((team) =>
+    team.countryId === nationalityId
+      && Object.values(world.competitions).some((competition) => competition.participantTeamIds.includes(team.id)
+        && world.ecosystems[competition.ecosystemId]?.kind === 'fibaLike'),
+  )
+  if (!hasLocalInternationalEcosystem) return 'OTHER_PRECOLLEGE'
+  const routeRandom = new SeededRandomSource(hashStringToSeed(`talent-pathway:${cohort.seed}:${candidateKey}:v1`))
+  return routeRandom.pick(['INTERNATIONAL_CLUB', 'OTHER_PRECOLLEGE'] as const)
 }
 
 export interface TalentSupplyMetrics {

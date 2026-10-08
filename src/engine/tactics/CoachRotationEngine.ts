@@ -180,19 +180,36 @@ function selectContextualLineup(
 ): PlayerId[] {
   let best: PlayerId[] | undefined
   let bestScore = Number.NEGATIVE_INFINITY
+  let bestKey = ''
+  // These qualities depend only on the current Player snapshot, not on a positional permutation.
+  const qualities = Object.fromEntries(available.map((id) => {
+    const ratings = input.players[id]!.basketball.ratings
+    return [id, {
+      handler: avg([ratings.BALL_CONTROL, ratings.PASSING_VISION, ratings.PRESSURE_HANDLING]) >= 63,
+      spacer: avg([ratings.THREE_POINT_STATIC, ratings.MOVEMENT_SHOOTING, ratings.SPACING]) >= 62,
+      interior: avg([ratings.RIM_PROTECTION, ratings.DEFENSIVE_REBOUNDING, ratings.STRENGTH]),
+      perimeter: avg([ratings.POINT_OF_ATTACK_DEFENSE, ratings.LATERAL_DEFENSE]),
+    }]
+  })) as Record<PlayerId, { handler: boolean; spacer: boolean; interior: number; perimeter: number }>
   const current: PlayerId[] = []
   const visit = (slot: number) => {
     if (slot === COACH_ROTATION_POSITIONS.length) {
-      const score = scoreLineup(current, fits, input.players)
+      const score = scoreLineup(current, fits, qualities)
+      if (score < bestScore) return
       const key = current.join('|')
-      const bestKey = best?.join('|') ?? ''
-      if (score > bestScore || (score === bestScore && key < bestKey)) { best = [...current]; bestScore = score }
+      if (score > bestScore || (score === bestScore && key < bestKey)) { best = [...current]; bestScore = score; bestKey = key }
       return
     }
     const position = COACH_ROTATION_POSITIONS[slot]!
     const fixed = anchored.get(position)
-    const candidates = fixed === undefined ? available.filter((id) => !current.includes(id)) : [fixed]
-    for (const playerId of candidates) {
+    if (fixed !== undefined) {
+      if (current.includes(fixed)) return
+      current.push(fixed)
+      visit(slot + 1)
+      current.pop()
+      return
+    }
+    for (const playerId of available) {
       if (current.includes(playerId)) continue
       current.push(playerId)
       visit(slot + 1)
@@ -204,13 +221,31 @@ function selectContextualLineup(
   return best
 }
 
-function scoreLineup(lineup: readonly PlayerId[], fits: Partial<Record<PlayerId, Partial<Record<BasketballPosition, number>>>>, players: Readonly<Record<PlayerId, Player>>): number {
-  const fitTotal = lineup.reduce((sum, playerId, index) => sum + (fits[playerId]?.[COACH_ROTATION_POSITIONS[index]!] ?? 0), 0)
-  const selected = lineup.map((id) => players[id]!)
-  const handlers = selected.filter((player) => avg([player.basketball.ratings.BALL_CONTROL, player.basketball.ratings.PASSING_VISION, player.basketball.ratings.PRESSURE_HANDLING]) >= 63).length
-  const spacers = selected.filter((player) => avg([player.basketball.ratings.THREE_POINT_STATIC, player.basketball.ratings.MOVEMENT_SHOOTING, player.basketball.ratings.SPACING]) >= 62).length
-  const reboundAndInterior = Math.max(...selected.map((player) => avg([player.basketball.ratings.RIM_PROTECTION, player.basketball.ratings.DEFENSIVE_REBOUNDING, player.basketball.ratings.STRENGTH])))
-  const perimeterDefense = selected.map((player) => avg([player.basketball.ratings.POINT_OF_ATTACK_DEFENSE, player.basketball.ratings.LATERAL_DEFENSE])).sort((a, b) => b - a).slice(0, 3).reduce((sum, value) => sum + value, 0) / 3
+function scoreLineup(lineup: readonly PlayerId[], fits: Partial<Record<PlayerId, Partial<Record<BasketballPosition, number>>>>, qualities: Readonly<Record<PlayerId, { handler: boolean; spacer: boolean; interior: number; perimeter: number }>>): number {
+  let fitTotal = 0
+  let handlers = 0
+  let spacers = 0
+  let reboundAndInterior = Number.NEGATIVE_INFINITY
+  let perimeterFirst = Number.NEGATIVE_INFINITY
+  let perimeterSecond = Number.NEGATIVE_INFINITY
+  let perimeterThird = Number.NEGATIVE_INFINITY
+  for (let index = 0; index < lineup.length; index += 1) {
+    const playerId = lineup[index]!
+    fitTotal += fits[playerId]?.[COACH_ROTATION_POSITIONS[index]!] ?? 0
+    const player = qualities[playerId]!
+    handlers += Number(player.handler)
+    spacers += Number(player.spacer)
+    if (player.interior > reboundAndInterior) reboundAndInterior = player.interior
+    if (player.perimeter > perimeterFirst) {
+      perimeterThird = perimeterSecond
+      perimeterSecond = perimeterFirst
+      perimeterFirst = player.perimeter
+    } else if (player.perimeter > perimeterSecond) {
+      perimeterThird = perimeterSecond
+      perimeterSecond = player.perimeter
+    } else if (player.perimeter > perimeterThird) perimeterThird = player.perimeter
+  }
+  const perimeterDefense = (perimeterFirst + perimeterSecond + perimeterThird) / 3
   return fitTotal + Math.min(0, handlers - 2) * 3 + Math.min(0, spacers - 2) * 2 + reboundAndInterior * 0.06 + perimeterDefense * 0.035
 }
 

@@ -304,6 +304,7 @@ const TRANSACTION_LABELS: Record<PlayerTransactionKind, string> = {
   released: 'Released',
   contractExpired: 'Contract expired',
   traded: 'Traded',
+  ncaaWalkOn: 'NCAA walk-on', ncaaEligibilityExit: 'NCAA eligibility exhausted',
 }
 
 const ECOSYSTEM_LABELS: Record<EcosystemTransitionType, string> = {

@@ -7,7 +7,7 @@ import { updateGameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
-import { generateRecruitingPool, performRecruitingAction, recordRecruitingEvaluation, resolveBasketballChampionshipDate } from './RecruitingEngine'
+import { generateLegacyFixtureRecruitingPool as generateRecruitingPool, performRecruitingAction, recordRecruitingEvaluation, resolveBasketballChampionshipDate } from './RecruitingEngine'
 import { canPerformRecruitingAction } from './RecruitingPermission'
 
 describe('2026-27 NCAA basketball recruiting rulesets', () => {

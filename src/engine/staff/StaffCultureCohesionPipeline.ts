@@ -39,8 +39,16 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
   const cohesionByUnit = new Map<string, StaffUnitCohesionState>(Object.entries(world.staffUnitCohesionStatesByUnitKey))
   let changed = false
 
+  const staffIdsByTeamId = new Map<string, string[]>()
+  for (const assignment of Object.values(world.teamStaffAssignmentsById)) {
+    if (world.staffPeopleById[assignment.staffPersonId] === undefined) continue
+    if (world.staffEmploymentByStaffId[assignment.staffPersonId]?.status !== undefined && world.staffEmploymentByStaffId[assignment.staffPersonId]?.status !== 'employed') continue
+    const staffIds = staffIdsByTeamId.get(assignment.teamId) ?? []
+    staffIds.push(assignment.staffPersonId)
+    staffIdsByTeamId.set(assignment.teamId, staffIds)
+  }
   const relevantTeamIds = Object.values(world.teams)
-    .filter((team) => getRelevantTeamStaffIds(world, team.id).length > 0)
+    .filter((team) => staffIdsByTeamId.has(team.id))
     .map((team) => team.id)
   const unitViewsByTeamId = new Map(relevantTeamIds.map((teamId) => [teamId, buildStaffUnitRuntimeViews(world, teamId)]))
 
@@ -106,14 +114,6 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
       staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => pressuredByContextId.get(state.contextId) ?? state),
     }),
   })
-}
-
-function getRelevantTeamStaffIds(world: GameWorld, teamId: import('@/domain/ids').TeamId): readonly string[] {
-  return Object.values(world.teamStaffAssignmentsById)
-    .filter((assignment) => assignment.teamId === teamId)
-    .map((assignment) => assignment.staffPersonId)
-    .filter((staffId) => world.staffPeopleById[staffId] !== undefined)
-    .filter((staffId) => world.staffEmploymentByStaffId[staffId] === undefined || world.staffEmploymentByStaffId[staffId]!.status === 'employed')
 }
 
 /** Weekly cadence: the ISO weekday of `currentDate` is Monday (1). Matches the Wave 5A pipeline's convention. */

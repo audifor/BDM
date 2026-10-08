@@ -5,10 +5,42 @@ import type { GameWorld } from '@/domain/world'
 export type NbaInternationalClassification = 'QUALIFYING_INTERNATIONAL' | 'NON_INTERNATIONAL' | 'UNKNOWN'
 export interface DraftEligibilityResult { readonly eligible: boolean; readonly automatic: boolean; readonly classification: NbaInternationalClassification; readonly reason: string }
 
+// Derived, collection-reference keyed indexes; they never retain a GameWorld or old collection.
+const educationIndexes = new WeakMap<object, Map<PlayerId, NonNullable<GameWorld['recruitProfilesById'][string]['education']>>>()
+const enrollmentIndexes = new WeakMap<object, Map<PlayerId, readonly GameWorld['playerEnrollmentsById'][string][]>>()
+function educationFor(world: GameWorld, playerId: PlayerId) {
+  let index = educationIndexes.get(world.recruitProfilesById)
+  if (index === undefined) {
+    index = new Map()
+    const seen = new Set<PlayerId>()
+    for (const profile of Object.values(world.recruitProfilesById)) {
+      if (seen.has(profile.playerId)) continue
+      seen.add(profile.playerId)
+      if (profile.education !== undefined) index.set(profile.playerId, profile.education)
+    }
+    educationIndexes.set(world.recruitProfilesById, index)
+  }
+  return index.get(playerId)
+}
+function collegeEnrollmentsFor(world: GameWorld, playerId: PlayerId) {
+  let index = enrollmentIndexes.get(world.playerEnrollmentsById)
+  if (index === undefined) {
+    const all = new Map<PlayerId, GameWorld['playerEnrollmentsById'][string][]>()
+    for (const enrollment of Object.values(world.playerEnrollmentsById)) {
+      const records = all.get(enrollment.playerId) ?? []
+      records.push(enrollment)
+      all.set(enrollment.playerId, records)
+    }
+    index = all
+    enrollmentIndexes.set(world.playerEnrollmentsById, index)
+  }
+  return (index.get(playerId) ?? []).filter(item => world.ecosystems[item.ecosystemId]?.kind === 'ncaaLike')
+}
+
 /** Uses recorded education/residence facts only. Missing CBA facts remain UNKNOWN. */
 export function classifyNbaInternational(world: GameWorld, playerId: PlayerId): NbaInternationalClassification {
-  const education = world.recruitProfilesById && Object.values(world.recruitProfilesById).find((profile) => profile.playerId === playerId)?.education
-  const hasUsCollegeEnrollment = Object.values(world.playerEnrollmentsById).some((item) => item.playerId === playerId && world.ecosystems[item.ecosystemId]?.kind === 'ncaaLike')
+  const education = educationFor(world, playerId)
+  const hasUsCollegeEnrollment = collegeEnrollmentsFor(world, playerId).length > 0
   if (hasUsCollegeEnrollment) return 'NON_INTERNATIONAL'
   if (!education) return 'UNKNOWN'
   if (education.completedUsHighSchool === true || education.enrolledAtUsCollege === true) return 'NON_INTERNATIONAL'
@@ -27,8 +59,8 @@ export function assessNbaDraftEligibility(world: GameWorld, playerId: PlayerId, 
   const age = year - Number(player.bio.dateOfBirth.slice(0, 4))
   if (age < (draft.rules.minimumAgeDuringDraftYear ?? 19)) return { eligible: false, automatic: false, classification: classifyNbaInternational(world, playerId), reason: 'Minimum Draft age is not met' }
   const classification = classifyNbaInternational(world, playerId)
-  const education = Object.values(world.recruitProfilesById ?? {}).find((profile) => profile.playerId === playerId)?.education
-  const collegeEnrollments = Object.values(world.playerEnrollmentsById).filter((item) => item.playerId === playerId && world.ecosystems[item.ecosystemId]?.kind === 'ncaaLike')
+  const education = educationFor(world, playerId)
+  const collegeEnrollments = collegeEnrollmentsFor(world, playerId)
   const enrolled = collegeEnrollments.length > 0
   if (classification === 'QUALIFYING_INTERNATIONAL' && age >= (draft.rules.internationalAutomaticEligibilityAge ?? 22)) return { eligible: true, automatic: true, classification, reason: 'Meets automatic international age threshold' }
   const gradYear = education?.highSchoolGraduationYear

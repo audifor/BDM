@@ -1,6 +1,7 @@
-import { addYears, compareGameDates, createGameDate, type GameDate } from '@/domain/date'
+import { addDays, addYears, compareGameDates, createGameDate, type GameDate } from '@/domain/date'
 import type { CompetitionId, EcosystemId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import { createCollegeRuleset, createPlayerEnrollment, defaultEligibilityRules, type CollegeEligibilityAssessment, type CollegeEligibilityReason, type CollegeRuleset, type EligibilityProfile, type EligibilityResult, type PlayerEnrollment } from '@/domain/eligibility'
+import { isPlayerCareerActive } from '@/engine/career/PlayerCareerLifecycle'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { isPlayerAvailable } from '@/domain/world'
 import { initializeAcademicProfile } from '@/engine/academic'
@@ -9,7 +10,7 @@ export function collegeFixtureRulesets(ecosystemId: EcosystemId, eligibilityRule
   const eligibilityClock = { model: 'AGE_OR_ENROLLMENT_FIVE_YEAR' as const, effectiveFrom: createGameDate(2026, 8, 1), periodYears: 5 as const, ageTriggerYears: 19 as const, academicYearStartMonthDay: '09-01' as const, source: 'https://web3.ncaa.org/lsdbi/search/proposalView?id=109394', transitionSource: 'https://www.ncaa.org/news/division-i-adopts-age-based-eligibility-model/' }
   return [
     createCollegeRuleset({ id: `college-fixture:${ecosystemId}:v1`, version: 'V1', ecosystemId, effectiveFrom: createGameDate(1, 1, 1), effectiveTo: createGameDate(2035, 6, 30), minimumAcademicPerformance: 60, minimumAcademicProgress: 55, maximumEligibilitySeasons: eligibilityRules.maximumEligibilitySeasons, participationThreshold: eligibilityRules.participationThreshold, eligibilityClock, provenance: 'TEST / PRODUCT FIXTURE' }),
-    createCollegeRuleset({ id: `college-fixture:${ecosystemId}:v2`, version: 'V2', ecosystemId, effectiveFrom: createGameDate(2035, 7, 1), minimumAcademicPerformance: 75, minimumAcademicProgress: 65, maximumEligibilitySeasons: eligibilityRules.maximumEligibilitySeasons, participationThreshold: eligibilityRules.participationThreshold, eligibilityClock, provenance: 'TEST / PRODUCT FIXTURE' }),
+    createCollegeRuleset({ id: `college-fixture:${ecosystemId}:v2`, version: 'V2', ecosystemId, effectiveFrom: createGameDate(2035, 7, 1), effectiveTo: createGameDate(2036, 7, 31), minimumAcademicPerformance: 75, minimumAcademicProgress: 65, maximumEligibilitySeasons: eligibilityRules.maximumEligibilitySeasons, participationThreshold: eligibilityRules.participationThreshold, eligibilityClock, provenance: 'TEST / PRODUCT FIXTURE' }),
   ]
 }
 
@@ -32,6 +33,21 @@ export function ageAcademicYearTrigger(dateOfBirth: GameDate): GameDate {
 export function resolveCollegeRuleset(world: GameWorld, ecosystemId: EcosystemId, date: GameDate): CollegeRuleset | undefined {
   const matches = Object.values(world.collegeRulesetsById).filter((item) => item.ecosystemId === ecosystemId && compareGameDates(item.effectiveFrom, date) <= 0 && (item.effectiveTo === undefined || compareGameDates(date, item.effectiveTo) <= 0))
   return matches.length === 1 ? matches[0] : undefined
+}
+
+/** Continues a supplied policy through offseason gaps without changing its values or published successors. */
+export function ensureCollegeRulesetContinuity(world: GameWorld): GameWorld {
+  const rulesets = [...Object.values(world.collegeRulesetsById)]
+  for (const ecosystem of Object.values(world.ecosystems)) {
+    if (ecosystem.kind !== 'ncaaLike' || rulesets.some(rule => rule.ecosystemId === ecosystem.id && rule.effectiveFrom <= world.currentDate && (rule.effectiveTo === undefined || rule.effectiveTo >= world.currentDate))) continue
+    const own = rulesets.filter(rule => rule.ecosystemId === ecosystem.id)
+    const source = own.filter(rule => rule.effectiveTo !== undefined && rule.effectiveTo < world.currentDate).sort((a, b) => b.effectiveTo!.localeCompare(a.effectiveTo!))[0]
+    if (source === undefined) continue
+    const successor = own.filter(rule => rule.effectiveFrom > world.currentDate).sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom))[0]
+    const startsOn = addDays(source.effectiveTo!, 1)
+    rulesets.push(createCollegeRuleset({ ...source, id: `college-continuity:${ecosystem.id}:${startsOn}`, version: `${startsOn}.carry-forward`, effectiveFrom: startsOn, effectiveTo: successor === undefined ? addYears(world.currentDate, 1) : addDays(successor.effectiveFrom, -1), provenance: 'SIMULATED_CARRY_FORWARD', basedOnRulesetId: source.id }))
+  }
+  return rulesets.length === Object.keys(world.collegeRulesetsById).length ? world : updateGameWorld(world, { collegeRulesets: rulesets })
 }
 
 export function assessCollegeEligibility(world: GameWorld, input: { readonly playerId: PlayerId; readonly teamId: TeamId; readonly ecosystemId: EcosystemId; readonly onDate?: GameDate }): CollegeEligibilityAssessment | undefined {
@@ -122,8 +138,8 @@ export function evaluatePlayerEligibility(world: GameWorld, input: { readonly pl
   return { eligible: true, status: 'eligible', reasons: [], seasonsRemaining: remaining }
 }
 
-export function getEligiblePlayersForCompetition(world: GameWorld, teamId: TeamId, competitionId: CompetitionId, seasonId: SeasonId, onDate: GameDate): readonly PlayerId[] { const team=world.teams[teamId]; return team ? team.rosterPlayerIds.filter((playerId) => evaluatePlayerEligibility(world, { playerId, teamId, competitionId, seasonId, onDate }).eligible) : [] }
-export function getAvailablePlayersForCompetition(world: GameWorld, teamId: TeamId, competitionId: CompetitionId, seasonId: SeasonId, onDate: GameDate): readonly PlayerId[] { return getEligiblePlayersForCompetition(world, teamId, competitionId, seasonId, onDate).filter((playerId) => isPlayerAvailable(world, playerId, onDate)) }
+export function getEligiblePlayersForCompetition(world: GameWorld, teamId: TeamId, competitionId: CompetitionId, seasonId: SeasonId, onDate: GameDate): readonly PlayerId[] { const team=world.teams[teamId]; return team ? team.rosterPlayerIds.filter((playerId) => isPlayerCareerActive(world, playerId) && evaluatePlayerEligibility(world, { playerId, teamId, competitionId, seasonId, onDate }).eligible) : [] }
+export function getAvailablePlayersForCompetition(world: GameWorld, teamId: TeamId, competitionId: CompetitionId, seasonId: SeasonId, onDate: GameDate): readonly PlayerId[] { return getEligiblePlayersForCompetition(world, teamId, competitionId, seasonId, onDate).filter((playerId) => isPlayerCareerActive(world, playerId) && isPlayerAvailable(world, playerId, onDate)) }
 
 export function initializeEligibility(world: GameWorld, playerId: PlayerId, teamId: TeamId, ecosystemId: EcosystemId): GameWorld { if (world.ecosystems[ecosystemId]?.kind !== 'ncaaLike' || Object.values(world.eligibilityProfilesById).some((item) => item.playerId === playerId && item.ecosystemId === ecosystemId && item.programTeamId === teamId)) return world; const prior = Object.values(world.eligibilityProfilesById).filter((item) => item.playerId === playerId && item.ecosystemId === ecosystemId).sort((a, b) => b.seasonsUsed - a.seasonsUsed || a.programTeamId.localeCompare(b.programTeamId))[0]; const profile: EligibilityProfile = { id: `eligibility:${ecosystemId}:${teamId}:${playerId}`, playerId, ecosystemId, programTeamId: teamId, seasonsUsed: prior?.seasonsUsed ?? 0, seasonRecordsBySeasonId: prior?.seasonRecordsBySeasonId ?? {} }; return updateGameWorld(world, { eligibilityRulesByEcosystemId: { ...world.eligibilityRulesByEcosystemId, [ecosystemId]: world.eligibilityRulesByEcosystemId[ecosystemId] ?? defaultEligibilityRules(ecosystemId) }, eligibilityProfiles: [...Object.values(world.eligibilityProfilesById), profile] }) }
 
@@ -141,6 +157,11 @@ export function ensureNcaaEligibility(world: GameWorld): GameWorld {
     rules[ecosystemId] ??= defaultEligibilityRules(ecosystemId)
     if (!rulesetEcosystems.has(ecosystemId)) rulesets.push(...collegeFixtureRulesets(ecosystemId, rules[ecosystemId]))
     rulesetEcosystems.add(ecosystemId)
+    const latestSeason = Object.values(world.seasons).filter((season) => season.competitionId === competition.id).sort((a, b) => b.startDate.localeCompare(a.startDate))[0]
+    if (latestSeason !== undefined && !rulesets.some((item) => item.ecosystemId === ecosystemId && item.effectiveFrom <= latestSeason.startDate && (item.effectiveTo === undefined || item.effectiveTo >= latestSeason.startDate))) {
+      const source = rulesets.filter((item) => item.ecosystemId === ecosystemId && item.effectiveFrom < latestSeason.startDate).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0]
+      if (source !== undefined) rulesets.push(createCollegeRuleset({ ...source, id: `college-carry-forward:${ecosystemId}:${latestSeason.label}`, version: `${latestSeason.label}.carry-forward`, effectiveFrom: latestSeason.startDate, effectiveTo: latestSeason.endDate, provenance: 'SIMULATED_CARRY_FORWARD', basedOnRulesetId: source.id }))
+    }
     for (const teamId of competition.participantTeamIds) for (const playerId of world.teams[teamId]!.rosterPlayerIds) {
       const profileKey = `${ecosystemId}:${teamId}:${playerId}`
       if (!profileKeys.has(profileKey)) {
@@ -156,8 +177,9 @@ export function ensureNcaaEligibility(world: GameWorld): GameWorld {
       }
     }
   }
-  if (rulesets.length === Object.keys(world.collegeRulesetsById).length && profiles.length === Object.keys(world.eligibilityProfilesById).length && enrollments.length === Object.keys(world.playerEnrollmentsById).length && Object.keys(rules).length === Object.keys(world.eligibilityRulesByEcosystemId).length) return world
-  return updateGameWorld(world, { collegeRulesets: rulesets, eligibilityProfiles: profiles, playerEnrollments: enrollments, eligibilityRulesByEcosystemId: rules })
+  const initialized = rulesets.length === Object.keys(world.collegeRulesetsById).length && profiles.length === Object.keys(world.eligibilityProfilesById).length && enrollments.length === Object.keys(world.playerEnrollmentsById).length && Object.keys(rules).length === Object.keys(world.eligibilityRulesByEcosystemId).length
+    ? world : updateGameWorld(world, { collegeRulesets: rulesets, eligibilityProfiles: profiles, playerEnrollments: enrollments, eligibilityRulesByEcosystemId: rules })
+  return ensureCollegeRulesetContinuity(initialized)
 }
 
 export function recordEligibilityParticipation(world: GameWorld, gameId: keyof GameWorld['games']): GameWorld { const game=world.games[gameId]; const log=world.matchStatLogsByGameId[gameId]; if(!game||!log||world.ecosystems[world.competitions[game.competitionId]!.ecosystemId]?.kind!=='ncaaLike') return world; const profiles=Object.values(world.eligibilityProfilesById).map(profile=>{const appearances=log.playerLines.filter(line=>line.playerId===profile.playerId&&line.stats.secondsPlayed>0); if(appearances.length===0||profile.seasonRecordsBySeasonId[game.seasonId]?.gameIds.includes(gameId))return profile;const old=profile.seasonRecordsBySeasonId[game.seasonId]??{seasonId:game.seasonId,gamesParticipated:0,gameIds:[],eligibilityConsumed:false,resolved:false};return {...profile,seasonRecordsBySeasonId:{...profile.seasonRecordsBySeasonId,[game.seasonId]:{...old,gamesParticipated:old.gamesParticipated+1,gameIds:[...old.gameIds,gameId]}}}});return updateGameWorld(world,{eligibilityProfiles:profiles}) }

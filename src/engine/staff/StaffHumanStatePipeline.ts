@@ -137,8 +137,9 @@ function applyDailyRecovery(world: GameWorld): GameWorld {
     .map((state) => ({ state, recovered: applyHumanStateRecovery(state, world.personalitiesByPersonId[state.staffId]) }))
     .filter((item) => item.recovered.stress !== item.state.stress || item.recovered.frustration !== item.state.frustration)
   if (updates.length === 0) return world
+  const recoveredByContextId = new Map(updates.map((item) => [item.state.contextId, item.recovered]))
   return updateGameWorld(world, {
-    staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => updates.find((item) => item.state.contextId === state.contextId)?.recovered ?? state),
+    staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => recoveredByContextId.get(state.contextId) ?? state),
   })
 }
 

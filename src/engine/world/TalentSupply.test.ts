@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createPlace } from '@/domain/facilities'
+import { createCountry } from '@/domain/country'
 import { createGameWorld, getPlayersInScoutingTerritory, updateGameWorld } from '@/domain/world'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -30,6 +31,58 @@ function cohortInput(placeId: string, gender: 'male' | 'female' = 'male', id = `
 }
 
 describe('BS15B global talent supply and materialization', () => {
+  it('generates context-backed pre-college provenance deterministically before recruiting', () => {
+    const base = makeWorld()
+    const usa = createCountry({ id: 'country:us-pathway' as never, name: 'United States', code: 'USA' })
+    const usPlace = createPlace({ id: 'place:us-pathway', kind: 'CITY', name: 'U.S. pathway place', countryId: usa.id })
+    const usWorld = updateGameWorld(base, { countries: [...Object.values(base.countries), usa], places: [...Object.values(base.placesById), usPlace] })
+    const young = createTalentSupplyCohort(usWorld, { ...cohortInput(usPlace.id, 'male', 'us-high-school'), birthYear: 2014 })
+    const highSchool = materializeTalentCandidates(young, [{ cohortId: 'us-high-school', candidateIndex: 1, cause: 'RECRUITING_POOL' }])
+    expect(highSchool.players[0]!.pathwayHistory).toMatchObject([{ source: 'US_HIGH_SCHOOL', placeId: usPlace.id }])
+    expect(() => materializeTalentCandidates(young, [{ cohortId: 'us-high-school', candidateIndex: 2, cause: 'RECRUITING_POOL', pathwaySource: 'JUCO' }])).toThrow('age of at least 19')
+
+    const matureInput = { ...cohortInput(usPlace.id, 'male', 'us-two-year'), birthYear: 2013, seed: 991 }
+    const mature = createTalentSupplyCohort(usWorld, matureInput)
+    const first = materializeTalentCandidates(mature, Array.from({ length: 40 }, (_, index) => ({ cohortId: 'us-two-year', candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const })))
+    const repeat = materializeTalentCandidates(createTalentSupplyCohort(usWorld, matureInput), Array.from({ length: 40 }, (_, index) => ({ cohortId: 'us-two-year', candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const })))
+    const firstSources = first.players.map((player) => player.pathwayHistory!.at(-1)!.source)
+    expect(repeat.players.map((player) => player.pathwayHistory!.at(-1)!.source)).toEqual(firstSources)
+    expect(firstSources).toContain('US_HIGH_SCHOOL')
+    expect(firstSources).toContain('JUCO')
+    const juco = first.players.find((player) => player.pathwayHistory!.at(-1)!.source === 'JUCO')!
+    expect(juco.pathwayHistory!.map((item) => item.source)).toEqual(['US_HIGH_SCHOOL', 'JUCO'])
+    expect(juco.pathwayHistory![0]!.occurredOn < juco.pathwayHistory![1]!.occurredOn).toBe(true)
+    expect(new Set(first.players.map((player) => player.id)).size).toBe(40)
+    expect(new Set(first.players.map((player) => player.personId)).size).toBe(40)
+
+    const truthTarget = Object.values(usWorld.players)[0]!
+    const changedTruthPlayer = { ...truthTarget, basketball: { ...truthTarget.basketball, ratings: { ...truthTarget.basketball.ratings, SPEED: 99 } } }
+    const changedTruthWorld = updateGameWorld(usWorld, { players: [...Object.values(usWorld.players).filter((player) => player.id !== truthTarget.id), changedTruthPlayer] })
+    const truthChangedCandidates = materializeTalentCandidates(createTalentSupplyCohort(changedTruthWorld, matureInput), Array.from({ length: 40 }, (_, index) => ({ cohortId: 'us-two-year', candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const })))
+    expect(truthChangedCandidates.players.map((player) => player.pathwayHistory!.at(-1)!.source)).toEqual(firstSources)
+
+    const differentSeedInput = { ...matureInput, seed: 992 }
+    const differentSeed = materializeTalentCandidates(createTalentSupplyCohort(usWorld, differentSeedInput), Array.from({ length: 40 }, (_, index) => ({ cohortId: differentSeedInput.id, candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const })))
+    expect(differentSeed.players.map((player) => player.pathwayHistory!.at(-1)!.source)).not.toEqual(firstSources)
+
+    const academyWorld = createTalentSupplyCohort(usWorld, { ...cohortInput(usPlace.id, 'male', 'academy-intake') })
+    const academy = materializeTalentCandidates(academyWorld, [{ cohortId: 'academy-intake', candidateIndex: 1, cause: 'ACADEMY_INTAKE' }])
+    expect(academy.players[0]!.pathwayHistory!.at(-1)!.source).toBe('ACADEMY_YOUTH')
+
+    const international = createCountry({ id: 'country:intl-pathway' as never, name: 'International', code: 'INT' })
+    const intlPlace = createPlace({ id: 'place:intl-pathway', kind: 'CITY', name: 'International pathway place', countryId: international.id })
+    const intlTeams = Object.values(base.teams).map((team) => ({ ...team, countryId: international.id }))
+    const intlWorld = updateGameWorld(base, { countries: [...Object.values(base.countries), international], places: [...Object.values(base.placesById), intlPlace], teams: intlTeams })
+    const intlCohort = createTalentSupplyCohort(intlWorld, { ...cohortInput(intlPlace.id, 'male', 'intl-source-mix'), seed: 813 })
+    const intlPlayers = materializeTalentCandidates(intlCohort, Array.from({ length: 40 }, (_, index) => ({ cohortId: 'intl-source-mix', candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const }))).players
+    const intlSources = intlPlayers.map((player) => player.pathwayHistory!.at(-1)!.source)
+    expect(intlSources).toContain('INTERNATIONAL_CLUB')
+    expect(intlSources).toContain('OTHER_PRECOLLEGE')
+    const withPlayers = materializeTalentCandidates(intlCohort, Array.from({ length: 40 }, (_, index) => ({ cohortId: 'intl-source-mix', candidateIndex: index + 1, cause: 'RECRUITING_POOL' as const }))).world
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(withPlayers, savedAt))
+    expect(restored.players[intlPlayers[0]!.id]!.pathwayHistory).toEqual(intlPlayers[0]!.pathwayHistory)
+  })
+
   it('creates cheap, deterministic, finite cohorts with place-specific supply inputs', () => {
     const inputs = TALENT_SUPPLY_TEST_FIXTURES.map((fixture, index) => createTalentCohort({
       id: `fixture-cohort-${index}`,

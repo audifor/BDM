@@ -49,6 +49,7 @@ export function assessCollegeContinuation(world: GameWorld, playerId: PlayerId, 
   const promises = (rpg?.promises ?? []).filter((promise) => promise.programTeamId === team.id)
   const promiseAssessments: CollegePromiseAssessment[] = promises.map((promise) => {
     if (!['role', 'playingOpportunity'].includes(promise.topic)) return { promiseId: promise.id, topic: promise.topic, strength: promise.strength, fulfillment: 'UNCLEAR', explanation: 'The current world does not contain an outcome measure for this promise.' }
+    if (stats.gamesPlayed < 5 && promise.fulfilled === false) return { promiseId: promise.id, topic: promise.topic, strength: promise.strength, fulfillment: 'BROKEN', explanation: 'A prior canonical promise assessment records this promise as broken; sparse current-season appearances do not erase that outcome.' }
     if (stats.gamesPlayed === 0) return { promiseId: promise.id, topic: promise.topic, strength: promise.strength, fulfillment: 'UNCLEAR', explanation: 'No completed game minutes are recorded for this Player in the assessed season.' }
     const startRate = stats.gamesStarted / stats.gamesPlayed
     const expected = promise.strength === 'explicit' || promise.strength === 'assurance'

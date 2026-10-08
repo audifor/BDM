@@ -1,0 +1,96 @@
+{
+  "date": "2037-10-01",
+  "sourceSave": "C:\\Temp\\BS15I-NCAA-bounded-save-v4.2037-10-01.json",
+  "draftStatuses": {
+    "inProgress": 6,
+    "completed": 4
+  },
+  "selectedPlayers": 32,
+  "uniqueSelectedPlayers": 32,
+  "duplicateSelections": {},
+  "draftRights": 32,
+  "unsignedDraftRights": 32,
+  "ecosystemTransitions": 0,
+  "portalEntries": 0,
+  "fifthYearRecruitingCycles": [
+    {
+      "id": "recruiting:generated-ecosystem-0003:generated-season-0035",
+      "ecosystemId": "generated-ecosystem-0003",
+      "opensOn": "2036-12-30",
+      "closesOn": "2037-04-29",
+      "status": "completed",
+      "profiles": 76,
+      "offers": 32,
+      "commitments": 8,
+      "signings": 8
+    },
+    {
+      "id": "recruiting:women-ecosystem-0003:generated-season-0036",
+      "ecosystemId": "women-ecosystem-0003",
+      "opensOn": "2037-01-06",
+      "closesOn": "2037-05-06",
+      "status": "completed",
+      "profiles": 76,
+      "offers": 27,
+      "commitments": 1,
+      "signings": 1
+    }
+  ],
+  "rejectedArrivals": [
+    {
+      "recruitId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:14",
+      "playerId": "recruit:recruiting:generated-ecosystem-0003:generated-season-0019:14",
+      "evidence": [
+        "2035-12-30: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:13",
+      "playerId": "recruit:recruiting:generated-ecosystem-0003:generated-season-0019:13",
+      "evidence": [
+        "2035-12-30: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:8",
+      "playerId": "recruit:recruiting:generated-ecosystem-0003:generated-season-0019:8",
+      "evidence": [
+        "2035-12-30: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0019:2",
+      "playerId": "recruit:recruiting:generated-ecosystem-0003:generated-season-0019:2",
+      "evidence": [
+        "2035-12-30: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:women-ecosystem-0003:generated-season-0020:69",
+      "playerId": "recruit:recruiting:women-ecosystem-0003:generated-season-0020:69",
+      "evidence": [
+        "2036-01-06: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0027:42",
+      "playerId": "recruit:recruiting:generated-ecosystem-0003:generated-season-0027:42",
+      "evidence": [
+        "2036-12-30: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    },
+    {
+      "recruitId": "recruit-profile:recruiting:women-ecosystem-0003:generated-season-0028:43",
+      "playerId": "recruit:recruiting:women-ecosystem-0003:generated-season-0028:43",
+      "evidence": [
+        "2037-01-06: college arrival blocked by eligibility assessment (ACADEMIC_REQUIREMENT_NOT_MET)."
+      ]
+    }
+  ],
+  "year5DerivedViability": {
+    "teamCount": 24,
+    "minimumRequired": 5,
+    "minimumEligible": 7,
+    "deficientTeams": []
+  }
+}

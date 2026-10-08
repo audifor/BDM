@@ -1,7 +1,12 @@
 export {
   GAME_WORLD_SCHEMA_VERSION,
   createGameWorld,
+  validateGameWorld,
+  withSingleWorldValidation,
   updateGameWorld,
+  updateGameWorldBatch,
+  updateScheduledTrainingSessionRecord,
+  updateScheduledTrainingSessionRecords,
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
@@ -28,7 +33,7 @@ export { addMemoriesToGameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'
 export { addInboxItem, addNewsItem, archiveInboxItem, markInboxItemRead } from './InboxOperations'
-export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
+export { getInjuriesForPlayer, getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot, calculateTeamStaffPayroll, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus, TeamStaffPayroll } from './finances'
@@ -113,3 +118,6 @@ export {
   getPendingMediaOpportunities,
   getCoachMediaProfileDescriptor,
 } from './queries'
+
+export { getWorldValidationReport } from './WorldValidationScope'
+export type { WorldValidationMode, WorldValidationReport } from './WorldValidationScope'

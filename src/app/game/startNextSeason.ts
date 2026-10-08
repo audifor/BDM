@@ -157,7 +157,10 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
     ? generateNcaaLikeSchedule(staged, nextPrimary.id)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
-  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)
+  // Rollover creates a future season without moving the world clock. Contract expiry is a
+  // daily lifecycle event, so evaluating it at the successor start date would release players
+  // whose contracts expire between today and that future date before the clock reaches expiry.
+  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), staged.currentDate)
   const repair = repairWorldAtLifecycleBoundary(reconciled)
   let next = repair.world
   const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
