@@ -130,7 +130,7 @@ describe('BS16D authorization persistence', () => {
     const persistedBudget = (payload.financialBudgets ?? [])[0] as unknown as Record<string, unknown>
     const persistedLine = (payload.budgetLines ?? [])[0] as unknown as Record<string, unknown>
 
-    expect(Object.keys(persistedBudget).sort()).toEqual(['approval', 'createdOn', 'currencyCode', 'id', 'label', 'organizationId', 'period', 'provenance', 'revisionOfId', 'status'])
+    expect(Object.keys(persistedBudget).sort()).toEqual(['approval', 'createdOn', 'currencyCode', 'fiscalPeriodId', 'id', 'label', 'organizationId', 'period', 'provenance', 'revisionOfId', 'status'])
     expect(Object.keys(persistedLine).sort()).toEqual(['amount', 'budgetId', 'category', 'direction', 'id', 'organizationId', 'provenance'])
     expect('availableHeadroomMinorUnits' in persistedBudget).toBe(false)
     expect('availableHeadroomMinorUnits' in persistedLine).toBe(false)

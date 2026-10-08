@@ -44,6 +44,8 @@ export interface FinancialBudget {
   readonly organizationId: string
   readonly currencyCode: CurrencyCode
   readonly period: FinancialPlanningPeriod
+  /** Canonical `FiscalPeriod` authority this authorization belongs to; the fiscal period owns the effective dates. */
+  readonly fiscalPeriodId: string | null
   readonly status: BudgetStatus
   readonly label: string
   readonly createdOn: GameDate
@@ -159,14 +161,14 @@ export function createFinancialPlanningPeriod(input: { readonly kind: PlanningPe
 
 export function createFinancialBudget(input: {
   readonly id: string; readonly organizationId: string; readonly currencyCode: string; readonly period: FinancialPlanningPeriod | { readonly kind: PlanningPeriodKind; readonly startsOn: GameDate | string; readonly endsOn: GameDate | string; readonly seasonId?: string }
-  readonly status?: BudgetStatus; readonly label: string; readonly createdOn: GameDate | string; readonly revisionOfId?: string | null; readonly approval?: { readonly authorityKind: BudgetApproval['authorityKind']; readonly authorityId: string; readonly approvedOn: GameDate | string; readonly provenance: FinancialSource } | null; readonly provenance: FinancialSource
+  readonly status?: BudgetStatus; readonly label: string; readonly createdOn: GameDate | string; readonly revisionOfId?: string | null; readonly fiscalPeriodId?: string | null; readonly approval?: { readonly authorityKind: BudgetApproval['authorityKind']; readonly authorityId: string; readonly approvedOn: GameDate | string; readonly provenance: FinancialSource } | null; readonly provenance: FinancialSource
 }): FinancialBudget {
   const status = input.status ?? 'DRAFT'
   if (!BUDGET_STATUSES.includes(status)) throw new TypeError('Budget status is invalid')
   const approval = input.approval === undefined || input.approval === null ? null : createBudgetApproval(input.approval)
   if (status === 'APPROVED' && approval === null) throw new TypeError('An approved budget requires Governance or Ownership approval provenance')
   if (status !== 'APPROVED' && approval !== null) throw new TypeError('Only an approved budget may carry approval metadata')
-  return Object.freeze({ id: nonEmpty(input.id, 'Budget id'), organizationId: nonEmpty(input.organizationId, 'Budget organizationId'), currencyCode: createMoney({ currencyCode: input.currencyCode, minorUnits: 0 }).currencyCode, period: createFinancialPlanningPeriod(input.period), status, label: nonEmpty(input.label, 'Budget label'), createdOn: parseGameDate(input.createdOn), revisionOfId: input.revisionOfId === undefined || input.revisionOfId === null ? null : nonEmpty(input.revisionOfId, 'Budget revisionOfId'), approval, provenance: createFinancialSource(input.provenance) })
+  return Object.freeze({ id: nonEmpty(input.id, 'Budget id'), organizationId: nonEmpty(input.organizationId, 'Budget organizationId'), currencyCode: createMoney({ currencyCode: input.currencyCode, minorUnits: 0 }).currencyCode, period: createFinancialPlanningPeriod(input.period), fiscalPeriodId: input.fiscalPeriodId === undefined || input.fiscalPeriodId === null ? null : nonEmpty(input.fiscalPeriodId, 'Budget fiscalPeriodId'), status, label: nonEmpty(input.label, 'Budget label'), createdOn: parseGameDate(input.createdOn), revisionOfId: input.revisionOfId === undefined || input.revisionOfId === null ? null : nonEmpty(input.revisionOfId, 'Budget revisionOfId'), approval, provenance: createFinancialSource(input.provenance) })
 }
 
 export function createBudgetLine(input: { readonly id: string; readonly budgetId: string; readonly organizationId: string; readonly category: string; readonly direction: BudgetDirection; readonly amount: Money | { readonly currencyCode: string; readonly minorUnits: number }; readonly teamId?: string; readonly organizationSectionId?: string; readonly purpose?: string; readonly provenance: FinancialSource }): BudgetLine {
