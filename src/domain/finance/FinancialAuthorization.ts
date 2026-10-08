@@ -1,8 +1,8 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
-import { organizationIdFromString, type OrganizationId } from '@/domain/ids'
+import { organizationIdFromString, fiscalPeriodIdFromString, type OrganizationId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world/GameWorld'
 import { getCashBalancesByCurrency } from './CashFlowQueries'
-import { getBudgetComparison, getBudgetLifecycleStatus, type BudgetApproval, type FinancialPlanningPeriod } from './BudgetForecasting'
+import { getBudgetComparison, getBudgetLifecycleStatus, type BudgetApproval, type FinancialBudget, type FinancialPlanningPeriod } from './BudgetForecasting'
 import { evaluateFinancialCommitment, sumReservedCapacity, type FinancialCommitmentDecision, type FinancialReservation } from './FinancialAuthority'
 import { createCurrencyCode, createMoney, type CurrencyCode, type Money } from './FinancialLedger'
 import { getOutstandingCommitments } from './RecognitionQueries'
@@ -41,6 +41,7 @@ export interface OrganizationFinancialAuthorization {
   readonly currencyCode: CurrencyCode
   readonly asOfDate: GameDate
   readonly budgetId: string | null
+  readonly fiscalPeriodId: string | null
   readonly approval: BudgetApproval | null
   readonly period: FinancialPlanningPeriod | null
   readonly lines: readonly FinancialAuthorizationLine[]
@@ -73,7 +74,7 @@ export function getOrganizationFinancialAuthorization(world: GameWorld, input: O
     (budget) => budget.organizationId === organizationId && budget.currencyCode === currencyCode && budget.status === 'APPROVED' && getBudgetLifecycleStatus(world, budget.id) === 'APPROVED'
   )
   const effective = budgets
-    .filter((budget) => compareGameDates(budget.createdOn, asOfDate) <= 0 && withinPeriod(budget.period, asOfDate) && (input.period === undefined || overlapsPeriod(budget.period, input.period)))
+    .filter((budget) => compareGameDates(budget.createdOn, asOfDate) <= 0 && isAuthorizationInEffect(world, budget, asOfDate) && (input.period === undefined || overlapsPeriod(budget.period, input.period)))
     .sort((left, right) => compareGameDates(right.createdOn, left.createdOn) || right.id.localeCompare(left.id))[0]
 
   const reservations = input.reservations ?? Object.values(world.financialReservationsById)
@@ -81,12 +82,16 @@ export function getOrganizationFinancialAuthorization(world: GameWorld, input: O
   const outstanding = getOutstandingCommitments(world, organizationId, asOfDate).filter((item) => item.commitment.amount.currencyCode === currencyCode)
 
   if (effective === undefined) {
+    const state: FinancialAuthorizationState = budgets.length === 0 || budgets.every((budget) => compareGameDates(authorizationEndsOn(world, budget), asOfDate) < 0)
+      ? 'NOT_PROVISIONED'
+      : 'OUT_OF_PERIOD'
     return Object.freeze({
-      state: budgets.length > 0 ? 'OUT_OF_PERIOD' : 'NOT_PROVISIONED',
+      state,
       organizationId,
       currencyCode,
       asOfDate,
       budgetId: null,
+      fiscalPeriodId: null,
       approval: null,
       period: null,
       lines: Object.freeze([]),
@@ -131,6 +136,7 @@ export function getOrganizationFinancialAuthorization(world: GameWorld, input: O
     currencyCode,
     asOfDate,
     budgetId: effective.id,
+    fiscalPeriodId: effective.fiscalPeriodId,
     approval: effective.approval,
     period: effective.period,
     lines,
@@ -152,12 +158,19 @@ export interface CategoryHeadroom {
   readonly overAuthorized: boolean
 }
 
-export function getCategoryAuthorizedHeadroom(authorization: OrganizationFinancialAuthorization, category: string): CategoryHeadroom {
-  const lines = authorization.lines.filter((line) => line.category === category)
+export function getCategoryAuthorizedHeadroom(authorization: OrganizationFinancialAuthorization, category: string): CategoryHeadroom {  const lines = authorization.lines.filter((line) => line.category === category)
   const authorizedMinorUnits = lines.reduce((sum, line) => sum + line.authorizedMinorUnits, 0)
   const committedMinorUnits = lines.reduce((sum, line) => sum + line.committedMinorUnits, 0)
   const availableHeadroomMinorUnits = authorizedMinorUnits - committedMinorUnits
   return Object.freeze({ category, authorizedMinorUnits, committedMinorUnits, availableHeadroomMinorUnits, overAuthorized: availableHeadroomMinorUnits < 0 })
+}
+
+/**
+ * A category with no authorization line has no modelled permission at all: callers must report
+ * `BUDGET_AUTHORIZATION_NOT_MODELLED` for it rather than treating it as a zero-sized authorization.
+ */
+export function isCategoryAuthorized(authorization: OrganizationFinancialAuthorization, category: string): boolean {
+  return authorization.lines.some((line) => line.category === category)
 }
 
 /**
@@ -191,7 +204,8 @@ export function evaluateOrganizationFinancialCommitment(world: GameWorld, input:
   const currency = createCurrencyCode(input.currency)
   const asOfDate = parseGameDate(input.asOfDate ?? world.currentDate)
   const authorization = getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: currency, asOfDate, ...(input.period === undefined ? {} : { period: input.period }), ...(input.reservations === undefined ? {} : { reservations: input.reservations }) })
-  const headroomMinorUnits = getEffectiveAuthorizedHeadroomMinorUnits(authorization, input.category)
+  const scopeModelled = input.category === undefined || (authorization.state === 'ACTIVE' && isCategoryAuthorized(authorization, input.category))
+  const authorizationState = authorization.state === 'ACTIVE' && !scopeModelled ? 'NOT_PROVISIONED' : authorization.state
   const cashMinorUnits = getCashBalancesByCurrency(world, organizationId, asOfDate).find((row) => row.currencyCode === currency)?.totalCashMinorUnits ?? null
 
   return evaluateFinancialCommitment({
@@ -201,15 +215,38 @@ export function evaluateOrganizationFinancialCommitment(world: GameWorld, input:
     amount: input.amount,
     currentCash: cashMinorUnits === null ? null : createMoney({ currencyCode: currency, minorUnits: cashMinorUnits }),
     existingCommitments: getOutstandingCommitments(world, organizationId, asOfDate).filter((item) => item.commitment.amount.currencyCode === currency).map((item) => item.remaining),
-    authorizedHeadroom: authorization.state === 'ACTIVE' ? createMoney({ currencyCode: currency, minorUnits: Math.max(headroomMinorUnits, 0) }) : null,
+    authorizedHeadroom: authorizationState === 'ACTIVE' ? createMoney({ currencyCode: currency, minorUnits: Math.max(getEffectiveAuthorizedHeadroomMinorUnits(authorization, input.category), 0) }) : null,
     activeReservations: input.reservations ?? Object.values(world.financialReservationsById),
-    authorization: { state: authorization.state, ...(authorization.budgetId === null ? {} : { budgetId: authorization.budgetId }) },
+    authorization: { state: authorizationState, ...(authorization.budgetId === null ? {} : { budgetId: authorization.budgetId }) },
     ...(input.category === undefined ? {} : { commitmentCategory: input.category }),
   })
 }
 
-function withinPeriod(period: FinancialPlanningPeriod, date: GameDate): boolean {
+function withinPeriod(period: { readonly startsOn: GameDate; readonly endsOn: GameDate }, date: GameDate): boolean {
   return compareGameDates(date, period.startsOn) >= 0 && compareGameDates(date, period.endsOn) <= 0
+}
+
+/**
+ * Effective end of an authorization: the canonical `FiscalPeriod` owns the dates when the budget declares
+ * one. An authorization whose period has ended leaves the organization NOT_PROVISIONED for a later date
+ * (nothing is provisioned for the new period), while one that has not started yet is OUT_OF_PERIOD.
+ */
+function authorizationEndsOn(world: GameWorld, budget: FinancialBudget): GameDate {
+  if (budget.fiscalPeriodId === null) return budget.period.endsOn
+  return world.fiscalPeriodsById[fiscalPeriodIdFromString(budget.fiscalPeriodId)]?.endsOn ?? budget.period.endsOn
+}
+
+/**
+ * The canonical `FiscalPeriod` owns the effective dates when a budget declares one: a budget whose
+ * fiscal period is missing (or belongs to another organization) is not in effect, so the fiscal period
+ * authority can never be silently contradicted by planning metadata.
+ */
+function isAuthorizationInEffect(world: GameWorld, budget: FinancialBudget, asOfDate: GameDate): boolean {
+  if (budget.fiscalPeriodId === null) return withinPeriod(budget.period, asOfDate)
+  const fiscalPeriod = world.fiscalPeriodsById[fiscalPeriodIdFromString(budget.fiscalPeriodId)]
+  if (fiscalPeriod === undefined) return false
+  if (String(fiscalPeriod.organizationId) !== budget.organizationId) return false
+  return withinPeriod(fiscalPeriod, asOfDate)
 }
 
 function overlapsPeriod(left: FinancialPlanningPeriod, right: FinancialPlanningPeriod): boolean {

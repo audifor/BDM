@@ -208,11 +208,20 @@ describe('BS16D authorization authority', () => {
     expect(getOrganizationFinancialAuthorization(withOther, { organizationId, currencyCode: 'USD', asOfDate: AS_OF }).state).toBe('NOT_PROVISIONED')
     expect(evaluateOrganizationFinancialCommitment(withOther, { organizationId, currency: 'USD', amount: eur(10_000), asOfDate: AS_OF }).status).toBe('CURRENCY_MISMATCH')
 
-    // Period N authorization never governs period N+1 without explicit rollover.
+    // Period N authorization never governs period N+1 without explicit rollover: once its period has
+    // ended the organization is simply not provisioned for the new period (no silent carry-forward).
     const outside = authorizationOf(withOther, NEXT_PERIOD_DATE)
-    expect(outside.state).toBe('OUT_OF_PERIOD')
+    expect(outside.state).toBe('NOT_PROVISIONED')
     expect(outside.availableHeadroomMinorUnits).toBe(0)
-    expect(evaluateOrganizationFinancialCommitment(withOther, { organizationId, currency: 'EUR', amount: eur(10_000), asOfDate: NEXT_PERIOD_DATE }).reasonCodes).toEqual(expect.arrayContaining(['BUDGET_AUTHORIZATION_NOT_MODELLED', 'AUTHORIZATION_OUT_OF_PERIOD']))
+    const outsideDecision = evaluateOrganizationFinancialCommitment(withOther, { organizationId, currency: 'EUR', amount: eur(10_000), asOfDate: NEXT_PERIOD_DATE })
+    expect(outsideDecision.reasonCodes).toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
+    expect(outsideDecision.reasonCodes).not.toContain('AUTHORIZATION_OUT_OF_PERIOD')
+
+    // An authorization that has not started yet is distinct from a lapsed one.
+    const futureBudget = createFinancialBudget({ id: 'budget:future', organizationId, currencyCode: 'EUR', period: { kind: 'DATE_RANGE', startsOn: '2034-07-01', endsOn: '2035-06-30' }, status: 'APPROVED', label: 'Future authorization', createdOn: '2033-01-01', approval, provenance: { kind: 'BUDGET_PROPOSAL', id: 'budget:future' } })
+    const withFuture = authorizationWorld({ budget: { budget: futureBudget, lines: [] } })
+    expect(authorizationOf(withFuture).state).toBe('OUT_OF_PERIOD')
+    expect(evaluateOrganizationFinancialCommitment(withFuture, { organizationId, currency: 'EUR', amount: eur(10_000), asOfDate: AS_OF }).reasonCodes).toEqual(expect.arrayContaining(['BUDGET_AUTHORIZATION_NOT_MODELLED', 'AUTHORIZATION_OUT_OF_PERIOD']))
   })
 
   it('distinguishes authorization blockers from liquidity blockers', () => {

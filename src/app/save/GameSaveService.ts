@@ -2,6 +2,7 @@ import type { GameWorld } from '@/domain/world'
 import { deserializeGameWorldSaveV4, deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { repairRosterContractIntegrity } from '@/engine/market/RosterContractIntegrity'
 import { ensureUserClubBoardState } from '@/engine/board'
+import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
 import type { GameSaveRepository } from './GameSaveRepository'
 
 export async function saveCurrentGame(world: GameWorld, repository: GameSaveRepository, savedAt: string): Promise<void> {
@@ -19,7 +20,9 @@ export async function loadSavedGame(repository: GameSaveRepository): Promise<Gam
   if (integrity.reports.some((report) => report.classification === 'UNRECOVERABLE')) throw new Error('Saved game has unresolved roster/contract integrity; no authority was selected')
   // MX0.6 closure: careers saved before Board initialization (or by a universe that never ran it)
   // must still open with canonical Board truth for the club the user coach is attached to.
-  return ensureUserClubBoardState(integrity.world)
+  // BS16E: canonical spending authorization activates from the legacy TeamFinances authority when the
+  // organization has a provisioned finance profile; it is idempotent and never overwrites canonical facts.
+  return ensureCanonicalFinanceFoundation(ensureUserClubBoardState(integrity.world))
 }
 
 function assertNoUnresolvedRosterContractIntegrity(world: GameWorld): void {
