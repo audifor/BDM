@@ -4,7 +4,7 @@ import { recordPlayerContractSigningDecisionEvent } from '@/app/governance/Playe
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { addYears } from '@/domain/date'
-import { createOrganizationFinancialProfile, getContractFinancialSchedule } from '@/domain/finance'
+import { createOrganizationFinancialProfile, getContractFinancialSchedule, SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT } from '@/domain/finance'
 import { staffPersonIdFromString } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
@@ -71,7 +71,9 @@ describe('BS11D1 retention signing', () => {
     expect(successor.compensation.years?.[0]).toMatchObject({ cashSalary: setup.negotiation.acceptedTerms!.salary, guaranteedAmount: setup.negotiation.acceptedTerms!.salary, capTreatment: { policy: 'NOT_APPLICABLE' } })
     expect(signed.world.contractsById[setup.predecessor.id]).toEqual(setup.predecessor)
     expect(signed.world.retentionNegotiationsById[setup.negotiation.id]?.execution).toMatchObject({ status: 'SIGNED', contractId: successor.id })
-    expect(getContractFinancialSchedule(signed.world, { organizationId: setup.team.organizationId, contractId: successor.id, currencyCode: 'EUR' })).toContainEqual(expect.objectContaining({ amount: { currencyCode: 'EUR', minorUnits: setup.negotiation.acceptedTerms!.salary }, compensationStatus: 'GUARANTEED', effectiveOn: successor.term.startsOn }))
+    // The successor's guaranteed schedule is the legacy annual salary in major units converted once to minor
+    // units, so the canonical amount is exactly the currency's major:minor ratio.
+    expect(getContractFinancialSchedule(signed.world, { organizationId: setup.team.organizationId, contractId: successor.id, currencyCode: 'EUR' })).toContainEqual(expect.objectContaining({ amount: { currencyCode: 'EUR', minorUnits: setup.negotiation.acceptedTerms!.salary * SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT.EUR! }, compensationStatus: 'GUARANTEED', effectiveOn: successor.term.startsOn }))
     const atActivation = reconcileExpiredPlayerContracts(signed.world, successor.term.startsOn)
     expect(getPlayerContractStatus(successor, successor.term.startsOn)).toBe('active')
     expect(atActivation.teams[setup.team.id]!.rosterPlayerIds).toContain(successor.playerId)

@@ -60,6 +60,7 @@ import { createRetentionNegotiation, type ContractRetentionNegotiation } from '@
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement, assertOrganizationFinanceAccountShape } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
+import { legacyMajorUnitsToMoney } from '@/domain/finance/FinanceCurrencyPolicy'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString } from '@/domain/ids'
@@ -2134,7 +2135,7 @@ function assertPlayerContractSigningEffect(world: GameWorld, decision: Governanc
     const profile = world.organizationFinancialProfilesById[team.organizationId]
     if (feeCommitments.length !== 1 || fee === undefined || profile === undefined
       || fee.id !== financialCommitmentIdFromString(`financial-commitment:player-agent-fee:${negotiation.id}`)
-      || fee.organizationId !== team.organizationId || fee.amount.minorUnits !== negotiation.agentFee
+      || fee.organizationId !== team.organizationId || fee.amount.minorUnits !== legacyMajorUnitsToMoney(negotiation.agentFee, profile.baseCurrencyCode).minorUnits
       || fee.amount.currencyCode !== profile.baseCurrencyCode || fee.startsOn !== negotiation.signedOn || fee.dueOn !== negotiation.signedOn
       || fee.dimensions?.teamId !== team.id || fee.dimensions.reference?.kind !== 'CONTRACT_NEGOTIATION'
       || fee.dimensions.reference.id !== negotiation.id) {
@@ -2174,7 +2175,7 @@ function assertRetentionContractSigningEffect(world: GameWorld, decision: Govern
     const fee = feeCommitments[0]
     const profile = world.organizationFinancialProfilesById[negotiation.organizationId]
     if (feeCommitments.length !== 1 || fee === undefined || profile === undefined || fee.id !== financialCommitmentIdFromString(`financial-commitment:player-agent-fee:retention:${negotiation.id}`)
-      || fee.organizationId !== negotiation.organizationId || fee.category !== 'PLAYER_AGENT_FEE' || fee.amount.minorUnits !== terms.agentFee
+      || fee.organizationId !== negotiation.organizationId || fee.category !== 'PLAYER_AGENT_FEE' || fee.amount.minorUnits !== legacyMajorUnitsToMoney(terms.agentFee ?? 0, profile.baseCurrencyCode).minorUnits
       || fee.amount.currencyCode !== profile.baseCurrencyCode || fee.startsOn !== effectiveOn || fee.dueOn !== effectiveOn
       || fee.dimensions?.teamId !== negotiation.teamId || fee.dimensions.reference?.id !== `retention:${negotiation.id}`) throw new GameWorldValidationError(`Retention signing ${negotiation.id} lacks its agent-fee commitment`)
   } else if (feeCommitments.length > 0) throw new GameWorldValidationError(`Retention signing ${negotiation.id} has an unagreed agent-fee commitment`)

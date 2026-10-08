@@ -1,4 +1,4 @@
-import { createCurrencyCode, type CurrencyCode } from './FinancialLedger'
+import { createCurrencyCode, createMoney, type CurrencyCode, type Money } from './FinancialLedger'
 import { DEFAULT_NBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { ecosystemIdFromString, organizationIdFromString, type OrganizationId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world/GameWorld'
@@ -53,6 +53,15 @@ export const SHIPPED_ECOSYSTEM_CURRENCY_POLICY: readonly FinanceCurrencyPolicyEn
 /** Supported currencies use exactly two decimal places; `Money.minorUnits` is 1/100 of the major unit. */
 export const SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT: Readonly<Record<string, number>> = Object.freeze({ EUR: 100, USD: 100 })
 
+/**
+ * Canonical precision authority: how many minor units one major unit of `currencyCode` is worth, or null when
+ * the currency has no support in canonical Finance. Every major→minor crossing resolves its precision here, so
+ * no caller invents its own scale.
+ */
+export function getMinorUnitsPerMajorUnit(currencyCode: string): number | null {
+  return SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT[currencyCode] ?? null
+}
+
 export function getCountryCurrencyPolicy(countryCode: string): CurrencyCode | null {
   return COUNTRY_CURRENCY_POLICY.find((entry) => entry.identity === countryCode)?.currencyCode ?? null
 }
@@ -104,16 +113,19 @@ export function resolveOrganizationCurrency(world: GameWorld, organizationId: Or
 
 /**
  * The single legacy-money conversion boundary. Legacy gameplay amounts (`TeamFinances` pools, contract
- * salaries) are whole major currency units — `formatMoney` renders 11_600_000 as "11.60M" and generated
- * player salaries span 80_000..3_500_000 — while canonical `Money.minorUnits` are minor units, so the
- * conversion multiplies by the currency's minor-unit precision and stays integer-safe.
+ * salaries, agent fees, buyouts) are whole major currency units — `formatMoney` renders 11_600_000 as "11.60M"
+ * and generated player salaries span 80_000..3_500_000 — while canonical `Money.minorUnits` are minor units,
+ * so every legacy amount that becomes a canonical Money obligation crosses here and nowhere else.
  */
-export function legacyTeamFinanceAmountToMoney(amount: number, currencyCode: string): { readonly currencyCode: CurrencyCode; readonly minorUnits: number } {
+export function legacyMajorUnitsToMoney(amount: number, currencyCode: string): Money {
   const currency = createCurrencyCode(currencyCode)
-  const precision = SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT[currency]
-  if (precision === undefined) throw new RangeError(`No canonical minor-unit precision is defined for ${currency}`)
-  if (!Number.isSafeInteger(amount) || amount < 0) throw new RangeError('Legacy team finance amount must be a non-negative safe integer of major currency units')
+  const precision = getMinorUnitsPerMajorUnit(currency)
+  if (precision === null) throw new RangeError(`No canonical minor-unit precision is defined for ${currency}`)
+  if (!Number.isSafeInteger(amount) || amount < 0) throw new RangeError('Legacy amount must be a non-negative safe integer of major currency units')
   const minorUnits = amount * precision
-  if (!Number.isSafeInteger(minorUnits)) throw new RangeError('Legacy team finance amount exceeds the safe integer range once converted to minor units')
-  return Object.freeze({ currencyCode: currency, minorUnits })
+  if (!Number.isSafeInteger(minorUnits)) throw new RangeError('Legacy amount exceeds the safe integer range once converted to minor units')
+  return createMoney({ currencyCode: currency, minorUnits })
 }
+
+/** The same boundary under its BS16F name, for the team-finance pools that introduced it. */
+export const legacyTeamFinanceAmountToMoney = legacyMajorUnitsToMoney

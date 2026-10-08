@@ -47,7 +47,9 @@ describe('CF6 budget and forecasting', () => {
     const line = expenseLine(budget.id, 12_000_000, 'PLAYER_SALARY')
     const team = input.teams![0]!
     const player = input.players![0]!
-    const contract = createPlayerContract({ id: contractIdFromString('contract:cf6:payroll'), playerId: player.id, teamId: team.id, kind: 'standard', term: { startsOn: '2032-01-01' as never, expiresOn: '2033-01-01' as never }, compensation: { annualSalary: 10_000_000, years: [{ cashSalary: 10_000_000, capHit: 9_000_000, guaranteedAmount: 10_000_000 }] } })
+    // Legacy contract amounts are major units: 100,000 EUR of annual salary is a 10,000,000 minor-unit
+    // commitment, which is what the budget of 12,000,000 minor units is compared against.
+    const contract = createPlayerContract({ id: contractIdFromString('contract:cf6:payroll'), playerId: player.id, teamId: team.id, kind: 'standard', term: { startsOn: '2032-01-01' as never, expiresOn: '2033-01-01' as never }, compensation: { annualSalary: 100_000, years: [{ cashSalary: 100_000, capHit: 90_000, guaranteedAmount: 100_000 }] } })
     const row = getBudgetComparison(createGameWorld({ ...input, contracts: [contract], financialBudgets: [budget], budgetLines: [line] }), budget.id)[0]!
     expect(row).toMatchObject({ committedMinorUnits: 10_000_000, commitmentVarianceMinorUnits: 2_000_000 })
   })

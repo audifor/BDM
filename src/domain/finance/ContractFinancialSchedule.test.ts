@@ -52,34 +52,34 @@ describe('CF5 contract financial scheduling', () => {
     const team = Object.values(world.teams)[0]!
     const entries = getContractFinancialSchedule(world, { organizationId: team.organizationId, currencyCode: 'EUR' })
     expect(entries).toHaveLength(6)
-    expect(entries.filter((entry) => entry.category === 'PLAYER_SALARY').map((entry) => entry.amount.minorUnits)).toEqual([1_000_000, 1_200_000, 1_500_000])
-    expect(entries.filter((entry) => entry.category === 'STAFF_SALARY').map((entry) => entry.amount.minorUnits)).toEqual([500_000, 500_000, 500_000])
+    expect(entries.filter((entry) => entry.category === 'PLAYER_SALARY').map((entry) => entry.amount.minorUnits)).toEqual([100_000_000, 120_000_000, 150_000_000])
+    expect(entries.filter((entry) => entry.category === 'STAFF_SALARY').map((entry) => entry.amount.minorUnits)).toEqual([50_000_000, 50_000_000, 50_000_000])
     expect(entries.every((entry) => entry.dueOn === null && Object.isFrozen(entry))).toBe(true)
   })
 
   it('keeps the three-year contract split between current and future seasons', () => {
     const world = scheduleWorld()
     const organizationId = Object.values(world.teams)[0]!.organizationId
-    expect(getCurrentSeasonContractualCost(world, organizationId, { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 1_500_000 }])
-    expect(getContractualPayrollBySeason(world, organizationId, 'season-b', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 1_700_000 }])
-    expect(getNextSeasonCommittedCost(world, organizationId, { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 1_700_000 }])
-    expect(getContractualPayrollCommitted(world, organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 5_200_000 }])
+    expect(getCurrentSeasonContractualCost(world, organizationId, { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 150_000_000 }])
+    expect(getContractualPayrollBySeason(world, organizationId, 'season-b', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 170_000_000 }])
+    expect(getNextSeasonCommittedCost(world, organizationId, { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 170_000_000 }])
+    expect(getContractualPayrollCommitted(world, organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 520_000_000 }])
   })
 
   it('separates player and staff payroll and preserves Team/Section dimensions', () => {
     const world = scheduleWorld()
     const team = Object.values(world.teams)[0]!
-    expect(getPlayerPayrollCommitted(world, team.organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 3_700_000 }])
-    expect(getStaffPayrollCommitted(world, team.organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 1_500_000 }])
-    expect(getPayrollByTeam(world, team.organizationId, team.id, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 5_200_000 }])
-    expect(getPayrollBySection(world, team.organizationId, team.organizationSectionId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 5_200_000 }])
+    expect(getPlayerPayrollCommitted(world, team.organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 370_000_000 }])
+    expect(getStaffPayrollCommitted(world, team.organizationId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 150_000_000 }])
+    expect(getPayrollByTeam(world, team.organizationId, team.id, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 520_000_000 }])
+    expect(getPayrollBySection(world, team.organizationId, team.organizationSectionId, '2032-10-01', { currencyCode: 'EUR' })).toEqual([{ currencyCode: 'EUR', minorUnits: 520_000_000 }])
   })
 
   it('does not invent a currency when the Organization has no financial profile', () => {
     const world = scheduleWorld()
     const organizationId = Object.values(world.teams)[0]!.organizationId
     expect(() => getContractFinancialSchedule(world, { organizationId })).toThrow('requires currencyCode')
-    expect(getContractualPayrollCommitted(world, organizationId, '2032-10-01', { currencyCode: 'USD' })).toEqual([{ currencyCode: 'USD', minorUnits: 5_200_000 }])
+    expect(getContractualPayrollCommitted(world, organizationId, '2032-10-01', { currencyCode: 'USD' })).toEqual([{ currencyCode: 'USD', minorUnits: 520_000_000 }])
   })
 
   it('represents a partially guaranteed player year as guaranteed plus conditional exposure', () => {
@@ -89,8 +89,8 @@ describe('CF5 contract financial scheduling', () => {
     const conditional = createPlayerContract({ id: contractIdFromString('contract:cf5:conditional'), playerId: player.id, teamId: team.id, kind: 'standard', term: { startsOn: '2032-10-01' as never, expiresOn: '2033-10-01' as never }, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 600_000 }] } })
     const withConditional = updateGameWorld(world, { contracts: [...Object.values(world.contractsById), conditional] })
     const entries = getContractFinancialSchedule(withConditional, { organizationId: team.organizationId, contractId: conditional.id, currencyCode: 'EUR', includeConditional: true })
-    expect(entries.map((entry) => [entry.compensationStatus, entry.amount.minorUnits])).toEqual([['CONDITIONAL', 400_000], ['GUARANTEED', 600_000]])
-    expect(getConditionalPayrollExposure(withConditional, team.organizationId, '2032-10-01', { currencyCode: 'EUR' }).map((entry) => entry.amount.minorUnits)).toContain(400_000)
+    expect(entries.map((entry) => [entry.compensationStatus, entry.amount.minorUnits])).toEqual([['CONDITIONAL', 40_000_000], ['GUARANTEED', 60_000_000]])
+    expect(getConditionalPayrollExposure(withConditional, team.organizationId, '2032-10-01', { currencyCode: 'EUR' }).map((entry) => entry.amount.minorUnits)).toContain(40_000_000)
   })
 
   it('materializes player and staff salary through the CF4 adapter, not a Finance bypass', () => {
@@ -100,7 +100,7 @@ describe('CF5 contract financial scheduling', () => {
     expect(result.status).toBe('accepted')
     expect(result.results).toHaveLength(2)
     expect(result.results.every((item) => item.status === 'accepted')).toBe(true)
-    expect(getRecognizedExpense(result.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_500_000 }])
+    expect(getRecognizedExpense(result.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 150_000_000 }])
   })
 
   it('keeps date materialization all-or-nothing when ledger mapping is invalid', () => {
@@ -120,7 +120,7 @@ describe('CF5 contract financial scheduling', () => {
     const first = materializeContractFinanceForDate(world, '2032-10-01', options)
     const second = materializeContractFinanceForDate(first.world, '2032-10-01', options)
     expect(second.status).toBe('alreadyProcessed')
-    expect(getRecognizedExpense(second.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_500_000 }])
+    expect(getRecognizedExpense(second.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 150_000_000 }])
     expect(getCashBalancesByCurrency(second.world, team.organizationId, '2032-10-01')[0]?.totalCashMinorUnits).toBe(0)
   })
 
@@ -128,11 +128,11 @@ describe('CF5 contract financial scheduling', () => {
     const world = scheduleWorld()
     const team = Object.values(world.teams)[0]!
     const result = materializeContractFinanceForDate(world, '2032-10-01', { organizationId: team.organizationId, currencyCode: 'EUR', dueDatePolicy: 'ON_RECOGNITION', ledger: { offsetAccountId: 'payable:cf5', resultAccountId: 'expense:cf5' } })
-    const payable = Object.values(result.world.payablesById).find((item) => item.amount.minorUnits === 500_000)!
+    const payable = Object.values(result.world.payablesById).find((item) => item.amount.minorUnits === 50_000_000)!
     const settlement = settlePayable(result.world, payable.id, { settlementId: 'settlement:cf5:payroll', transactionId: 'financial:cf5:payroll-settlement', amount: payable.amount, settledOn: '2032-10-02', cashAccountId: 'cash:cf5', offsetAccountId: 'payable:cf5' })
     const settled = updateGameWorld(result.world, { financialTransactions: [...Object.values(result.world.financialTransactionsById), settlement.transaction], treasuryApplications: [...Object.values(result.world.treasuryApplicationsById), settlement.settlement] })
-    expect(getRecognizedExpense(settled, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_500_000 }])
-    expect(getCashBalancesByCurrency(settled, team.organizationId, '2032-10-02')[0]?.totalCashMinorUnits).toBe(-500_000)
+    expect(getRecognizedExpense(settled, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 150_000_000 }])
+    expect(getCashBalancesByCurrency(settled, team.organizationId, '2032-10-02')[0]?.totalCashMinorUnits).toBe(-50_000_000)
     expect(getPaidCompensation(settled, team.organizationId, '2032-10-02')).toHaveLength(1)
     expect(getUnpaidRecognizedCompensation(settled, team.organizationId, '2032-10-02')).toHaveLength(1)
   })
@@ -157,10 +157,10 @@ describe('CF5 contract financial scheduling', () => {
     const changed = updateGameWorld(materialized.world, { contracts: [terminated] })
     const future = getContractFinancialSchedule(changed, { contractId: contract.id, currencyCode: 'EUR' }).filter((entry) => entry.effectiveOn >= '2033-10-01')
     expect(future.map((entry) => [entry.effectiveOn, entry.amount.minorUnits, entry.compensationStatus])).toEqual([
-      ['2033-10-01', 1_200_000, 'GUARANTEED'],
-      ['2034-10-01', 1_500_000, 'GUARANTEED'],
+      ['2033-10-01', 120_000_000, 'GUARANTEED'],
+      ['2034-10-01', 150_000_000, 'GUARANTEED'],
     ])
-    expect(getRecognizedExpense(changed, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_000_000 }])
+    expect(getRecognizedExpense(changed, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 100_000_000 }])
   })
 
   it('does not retain conditional salary after a scheduled contract is terminated before activation', () => {
@@ -180,7 +180,7 @@ describe('CF5 contract financial scheduling', () => {
     const materialized = materializeContractFinanceForDate(world, '2032-10-01', { contractId: contract.id, currencyCode: 'EUR', dueDatePolicy: 'ON_RECOGNITION', ledger: { offsetAccountId: 'payable:cf5', resultAccountId: 'expense:cf5' } })
     const after = calculateTeamPayroll([contract], materialized.world.currentDate)
     expect(after).toEqual(before)
-    expect(getRecognizedExpense(materialized.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_000_000 }])
+    expect(getRecognizedExpense(materialized.world, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 100_000_000 }])
   })
 
   it('supports future lookup by contract and keeps currencies separate without FX', () => {
