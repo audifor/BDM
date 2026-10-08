@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION, createNewGame } from '@/app/game'
+import { generateWorld } from '@/engine/world'
 import { createOrganization } from '@/domain/organization'
 import { organizationIdFromString, type OrganizationId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
@@ -29,8 +30,12 @@ import {
 const provenance = { kind: 'BS16B_TEST', id: 'finance-foundation' }
 const savedAt = '2032-10-01T00:00:00.000Z'
 
-/** Shipped-state world (immutable; every test derives new worlds from it). */
-const shippedWorld = createNewGame()
+/**
+ * Generated-state world (immutable; every test derives new worlds from it). The engine generator produces the
+ * universe without canonical finance facts, which is the provisioning precondition BS16B certifies; the shipped
+ * career seams then run the BS16F activation authority on top of it.
+ */
+const shippedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true, includeNcaaLike: true })
 const season = shippedWorld.seasons[shippedWorld.currentSeasonId]!
 const expectedFiscalYearStartMonth = Number(season.startDate.slice(5, 7))
 
@@ -53,7 +58,7 @@ const ROLE_ACCOUNT_TYPES: Readonly<Record<OrganizationFinanceAccountRole, string
 }
 
 describe('BS16B finance foundation provisioning', () => {
-  it('shipped worlds start with an empty canonical finance foundation and a canonical club-eligibility rule', () => {
+  it('generated worlds start with an empty canonical finance foundation and a canonical club-eligibility rule', () => {
     expect(Object.keys(shippedWorld.organizationFinancialProfilesById)).toHaveLength(0)
     expect(Object.keys(shippedWorld.financialAccountsById)).toHaveLength(0)
     expect(Object.keys(shippedWorld.fiscalPeriodsById)).toHaveLength(0)
@@ -187,20 +192,22 @@ describe('BS16B finance foundation provisioning', () => {
   })
 
   it('round-trips the foundation through Save V4 and reprovisions idempotently after load', () => {
-    const organizationId = clubOrganizations(shippedWorld)[0]!
-    const provisioned = provisionOrganizationFinanceFoundation(shippedWorld, organizationId, { currencyCode: 'EUR' })
+    // A real career world is used here because it is the round-trippable save shape; the assertion stays
+    // organization-scoped because shipped careers legitimately carry more than one provisioned club (BS16F).
+    const career = createNewGame()
+    const organizationId = clubOrganizations(career)[0]!
+    const provisioned = provisionOrganizationFinanceFoundation(career, organizationId, { currencyCode: 'EUR' })
     const restored = deserializeGameWorldV4(serializeGameWorldV4(provisioned, savedAt))
 
-    expect(restored.organizationFinancialProfilesById).toEqual(provisioned.organizationFinancialProfilesById)
-    expect(restored.financialAccountsById).toEqual(provisioned.financialAccountsById)
-    expect(restored.fiscalPeriodsById).toEqual(provisioned.fiscalPeriodsById)
+    expect(restored.organizationFinancialProfilesById[organizationId]).toEqual(provisioned.organizationFinancialProfilesById[organizationId])
+    expect(getOrganizationFinanceAccounts(restored, organizationId, 'EUR')).toEqual(getOrganizationFinanceAccounts(provisioned, organizationId, 'EUR'))
+    expect(Object.values(restored.fiscalPeriodsById).filter((period) => String(period.organizationId) === String(organizationId))).toEqual(Object.values(provisioned.fiscalPeriodsById).filter((period) => String(period.organizationId) === String(organizationId)))
     expect(restored.financialTransactionsById).toEqual(provisioned.financialTransactionsById)
     expect(resolveRevenueRecognitionAccounts(restored, organizationId)).toEqual(resolveRevenueRecognitionAccounts(provisioned, organizationId))
 
     const reprovisioned = provisionOrganizationFinanceFoundation(restored, organizationId, { currencyCode: 'EUR' })
     expect(reprovisioned).toBe(restored)
-    expect(Object.keys(reprovisioned.financialAccountsById)).toHaveLength(ORGANIZATION_FINANCE_ACCOUNT_ROLES.length)
-    expect(Object.keys(reprovisioned.fiscalPeriodsById)).toHaveLength(1)
+    expect(Object.values(reprovisioned.fiscalPeriodsById).filter((period) => String(period.organizationId) === String(organizationId))).toHaveLength(1)
     expect(Object.keys(reprovisioned.financialTransactionsById)).toHaveLength(0)
   })
 

@@ -65,12 +65,12 @@ describe('BS16 canonical stack integration (A→E)', () => {
     expect(Object.keys(activated.financialBudgetsById)).toHaveLength(1)
     expect(Object.keys(activated.budgetLinesById)).toHaveLength(2)
     expect(Object.keys(activated.financialAccountsById)).toEqual(Object.keys(founded.financialAccountsById))
-    expect(getOrganizationFinancialAuthorization(activated, { organizationId: org, currencyCode: 'EUR', asOfDate: activated.currentDate })).toMatchObject({ state: 'ACTIVE', authorizedMinorUnits: 1_500_000 })
+    expect(getOrganizationFinancialAuthorization(activated, { organizationId: org, currencyCode: 'EUR', asOfDate: activated.currentDate })).toMatchObject({ state: 'ACTIVE', authorizedMinorUnits: 150_000_000 })
 
     // 3. BS16C decision authority consumed by BS16D authorization: zero cash is valid truth, not a fake budget.
     const decision = evaluateOrganizationFinancialCommitment(activated, { organizationId: org, currency: 'EUR', amount: eur(1_000_000), category: 'PLAYER_SALARY', asOfDate: activated.currentDate })
     expect(decision.status).toBe('INSUFFICIENT_LIQUIDITY')
-    expect(decision.availableAuthorizedHeadroom).toEqual(eur(1_000_000))
+    expect(decision.availableAuthorizedHeadroom).toEqual(eur(100_000_000))
     expect(decision.reasonCodes).not.toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
 
     // 4. BS16C reservation authority on the same canonical stack.
@@ -107,7 +107,7 @@ describe('BS16 canonical stack integration (A→E)', () => {
     expect(Object.values(consumed.financialReservationsById)[0]?.status).toBe('CONSUMED')
     const afterConsumption = getOrganizationFinancialAuthorization(consumed, { organizationId: org, currencyCode: 'EUR', asOfDate: activated.currentDate })
     expect(afterConsumption.reservedMinorUnits).toBe(0)
-    expect(afterConsumption.authorizedMinorUnits).toBe(1_500_000)
+    expect(afterConsumption.authorizedMinorUnits).toBe(150_000_000)
     expect(Object.keys(consumed.financialTransactionsById)).toEqual([])
   })
 
