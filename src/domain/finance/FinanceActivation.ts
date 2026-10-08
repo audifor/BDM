@@ -1,4 +1,4 @@
-import { parseGameDate, type GameDate } from '@/domain/date'
+import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { fiscalPeriodIdFromString, organizationIdFromString, type FiscalPeriodId, type OrganizationId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createBudgetLine, createFinancialBudget, type BudgetLine, type FinancialBudget } from './BudgetForecasting'
@@ -180,7 +180,7 @@ function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDa
     return { status: 'FINANCE_PROFILE_UNAVAILABLE', activation: Object.freeze({ organizationId, status: 'FINANCE_PROFILE_UNAVAILABLE' as const, fiscalPeriodId: null, budgetId: null, currencyCode: null, authorizedMinorUnits: 0 }) }
   }
   const fiscalYear = getFiscalYearFor(profile, asOfDate)
-  const fiscalPeriodId = fiscalPeriodIdFor(organizationId, fiscalYear.startsOn)
+  const fiscalPeriodId = findCanonicalFiscalPeriod(world, organizationId, asOfDate)?.id ?? fiscalPeriodIdFor(organizationId, fiscalYear.startsOn)
   const existingForPeriod = Object.values(world.financialBudgetsById).find((budget) => budget.organizationId === String(organizationId) && budget.fiscalPeriodId === String(fiscalPeriodId))
   if (existingForPeriod !== undefined) {
     return { status: 'ALREADY_PROVISIONED', activation: Object.freeze({ organizationId, status: 'ALREADY_PROVISIONED' as const, fiscalPeriodId, budgetId: existingForPeriod.id, currencyCode: profile.baseCurrencyCode, authorizedMinorUnits: 0 }) }
@@ -212,6 +212,17 @@ function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDa
 
 function hasLegacyBudgetSource(world: GameWorld, organizationId: OrganizationId | string): boolean {
   return teamsOf(world, organizationId).some((team) => world.teamFinancesByTeamId[team.id] !== undefined)
+}
+
+/**
+ * The canonical `FiscalPeriod` collection is the single period authority: activation reuses a period
+ * already provisioned for the organization (for example the BS16B season-anchored opening period)
+ * instead of inserting a second, overlapping period for the same dates.
+ */
+function findCanonicalFiscalPeriod(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate): FiscalPeriod | undefined {
+  return Object.values(world.fiscalPeriodsById)
+    .filter((period) => String(period.organizationId) === String(organizationId) && compareGameDates(asOfDate, period.startsOn) >= 0 && compareGameDates(asOfDate, period.endsOn) <= 0)
+    .sort((left, right) => compareGameDates(right.startsOn, left.startsOn) || String(right.id).localeCompare(String(left.id)))[0]
 }
 
 function teamsOf(world: GameWorld, organizationId: OrganizationId | string) {
