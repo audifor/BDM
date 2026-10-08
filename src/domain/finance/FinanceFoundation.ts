@@ -22,6 +22,7 @@
  * Finance V2 currency.
  */
 
+import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import {
   financialAccountIdFromString,
   fiscalPeriodIdFromString,
@@ -29,7 +30,6 @@ import {
   type FinancialAccountId,
   type FiscalPeriodId,
   type OrganizationId,
-  type SeasonId,
 } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { DebtLedgerMapping } from './DebtEngine'
@@ -40,6 +40,8 @@ import {
   createOrganizationFinancialProfile,
   type CurrencyCode,
   type FinancialAccount,
+  type FiscalPeriod,
+  type OrganizationFinancialProfile,
 } from './FinancialLedger'
 
 export const ORGANIZATION_FINANCE_ACCOUNT_ROLES = [
@@ -83,8 +85,38 @@ export function organizationFinanceAccountId(organizationId: OrganizationId | st
   return financialAccountIdFromString(`${ACCOUNT_ID_PREFIX}${organizationId}:${currency.toLowerCase()}:${ROLE_ID_SLUGS[role]}`)
 }
 
-export function organizationFinanceFiscalPeriodId(organizationId: OrganizationId | string, seasonId: SeasonId | string): FiscalPeriodId {
-  return fiscalPeriodIdFromString(`${FISCAL_PERIOD_ID_PREFIX}${organizationId}:${seasonId}`)
+export function financeFiscalPeriodIdFor(organizationId: OrganizationId | string, fiscalYearStartsOn: GameDate | string): FiscalPeriodId {
+  return fiscalPeriodIdFromString(`${FISCAL_PERIOD_ID_PREFIX}${organizationId}:${parseGameDate(fiscalYearStartsOn)}`)
+}
+
+/**
+ * BS16G canonical fiscal-year rule. A Finance fiscal period is NOT a competition season: it is the fiscal year
+ * that contains the effective date, derived from the profile's `fiscalYearStartMonth` and the world's GameDate.
+ * Seasons may supply the default starting month as context, but they never own Finance period dates, so a
+ * career that starts before its first game still sits inside a valid fiscal period.
+ */
+export function getFinanceFiscalYearFor(profile: Pick<OrganizationFinancialProfile, 'fiscalYearStartMonth'>, date: GameDate | string): { readonly startsOn: GameDate; readonly endsOn: GameDate; readonly label: string } {
+  const asOf = parseGameDate(date)
+  const year = Number(asOf.slice(0, 4))
+  const month = Number(asOf.slice(5, 7))
+  const startYear = month >= profile.fiscalYearStartMonth ? year : year - 1
+  const endYear = startYear + 1
+  const monthText = String(profile.fiscalYearStartMonth).padStart(2, '0')
+  const startsOn = parseGameDate(`${startYear}-${monthText}-01`)
+  const lastDay = new Date(`${endYear}-${monthText}-01T00:00:00Z`)
+  lastDay.setUTCDate(lastDay.getUTCDate() - 1)
+  return Object.freeze({ startsOn, endsOn: parseGameDate(lastDay.toISOString().slice(0, 10)), label: `${startYear}-${String(endYear).slice(2)}` })
+}
+
+/** Every canonical fiscal period of one organization, deterministically ordered. */
+export function financeFiscalPeriodsOf(world: GameWorld, organizationId: OrganizationId | string): readonly FiscalPeriod[] {
+  return Object.freeze(Object.values(world.fiscalPeriodsById)
+    .filter((period) => String(period.organizationId) === String(organizationId))
+    .sort((left, right) => compareGameDates(left.startsOn, right.startsOn) || String(left.id).localeCompare(String(right.id))))
+}
+
+function fiscalPeriodsOverlap(left: FiscalPeriod, right: Pick<FiscalPeriod, 'startsOn' | 'endsOn'>): boolean {
+  return compareGameDates(left.startsOn, right.endsOn) <= 0 && compareGameDates(right.startsOn, left.endsOn) <= 0
 }
 
 export interface ParsedOrganizationFinanceAccountId {
@@ -131,22 +163,33 @@ export function listFinanceBearingOrganizationIds(world: GameWorld): readonly Or
 export interface OrganizationFinanceProvisioningContext {
   /** Explicit currency policy; the world model carries no canonical Organization currency. */
   readonly currencyCode: string
-  /** Defaults to the world's current Season. */
-  readonly seasonId?: SeasonId | string
-  /** Defaults to the calendar month of the opening period's start date. */
+  /** Effective date the opening fiscal period must contain. Defaults to the world's current date. */
+  readonly asOfDate?: GameDate | string
+  /** Defaults to the starting month of the current Season, which is context only and never a period date. */
   readonly fiscalYearStartMonth?: number
 }
 
+/**
+ * Provisions the foundation for one organization: the currency/profile fact, the deterministic account catalog,
+ * and the canonical fiscal period of the fiscal year containing the effective date. Season identity is never a
+ * period authority, and an existing period that already spans that fiscal year stays the only period authority
+ * for it, so no overlapping second period is ever introduced. It creates no money and never overwrites facts.
+ */
 export function provisionOrganizationFinanceFoundation(world: GameWorld, organizationIdInput: OrganizationId | string, context: OrganizationFinanceProvisioningContext): GameWorld {
   const organizationId = organizationIdFromString(organizationIdInput)
   if (world.organizationsById[organizationId] === undefined) throw new Error(`Unknown Organization ${organizationId}`)
   if (!isFinanceBearingOrganization(world, organizationId)) throw new RangeError(`Organization ${organizationId} is not finance-bearing: it owns no Team`)
   const currencyCode = createCurrencyCode(context.currencyCode)
-  const seasonId = (context.seasonId ?? world.currentSeasonId) as SeasonId
-  const season = world.seasons[seasonId]
-  if (season === undefined) throw new Error(`GameWorld has no Season ${seasonId} to anchor the opening fiscal period`)
-  const fiscalYearStartMonth = context.fiscalYearStartMonth ?? Number(season.startDate.slice(5, 7))
+  const asOfDate = parseGameDate(context.asOfDate ?? world.currentDate)
+  const season = world.seasons[world.currentSeasonId]
+  const fiscalYearStartMonth = context.fiscalYearStartMonth ?? Number(season?.startDate.slice(5, 7) ?? asOfDate.slice(5, 7))
   const profile = createOrganizationFinancialProfile({ organizationId, baseCurrencyCode: currencyCode, fiscalYearStartMonth })
+  const existingProfile = world.organizationFinancialProfilesById[organizationId]
+  if (existingProfile !== undefined) {
+    if (existingProfile.baseCurrencyCode !== currencyCode) throw new RangeError(`Organization ${organizationId} already has a financial profile in ${existingProfile.baseCurrencyCode}; refusing to overwrite it with ${currencyCode}`)
+    if (existingProfile.fiscalYearStartMonth !== fiscalYearStartMonth) throw new RangeError(`Organization ${organizationId} already has a financial profile with fiscalYearStartMonth ${existingProfile.fiscalYearStartMonth}; refusing to overwrite it with ${fiscalYearStartMonth}`)
+  }
+  const fiscalYear = getFinanceFiscalYearFor(existingProfile ?? profile, asOfDate)
   const expectedAccounts = ORGANIZATION_FINANCE_ACCOUNT_ROLES.map((role) => createFinancialAccount({
     id: organizationFinanceAccountId(organizationId, currencyCode, role),
     organizationId,
@@ -155,19 +198,13 @@ export function provisionOrganizationFinanceFoundation(world: GameWorld, organiz
     openedOn: null,
   }))
   const period = createFiscalPeriod({
-    id: organizationFinanceFiscalPeriodId(organizationId, seasonId),
+    id: financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn),
     organizationId,
-    label: season.label,
-    startsOn: season.startDate,
-    endsOn: season.endDate,
+    label: fiscalYear.label,
+    startsOn: fiscalYear.startsOn,
+    endsOn: fiscalYear.endsOn,
     status: 'OPEN',
   })
-
-  const existingProfile = world.organizationFinancialProfilesById[organizationId]
-  if (existingProfile !== undefined) {
-    if (existingProfile.baseCurrencyCode !== currencyCode) throw new RangeError(`Organization ${organizationId} already has a financial profile in ${existingProfile.baseCurrencyCode}; refusing to overwrite it with ${currencyCode}`)
-    if (existingProfile.fiscalYearStartMonth !== fiscalYearStartMonth) throw new RangeError(`Organization ${organizationId} already has a financial profile with fiscalYearStartMonth ${existingProfile.fiscalYearStartMonth}; refusing to overwrite it with ${fiscalYearStartMonth}`)
-  }
 
   const missingAccounts: FinancialAccount[] = []
   for (const account of expectedAccounts) {
@@ -179,15 +216,17 @@ export function provisionOrganizationFinanceFoundation(world: GameWorld, organiz
     if (existing.organizationId !== account.organizationId || existing.accountType !== account.accountType || existing.currencyCode !== account.currencyCode) throw new RangeError(`Canonical finance account ${account.id} already exists with a different shape; refusing to overwrite it`)
   }
 
-  const existingPeriod = world.fiscalPeriodsById[period.id]
-  if (existingPeriod !== undefined && (existingPeriod.organizationId !== period.organizationId || existingPeriod.label !== period.label || existingPeriod.startsOn !== period.startsOn || existingPeriod.endsOn !== period.endsOn)) throw new RangeError(`Opening fiscal period ${period.id} already exists with different dates; refusing to overwrite it`)
+  const existingPeriods = financeFiscalPeriodsOf(world, organizationId)
+  // Identity is (organization, fiscal-year boundary): an existing period that already spans this fiscal year —
+  // including a pre-BS16G season-shaped period — stays the single period authority for it.
+  const periodAlreadyAuthoritative = existingPeriods.some((item) => String(item.id) === String(period.id) || fiscalPeriodsOverlap(item, period))
 
-  if (existingProfile !== undefined && missingAccounts.length === 0 && existingPeriod !== undefined) return world
+  if (existingProfile !== undefined && missingAccounts.length === 0 && periodAlreadyAuthoritative) return world
 
   return updateGameWorld(world, {
     ...(existingProfile === undefined ? { organizationFinancialProfiles: [...Object.values(world.organizationFinancialProfilesById), profile] } : {}),
     ...(missingAccounts.length === 0 ? {} : { financialAccounts: [...Object.values(world.financialAccountsById), ...missingAccounts] }),
-    ...(existingPeriod === undefined ? { fiscalPeriods: [...Object.values(world.fiscalPeriodsById), period] } : {}),
+    ...(periodAlreadyAuthoritative ? {} : { fiscalPeriods: [...Object.values(world.fiscalPeriodsById), period] }),
   })
 }
 

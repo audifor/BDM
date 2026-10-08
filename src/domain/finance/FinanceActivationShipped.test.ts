@@ -3,7 +3,7 @@ import { PROTOTYPE_GAME_CONFIGURATION, createAcbTestGame, createNewGame } from '
 import { createCompetition } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
-import { createFiscalPeriod, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, getFinanceActivationReport, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, organizationFinanceFiscalPeriodId, provisionOrganizationFinanceFoundation } from '@/domain/finance'
+import { createFiscalPeriod, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, provisionOrganizationFinanceFoundation } from '@/domain/finance'
 import { getCashBalancesByCurrency } from '@/domain/finance/CashFlowQueries'
 import { competitionIdFromString, countryIdFromString, organizationIdFromString, organizationSectionIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import { createOrganization, createOrganizationSection } from '@/domain/organization'
@@ -50,10 +50,6 @@ describe('BS16F shipped finance activation', () => {
 
   it('provisions every ACB club in EUR with profile, accounts, period and authorization but no money', () => {
     const career = createAcbTestGame()
-    // The ACB career starts in the preseason gap a week before the season, while the canonical opening fiscal
-    // period is the season itself (BS16B). Provisioning is therefore unconditional, and the authorization
-    // state follows the period: out of period now, active once the season period starts.
-    const asOfDate = career.seasons[career.currentSeasonId]!.startDate
 
     expect(organizationIdsOf(career)).toHaveLength(18)
     expect(provisionedOrganizationIds(career)).toEqual(organizationIdsOf(career))
@@ -64,10 +60,15 @@ describe('BS16F shipped finance activation', () => {
       expect(String(accounts.cashOperating.currencyCode)).toBe('EUR')
       const periods = Object.values(career.fiscalPeriodsById).filter((period) => String(period.organizationId) === organizationId)
       expect(periods).toHaveLength(1)
-      expect(String(periods[0]!.id)).toBe(String(organizationFinanceFiscalPeriodId(organizationId, career.currentSeasonId)))
-      expect(getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: 'EUR', asOfDate: career.currentDate }).state).toBe('OUT_OF_PERIOD')
-      const authorization = getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: 'EUR', asOfDate })
+      // BS16G: the period is the canonical fiscal year containing the career date, never the competition
+      // season, so a career that starts before its first game already has valid Finance truth.
+      const fiscalYear = getFinanceFiscalYearFor(profile, career.currentDate)
+      expect(String(periods[0]!.id)).toBe(String(financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)))
+      expect(periods[0]!.startsOn).toBe(fiscalYear.startsOn)
+      expect(periods[0]!.endsOn).toBe(fiscalYear.endsOn)
+      const authorization = getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: 'EUR', asOfDate: career.currentDate })
       expect(authorization.state).toBe('ACTIVE')
+      expect(authorization.fiscalPeriodId).toBe(String(periods[0]!.id))
       expect(authorization.authorizedMinorUnits).toBeGreaterThan(0)
       expect(authorization.approval).not.toBeNull()
       expect(String(authorization.approval?.authorityKind)).toBe('MANUAL_SYSTEM_ACTION')
@@ -89,19 +90,13 @@ describe('BS16F shipped finance activation', () => {
     expect(player).toBe(legacyTeamFinanceAmountToMoney(legacy.playerSalaryBudget, 'EUR').minorUnits)
     expect(staff).toBe(legacyTeamFinanceAmountToMoney(legacy.staffSalaryBudget, 'EUR').minorUnits)
 
-    // At the preseason career date the club is provisioned but out of period, so the decision refuses the
-    // commitment for two independent, reported reasons; inside the season period only liquidity fails.
+    // Preseason is inside the fiscal period, so the authorization is active and the only remaining reason is
+    // the club's real zero cash — never a missing period merely because the first game has not happened.
     const decision = evaluateOrganizationFinancialCommitment(career, { organizationId: team.organizationId, currency: 'EUR', amount: legacyTeamFinanceAmountToMoney(1_000_000, 'EUR'), category: 'PLAYER_SALARY', asOfDate: career.currentDate })
     expect(decision.status).not.toBe('FINANCE_PROFILE_UNAVAILABLE')
     expect(decision.status).toBe('INSUFFICIENT_LIQUIDITY')
-    expect(decision.reasonCodes).toContain('AUTHORIZATION_OUT_OF_PERIOD')
-
-    // Inside the season period the authorization is active for the modelled scope, so the only remaining
-    // reason is the club's real zero cash.
-    const inPeriod = evaluateOrganizationFinancialCommitment(career, { organizationId: team.organizationId, currency: 'EUR', amount: legacyTeamFinanceAmountToMoney(1_000_000, 'EUR'), category: 'PLAYER_SALARY', asOfDate: career.seasons[career.currentSeasonId]!.startDate })
-    expect(inPeriod.status).toBe('INSUFFICIENT_LIQUIDITY')
-    expect(inPeriod.reasonCodes).not.toContain('AUTHORIZATION_OUT_OF_PERIOD')
-    expect(inPeriod.reasonCodes).not.toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
+    expect(decision.reasonCodes).not.toContain('AUTHORIZATION_OUT_OF_PERIOD')
+    expect(decision.reasonCodes).not.toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
   })
 
   it('isolates a EUR organization from a USD organization inside one world', () => {
@@ -171,29 +166,33 @@ describe('BS16F shipped finance activation', () => {
   it('is deterministic, idempotent and never creates overlapping fiscal periods', () => {
     const career = createAcbTestGame()
     const again = ensureCanonicalFinanceFoundation(career)
-    const season = career.seasons[career.currentSeasonId]!
 
     expect(again).toBe(career)
     for (const organizationId of organizationIdsOf(career)) {
+      const profile = career.organizationFinancialProfilesById[organizationId as never]!
       const periods = Object.values(career.fiscalPeriodsById).filter((period) => String(period.organizationId) === organizationId)
-      // The BS16B season-anchored opening period stays the only period authority: activation reuses it.
+      // One canonical period per fiscal year: activation reuses the period provisioning created.
       expect(periods).toHaveLength(1)
-      expect(String(periods[0]!.id)).toBe(String(organizationFinanceFiscalPeriodId(organizationId, career.currentSeasonId)))
-      expect(periods[0]!.startsOn).toBe(season.startDate)
+      const fiscalYear = getFinanceFiscalYearFor(profile, career.currentDate)
+      expect(String(periods[0]!.id)).toBe(String(financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)))
+      expect(periods[0]!.startsOn).toBe(fiscalYear.startsOn)
       expect(Object.values(career.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
     }
-    // The preseason career date is covered by no period: that is the truth of a season-anchored opening period
-    // rather than a silent second, overlapping period.
-    expect(Object.values(career.fiscalPeriodsById).filter((period) => period.startsOn <= career.currentDate && period.endsOn >= career.currentDate)).toHaveLength(0)
+    // The preseason career date is inside its fiscal period, and no second period exists anywhere.
+    expect(Object.values(career.fiscalPeriodsById).filter((period) => period.startsOn <= career.currentDate && period.endsOn >= career.currentDate)).toHaveLength(organizationIdsOf(career).length)
 
-    // Renewal stays unmodelled: a later canonical period is never silently authorized, even when it exists.
+    // Renewal stays unmodelled: the next fiscal year gains period truth, never a copied authorization.
     const organizationId = organizationIdsOf(career)[0]!
-    const laterPeriod = createFiscalPeriod({ id: organizationFinanceFiscalPeriodId(organizationId, seasonIdFromString('season-0002')), organizationId, label: '2027-28', startsOn: '2027-09-25', endsOn: '2028-05-20' })
-    const later = updateGameWorld(career, { currentDate: createGameDate(2028, 1, 10), fiscalPeriods: [...Object.values(career.fiscalPeriodsById), laterPeriod] })
+    const later = updateGameWorld(career, { currentDate: createGameDate(2028, 1, 10) })
     const next = getFinanceActivationReport(later).organizations.find((entry) => entry.organizationId === organizationId)!
     expect(next.status).toBe('RENEWAL_NOT_MODELLED')
-    expect(ensureCanonicalFinanceFoundation(later)).toBe(later)
-    expect(Object.values(later.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
+    const advanced = ensureCanonicalFinanceFoundation(later)
+    expect(financeFiscalPeriodsOf(advanced, organizationId).map((period) => String(period.id))).toEqual([
+      String(financeFiscalPeriodIdFor(organizationId, '2026-09-01')),
+      String(financeFiscalPeriodIdFor(organizationId, '2027-09-01')),
+    ])
+    expect(Object.values(advanced.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
+    expect(ensureCanonicalFinanceFoundation(advanced)).toBe(advanced)
   })
 
   it('activates a legacy-shaped world whose clubs carry only TeamFinances and a resolvable jurisdiction', () => {
@@ -212,7 +211,9 @@ describe('BS16F shipped finance activation', () => {
       expect(Object.values(activated.fiscalPeriodsById).filter((period) => String(period.organizationId) === organizationId)).toHaveLength(1)
       expect(Object.values(activated.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
       // The read-only report and the activation it describes resolve the same period and the same budget.
-      expect(entry.fiscalPeriodId).toBe(String(organizationFinanceFiscalPeriodId(organizationId, world.currentSeasonId)))
+      const profile = activated.organizationFinancialProfilesById[organizationId as never]!
+      const fiscalYear = getFinanceFiscalYearFor(profile, activated.currentDate)
+      expect(entry.fiscalPeriodId).toBe(String(financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)))
       expect(String(activated.financialBudgetsById[entry.budgetId!]!.fiscalPeriodId)).toBe(entry.fiscalPeriodId)
     }
     // Unresolvable jurisdictions are never guessed, and the activation stays idempotent.

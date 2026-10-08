@@ -18,7 +18,8 @@ import {
   isFinanceBearingOrganization,
   listFinanceBearingOrganizationIds,
   organizationFinanceAccountId,
-  organizationFinanceFiscalPeriodId,
+  financeFiscalPeriodIdFor,
+  getFinanceFiscalYearFor,
   provisionOrganizationFinanceFoundation,
   resolveDebtLedgerMapping,
   resolveExpenseRecognitionAccounts,
@@ -101,13 +102,16 @@ describe('BS16B finance foundation provisioning', () => {
       expect(account.openedOn).toBeNull()
     }
 
-    const period = provisioned.fiscalPeriodsById[organizationFinanceFiscalPeriodId(organizationId, season.id)]!
+    const fiscalYear = getFinanceFiscalYearFor({ fiscalYearStartMonth: expectedFiscalYearStartMonth }, shippedWorld.currentDate)
+    const period = provisioned.fiscalPeriodsById[financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)]!
     expect(period).toBeDefined()
     expect(period.organizationId).toBe(organizationId)
-    expect(period.label).toBe(season.label)
-    expect(period.startsOn).toBe(season.startDate)
-    expect(period.endsOn).toBe(season.endDate)
+    expect(period.label).toBe(fiscalYear.label)
+    expect(period.startsOn).toBe(fiscalYear.startsOn)
+    expect(period.endsOn).toBe(fiscalYear.endsOn)
     expect(period.status).toBe('OPEN')
+    // BS16G: the period is the fiscal year containing the effective date, never the competition season.
+    expect(period.startsOn <= shippedWorld.currentDate && period.endsOn >= shippedWorld.currentDate).toBe(true)
 
     expect(Object.keys(provisioned.financialTransactionsById)).toHaveLength(0)
     expect(getCashBalancesByCurrency(provisioned, organizationId)).toEqual([expect.objectContaining({ currencyCode: 'EUR', totalCashMinorUnits: 0, unrestrictedCashMinorUnits: 0, restrictedCashMinorUnits: 0 })])
@@ -129,7 +133,8 @@ describe('BS16B finance foundation provisioning', () => {
 
     expect(Object.keys(second.financialAccountsById)).toHaveLength(ORGANIZATION_FINANCE_ACCOUNT_ROLES.length)
     expect(Object.keys(second.financialTransactionsById)).toHaveLength(0)
-    expect(second.fiscalPeriodsById[organizationFinanceFiscalPeriodId(organizationId, season.id)]).toEqual(first.fiscalPeriodsById[organizationFinanceFiscalPeriodId(organizationId, season.id)])
+    const periodId = financeFiscalPeriodIdFor(organizationId, getFinanceFiscalYearFor({ fiscalYearStartMonth: expectedFiscalYearStartMonth }, shippedWorld.currentDate).startsOn)
+    expect(second.fiscalPeriodsById[periodId]).toEqual(first.fiscalPeriodsById[periodId])
 
     const accounts = getOrganizationFinanceAccounts(second, organizationId)
     expect(accounts.cashOperating.organizationId).toBe(organizationId)
@@ -163,7 +168,8 @@ describe('BS16B finance foundation provisioning', () => {
     expect(withBoth.financialAccountsById[settlementAccounts.cashAccountId]!.organizationId).toBe(organizationA)
     expect(withBoth.financialAccountsById[settlementAccounts.offsetAccountId]!.organizationId).toBe(organizationA)
 
-    expect(organizationFinanceFiscalPeriodId(organizationA, season.id)).not.toBe(organizationFinanceFiscalPeriodId(organizationB, season.id))
+    const periodStartsOn = getFinanceFiscalYearFor({ fiscalYearStartMonth: expectedFiscalYearStartMonth }, shippedWorld.currentDate).startsOn
+    expect(financeFiscalPeriodIdFor(organizationA, periodStartsOn)).not.toBe(financeFiscalPeriodIdFor(organizationB, periodStartsOn))
     expect(Object.keys(withBoth.fiscalPeriodsById)).toHaveLength(2)
   })
 

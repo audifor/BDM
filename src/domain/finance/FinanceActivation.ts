@@ -2,9 +2,9 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { fiscalPeriodIdFromString, organizationIdFromString, type FiscalPeriodId, type OrganizationId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createBudgetLine, createFinancialBudget, type BudgetLine, type FinancialBudget } from './BudgetForecasting'
-import { provisionOrganizationFinanceFoundation, organizationFinanceFiscalPeriodId } from './FinanceFoundation'
-import { legacyTeamFinanceAmountToMoney, resolveOrganizationCurrency, type FinanceCurrencyUnavailableReason } from './FinanceCurrencyPolicy'
-import { createFiscalPeriod, type FiscalPeriod, type OrganizationFinancialProfile } from './FinancialLedger'
+import { financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceFiscalYearFor, provisionOrganizationFinanceFoundation } from './FinanceFoundation'
+import { legacyMajorUnitsToMoney, resolveOrganizationCurrency, type FinanceCurrencyUnavailableReason } from './FinanceCurrencyPolicy'
+import { createFiscalPeriod, type FiscalPeriod } from './FinancialLedger'
 
 /**
  * BS16E/BS16F. Canonical finance activation.
@@ -66,24 +66,6 @@ export const LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE = Object.freeze({
 
 const LEGACY_ACTIVATION_AUTHORITY_ID = 'system:legacy-team-finances-activation'
 
-/** Deterministic fiscal year containing `date`, derived from the fiscal year start month. */
-export function getFiscalYearFor(profile: Pick<OrganizationFinancialProfile, 'fiscalYearStartMonth'>, date: GameDate | string): { readonly startsOn: GameDate; readonly endsOn: GameDate; readonly label: string } {
-  const asOf = parseGameDate(date)
-  const year = Number(asOf.slice(0, 4))
-  const month = Number(asOf.slice(5, 7))
-  const startYear = month >= profile.fiscalYearStartMonth ? year : year - 1
-  const endYear = startYear + 1
-  const monthText = String(profile.fiscalYearStartMonth).padStart(2, '0')
-  const startsOn = parseGameDate(`${startYear}-${monthText}-01`)
-  const lastDay = new Date(`${endYear}-${monthText}-01T00:00:00Z`)
-  lastDay.setUTCDate(lastDay.getUTCDate() - 1)
-  return Object.freeze({ startsOn, endsOn: parseGameDate(lastDay.toISOString().slice(0, 10)), label: `${startYear}-${String(endYear).slice(2)}` })
-}
-
-export function fiscalPeriodIdFor(organizationId: OrganizationId | string, startsOn: GameDate | string): FiscalPeriodId {
-  return fiscalPeriodIdFromString(`fiscal-period:${organizationId}:${parseGameDate(startsOn)}`)
-}
-
 export function authorizationBudgetIdFor(organizationId: OrganizationId | string, fiscalPeriodId: FiscalPeriodId | string): string {
   return `budget:legacy-team-finances:${organizationId}:${fiscalPeriodId}`
 }
@@ -114,15 +96,20 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
     const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization)
-    if (planned.status !== 'ACTIVATED') continue
-    if (planned.provisionFoundation) {
-      current = provisionOrganizationFinanceFoundation(current, organizationId, { currencyCode: planned.currencyCode })
-      provisionedAny = true
+    if (planned.provision !== null) {
+      const provisioned = provisionOrganizationFinanceFoundation(current, organizationId, {
+        currencyCode: planned.provision.currencyCode,
+        fiscalYearStartMonth: planned.provision.fiscalYearStartMonth,
+        asOfDate,
+      })
+      if (provisioned !== current) provisionedAny = true
+      current = provisioned
     }
-    const fiscalPeriodId = resolveCanonicalFiscalPeriod(current, organizationId, asOfDate)?.id ?? planned.fiscalPeriodId
+    if (!planned.materializeAuthorization || planned.fiscalPeriodId === null || planned.currencyCode === null) continue
+    const profile = current.organizationFinancialProfilesById[organizationId]!
+    const fiscalPeriodId = resolveCanonicalFiscalPeriod(current, organizationId, asOfDate, profile.fiscalYearStartMonth)?.id ?? planned.fiscalPeriodId
     if (current.fiscalPeriodsById[fiscalPeriodId] === undefined) {
-      const profile = current.organizationFinancialProfilesById[organizationId]!
-      const fiscalYear = getFiscalYearFor(profile, asOfDate)
+      const fiscalYear = getFinanceFiscalYearFor(profile, asOfDate)
       periodAdds.push(createFiscalPeriod({ id: fiscalPeriodId, organizationId, label: fiscalYear.label, startsOn: fiscalYear.startsOn, endsOn: fiscalYear.endsOn }))
     }
     const materialized = materializeLegacyTeamFinancesAuthorization(current, { organizationId, fiscalPeriodId, asOfDate, currencyCode: planned.currencyCode })
@@ -157,7 +144,7 @@ export function materializeLegacyTeamFinancesAuthorization(world: GameWorld, inp
   if (currencyCode === undefined) throw new TypeError(`Cannot activate canonical authorization for ${organizationId} without an organization financial profile or an explicit currency`)
   const fiscalPeriod = world.fiscalPeriodsById[fiscalPeriodIdFromString(input.fiscalPeriodId)]
   const planningPeriod = fiscalPeriod === undefined
-    ? { kind: 'FISCAL_YEAR' as const, ...getFiscalYearFor({ fiscalYearStartMonth: profile?.fiscalYearStartMonth ?? Number(world.seasons[world.currentSeasonId]?.startDate.slice(5, 7) || 1) }, input.asOfDate) }
+    ? { kind: 'FISCAL_YEAR' as const, ...getFinanceFiscalYearFor({ fiscalYearStartMonth: profile?.fiscalYearStartMonth ?? Number(world.seasons[world.currentSeasonId]?.startDate.slice(5, 7) ?? input.asOfDate.slice(5, 7)) }, input.asOfDate) }
     : { kind: 'FISCAL_YEAR' as const, startsOn: fiscalPeriod.startsOn, endsOn: fiscalPeriod.endsOn }
   const budgetId = authorizationBudgetIdFor(organizationId, input.fiscalPeriodId)
   const budget = createFinancialBudget({
@@ -184,7 +171,7 @@ export function materializeLegacyTeamFinancesAuthorization(world: GameWorld, inp
         organizationId,
         category,
         direction: 'EXPENSE',
-        amount: legacyTeamFinanceAmountToMoney(amount, currencyCode),
+        amount: legacyMajorUnitsToMoney(amount, currencyCode),
         teamId: String(team.id),
         purpose: 'Legacy TeamFinances activation',
         provenance: LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE,
@@ -193,15 +180,44 @@ export function materializeLegacyTeamFinancesAuthorization(world: GameWorld, inp
   return Object.freeze({ budget, lines })
 }
 
-type OrganizationActivationPlan =
-  | {
-      readonly status: 'ACTIVATED'
-      readonly activation: OrganizationFinanceActivation
-      readonly currencyCode: string
-      readonly fiscalPeriodId: FiscalPeriodId
-      readonly provisionFoundation: boolean
-    }
-  | { readonly status: Exclude<FinanceActivationStatus, 'ACTIVATED'>; readonly activation: OrganizationFinanceActivation }
+interface OrganizationActivationPlan {
+  readonly activation: OrganizationFinanceActivation
+  /**
+   * Non-null when the currency resolved: the foundation (profile, account catalog, canonical fiscal period) is
+   * ensured for the organization. It is currency/identity truth, so it exists independently of any budget
+   * authority; an organization whose fiscal year has no period yet still gains period truth while its
+   * authorization stays unmodelled.
+   */
+  readonly provision: OrganizationFinanceProvisioning | null
+  /** True only for `ACTIVATED`: the legacy payroll authorization is (or already is) materialized. */
+  readonly materializeAuthorization: boolean
+  readonly currencyCode: string | null
+  readonly fiscalPeriodId: FiscalPeriodId | null
+}
+
+interface OrganizationFinanceProvisioning {
+  readonly currencyCode: string
+  readonly fiscalYearStartMonth: number
+}
+
+function activationOf(organizationId: OrganizationId, status: FinanceActivationStatus, overrides: Partial<OrganizationFinanceActivation> = {}): OrganizationFinanceActivation {
+  return Object.freeze({
+    organizationId,
+    status,
+    fiscalPeriodId: null,
+    budgetId: null,
+    currencyCode: null,
+    currencySource: null,
+    currencyUnavailableReason: null,
+    policyCurrencyCode: null,
+    authorizedMinorUnits: 0,
+    ...overrides,
+  })
+}
+
+function noMaterialization(activation: OrganizationFinanceActivation, provision: OrganizationFinanceProvisioning | null = null): OrganizationActivationPlan {
+  return Object.freeze({ activation, provision, materializeAuthorization: false, currencyCode: null, fiscalPeriodId: null })
+}
 
 function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, allowNewPeriodMaterialization: boolean): OrganizationActivationPlan {
   const profile = world.organizationFinancialProfilesById[organizationId]
@@ -211,61 +227,29 @@ function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDa
     // Persisted canonical financial history wins: a policy that derives a different currency is a reported
     // conflict, never a silent rewrite of the organization's currency.
     if (resolution.status === 'RESOLVED' && resolution.currencyCode !== profile.baseCurrencyCode) {
-      return {
-        status: 'CURRENCY_POLICY_CONFLICT',
-        activation: Object.freeze({
-          organizationId,
-          status: 'CURRENCY_POLICY_CONFLICT' as const,
-          fiscalPeriodId: null,
-          budgetId: null,
-          currencyCode: String(profile.baseCurrencyCode),
-          currencySource: 'CANONICAL_PROFILE' as const,
-          currencyUnavailableReason: null,
-          policyCurrencyCode: String(resolution.currencyCode),
-          authorizedMinorUnits: 0,
-        }),
-      }
+      return noMaterialization(activationOf(organizationId, 'CURRENCY_POLICY_CONFLICT', {
+        currencyCode: String(profile.baseCurrencyCode),
+        currencySource: 'CANONICAL_PROFILE',
+        policyCurrencyCode: String(resolution.currencyCode),
+      }))
     }
-    return planAuthorization(world, organizationId, profile.baseCurrencyCode, 'CANONICAL_PROFILE', asOfDate, allowNewPeriodMaterialization, false)
+    return planAuthorization(world, organizationId, profile.baseCurrencyCode, 'CANONICAL_PROFILE', asOfDate, allowNewPeriodMaterialization, { currencyCode: String(profile.baseCurrencyCode), fiscalYearStartMonth: profile.fiscalYearStartMonth })
   }
 
   if (resolution.status !== 'RESOLVED') {
-    return {
-      status: 'FINANCE_CURRENCY_UNAVAILABLE',
-      activation: Object.freeze({
-        organizationId,
-        status: 'FINANCE_CURRENCY_UNAVAILABLE' as const,
-        fiscalPeriodId: null,
-        budgetId: null,
-        currencyCode: null,
-        currencySource: null,
-        currencyUnavailableReason: resolution.reason,
-        policyCurrencyCode: null,
-        authorizedMinorUnits: 0,
-      }),
-    }
+    return noMaterialization(activationOf(organizationId, 'FINANCE_CURRENCY_UNAVAILABLE', { currencyUnavailableReason: resolution.reason }))
   }
 
-  // Provisioning the foundation needs a Season to anchor the opening fiscal period.
-  if (world.seasons[world.currentSeasonId] === undefined) {
-    return {
-      status: 'FINANCE_PROFILE_UNAVAILABLE',
-      activation: Object.freeze({
-        organizationId,
-        status: 'FINANCE_PROFILE_UNAVAILABLE' as const,
-        fiscalPeriodId: null,
-        budgetId: null,
-        currencyCode: resolution.currencyCode,
-        currencySource: resolution.source,
-        currencyUnavailableReason: null,
-        policyCurrencyCode: null,
-        authorizedMinorUnits: 0,
-      }),
-    }
-  }
+  // The currency resolved, so the foundation is ensured regardless of whether a legacy budget authority exists.
+  return planAuthorization(world, organizationId, resolution.currencyCode, resolution.source, asOfDate, allowNewPeriodMaterialization, {
+    currencyCode: String(resolution.currencyCode),
+    fiscalYearStartMonth: defaultFiscalYearStartMonth(world, asOfDate),
+  })
+}
 
-  const planned = planAuthorization(world, organizationId, resolution.currencyCode, resolution.source, asOfDate, allowNewPeriodMaterialization, true)
-  return planned.status === 'ACTIVATED' ? { ...planned, provisionFoundation: true } : planned
+function defaultFiscalYearStartMonth(world: GameWorld, asOfDate: GameDate): number {
+  // The Season supplies the default starting month as context only; it never owns Finance period dates.
+  return Number(world.seasons[world.currentSeasonId]?.startDate.slice(5, 7) ?? asOfDate.slice(5, 7))
 }
 
 function planAuthorization(
@@ -275,44 +259,40 @@ function planAuthorization(
   currencySource: FinanceCurrencySource,
   asOfDate: GameDate,
   allowNewPeriodMaterialization: boolean,
-  mayProvisionFoundation: boolean,
+  provision: OrganizationFinanceProvisioning,
 ): OrganizationActivationPlan {
-  const profile = world.organizationFinancialProfilesById[organizationId]
-  const fiscalYearStartMonth = profile?.fiscalYearStartMonth ?? Number(world.seasons[world.currentSeasonId]?.startDate.slice(5, 7) || 1)
-  const fiscalYear = getFiscalYearFor({ fiscalYearStartMonth }, asOfDate)
-  const existingCanonicalPeriod = resolveCanonicalFiscalPeriod(world, organizationId, asOfDate)
-  // An organization that is about to be provisioned will get the BS16B season-anchored opening period, so the
-  // planned authorization must name that period instead of a fiscal-year one: a read-only report and the
-  // activation it describes have to resolve the same period, and the organization must never gain a second one.
-  const fiscalPeriodId = existingCanonicalPeriod?.id ?? (profile === undefined && mayProvisionFoundation
-    ? organizationFinanceFiscalPeriodId(organizationId, world.currentSeasonId)
-    : fiscalPeriodIdFor(organizationId, fiscalYear.startsOn))
-  const base = { organizationId, fiscalPeriodId, currencyCode, currencySource, currencyUnavailableReason: null, policyCurrencyCode: null }
+  const fiscalYearStartMonth = provision.fiscalYearStartMonth
+  const fiscalYear = getFinanceFiscalYearFor({ fiscalYearStartMonth }, asOfDate)
+  const existingPeriod = resolveCanonicalFiscalPeriod(world, organizationId, asOfDate, fiscalYearStartMonth)
+  // A read-only report and the activation it describes must resolve the same period, and an organization that
+  // already has a period for this fiscal year never gains a second one.
+  const fiscalPeriodId = existingPeriod?.id ?? financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)
+  const base = { fiscalPeriodId, currencyCode, currencySource }
   const existingForPeriod = Object.values(world.financialBudgetsById).find((budget) => budget.organizationId === String(organizationId) && budget.fiscalPeriodId === String(fiscalPeriodId))
   if (existingForPeriod !== undefined) {
-    return { status: 'ALREADY_PROVISIONED', activation: Object.freeze({ ...base, status: 'ALREADY_PROVISIONED' as const, budgetId: existingForPeriod.id, authorizedMinorUnits: 0 }) }
+    return noMaterialization(activationOf(organizationId, 'ALREADY_PROVISIONED', { ...base, budgetId: existingForPeriod.id }), provision)
   }
   const hasAnyCanonicalAuthorization = Object.values(world.financialBudgetsById).some((budget) => budget.organizationId === String(organizationId))
   if (hasAnyCanonicalAuthorization && !allowNewPeriodMaterialization) {
-    // No silent carry-forward: a later fiscal period stays unauthorized until a real authority exists.
-    return { status: 'RENEWAL_NOT_MODELLED', activation: Object.freeze({ ...base, status: 'RENEWAL_NOT_MODELLED' as const, fiscalPeriodId: null, budgetId: null, authorizedMinorUnits: 0 }) }
+    // No silent carry-forward: the new fiscal period may exist as period truth, but its authorization is never
+    // copied from the previous one.
+    return noMaterialization(activationOf(organizationId, 'RENEWAL_NOT_MODELLED', { currencyCode, currencySource }), provision)
   }
   if (!hasLegacyBudgetSource(world, organizationId)) {
-    return { status: 'NO_LEGACY_BUDGET_SOURCE', activation: Object.freeze({ ...base, status: 'NO_LEGACY_BUDGET_SOURCE' as const, fiscalPeriodId: null, budgetId: null, authorizedMinorUnits: 0 }) }
+    return noMaterialization(activationOf(organizationId, 'NO_LEGACY_BUDGET_SOURCE', { currencyCode, currencySource }), provision)
   }
   const materialized = materializeLegacyTeamFinancesAuthorization(world, { organizationId, fiscalPeriodId, asOfDate, currencyCode })
-  return {
-    status: 'ACTIVATED',
-    currencyCode,
-    fiscalPeriodId,
-    provisionFoundation: mayProvisionFoundation && profile === undefined,
-    activation: Object.freeze({
+  return Object.freeze({
+    activation: activationOf(organizationId, 'ACTIVATED', {
       ...base,
-      status: 'ACTIVATED' as const,
       budgetId: materialized.budget.id,
       authorizedMinorUnits: materialized.lines.reduce((sum, line) => sum + line.amount.minorUnits, 0),
     }),
-  }
+    provision,
+    materializeAuthorization: true,
+    currencyCode,
+    fiscalPeriodId,
+  })
 }
 
 function hasLegacyBudgetSource(world: GameWorld, organizationId: OrganizationId | string): boolean {
@@ -320,23 +300,23 @@ function hasLegacyBudgetSource(world: GameWorld, organizationId: OrganizationId 
 }
 
 /**
- * The canonical `FiscalPeriod` collection is the single period authority: activation reuses a period already
- * provisioned for the organization (for example the BS16B season-anchored opening period) instead of
- * inserting a second, overlapping period for the same dates.
- *
- * When the as-of date falls outside every canonical period the organization already has — for example a
- * career date in the week before the opening season period starts — the organization's earliest canonical
- * period is reused. Inventing another period there would create two competing period authorities covering the
- * same fiscal year, and the reused period still reports truthfully through `getFiscalPeriodStatus`, so an
- * out-of-period date keeps producing `AUTHORIZATION_OUT_OF_PERIOD` rather than a silent second authorization.
+ * The canonical `FiscalPeriod` collection is the single period authority (BS16G): a Finance fiscal period is
+ * the fiscal year containing the effective date, never a competition season. Resolution order is deterministic
+ * and never disjoint from what already exists, so activation can never introduce a second, overlapping period:
+ * the period whose identity encodes this fiscal year's boundary, then the period covering the date, then any
+ * existing period of the same fiscal year (a pre-BS16G season-shaped period). An organization whose target
+ * fiscal year is covered by nothing yet resolves to no period, which makes the caller's answer the canonical
+ * fiscal-year identity the provisioning authority will create.
  */
-function resolveCanonicalFiscalPeriod(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate): FiscalPeriod | undefined {
-  const periods = Object.values(world.fiscalPeriodsById).filter((period) => String(period.organizationId) === String(organizationId))
-  const covering = periods
-    .filter((period) => compareGameDates(asOfDate, period.startsOn) >= 0 && compareGameDates(asOfDate, period.endsOn) <= 0)
-    .sort((left, right) => compareGameDates(right.startsOn, left.startsOn) || String(right.id).localeCompare(String(left.id)))[0]
+function resolveCanonicalFiscalPeriod(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, fiscalYearStartMonth: number): FiscalPeriod | undefined {
+  const periods = financeFiscalPeriodsOf(world, organizationId)
+  if (periods.length === 0) return undefined
+  const fiscalYear = getFinanceFiscalYearFor({ fiscalYearStartMonth }, asOfDate)
+  const byIdentity = periods.find((period) => String(period.id) === String(financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn)))
+  if (byIdentity !== undefined) return byIdentity
+  const covering = [...periods].reverse().find((period) => compareGameDates(asOfDate, period.startsOn) >= 0 && compareGameDates(asOfDate, period.endsOn) <= 0)
   if (covering !== undefined) return covering
-  return [...periods].sort((left, right) => compareGameDates(left.startsOn, right.startsOn) || String(left.id).localeCompare(String(right.id)))[0]
+  return periods.find((period) => compareGameDates(period.startsOn, fiscalYear.endsOn) <= 0 && compareGameDates(fiscalYear.startsOn, period.endsOn) <= 0)
 }
 
 function teamsOf(world: GameWorld, organizationId: OrganizationId | string) {

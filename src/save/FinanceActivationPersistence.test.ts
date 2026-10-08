@@ -8,9 +8,10 @@ import {
   createOrganizationFinancialProfile,
   createTeamFinances,
   ensureCanonicalFinanceFoundation,
-  fiscalPeriodIdFor,
+  financeFiscalPeriodIdFor,
   getFinanceActivationReport,
   getOrganizationFinancialAuthorization,
+  ORGANIZATION_FINANCE_ACCOUNT_ROLES,
 } from '@/domain/finance'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from './GameWorldSaveV4'
 
@@ -58,7 +59,7 @@ describe('BS16E activation persistence', () => {
     expect(restored.fiscalPeriodsById).toEqual(activated.fiscalPeriodsById)
     expect(restored.financialBudgetsById).toEqual(activated.financialBudgetsById)
     expect(restored.budgetLinesById).toEqual(activated.budgetLinesById)
-    expect(authorization.fiscalPeriodId).toBe(fiscalPeriodIdFor(organizationId, '2032-01-01'))
+    expect(authorization.fiscalPeriodId).toBe(financeFiscalPeriodIdFor(organizationId, '2032-01-01'))
     expect(authorization.authorizedMinorUnits).toBe(150_000_000)
     expect(authorization.lines.map((line) => [line.category, line.authorizedMinorUnits])).toEqual([['PLAYER_SALARY', 100_000_000], ['STAFF_SALARY', 50_000_000]])
     expect(authorization.currencyCode).toBe('EUR')
@@ -79,7 +80,10 @@ describe('BS16E activation persistence', () => {
     expect('availableHeadroomMinorUnits' in persistedBudget).toBe(false)
     expect(Object.keys(payload).sort().filter((key) => key.includes('Headroom'))).toEqual([])
     expect(Object.keys(restored.financialTransactionsById)).toEqual(['finance:opening'])
-    expect(Object.keys(restored.financialAccountsById)).toEqual(['cash:eur', 'equity:eur'])
+    // The organization's canonical account catalog is ensured by activation; the fixture's own two accounts and
+    // no other money fact exist, and nothing but the catalog was added.
+    expect(Object.keys(restored.financialAccountsById)).toHaveLength(2 + ORGANIZATION_FINANCE_ACCOUNT_ROLES.length)
+    expect(Object.keys(restored.financialAccountsById)).toEqual(expect.arrayContaining(['cash:eur', 'equity:eur']))
     expect(restored.financialReservationsById).toEqual({})
     expect(restored.payablesById).toEqual({})
     expect(restored.receivablesById).toEqual({})
