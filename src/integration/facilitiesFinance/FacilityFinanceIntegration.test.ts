@@ -6,7 +6,8 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION } from '@/app/game/createNewGame'
+import { generateWorld } from '@/engine/world/WorldGenerator'
 import { parseGameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import {
@@ -50,7 +51,8 @@ const EUR = (minorUnits: number) => ({ currencyCode: 'EUR', minorUnits })
 
 /** A world carrying both a Facility (CFI1-CFI6a) and the Finance accounts (CF1) the ledger needs. */
 function fixture(initialStatus: 'ACTIVE' | 'TEMPORARILY_CLOSED' = 'ACTIVE') {
-  const world = createNewGame()
+  // CFI7 fact orchestration is tested before career bootstrap posts daily payroll.
+  const world = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true, includeNcaaLike: true })
   const organization = Object.values(world.organizationsById)[0]!
   const place = createPlace({ id: 'place:cfi7', kind: 'CAMPUS', name: 'CFI7 Campus' })
   const facility = createFacility({ id: 'facility:cfi7', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: initialStatus, canonicalName: 'CFI7 Center' })
@@ -60,7 +62,7 @@ function fixture(initialStatus: 'ACTIVE' | 'TEMPORARILY_CLOSED' = 'ACTIVE') {
     createFinancialAccount({ id: 'finance:payable', organizationId: organization.id, accountType: 'PAYABLE', currencyCode: 'EUR' }),
     createFinancialAccount({ id: 'finance:expense', organizationId: organization.id, accountType: 'EXPENSE', currencyCode: 'EUR' }),
   ]
-  const base = updateGameWorld(world, { places: [place], facilities: [facility], facilityComponents: [component], financialAccounts: accounts })
+  const base = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [component], financialAccounts: accounts })
   return { world: base, organization, place, facility, component }
 }
 

@@ -1,3 +1,4 @@
+import { componentWorkProjectsAt, componentPhysicalAvailabilityAt } from '@/engine/facilities/FacilityPhysicalOperations'
 /**
  * CFI8 — the derived answer to "what usable sporting infrastructure does this Team actually have
  * access to at this date?" Composed entirely from CFI2 (access rights), CFI3 (anatomy/capabilities)
@@ -30,6 +31,7 @@ import {
  * explainability. Deliberately small and derived — never persisted.
  */
 export const SPORTING_FACILITY_CONSTRAINT_REASONS = [
+  'PHYSICAL_WORK',
   'NO_COMPONENT',
   'NO_ACCESS',
   'OUT_OF_SERVICE',
@@ -205,7 +207,7 @@ function resolveCapabilityStatus(world: GameWorld, teamId: TeamId, onDate: GameD
   for (const component of accessibleCandidates) {
     if (capability === 'BASKETBALL_FULL_COURT' && component.specification !== null && component.specification.kind === 'COURT' && !component.specification.isFullCourt) continue
     const record = componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), component.id, onDate)
-    const serviceability = record?.serviceability ?? 'FULL'
+    const serviceability = componentPhysicalAvailabilityAt(world, component.id, onDate).status === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : record?.serviceability ?? 'FULL'
     if (best === null || SERVICEABILITY_RANK[serviceability] > SERVICEABILITY_RANK[best.serviceability]) {
       best = { component, serviceability, technicalStandard: record?.technicalStandard ?? null }
     }
@@ -215,7 +217,7 @@ function resolveCapabilityStatus(world: GameWorld, teamId: TeamId, onDate: GameD
     return { capability, status: 'UNAVAILABLE', reason: 'NO_COMPONENT', sourceComponentId: null, serviceability: null, technicalStandard: null }
   }
   if (best.serviceability === 'OUT_OF_SERVICE') {
-    return { capability, status: 'UNAVAILABLE', reason: 'OUT_OF_SERVICE', sourceComponentId: best.component.id, serviceability: best.serviceability, technicalStandard: best.technicalStandard }
+    return { capability, status: 'UNAVAILABLE', reason: componentWorkProjectsAt(world, best.component.id, onDate).length > 0 ? 'PHYSICAL_WORK' : 'OUT_OF_SERVICE', sourceComponentId: best.component.id, serviceability: best.serviceability, technicalStandard: best.technicalStandard }
   }
   if (best.serviceability !== 'FULL') {
     return { capability, status: 'LIMITED', reason: 'LIMITED_SERVICE', sourceComponentId: best.component.id, serviceability: best.serviceability, technicalStandard: best.technicalStandard }
@@ -239,7 +241,7 @@ function basketballContext(world: GameWorld, teamId: TeamId, onDate: GameDate, a
         type: component.type,
         isFullCourt: spec?.isFullCourt ?? null,
         isIndoor: spec?.isIndoor ?? null,
-        serviceability: record?.serviceability ?? 'FULL',
+        serviceability: componentPhysicalAvailabilityAt(world, component.id, onDate).status === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : record?.serviceability ?? 'FULL',
         technicalStandard: record?.technicalStandard ?? null,
         hasVideoTrackingTechnology: spec?.hasVideoTrackingTechnology ?? null,
       }

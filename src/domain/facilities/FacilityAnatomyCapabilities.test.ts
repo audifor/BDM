@@ -36,7 +36,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const place = createPlace({ id: 'place:1', kind: 'CITY', name: 'City 1' })
     const arena = createFacility({ id: 'facility:1', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Arena 1' })
     const mainCourt = createFacilityComponent({ id: 'component:1-main', facilityId: arena.id, type: 'MAIN_COURT', status: 'ACTIVE', specification: { kind: 'COURT', isFullCourt: true, isIndoor: true, competitionCapable: true } })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityComponents: [mainCourt] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityComponents: [mainCourt] })
     const onDate = parseGameDate('2030-01-01')
     expect(courtsOfFacility(Object.values(world.facilityComponentsById), arena.id, onDate).map((c) => c.id)).toEqual([mainCourt.id])
     expect(facilityHasCapability(Object.values(world.facilityComponentsById), arena.id, 'BASKETBALL_FULL_COURT', onDate)).toBe(true)
@@ -48,7 +48,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const trainingCenter = createFacility({ id: 'facility:2', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Training Center 2' })
     const courtA = createFacilityComponent({ id: 'component:2-a', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const courtB = createFacilityComponent({ id: 'component:2-b', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [trainingCenter], facilityComponents: [courtA, courtB] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [trainingCenter], facilityComponents: [courtA, courtB] })
     const onDate = parseGameDate('2030-01-01')
     expect(practiceCourtsOfFacility(Object.values(world.facilityComponentsById), trainingCenter.id, onDate)).toHaveLength(2)
   })
@@ -60,7 +60,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const courtA = createFacilityComponent({ id: 'component:3-a', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const courtB = createFacilityComponent({ id: 'component:3-b', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [trainingCenter],
       facilityComponents: [courtA, courtB],
       facilityUsageRights: [
@@ -80,7 +80,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const performanceArea = createFacilityComponent({ id: 'component:4-perf', facilityId: facility.id, type: 'PERFORMANCE_LAB', status: 'ACTIVE' })
     const recoveryArea = createFacilityComponent({ id: 'component:4-recovery', facilityId: facility.id, type: 'RECOVERY_ROOM', status: 'ACTIVE', parentComponentId: performanceArea.id })
     const coldTub = createFacilityComponent({ id: 'component:4-coldtub', facilityId: facility.id, type: 'COLD_TUB', status: 'ACTIVE', parentComponentId: recoveryArea.id })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [performanceArea, recoveryArea, coldTub] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [performanceArea, recoveryArea, coldTub] })
     const onDate = parseGameDate('2030-01-01')
     expect(rootComponentsOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate).map((c) => c.id)).toEqual([performanceArea.id])
     expect(childComponentsOf(Object.values(world.facilityComponentsById), performanceArea.id, onDate).map((c) => c.id)).toEqual([recoveryArea.id])
@@ -95,7 +95,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const parentInFacilityTwo = createFacilityComponent({ id: 'component:5-parent', facilityId: facilityTwo.id, type: 'RECOVERY_ROOM', status: 'ACTIVE' })
     const childInFacilityOne = createFacilityComponent({ id: 'component:5-child', facilityId: facilityOne.id, type: 'COLD_TUB', status: 'ACTIVE', parentComponentId: parentInFacilityTwo.id })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facilityOne, facilityTwo],
       facilityComponents: [parentInFacilityTwo, childInFacilityOne],
     })).toThrow(GameWorldValidationError)
@@ -111,7 +111,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const componentB = createFacilityComponent({ id: 'component:6-b', facilityId: facility.id, type: 'COLD_TUB', status: 'ACTIVE', parentComponentId: componentA.id })
     const cyclicA = { ...componentA, parentComponentId: componentB.id }
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [cyclicA, componentB],
     })).toThrow(GameWorldValidationError)
@@ -127,7 +127,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:7-imaging', facilityId: medicalCenter.id, type: 'IMAGING_ROOM', status: 'ACTIVE', equipmentTags: ['MRI'] }),
       createFacilityComponent({ id: 'component:7-rehab', facilityId: medicalCenter.id, type: 'REHABILITATION_ROOM', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [medicalCenter], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [medicalCenter], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(medicalComponentsOfFacility(Object.values(world.facilityComponentsById), medicalCenter.id, onDate)).toHaveLength(4)
     expect(facilityHasCapability(Object.values(world.facilityComponentsById), medicalCenter.id, 'MEDICAL_IMAGING', onDate)).toBe(true)
@@ -145,7 +145,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:8-sauna', facilityId: facility.id, type: 'SAUNA', status: 'ACTIVE' }),
       createFacilityComponent({ id: 'component:8-cryo', facilityId: facility.id, type: 'CRYOTHERAPY_ROOM', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(recoveryComponentsOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate)).toHaveLength(4)
     const capabilities = capabilitiesOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate)
@@ -162,7 +162,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:9-biomech', facilityId: facility.id, type: 'BIOMECHANICS_LAB', status: 'ACTIVE' }),
       createFacilityComponent({ id: 'component:9-sprint', facilityId: facility.id, type: 'SPRINT_AREA', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(trainingComponentsOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate).map((c) => c.type).sort()).toEqual(['SPRINT_AREA', 'STRENGTH_ROOM'])
     expect(componentsOfFacilityByCategory(Object.values(world.facilityComponentsById), facility.id, 'PERFORMANCE', onDate).map((c) => c.type)).toEqual(['BIOMECHANICS_LAB'])
@@ -178,7 +178,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:10-gym', facilityId: academy.id, type: 'ACADEMY_GYM', status: 'ACTIVE' }),
       createFacilityComponent({ id: 'component:10-classroom', facilityId: academy.id, type: 'CLASSROOM', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [academy], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [academy], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(componentsOfFacility(Object.values(world.facilityComponentsById), academy.id, onDate)).toHaveLength(3)
     expect(courtsOfFacility(Object.values(world.facilityComponentsById), academy.id, onDate).map((c) => c.type)).toEqual(['ACADEMY_COURT'])
@@ -192,7 +192,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:11-room', facilityId: dormitory.id, type: 'PLAYER_ROOM', status: 'ACTIVE', specification: { kind: 'CAPACITY', unit: 'BEDS', amount: 2 } }),
       createFacilityComponent({ id: 'component:11-common', facilityId: dormitory.id, type: 'COMMON_AREA', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [dormitory], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [dormitory], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(facilityHasCapability(Object.values(world.facilityComponentsById), dormitory.id, 'PLAYER_RESIDENTIAL', onDate)).toBe(true)
     const room = world.facilityComponentsById[components[0]!.id]!
@@ -208,7 +208,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:12-vip', facilityId: arena.id, type: 'VIP_BOX', status: 'ACTIVE', quantity: 20 }),
       createFacilityComponent({ id: 'component:12-accessible', facilityId: arena.id, type: 'ACCESSIBLE_SEATING_AREA', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     expect(componentsOfFacilityByCategory(Object.values(world.facilityComponentsById), arena.id, 'SPECTATOR', onDate)).toHaveLength(3)
   })
@@ -221,7 +221,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const treatmentRoom = createFacilityComponent({ id: 'component:13-treatment', facilityId: facility.id, type: 'TREATMENT_ROOM', status: 'ACTIVE', specification: { kind: 'CAPACITY', unit: 'TREATMENT_STATIONS', amount: 4 } })
     const meetingRoom = createFacilityComponent({ id: 'component:13-meeting', facilityId: facility.id, type: 'MEETING_ROOM', status: 'ACTIVE', specification: { kind: 'CAPACITY', unit: 'SEATS', amount: 25 } })
     const parking = createFacilityComponent({ id: 'component:13-parking', facilityId: facility.id, type: 'PARKING', status: 'ACTIVE', specification: { kind: 'CAPACITY', unit: 'PARKING_SPACES', amount: 500 } })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [lockerRoom, treatmentRoom, meetingRoom, parking] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [lockerRoom, treatmentRoom, meetingRoom, parking] })
     expect(world.facilityComponentsById[lockerRoom.id]!.specification).toEqual({ kind: 'CAPACITY', unit: 'LOCKERS', amount: 18 })
     expect(world.facilityComponentsById[treatmentRoom.id]!.specification).toEqual({ kind: 'CAPACITY', unit: 'TREATMENT_STATIONS', amount: 4 })
     expect(world.facilityComponentsById[meetingRoom.id]!.specification).toEqual({ kind: 'CAPACITY', unit: 'SEATS', amount: 25 })
@@ -233,7 +233,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const place = createPlace({ id: 'place:14', kind: 'CITY', name: 'City 14' })
     const facility = createFacility({ id: 'facility:14', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Arena 14' })
     const pressRoom = createFacilityComponent({ id: 'component:14-press', facilityId: facility.id, type: 'PRESS_CONFERENCE_ROOM', status: 'ACTIVE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [pressRoom] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [pressRoom] })
     const onDate = parseGameDate('2030-01-01')
     expect(facilitiesWithCapability(Object.values(world.facilityComponentsById), 'PRESS_CONFERENCE', onDate)).toEqual([facility.id])
   })
@@ -243,7 +243,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const place = createPlace({ id: 'place:15', kind: 'CITY', name: 'City 15' })
     const facility = createFacility({ id: 'facility:15', placeId: place.id, type: 'STORAGE', purposes: ['STORAGE'], status: 'ACTIVE', canonicalName: 'Storage 15' })
     const storageRoom = createFacilityComponent({ id: 'component:15-storage', facilityId: facility.id, type: 'STORAGE', status: 'ACTIVE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [storageRoom] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [storageRoom] })
     const onDate = parseGameDate('2030-01-01')
     expect(facilityHasCapability(Object.values(world.facilityComponentsById), facility.id, 'MEDICAL_IMAGING', onDate)).toBe(false)
     expect(capabilitiesOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate)).toEqual([])
@@ -259,7 +259,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
       createFacilityComponent({ id: 'component:16-physio', facilityId: facility.id, type: 'PHYSIO_ROOM', status: 'ACTIVE' }),
       createFacilityComponent({ id: 'component:16-film', facilityId: facility.id, type: 'FILM_ROOM', status: 'ACTIVE' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: components })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: components })
     const onDate = parseGameDate('2030-01-01')
     const capabilities = capabilitiesOfFacility(Object.values(world.facilityComponentsById), facility.id, onDate)
     expect(capabilities).toEqual(['BASKETBALL_TRAINING', 'PHYSIOTHERAPY', 'STRENGTH_TRAINING', 'VIDEO_ANALYSIS'].sort())
@@ -272,7 +272,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const courtA = createFacilityComponent({ id: 'component:17-a', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const courtB = createFacilityComponent({ id: 'component:17-b', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [courtA, courtB],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:17-whole', facilityId: facility.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
@@ -288,7 +288,7 @@ describe('Club Facilities & Infrastructure V2 — Anatomy & Capabilities (CFI3)'
     const activeCourt = createFacilityComponent({ id: 'component:18-active', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const closedCourt = createFacilityComponent({ id: 'component:18-closed', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'CLOSED', openedAt: '2015-01-01', closedAt: '2024-01-01' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [activeCourt, closedCourt],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:18-whole', facilityId: facility.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2010-01-01' })],

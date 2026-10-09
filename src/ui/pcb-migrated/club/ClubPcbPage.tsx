@@ -11,7 +11,7 @@ import DraggableSubnav from './components/DraggableSubnav'
 import ClubAnalytics from './components/club/ClubAnalytics'
 import ClubBoard from './components/club/ClubBoard'
 import ClubDashboard from './components/club/ClubDashboard'
-import ClubFacilities from './components/club/ClubFacilities'
+import { FacilitiesWorkspace } from '@/ui-ng/applications/facilities/FacilitiesWorkspace'
 import { FinancesWorkspace } from '@/ui-ng/applications/finances/FinancesWorkspace'
 import ClubHistory from './components/club/ClubHistory'
 import ClubStaffAssignments from './components/club/ClubStaffAssignments'
@@ -25,8 +25,7 @@ const analytics = { league_name: 'ACB', season_label: '2026/27', updated_at: 0, 
 
 export function ClubPcbPage({ initialTab = 'dashboard', onAcceptStaffOffer, onCompleteStaffInterview, onCreateStaffOffer, onDeclineStaffOffer, onFireStaff, onStartStaffCandidacy, onStartStaffInterview, world }: { readonly initialTab?: ClubTab; readonly onAcceptStaffOffer?: (offerId: string) => void; readonly onCompleteStaffInterview?: (candidacyId: string) => void; readonly onCreateStaffOffer?: (candidacyId: string) => void; readonly onDeclineStaffOffer?: (offerId: string) => void; readonly onFireStaff?: (staffId: StaffPersonId) => void; readonly onStartStaffCandidacy?: (roleId: StaffRoleId, staffId: StaffPersonId) => void; readonly onStartStaffInterview?: (candidacyId: string) => void; readonly world?: GameWorld }) {
   const [tab, setTab] = useState<ClubTab>(initialTab)
-  const [facilities, setFacilities] = useState(clubFixtures.facilities)
-  const [balance, setBalance] = useState(850000)
+  const balance = 850000 // Existing Board preview only; never a Facilities balance.
   const [confidence, setConfidence] = useState(76)
   const [selectedPlayer, setSelectedPlayer] = useState<(typeof players)[number] | null>(null)
   const staffData = world === undefined ? undefined : getCanonicalStaffData(world)
@@ -38,7 +37,7 @@ export function ClubPcbPage({ initialTab = 'dashboard', onAcceptStaffOffer, onCo
     <DraggableSubnav className="subnav club-subnav" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.club" />
     {tab === 'dashboard' && <ClubDashboard alerts={clubFixtures.alerts} cashSummary={cashSummary} boardConfidence={confidence} jobSecurity={82} leaguePosition={3} nextOpponent="Real Madrid" objectives={clubFixtures.objectives} onPlayerClick={setSelectedPlayer} reputation={68} teamDivision="ACB" teamName="Casademont Zaragoza" topPlayers={players} upcomingMatches={clubFixtures.matches} />}
     {selectedPlayer && <aside aria-label="Detalle de jugador" className="pcb-club__detail" style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, background: 'rgba(15,23,42,.6)', padding: 14 }}><header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0 }}>{selectedPlayer.name}</h3><button onClick={() => setSelectedPlayer(null)} type="button">Cerrar</button></header><dl style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto)', gap: 12, margin: 0 }}><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>PosiciÃ³n</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.bio.pos}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Edad</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.bio.age}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Potencial</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.potential}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Valor de mercado</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.market_value}</dd></div></dl></aside>}
-    {tab === 'facilities' && <ClubFacilities onUpgradeFacility={(facilityId: string) => { setBalance((value) => value - 50000); setFacilities((value) => ({ ...value, [facilityId]: { level: (value[facilityId]?.level ?? 0) + 1 } })) }} teamBudget={balance} teamFacilities={facilities} teamLevel={4} />}
+    {tab === 'facilities' && <FacilitiesWorkspace world={world} />}
     {tab === 'staff' && (staffData === undefined ? <section className="content-panel">No hay mundo de juego activo.</section> : <ClubStaffAssignments marketCandidates={staffData.marketCandidates} onAcceptStaffOffer={onAcceptStaffOffer} onCompleteStaffInterview={onCompleteStaffInterview} onCreateStaffOffer={onCreateStaffOffer} onDeclineStaffOffer={onDeclineStaffOffer} onFireStaff={onFireStaff} onStartStaffCandidacy={onStartStaffCandidacy} onStartStaffInterview={onStartStaffInterview} roles={staffData.roles} staffMembers={staffData.staffMembers} />)}
     {tab === 'board' && <ClubBoard confidence={confidence} currentMetrics={{ league_position: 3, wins: 16, balance }} currentObjectives={clubFixtures.objectives} onNegotiateObjectives={onNegotiateObjectives} season={22} />}
     {tab === 'finances' && (world ? <FinancesWorkspace world={world} /> : <section className="content-panel">No hay mundo de juego activo.</section>)}

@@ -1244,14 +1244,55 @@ from `FACILITY_DEVELOPMENT_PROJECT_ALLOWED_TRANSITIONS`, so a manager can only b
 engine accepts. Nothing is persisted: the workspace is recomputed from `GameWorld` on demand, so a
 save/load round-trip cannot desynchronize it.
 
-Deliberate gaps, reported rather than implemented: no world generates Facilities (the shipped
-prototype has none, and the canonical World DB bootstrap projects neither `places` nor `facilities`
-even though the source DB carries `organization.primary_place_id` and `match.facility_id`
-references), no project planning/blueprint authority exists (a manager cannot yet commission a
-project), no policy maps a maintenance need to an intervention (type, outcome, resulting condition),
-and no canonical ledger account catalog exists for capital payments or funded maintenance. Until an
-approved milestone adds that projection and generation authority, the Facilities workspace presents
-an honest empty state instead of fabricated data.
+BS17B provisions World DB physical facts through the native read-only bootstrap slice and
+`projectWorldDbPhysicalContent`. Source Facility, Place and team-use IDs are preserved and sorted;
+only recorded names, locations, capacities and structural associations are projected. A team
+association makes an asset visible but does not grant ownership or a sporting usage right. Unknown
+classification is `OTHER`, administrative status is `UNKNOWN`, and absent condition, standard,
+opening date and anatomy remain null or absent. Season labels are not precise temporal boundaries
+and do not create entitlements. Prototype, ACB and shared synthetic generators remain empty because
+they have no physical source content. CREATE_FACILITY accepts explicit purposes; older scopes
+without them use `OTHER`, never an automatic `TRAINING` purpose.
+
+PCB's Facilities tab renders the same NG workspace and read model; local levels, upgrades and
+Facilities balance are no longer reachable. UI physical capabilities and recorded financial facts
+do not promise Training, Medical or Talent bonuses or spending permission.
+
+BS17C keeps continuous condition loss in canonical numeric snapshots; display rounding no longer
+changes monthly versus interval wear. No rate, threshold or utilization coefficient is recalibrated.
+Missing condition remains unknown. The existing utilization fallback is explicitly 2x the base rate
+(ratio 1 through `1 + ratio`); no real utilization source is claimed. Same-day condition/lifecycle
+records have an optional command sequence (legacy absence means zero), preserved by Save V4.
+Sequences order real operations, not simulated progress; superseded observations cannot outlive
+their successor. Repair identity records prevent repeat application without a parallel ledger.
+
+`FacilityPhysicalOperations` derives scoped work restrictions and physical availability. Disjoint
+component work may coexist; overlapping/retired/planned targets are blocked. Pausing preserves work
+restrictions and phase state; the final concurrent facility-wide operation restores the recorded
+prior lifecycle. Retired component identity remains queryable before its closure date. CFI8 courts,
+capabilities and the club inventory use the same physical restrictions without sporting modifiers.
+Nominal capacity retains its recorded unit; measured operating capacity and occupancy remain unknown.
+
+BS17D-P0 adds a pure sporting-operation resolver in `facilitiesSporting`, using the same CFI
+anatomy, Team rights and BS17C physical restrictions. The approved v1 Training registry feeds
+the actual scheduled-session executor: known unavailable resources block the session without
+effects; unknown context preserves legacy continuity with explicit evidence. Historical physical
+attempts are optional, JSON-safe session evidence, not persisted current Facilities projections.
+Training retains all outcome formulas and its sole agenda. Medical has no specialized material
+procedure consumer yet; clinical actions and BS12C recovery remain unchanged. Talent awaits
+authorized BS15 ancestry; no allocator, player supply or Finance authority is added.
+
+Planned dates are not executable construction durations. Calendar continues the existing monthly
+condition phase, never fabricating project percentages or automatic completion. Explicit CFI6
+completion is a command recording physical scope completion; incomplete or future-dated actual
+phase completion facts block it. No minimum duration is inferred from a plan. Source phase facts
+are inspected and pause/resume/cancel propagate their existing states, without a new work scheduler.
+The canonical UI exposes physical availability, units, affected work, phase blockers and history.
+
+Deliberate gaps remain: no project planning/blueprint authority, no policy mapping a maintenance
+need to an intervention, no canonical ledger account catalog for capital payments or funded
+maintenance, and no generation of absent physical anatomy. BS17C/D/E/F own those later concerns;
+BS17B does not introduce economic or sporting effects.
 
 ## Board confidence initialization
 

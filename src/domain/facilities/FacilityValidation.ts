@@ -405,7 +405,7 @@ function assertOwnershipDoesNotOverlapPast100(interests: readonly FacilityOwners
  * adapter rather than renaming either family's fields or generalizing the shared helper's field
  * names, so no existing CFI1/CFI2 caller changes shape.
  */
-function assertNoDuplicateEffectivePeriods<T extends { readonly effectiveFrom: GameDate; readonly effectiveTo: GameDate | null }>(records: readonly T[], key: (record: T) => string, label: string): void {
+function assertNoDuplicateEffectivePeriods<T extends { readonly effectiveFrom: GameDate; readonly effectiveTo: GameDate | null; readonly sequence?: number }>(records: readonly T[], key: (record: T) => string, label: string): void {
   const byKey = new Map<string, T[]>()
   for (const record of records) {
     const k = key(record)
@@ -415,7 +415,17 @@ function assertNoDuplicateEffectivePeriods<T extends { readonly effectiveFrom: G
   }
   for (const bucket of byKey.values()) {
     if (bucket.length < 2) continue
-    assertNoOverlap(bucket.map((item, index) => ({ id: String(index), validFrom: item.effectiveFrom, validTo: item.effectiveTo })), label)
+    // Sequenced observations within a day are ordered history, not competing periods.
+    // Unsequenced duplicates and overlapping different-day periods remain invalid.
+    const days = new Map<string, T[]>()
+    for (const item of bucket) days.set(item.effectiveFrom, [...(days.get(item.effectiveFrom) ?? []), item])
+    const latest = [...days.values()].map((items) => {
+      if (new Set(items.map((item) => item.sequence ?? 0)).size !== items.length) throw new FacilityValidationError(`${label} has overlapping same-day records without unique sequence`)
+      const newest = [...items].sort((a,b) => (b.sequence ?? 0) - (a.sequence ?? 0))[0]!
+      if (newest.effectiveTo !== null && items.some((item) => item.effectiveTo === null || item.effectiveTo > newest.effectiveTo!)) throw new FacilityValidationError(`${label} has overlapping superseded records beyond their successor`)
+      return newest
+    })
+    assertNoOverlap(latest.map((item, index) => ({ id: String(index), validFrom: item.effectiveFrom, validTo: item.effectiveTo })), label)
   }
 }
 

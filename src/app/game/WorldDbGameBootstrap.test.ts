@@ -611,6 +611,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       advanceDaySpy.mockRestore()
     }
 
+    process.stdout.write(`[RWS legacy long-run stop] ${JSON.stringify({ finalDate: result!.finalDate, stopReason: result!.stopReason })}\n`)
     const { world } = result!
     const seasons = Object.values(world.seasons)
     const seasonIds = seasons.map((season) => season.id)
@@ -631,6 +632,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       startDate,
       targetDate,
       finalDate: result!.finalDate,
+      stopReason: result!.stopReason,
       expectedCycleIds,
       observedCycleIds,
       applications: observedApplications,

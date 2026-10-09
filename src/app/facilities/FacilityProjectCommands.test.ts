@@ -110,12 +110,13 @@ describe('MX0.6 club facility project commands', () => {
 
   it('refuses an unusable capital commitment without touching the world', () => {
     const scenario = createFacilityClubScenario()
+    const before = JSON.stringify(scenario.world)
 
     expect(startClubFacilityProject(scenario.world, { teamId: scenario.teamId, projectId: scenario.scheduledProjectId, commitment: { currencyCode: 'EUR', minorUnits: 0 } })).toMatchObject({ status: 'BLOCKED', reasons: ['INVALID_COMMITMENT_AMOUNT'] })
     expect(startClubFacilityProject(scenario.world, { teamId: scenario.teamId, projectId: scenario.scheduledProjectId, commitment: { currencyCode: 'EUR', minorUnits: -100 } })).toMatchObject({ status: 'BLOCKED', reasons: ['INVALID_COMMITMENT_AMOUNT'] })
     expect(startClubFacilityProject(scenario.world, { teamId: scenario.teamId, projectId: scenario.scheduledProjectId, commitment: { currencyCode: '   ', minorUnits: 100 } })).toMatchObject({ status: 'BLOCKED', reasons: ['COMMITMENT_CURRENCY_REQUIRED'] })
     expect(scenario.world.facilityDevelopmentProjectsById[scenario.scheduledProjectId]!.status).toBe('SCHEDULED')
-    expect(scenario.world.financialCommitmentsById).toEqual({})
+    expect(JSON.stringify(scenario.world)).toBe(before)
   })
 
   it('runs the canonical pause/resume/complete lifecycle and applies the project scope on completion', () => {

@@ -3,6 +3,7 @@ import { isFacilityDevelopmentProjectTerminalStatus, type FacilityDevelopmentPro
 import type { FacilityDevelopmentProjectId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import {
+  projectPhysicalBlocker,
   cancelFacilityDevelopmentProject,
   completeFacilityDevelopmentProject,
   pauseFacilityDevelopmentProject,
@@ -25,6 +26,10 @@ import { resolveClubFacilityAuthority } from './ClubFacilitiesReadModel'
  */
 
 export const CLUB_FACILITY_COMMAND_REASONS = [
+  'PHYSICAL_ASSET_UNAVAILABLE',
+  'PHYSICAL_COMPLETION_BEFORE_START',
+  'PHYSICAL_WORK_CONFLICT',
+  'PHYSICAL_PHASES_INCOMPLETE',
   'UNKNOWN_TEAM',
   'PROJECT_NOT_FOUND',
   'NOT_CLUB_PROJECT',
@@ -116,6 +121,8 @@ export function startClubFacilityProject(world: GameWorld, input: StartClubFacil
   const startable = project.status === 'PLANNED' || project.status === 'APPROVED' || project.status === 'SCHEDULED'
   if (!startable) return blocked(world, statusMismatch(project.status, 'PROJECT_NOT_STARTABLE'))
   const startedAt = input.startedAt ?? world.currentDate
+  const physicalBlocker = projectPhysicalBlocker(world, project, 'START', startedAt)
+  if (physicalBlocker !== null) return blocked(world, physicalBlocker)
   if (input.commitment === undefined) {
     const started = startFacilityDevelopmentProject(world, project.id, startedAt)
     return applied(started.world, started.outcome)
@@ -156,6 +163,8 @@ export function completeClubFacilityProject(world: GameWorld, input: CompleteClu
   const resolved = resolveClubProject(world, input.teamId, input.projectId)
   if ('reason' in resolved) return blocked(world, resolved.reason)
   if (resolved.project.status !== 'IN_PROGRESS') return blocked(world, statusMismatch(resolved.project.status, 'PROJECT_NOT_IN_PROGRESS'))
+  const physicalBlocker = projectPhysicalBlocker(world, resolved.project, 'COMPLETE', input.completedAt ?? world.currentDate)
+  if (physicalBlocker !== null) return blocked(world, physicalBlocker)
   const completed = completeFacilityDevelopmentProject(world, resolved.project.id, input.completedAt ?? world.currentDate)
   return applied(completed.world, completed.outcome)
 }
@@ -176,6 +185,10 @@ export const CLUB_FACILITY_COMMAND_REASON_TEXT: Readonly<Record<ClubFacilityComm
   PROJECT_ALREADY_TERMINAL: 'That project is already completed or cancelled.',
   PROJECT_NOT_STARTABLE: 'That project cannot be started from its current status.',
   PROJECT_NOT_IN_PROGRESS: 'That project is not in progress right now.',
+  PHYSICAL_ASSET_UNAVAILABLE: 'The physical target is planned, retired or demolished.',
+  PHYSICAL_COMPLETION_BEFORE_START: 'Physical completion cannot precede actual start.',
+  PHYSICAL_WORK_CONFLICT: 'Another active or paused project affects the same physical scope.',
+  PHYSICAL_PHASES_INCOMPLETE: 'Recorded physical phases are not completed at this date.',
   PROJECT_NOT_PAUSED: 'That project is not paused.',
   COMMITMENT_CURRENCY_REQUIRED: 'Enter the currency of the capital commitment.',
   INVALID_COMMITMENT_AMOUNT: 'The capital commitment must be a positive amount.',

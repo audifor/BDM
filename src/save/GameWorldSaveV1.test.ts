@@ -10,22 +10,21 @@ import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
 import { executeTeamTraining } from '@/engine/training'
 import { advanceDay } from '@/engine/calendar'
 
-/**
- * MX0.3: a legacy V1/V2/V3 payload is a strict subset of the current world. `clubStrategicStatesByTeamId` and
- * `gmPlanStatesById` are owned by the Save V4 layer (a V1/V2/V3 file never carries them, exactly as
- * `migrateGameWorldSaveV3ToV4` states by projecting them empty), so a V1 round-trip deterministically returns them
- * empty — that is the schema boundary, not state loss: `GameWorldSaveV4.test.ts` owns the guarantee that the
- * *current* save preserves them. Every other layer is still asserted to survive V1 exactly, like
- * `withoutCoachRpgProfiles` does for the Coach RPG layer.
- */
-function withoutV4OwnedLayers<T extends { readonly clubStrategicStatesByTeamId: unknown; readonly gmPlanStatesById: unknown }>(world: T): Omit<T, 'clubStrategicStatesByTeamId' | 'gmPlanStatesById'> {
-  const { clubStrategicStatesByTeamId: _clubStrategy, gmPlanStatesById: _gmPlans, ...v1Contract } = world
-  return v1Contract
+/** V1 is a legacy schema subset: compare every field its payload actually carries.
+ * Finance V2, Talent, Facilities and other V4-only authorities are checked by the V4 suites.
+ * This does not expand the legacy format or suppress differences in its persisted fields. */
+function v1OwnedTruth(world: GameWorld) {
+  const payload = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z').payload
+  return {
+    ...payload,
+    personalities: payload.personalities === undefined ? undefined : [...payload.personalities].sort((a, b) => String(a.coachId).localeCompare(String(b.coachId))),
+    morale: payload.morale === undefined ? undefined : [...payload.morale].sort((a, b) => String(a.personId).localeCompare(String(b.personId))),
+  }
 }
 
-/** The V1-owned contract of a round-trip: identical except the two layers only the current (V4) save carries. */
+/** The V1-owned contract of a round-trip: identical persisted facts, with identity-keyed personality/morale collections compared independent of insertion order. */
 function expectV1RoundTrip(loaded: GameWorld, world: GameWorld): void {
-  expect(withoutV4OwnedLayers(loaded)).toEqual(withoutV4OwnedLayers(world))
+  expect(v1OwnedTruth(loaded)).toEqual(v1OwnedTruth(world))
   // The V4-owned layers must come back exactly empty, never partially populated by the legacy read.
   expect(loaded.clubStrategicStatesByTeamId).toEqual({})
   expect(loaded.gmPlanStatesById).toEqual({})
@@ -241,7 +240,7 @@ describe('GameWorldSaveV1', () => {
 
     expect(loaded.matchStatLogsByGameId).toEqual(completed.matchStatLogsByGameId)
     // Deterministic next result: a world loaded from a V1 save must resolve the same match as the original.
-    expect(withoutV4OwnedLayers(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay, 12345)))).toEqual(withoutV4OwnedLayers(withoutCoachRpgProfiles(playUserGame(original, 12345))))
+    expect(v1OwnedTruth(playUserGame(loadedBeforePlay, 12345))).toEqual(v1OwnedTruth(playUserGame(original, 12345)))
   })
 
   it('enriches legacy players without bio deterministically', () => {
@@ -291,8 +290,3 @@ describe('GameWorldSaveV1', () => {
     expect(() => deserializeGameWorldV1({ ...envelope, payload: { ...envelope.payload, players } })).toThrow()
   })
 })
-
-function withoutCoachRpgProfiles<T extends { readonly coachRpgProfilesByCoachId: unknown }>(world: T): Omit<T, 'coachRpgProfilesByCoachId'> {
-  const { coachRpgProfilesByCoachId: _rpg, ...remaining } = world
-  return remaining
-}

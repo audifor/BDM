@@ -70,6 +70,8 @@ export function isFacilityTechnicalStandard(value: unknown): value is FacilityTe
  * granularidad suficiente."
  */
 export interface FacilityComponentConditionRecord {
+  /** Canonical command order within one day; old records default to zero. */
+  readonly sequence?: number
   readonly id: FacilityComponentConditionRecordId
   readonly componentId: FacilityComponentId
   readonly effectiveFrom: GameDate
@@ -81,6 +83,8 @@ export interface FacilityComponentConditionRecord {
 }
 
 export interface CreateFacilityComponentConditionRecordInput {
+  /** Canonical command order within one day; old records default to zero. */
+  readonly sequence?: number
   readonly id: FacilityComponentConditionRecordId | string
   readonly componentId: FacilityComponentId | string
   readonly effectiveFrom: GameDate | string
@@ -92,6 +96,7 @@ export interface CreateFacilityComponentConditionRecordInput {
 }
 
 export function createFacilityComponentConditionRecord(input: CreateFacilityComponentConditionRecordInput): FacilityComponentConditionRecord {
+  if (input.sequence !== undefined && (!Number.isSafeInteger(input.sequence) || input.sequence < 0)) throw new RangeError('Physical record sequence must be a non-negative safe integer')
   if (!isFacilityServiceability(input.serviceability)) throw new TypeError(`Facility component condition record serviceability is invalid: ${String(input.serviceability)}`)
   const technicalStandard = input.technicalStandard === undefined || input.technicalStandard === null ? null : input.technicalStandard
   if (technicalStandard !== null && !isFacilityTechnicalStandard(technicalStandard)) throw new TypeError(`Facility component condition record technicalStandard is invalid: ${String(technicalStandard)}`)
@@ -102,6 +107,7 @@ export function createFacilityComponentConditionRecord(input: CreateFacilityComp
   const notes = input.notes === undefined || input.notes === null ? null : input.notes
   if (notes !== null && notes.trim().length === 0) throw new TypeError('Facility component condition record notes must be a non-empty string or null')
   return Object.freeze({
+    ...(input.sequence === undefined ? {} : { sequence: input.sequence }),
     id: facilityComponentConditionRecordIdFromString(input.id),
     componentId: facilityComponentIdFromString(input.componentId),
     effectiveFrom,
@@ -175,13 +181,13 @@ function isActiveOn(effectiveFrom: GameDate, effectiveTo: GameDate | null, onDat
   return compareGameDates(effectiveFrom, onDate) <= 0 && (effectiveTo === null || compareGameDates(onDate, effectiveTo) <= 0)
 }
 
-/** Deterministic: among records active on the date, the one with the latest `effectiveFrom` wins; ties broken by record ID. `undefined` means no record ever existed for this component — the caller must treat this as UNKNOWN, never as a default FULL/100 state. */
+/** Deterministic: among records active on the date, the one with the latest `effectiveFrom` wins; same-day command sequence precedes the legacy record-ID tie-break. `undefined` means no record ever existed for this component — the caller must treat this as UNKNOWN, never as a default FULL/100 state. */
 export function componentConditionAt(records: readonly FacilityComponentConditionRecord[], componentId: FacilityComponentId, onDate: GameDate): FacilityComponentConditionRecord | undefined {
   const candidates = records.filter((record) => record.componentId === componentId && isActiveOn(record.effectiveFrom, record.effectiveTo, onDate))
   if (candidates.length === 0) return undefined
   return [...candidates].sort((a, b) => {
     const byDate = compareGameDates(b.effectiveFrom, a.effectiveFrom)
-    return byDate !== 0 ? byDate : b.id.localeCompare(a.id)
+    return byDate !== 0 ? byDate : (b.sequence ?? 0) - (a.sequence ?? 0) || b.id.localeCompare(a.id)
   })[0]
 }
 

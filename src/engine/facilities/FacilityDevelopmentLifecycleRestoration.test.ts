@@ -21,7 +21,7 @@ function fixture(initialStatus: 'ACTIVE' | 'TEMPORARILY_CLOSED' | 'PARTIALLY_CLO
   const place = createPlace({ id: 'place:lifecycle-fix-1', kind: 'CAMPUS', name: 'Lifecycle Fix Campus 1' })
   const facility = createFacility({ id: 'facility:lifecycle-fix-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: initialStatus, canonicalName: 'Lifecycle Fix Center 1' })
   const court = createFacilityComponent({ id: 'component:lifecycle-fix-court', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
-  const base = updateGameWorld(world, { places: [place], facilities: [facility], facilityComponents: [court] })
+  const base = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [court] })
   return { world: base, organization, place, facility, court }
 }
 

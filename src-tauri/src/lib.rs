@@ -1,5 +1,6 @@
 mod world_db;
 mod world_db_bootstrap;
+mod world_db_facilities;
 mod world_db_matches;
 mod world_db_rules;
 mod world_db_selection;

@@ -22,7 +22,7 @@ describe('simulated NCAA development career', () => {
     expect(ecosystem).toMatchObject({ kind: 'ncaaLike', category: 'men' })
     expect(program).toBeDefined()
     expect(cycle).toMatchObject({ status: 'open', sourceSeasonId: season.id })
-    expect(cycle?.institutionalSigningPolicies).toContainEqual(expect.objectContaining({ programTeamId: program, seasonId: season.id, provenance: 'SIMULATED_CARRY_FORWARD', basedOnSeasonId: season.id }))
+    expect(cycle?.institutionalSigningPolicies).toContainEqual(expect.objectContaining({ programTeamId: program, seasonId: season.id, provenance: 'INSTITUTIONAL_POLICY', finalAidSigningDate: cycle?.closesOn }))
     const year = Number(season.startDate.slice(0, 4))
     expect(cycle?.calendar).toMatchObject({ provenance: 'SIMULATED_CARRY_FORWARD', derivedSeason: `${year}-${String(year + 1).slice(-2)}` })
     expect(season.worldCompetitionFormat?.variants[0]?.nodes.some((node) => node.role === 'FINAL')).toBe(true)
@@ -85,7 +85,7 @@ describe('simulated NCAA development career', () => {
     const discovered = discoverRecruitingTalentCandidate(world, cycle.id, program)
     expect(discovered.ok).toBe(true)
     if (!discovered.ok) return
-    const result = simulateUntilDate(discovered.value, '2033-02-02' as never)
+    const result = simulateUntilDate(discovered.value, '2033-02-02' as never, () => 15015)
     const ncaaCycles = Object.values(result.world.recruitingCyclesById).filter((cycle) => result.world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike')
 
     expect(result.finalDate).toBe('2033-02-02')

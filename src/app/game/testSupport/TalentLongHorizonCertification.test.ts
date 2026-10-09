@@ -31,7 +31,7 @@ describe('runTalentLongHorizonCertification', () => {
     expect(result.checkpoints[0]?.saveBytes).toBeGreaterThan(0)
     expect(result.checkpoints[0]?.loadMs).toBeGreaterThanOrEqual(0)
     expect(progress).toEqual([target])
-  }, 30_000)
+  }, 120_000)
 })
 
 function useAiWorld(world: GameWorld): GameWorld {

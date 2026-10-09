@@ -188,7 +188,7 @@ describe('Club needs assessment', () => {
     const amount = { currencyCode: 'EUR', minorUnits: 1_000 }
     const opening = createFinancialTransaction({ id: `club-needs-opening:${team.id}`, organizationId: team.organizationId, effectiveOn: base.currentDate, transactionType: 'OPENING_BALANCE', amount, postings: [{ accountId: cash.id, direction: 'DEBIT', amount }, { accountId: equity.id, direction: 'CREDIT', amount }], provenance: { kind: 'TEST', id: 'club-needs' } })
     const payable = createPayable({ id: `club-needs-payable:${team.id}`, organizationId: team.organizationId, amount: { currencyCode: 'EUR', minorUnits: 10_000 }, recognizedOn: base.currentDate, dueOn: addDays(base.currentDate, 10), counterparty: { kind: 'EXTERNAL', label: 'Supplier' }, provenance: { kind: 'TEST', id: 'club-needs' } })
-    const world = updateGameWorld(repositionRoster(base, team.id, 'SG'), { financialAccounts: [cash, equity], financialTransactions: [opening], payables: [payable] })
+    const world = updateGameWorld(repositionRoster(base, team.id, 'SG'), { financialAccounts: [...Object.values(base.financialAccountsById), cash, equity], financialTransactions: [...Object.values(base.financialTransactionsById), opening], payables: [...Object.values(base.payablesById), payable] })
     const needs = assessClubNeeds(world, team.id)
     expect(needs.financialContext).toBe('STRESSED')
     expect(findNeed(needs.needs, 'FINANCIAL_PRESSURE')?.strategicFit).toBe('HIGH')

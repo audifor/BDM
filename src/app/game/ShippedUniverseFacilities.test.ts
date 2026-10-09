@@ -5,20 +5,13 @@ import { ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { getUserTeam } from '@/engine/calendar'
 import { buildClubFacilitiesWorkspaceModel, resolveClubFacilityAuthority } from '@/app/facilities'
 
-/**
- * MX0.6 closure — shipped-universe Facilities reachability.
- *
- * This suite pins the audited production truth: no shipped universe creation path
- * (`createNewGame` / `createConfiguredGame`, prototype and ACB-test universes; the World DB Spain
- * bootstrap maps no `places`/`facilities` collection at all) creates a single canonical Facility or
- * Place. Facilities gameplay therefore cannot be reached from a real career today, and the product
- * surface must stay honest about it instead of showing a fabricated page. When an approved milestone
- * adds facility generation, this suite is the one that must change.
- */
+/** BS17B: sources without physical content remain empty. World DB physical
+ * reachability is separately tested using the actual read-only native source export. */
 function assertShippedUniverseHasNoFacilities(label: string, world: ReturnType<typeof createNewGame>) {
   const userTeam = getUserTeam(world)
   expect(userTeam, `${label}: user club`).toBeDefined()
-  expect(Object.keys(world.placesById), `${label}: places`).toEqual([])
+  const talentPlaces = [...new Set(Object.values(world.talentCohortsById).map(cohort => String(cohort.placeId)))].sort()
+  expect(Object.keys(world.placesById).sort(), `${label}: only Talent origin Places`).toEqual(talentPlaces)
   expect(Object.keys(world.facilitiesById), `${label}: facilities`).toEqual([])
   expect(Object.keys(world.facilityComponentsById), `${label}: components`).toEqual([])
   expect(Object.keys(world.facilityUsageRightsById), `${label}: usage rights`).toEqual([])
@@ -43,15 +36,15 @@ function assertShippedUniverseHasNoFacilities(label: string, world: ReturnType<t
 }
 
 describe('MX0.6 closure — shipped universes contain no canonical Facility (audited truth)', () => {
-  it('leaves the prototype career with zero canonical Places and Facilities', () => {
+  it('leaves the prototype career with only Talent origin Places and no Facilities', () => {
     assertShippedUniverseHasNoFacilities('createNewGame', createNewGame())
   })
 
-  it('leaves the configured prototype career with zero canonical Places and Facilities', () => {
+  it('leaves the configured prototype career with only Talent origin Places and no Facilities', () => {
     assertShippedUniverseHasNoFacilities('createConfiguredGame(prototype)', createConfiguredGame({ universeId: 'prototype' }))
   })
 
-  it('leaves the ACB test career with zero canonical Places and Facilities', () => {
+  it('leaves the ACB test career with only Talent origin Places and no Facilities', () => {
     assertShippedUniverseHasNoFacilities('createConfiguredGame(acb2026)', createConfiguredGame({ universeId: ACB_TEST_UNIVERSE_ID }))
   })
 })

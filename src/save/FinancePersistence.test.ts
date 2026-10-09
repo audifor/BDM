@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION } from '@/app/game/createNewGame'
+import { generateWorld } from '@/engine/world/WorldGenerator'
 import { updateGameWorld } from '@/domain/world'
 import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile } from '@/domain/finance'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from './GameWorldSaveV4'
+
+// CF1 fixtures precede career payroll and genuinely contain no later ledger-linked facts.
+const createFinanceFixtureWorld = () => generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true, includeNcaaLike: true })
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 
 describe('CF1 finance persistence', () => {
   it('round-trips the complete finance surface through Save V4', () => {
-    const base = createNewGame()
+    const base = createFinanceFixtureWorld()
     const organizationId = Object.values(base.organizationsById)[0]!.id
     const accounts = [
       createFinancialAccount({ id: 'finance:cash', organizationId, accountType: 'CASH', currencyCode: 'EUR' }),
@@ -24,7 +28,7 @@ describe('CF1 finance persistence', () => {
   })
 
   it('loads a pre-CF1 Save V4 payload with empty finance collections', () => {
-    const current = serializeGameWorldV4(createNewGame(), savedAt)
+    const current = serializeGameWorldV4(createFinanceFixtureWorld(), savedAt)
     const { financialAccounts: _accounts, financialTransactions: _transactions, fiscalPeriods: _periods, organizationFinancialProfiles: _profiles, ...legacyPayload } = current.payload
     const restored = deserializeGameWorldV4({ ...current, payload: legacyPayload })
     expect(restored.financialAccountsById).toEqual({})

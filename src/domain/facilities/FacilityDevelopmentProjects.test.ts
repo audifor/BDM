@@ -27,7 +27,7 @@ function fixture() {
   const place = createPlace({ id: 'place:dev-1', kind: 'CAMPUS', name: 'Development Campus 1' })
   const facility = createFacility({ id: 'facility:dev-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Existing Training Center' })
   const court = createFacilityComponent({ id: 'component:dev-court-1', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
-  const base = updateGameWorld(world, { places: [place], facilities: [facility], facilityComponents: [court] })
+  const base = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [court] })
   return { world: base, organization, place, facility, court }
 }
 
@@ -301,7 +301,7 @@ describe('Club Facilities & Infrastructure V2 — Construction, Renovation & Dev
       createdAt: '2029-11-01',
     })
     expect(() => updateGameWorld(f.world, {
-      places: [otherPlace],
+      places: [...Object.values(f.world.placesById), otherPlace],
       facilities: [otherFacility],
       facilityComponents: [otherCourt],
       facilityDevelopmentProjects: [project],

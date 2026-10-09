@@ -155,7 +155,7 @@ describe('GM decision context', () => {
     const opening = createFinancialTransaction({ id: `bs9c-opening:${club.id}`, organizationId: club.organizationId, effectiveOn: base.currentDate, transactionType: 'OPENING_BALANCE', amount, postings: [{ accountId: cash.id, direction: 'DEBIT', amount }, { accountId: equity.id, direction: 'CREDIT', amount }], provenance: { kind: 'TEST', id: 'bs9c' } })
     const payable = createPayable({ id: `bs9c-payable:${club.id}`, organizationId: club.organizationId, amount: { currencyCode: 'EUR', minorUnits: 10_000 }, recognizedOn: base.currentDate, dueOn: addDays(base.currentDate, 10), counterparty: { kind: 'EXTERNAL', label: 'Supplier' }, provenance: { kind: 'TEST', id: 'bs9c' } })
     const short = shortRoster(base, club.id)
-    const world = updateGameWorld(short, { financialAccounts: [cash, equity], financialTransactions: [opening], payables: [payable] })
+    const world = updateGameWorld(short, { financialAccounts: [...Object.values(base.financialAccountsById), cash, equity], financialTransactions: [...Object.values(base.financialTransactionsById), opening], payables: [...Object.values(base.payablesById), payable] })
     const context = assessGMDecisionContext(world, club.id)
     expect(context.needsAssessment.financialContext).toBe('STRESSED')
     expect(context.needsAssessment.needs.some((need) => need.kind === 'ROSTER_SIZE')).toBe(true)

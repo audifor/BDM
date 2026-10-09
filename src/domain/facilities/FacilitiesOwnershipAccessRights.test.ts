@@ -48,7 +48,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:1', kind: 'CITY', name: 'City 1' })
     const arena = arenaAt('facility:1', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:1', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2000-01-01' })],
       facilityOperatorAssignments: [createFacilityOperatorAssignment({ id: 'op:1', facilityId: arena.id, operatorOrganizationId: f.organizationA, validFrom: '2000-01-01' })],
@@ -64,7 +64,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const arena = arenaAt('facility:2', place.id)
     const thirdPartyOperator = f.organizationB
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:2', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.municipalOrg }, ownershipPercentage: 100, validFrom: '2000-01-01' })],
       facilityOperatorAssignments: [createFacilityOperatorAssignment({ id: 'op:2', facilityId: arena.id, operatorOrganizationId: thirdPartyOperator, validFrom: '2000-01-01' })],
@@ -83,7 +83,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:3', kind: 'CITY', name: 'City 3' })
     const arena = arenaAt('facility:3', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:3a', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 60, validFrom: '2020-01-01' }),
@@ -100,7 +100,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:4', kind: 'CITY', name: 'City 4' })
     const arena = arenaAt('facility:4', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:4-old', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2000-01-01', validTo: '2019-12-31' }),
@@ -116,7 +116,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:5', kind: 'CITY', name: 'City 5' })
     const arena = arenaAt('facility:5', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:5', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: null, validFrom: '2020-01-01' })],
     })
@@ -128,7 +128,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:6', kind: 'CITY', name: 'City 6' })
     const arena = arenaAt('facility:6', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:6a', facilityId: arena.id, teamId: f.teamA.id, purpose: 'HOME_VENUE', exclusivity: 'SHARED', validFrom: '2020-01-01' }),
@@ -145,7 +145,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:7', kind: 'CITY', name: 'City 7' })
     const arena = arenaAt('facility:7', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:7a', facilityId: arena.id, teamId: f.teamA.id, purpose: 'HOME_VENUE', exclusivity: 'EXCLUSIVE', validFrom: '2020-01-01' }),
@@ -162,7 +162,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
       createFacilityUsageRight({ id: 'usage:8a', facilityId: facility.id, teamId: f.teamA.id, purpose: 'TRAINING', exclusivity: 'SHARED', validFrom: '2020-01-01' }),
       createFacilityUsageRight({ id: 'usage:8b', facilityId: facility.id, teamId: f.teamB.id, purpose: 'TRAINING', exclusivity: 'SHARED', validFrom: '2020-01-01' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityUsageRights: rights })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityUsageRights: rights })
     expect(facilityRightsConflictsAt(Object.values(world.facilityUsageRightsById), facility.id, parseGameDate('2030-01-01'))).toEqual([])
   })
 
@@ -171,7 +171,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:9', kind: 'CAMPUS', name: 'Campus 9' })
     const trainingCenter = createFacility({ id: 'facility:9', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Training Center 9' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [trainingCenter],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:9a', facilityId: trainingCenter.id, teamId: f.teamA.id, purpose: 'TRAINING', exclusivity: 'SHARED', validFrom: '2020-01-01' }),
@@ -189,7 +189,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const courtA = createFacilityComponent({ id: 'component:10a', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const courtB = createFacilityComponent({ id: 'component:10b', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [trainingCenter],
       facilityComponents: [courtA, courtB],
       facilityUsageRights: [
@@ -209,7 +209,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:11', kind: 'CITY', name: 'City 11' })
     const arena = arenaAt('facility:11', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:11', facilityId: arena.id, organizationId: f.organizationA, purpose: 'ADMINISTRATION', validFrom: '2020-01-01' })],
     })
@@ -223,7 +223,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:12', kind: 'CITY', name: 'City 12' })
     const arena = arenaAt('facility:12', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:12', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2020-01-01' })],
     })
@@ -235,7 +235,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:13', kind: 'CITY', name: 'City 13' })
     const arena = arenaAt('facility:13', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOperatorAssignments: [createFacilityOperatorAssignment({ id: 'op:13', facilityId: arena.id, operatorOrganizationId: f.organizationA, validFrom: '2020-01-01' })],
     })
@@ -248,7 +248,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const fieldhouse = createFacility({ id: 'facility:14', placeId: place.id, type: 'MULTI_SPORT_COMPLEX', purposes: ['MATCH_HOSTING', 'TRAINING'], status: 'ACTIVE', canonicalName: 'Fieldhouse 14' })
     const athleticDept = f.organizationB
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [fieldhouse],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:14', facilityId: fieldhouse.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '1990-01-01' })],
       facilityControlRights: [createFacilityControlRight({ id: 'control:14', facilityId: fieldhouse.id, controller: { kind: 'ORGANIZATION', organizationId: athleticDept }, validFrom: '1990-01-01' })],
@@ -269,7 +269,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const mainArena = arenaAt('facility:15-main', place.id)
     const tempArena = arenaAt('facility:15-temp', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [mainArena, tempArena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:15-main', facilityId: mainArena.id, teamId: f.teamA.id, purpose: 'HOME_VENUE', validFrom: '2026-07-01' }),
@@ -285,7 +285,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const mainArena = arenaAt('facility:16-main', place.id)
     const tempArena = arenaAt('facility:16-temp', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [mainArena, tempArena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:16-main', facilityId: mainArena.id, teamId: f.teamA.id, purpose: 'HOME_VENUE', validFrom: '2026-07-01' }),
@@ -303,7 +303,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:17', kind: 'CITY', name: 'City 17' })
     const arena = arenaAt('facility:17', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:17', facilityId: arena.id, teamId: 'team:does-not-exist', purpose: 'HOME_VENUE', validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
@@ -314,17 +314,17 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:18', kind: 'CITY', name: 'City 18' })
     const arena = arenaAt('facility:18', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:18', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: 'organization:does-not-exist' as never }, ownershipPercentage: 50, validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityControlRights: [createFacilityControlRight({ id: 'control:18', facilityId: arena.id, controller: { kind: 'ORGANIZATION', organizationId: 'organization:does-not-exist' as never }, validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOperatorAssignments: [createFacilityOperatorAssignment({ id: 'op:18', facilityId: arena.id, operatorOrganizationId: 'organization:does-not-exist' as never, validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
@@ -348,7 +348,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:20', kind: 'CITY', name: 'City 20' })
     const arena = arenaAt('facility:20', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:20', facilityId: arena.id, componentIds: ['component:does-not-exist'], teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
@@ -361,7 +361,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const arenaTwo = arenaAt('facility:21-two', place.id)
     const componentOfTwo = createFacilityComponent({ id: 'component:21', facilityId: arenaTwo.id, type: 'MAIN_COURT', status: 'ACTIVE' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arenaOne, arenaTwo],
       facilityComponents: [componentOfTwo],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:21', facilityId: arenaOne.id, componentIds: [componentOfTwo.id], teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
@@ -373,7 +373,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:22', kind: 'CITY', name: 'City 22' })
     const arena = arenaAt('facility:22', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:22a', facilityId: arena.id, teamId: f.teamA.id, purpose: 'TRAINING', exclusivity: 'EXCLUSIVE', validFrom: '2020-01-01', validTo: '2025-12-31' }),
@@ -382,7 +382,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     })).toThrow(GameWorldValidationError)
     // No overlap: sequential exclusive periods are fine.
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:22c', facilityId: arena.id, teamId: f.teamA.id, purpose: 'TRAINING', exclusivity: 'EXCLUSIVE', validFrom: '2020-01-01', validTo: '2023-12-31' }),
@@ -397,7 +397,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:23', kind: 'CITY', name: 'City 23' })
     const arena = arenaAt('facility:23', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:23-old', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2000-01-01', validTo: '2014-12-31' }),
@@ -414,8 +414,8 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const arena = arenaAt('facility:24', place.id)
     const ownershipA = createFacilityOwnershipInterest({ id: 'own:24-a', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 55, validFrom: '2020-01-01' })
     const ownershipB = createFacilityOwnershipInterest({ id: 'own:24-b', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationB }, ownershipPercentage: 45, validFrom: '2020-01-01' })
-    const worldA = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityOwnershipInterests: [ownershipA, ownershipB] })
-    const worldB = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityOwnershipInterests: [ownershipB, ownershipA] })
+    const worldA = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityOwnershipInterests: [ownershipA, ownershipB] })
+    const worldB = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityOwnershipInterests: [ownershipB, ownershipA] })
     const onDate = parseGameDate('2030-01-01')
     const resultA = ownersOfFacilityAt(Object.values(worldA.facilityOwnershipInterestsById), arena.id, onDate).map((o) => o.id)
     const resultB = ownersOfFacilityAt(Object.values(worldB.facilityOwnershipInterestsById), arena.id, onDate).map((o) => o.id)
@@ -429,7 +429,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:25', kind: 'CITY', name: 'City 25' })
     const arena = arenaAt('facility:25', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:25a', facilityId: arena.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' }),
@@ -443,7 +443,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:26', kind: 'CAMPUS', name: 'Campus 26' })
     const facility = createFacility({ id: 'facility:26', placeId: place.id, type: 'MULTI_SPORT_COMPLEX', purposes: ['ADMINISTRATION'], status: 'ACTIVE', canonicalName: 'Shared Complex 26' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityUsageRights: [
         createFacilityUsageRight({ id: 'usage:26a', facilityId: facility.id, organizationId: f.organizationA, purpose: 'ADMINISTRATION', exclusivity: 'NON_EXCLUSIVE', validFrom: '2020-01-01' }),
@@ -458,7 +458,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:27', kind: 'CITY', name: 'City 27' })
     const arena = arenaAt('facility:27', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:27', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2020-01-01' })],
     })
@@ -470,7 +470,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:28', kind: 'CITY', name: 'City 28' })
     const arena = arenaAt('facility:28', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:28', facilityId: arena.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01', validTo: '2024-12-31' })],
     })
@@ -483,7 +483,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:29', kind: 'CITY', name: 'City 29' })
     const arena = arenaAt('facility:29', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOperatorAssignments: [
         createFacilityOperatorAssignment({ id: 'op:29-old', facilityId: arena.id, operatorOrganizationId: f.organizationA, validFrom: '2000-01-01', validTo: '2014-12-31' }),
@@ -501,7 +501,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:30', kind: 'CITY', name: 'City 30' })
     const arena = arenaAt('facility:30', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityControlRights: [
         createFacilityControlRight({ id: 'control:30-old', facilityId: arena.id, controller: { kind: 'ORGANIZATION', organizationId: f.organizationA }, validFrom: '2000-01-01', validTo: '2014-12-31' }),
@@ -517,7 +517,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const place = createPlace({ id: 'place:31', kind: 'CITY', name: 'City 31' })
     const arena = arenaAt('facility:31', place.id)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOperatorAssignments: [
         createFacilityOperatorAssignment({ id: 'op:31a', facilityId: arena.id, operatorOrganizationId: f.organizationA, validFrom: '2020-01-01' }),
@@ -532,7 +532,7 @@ describe('Club Facilities & Infrastructure V2 — Ownership, Control & Access Ri
     const arenaOne = arenaAt('facility:32-one', place.id)
     const arenaTwo = arenaAt('facility:32-two', place.id)
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arenaOne, arenaTwo],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:32-one', facilityId: arenaOne.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 100, validFrom: '2020-01-01' }),

@@ -29,7 +29,7 @@ function fixture() {
   const place = createPlace({ id: 'place:ops-1', kind: 'CAMPUS', name: 'Ops Campus 1' })
   const facility = createFacility({ id: 'facility:ops-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Ops Center 1' })
   const component = createFacilityComponent({ id: 'component:ops-1', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
-  const base = updateGameWorld(world, { places: [place], facilities: [facility], facilityComponents: [component] })
+  const base = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [component] })
   return { world: base, facility, component }
 }
 
@@ -93,7 +93,7 @@ describe('Club Facilities & Infrastructure V2 — Operations, Maintenance & Dete
     const need = createFacilityMaintenanceNeed({ id: 'need:cross', facilityId: otherFacility.id, detectedAt: '2030-01-01', type: 'CORRECTIVE', severity: 'MINOR', status: 'OPEN', source: 'x' })
     const action = createFacilityMaintenanceAction({ id: 'action:cross', needId: need.id, facilityId: f.facility.id, type: 'REPAIR', startedAt: '2030-01-02' })
     expect(() => updateGameWorld(f.world, {
-      places: [otherPlace],
+      places: [...Object.values(f.world.placesById), otherPlace],
       facilities: [otherFacility],
       facilityMaintenanceNeeds: [need],
       facilityMaintenanceActions: [action],

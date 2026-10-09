@@ -725,8 +725,30 @@ function readScheduledTrainingSessions(value: unknown) {
       ...(v.assignedStaffPersonIds === undefined ? {} : { assignedStaffPersonIds: array(v.assignedStaffPersonIds, 'Scheduled session staff').map((staffId) => string(staffId, 'Scheduled session staff id') as import('@/domain/ids').StaffPersonId) }),
       ...(participation === undefined ? {} : { participationByPlayerId: Object.fromEntries(Object.entries(participation).map(([playerId, status]) => [playerId, string(status, 'Training participation') as import('@/domain/training').TrainingParticipation])) }),
       ...(v.execution === undefined ? {} : { execution: readTrainingExecution(v.execution) }),
+      ...(v.physicalAttempt === undefined ? {} : { physicalAttempt: readTrainingPhysicalAttempt(v.physicalAttempt) }),
     }]
   }))
+}
+
+function readTrainingPhysicalAttempt(value: unknown): import('@/domain/facilities/SportingOperationPhysical').SportingPhysicalAttempt {
+  const v = record(value, 'Training physical attempt')
+  return {
+    policyVersion: string(v.policyVersion, 'Physical policy version') as 'BS17D-P0-v1',
+    attemptedOn: parseGameDate(string(v.attemptedOn, 'Physical attempt date')),
+    operationId: string(v.operationId, 'Physical operation id'),
+    status: string(v.status, 'Physical operation status') as import('@/domain/facilities/SportingOperationPhysical').PhysicalOperationStatus,
+    resources: array(v.resources, 'Physical resources').map((entry) => {
+      const r = record(entry, 'Physical resource')
+      if (r.operationalCapacity !== null) throw new Error('Physical operational capacity has no allocation authority')
+      if (typeof r.hasAccess !== 'boolean') throw new Error('Physical resource access must be boolean')
+      return { facilityId: string(r.facilityId, 'Physical Facility id'), componentId: string(r.componentId, 'Physical Component id'),
+        capability: string(r.capability, 'Physical capability') as import('@/domain/facilities').FacilityComponentCapability,
+        status: string(r.status, 'Physical resource status') as import('@/domain/facilities/SportingOperationPhysical').PhysicalOperationStatus,
+        reason: string(r.reason, 'Physical resource reason'), hasAccess: r.hasAccess,
+        nominalCapacity: r.nominalCapacity === null ? null : number(r.nominalCapacity, 'Physical nominal capacity'),
+        capacityUnit: r.capacityUnit === null ? null : string(r.capacityUnit, 'Physical capacity unit'), operationalCapacity: null }
+    }),
+  }
 }
 
 function readTrainingExecution(value: unknown) {

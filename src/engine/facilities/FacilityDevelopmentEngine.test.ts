@@ -30,7 +30,7 @@ function fixture() {
   const facility = createFacility({ id: 'facility:engine-dev-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Engine Dev Center 1' })
   const court = createFacilityComponent({ id: 'component:engine-dev-court', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
   const strengthRoom = createFacilityComponent({ id: 'component:engine-dev-strength', facilityId: facility.id, type: 'STRENGTH_ROOM', status: 'ACTIVE' })
-  const base = updateGameWorld(world, { places: [place], facilities: [facility], facilityComponents: [court, strengthRoom] })
+  const base = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [court, strengthRoom] })
   return { world: base, organization, place, facility, court, strengthRoom }
 }
 

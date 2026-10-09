@@ -1465,6 +1465,8 @@ function validateScheduledTrainingHistory(world: GameWorld, previous: GameWorld 
     teamStaffAssignments.set(assignment.teamId, staffIds)
   }
   for (const session of sessionsToValidate) {
+    // BS17 attempt facts must retain their constructor checks through BS15's Record update path.
+    if (session.physicalAttempt !== undefined) createScheduledTrainingSession(session)
     requireEntity(world.teams, session.teamId, `Scheduled training session ${session.id} team`)
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
     if (session.execution !== undefined) {
@@ -3765,8 +3767,8 @@ function assertTrainingSessionAppendOnly(session: ScheduledTrainingSession | und
   if (session.status === 'completed' && (next === undefined || JSON.stringify(next) !== JSON.stringify(session))) throw new GameWorldValidationError(`Completed Training session ${id} is immutable`)
   if (session.execution !== undefined && next?.execution !== undefined && JSON.stringify(next.execution) !== JSON.stringify(session.execution)) throw new GameWorldValidationError(`Training execution evidence ${id} is immutable`)
   if (session.status === 'scheduled' && next?.status === 'completed') {
-    const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, ...oldSchedule } = session
-    const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, ...newSchedule } = next
+    const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, physicalAttempt: _oldPhysical, ...oldSchedule } = session
+    const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, physicalAttempt: _newPhysical, ...newSchedule } = next
     if (JSON.stringify(oldSchedule) !== JSON.stringify(newSchedule) || next.execution === undefined || JSON.stringify(next.execution.executingStaffPersonIds) !== JSON.stringify(session.assignedStaffPersonIds ?? [])) throw new GameWorldValidationError(`Completed Training session ${id} does not preserve its scheduled identity and executor`)
   }
 }

@@ -35,7 +35,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2030-12-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilityDevelopmentProjects: [project] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityDevelopmentProjectsById).toEqual(world.facilityDevelopmentProjectsById)
@@ -59,7 +59,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2030-03-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court], facilityDevelopmentProjects: [project] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     const restoredScope = restored.facilityDevelopmentProjectsById[project.id]!.scope
@@ -93,7 +93,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2031-01-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court, strengthRoom], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court, strengthRoom], facilityDevelopmentProjects: [project] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     const restoredScope = restored.facilityDevelopmentProjectsById[project.id]!.scope
@@ -122,7 +122,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
     })
     const phase1 = createFacilityDevelopmentProjectPhase({ id: 'phase:save-1', projectId: project.id, sequence: 1, name: 'Construction', plannedStart: '2030-01-01', plannedCompletion: '2030-08-01' })
     const phase2 = createFacilityDevelopmentProjectPhase({ id: 'phase:save-2', projectId: project.id, sequence: 2, name: 'Commissioning', plannedStart: '2030-08-01', plannedCompletion: '2031-01-01' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project], facilityDevelopmentProjectPhases: [phase1, phase2] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityDevelopmentProjects: [project], facilityDevelopmentProjectPhases: [phase1, phase2] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityDevelopmentProjectPhasesById).toEqual(world.facilityDevelopmentProjectPhasesById)
@@ -146,7 +146,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       createdAt: '2029-11-01',
       cancelledAt: '2029-12-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityDevelopmentProjects: [project] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityDevelopmentProjectsById[project.id]!.status).toBe('CANCELLED')
@@ -170,7 +170,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2030-06-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityDevelopmentProjects: [project] })
     const started = startFacilityDevelopmentProject(world, project.id, parseGameDate('2030-01-01'))
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(started.world, savedAt))))
@@ -195,7 +195,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2031-01-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityDevelopmentProjects: [project] })
     const saved = serializeGameWorldV4(world, savedAt)
 
     // Simulate a genuinely pre-CFI6a payload: strip the new field from the serialized project.
@@ -213,7 +213,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
     const base = createNewGame()
     const place = createPlace({ id: 'place:dev-save-6', kind: 'CITY', name: 'Dev Save City 6' })
     const facility = createFacility({ id: 'facility:dev-save-6', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Dev Save Arena 6' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility] })
     const saved = serializeGameWorldV4(world, savedAt)
 
     // Simulate a genuinely pre-CFI6 payload: strip the two new collections entirely.
@@ -245,7 +245,7 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
       plannedCompletionDate: '2031-01-01',
       createdAt: '2029-11-01',
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityDevelopmentProjects: [project] })
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
 
     const { activeDevelopmentProjectsAt, developmentProjectsForFacility } = await import('@/domain/facilities')

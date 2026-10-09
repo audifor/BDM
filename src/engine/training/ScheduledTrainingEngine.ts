@@ -20,6 +20,8 @@ import { boundedInjuryProbability, recurrenceRiskMultiplier } from '@/engine/inj
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { InjuryRecord } from '@/domain/injury'
 import { validateTransferAuthorization } from '@/engine/eligibility/TransferPortalLifecycle'
+import { resolveSportingOperation } from '@/integration/facilitiesSporting/SportingOperationResolver'
+import { trainingPhysicalRequirements } from './TrainingPhysicalRequirements'
 
 const sessionsByDateCache = new WeakMap<GameWorld['scheduledTrainingSessionsById'], ReadonlyMap<GameDate, readonly ScheduledTrainingSession[]>>()
 
@@ -263,6 +265,13 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const definition = planDelegation === undefined ? trainingDefinitionById(session.definitionId) : planDelegation.definition
   const intensity = intensityDelegation === undefined ? session.intensity : intensityDelegation.intensity
 
+  const physicalAttempt = resolveSportingOperation(world, { teamId: session.teamId, date: world.currentDate, operationId: definition.id,
+    requirements: trainingPhysicalRequirements(definition), interval: { startTime: session.startTime, durationMinutes: session.durationMinutes } })
+  if (physicalAttempt.status === 'VERIFIED_UNAVAILABLE') {
+    pendingSessions.push({ ...session, physicalAttempt })
+    return world
+  }
+
   const playerIds = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
   const load = trainingLoad(intensity)
   const executionMultiplier = trainingStaffExecutionMultiplier(world, session, definition)
@@ -347,6 +356,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const moduleName = planDelegation === undefined ? plannedModuleName : definition.name
   const completedSession: ScheduledTrainingSession = {
     ...session,
+    physicalAttempt,
     assignedStaffPersonIds: undefined,
     status: 'completed',
     execution: {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { GameWorld } from '@/domain/world'
 
 import {
   CLUB_FACILITY_COMMAND_REASON_TEXT,
@@ -32,8 +33,8 @@ const TABS = [
   { id: 'facilities', label: 'Facilities' },
   { id: 'maintenance', label: 'Condition & maintenance' },
   { id: 'projects', label: 'Projects' },
-  { id: 'costs', label: 'Costs & funding' },
-  { id: 'effects', label: 'Sporting effects' },
+  { id: 'costs', label: 'Recorded costs' },
+  { id: 'effects', label: 'Physical capabilities' },
 ] as const
 type FacilitiesTabId = (typeof TABS)[number]['id']
 
@@ -42,8 +43,9 @@ interface CommandNotice {
   readonly text: string
 }
 
-export function FacilitiesWorkspace() {
-  const world = useGameStore((state) => state.world)
+export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?: GameWorld } = {}) {
+  const storedWorld = useGameStore((state) => state.world)
+  const world = suppliedWorld ?? storedWorld
   const startFacilityProject = useGameStore((state) => state.startFacilityProject)
   const pauseFacilityProject = useGameStore((state) => state.pauseFacilityProject)
   const resumeFacilityProject = useGameStore((state) => state.resumeFacilityProject)
@@ -170,6 +172,7 @@ function OverviewPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel
 
   return (
     <section className="ng-canon__overview">
+      <p className="ng-canon__note">Known assets may have unknown properties or no recorded components. A team association does not establish ownership or sporting access. Season-only source dates are not exact relationship dates; no access right is inferred.</p>
       <div className="ng-canon__panel ng-holo-panel">
         <dl className="ng-canon__metrics">
           <NgMetric label="Club organization" value={model.organizationName ?? model.organizationId} />
@@ -318,7 +321,7 @@ function FacilityInspector({ model, facility }: { readonly model: ClubFacilities
         <NgMetric label="Purposes" value={facility.purposes.map(humanizeToken).join(' · ')} />
         <NgMetric label="Capabilities" value={facility.capabilities.length === 0 ? 'Not declared' : facility.capabilities.map(humanizeToken).join(' · ')} />
         <NgMetric label="Opened" value={facility.openedOn ?? 'Not recorded'} />
-        <NgMetric label="Total capacity" value={facility.totalCapacity ?? 'Not recorded'} />
+        <NgMetric label="Recorded total capacity" value={facility.totalCapacity ?? 'Not recorded'} />
         <NgMetric label="Court count" value={facility.courtCount ?? 'Not recorded'} />
         <NgMetric label="Accessibility provision" value={facility.hasAccessibilityProvision === null ? 'Not recorded' : facility.hasAccessibilityProvision ? 'Yes' : 'No'} />
         <NgMetric label="Worst condition" value={conditionLabel(facility.worstKnownCondition)} />
@@ -331,7 +334,7 @@ function FacilityInspector({ model, facility }: { readonly model: ClubFacilities
       <Table
         empty="No active component is recorded for this facility."
         gridId="ng-facilities-components"
-        headers={['Component', 'Type', 'Status', 'Condition', 'Serviceability', 'Open needs']}
+        headers={['Component', 'Type', 'Status', 'Condition', 'Serviceability', 'Physical availability', 'Team access', 'Nominal capacity', 'Operational capacity', 'Affected work', 'Open needs']}
         numericColumns={['Condition', 'Open needs']}
         rows={components.map((component) => [
           String(component.componentId),
@@ -340,10 +343,20 @@ function FacilityInspector({ model, facility }: { readonly model: ClubFacilities
           humanizeToken(component.status),
           conditionLabel(component.physicalCondition),
           serviceabilityLabel(component.serviceability),
+          component.availability.status === 'UNKNOWN' ? 'Not demonstrated' : humanizeToken(component.availability.status),
+          component.availability.access ? 'Recorded current right' : 'No current team right',
+          component.availability.nominalCapacity === null ? 'Not recorded' : `${component.availability.nominalCapacity} ${component.availability.capacityUnit ?? '(unit not recorded)'}`,
+          component.availability.operationalCapacity === null ? 'Not demonstrated' : `${component.availability.operationalCapacity} ${component.availability.capacityUnit}`,
+          component.availability.affectedProjectIds.join(', ') || 'None recorded',
           String(component.openNeedIds.length),
         ])}
       />
 
+      <p className="ng-canon__note">Nominal capacity is a recorded amount with its recorded unit. Court counts do not establish simultaneous player capacity. Shared rights do not supply an occupancy schedule.</p>
+      <p className="ng-canon__eyebrow">Physical history</p>
+      {facility.history.map((entry, index) => <p className="ng-canon__note" key={index}>{entry.date}: {entry.description}</p>)}
+      <p className="ng-canon__eyebrow">Recorded usage rights</p>
+      {facility.usageRights.map((right) => <p className="ng-canon__note" key={right.id}>{right.id}: {right.purpose} / {right.exclusivity} / {right.from} to {right.to ?? 'no recorded end'}</p>)}
       {needs.length === 0 ? null : (
         <>
           <p className="ng-canon__eyebrow">Maintenance needs</p>
@@ -475,6 +488,8 @@ function ProjectsPanel({
             {scheduleLabel(model.asOf, project.plannedStartDate, project.actualStartDate)} · planned completion{' '}
             {scheduleLabel(model.asOf, project.plannedCompletionDate, project.actualCompletionDate)}
           </p>
+          <p className="ng-canon__note">Physical progress: {project.progress === 'COMPLETED' ? 'completion explicitly recorded' : 'unknown; no executable duration or percentage authority'}. Completion is an explicit physical command, not a consequence of the planned date.</p>
+          {project.physicalBlockers.map((reason) => <p className="ng-canon__note" key={reason}>{reason === 'PHYSICAL_PHASES_INCOMPLETE' ? 'Recorded physical phases are incomplete.' : humanizeToken(reason)}</p>)}
           {project.currentPhase === null ? null : (
             <p className="ng-canon__note">
               Current phase: {project.currentPhase.name ?? `Phase ${project.currentPhase.sequence}`} · {humanizeToken(project.currentPhase.status)} ·{' '}
@@ -489,7 +504,7 @@ function ProjectsPanel({
                     `${money.currencyCode} committed ${formatFacilityAmount(money.currencyCode, money.committedMinorUnits)} · recognized ${formatFacilityAmount(money.currencyCode, money.recognizedMinorUnits)} · paid ${formatFacilityAmount(money.currencyCode, money.paidMinorUnits)} · outstanding ${formatFacilityAmount(money.currencyCode, money.outstandingCommitmentMinorUnits)}`,
                 )
                 .join(' · ')}
-              {project.underfundedAsOfDate === null ? '' : project.underfundedAsOfDate ? ' · underfunded' : ' · funded'}
+              {project.underfundedAsOfDate === null ? '' : project.underfundedAsOfDate ? ' · recorded commitment coverage incomplete' : ' · recorded commitment coverage complete'}
             </p>
           )}
           <div className="ng-canon__actions">
@@ -557,11 +572,11 @@ function CostsPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel })
   }
   return (
     <div className="ng-canon__panel ng-holo-panel" data-ng-region="facilities-costs">
-      <p className="ng-canon__eyebrow">Facility project funding</p>
+      <p className="ng-canon__eyebrow">Recorded project financial facts</p>
       <Table
         empty="No facility financial fact is recorded for this club organization."
         gridId="ng-facilities-costs"
-        headers={['Project', 'Currency', 'Committed', 'Recognized', 'Paid', 'Outstanding', 'Underfunded']}
+        headers={['Project', 'Currency', 'Committed', 'Recognized', 'Paid', 'Outstanding', 'Recorded coverage gap']}
         numericColumns={['Committed', 'Recognized', 'Paid', 'Outstanding']}
         rows={model.projects.map((project) => [
           String(project.projectId),
@@ -580,7 +595,7 @@ function CostsPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel })
       />
       <p className="ng-canon__note">
         Figures are canonical CFI7 facts only: a start without a capital commitment records no money, and recurring facility
-        operating costs are not yet generated by the world.
+        operating costs are not yet generated by the world. Recorded commitment coverage is not cash availability or spending permission.
       </p>
     </div>
   )
@@ -603,9 +618,10 @@ function EffectsPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel 
   return (
     <>
       <div className="ng-canon__panel ng-holo-panel" data-ng-region="facilities-effects-capabilities">
-        <p className="ng-canon__eyebrow">Usable capability by domain</p>
+        <p className="ng-canon__eyebrow">Recorded physical capability by domain</p>
+        <p className="ng-canon__note">These are physical context facts, not Training, Medical or Talent outcome bonuses. Missing condition is unknown; serviceability defaults do not certify physical health.</p>
         <Table
-          empty="No sporting capability is reachable for this club today."
+          empty="No physical capability is recorded as reachable for this club today."
           gridId="ng-facilities-effects"
           headers={['Domain', 'Capability', 'Status', 'Serviceability']}
           rows={domains.flatMap(([domain, capabilities]) =>
@@ -620,7 +636,7 @@ function EffectsPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel 
         />
       </div>
       <div className="ng-canon__panel ng-holo-panel" data-ng-region="facilities-effects-courts">
-        <p className="ng-canon__eyebrow">Courts reachable by this club</p>
+        <p className="ng-canon__eyebrow">Courts in the recorded component access context</p>
         <Table
           empty="No court is reachable for this club today."
           gridId="ng-facilities-effects-courts"

@@ -32,7 +32,7 @@ function fixture() {
   const initialCondition = createFacilityComponentConditionRecord({ id: 'condition:engine-indoor-initial', componentId: indoorComponent.id, effectiveFrom: '2030-01-01', physicalCondition: 90, serviceability: 'FULL' })
   const outdoorInitial = createFacilityComponentConditionRecord({ id: 'condition:engine-outdoor-initial', componentId: outdoorComponent.id, effectiveFrom: '2030-01-01', physicalCondition: 90, serviceability: 'FULL' })
   const base = updateGameWorld(world, {
-    places: [place],
+    places: [...Object.values(world.placesById), place],
     facilities: [facility],
     facilityComponents: [indoorComponent, outdoorComponent, parkingComponent],
     facilityComponentConditionRecords: [initialCondition, outdoorInitial],

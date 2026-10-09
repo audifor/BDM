@@ -4,6 +4,7 @@
  * not that these exact status names are final.
  */
 export const FACILITY_STATUSES = [
+  'UNKNOWN',
   'PLANNED',
   'UNDER_CONSTRUCTION',
   'ACTIVE',

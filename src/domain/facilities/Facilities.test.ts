@@ -44,7 +44,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-a', kind: 'CITY', name: 'City A' })
     const arena = createFacility({ id: 'facility:club-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Club Arena', physical: { openedOn: '2000-01-01', totalCapacity: 12000 } })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [ownerInterest('own:club', arena.id, f.organizationA, '2000-01-01')],
       facilityTeamRelationships: [createFacilityTeamRelationship({ id: 'rel:home', facilityId: arena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2000-01-01' })],
@@ -60,7 +60,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const municipalArena = createFacility({ id: 'facility:municipal-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Municipal Arena' })
     const municipalOrg = Object.values(f.world.organizationsById).find((organization) => organization.id !== f.organizationA)!
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [municipalArena],
       facilityOwnershipInterests: [ownerInterest('own:municipality', municipalArena.id, municipalOrg.id, '2010-01-01')],
       facilityTeamRelationships: [createFacilityTeamRelationship({ id: 'rel:lease', facilityId: municipalArena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2010-01-01' })],
@@ -78,7 +78,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-c', kind: 'CITY', name: 'City C' })
     const sharedArena = createFacility({ id: 'facility:shared-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Shared Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [sharedArena],
       facilityTeamRelationships: [
         createFacilityTeamRelationship({ id: 'rel:home-a', facilityId: sharedArena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2015-01-01' }),
@@ -94,7 +94,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:campus', kind: 'CAMPUS', name: 'Campus' })
     const trainingCenter = createFacility({ id: 'facility:training', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Training Center' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [trainingCenter],
       facilityOwnershipInterests: [ownerInterest('own:multi-team-org', trainingCenter.id, f.organizationA, '2018-01-01')],
       facilityTeamRelationships: [
@@ -111,7 +111,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const mainArena = createFacility({ id: 'facility:main-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'UNDER_RENOVATION', canonicalName: 'Main Arena' })
     const tempArena = createFacility({ id: 'facility:temp-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Temporary Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [mainArena, tempArena],
       facilityTeamRelationships: [
         createFacilityTeamRelationship({ id: 'rel:home-main', facilityId: mainArena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2020-01-01', validTo: '2023-12-31' }),
@@ -129,7 +129,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const university = createPlace({ id: 'place:university', kind: 'CAMPUS', name: 'University Campus' })
     const fieldhouse = createFacility({ id: 'facility:fieldhouse', placeId: university.id, type: 'MULTI_SPORT_COMPLEX', purposes: ['MATCH_HOSTING', 'TRAINING'], status: 'ACTIVE', canonicalName: 'University Fieldhouse' })
     const world = updateGameWorld(f.world, {
-      places: [university],
+      places: [...Object.values(f.world.placesById), university],
       facilities: [fieldhouse],
       facilityOwnershipInterests: [ownerInterest('own:university', fieldhouse.id, f.organizationA, '1990-01-01')],
       facilityTeamRelationships: [
@@ -145,7 +145,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-e', kind: 'CITY', name: 'City E' })
     const arena = createFacility({ id: 'facility:naming-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'City Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityNameRecords: [
         createFacilityNameRecord({ id: 'name:canonical', facilityId: arena.id, name: 'City Arena', isCanonical: true, validFrom: '2000-01-01' }),
@@ -165,7 +165,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-f', kind: 'CITY', name: 'City F' })
     const arena = createFacility({ id: 'facility:partial-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'PARTIALLY_CLOSED', canonicalName: 'Partial Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityComponents: [
         createFacilityComponent({ id: 'component:main-court', facilityId: arena.id, type: 'MAIN_COURT', status: 'ACTIVE' }),
@@ -181,7 +181,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-g', kind: 'CITY', name: 'City G' })
     const arena = createFacility({ id: 'facility:split-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Split Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:a', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 60, validFrom: '2020-01-01' }),
@@ -197,7 +197,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-h', kind: 'CITY', name: 'City H' })
     const arena = createFacility({ id: 'facility:unknown-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Unknown Ownership Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [createFacilityOwnershipInterest({ id: 'own:unknown', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: null, validFrom: '2020-01-01' })],
     })
@@ -210,7 +210,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:campus-2', kind: 'CAMPUS', name: 'Campus 2' })
     const trainingCenter = createFacility({ id: 'facility:multi-component-training', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING', 'MEDICAL_TREATMENT'], status: 'ACTIVE', canonicalName: 'Multi Component Training Center' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [trainingCenter],
       facilityComponents: [
         createFacilityComponent({ id: 'component:practice-court', facilityId: trainingCenter.id, type: 'PRACTICE_COURT', status: 'ACTIVE', quantity: 2 }),
@@ -233,24 +233,24 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const f = fixture()
     const place = createPlace({ id: 'place:city-i', kind: 'CITY', name: 'City I' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [createFacility({ id: 'facility:orphan', placeId: 'place:does-not-exist', type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Orphan Arena' })],
     })).toThrow(GameWorldValidationError)
 
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [createFacility({ id: 'facility:ok', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'OK Arena' })],
       facilityTeamRelationships: [createFacilityTeamRelationship({ id: 'rel:missing-team', facilityId: 'facility:ok', teamId: 'team:does-not-exist', kind: 'HOME_VENUE', validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
 
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [createFacility({ id: 'facility:ok-2', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'OK Arena 2' })],
       facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:missing-org', facilityId: 'facility:ok-2', organizationId: 'organization:does-not-exist', kind: 'TENANT', validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
 
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [createFacility({ id: 'facility:ok-3', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'OK Arena 3' })],
       facilityComponents: [createFacilityComponent({ id: 'component:orphan', facilityId: 'facility:does-not-exist', type: 'MAIN_COURT', status: 'ACTIVE' })],
     })).toThrow(GameWorldValidationError)
@@ -261,7 +261,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-j', kind: 'CITY', name: 'City J' })
     const arena = createFacility({ id: 'facility:over-owned', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Over-owned Arena' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityOwnershipInterests: [
         createFacilityOwnershipInterest({ id: 'own:over-a', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 70, validFrom: '2020-01-01' }),
@@ -275,7 +275,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-k', kind: 'CITY', name: 'City K' })
     const arena = createFacility({ id: 'facility:dup-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Dup Arena' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityTeamRelationships: [
         createFacilityTeamRelationship({ id: 'rel:dup-1', facilityId: arena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2020-01-01' }),
@@ -290,8 +290,8 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const arena = createFacility({ id: 'facility:deterministic-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Deterministic Arena' })
     const ownershipA = createFacilityOwnershipInterest({ id: 'own:det-a', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationA }, ownershipPercentage: 55, validFrom: '2020-01-01' })
     const ownershipB = createFacilityOwnershipInterest({ id: 'own:det-b', facilityId: arena.id, owner: { kind: 'ORGANIZATION', organizationId: f.organizationB }, ownershipPercentage: 45, validFrom: '2020-01-01' })
-    const worldA = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityOwnershipInterests: [ownershipA, ownershipB] })
-    const worldB = updateGameWorld(f.world, { places: [place], facilities: [arena], facilityOwnershipInterests: [ownershipB, ownershipA] })
+    const worldA = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityOwnershipInterests: [ownershipA, ownershipB] })
+    const worldB = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [arena], facilityOwnershipInterests: [ownershipB, ownershipA] })
     const onDate = parseGameDate('2030-01-01')
     const resultA = ownersOfFacilityAt(Object.values(worldA.facilityOwnershipInterestsById), arena.id, onDate).map((o) => o.id)
     const resultB = ownersOfFacilityAt(Object.values(worldB.facilityOwnershipInterestsById), arena.id, onDate).map((o) => o.id)
@@ -306,7 +306,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const place = createPlace({ id: 'place:city-m', kind: 'CITY', name: 'City M' })
     const arena = createFacility({ id: 'facility:status-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Status Arena' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityStatusRecords: [
         createFacilityStatusRecord({ id: 'status:planned', facilityId: arena.id, status: 'PLANNED', effectiveFrom: '2018-01-01' }),
@@ -325,13 +325,13 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const arena = createFacility({ id: 'facility:approval-arena', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Approval Arena' })
     const competitionId = Object.values(f.world.competitions)[0]!.id
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityCompetitionApprovals: [createFacilityCompetitionApproval({ id: 'approval:main', facilityId: arena.id, competitionId, approved: true, validFrom: '2020-01-01' })],
     })
     expect(Object.values(world.facilityCompetitionApprovalsById)).toHaveLength(1)
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [arena],
       facilityCompetitionApprovals: [createFacilityCompetitionApproval({ id: 'approval:bad', facilityId: arena.id, competitionId: 'competition:does-not-exist', approved: true })],
     })).toThrow(GameWorldValidationError)

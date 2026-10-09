@@ -57,7 +57,7 @@ describe('BS16F pre-BS16B save migration through the load seam', () => {
     expect(organizationIds).toHaveLength(18)
     expect(Object.keys(loaded.organizationFinancialProfilesById).sort()).toEqual(organizationIds)
     // Provisioning creates profile, catalog, period and authorization in EUR — never money.
-    expect(Object.keys(loaded.financialTransactionsById)).toEqual([])
+    expect(loaded.financialTransactionsById).toEqual({})
     for (const organizationId of organizationIds) {
       const profile = loaded.organizationFinancialProfilesById[organizationId as never]!
       expect(String(profile.baseCurrencyCode)).toBe('EUR')
@@ -132,7 +132,7 @@ describe('BS16E activation through the save/load seam', () => {
     expect(unavailable.length).toBeGreaterThan(0)
     expect(unavailable.every((entry) => entry.currencyCode === null)).toBe(true)
     expect(Object.keys(loaded.organizationFinancialProfilesById)).toHaveLength(provisioned.length)
-    expect(Object.keys(loaded.financialTransactionsById)).toEqual([])
+    expect(loaded.financialTransactionsById).toEqual(base.financialTransactionsById)
 
     // Reloading never duplicates canonical finance facts.
     const second = repository()
@@ -141,6 +141,6 @@ describe('BS16E activation through the save/load seam', () => {
     expect(Object.keys(reloaded.organizationFinancialProfilesById)).toEqual(Object.keys(loaded.organizationFinancialProfilesById))
     expect(Object.keys(reloaded.fiscalPeriodsById)).toEqual(Object.keys(loaded.fiscalPeriodsById))
     expect(Object.keys(reloaded.financialBudgetsById)).toEqual(Object.keys(loaded.financialBudgetsById))
-    expect(reloaded.financialTransactionsById).toEqual({})
+    expect(reloaded.financialTransactionsById).toEqual(loaded.financialTransactionsById)
   })
 })

@@ -33,13 +33,20 @@ describe('progressStaffCultureAndCohesion', () => {
     }
   })
 
-  it('CRITICAL REGRESSION: teamCohesionByTeamId is unchanged across full CalendarEngine days crossing multiple Mondays', () => {
+  it('CRITICAL REGRESSION: full CalendarEngine days crossing multiple Mondays change tactical cohesion only through completed Training', () => {
     let world = createNewGame()
-    const before = { ...world.teamCohesionByTeamId }
+    let cohesionSessions = 0
     for (let day = 0; day < 16; day += 1) {
+      const before = world
       world = advanceDay(world)
-      expect(world.teamCohesionByTeamId).toEqual(before)
+      const completed = Object.values(world.scheduledTrainingSessionsById).filter(session => session.status === 'completed' && before.scheduledTrainingSessionsById[session.id]?.status !== 'completed')
+      for (const team of Object.values(world.teams)) {
+        const delta = completed.filter(session => session.teamId === team.id).reduce((sum, session) => sum + (session.execution?.cohesionDelta ?? 0), 0)
+        expect(world.teamCohesionByTeamId[team.id] ?? 50).toBeCloseTo((before.teamCohesionByTeamId[team.id] ?? 50) + delta, 10)
+      }
+      cohesionSessions += completed.filter(session => (session.execution?.cohesionDelta ?? 0) !== 0).length
     }
+    expect(cohesionSessions).toBeGreaterThan(0)
   })
 
   it('initializes culture and cohesion only for teams with current Staff', () => {

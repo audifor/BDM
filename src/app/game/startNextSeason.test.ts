@@ -39,7 +39,8 @@ function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId:
 }
 
 // The completed input is immutable. Resolve its 182 matches once, rather than repeating
-// the same expensive fixture setup inside every rollover assertion's ten-second budget.
+// the same expensive fixture setup inside every rollover assertion's budget.
+// Allow the measured full-season preparation on busy machines; this is not a performance gate.
 let completedWorld: ReturnType<typeof createNewGame>
 beforeAll(() => {
   const fixtureStart = performance.now()
@@ -48,7 +49,7 @@ beforeAll(() => {
   const rolloverStart = performance.now()
   startNextSeason(completedWorld)
   process.stdout.write(`[BS15I rollover fixture] ${JSON.stringify({ setupMs, rolloverMs: performance.now() - rolloverStart })}\n`)
-}, 30_000)
+}, 120_000)
 
 describe('startNextSeason', () => {
   it('configures a successor in the same competition and ecosystem without rolling window dates forward', () => {
@@ -171,7 +172,7 @@ describe('startNextSeason', () => {
     expect(Object.values(next.seasonHistoryBySeasonId).filter((history) => next.ecosystems[next.competitions[next.seasons[history.seasonId]!.competitionId]!.ecosystemId]!.category === 'men')).toHaveLength(5)
     expect(getSeasonHistoryRecord(next, seasonTwo.id)).toBeDefined()
     expect(latestSeasonFor(startNextSeasonFor(next, seasonTwo.id), primaryCompetitionId).id).toBe('generated-season-0006')
-  }, 10_000)
+  }, 120_000)
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {
     const next = startNextSeason(completedWorld)

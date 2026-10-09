@@ -264,7 +264,7 @@ export function activeFacilityComponentsAt(components: readonly FacilityComponen
     .filter((component) => {
       if (component.openedAt !== null && component.openedAt > onDate) return false
       if (component.closedAt !== null && component.closedAt <= onDate) return false
-      return component.status !== 'CLOSED'
+      return component.status === 'ACTIVE' || component.status === 'CLOSED' && component.closedAt !== null && onDate < component.closedAt
     })
     .sort((a, b) => a.id.localeCompare(b.id))
 }

@@ -20,7 +20,7 @@ describe('GameWorldSaveV4 — Facility Anatomy & Capabilities (CFI3) persistence
     const facility = createFacility({ id: 'facility:anatomy-1', placeId: place.id, type: 'PERFORMANCE_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Performance Center Anatomy 1' })
     const parent = createFacilityComponent({ id: 'component:anatomy-1-parent', facilityId: facility.id, type: 'RECOVERY_ROOM', status: 'ACTIVE' })
     const child = createFacilityComponent({ id: 'component:anatomy-1-child', facilityId: facility.id, type: 'COLD_TUB', status: 'ACTIVE', parentComponentId: parent.id })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [parent, child] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [parent, child] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentsById).toEqual(world.facilityComponentsById)
@@ -52,7 +52,7 @@ describe('GameWorldSaveV4 — Facility Anatomy & Capabilities (CFI3) persistence
         hasVideoTrackingTechnology: false,
       },
     })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentsById[court.id]!.specification).toEqual(court.specification)
@@ -64,7 +64,7 @@ describe('GameWorldSaveV4 — Facility Anatomy & Capabilities (CFI3) persistence
     const facility = createFacility({ id: 'facility:anatomy-3', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Anatomy Arena 3' })
     const lockerRoom = createFacilityComponent({ id: 'component:anatomy-3-locker', facilityId: facility.id, type: 'LOCKER_ROOM', status: 'ACTIVE', specification: { kind: 'CAPACITY', unit: 'LOCKERS', amount: 15 } })
     const bareOffice = createFacilityComponent({ id: 'component:anatomy-3-office', facilityId: facility.id, type: 'COACHES_OFFICE', status: 'ACTIVE' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [lockerRoom, bareOffice] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [lockerRoom, bareOffice] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentsById[lockerRoom.id]!.specification).toEqual({ kind: 'CAPACITY', unit: 'LOCKERS', amount: 15 })
@@ -77,7 +77,7 @@ describe('GameWorldSaveV4 — Facility Anatomy & Capabilities (CFI3) persistence
     const facility = createFacility({ id: 'facility:anatomy-4', placeId: place.id, type: 'MEDICAL_CENTER', purposes: ['MEDICAL_TREATMENT'], status: 'ACTIVE', canonicalName: 'Anatomy Medical 4' })
     const imagingRoom = createFacilityComponent({ id: 'component:anatomy-4-imaging', facilityId: facility.id, type: 'IMAGING_ROOM', status: 'ACTIVE', equipmentTags: ['MRI', 'ULTRASOUND'] })
     const plainRoom = createFacilityComponent({ id: 'component:anatomy-4-plain', facilityId: facility.id, type: 'EXAMINATION_ROOM', status: 'ACTIVE' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [imagingRoom, plainRoom] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [imagingRoom, plainRoom] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentsById[imagingRoom.id]!.equipmentTags).toEqual(['MRI', 'ULTRASOUND'])
@@ -89,7 +89,7 @@ describe('GameWorldSaveV4 — Facility Anatomy & Capabilities (CFI3) persistence
     const place = createPlace({ id: 'place:anatomy-5', kind: 'CITY', name: 'Anatomy City 5' })
     const facility = createFacility({ id: 'facility:anatomy-5', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Anatomy Arena 5' })
     const component = createFacilityComponent({ id: 'component:anatomy-5', facilityId: facility.id, type: 'MAIN_COURT', status: 'ACTIVE' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component] })
     const saved = serializeGameWorldV4(world, savedAt)
 
     // Simulate a genuinely pre-CFI3 payload: strip the three new fields entirely, not just null them.
