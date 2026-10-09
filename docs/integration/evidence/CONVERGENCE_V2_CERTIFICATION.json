@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS · BS15/BS16/BS17 CONTROLLED CONVERGENCE V2 · BOUNDED CROSS-SYSTEM",
+  "approval": {
+    "authority": "Explicit user product decision: BDM APROBACION CANONICA V2 Y CERTIFICACION FINAL",
+    "accepted": true,
+    "automaticPassFromApproval": false,
+    "acceptedScope": "Bounded cross-system convergence only"
+  },
+  "recordedAtUtc": "2026-10-09T17:57:45.055886+00:00",
+  "validatedSourceSha": "7edbba2f8e0feefeb1794d1c19442fe33bb95ad8",
+  "certificateCommit": "Commit containing this manifest; documentation/evidence only",
+  "branch": "integration/bs15-bs16-bs17-certified",
+  "ancestry": {
+    "94c077092224a9f75c861a853d9d52fceae526fe": true,
+    "97c58b98b9192a569f30bdfd8b63565f0b02a744": true,
+    "6945cb90604bd349edd9d2333aa7d1861e9a311a": true
+  },
+  "unchangedDestinationRefs": {
+    "main": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+    "originMain": "94c077092224a9f75c861a853d9d52fceae526fe"
+  },
+  "differential": {
+    "frozen-bs15": {
+      "passed": 10,
+      "failed": 0,
+      "outsideSelectedFilter": 22
+    },
+    "integrated": {
+      "passed": 10,
+      "failed": 0,
+      "outsideSelectedFilter": 22
+    }
+  },
+  "differentialScenarioLabels": [
+    "medical-review",
+    "season-complete-rollover",
+    "calendar-sync-async",
+    "talent-materialization",
+    "training-FULL",
+    "training-OUT_OF_SERVICE",
+    "training-UNKNOWN",
+    "coach-finance-exactly-once",
+    "bounded-original-fixture",
+    "controlled-media-fixture"
+  ],
+  "sourceFingerprint": "456153258a2d289fe7e22a4c10ef2154d6aeff83ccb280e0c39412c55021e471",
+  "matchSeed": 151617,
+  "harnessGitBlob": "df256e1a6819b9323c657f463f9685d14fd90607",
+  "diagnosticUtilityGitBlob": "e8a277866cc5829f75afd8d2895d8ca96e1c23b7",
+  "runnerRawPreparationLabel": "PROPOSED_GATES_GREEN_PENDING_ACCEPTANCE",
+  "runnerLabelInterpretation": "The preparation runner verifies test gates, not acceptance authority. Explicit approval and all remaining gates are recorded by this certificate.",
+  "regressions": {
+    "passed": 89,
+    "failed": 0,
+    "pending": 0,
+    "maxWorkers": 1,
+    "testTimeoutsChanged": false,
+    "files": {
+      "BS15BS16BS17Convergence.test.ts": 5,
+      "ContinueFlow.test.ts": 15,
+      "SimulationBreakpoints.test.ts": 16,
+      "WorldDbCertificationDiagnostics.test.ts": 1,
+      "FinanceReservationDirtyValidation.test.ts": 2,
+      "CalendarEngine.test.ts": 25,
+      "MedicalPhysicalCompatibility.test.ts": 8,
+      "TrainingPhysicalConsequences.test.tsx": 17
+    }
+  },
+  "continueFlow": {
+    "arrived": "PASS",
+    "canonicalDecision": "PASS",
+    "simulationErrorClassification": "PASS",
+    "medicalAuthorityBypassed": false
+  },
+  "subsystems": {
+    "combinedGameWorldSaveV4": "PASS",
+    "scopedSaveV1PhysicalAttempt": "PASS",
+    "calendarSyncAsyncExactlyOnce": "PASS",
+    "talentIdentityMaterializationReplay": "PASS",
+    "financeFrozenThroughKC": "PASS",
+    "cfi8AndTrainingP0": "PASS",
+    "bs12cMedicalCompatibility": "PASS"
+  },
+  "checks": {
+    "typecheckExitCode": 0,
+    "buildExitCode": 0,
+    "bundleSizeAdvisory": "existing",
+    "diffCheck": "PASS",
+    "unmergedIndexEntries": 0,
+    "srcMathRandomCalls": 0,
+    "improperDomainEngineRuntimeImports": 0
+  },
+  "initialContendedRun": {
+    "classification": "CONTENDED_DEFAULT_TEST_TIMEOUT",
+    "initialFailure": {
+      "ancestorTitles": [
+        "continue flow"
+      ],
+      "fullName": "continue flow keeps the explicit one-day advance quick-simulation allowance for the user fixture",
+      "status": "failed",
+      "title": "keeps the explicit one-day advance quick-simulation allowance for the user fixture",
+      "duration": 5735.843700000001,
+      "failureMessages": [
+        "Error: STACK_TRACE_ERROR\n    at task (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at chain (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:599:14)\n    at C:/BDM-INTEGRATION-BS15-BS16-BS17/src/app/game/ContinueFlow.test.ts:36:3\n    at file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:40\n    at runWithSuite (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:2258:8)\n    at Object.collect (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:10)\n    at Object.collect (file:///C:/BDM-INTEGRATION-BS15-BS16-BS17/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:54)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+      ],
+      "meta": {},
+      "tags": []
+    },
+    "isolatedPass": {
+      "ancestorTitles": [
+        "continue flow"
+      ],
+      "fullName": "continue flow keeps the explicit one-day advance quick-simulation allowance for the user fixture",
+      "status": "passed",
+      "title": "keeps the explicit one-day advance quick-simulation allowance for the user fixture",
+      "duration": 3474.2942999999996,
+      "failureMessages": [],
+      "meta": {},
+      "tags": []
+    },
+    "unchangedDefaultTimeoutMs": 5000,
+    "testImplementationChanged": false,
+    "assertionsChanged": false,
+    "productionChanged": false,
+    "serialSuiteRequiredForFinalGate": true,
+    "evidenceBasis": "Vitest withTimeout rejects synchronously completed work when elapsed exceeds its timeout; initial 5735.84 ms runner-created stack versus isolated pass below the unchanged budget. Initial raw result retained."
+  },
+  "historical": {
+    "classification": "UNRESOLVED_HISTORICAL_CAUSE",
+    "originalDate": "2029-06-05",
+    "requestedDate": "2035-10-01",
+    "stopReason": null,
+    "rawEvidenceUnchanged": {
+      "full.json": {
+        "sha256": "233beb1ea0ffaa24f9399b89ee7e1724acde4ac15fe30c17f8fdae3550b4d210",
+        "bytes": 1922004
+      },
+      "full.log": {
+        "sha256": "211f1f3ed55557546ec0ed11e30dbb3a9290ce211777876a8d61da82213911cf",
+        "bytes": 7302
+      }
+    },
+    "originalFailReportGitBlob": "2ad599baca4c8cb6cb43dede4711637f6bfbb939",
+    "fullSuiteHistoricalTotals": {
+      "total": 4916,
+      "passed": 4819,
+      "failed": 38,
+      "pending": 59
+    },
+    "knownFailureAccounting": {
+      "previouslyRepairedStale": 20,
+      "reproducedFrozenBS15Baseline": 10,
+      "directLoopStopAssumptions": 2,
+      "timeoutOrArtifactEnvironment": 5,
+      "unresolvedOriginalTenYearStop": 1
+    }
+  },
+  "uncertifiedScope": [
+    "Original longitudinal World DB run/cause",
+    "Global BS16 completion",
+    "Global BS17D completion",
+    "Specialized Medical",
+    "Facilities AI management",
+    "Global quantitative facility assignment",
+    "Facilities Talent LIVE"
+  ],
+  "bs17dtReadiness": "Certified integrated base available only if Talent contract is approved and dependencies resolved; not started",
+  "longitudinalReplayed": false,
+  "fullSuiteRepeated": false,
+  "productionImplementationChanged": false,
+  "newBs16Imports": false,
+  "mainMergeAuthorized": false,
+  "rawEvidence": {
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\build.log": {
+      "sha256": "5fd67ecefd4c9a7bde55d5d8d22a2385833e74f9adf1d0641648c443b4928085",
+      "bytes": 8534
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\certifier.log": {
+      "sha256": "e6124734f9ddfbb5f4955c6af3d7df2fba2c34732b291dc8348cb4d686ea8cc5",
+      "bytes": 570
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\continue-isolated.json": {
+      "sha256": "7c5bc97f06d9530236690c999f81aba4e0319edd65526c02a5612eeb7bc08751",
+      "bytes": 5010
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\continue-isolated.log": {
+      "sha256": "6e333eb11fcd5d35a57d851d233e6f4b7e1d1e5e92a2c24fce45e100fad2eda3",
+      "bytes": 4786
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\initial-git.json": {
+      "sha256": "409979be98b72ee8e22cb5e1daed5c85ab0a59ee924255fabbad78363ce1ac51",
+      "bytes": 529
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\regressions-serial.json": {
+      "sha256": "5911c0e41f31a7a9cb6e66387ba2f75492073803980c0fe78e4b76ccda541771",
+      "bytes": 32803
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\regressions-serial.log": {
+      "sha256": "ea81b21fdb4f1c42adb177c9e62b293548fea12392c67c422c685ef924f61410",
+      "bytes": 30328
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\regressions.json": {
+      "sha256": "3b5034740132d585bb71a1dd5a5aa41a279c96e5a89714441fec9de7f3da60f5",
+      "bytes": 34029
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\regressions.log": {
+      "sha256": "1ef52aa55a08a7cc4b753c2fcfaa8bc7db42eb928617edac0bb5219fe05b0249",
+      "bytes": 296
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\timeout-diagnosis.json": {
+      "sha256": "85100a76dc51dfa9e0539767cc3a122eb859ed3cc4990b8f29a8a6672aaa1a25",
+      "bytes": 2494
+    },
+    "node_modules\\.cache\\bs15-bs16-bs17-certification\\approved-1791568214531\\typecheck.log": {
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec",
+      "bytes": 106
+    },
+    "C:\\BDM-INTEGRATION-BS15-BS16-BS17\\node_modules\\.cache\\bs15-bs16-bs17-certification\\v2\\runs\\1791568215227-16248\\comparison.json": {
+      "sha256": "fc5a30682e053d71ea83b7750a0a7bb0e6739ce9a3ddc316d07dfbecc9d7d98b",
+      "bytes": 12357
+    },
+    "C:\\BDM-INTEGRATION-BS15-BS16-BS17\\node_modules\\.cache\\bs15-bs16-bs17-certification\\v2\\runs\\1791568215227-16248\\frozen-bs15.json": {
+      "sha256": "11cd1fc422aca142d9e3688f7f6e3c2373b3e1a8d1db4f92698ecf492d02019d",
+      "bytes": 13110
+    },
+    "C:\\BDM-INTEGRATION-BS15-BS16-BS17\\node_modules\\.cache\\bs15-bs16-bs17-certification\\v2\\runs\\1791568215227-16248\\frozen-bs15.log": {
+      "sha256": "eaa22b240e3b425c27ae28329ae2ab8000d04598f4b9cd9764a7740bff6c7d8b",
+      "bytes": 31784
+    },
+    "C:\\BDM-INTEGRATION-BS15-BS16-BS17\\node_modules\\.cache\\bs15-bs16-bs17-certification\\v2\\runs\\1791568215227-16248\\integrated.json": {
+      "sha256": "a775160da2731d68fd7244050a364d46a0adfa04f43cc9dc2ab1cc51acdca1c2",
+      "bytes": 13059
+    },
+    "C:\\BDM-INTEGRATION-BS15-BS16-BS17\\node_modules\\.cache\\bs15-bs16-bs17-certification\\v2\\runs\\1791568215227-16248\\integrated.log": {
+      "sha256": "642999d31d93af028e5d2cd54240a6dc6222883241488d1e1caf6dfcdfb9cc96",
+      "bytes": 31619
+    }
+  }
+}
