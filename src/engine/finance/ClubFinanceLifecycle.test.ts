@@ -144,8 +144,11 @@ describe('BS16I contract payroll lifecycle on a shipped ACB career', { timeout: 
     const organizationId = organizationIdsOf(career)[0]!
     const facts = factsForOrganization(application.world, organizationId)
 
-    expect(application.result.settlement).toBe('AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED')
-    expect(application.result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED')
+    // BS16J: settlement is the canonical due-batch authority, and a club with zero cash is truthfully unable to
+    // pay, so the batch settles nothing and the obligations stay outstanding.
+    expect(application.result.treasury.status).toBe('INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES')
+    expect(application.result.treasury.settledCount).toBe(0)
+    expect(application.result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES')
     expect(Object.keys(application.world.treasuryApplicationsById)).toEqual([])
     // Zero cash is preserved: no overdraft, no owner capital, no loan, no revenue was manufactured.
     expect(getCashBalancesByCurrency(application.world, organizationId, SEASON_START).every((row) => row.totalCashMinorUnits === 0)).toBe(true)

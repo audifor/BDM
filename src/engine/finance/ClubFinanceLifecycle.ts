@@ -8,27 +8,34 @@ import {
   materializeRevenueForDate,
   organizationFinanceAccountId,
   ORGANIZATION_FINANCE_ACCOUNT_ROLES,
+  settleDuePayableBatchForDate,
+  type DuePayableSettlementResult,
+  type DuePayableSettlementStatus,
 } from '@/domain/finance'
 import { financeFiscalPeriodsOf } from '@/domain/finance/FinanceFoundation'
 import type { FiscalPeriodId, OrganizationId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
 /**
- * BS16I — the single canonical daily Finance lifecycle processor.
+ * BS16I/BS16J — the single canonical daily Finance lifecycle processor.
  *
  * It processes only economic facts whose source already exists in the world: contracts (shipped careers have
  * them), plus revenue, operating cost or debt engines strictly when the world declares the corresponding
- * source. It never creates a source to have something to process, never invents an opening position, never
- * funds a club, and never settles an obligation, because no canonical policy says when a payable is paid.
+ * source. It never creates a source to have something to process, never invents an opening position and never
+ * funds a club.
  *
  * Payroll is the mandatory shipped producer: a contract's due schedule entry becomes a canonical commitment,
  * expense recognition, payable and ledger posting on its own effective date. A club can legitimately hold zero
  * cash, so the result is an outstanding obligation — cash is untouched and the funding problem stays visible
  * instead of being secretly solved.
  *
- * Replay protection comes from the Finance facts themselves (deterministic event and artifact ids keyed by the
- * contract schedule entry), so processing a date twice is a no-op and no coarse "last processed date" marker is
- * introduced.
+ * BS16J adds the canonical Treasury step last: after every legitimate date-D economic materialization, the
+ * Organization's due payable batch is settled through the canonical batch policy, and only when the whole batch
+ * is fundable by the cash its ledger derives.
+ *
+ * Replay protection comes from the Finance facts themselves (deterministic event, artifact and settlement ids
+ * keyed by their canonical source), so processing a date twice is a no-op and no coarse "last processed date"
+ * marker is introduced.
  */
 export type ClubFinanceOrganizationStatus =
   | 'MATERIALIZED'
@@ -49,6 +56,8 @@ export interface ClubFinanceOrganizationResult {
   readonly debtOccurrences: number
   readonly materializedMinorUnits: number
   readonly reason: string | null
+  /** BS16J Treasury outcome; `null` when settlement could not be evaluated for this Organization. */
+  readonly treasury: DuePayableSettlementResult | null
 }
 
 export interface ClubFinanceDiagnostic {
@@ -57,14 +66,27 @@ export interface ClubFinanceDiagnostic {
   readonly sourceId?: string
 }
 
-/** BS16I audit outcome: obligations are produced, payment is not automatic because no policy exists. */
-export const AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED = 'AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED' as const
+/**
+ * BS16J date-level Treasury summary: the whole-date rollup of the per-Organization due-payable batch settlement.
+ * `BLOCKED` dominates (a batch that could not be applied must stay visible), then `SETTLED`, then the
+ * insufficient-liquidity case, then a day with nothing due. Cash and gap totals only include Organizations whose
+ * batch was actually evaluated, because a day with nothing due never reads the ledger.
+ */
+export interface ClubFinanceTreasurySummary {
+  readonly status: DuePayableSettlementStatus
+  readonly eligiblePayableCount: number
+  readonly totalDueMinorUnits: number
+  readonly availableCashMinorUnits: number
+  readonly fundingGapMinorUnits: number
+  readonly settledCount: number
+  readonly settledMinorUnits: number
+}
 
 export interface ClubFinanceDateResult {
   readonly date: GameDate
   readonly organizations: readonly ClubFinanceOrganizationResult[]
   readonly diagnostics: readonly ClubFinanceDiagnostic[]
-  readonly settlement: typeof AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED
+  readonly treasury: ClubFinanceTreasurySummary
 }
 
 export interface ClubFinanceApplication {
@@ -199,17 +221,41 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       }
     }
 
+    // 5. Treasury (BS16J): settle the Organization's due payable batch, and only when the whole batch is
+    // fundable by the cash its own ledger derives. It runs after every legitimate date-D economic
+    // materialization above, so same-day revenue, debt drawdown or receipts are real liquidity by now.
+    // There is no creditor priority in BDM, so a partially fundable batch settles nothing automatically.
+    const treasury = settleDuePayableBatchForDate(current, {
+      organizationId,
+      currencyCode,
+      date,
+      cashAccountId: accounts.cashOperating.id,
+      payableAccountId: accounts.payableControl.id,
+    })
+    current = treasury.world
+    if (treasury.result.status === 'SETTLED') diagnostics.push({ code: 'TREASURY_DUE_BATCH_SETTLED', message: `The complete due payable batch of ${treasury.result.settledMinorUnits} ${currencyCode} settled across ${treasury.result.settledCount} payable(s).`, sourceId: String(organizationId) })
+    else if (treasury.result.status === 'INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES') diagnostics.push({ code: 'INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES', message: treasury.result.reason ?? 'Due payables are not fully covered by cash, so none is settled automatically.', sourceId: String(organizationId) })
+    else if (treasury.result.status === 'BLOCKED') diagnostics.push({ code: 'TREASURY_SETTLEMENT_BLOCKED', message: treasury.result.reason ?? 'The due payable batch could not be settled.', sourceId: String(organizationId) })
+    if (treasury.result.ineligibleCurrencyPayableCount > 0) diagnostics.push({ code: 'TREASURY_CURRENCY_CONFLICT', message: `${treasury.result.ineligibleCurrencyPayableCount} due payable(s) are in another currency and were neither converted nor settled.`, sourceId: String(organizationId) })
+
     const dueOccurrences = occurrences.payroll + occurrences.operatingCost + occurrences.revenue + occurrences.debt
     const status: ClubFinanceOrganizationStatus = anyAccepted ? 'MATERIALIZED' : dueOccurrences > 0 && anyAlreadyProcessed ? 'ALREADY_PROCESSED' : 'NO_DUE_FACTS'
-    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null))
+    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null, treasury.result))
   }
 
-  // Settlement stays explicit: no canonical policy states when a payable is paid, and inventing a payment
-  // priority or an overdraft would be a product decision this milestone must not make.
-  diagnostics.push({ code: AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED, message: 'No canonical policy says when a payable is paid, so the lifecycle leaves obligations outstanding instead of inventing a payment priority or an overdraft.' })
+  const treasuryResults = organizations.flatMap((entry) => entry.treasury === null ? [] : [entry.treasury])
+  const treasurySummary: ClubFinanceTreasurySummary = Object.freeze({
+    status: summarizeTreasuryStatus(treasuryResults),
+    eligiblePayableCount: treasuryResults.reduce((sum, entry) => sum + entry.eligiblePayableCount, 0),
+    totalDueMinorUnits: treasuryResults.reduce((sum, entry) => sum + entry.totalDueMinorUnits, 0),
+    availableCashMinorUnits: treasuryResults.reduce((sum, entry) => sum + (entry.availableCashMinorUnits ?? 0), 0),
+    fundingGapMinorUnits: treasuryResults.reduce((sum, entry) => sum + (entry.fundingGapMinorUnits ?? 0), 0),
+    settledCount: treasuryResults.reduce((sum, entry) => sum + entry.settledCount, 0),
+    settledMinorUnits: treasuryResults.reduce((sum, entry) => sum + entry.settledMinorUnits, 0),
+  })
   return Object.freeze({
     world: current,
-    result: Object.freeze({ date, organizations: Object.freeze(organizations), diagnostics: Object.freeze(diagnostics), settlement: AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED }),
+    result: Object.freeze({ date, organizations: Object.freeze(organizations), diagnostics: Object.freeze(diagnostics), treasury: treasurySummary }),
   })
 }
 
@@ -248,7 +294,7 @@ function zeroOccurrences(): Occurrences {
   return { payroll: 0, operatingCost: 0, revenue: 0, debt: 0 }
 }
 
-function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null): ClubFinanceOrganizationResult {
+function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null, treasury: DuePayableSettlementResult | null = null): ClubFinanceOrganizationResult {
   return Object.freeze({
     organizationId,
     currencyCode,
@@ -260,7 +306,16 @@ function result(organizationId: OrganizationId, currencyCode: string | null, fis
     debtOccurrences: occurrences.debt,
     materializedMinorUnits,
     reason,
+    treasury,
   })
+}
+
+/** `BLOCKED` dominates a settled or insufficient day, so an unapplied batch can never be hidden by another Organization. */
+function summarizeTreasuryStatus(results: readonly DuePayableSettlementResult[]): DuePayableSettlementStatus {
+  if (results.some((entry) => entry.status === 'BLOCKED')) return 'BLOCKED'
+  if (results.some((entry) => entry.status === 'SETTLED')) return 'SETTLED'
+  if (results.some((entry) => entry.status === 'INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES')) return 'INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES'
+  return 'NO_DUE_PAYABLES'
 }
 
 function tryOrganizationFinanceAccounts(world: GameWorld, organizationId: OrganizationId, currencyCode: string): ReturnType<typeof getOrganizationFinanceAccounts> | null {
