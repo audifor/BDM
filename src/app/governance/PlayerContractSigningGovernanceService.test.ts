@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { completeAcceptedFreeAgentSigning } from '@/app/marketIntelligence/FreeAgentSigningService'
 import { createNewGame } from '@/app/game'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { clearPlayerFromLineup } from '@/domain/tactics'
@@ -10,7 +11,7 @@ import type { ContractNegotiation } from '@/domain/market'
 import { assessPlayerContractSigningReadiness, ensureAiAcceptedPlayerContractSigningDecisions, playerContractSigningDecisionId, recordPlayerContractSigningDecisionEvent, startUserPlayerContractSigning } from './PlayerContractSigningGovernanceService'
 import { evaluateSimulationBreakpoints } from '@/app/game/SimulationBreakpoints'
 
-function fixture(kind: 'USER' | 'AI' = 'USER', options: { readonly status?: 'ACCEPTED' | 'OPEN' } = {}) {
+function fixture(kind: 'USER' | 'AI' = 'USER', options: { readonly status?: 'ACCEPTED' | 'OPEN'; readonly playerSalaryMinorUnits?: number } = {}) {
   const base = createNewGame()
   const team = Object.values(base.teams).find((item) => kind === 'USER' ? item.coachId === base.userCoachId : item.coachId !== undefined && item.coachId !== base.userCoachId)!
   const player = base.players[team.rosterPlayerIds[0]!]!
@@ -48,12 +49,16 @@ function fixture(kind: 'USER' | 'AI' = 'USER', options: { readonly status?: 'ACC
     { id: `appointment:${kind}:approver`, bodyId: 'body:board', actor: { kind: 'STAFF' as const, id: approverStaffId }, role: 'BOARD_MEMBER' as const, startedOn: base.currentDate },
   ]
   const assignmentId = teamStaffAssignmentIdFromString(`assignment:bs10d-h:${kind.toLowerCase()}:proposer`)
-  const world = updateGameWorld(base, {
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(base, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    team.id,
+    { currencyCode: 'USD', playerSalaryMinorUnits: options.playerSalaryMinorUnits ?? 200_000_000_000, staffSalaryMinorUnits: 10_000_000_000 },
+  )
+  const world = updateGameWorld(financed, {
     negotiations: [negotiation],
     contracts: baseContracts,
     teams: Object.values(base.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== player.id) } : item),
     lineupsByTeamId: Object.fromEntries(Object.entries(base.lineupsByTeamId).map(([id, lineup]) => [id, clearPlayerFromLineup(lineup, player.id)])),
-    teamFinances: Object.values(base.teamFinancesByTeamId).map((finances) => finances.teamId === team.id ? { ...finances, playerSalaryBudget: 1_000_000_000 } : finances),
     staffPeople: [...Object.values(base.staffPeopleById), proposerStaff, approverStaff],
     governanceInstitutions: [institution],
     governanceBodies: [
@@ -206,10 +211,12 @@ describe('PLAYER_CONTRACT_SIGNING Governance workflow', () => {
     expect(Object.values(approved.world.governanceDecisionEventsById).some((event) => event.decisionId === proposed.results[0]!.decision!.id && event.kind === 'EXECUTED')).toBe(false)
   })
 
-  it('leaves approval history intact when current payroll blocks the AI retry', () => {
+  it('leaves approval history intact when canonical Finance blocks the AI retry', () => {
+    // The club's liquidity is already committed through a real canonical obligation, so canonical Finance
+    // — not a legacy payroll pool — blocks the execution.
     const setup = fixture('AI')
     const proposed = ensureAiAcceptedPlayerContractSigningDecisions(setup.world, [setup.negotiation.id])
-    const poor = updateGameWorld(proposed.world, { teamFinances: Object.values(proposed.world.teamFinancesByTeamId).map((finances) => finances.teamId === setup.team.id ? { ...finances, playerSalaryBudget: 1 } : finances) })
+    const poor = commitTeamLiquidityForTest(proposed.world, setup.team.id, 10_000_000_000)
     const approved = recordPlayerContractSigningDecisionEvent(poor, { decisionId: proposed.results[0]!.decision!.id, kind: 'APPROVED', actor: { kind: 'STAFF', id: setup.approverStaffId }, bodyId: 'body:board' })
     expect(approved.status).toBe('FINANCIAL_BLOCK')
     expect(approved.world.negotiationsById[setup.negotiation.id]!.status).toBe('ACCEPTED')

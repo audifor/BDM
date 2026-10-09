@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer } from './MarketService'
+import { fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { updateGameWorld } from '@/domain/world'
 import { freeAgentDesirability, maintainAiTeamMinimumRosters } from './AiRosterMaintenance'
 
@@ -11,9 +12,11 @@ describe('AI roster maintenance', () => {
     const ai = Object.values(base.teams).find((team) => team.id !== user.id)!
     const donor = Object.values(base.teams).find((team) => team.id !== user.id && team.id !== ai.id)!
     const released = releasePlayer(base, donor.id, donor.rosterPlayerIds[0]!)
-    const short = updateGameWorld(released, {
-      teams: Object.values(released.teams).map((team) => team.id === ai.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team),
-      teamFinances: Object.values(released.teamFinancesByTeamId).map((finance) => finance.teamId === ai.id ? { ...finance, playerSalaryBudget: 100_000_000 } : finance),
+    // Canonical Finance decides affordability, so the fixture gives the AI club real liquidity from the
+    // canonical opening authority instead of raising a legacy payroll pool.
+    const funded = fundTeamWithOpeningCapital(released, ai.id, { currencyCode: 'USD', cashMinorUnits: 500_000_000 })
+    const short = updateGameWorld(funded, {
+      teams: Object.values(funded.teams).map((team) => team.id === ai.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team),
     })
 
     const result = maintainAiTeamMinimumRosters(short, { source: 'WORLD_REPAIR' })

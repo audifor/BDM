@@ -7,13 +7,26 @@ import { agentCounter, createNegotiationContact, getMarketKnowledge, negotiation
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
+import type { GameWorld } from '@/domain/world'
+import { fundTeamWithOpeningCapital, authorizeTeamSalaryForTest } from '@/domain/finance/financeTestFixture'
 import { formalOfferCounterSignalId, initializeMarketAgents, openNegotiation, progressFormalOfferResponses, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
-describe('Wave 4 market core',()=>{
-  it('creates deterministic agencies, shared agent portfolios, and sparse market knowledge',()=>{const first=initializeMarketAgents(createNewGame()),second=initializeMarketAgents(createNewGame());expect(first.agenciesById).toEqual(second.agenciesById);expect(first.agentsById).toEqual(second.agentsById);expect(first.playerRepresentations).toEqual(second.playerRepresentations);expect(Object.keys(first.agentsById).length).toBeLessThan(Object.keys(first.players).length);expect(first.marketKnowledge).toEqual([])})
-  it('updates only the contacted organization market knowledge without reading market reality',()=>{const world=initializeMarketAgents(createNewGame()),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!,organizationId=organizationIdForTeam(team.id),before=world.marketKnowledge.length;const next=receiveMarketSignal(world,{id:'signal:1',organizationId,playerId:player.id,source:'AGENT',occurredOn:world.currentDate,reliability:.8,availability:'OPEN',expectedSalary:900_000});expect(next.marketKnowledge).toHaveLength(before+1);expect(getMarketKnowledge(next.marketKnowledge,organizationId,player.id)).toMatchObject({availability:'OPEN',expectedSalary:900_000});expect(next.marketRealityByPlayerId[player.id]).toEqual(world.marketRealityByPlayerId[player.id])})
+/**
+ * The clubs these flow tests negotiate with are funded through the canonical opening authority, because
+ * canonical Finance — not a legacy payroll pool — is what decides whether an offer may be recorded.
+ */
+function fundedGame(): GameWorld {
+  let world = createNewGame()
+  for (const team of Object.values(world.teams).slice(0, 5)) {
+    world = fundTeamWithOpeningCapital(world, team.id, { currencyCode: 'USD', cashMinorUnits: 500_000_000 })
+  }
+  return world
+}
+
+describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared agent portfolios, and sparse market knowledge',()=>{const first=initializeMarketAgents(fundedGame()),second=initializeMarketAgents(fundedGame());expect(first.agenciesById).toEqual(second.agenciesById);expect(first.agentsById).toEqual(second.agentsById);expect(first.playerRepresentations).toEqual(second.playerRepresentations);expect(Object.keys(first.agentsById).length).toBeLessThan(Object.keys(first.players).length);expect(first.marketKnowledge).toEqual([])})
+  it('updates only the contacted organization market knowledge without reading market reality',()=>{const world=initializeMarketAgents(fundedGame()),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!,organizationId=organizationIdForTeam(team.id),before=world.marketKnowledge.length;const next=receiveMarketSignal(world,{id:'signal:1',organizationId,playerId:player.id,source:'AGENT',occurredOn:world.currentDate,reliability:.8,availability:'OPEN',expectedSalary:900_000});expect(next.marketKnowledge).toHaveLength(before+1);expect(getMarketKnowledge(next.marketKnowledge,organizationId,player.id)).toMatchObject({availability:'OPEN',expectedSalary:900_000});expect(next.marketRealityByPlayerId[player.id]).toEqual(world.marketRealityByPlayerId[player.id])})
   it('processes a due positive contact once and reveals only scoped contact observations',()=>{
-    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const initial=initializeMarketAgents(fundedGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
     const reality={...released.marketRealityByPlayerId[playerId]!,playerWillingness:72,expectedSalary:1_250_000,expectedYears:3}
     const responseDate=addDays(released.currentDate,1)
     const world=updateGameWorld(released,{currentDate:responseDate,marketReality:[...Object.values(released.marketRealityByPlayerId).filter(item=>item.playerId!==playerId),reality]})
@@ -34,7 +47,7 @@ describe('Wave 4 market core',()=>{
     expect(answered.teams[team.id]!.rosterPlayerIds).toEqual(contacted.teams[team.id]!.rosterPlayerIds)
   })
   it('closes a refusal without inventing salary or years and leaves missing reality pending',()=>{
-    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const initial=initializeMarketAgents(fundedGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
     const reality={...released.marketRealityByPlayerId[playerId]!,playerWillingness:20}
     const ready=updateGameWorld(released,{currentDate:addDays(released.currentDate,1),marketReality:[...Object.values(released.marketRealityByPlayerId).filter(item=>item.playerId!==playerId),reality]})
     const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'negative-response',responsibleActor:{kind:'USER'}})
@@ -48,7 +61,7 @@ describe('Wave 4 market core',()=>{
     expect(progressNegotiationContactResponses(noReality)).toBe(noReality)
   })
   it('waits until the day after contact and closes stale contacts without claiming a response',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const initial=fundedGame(),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
     const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'delayed-response',responsibleActor:{kind:'USER'}})
     const sameDay=updateGameWorld(released,{negotiations:[contact]})
     expect(progressNegotiationContactResponses(sameDay)).toBe(sameDay)
@@ -60,7 +73,7 @@ describe('Wave 4 market core',()=>{
     expect(stale.marketSignalsById).toEqual(later.marketSignalsById)
   })
   it('uses the same response model for user and AI contacts and ignores non-contact states',()=>{
-    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const initial=initializeMarketAgents(fundedGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
     const due=updateGameWorld(released,{currentDate:addDays(released.currentDate,1)})
     const userContact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'same-response',responsibleActor:{kind:'USER'}})
     const aiContact={...userContact,responsibleActor:{kind:'ORGANIZATION' as const}}
@@ -72,7 +85,7 @@ describe('Wave 4 market core',()=>{
     expect(progressNegotiationContactResponses(untouched)).toBe(untouched)
   })
   it('represents pre-offer contact without creating offer terms',()=>{
-    const world=createNewGame(),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!
+    const world=fundedGame(),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!
     const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId:player.id,startedOn:world.currentDate,actionKey:'plan-a:proposal-a',sourcePlanId:'plan-a',sourceProposalId:'proposal-a',responsibleActor:{kind:'USER'}})
     expect(contact).toMatchObject({status:'CONTACTED',teamId:team.id,startedOn:world.currentDate})
     expect(contact).not.toHaveProperty('salary');expect(contact).not.toHaveProperty('years');expect(contact).not.toHaveProperty('role');expect(contact).not.toHaveProperty('agentFee')
@@ -174,7 +187,7 @@ describe('Wave 4 market core',()=>{
     expect(rejected.negotiationsById[setup.contact.id]).toMatchObject({status:'REJECTED',playerResponse:{outcome:'REJECTED',origin:'PLAYER'}})
     expect(rejected.marketSignalsById).toEqual(due.marketSignalsById)
 
-    const funded=updateGameWorld(opened,{teamFinances:Object.values(opened.teamFinancesByTeamId).map(item=>item.teamId===setup.team.id?{...item,playerSalaryBudget:100_000_000}:item)})
+    const funded=authorizeTeamSalaryForTest(fundTeamWithOpeningCapital(opened,setup.team.id,{currencyCode:'USD',cashMinorUnits:500_000_000}),setup.team.id,{currencyCode:'USD',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
     const signed=signFreeAgent(funded,setup.team.id,setup.playerId)
     const stale=updateGameWorld(signed,{currentDate:addDays(signed.currentDate,1)})
     const closed=progressFormalOfferResponses(stale)
@@ -190,14 +203,14 @@ describe('Wave 4 market core',()=>{
     expect(()=>openNegotiation(pending,openInput(setup))).toThrow(/positive current contact/)
     const refused=updateGameWorld(setup.world,{negotiations:[{...setup.contact,status:'CLOSED',contactResponse:{...setup.contact.contactResponse!,outcome:'NOT_INTERESTED'}} as ContractNegotiation]})
     expect(()=>openNegotiation(refused,openInput(setup))).toThrow(/opening key.*already in use/)
-    const funded=updateGameWorld(setup.world,{teamFinances:Object.values(setup.world.teamFinancesByTeamId).map(item=>item.teamId===setup.team.id?{...item,playerSalaryBudget:100_000_000}:item)})
+    const funded=authorizeTeamSalaryForTest(fundTeamWithOpeningCapital(setup.world,setup.team.id,{currencyCode:'USD',cashMinorUnits:500_000_000}),setup.team.id,{currencyCode:'USD',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
     const signed=signFreeAgent(funded,setup.team.id,setup.playerId)
     expect(()=>openNegotiation(signed,openInput(setup))).toThrow(/no longer a free agent/)
     expect(()=>openNegotiation(setup.world,{...openInput(setup),offerResponsibleActor:{kind:'ORGANIZATION'}})).toThrow(/not authorized/)
     expect(()=>openNegotiation(funded,{...openInput(setup),salary:100_000_000})).toThrow(/cannot afford/)
   })
   it('creates one authorized term-free contact and persists the delegated actor and current source',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!
+    const initial=fundedGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!
     const released=releasePlayer(initial,source.id,playerId)
     const world=updateGameWorld(released,{userCoachId:team.coachId!})
     const input={organizationId:team.organizationId,teamId:team.id,playerId,startedOn:world.currentDate,actionKey:'current-plan:current-proposal',responsibleActor:{kind:'USER' as const},sourcePlanId:'current-plan',sourceProposalId:'current-proposal'}
@@ -221,7 +234,7 @@ describe('Wave 4 market core',()=>{
   })
 
   it('blocks unauthorized, malformed, non-free-agent, and conflicting active contacts without mutation',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
+    const initial=fundedGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
     const input={organizationId:team.organizationId,teamId:team.id,playerId,startedOn:world.currentDate,actionKey:'plan:proposal',responsibleActor:{kind:'USER' as const},sourcePlanId:'plan',sourceProposalId:'proposal'}
     expect(createContactInEngine(world,input)).toMatchObject({status:'BLOCKED',reason:'CONTACT_ACTOR_NOT_AUTHORIZED',world})
     expect(createContactInEngine(world,{...input,organizationId:organizationIdForTeam(source.id)})).toMatchObject({status:'BLOCKED',reason:'TEAM_OR_ORGANIZATION_MISMATCH',world})
@@ -237,7 +250,7 @@ describe('Wave 4 market core',()=>{
   })
 
   it('allows a new canonical contact after an earlier attempt is closed',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId),userWorld=updateGameWorld(world,{userCoachId:team.coachId!})
+    const initial=fundedGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId),userWorld=updateGameWorld(world,{userCoachId:team.coachId!})
     const first=createContactInEngine(userWorld,{organizationId:team.organizationId,teamId:team.id,playerId,startedOn:userWorld.currentDate,actionKey:'plan-a:proposal-a',responsibleActor:{kind:'USER'},sourcePlanId:'plan-a',sourceProposalId:'proposal-a'})
     if(first.status!=='CREATED') throw new Error('expected first contact')
     const closedContact=first.contact.status==='CONTACTED'?{...first.contact,status:'CLOSED' as const}:first.contact
@@ -249,7 +262,7 @@ describe('Wave 4 market core',()=>{
 })
 
 function userContactFixture() {
-  const initial=createNewGame()
+  const initial=fundedGame()
   const team=Object.values(initial.teams).find(item=>item.coachId===initial.userCoachId)!
   const source=Object.values(initial.teams).find(item=>item.id!==team.id&&item.rosterPlayerIds.length>0)!
   const playerId=source.rosterPlayerIds[0]!
