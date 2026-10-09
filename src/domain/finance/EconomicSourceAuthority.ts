@@ -105,7 +105,6 @@ export const MISSING_ECONOMIC_SOURCE_AUTHORITIES = [
   'COMPETITION_PRIZE_AND_MEDIA_DISTRIBUTION_NOT_MODELLED',
   'FACILITY_OPEX_AUTHORITY_NOT_MODELLED',
   'TRAVEL_MEDICAL_SCOUTING_ADMINISTRATION_COST_AUTHORITY_NOT_MODELLED',
-  'RECEIVABLE_COLLECTION_NOT_MODELLED',
 ] as const
 export type MissingEconomicSourceAuthority = (typeof MISSING_ECONOMIC_SOURCE_AUTHORITIES)[number]
 
@@ -125,7 +124,6 @@ export const MISSING_ECONOMIC_SOURCE_AUTHORITY_REGISTER: readonly MissingEconomi
   Object.freeze({ code: 'COMPETITION_PRIZE_AND_MEDIA_DISTRIBUTION_NOT_MODELLED' as const, kind: 'REVENUE' as const, requiredDecision: 'Approve the remaining competition distribution rules — prize money, solidarity, media pool and revenue share — with their amounts and dates per competition.', evidence: 'Competition participation distribution V1 is now modelled through a CompetitionEconomicProfile; no competition configures a prize, solidarity or media pool, and the canonical distribution type still has no shipped fact.' }),
   Object.freeze({ code: 'FACILITY_OPEX_AUTHORITY_NOT_MODELLED' as const, kind: 'OPERATING_COST' as const, requiredDecision: 'Approve a facility operating cost policy: what recurring cost a facility or component incurs, at what amount, and on what cadence.', evidence: 'Facilities store condition and maintenance actions with no cost field by design; the World DB expense tables ship empty.' }),
   Object.freeze({ code: 'TRAVEL_MEDICAL_SCOUTING_ADMINISTRATION_COST_AUTHORITY_NOT_MODELLED' as const, kind: 'OPERATING_COST' as const, requiredDecision: 'Approve the remaining non-payroll operating cost model (travel, medical, scouting, administration, venue): which costs exist, their amounts, and their timing.', evidence: 'Match operations V1 is now modelled through a CompetitionEconomicProfile; the canonical source type still ships with no amount for any other category.' }),
-  Object.freeze({ code: 'RECEIVABLE_COLLECTION_NOT_MODELLED' as const, kind: 'REVENUE' as const, requiredDecision: 'Approve when a recognized receivable is actually collected into cash, so participation revenue becomes liquidity instead of remaining an outstanding receivable.', evidence: 'Canonical revenue semantics produce a receivable and never cash, and BS16J settlement authority deliberately covers payables only; no purchase/collection policy has been approved.' }),
 ])
 
 export interface EconomicSourceAuthorityReport {

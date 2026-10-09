@@ -1,6 +1,6 @@
 import { compareGameDates, createGameDate, daysInMonth, parseGameDate, type GameDate } from '@/domain/date'
 import { getContractYearCompensation, type PlayerContract } from '@/domain/contract'
-import type { StaffContract } from '@/domain/staffContract'
+import { staffFinancialScheduleStartsOn, type StaffContract } from '@/domain/staffContract'
 import {
   contractIdFromString,
   organizationIdFromString,
@@ -253,7 +253,11 @@ function buildAmountEntries(world: GameWorld, source: SourceContract, query: Con
     ? source.contract.term.expiresOn
     : earliest(source.contract.term.expiresOn, source.contract.termination?.effectiveOn)
   const team = world.teams[source.teamId]!
-  const periods = annualPeriods(source.contract.term.startsOn, contractEnd)
+  // Employment and its financial schedule are separate meanings: Staff payroll is anchored on the contract's own
+  // financial start when it declares one (a career can begin before the Season that its salaries start with),
+  // and on the term start otherwise, which keeps production payroll semantics unchanged.
+  const scheduleStartsOn = source.sourceContractType === 'PLAYER' ? source.contract.term.startsOn : staffFinancialScheduleStartsOn(source.contract)
+  const periods = annualPeriods(scheduleStartsOn, contractEnd)
   return Object.freeze(periods.flatMap((period, yearIndex) => {
     const compensation = source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
     const guaranteed = compensation.guaranteedAmount

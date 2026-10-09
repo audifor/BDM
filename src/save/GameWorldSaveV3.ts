@@ -458,10 +458,11 @@ function parseStaffJobOfferV3(value: unknown): StaffJobOffer {
 
 function parseStaffContractV3(value: unknown): StaffContract {
   const v = record(value, 'Staff contract V3')
-  const keys = ['id', 'staffId', 'teamId', 'kind', 'term', 'compensation', ...(v.termination === undefined ? [] : ['termination'])]
+  const keys = ['id', 'staffId', 'teamId', 'kind', 'term', 'compensation', ...(v.financialScheduleStartsOn === undefined ? [] : ['financialScheduleStartsOn']), ...(v.termination === undefined ? [] : ['termination'])]
   assertExactKeys(v, keys, 'Staff contract V3')
   const term = record(v.term, 'Staff contract V3 term'); assertExactKeys(term, ['startsOn', 'expiresOn'], 'Staff contract V3 term')
   const compensation = record(v.compensation, 'Staff contract V3 compensation'); assertExactKeys(compensation, ['annualSalary'], 'Staff contract V3 compensation')
+  const financialScheduleStartsOn = v.financialScheduleStartsOn === undefined ? undefined : parseGameDate(text(v.financialScheduleStartsOn, 'Staff contract financialScheduleStartsOn'))
   const termination = v.termination === undefined ? undefined : (() => { const t = record(v.termination, 'Staff contract V3 termination'); assertExactKeys(t, ['effectiveOn', 'reason'], 'Staff contract V3 termination'); return { effectiveOn: parseGameDate(text(t.effectiveOn, 'Staff contract termination effectiveOn')), reason: enumValue(t.reason, ['performance', 'budgetCuts', 'roleEliminated', 'resigned'], 'Staff contract termination reason') as never } })()
   return createStaffContract({
     id: staffContractIdFromString(text(v.id, 'Staff contract id')),
@@ -470,6 +471,7 @@ function parseStaffContractV3(value: unknown): StaffContract {
     kind: enumValue(v.kind, ['standard'], 'Staff contract kind') as 'standard',
     term: { startsOn: parseGameDate(text(term.startsOn, 'Staff contract startsOn')), expiresOn: parseGameDate(text(term.expiresOn, 'Staff contract expiresOn')) },
     compensation: { annualSalary: finite(compensation.annualSalary, 'Staff contract annualSalary') },
+    ...(financialScheduleStartsOn === undefined ? {} : { financialScheduleStartsOn }),
     ...(termination === undefined ? {} : { termination }),
   })
 }

@@ -1,5 +1,7 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
+import { staffFinancialScheduleStartsOn } from '@/domain/staffContract'
 import {
+  collectDueReceivablesForDate,
   getContractFinancialSchedule,
   getOrganizationFinanceAccounts,
   materializeContractFinanceForDate,
@@ -11,6 +13,7 @@ import {
   settleDuePayableBatchForDate,
   type DuePayableSettlementResult,
   type DuePayableSettlementStatus,
+  type ReceivableCollectionResult,
 } from '@/domain/finance'
 import { financeFiscalPeriodsOf } from '@/domain/finance/FinanceFoundation'
 import type { FiscalPeriodId, OrganizationId } from '@/domain/ids'
@@ -54,6 +57,10 @@ export interface ClubFinanceOrganizationResult {
   readonly operatingCostOccurrences: number
   readonly revenueOccurrences: number
   readonly debtOccurrences: number
+  /** BS16K-C: receivables collected today because their own source policy declares collection on the due date. */
+  readonly collectionOccurrences: number
+  readonly collectedMinorUnits: number
+  readonly collection: ReceivableCollectionResult | null
   readonly materializedMinorUnits: number
   readonly reason: string | null
   /** BS16J Treasury outcome; `null` when settlement could not be evaluated for this Organization. */
@@ -87,6 +94,21 @@ export interface ClubFinanceDateResult {
   readonly organizations: readonly ClubFinanceOrganizationResult[]
   readonly diagnostics: readonly ClubFinanceDiagnostic[]
   readonly treasury: ClubFinanceTreasurySummary
+  /** BS16K-C: whole-date rollup of source-driven receivable collection. */
+  readonly collection: ReceivableCollectionSummary
+}
+
+/**
+ * BS16K-C date-level collection summary: how much declared-collectible revenue actually became cash today.
+ * `BLOCKED` dominates (a collection that could not be applied must stay visible), then `COLLECTED`, then a day
+ * with nothing collectible. Totals only count Organizations whose collection was actually evaluated.
+ */
+export interface ReceivableCollectionSummary {
+  readonly status: 'COLLECTED' | 'NOTHING_DUE' | 'BLOCKED'
+  readonly evaluatedOrganizations: number
+  readonly collectedCount: number
+  readonly collectedMinorUnits: number
+  readonly policylessDueReceivableCount: number
 }
 
 export interface ClubFinanceApplication {
@@ -132,8 +154,11 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
 
     const occurrences = zeroOccurrences()
     let materialized = 0
+    let collectedMinorUnits = 0
+    let latestCollection: ReceivableCollectionResult | null = null
     let anyAccepted = false
     let anyAlreadyProcessed = false
+    let anyCollected = false
 
     // 1. Contract payroll: the shipped producer whose source (contracts) already exists in every career.
     // A contract's schedule entries are dated at the anniversary of its term start, so an organization none of
@@ -221,7 +246,28 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       }
     }
 
-    // 5. Treasury (BS16J): settle the Organization's due payable batch, and only when the whole batch is
+    // 5. Source-driven collection (BS16K-C): a receivable becomes cash only when its own source policy says the
+    // money arrives on that due date, so a club that owns an approved distribution collects it here — after every
+    // legitimate date-D recognition, and before the Treasury batch below, which then sees real liquidity.
+    const collectingSources = Object.values(current.revenueSourcesById).some((source) => String(source.organizationId) === String(organizationId) && source.status === 'ACTIVE' && source.collectionPolicy === 'COLLECT_ON_DUE_DATE')
+    if (collectingSources) {
+      const collection = collectDueReceivablesForDate(current, {
+        organizationId,
+        currencyCode,
+        date,
+        cashAccountId: accounts.cashOperating.id,
+        receivableAccountId: accounts.receivableControl.id,
+      })
+      occurrences.collections = collection.result.collectedCount
+      collectedMinorUnits += collection.result.collectedMinorUnits
+      latestCollection = collection.result
+      if (collection.result.status === 'COLLECTED') anyCollected = true
+      current = collection.world
+      if (collection.result.status === 'COLLECTED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION', message: `${collection.result.collectedMinorUnits} ${currencyCode} collected across ${collection.result.collectedCount} receivable(s) declared collectible by their source policy.`, sourceId: String(organizationId) })
+      else if (collection.result.status === 'BLOCKED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION_BLOCKED', message: collection.result.reason ?? 'Receivable collection failed.', sourceId: String(organizationId) })
+    }
+
+    // 6. Treasury (BS16J): settle the Organization's due payable batch, and only when the whole batch is
     // fundable by the cash its own ledger derives. It runs after every legitimate date-D economic
     // materialization above, so same-day revenue, debt drawdown or receipts are real liquidity by now.
     // There is no creditor priority in BDM, so a partially fundable batch settles nothing automatically.
@@ -239,11 +285,12 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
     if (treasury.result.ineligibleCurrencyPayableCount > 0) diagnostics.push({ code: 'TREASURY_CURRENCY_CONFLICT', message: `${treasury.result.ineligibleCurrencyPayableCount} due payable(s) are in another currency and were neither converted nor settled.`, sourceId: String(organizationId) })
 
     const dueOccurrences = occurrences.payroll + occurrences.operatingCost + occurrences.revenue + occurrences.debt
-    const status: ClubFinanceOrganizationStatus = anyAccepted ? 'MATERIALIZED' : dueOccurrences > 0 && anyAlreadyProcessed ? 'ALREADY_PROCESSED' : 'NO_DUE_FACTS'
-    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null, treasury.result))
+    const status: ClubFinanceOrganizationStatus = anyAccepted || anyCollected ? 'MATERIALIZED' : dueOccurrences > 0 && anyAlreadyProcessed ? 'ALREADY_PROCESSED' : 'NO_DUE_FACTS'
+    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null, treasury.result, collectedMinorUnits, latestCollection))
   }
 
   const treasuryResults = organizations.flatMap((entry) => entry.treasury === null ? [] : [entry.treasury])
+  const collectionSummary = summarizeCollection(organizations)
   const treasurySummary: ClubFinanceTreasurySummary = Object.freeze({
     status: summarizeTreasuryStatus(treasuryResults),
     eligiblePayableCount: treasuryResults.reduce((sum, entry) => sum + entry.eligiblePayableCount, 0),
@@ -255,7 +302,23 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
   })
   return Object.freeze({
     world: current,
-    result: Object.freeze({ date, organizations: Object.freeze(organizations), diagnostics: Object.freeze(diagnostics), treasury: treasurySummary }),
+    result: Object.freeze({ date, organizations: Object.freeze(organizations), diagnostics: Object.freeze(diagnostics), treasury: treasurySummary, collection: collectionSummary }),
+  })
+}
+
+function summarizeCollection(organizations: readonly ClubFinanceOrganizationResult[]): ReceivableCollectionSummary {
+  const evaluated = organizations.flatMap((entry) => entry.collection === null ? [] : [entry.collection])
+  const status: ReceivableCollectionSummary['status'] = evaluated.some((entry) => entry.status === 'BLOCKED')
+    ? 'BLOCKED'
+    : evaluated.some((entry) => entry.status === 'COLLECTED')
+      ? 'COLLECTED'
+      : 'NOTHING_DUE'
+  return Object.freeze({
+    status,
+    evaluatedOrganizations: evaluated.length,
+    collectedCount: evaluated.reduce((sum, entry) => sum + entry.collectedCount, 0),
+    collectedMinorUnits: evaluated.reduce((sum, entry) => sum + entry.collectedMinorUnits, 0),
+    policylessDueReceivableCount: evaluated.reduce((sum, entry) => sum + entry.policylessDueReceivableCount, 0),
   })
 }
 
@@ -264,6 +327,7 @@ interface Occurrences {
   operatingCost: number
   revenue: number
   debt: number
+  collections: number
 }
 
 interface PayrollAnniversaryIndex {
@@ -286,15 +350,17 @@ function payrollAnniversaryIndex(world: GameWorld): PayrollAnniversaryIndex {
     if (monthDay === '02-29') leapDayOrganizations.add(key)
   }
   for (const contract of Object.values(world.contractsById)) record(String(contract.teamId), String(contract.term.startsOn))
-  for (const contract of Object.values(world.staffContractsById)) record(String(contract.teamId), String(contract.term.startsOn))
+  // Employment and its financial schedule are distinct: the payroll occurrence index must follow the schedule's
+  // own anchor, or a contract whose salary starts after its term would have its occurrences filtered out here.
+  for (const contract of Object.values(world.staffContractsById)) record(String(contract.teamId), String(staffFinancialScheduleStartsOn(contract)))
   return Object.freeze({ byOrganization, leapDayOrganizations })
 }
 
 function zeroOccurrences(): Occurrences {
-  return { payroll: 0, operatingCost: 0, revenue: 0, debt: 0 }
+  return { payroll: 0, operatingCost: 0, revenue: 0, debt: 0, collections: 0 }
 }
 
-function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null, treasury: DuePayableSettlementResult | null = null): ClubFinanceOrganizationResult {
+function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null, treasury: DuePayableSettlementResult | null = null, collectedMinorUnits = 0, collection: ReceivableCollectionResult | null = null): ClubFinanceOrganizationResult {
   return Object.freeze({
     organizationId,
     currencyCode,
@@ -304,6 +370,9 @@ function result(organizationId: OrganizationId, currencyCode: string | null, fis
     operatingCostOccurrences: occurrences.operatingCost,
     revenueOccurrences: occurrences.revenue,
     debtOccurrences: occurrences.debt,
+    collectionOccurrences: occurrences.collections,
+    collectedMinorUnits,
+    collection,
     materializedMinorUnits,
     reason,
     treasury,

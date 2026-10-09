@@ -136,7 +136,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const staffContracts = staffSandbox.assignments.map((assignment) => {
     const staff = staffSandbox.people.find((person) => person.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
   })
   const financedTeams = teamFinances.map((finance) => {
     const staffPayroll = staffContracts.filter((contract) => contract.teamId === finance.teamId).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0)
@@ -159,7 +159,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const coachStaffContracts = coachAssignments.map((assignment) => {
     const staff = coachStaffProfiles.find((item) => item.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
   })
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
