@@ -15,6 +15,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { NgPrecisionTable, ngCol } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import type { SportingCapabilityStatus } from '@/integration/facilitiesSporting'
+import { FacilityCapacityContext } from './FacilityCapacityContext'
 
 import {
   accessLabel,
@@ -117,7 +118,10 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
             onSelect={(facilityId) => setSelectedFacilityId(facilityId)}
             selectedFacilityId={selectedFacilityId}
           />
-          {selectedFacility === undefined ? null : <FacilityInspector model={model} facility={selectedFacility} />}
+          {selectedFacility === undefined ? null : <>
+            <FacilityInspector model={model} facility={selectedFacility} />
+            <FacilityCapacityContext world={world} teamId={team.id} facilityId={selectedFacility.facilityId} />
+          </>}
         </>
       ) : null}
 

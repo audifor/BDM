@@ -42,6 +42,7 @@ describe('TrainingWorkspace', () => {
     const session = createScheduledTrainingSession({ id: 'ui:p0-session', teamId: team.id, date, startTime: '14:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' })
     const blocked = executeScheduledTrainingSessions(updateGameWorld(scheduleTrainingSession(physical, session), { currentDate: date }))
     mountTrainingWorkspace(blocked)
+    expect(screen.getByRole('region', { name: 'Capacity and shared Training timetable' })).toBeInTheDocument()
     expect(screen.getByText(/Session not executed/)).toBeInTheDocument()
     expect(screen.getByText(/Closed practice center/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Reschedule for tomorrow' }))

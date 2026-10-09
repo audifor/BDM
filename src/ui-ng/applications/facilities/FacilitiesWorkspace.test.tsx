@@ -44,10 +44,12 @@ describe('MX0.6 Facilities workspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Facilities' }))
     fireEvent.doubleClick(screen.getByText('MX0.6 Training Center'))
     expect(screen.getByText('Physical history')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Capacity and shared Training timetable' })).toBeInTheDocument()
+    expect(screen.getByText(/Simultaneous demand and resource assignments are not recorded/)).toBeInTheDocument()
     expect(screen.getByText('Recorded usage rights')).toBeInTheDocument()
     expect(screen.getByText(/Court counts do not establish simultaneous player capacity/)).toBeInTheDocument()
     expect(screen.getAllByText('Not demonstrated').length).toBeGreaterThan(0)
-    expect(screen.getByText(/project:mx06-delayed-replacement/)).toBeInTheDocument()
+    expect(screen.getAllByText(/project:mx06-delayed-replacement/).length).toBeGreaterThan(0)
   })
 
   it('says honestly that the shipped universe has no recorded facility', () => {

@@ -17,6 +17,7 @@ import { TrainingSessionHistoryDetails } from './TrainingSessionHistoryDetails'
 import type { GameWorld } from '@/domain/world'
 import { nextEligibleTrainingDate } from '@/engine/training'
 import { TrainingPhysicalExplanation } from './TrainingPhysicalExplanation'
+import { FacilityCapacityContext } from '@/ui-ng/applications/facilities/FacilityCapacityContext'
 
 import './training-workspace.css'
 
@@ -130,6 +131,7 @@ export function TrainingWorkspace() {
             world={world}
           />
           <TeamTrainingHistory world={world} teamId={team.id} />
+          <FacilityCapacityContext world={world} teamId={team.id} />
           <section aria-label="Physical Training restrictions">
             {Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === team.id && session.status === 'scheduled' && session.physicalAttempt?.status === 'VERIFIED_UNAVAILABLE').map((session) => <article key={session.id}>
               <h3>{session.date > world.currentDate ? 'Rescheduled session with a previous physical restriction' : 'Blocked session'}: {session.id}</h3>
