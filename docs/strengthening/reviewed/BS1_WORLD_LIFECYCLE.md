@@ -1,5 +1,7 @@
 # BS1 · Canonical World Lifecycle
 
+> **Historical snapshot — reconciled 2026-10-09.** This document records the world at its own audit baseline and is preserved as history. Its statement that `CLUB_FINANCE_V2` is not part of the ordinary daily lifecycle (skipped / no processor / not activated by the daily simulation) is **superseded**: since BS16I (`87a24a0`, `76a3dcf`, `f176bc8`) the `CLUB_FINANCE_V2` phase runs the canonical `processClubFinanceForDate` processor on every GameDate, and career creation processes the initial career date exactly once. Canonical roadmap: [`docs/strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md`](../BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md) §16.
+
 ## Canonical phases and order
 
 The daily operation is an immutable, ordered application transition. The exact application order is:
@@ -59,7 +61,7 @@ BS1 selects when existing operations run and in what order, then reports their r
 
 BS1 reviewed the available Finance V2 operations and does not activate any automatically. The canonical account/ledger materializers require explicit event or source records, ledger mapping, date policy/currency, or authorization inputs. The repository does not define a safe generic daily, monthly, period-close, or season-close Club Finance processor. Event-driven operations continue to run only through their owning event/application path. Finance recommendations remain advice and do not become approvals, funding, or autonomous club actions.
 
-The `CLUB_FINANCE_V2` phase is explicitly skipped and explains why. BS1 does not call legacy salary-cap, affordability, or Team budget logic. The existing monthly `COACH_FINANCE` operation is personal coach finance and remains unchanged.
+The `CLUB_FINANCE_V2` phase is explicitly skipped and explains why. BS1 does not call legacy salary-cap, affordability, or Team budget logic. The existing monthly `COACH_FINANCE` operation is personal coach finance and remains unchanged. **(Superseded by BS16I — see the note at the top of this file: since `87a24a0`, `76a3dcf`, `f176bc8` the phase runs the canonical `processClubFinanceForDate` processor.)**
 
 ## Facilities activation
 

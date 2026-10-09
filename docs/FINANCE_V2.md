@@ -348,4 +348,6 @@ The runtime still lacks some dynamic fact producers. No attendance-based ticket 
 2. **Financial distress and institutional lifecycle:** define approved rules for insolvency, administration, restructuring, defaults, rescue financing, forced sales and capital rescue before implementing consequences.
 3. **Economic AI and market dynamics V2:** extend interactions among clubs, owners, boards, lenders, sponsors, competitions and markets after the required authorities and market facts exist.
 
+The BS16 Finance continuation that governs delivery is tracked separately and canonically: see [`docs/strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md`](strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md) §16 for the implemented lineage (BS16A–BS16I) and the approved continuation (BS16J–BS16N).
+
 Final test inventory, shards, pass counts and gate evidence are recorded in `docs/autopilot/CF12_FINANCE_V2_FINAL_CERTIFICATION.md`.

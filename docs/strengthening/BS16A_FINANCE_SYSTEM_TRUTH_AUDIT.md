@@ -7,6 +7,8 @@
 **Date:** 2026-10-07.
 **Evidence base:** executable producers/consumers read at the stated SHA. `docs/FINANCE_V2.md`, `docs/ARCHITECTURE.md` and `docs/autopilot/PRODUCT_GUARDRAILS.md` were treated as design context; where design intent and executable behavior differ this is stated explicitly.
 
+> **Reading note (reconciled 2026-10-09).** The audit findings in this document describe the state at `a682646` and are preserved as history. Where they say canonical Finance is dormant, that `CalendarEngine` always skips the `CLUB_FINANCE_V2` phase, or that the phase has no processor, that is the audit-time state, **not** the current state. The implemented lineage (BS16A–BS16I) and the approved continuation (BS16J–BS16N) are recorded in **§16** below, which is the single authoritative BS16 Finance roadmap.
+
 ---
 
 ## Executive answer
@@ -301,6 +303,8 @@ No `.skip`/`.todo`/`.only` in finance suites (verified).
 
 ## 15. Output roadmap (BS16B onward)
 
+> **SUPERSEDED / REFINED BY IMPLEMENTATION DISCOVERY — preserved as history.** This table was the legitimate, evidence-based plan at audit time. Deeper System Truth auditing exposed additional Finance layers that must exist before final certification — monetary-boundary correctness, shipped currency provisioning, an explicit opening economic state, the daily lifecycle processor, treasury settlement, real revenue/OPEX sources, financing/capital acquisition and consumer convergence — so the endpoint below ("BS16H — Finance Certification") is superseded by **BS16N — Long-Horizon Finance Certification**. The rows are kept verbatim. Audit-time findings elsewhere in this document (for example the "the `CLUB_FINANCE_V2` phase is always skipped" and dormant-lifecycle findings) describe the state at `a682646`; the current state and the canonical continuation are recorded in §16.
+
 Evidence-driven; shared-file risk marked. All wiring into the BS16A exclusion zone is deferred.
 
 | Block | Exact scope | Dependencies | Shared-file risk | Expected value | Acceptance gate |
@@ -314,6 +318,88 @@ Evidence-driven; shared-file risk marked. All wiring into the BS16A exclusion zo
 | **BS16H — Finance Certification** | Certification run: provisioning + lifecycle + affordability + reservations + producers, single-season and two-season checks, save/load, determinism. | all above | LOW | Formal closure of Finance System Truth | Certification doc + green gates |
 
 Do **not** blindly continue CF-roadmap ordering: the evidence says the minimum path to Finance System Truth is provisioning (B) → affordability queries (C) → lifecycle/season close (D) → decision safety (E) → producers (F), with G gated on product decisions and H closing.
+
+---
+
+## 16. Canonical BS16 roadmap (reconciled 2026-10-09)
+
+**This section is the single authoritative BS16 Finance roadmap.** It records the milestones actually implemented (evidence: commits and certification tests, never prose alone), the reframing of §15, and the approved continuation. §15 remains above as the historical plan of record.
+
+### 16.1 Implemented lineage
+
+| Milestone | Title | Status | Implementation evidence |
+|---|---|---|---|
+| BS16A | Finance System Truth Audit | **PASS** | `b100961` (audit-only); this document |
+| BS16B | Finance Foundation | **PASS** | `445fb1d` (canonical provisioning: account catalog, ledger mapping, currency and fiscal period), `cedbb71` (certification) |
+| BS16C | Financial Authority & Reservation Truth | **PASS** | `3628e17` |
+| BS16D | Spending Authorization Truth | **PASS** | `0896a4a` |
+| BS16E | Authorization Activation | **PARTIAL at the original milestone**; the activation blocker was reconciled by the BS16F tranche (`c9fbafb`) | `361b9b3` |
+| BS16F | Canonical Currency & Shipped Finance Provisioning | **PASS** | `c9fbafb` (activation reconciliation), `755ee03` (canonical currency provisioning), `eb01799` (shipped activation certification), `1e9db17` (World DB Spain finance boundary) |
+| BS16G | Monetary Boundary & Fiscal Period Truth | **PASS** | `88a010b` (every legacy money boundary crossed once), `ecfa182` (fiscal periods derived from the fiscal year, not the season) |
+| BS16H | Opening Economic State Authority | **PARTIAL** | `8cdf963` (authority), `884b420` (certification) |
+| BS16I | Contract Payroll & Daily Finance Lifecycle | **PASS** | `87a24a0`, `76a3dcf`; final closure `f176bc8` |
+
+Status rules that must not be relaxed:
+
+- **BS16H stays PARTIAL and is not retroactively promoted to PASS.** The authority exists and is certified, but no shipped world carries a legitimate opening economic source (`OPENING_ECONOMIC_STATE_UNAVAILABLE`), so truthful zero cash remains canonical. This is not a blocker for BS16J/BS16K, because zero cash is a valid and honest state.
+- **BS16E stays PARTIAL for its original milestone.** Its authorization activation was reconciled with the canonical finance foundation in `c9fbafb`, which belongs to the BS16F tranche.
+- **BS16I is PASS**, including the initial career date: `createNewGame` processes `processClubFinanceForDate(currentDate)` exactly once, and the first normal Advance Day processes the next GameDate.
+- Every commit above is a **local** commit on `bdm-stage2-bs16-finance-canonical`; nothing is claimed as pushed or merged.
+
+### 16.2 Approved continuation
+
+#### BS16J — Treasury & Settlement Truth
+
+Goal: turn canonical outstanding payables into real cash settlements when actual liquidity exists.
+
+Scope: payable eligibility by due date; canonical treasury settlement authority; deterministic organization and currency isolation; no negative cash; no invented overdraft; idempotent and save-safe settlement; an explicit insufficient-liquidity state; no arbitrary creditor priority.
+
+Approved default policy for automatic settlement — for each organization and date, the eligible due payables form **one canonical due batch**:
+
+- if cash covers the **entire** eligible batch → settle all;
+- if cash does **not** cover the entire eligible batch → settle **none** automatically.
+
+Reason: BDM has no canonical creditor-priority policy, so BS16J must not invent payroll-first priority, oldest-first priority, proportional allocation, smallest-first allocation or a financing fallback.
+
+No consumer migration in BS16J.
+
+#### BS16K — Revenue & Operating Cost Source Authority
+
+Goal: create legitimate shipped economic-source producers so canonical Finance has real recurring inflows and outflows beyond payroll.
+
+Scope: audit existing shipped data; competition/media/commercial revenue authority; operating-cost authority; use only defensible source data and policy; feed the existing Revenue/OPEX engines; lifecycle, save and idempotency correctness; no reputation-based or random cash formulas.
+
+Do not treat authorization as revenue.
+
+#### BS16L — Financing & Capital
+
+Goal: model the explicit acquisition of liquidity.
+
+Must distinguish `FinancingAgreement` from `CapitalContribution`, and the funding actor must stay generic enough for an external financial institution, an owner, a person/coach or another organization.
+
+Ownership boundaries: Finance owns economic facts, Governance owns approval and conflict authority, Human RPG owns personal wealth and roles. No bank-only architecture.
+
+#### BS16M — Canonical Consumer Convergence & Financial AI
+
+Goal: move gameplay affordability and financial decisions from legacy `TeamFinances` to canonical Finance only after the canonical lifecycle is economically trustworthy.
+
+Scope includes the controlled migration of contracts, market, staff, relevant AI and other affordability consumers.
+
+Requirements: explicit parity/divergence certification; no dual-write; retire legacy authority only when safe; AI understands liquidity, authorization, commitments and funding gaps.
+
+#### BS16N — Long-Horizon Finance Certification
+
+Goal: final System Truth certification for Finance, covering fiscal rollover, budget renewal authority, season close, long-horizon ledger integrity, save/load, revenue and cost continuity, debt/financing continuity, AI continuity, performance and growth, and multi-season economic plausibility.
+
+This is the final BS16 Finance certification milestone. It supersedes the §15 definition "BS16H — Finance Certification", because implementation discovery revealed the required intermediate System Truth layers.
+
+### 16.3 Scope uniqueness
+
+**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. The remaining roadmap after BS16I is exactly BS16J → BS16K → BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
+
+### 16.4 Product principles
+
+The invariants that govern every milestone above (AUTHORIZATION ≠ CASH, CASH ≠ REVENUE, REVENUE ≠ FINANCING, LOAN ≠ CAPITAL CONTRIBUTION, PAYABLE ≠ PAYMENT, BUDGET ≠ OPENING BALANCE, ZERO CASH MAY BE TRUE, and "if Finance cannot explain where money came from, it must not create it") are recorded canonically in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) under "Finance invariants and principles".
 
 ---
 
