@@ -11,6 +11,7 @@ import {
   legacyMajorUnitsToMoney,
 } from '@/domain/finance'
 import { advanceDayWithTrace } from '@/engine/calendar'
+import { advanceGameDay } from '@/app/game/advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
@@ -208,20 +209,43 @@ describe('BS16I contract payroll lifecycle on a shipped ACB career', { timeout: 
     expect(authorization.availableHeadroomMinorUnits).toBeLessThan(authorization.authorizedMinorUnits)
   })
 
-  it('characterizes the NBA-like prototype universe honestly', () => {
-    // The prototype career starts exactly on its contract anniversary, and the calendar only processes dates it
-    // advances to, so no fact is due on the first advanced day; the next anniversary is a year later.
+  it('materializes prototype career start-date payroll once across first Advance Day and save/load', () => {
     const prototype = createNewGame()
     const organizationId = organizationIdsOf(prototype).find((candidate) => prototype.organizationFinancialProfilesById[candidate as never] !== undefined)!
     const currency = String(prototype.organizationFinancialProfilesById[organizationId as never]!.baseCurrencyCode)
-    const quiet = processClubFinanceForDate(prototype, createGameDate(2032, 10, 2))
-    expect(quiet.world).toBe(prototype)
-
-    const nextAnniversary = processClubFinanceForDate(prototype, createGameDate(2033, 10, 1))
-    const due = getContractFinancialSchedule(prototype, { organizationId, currencyCode: currency, includeConditional: true }).filter((entry) => entry.effectiveOn === '2033-10-01' && entry.compensationStatus === 'GUARANTEED')
+    const startDate = prototype.currentDate
+    const due = getContractFinancialSchedule(prototype, { organizationId, currencyCode: currency, includeConditional: true })
+      .filter((entry) => entry.effectiveOn === startDate && entry.compensationStatus === 'GUARANTEED')
     expect(due.length).toBeGreaterThan(0)
-    expect(factsForOrganization(nextAnniversary.world, organizationId).payables.length).toBe(due.length)
-    expect(factsForOrganization(nextAnniversary.world, organizationId).payables.every((payable) => String(payable.amount.currencyCode) === currency)).toBe(true)
+    expect(factsForOrganization(prototype, organizationId).payables).toHaveLength(due.length)
+    expect(factsForOrganization(prototype, organizationId).commitments).toHaveLength(due.length)
+    expect(factsForOrganization(prototype, organizationId).recognitions).toHaveLength(due.length)
+    expect(factsForOrganization(prototype, organizationId).transactions).toHaveLength(due.length)
+    expect(getCashBalancesByCurrency(prototype, organizationId, startDate).every((row) => row.totalCashMinorUnits === 0)).toBe(true)
+    expect(Object.keys(prototype.treasuryApplicationsById)).toEqual([])
+
+    const factIds = {
+      commitments: Object.keys(prototype.financialCommitmentsById),
+      recognitions: Object.keys(prototype.expenseRecognitionsById),
+      payables: Object.keys(prototype.payablesById),
+      transactions: Object.keys(prototype.financialTransactionsById),
+    }
+    const reloaded = deserializeGameWorldV4(serializeGameWorldV4(prototype, SAVED_AT))
+    expect(Object.keys(reloaded.financialCommitmentsById)).toEqual(factIds.commitments)
+    expect(Object.keys(reloaded.expenseRecognitionsById)).toEqual(factIds.recognitions)
+    expect(Object.keys(reloaded.payablesById)).toEqual(factIds.payables)
+    expect(Object.keys(reloaded.financialTransactionsById)).toEqual(factIds.transactions)
+    expect(processClubFinanceForDate(reloaded, startDate).world).toBe(reloaded)
+
+    const advanced = advanceGameDay(reloaded, () => 1)
+    expect(advanced.currentDate).toBe(createGameDate(2032, 10, 2))
+    expect(Object.keys(advanced.financialCommitmentsById)).toEqual(factIds.commitments)
+    expect(Object.keys(advanced.expenseRecognitionsById)).toEqual(factIds.recognitions)
+    expect(Object.keys(advanced.payablesById)).toEqual(factIds.payables)
+    expect(Object.keys(advanced.financialTransactionsById)).toEqual(factIds.transactions)
+    expect(Object.keys(advanced.treasuryApplicationsById)).toEqual([])
+    expect(getCashBalancesByCurrency(advanced, organizationId, advanced.currentDate).every((row) => row.totalCashMinorUnits === 0)).toBe(true)
+    expect(factsForOrganization(advanced, organizationId).payables.every((payable) => String(payable.amount.currencyCode) === currency)).toBe(true)
   })
 
   it('keeps a long run over multiple payroll dates coherent and duplicate-free', { timeout: 180_000 }, () => {

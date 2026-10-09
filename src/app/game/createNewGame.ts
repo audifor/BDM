@@ -5,6 +5,7 @@ import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
 import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { materializeTradeWindows } from '@/engine/competition'
@@ -37,7 +38,8 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
   const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)
   if (userTeam !== undefined) world = initializeBoardState(world, userTeam.id)
   for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
-  return ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(world))
+  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(world))
+  return processClubFinanceForDate(career, career.currentDate).world
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {
