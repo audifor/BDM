@@ -1,5 +1,7 @@
 # BS1 · Daily Phase Map
 
+> **Historical snapshot — reconciled 2026-10-09.** This document records the world at its own audit baseline and is preserved as history. Its statement that `CLUB_FINANCE_V2` is not part of the ordinary daily lifecycle (skipped / no processor / not activated by the daily simulation) is **superseded**: since BS16I (`87a24a0`, `76a3dcf`, `f176bc8`) the `CLUB_FINANCE_V2` phase runs the canonical `processClubFinanceForDate` processor on every GameDate, and career creation processes the initial career date exactly once. Canonical roadmap: [`docs/strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md`](../BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md) §16.
+
 Application pre-transition rows are `PRE_ADVANCE_VALIDATION` and `MATCH_RESOLUTION`. Calendar Engine daily phases run from `DATE_ADVANCE` through `EVENT_COLLECTION`. Application post-transition rows are `SCHEDULE_INTEGRITY` through `DAY_COMPLETE`. The two World DB phases run only on that path. Calendar Engine phases use stable IDs and preserve the existing subsystem call order. A skipped cadence phase is still traced with `ran: false` and a reason. Timing is optional diagnostic evidence and does not affect simulation.
 
 | Phase | Owner | Cadence | Mutates | Can fail | Can create breakpoint | Notes |
@@ -30,7 +32,7 @@ Application pre-transition rows are `PRE_ADVANCE_VALIDATION` and `MATCH_RESOLUTI
 | `STAFF_APPRAISAL` | Staff Human State Pipeline | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Existing autonomy appraisal checks. |
 | `STAFF_CAREER_AUTONOMY` | Staff Career Autonomy | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Career market, autonomous offers, then resignations. |
 | `FACILITY_CONDITION` | Facilities Deterioration Engine | First of month | Yes, when condition changes | Yes; structured failure | Possible; BS2 decides | Latest canonical component condition record through checkpoint; diagnostics include condition changes/needs. |
-| `CLUB_FINANCE_V2` | Finance V2 | Not scheduled | No | No; skipped as unsupported automatic cadence | No | No generic calendar processor; phase explains required explicit inputs. |
+| `CLUB_FINANCE_V2` | Finance V2 | Not scheduled | No | No; skipped as unsupported automatic cadence | No | No generic calendar processor; phase explains required explicit inputs. **(Superseded by BS16I — see the note at the top of this file.)** |
 | `GOVERNANCE` | Governance | Not scheduled | No | No; skipped as unsupported automatic cadence | No | No automatic meeting/decision resolver; no governance state is created or resolved. |
 | `EVENT_COLLECTION` | Daily lifecycle coordinator | Every day | No | No | No | Collects transient phase diagnostics; persists no event stream. |
 | `SCHEDULE_INTEGRITY` | Application boundary | After Calendar Engine phases | No | Yes; `INVARIANT_VIOLATION` | No | Rejects a scheduled game dated before the new current date. |

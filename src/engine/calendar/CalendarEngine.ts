@@ -37,6 +37,7 @@ import { progressAiRetentionNegotiationsWithEvidence, type AiRetentionDecisionEv
 import { progressPlayerCareerEnds } from '@/engine/career/PlayerCareerLifecycle'
 import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
 import { progressAiProfessionalPathways } from '@/engine/career/AiProfessionalPathways'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
   'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
@@ -205,7 +206,12 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       ]
       return application.world
     }, 'Facility deterioration is evaluated on the first day of each month using elapsed time from each component condition record.', () => facilityDiagnostics)
-    run('CLUB_FINANCE_V2', current.currentDate, false, (input) => input, 'Club Finance V2 has no global calendar processor: materialization requires explicit event, ledger mapping, date policy, or authorization inputs.')
+    let clubFinanceDiagnostics: readonly DailyLifecycleDiagnostic[] = []
+    run('CLUB_FINANCE_V2', current.currentDate, true, (input) => {
+      const application = processClubFinanceForDate(input, input.currentDate)
+      clubFinanceDiagnostics = application.result.diagnostics
+      return application.world
+    }, 'Canonical Finance materializes the economic facts whose source already exists: due guaranteed contract payroll (commitment, recognition, payable, ledger posting), plus operating cost, revenue or debt only when the world declares such a source. Obligations stay outstanding because no canonical policy says when a payable is paid.', () => clubFinanceDiagnostics)
     run('GOVERNANCE', current.currentDate, false, (input) => input, 'Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
     const diagnostics = phases.flatMap((phase) => phase.diagnostics)
     phases.push({ phaseId: 'EVENT_COLLECTION', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: `Collected ${diagnostics.length} phase diagnostic(s) without persisting an event stream.` })

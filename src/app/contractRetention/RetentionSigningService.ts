@@ -1,6 +1,6 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus, type ContractYearCompensation } from '@/domain/contract'
-import { createFinancialCommitment, createMoney, getContractFinancialSchedule } from '@/domain/finance'
+import { createFinancialCommitment, getContractFinancialSchedule, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, type ContractId, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, resolveGovernanceDecisionEventAuthorityGrantIds } from '@/domain/governance'
 import { assessActiveContractRosterIntegrity } from '@/engine/market/RosterContractIntegrity'
@@ -144,7 +144,7 @@ function createRetentionAgentFeeCommitment(world: GameWorld, teamId: TeamId, pla
   const agent = representation === undefined ? undefined : world.agentsById[representation.agentId]
   try {
     return createFinancialCommitment({ id: financialCommitmentIdFromString(`financial-commitment:player-agent-fee:retention:${negotiationId}`), organizationId: team.organizationId,
-      amount: createMoney({ currencyCode: profile.baseCurrencyCode, minorUnits: amount }), startsOn: effectiveOn, dueOn: effectiveOn, category: 'PLAYER_AGENT_FEE',
+      amount: legacyMajorUnitsToMoney(amount, profile.baseCurrencyCode), startsOn: effectiveOn, dueOn: effectiveOn, category: 'PLAYER_AGENT_FEE',
       provenance: { kind: 'PLAYER_AGENT_FEE', id: `retention:${negotiationId}` }, counterparty: { kind: 'EXTERNAL', ...(agent === undefined ? {} : { id: agent.id }), label: agent?.name ?? 'Player agent' },
       dimensions: { teamId, reference: { kind: 'CONTRACT_NEGOTIATION', id: `retention:${negotiationId}` } } })
   } catch { return null }

@@ -1,5 +1,6 @@
 import type { ClubFacilityAccessKind, ClubProjectActionId } from '@/app/facilities'
 import type { FacilityServiceability } from '@/domain/facilities'
+import { getMinorUnitsPerMajorUnit } from '@/domain/finance'
 
 /** Presentation-only vocabulary for the Facilities workspace. No rule, threshold or cost lives here. */
 
@@ -87,14 +88,21 @@ export function amountPlaceholder(currencyCode: string | null): string {
 export function parseMajorAmountToMinorUnits(value: string, currencyCode: string): number | null {
   const trimmed = value.trim().replace(',', '.')
   if (trimmed.length === 0 || !/^\d+(\.\d+)?$/.test(trimmed)) return null
-  let digits = 2
-  try {
-    digits = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).resolvedOptions().maximumFractionDigits ?? 2
-  } catch {
-    digits = 2
-  }
-  const minorUnits = Math.round(Number(trimmed) * 10 ** digits)
+  // Canonical Finance owns the major→minor scale; the Intl fallback only covers currencies canonical Finance
+  // does not support yet, so no screen invents its own precision for a supported currency.
+  const scale = getMinorUnitsPerMajorUnit(currencyCode) ?? intlMinorUnitsPerMajorUnit(currencyCode)
+  if (scale === null) return null
+  const minorUnits = Math.round(Number(trimmed) * scale)
   return Number.isFinite(minorUnits) && minorUnits > 0 ? minorUnits : null
+}
+
+function intlMinorUnitsPerMajorUnit(currencyCode: string): number | null {
+  try {
+    const maximumFractionDigits = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).resolvedOptions().maximumFractionDigits
+    return maximumFractionDigits === undefined ? null : 10 ** maximumFractionDigits
+  } catch {
+    return null
+  }
 }
 
 export function daysBetween(from: string, to: string): number {

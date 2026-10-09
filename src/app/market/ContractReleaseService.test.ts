@@ -59,7 +59,9 @@ describe('Contract release lifecycle', () => {
     expect(preview.status).toBe('READY')
     if (preview.status !== 'READY') return
     expect(preview.contractIds).toEqual([setup.contract.id, successor.id])
-    expect(preview.financeConsequences).toContainEqual(expect.objectContaining({ contractId: successor.id, effectiveOn: successor.term.startsOn, currencyCode: 'EUR', amount: 300_000 }))
+    // The guaranteed schedule carries the legacy major-unit contract amount converted once into minor units
+    // (300,000 EUR major → 30,000,000 EUR minor), and no second conversion is applied downstream.
+    expect(preview.financeConsequences).toContainEqual(expect.objectContaining({ contractId: successor.id, effectiveOn: successor.term.startsOn, currencyCode: 'EUR', amount: 30_000_000 }))
 
     const result = executeContractRelease(world, setup.team.id, setup.playerId)
     expect(result.status).toBe('RELEASED')

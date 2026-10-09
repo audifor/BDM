@@ -15,7 +15,8 @@ import {
 } from '@/domain/ids'
 import { type GameWorld } from '@/domain/world'
 import { createAuthorizedEconomicEvent, processContractEconomicEvent, type EconomicEventAdapterResult, type EconomicEventAdapterOptions } from './EconomicEventAdapters'
-import { createCurrencyCode, createMoney, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
+import { legacyMajorUnitsToMoney } from './FinanceCurrencyPolicy'
+import { createCurrencyCode, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
 import { getExpenseRecognitionsAsOfDate, getExpenseRecognitionsBetween } from './RecognitionQueries'
 import { getPayableRemaining } from './Treasury'
 import type { ExpenseRecognition } from './Recognition'
@@ -239,7 +240,9 @@ function buildEntries(world: GameWorld, source: SourceContract, query: ContractF
   const currencyCode = resolveCurrencyCode(world, organizationId, query.currencyCode)
   return Object.freeze(amounts.map((entry) => {
     const { amountMinorUnits, ...rest } = entry
-    return Object.freeze({ ...rest, amount: createMoney({ currencyCode, minorUnits: amountMinorUnits }) })
+    // Legacy contract terms are whole major currency units; the canonical schedule is minor units, so every
+    // contract amount crosses the single conversion boundary instead of being cast 1:1 (BS16G).
+    return Object.freeze({ ...rest, amount: legacyMajorUnitsToMoney(amountMinorUnits, currencyCode) })
   }))
 }
 

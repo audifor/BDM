@@ -7,6 +7,7 @@ import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { worldDbDatabasePath, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
 import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
 import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
+import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
 import { ensureUserClubBoardState } from '@/engine/board'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
@@ -88,7 +89,7 @@ export async function createWorldDbSpainGame(
     // MX0.6 closure: the canonical World DB bootstrap attaches the user coach to the selected club
     // but never created Board truth for it, so the Board surface showed its initialization
     // placeholder in an already-running career. Same canonical initializer the other universes use.
-    return ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
+    return ensureCanonicalFinanceFoundation(ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID))))
   } finally {
     session.close()
   }

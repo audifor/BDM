@@ -141,7 +141,8 @@ describe('completeAcceptedFreeAgentSigning', () => {
     const signed = completeAcceptedFreeAgentSigning(financeReady, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
     expect(signed.status).toBe('SIGNED')
     expect(Object.values(signed.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE' && item.provenance.id === setup.negotiation.id)).toMatchObject([
-      { amount: { currencyCode: 'EUR', minorUnits: 75_000 }, category: 'PLAYER_AGENT_FEE', startsOn: financeReady.currentDate, dueOn: financeReady.currentDate },
+      // 75,000 EUR of legacy major units is a 7,500,000 minor-unit canonical commitment (BS16G scale).
+      { amount: { currencyCode: 'EUR', minorUnits: 7_500_000 }, category: 'PLAYER_AGENT_FEE', startsOn: financeReady.currentDate, dueOn: financeReady.currentDate },
     ])
   })
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION } from '@/app/game/createNewGame'
+import { generateWorld } from '@/engine/world/WorldGenerator'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
 import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { createFinancialAccount } from './FinancialLedger'
@@ -25,7 +26,8 @@ function competitionWorld() {
 }
 
 function contractWorld() {
-  const world = createNewGame()
+  // Exercise the adapter before any daily payroll processing; career bootstrap already posts payroll.
+  const world = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true, includeNcaaLike: true })
   const team = Object.values(world.teams)[0]!
   return { world: updateGameWorld(world, { financialAccounts: accounts(team.organizationId) }), contract: Object.values(world.contractsById).find((item) => item.teamId === team.id)! }
 }

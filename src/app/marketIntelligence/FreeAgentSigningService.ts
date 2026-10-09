@@ -1,6 +1,6 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
-import { createFinancialCommitment, createMoney } from '@/domain/finance'
+import { createFinancialCommitment, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
@@ -94,7 +94,7 @@ export function completeAcceptedFreeAgentSigning(
       feeCommitment = createFinancialCommitment({
         id: feeCommitmentId,
         organizationId: team.organizationId,
-        amount: createMoney({ currencyCode: profile.baseCurrencyCode, minorUnits: negotiation.agentFee }),
+        amount: legacyMajorUnitsToMoney(negotiation.agentFee, profile.baseCurrencyCode),
         startsOn: world.currentDate,
         dueOn: world.currentDate,
         category: 'PLAYER_AGENT_FEE',

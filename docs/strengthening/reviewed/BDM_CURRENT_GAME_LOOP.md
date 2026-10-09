@@ -1,5 +1,7 @@
 # BDM Current Game Loop
 
+> **Historical snapshot — reconciled 2026-10-09.** This document records the executable routes at its own audit baseline and is preserved as history. Its statement that `CLUB_FINANCE_V2` is not part of the ordinary daily lifecycle (skipped / no processor / not activated by the daily simulation) is **superseded**: since BS16I (`87a24a0`, `76a3dcf`, `f176bc8`) the `CLUB_FINANCE_V2` phase runs the canonical `processClubFinanceForDate` processor on every GameDate, and career creation processes the initial career date exactly once. Canonical roadmap: [`docs/strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md`](../BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md) §16.
+
 Audit base: `c23771ff51146ff7ce7a738504d54c443438b3ca` (`origin/main` and BS0 branch were equal at start). This describes executable routes present at that revision; it does not infer a single lifecycle from the subsystem inventory.
 
 ## Runtime routes

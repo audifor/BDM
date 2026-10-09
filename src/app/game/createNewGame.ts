@@ -4,6 +4,8 @@ import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/compe
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
+import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { materializeTradeWindows } from '@/engine/competition'
@@ -48,7 +50,8 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     ...cycle,
     institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
   })) })
-  return initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world)))
+  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world))))
+  return processClubFinanceForDate(career, career.currentDate).world
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number }, gender: 'male' | 'female'): GameWorld {
