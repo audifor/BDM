@@ -2,17 +2,20 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { staffFinancialScheduleStartsOn } from '@/domain/staffContract'
 import {
   collectDueReceivablesForDate,
+  executeFinancingForDate,
   getContractFinancialSchedule,
   getOrganizationFinanceAccounts,
   materializeContractFinanceForDate,
   materializeDebtFinanceForDate,
   materializeOperatingCostsForDate,
   materializeRevenueForDate,
+  mirrorInterOrganizationFinancingForDate,
   organizationFinanceAccountId,
   ORGANIZATION_FINANCE_ACCOUNT_ROLES,
   settleDuePayableBatchForDate,
   type DuePayableSettlementResult,
   type DuePayableSettlementStatus,
+  type FinancingExecutionResult,
   type ReceivableCollectionResult,
 } from '@/domain/finance'
 import { financeFiscalPeriodsOf } from '@/domain/finance/FinanceFoundation'
@@ -60,6 +63,10 @@ export interface ClubFinanceOrganizationResult {
   /** BS16K-C: receivables collected today because their own source policy declares collection on the due date. */
   readonly collectionOccurrences: number
   readonly collectedMinorUnits: number
+  /** BS16L: financing/capital facts executed today, how many were blocked, and the full execution detail. */
+  readonly financingOccurrences: number
+  readonly financingBlockedCount: number
+  readonly financing: FinancingExecutionResult | null
   readonly collection: ReceivableCollectionResult | null
   readonly materializedMinorUnits: number
   readonly reason: string | null
@@ -137,6 +144,13 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
   const diagnostics: ClubFinanceDiagnostic[] = []
   const payrollAnniversaries = payrollAnniversaryIndex(world)
   const dateMonthDay = date.slice(5)
+  // BS16L: one pass per processed date builds the only indexes the financing stages need, so no Organization ever
+  // scans the world's agreements, drawdown orders or contributions on an ordinary day.
+  const financingDueOrganizations = new Set<string>()
+  for (const drawdown of Object.values(world.financingDrawdownsById)) if (drawdown.drawnOn === date) financingDueOrganizations.add(String(drawdown.organizationId))
+  for (const contribution of Object.values(world.capitalContributionsById)) if (contribution.effectiveOn === date) financingDueOrganizations.add(String(contribution.recipientOrganizationId))
+  const inWorldLenderBorrowers = new Set<string>()
+  for (const agreement of Object.values(world.financingAgreementsById)) if (agreement.status === 'ACTIVE' && agreement.fundingParty.kind === 'ORGANIZATION') inWorldLenderBorrowers.add(String(agreement.borrowerOrganizationId))
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
     const profile = current.organizationFinancialProfilesById[organizationId]
@@ -156,6 +170,8 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
     let materialized = 0
     let collectedMinorUnits = 0
     let latestCollection: ReceivableCollectionResult | null = null
+    let latestFinancing: FinancingExecutionResult | null = null
+    let financingBlockedCount = 0
     let anyAccepted = false
     let anyAlreadyProcessed = false
     let anyCollected = false
@@ -226,6 +242,45 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       }
     }
 
+    // 4. Source-driven collection (BS16K-C): a receivable becomes cash only when its own source policy says the
+    // money arrives on that due date, so a club that owns an approved distribution collects it here — after every
+    // legitimate date-D recognition, and before financing, debt service and the Treasury batch below.
+    const collectingSources = Object.values(current.revenueSourcesById).some((source) => String(source.organizationId) === String(organizationId) && source.status === 'ACTIVE' && source.collectionPolicy === 'COLLECT_ON_DUE_DATE')
+    if (collectingSources) {
+      const collection = collectDueReceivablesForDate(current, {
+        organizationId,
+        currencyCode,
+        date,
+        cashAccountId: accounts.cashOperating.id,
+        receivableAccountId: accounts.receivableControl.id,
+      })
+      occurrences.collections = collection.result.collectedCount
+      collectedMinorUnits += collection.result.collectedMinorUnits
+      latestCollection = collection.result
+      if (collection.result.status === 'COLLECTED') anyCollected = true
+      current = collection.world
+      if (collection.result.status === 'COLLECTED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION', message: `${collection.result.collectedMinorUnits} ${currencyCode} collected across ${collection.result.collectedCount} receivable(s) declared collectible by their source policy.`, sourceId: String(organizationId) })
+      else if (collection.result.status === 'BLOCKED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION_BLOCKED', message: collection.result.reason ?? 'Receivable collection failed.', sourceId: String(organizationId) })
+    }
+
+    // 5. Financing and capital (BS16L): only explicitly declared facts due today are executed — a drawdown order or a
+    // capital contribution — and a liquidity shortfall is never a loan request. The stage runs before debt service
+    // and before Treasury, so a legitimate same-day drawdown is real liquidity by the time payables are evaluated.
+    const hasFinancingDue = financingDueOrganizations.has(String(organizationId))
+    if (hasFinancingDue) {
+      const financing = executeFinancingForDate(current, { organizationId, date })
+      occurrences.financing = financing.result.executedCount
+      financingBlockedCount += financing.result.blockedCount
+      latestFinancing = financing.result
+      if (financing.result.executedCount > 0) anyAccepted = true
+      current = financing.world
+      for (const entry of financing.result.entries) {
+        if (entry.status === 'EXECUTED') diagnostics.push({ code: entry.kind === 'DRAWDOWN' ? 'FINANCING_DRAWDOWN_EXECUTED' : 'CAPITAL_CONTRIBUTION_EXECUTED', message: `${entry.kind === 'DRAWDOWN' ? 'Financing drawdown' : 'Capital contribution'} ${entry.id} of ${entry.amountMinorUnits} ${entry.currencyCode} executed.`, sourceId: entry.id })
+        else if (entry.status === 'BLOCKED') diagnostics.push({ code: entry.code ?? 'FINANCING_BLOCKED', message: entry.reason ?? `Financing fact ${entry.id} was blocked.`, sourceId: entry.id })
+      }
+    }
+
+    // 6. Debt service: the existing CF9 authority owns principal repayment and interest accounting.
     const debt = runWhenSourcesExist(current, Object.values(current.debtInstrumentsById).some((instrument) => String(instrument.organizationId) === String(organizationId) && instrument.status === 'ACTIVE'), () => materializeDebtFinanceForDate(current, date, {
       organizationId,
       currencyCode,
@@ -246,28 +301,24 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       }
     }
 
-    // 5. Source-driven collection (BS16K-C): a receivable becomes cash only when its own source policy says the
-    // money arrives on that due date, so a club that owns an approved distribution collects it here — after every
-    // legitimate date-D recognition, and before the Treasury batch below, which then sees real liquidity.
-    const collectingSources = Object.values(current.revenueSourcesById).some((source) => String(source.organizationId) === String(organizationId) && source.status === 'ACTIVE' && source.collectionPolicy === 'COLLECT_ON_DUE_DATE')
-    if (collectingSources) {
-      const collection = collectDueReceivablesForDate(current, {
-        organizationId,
-        currencyCode,
-        date,
-        cashAccountId: accounts.cashOperating.id,
-        receivableAccountId: accounts.receivableControl.id,
-      })
-      occurrences.collections = collection.result.collectedCount
-      collectedMinorUnits += collection.result.collectedMinorUnits
-      latestCollection = collection.result
-      if (collection.result.status === 'COLLECTED') anyCollected = true
-      current = collection.world
-      if (collection.result.status === 'COLLECTED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION', message: `${collection.result.collectedMinorUnits} ${currencyCode} collected across ${collection.result.collectedCount} receivable(s) declared collectible by their source policy.`, sourceId: String(organizationId) })
-      else if (collection.result.status === 'BLOCKED') diagnostics.push({ code: 'RECEIVABLE_COLLECTION_BLOCKED', message: collection.result.reason ?? 'Receivable collection failed.', sourceId: String(organizationId) })
+    // 5. Source-driven collection: the moved stage now runs before financing and debt service (see above). The
+    // treasury summary below closes the day.
+
+    // 7. In-world lender counterpart: when the funding party is another Organization, its own cash and loan asset
+    // mirror the borrower's financing so world cash is conserved (§11/§32). External funding parties have no
+    // in-world ledger, which is exactly why the agreement itself is their provenance.
+    const lenderCounterpart = inWorldLenderBorrowers.has(String(organizationId))
+      ? mirrorInterOrganizationFinancingForDate(current, { organizationId, date })
+      : null
+    if (lenderCounterpart !== null && lenderCounterpart.result.entries.length > 0) {
+      current = lenderCounterpart.world
+      for (const entry of lenderCounterpart.result.entries) {
+        if (entry.status === 'EXECUTED') diagnostics.push({ code: 'FINANCING_LENDER_COUNTERPART_POSTED', message: `The in-world lender counterpart of ${entry.id} posted ${entry.amountMinorUnits} ${entry.currencyCode}.`, sourceId: entry.id })
+        else diagnostics.push({ code: entry.code ?? 'FINANCING_LENDER_COUNTERPART_BLOCKED', message: entry.reason ?? `The in-world lender counterpart of ${entry.id} could not be posted.`, sourceId: entry.id })
+      }
     }
 
-    // 6. Treasury (BS16J): settle the Organization's due payable batch, and only when the whole batch is
+    // 8. Treasury (BS16J): settle the Organization's due payable batch, and only when the whole batch is
     // fundable by the cash its own ledger derives. It runs after every legitimate date-D economic
     // materialization above, so same-day revenue, debt drawdown or receipts are real liquidity by now.
     // There is no creditor priority in BDM, so a partially fundable batch settles nothing automatically.
@@ -286,7 +337,7 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
 
     const dueOccurrences = occurrences.payroll + occurrences.operatingCost + occurrences.revenue + occurrences.debt
     const status: ClubFinanceOrganizationStatus = anyAccepted || anyCollected ? 'MATERIALIZED' : dueOccurrences > 0 && anyAlreadyProcessed ? 'ALREADY_PROCESSED' : 'NO_DUE_FACTS'
-    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null, treasury.result, collectedMinorUnits, latestCollection))
+    organizations.push(result(organizationId, currencyCode, fiscalPeriodId, status, occurrences, materialized, null, treasury.result, collectedMinorUnits, latestCollection, latestFinancing, financingBlockedCount))
   }
 
   const treasuryResults = organizations.flatMap((entry) => entry.treasury === null ? [] : [entry.treasury])
@@ -328,6 +379,7 @@ interface Occurrences {
   revenue: number
   debt: number
   collections: number
+  financing: number
 }
 
 interface PayrollAnniversaryIndex {
@@ -357,10 +409,10 @@ function payrollAnniversaryIndex(world: GameWorld): PayrollAnniversaryIndex {
 }
 
 function zeroOccurrences(): Occurrences {
-  return { payroll: 0, operatingCost: 0, revenue: 0, debt: 0, collections: 0 }
+  return { payroll: 0, operatingCost: 0, revenue: 0, debt: 0, collections: 0, financing: 0 }
 }
 
-function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null, treasury: DuePayableSettlementResult | null = null, collectedMinorUnits = 0, collection: ReceivableCollectionResult | null = null): ClubFinanceOrganizationResult {
+function result(organizationId: OrganizationId, currencyCode: string | null, fiscalPeriodId: FiscalPeriodId | null, status: ClubFinanceOrganizationStatus, occurrences: Occurrences, materializedMinorUnits: number, reason: string | null, treasury: DuePayableSettlementResult | null = null, collectedMinorUnits = 0, collection: ReceivableCollectionResult | null = null, financing: FinancingExecutionResult | null = null, financingBlockedCount = 0): ClubFinanceOrganizationResult {
   return Object.freeze({
     organizationId,
     currencyCode,
@@ -373,6 +425,9 @@ function result(organizationId: OrganizationId, currencyCode: string | null, fis
     collectionOccurrences: occurrences.collections,
     collectedMinorUnits,
     collection,
+    financingOccurrences: occurrences.financing,
+    financingBlockedCount,
+    financing,
     materializedMinorUnits,
     reason,
     treasury,

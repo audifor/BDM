@@ -52,6 +52,8 @@ export const ORGANIZATION_FINANCE_ACCOUNT_ROLES = [
   'REVENUE_OPERATING',
   'EXPENSE_OPERATING',
   'DEBT_LIABILITY',
+  /** BS16L: the lender-side asset of an in-world Organization→Organization financing (a loan receivable). */
+  'LOAN_ASSET',
 ] as const
 
 export type OrganizationFinanceAccountRole = typeof ORGANIZATION_FINANCE_ACCOUNT_ROLES[number]
@@ -65,6 +67,7 @@ const ROLE_ACCOUNT_TYPES: Readonly<Record<OrganizationFinanceAccountRole, string
   REVENUE_OPERATING: 'REVENUE',
   EXPENSE_OPERATING: 'EXPENSE',
   DEBT_LIABILITY: 'LIABILITY',
+  LOAN_ASSET: 'ASSET',
 }
 
 const ROLE_ID_SLUGS: Readonly<Record<OrganizationFinanceAccountRole, string>> = {
@@ -75,6 +78,7 @@ const ROLE_ID_SLUGS: Readonly<Record<OrganizationFinanceAccountRole, string>> = 
   REVENUE_OPERATING: 'revenue-operating',
   EXPENSE_OPERATING: 'expense-operating',
   DEBT_LIABILITY: 'debt-liability',
+  LOAN_ASSET: 'loan-asset',
 }
 
 const ACCOUNT_ID_PREFIX = 'finance:account:'
@@ -240,6 +244,8 @@ export interface OrganizationFinanceAccounts {
   readonly revenueOperating: FinancialAccount
   readonly expenseOperating: FinancialAccount
   readonly debtLiability: FinancialAccount
+  /** The Organization's own claim on money it lent to another Organization (never converted, never netted). */
+  readonly loanAsset: FinancialAccount
 }
 
 /** The single semantic mapping authority: resolves the canonical account catalog for an Organization. */
@@ -266,6 +272,7 @@ export function getOrganizationFinanceAccounts(world: GameWorld, organizationIdI
     revenueOperating: accountFor('REVENUE_OPERATING'),
     expenseOperating: accountFor('EXPENSE_OPERATING'),
     debtLiability: accountFor('DEBT_LIABILITY'),
+    loanAsset: accountFor('LOAN_ASSET'),
   })
 }
 
