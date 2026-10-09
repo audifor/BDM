@@ -1,8 +1,10 @@
-import type { GameDate } from '@/domain/date'
+import { parseGameDate, type GameDate } from '@/domain/date'
 import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
 import type { StaffRoleId } from '@/domain/staff'
+import { PHYSICAL_OPERATION_STATUSES, type SportingPhysicalAttempt } from '@/domain/facilities/SportingOperationPhysical'
+import { isFacilityComponentCapability } from '@/domain/facilities/FacilityComponentCapability'
 
 export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
 export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
@@ -56,6 +58,7 @@ export interface ScheduledTrainingSession {
   readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>>
   /** Immutable factual evidence attached when this scheduled session completes. */
   readonly execution?: TrainingExecutionEvidence
+  readonly physicalAttempt?: SportingPhysicalAttempt
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -77,6 +80,15 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (input.scope === 'team' && input.playerId !== undefined) throw new RangeError('Team sessions must not specify a playerId')
   if (input.moduleId !== undefined && input.moduleId.trim() === '') throw new RangeError('Scheduled session moduleId must not be blank')
   trainingDefinitionById(input.definitionId)
+  if (input.physicalAttempt !== undefined) {
+    const attempt = input.physicalAttempt
+    parseGameDate(attempt.attemptedOn)
+    if (attempt.policyVersion !== 'BS17D-P0-v1' || !PHYSICAL_OPERATION_STATUSES.includes(attempt.status) || attempt.attemptedOn > input.date || input.status === 'completed' && attempt.attemptedOn !== input.date || !attempt.operationId.trim()) throw new RangeError('Invalid Training physical attempt')
+    if (input.status === 'completed' && attempt.status === 'VERIFIED_UNAVAILABLE') throw new RangeError('Unavailable physical resource cannot complete Training')
+    for (const resource of attempt.resources) {
+      if (!resource.facilityId || !resource.componentId || !isFacilityComponentCapability(resource.capability) || !PHYSICAL_OPERATION_STATUSES.includes(resource.status) || !resource.reason || typeof resource.hasAccess !== 'boolean' || resource.operationalCapacity !== null || (resource.nominalCapacity !== null && (!Number.isFinite(resource.nominalCapacity) || resource.nominalCapacity < 0)) || (resource.capacityUnit !== null && typeof resource.capacityUnit !== 'string')) throw new RangeError('Invalid Training physical resource evidence')
+    }
+  }
   if (!['light', 'normal', 'high'].includes(input.intensity)) throw new RangeError('Invalid session intensity')
   const assigned = input.assignedStaffPersonIds
   if (assigned !== undefined && new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
@@ -101,7 +113,10 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
     executingStaffRoles: Object.freeze(input.execution.executingStaffRoles.map((staff) => Object.freeze({ ...staff }))),
     participants: Object.freeze(input.execution.participants.map((participant) => Object.freeze({ ...participant, injuryIds: Object.freeze([...participant.injuryIds]) }))),
   })
-  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), status: input.status ?? 'scheduled' }
+  const physicalAttempt = input.physicalAttempt === undefined ? undefined : Object.freeze({ ...input.physicalAttempt,
+    resources: Object.freeze(input.physicalAttempt.resources.map((resource) => Object.freeze({ ...resource }))),
+  })
+  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), ...(physicalAttempt === undefined ? {} : { physicalAttempt }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */

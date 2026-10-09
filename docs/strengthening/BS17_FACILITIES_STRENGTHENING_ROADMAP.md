@@ -55,6 +55,12 @@ Dependency labels:
 
 **NAME:** Physical context becomes constrained sporting operations.
 
+**APPROVED P0 CONTRACT:** The owner-approved `BS17D_P0_SPORTING_OPERATIONS_POLICY.md` now governs
+physical restrictions, unknown-context continuity and access behavior. These decisions are no
+longer pending. `BS17D_P0_SPORTING_OPERATIONS_CERTIFICATION.md` records the implemented Training
+scope and the separate Medical procedure, capacity-allocation and BS15 lineage limits; it does
+not certify core/full BS17D PASS.
+
 **OBJECTIVE:** Wire the existing CFI8 context into the canonical consumers for the approved capability/availability/throughput consequences. Training owns training execution/development; Medical owns diagnosis/treatment/rehab/RTP/recovery; accepted BS15 owns Talent intake/materialization/pathway. Preserve those authorities and avoid global quality bonuses.
 
 **CANONICAL AUTHORITY:** CFI8 physical context plus Training/Medical/Development/BS15 outcome authorities. Facility standard is a physical descriptor, not a new player/coach rating. Demand/capacity allocation and effect rules require explicit approved policy.

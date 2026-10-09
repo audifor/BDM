@@ -15,6 +15,8 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { TrainingSessionHistoryDetails } from './TrainingSessionHistoryDetails'
 import type { GameWorld } from '@/domain/world'
+import { nextEligibleTrainingDate } from '@/engine/training'
+import { TrainingPhysicalExplanation } from './TrainingPhysicalExplanation'
 
 import './training-workspace.css'
 
@@ -56,7 +58,8 @@ export function TrainingWorkspace() {
   const deleteUserTrainingModule = useGameStore((state) => state.deleteUserTrainingModule)
   const assignTrainingModuleToPlayer = useGameStore((state) => state.assignTrainingModuleToPlayer)
   const [activeTab, setActiveTab] = useState<TrainingPcbTab>('team')
-  const { openEntity } = useNgWorkspaceNavigation()
+  const [physicalRetryError, setPhysicalRetryError] = useState<string | null>(null)
+  const { openEntity, setActiveApp } = useNgWorkspaceNavigation()
 
   const context = useMemo(() => (world === null ? null : buildRosterWorkspaceContext(world)), [world])
   const team = useMemo(() => (world === null ? undefined : rosterTeamForWorld(world)), [world])
@@ -127,6 +130,18 @@ export function TrainingWorkspace() {
             world={world}
           />
           <TeamTrainingHistory world={world} teamId={team.id} />
+          <section aria-label="Physical Training restrictions">
+            {Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === team.id && session.status === 'scheduled' && session.physicalAttempt?.status === 'VERIFIED_UNAVAILABLE').map((session) => <article key={session.id}>
+              <h3>{session.date > world.currentDate ? 'Rescheduled session with a previous physical restriction' : 'Blocked session'}: {session.id}</h3>
+              <TrainingPhysicalExplanation world={world} attempt={session.physicalAttempt!} />
+              <button type="button" onClick={() => setActiveApp('facilities')}>Open Facilities</button>
+              <button type="button" onClick={() => {
+                try { scheduleTrainingSession({ ...session, date: nextEligibleTrainingDate(world.currentDate) }); setPhysicalRetryError(null) }
+                catch (error) { setPhysicalRetryError(error instanceof Error ? error.message : 'Session could not be rescheduled') }
+              }}>Reschedule for tomorrow</button>
+            </article>)}
+            {physicalRetryError !== null && <p role="alert">{physicalRetryError}</p>}
+          </section>
         </ScrollRegion>
       </ApplicationWorkspace>
     </div>

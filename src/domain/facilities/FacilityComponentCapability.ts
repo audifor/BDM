@@ -68,8 +68,12 @@ const CAPABILITY_COMPONENT_TYPES: Readonly<Record<FacilityComponentCapability, r
   RETAIL: ['CLUB_STORE', 'RETAIL_UNIT', 'MERCHANDISE_STORE'],
 }
 
-function componentSupportsCapability(component: FacilityComponent, capability: FacilityComponentCapability): boolean {
-  if (!CAPABILITY_COMPONENT_TYPES[capability].includes(component.type)) return false
+export function componentTypeSupportsCapability(type: FacilityComponentType, capability: FacilityComponentCapability): boolean {
+  return CAPABILITY_COMPONENT_TYPES[capability].includes(type)
+}
+
+export function componentSupportsCapability(component: FacilityComponent, capability: FacilityComponentCapability): boolean {
+  if (!componentTypeSupportsCapability(component.type, capability)) return false
   if (capability === 'BASKETBALL_FULL_COURT' && component.specification !== null && component.specification.kind === 'COURT') {
     return component.specification.isFullCourt
   }

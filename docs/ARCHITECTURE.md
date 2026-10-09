@@ -1273,6 +1273,15 @@ prior lifecycle. Retired component identity remains queryable before its closure
 capabilities and the club inventory use the same physical restrictions without sporting modifiers.
 Nominal capacity retains its recorded unit; measured operating capacity and occupancy remain unknown.
 
+BS17D-P0 adds a pure sporting-operation resolver in `facilitiesSporting`, using the same CFI
+anatomy, Team rights and BS17C physical restrictions. The approved v1 Training registry feeds
+the actual scheduled-session executor: known unavailable resources block the session without
+effects; unknown context preserves legacy continuity with explicit evidence. Historical physical
+attempts are optional, JSON-safe session evidence, not persisted current Facilities projections.
+Training retains all outcome formulas and its sole agenda. Medical has no specialized material
+procedure consumer yet; clinical actions and BS12C recovery remain unchanged. Talent awaits
+authorized BS15 ancestry; no allocator, player supply or Finance authority is added.
+
 Planned dates are not executable construction durations. Calendar continues the existing monthly
 condition phase, never fabricating project percentages or automatic completion. Explicit CFI6
 completion is a command recording physical scope completion; incomplete or future-dated actual

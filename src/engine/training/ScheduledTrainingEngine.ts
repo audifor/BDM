@@ -19,6 +19,8 @@ import { canRecordInjuries } from '@/engine/injury/InjuryApplication'
 import { boundedInjuryProbability, recurrenceRiskMultiplier } from '@/engine/injury/InjuryRisk'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { InjuryRecord } from '@/domain/injury'
+import { resolveSportingOperation } from '@/integration/facilitiesSporting/SportingOperationResolver'
+import { trainingPhysicalRequirements } from './TrainingPhysicalRequirements'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -135,6 +137,12 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const definition = planDelegation === undefined ? trainingDefinitionById(session.definitionId) : planDelegation.definition
   const intensity = intensityDelegation === undefined ? session.intensity : intensityDelegation.intensity
 
+  const physicalAttempt = resolveSportingOperation(world, { teamId: session.teamId, date: world.currentDate, operationId: definition.id,
+    requirements: trainingPhysicalRequirements(definition), interval: { startTime: session.startTime, durationMinutes: session.durationMinutes } })
+  if (physicalAttempt.status === 'VERIFIED_UNAVAILABLE') {
+    return updateGameWorld(world, { scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: { ...session, physicalAttempt } } })
+  }
+
   const playerIds = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
   const load = trainingLoad(intensity)
   const executionMultiplier = trainingStaffExecutionMultiplier(world, session, definition)
@@ -219,6 +227,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const moduleName = planDelegation === undefined ? plannedModuleName : definition.name
   const completedSession: ScheduledTrainingSession = {
     ...session,
+    physicalAttempt,
     assignedStaffPersonIds: undefined,
     status: 'completed',
     execution: {
