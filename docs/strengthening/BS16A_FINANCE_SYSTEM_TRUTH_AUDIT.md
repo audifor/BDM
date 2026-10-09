@@ -339,6 +339,7 @@ Do **not** blindly continue CF-roadmap ordering: the evidence says the minimum p
 | BS16H | Opening Economic State Authority | **PARTIAL** | `8cdf963` (authority), `884b420` (certification) |
 | BS16I | Contract Payroll & Daily Finance Lifecycle | **PASS** | `87a24a0`, `76a3dcf`; final closure `f176bc8` |
 | BS16J | Treasury & Settlement Truth | **PASS** | `f965995` (canonical due-payable batch settlement wired into `CLUB_FINANCE_V2`); certified by `src/domain/finance/TreasurySettlement.test.ts` + `src/engine/finance/ClubTreasuryLifecycle.test.ts` |
+| BS16K | Revenue & Operating Cost Source Authority | **PARTIAL** — the audit is complete and recorded, but no shipped data supplies a defensible recurring amount + timing, so no source was activated | `src/domain/finance/EconomicSourceAuthority.ts` (classification + missing-authority register); certified by `src/domain/finance/EconomicSourceAuthority.test.ts` |
 
 Status rules that must not be relaxed:
 
@@ -346,6 +347,7 @@ Status rules that must not be relaxed:
 - **BS16E stays PARTIAL for its original milestone.** Its authorization activation was reconciled with the canonical finance foundation in `c9fbafb`, which belongs to the BS16F tranche.
 - **BS16I is PASS**, including the initial career date: `createNewGame` processes `processClubFinanceForDate(currentDate)` exactly once, and the first normal Advance Day processes the next GameDate.
 - **BS16J is PASS.** `settleDuePayableBatchForDate` is the single payable-to-payment authority and runs as the last step of the same `CLUB_FINANCE_V2` phase (so the initial career date uses it too); only a fully fundable due batch settles, nothing partial, no priority, no invented cash or financing, and replay/save-load are idempotent.
+- **BS16K is PARTIAL, not PASS, and is not promoted by inventing a source.** The shipped-data audit found no defensible recurring revenue or operating-cost amount with timing authority anywhere (the World DB economic tables `revenue_stream`, `expense_commitment` and `budget` ship with zero rows; everything present is authorization, a physical driver or a soft rating). BS16K therefore activates no source and records the exact missing product authorities instead. BS16K becomes PASS only when at least one legitimate shipped recurring source family exists — which requires an approved product decision, never a fabricated formula.
 - Every commit above is a **local** commit on `bdm-stage2-bs16-finance-canonical`; nothing is claimed as pushed or merged.
 
 ### 16.2 Approved continuation
@@ -365,11 +367,22 @@ Reason: BDM has no canonical creditor-priority policy, so BS16J must not invent 
 
 No consumer migration in BS16J.
 
-#### BS16K — Revenue & Operating Cost Source Authority
+#### BS16K — Revenue & Operating Cost Source Authority — **DELIVERED (PARTIAL)**
 
 Goal: create legitimate shipped economic-source producers so canonical Finance has real recurring inflows and outflows beyond payroll.
 
 Scope: audit existing shipped data; competition/media/commercial revenue authority; operating-cost authority; use only defensible source data and policy; feed the existing Revenue/OPEX engines; lifecycle, save and idempotency correctness; no reputation-based or random cash formulas.
+
+Outcome: the audit completed and is recorded as data (`src/domain/finance/EconomicSourceAuthority.ts`); **no source was activated**, because no shipped surface supplies a defensible recurring amount with timing authority. The register records the six missing authorities with the decision each requires, and `getUngroundedEconomicSources` guards against any unauthorized source appearing in a world. PASS requires an approved product decision for at least one of them:
+
+- `TICKETING_PRICE_AUTHORITY_NOT_MODELLED` — ticket price/attendance model;
+- `MEDIA_REVENUE_AUTHORITY_NOT_MODELLED` — media rights pool model;
+- `COMMERCIAL_REVENUE_AUTHORITY_NOT_MODELLED` — sponsorship/licensing contract model;
+- `COMPETITION_DISTRIBUTION_SOURCE_NOT_MODELLED` — per-competition distribution rules (prize, participation, solidarity, revenue share);
+- `FACILITY_OPEX_AUTHORITY_NOT_MODELLED` — facility operating cost policy;
+- `OPERATING_COST_SOURCE_NOT_MODELLED` — non-payroll operating cost model (travel, medical, scouting, administration, venue, match operations).
+
+Payroll is explicitly excluded (BS16I contract truth; the operating-cost category list cannot express payroll), and financing/capital remains BS16L.
 
 Do not treat authorization as revenue.
 
@@ -397,7 +410,7 @@ This is the final BS16 Finance certification milestone. It supersedes the §15 d
 
 ### 16.3 Scope uniqueness
 
-**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. BS16J is delivered (`f965995`); the remaining roadmap after it is exactly BS16K → BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
+**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. BS16J is delivered (`f965995`); BS16K is delivered as PARTIAL (audit + authority record, no activated source); the remaining roadmap is exactly BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
 
 ### 16.4 Product principles
 
