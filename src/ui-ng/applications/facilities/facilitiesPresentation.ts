@@ -28,6 +28,8 @@ const TOKEN_LABELS: Readonly<Record<string, string>> = Object.freeze({
   DECOMMISSIONED: 'Decommissioned',
   DEMOLISHED: 'Demolished',
   ACTIVE: 'Active',
+  UNKNOWN: 'Not recorded',
+  RELATED: 'Team association (not an access right)',
   OWNED: 'Owned',
   OPERATED: 'Operated',
   USED: 'Used',

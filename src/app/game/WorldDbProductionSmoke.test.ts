@@ -9,11 +9,44 @@ import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player'
 import { buildPlayerWorkspaceModel } from '@/ui-ng/applications/player/data/buildPlayerWorkspaceModel'
 import { buildCoachOverviewModel } from '@/ui-ng/applications/coach/coachOverviewModel'
+import { buildClubFacilitiesWorkspaceModel } from '@/app/facilities'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
 const slicePath = process.env.BDM_WORLD_DB_SLICE_JSON
 const runProductionSmoke = slicePath !== undefined && existsSync(slicePath)
 
 describe.runIf(runProductionSmoke)('World DB production Spain ACB smoke', () => {
+  it('BS17B connects actual native physical source to the production bootstrap, club model and Save V4', () => {
+    const slice: WorldDbGameBootstrapSliceV1 = JSON.parse(readFileSync(slicePath!, 'utf8'))
+    assertWorldDbGameBootstrapSliceV1(slice)
+    const physical = slice.physicalContent!
+    expect(physical.facilities.length).toBeGreaterThan(0)
+    expect(physical.teamUsages.length).toBeGreaterThan(0)
+    const team = slice.teams[7]!
+    const selection: WorldDbGameBootstrapSelectionV1 = { source: slice.source, ecosystemId: slice.ecosystem.ecosystemId, competitionId: slice.competition.competitionId, competitionSeasonId: slice.season.competitionSeasonId, teamId: team.teamId }
+    const pin = { contentId: 'production-smoke', contentHash: '0'.repeat(64), worldDbSchema: slice.source.schemaId }
+    const world = bootstrapGameWorldFromWorldDb(slice, selection, pin)
+    const baseline = bootstrapGameWorldFromWorldDb({ ...slice, physicalContent: undefined }, selection, pin)
+    const reordered = bootstrapGameWorldFromWorldDb({ ...slice, physicalContent: { ...physical, facilities: [...physical.facilities].reverse(), places: [...physical.places].reverse(), teamUsages: [...physical.teamUsages].reverse() } }, selection, pin)
+    expect(Object.keys(world.facilitiesById).sort()).toEqual(physical.facilities.map((f) => f.facilityId).sort())
+    expect(world.facilitiesById).toEqual(reordered.facilitiesById)
+    expect(world.facilityTeamRelationshipsById).toEqual(reordered.facilityTeamRelationshipsById)
+    const model = buildClubFacilitiesWorkspaceModel(world, team.teamId as never)
+    const sourceUsage = physical.teamUsages.find((u) => u.teamId === team.teamId)!
+    expect(model.facilities.map((f) => f.facilityId)).toContain(sourceUsage.facilityId)
+    expect(world.facilitiesById[sourceUsage.facilityId as never]!.physical.totalCapacity).toBe(physical.facilities.find((f) => f.facilityId === sourceUsage.facilityId)!.capacity)
+    expect(world.facilitiesById[sourceUsage.facilityId as never]!.purposes).toEqual(['MATCH_HOSTING'])
+    expect(world.facilityComponentsById).toEqual({})
+    expect(world.facilityUsageRightsById).toEqual({})
+    expect(world.facilityOwnershipInterestsById).toEqual({})
+    expect(world.facilityComponentConditionRecordsById).toEqual({})
+    for (const key of Object.keys(world) as (keyof typeof world)[]) if (!key.startsWith('facility') && key !== 'facilitiesById' && key !== 'placesById') expect(JSON.stringify(world[key])).toBe(JSON.stringify(baseline[key]))
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2026-10-09T12:00:00.000Z'))
+    expect(loaded.facilitiesById).toEqual(world.facilitiesById)
+    expect(loaded.placesById).toEqual(world.placesById)
+    expect(loaded.facilityTeamRelationshipsById).toEqual(world.facilityTeamRelationshipsById)
+    expect(buildClubFacilitiesWorkspaceModel(loaded, team.teamId as never)).toEqual(model)
+  })
   it('materializes the real slice, derives the first game and applies a real MatchEngine result', () => {
     const value: unknown = JSON.parse(readFileSync(slicePath!, 'utf8'))
     assertWorldDbGameBootstrapSliceV1(value)

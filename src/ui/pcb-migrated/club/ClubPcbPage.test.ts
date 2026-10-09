@@ -11,6 +11,8 @@ import type { StaffPersonId } from '@/domain/ids'
 import type { StaffRoleId } from '@/domain/staff'
 import { getUserTeam } from '@/engine/calendar'
 import { ClubPcbPage } from './ClubPcbPage'
+import { createFacilityClubScenario } from '@/app/facilities/testFixtures'
+import { useGameStore } from '@/stores/gameStore'
 
 afterEach(cleanup)
 
@@ -91,5 +93,23 @@ describe('ClubPcbPage staff sandbox', () => {
 
     expect(screen.getByText(candidateName)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Iniciar candidatura' })).toHaveLength(5)
+  })
+})
+
+
+describe('BS17B one Facilities authority', () => {
+  it('renders the same canonical Facilities workspace in PCB, with unknowns and no local upgrades', () => {
+    const scenario = createFacilityClubScenario()
+    useGameStore.getState().replaceWorld(scenario.world)
+    const before = useGameStore.getState().world
+    render(createElement(ClubPcbPage, { initialTab: 'facilities', world: scenario.world }))
+    expect(screen.getByText(/Known assets may have unknown properties/)).toBeInTheDocument()
+    expect(screen.queryByText('Bonificaciones actuales:')).toBeNull()
+    expect(screen.queryByText(/Mejorar \(/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Facilities' }))
+    expect(screen.getByText('MX0.6 Training Center')).toBeInTheDocument()
+    expect(screen.queryByText('MX0.6 Rival Arena')).toBeNull()
+    expect(useGameStore.getState().world).toBe(before)
+    useGameStore.getState().resetGame()
   })
 })

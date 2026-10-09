@@ -52,7 +52,7 @@ import { sportingFacilityContextForTeamAt, type TeamSportingFacilityContext } fr
  */
 
 /** How the club's Organization is involved with a Facility. Derived only from canonical relationship records. */
-export type ClubFacilityAccessKind = 'OWNED' | 'OPERATED' | 'USED'
+export type ClubFacilityAccessKind = 'OWNED' | 'OPERATED' | 'USED' | 'RELATED'
 
 /** The canonical project commands that exist today. Availability is read off the canonical transition graph. */
 export type ClubProjectActionId = 'START' | 'PAUSE' | 'RESUME' | 'COMPLETE' | 'CANCEL'
@@ -209,6 +209,7 @@ export interface ClubFacilitiesWorkspaceModel {
 
 function accessKindsFor(world: GameWorld, facilityId: FacilityId, organizationId: OrganizationId, asOf: GameDate): readonly ClubFacilityAccessKind[] {
   const kinds = new Set<ClubFacilityAccessKind>()
+  const clubTeamIds = new Set(Object.values(world.teams).filter((team) => team.organizationId === organizationId).map((team) => team.id))
   const activeOn = (validFrom: GameDate | null, validTo: GameDate | null) => (validFrom === null || validFrom <= asOf) && (validTo === null || validTo >= asOf)
 
   for (const interest of Object.values(world.facilityOwnershipInterestsById)) {
@@ -225,8 +226,11 @@ function accessKindsFor(world: GameWorld, facilityId: FacilityId, organizationId
     if (activeOn(relationship.validFrom, relationship.validTo)) kinds.add('USED')
   }
   for (const right of Object.values(world.facilityUsageRightsById)) {
-    if (right.facilityId !== facilityId || right.organizationId !== organizationId) continue
+    if (right.facilityId !== facilityId || right.organizationId !== organizationId && (right.teamId === null || !clubTeamIds.has(right.teamId))) continue
     if (activeOn(right.validFrom, right.validTo)) kinds.add('USED')
+  }
+  for (const relationship of Object.values(world.facilityTeamRelationshipsById)) {
+    if (relationship.facilityId === facilityId && clubTeamIds.has(relationship.teamId) && activeOn(relationship.validFrom, relationship.validTo)) kinds.add('RELATED')
   }
   return Object.freeze([...kinds].sort())
 }

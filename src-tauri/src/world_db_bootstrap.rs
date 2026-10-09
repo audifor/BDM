@@ -181,6 +181,7 @@ pub struct WorldDbGameBootstrapMatchV1 {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapSliceV1 {
+    physical_content: crate::world_db_facilities::PhysicalContent,
     schema_version: u8,
     source: WorldDbGameBootstrapSourceV1,
     ecosystem: WorldDbGameBootstrapEcosystemV1,
@@ -332,7 +333,9 @@ pub fn load_game_bootstrap_slice_v1(
     persons.sort_by(|a, b| a.person_id.cmp(&b.person_id));
     let countries = query_countries(&connection, &teams, &persons)?;
     let matches = query_matches(&connection, competition_season_id)?;
+    let physical_content = crate::world_db_facilities::load(&connection, &team_ids)?;
     Ok(WorldDbGameBootstrapSliceV1 {
+        physical_content,
         schema_version: 1,
         source: WorldDbGameBootstrapSourceV1 {
             database_id: path

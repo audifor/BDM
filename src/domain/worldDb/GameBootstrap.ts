@@ -1,6 +1,13 @@
 import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
 
+/** Raw physical source facts. No generated anatomy, entitlement, condition or economy. */
+export interface WorldDbPhysicalContentV1 {
+  readonly places: readonly { readonly placeId: string; readonly name: string; readonly placeType: string; readonly parentPlaceId: string | null; readonly latitude: number | null; readonly longitude: number | null }[]
+  readonly facilities: readonly { readonly facilityId: string; readonly name: string; readonly placeId: string; readonly capacity: number | null }[]
+  readonly teamUsages: readonly { readonly usageId: string; readonly teamId: string; readonly facilityId: string; readonly usageType: string; readonly validFrom: string | null; readonly validTo: string | null }[]
+}
+
 export interface WorldDbGameBootstrapSelectionV1 {
   readonly source: WorldDbDatabaseInfoV1['source']
   readonly ecosystemId: string
@@ -71,6 +78,8 @@ export interface WorldDbGameBootstrapRosterAssignmentV1 { readonly rosterId: str
 export interface WorldDbGameBootstrapMatchV1 { readonly matchId: string; readonly scheduledAt: string | null; readonly playedAt: string | null; readonly status: 'SCHEDULED' | 'COMPLETED' | string; readonly homeTeamId: string; readonly awayTeamId: string; readonly homeScore?: number | null; readonly awayScore?: number | null }
 
 export interface WorldDbGameBootstrapSliceV1 {
+  /** Optional for pre-BS17B native payloads and worlds without physical source content. */
+  readonly physicalContent?: WorldDbPhysicalContentV1
   readonly schemaVersion: 1
   readonly source: WorldDbDatabaseInfoV1['source']
   readonly ecosystem: WorldDbGameBootstrapEcosystemV1
@@ -134,6 +143,22 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   assertArray(value.staffAssignments, 'staffAssignments', (entry) => { for (const field of ['assignmentId', 'staffId', 'teamId', 'roleCode', 'assignedOn'] as const) requireText(entry[field], `World DB bootstrap staff assignment ${field}`) }, 'assignmentId')
   assertArray(value.rosterAssignments, 'rosterAssignments', (entry) => { for (const field of ['rosterId', 'teamId', 'playerId', 'status'] as const) requireText(entry[field], `World DB bootstrap roster assignment ${field}`) }, undefined)
   assertArray(value.matches, 'matches', (entry) => { for (const field of ['matchId', 'status', 'homeTeamId', 'awayTeamId'] as const) requireText(entry[field], `World DB bootstrap match ${field}`) }, 'matchId')
+  if (value.physicalContent !== undefined) {
+    requireRecord(value.physicalContent, 'World DB physical content')
+    assertArray(value.physicalContent.places, 'physical places', (entry) => {
+      for (const field of ['placeId', 'name', 'placeType']) requireText(entry[field], `Physical place ${field}`)
+      requireNullableText(entry.parentPlaceId, 'Physical parent place')
+      for (const field of ['latitude', 'longitude']) if (entry[field] !== null && (typeof entry[field] !== 'number' || !Number.isFinite(entry[field]))) throw new TypeError(`Physical place ${field} must be finite or null`)
+    }, 'placeId')
+    assertArray(value.physicalContent.facilities, 'physical facilities', (entry) => {
+      for (const field of ['facilityId', 'name', 'placeId']) requireText(entry[field], `Physical facility ${field}`)
+      requireNullableInteger(entry.capacity, 'Physical facility capacity')
+    }, 'facilityId')
+    assertArray(value.physicalContent.teamUsages, 'physical team usage', (entry) => {
+      for (const field of ['usageId', 'teamId', 'facilityId', 'usageType']) requireText(entry[field], `Physical usage ${field}`)
+      for (const field of ['validFrom', 'validTo']) requireNullableText(entry[field], `Physical usage ${field}`)
+    }, 'usageId')
+  }
 }
 
 function assertArray(value: unknown, label: string, assertEntry: (entry: Record<string, unknown>) => void, idField: string | undefined): void { if (!Array.isArray(value)) throw new TypeError(`World DB bootstrap ${label} must be an array`); const ids = new Set<string>(); for (const item of value) { if (!isRecord(item)) throw new TypeError(`World DB bootstrap ${label} entries must be objects`); assertEntry(item); if (idField !== undefined) { const id = item[idField]; if (typeof id !== 'string') throw new TypeError(`World DB bootstrap ${label} ID must be a string`); if (ids.has(id)) throw new TypeError(`World DB bootstrap ${label} must not contain duplicate IDs`); ids.add(id) } } }

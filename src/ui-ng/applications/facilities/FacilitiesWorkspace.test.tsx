@@ -62,7 +62,7 @@ describe('MX0.6 Facilities workspace', () => {
     const scenario = createFacilityClubScenario()
     mountWorkspace(scenario.world)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sporting effects' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Physical capabilities' }))
     expect(screen.getAllByText('Basketball').length).toBeGreaterThan(0)
     expect(screen.getByText('Practice Court 1')).toBeInTheDocument()
     expect(screen.getByText(/usable practice court/)).toBeInTheDocument()
@@ -106,7 +106,7 @@ describe('MX0.6 Facilities workspace', () => {
     expect(commitment.amount).toMatchObject({ currencyCode: 'EUR', minorUnits: 2_500_000 })
     expect(screen.getByText(/Project started with a capital commitment of/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Costs & funding' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Recorded costs' }))
     expect(screen.getAllByText(/EUR 25,000\.00/).length).toBeGreaterThan(0)
   })
 

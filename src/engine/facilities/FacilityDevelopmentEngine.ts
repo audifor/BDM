@@ -120,7 +120,7 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
       id: newFacilityId,
       placeId: project.scope.placeId,
       type: project.scope.facilityType,
-      purposes: ['TRAINING'],
+      purposes: project.scope.purposes ?? ['OTHER'],
       status: 'UNDER_CONSTRUCTION',
       canonicalName: project.scope.canonicalName,
     })
