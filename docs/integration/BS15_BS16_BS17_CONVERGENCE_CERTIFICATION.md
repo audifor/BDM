@@ -10,10 +10,10 @@ Status: FAIL ? certification not established. Local semantic composition and foc
 - Common merge-base: `a6826469c78f8f948d73fd663e4996a99d30c678` (A).
 - Destination: `integration/bs15-bs16-bs17-certified`, isolated worktree `C:/BDM-INTEGRATION-BS15-BS16-BS17`.
 - BS15 + BS16 two-parent merge: `c54ba1bf5fb10f75874b62011dde51f4bf76b33a`.
-- Final integrated code SHA: recorded after the explicit second merge commit; no PASS is implied by Git ancestry.
+- Final integrated code SHA: `7030f1b551e55368d90e477a956893fe6ae40fc7`. Parents: `c54ba1bf5fb10f75874b62011dde51f4bf76b33a` and frozen S. O, C and S are all verified ancestors; no PASS is implied by Git ancestry.
 - Main observed at start: `8a0b359e9ae48fe372668241788c9d5aa7a33b03`; origin/main observed at O. No fetch/pull, push, main update, source worktree edit or uncommitted-source import.
 
-Pairwise O/C, O/S and C/S merge-bases are A. None of O, C or S contains either other frozen tip. Patch equivalence of historical Finance changes is not ancestry. The first merge contains O and C; the second explicit merge must add S. Final source ancestry is verified after committing, rather than inferred from document presence. The local merge can establish ancestry while functional certification remains FAIL.
+Pairwise O/C, O/S and C/S merge-bases are A. None of O, C or S contains either other frozen tip. Patch equivalence of historical Finance changes is not ancestry. The first merge contains O and C; the second explicit merge adds S. Final source ancestry was verified with merge-base --is-ancestor after committing, rather than inferred from document presence. The local merge can establish ancestry while functional certification remains FAIL.
 
 ## Actual conflicts and semantic resolution
 
@@ -77,7 +77,7 @@ Evidence is local JSON/log output, preserved under `node_modules/.cache/bs15-bs1
 - Typecheck: PASS after final production and fixture validation changes.
 - Final build: PASS. Existing chunk-size advisory is retained.
 - Full suite completed: 4916 tests, 4819 passed, 38 failed, 59 pending. The raw run is NOT green. Failure classification and focused repair evidence are below; pending tests include the explicit 30-second season fixture hook timeout. No test was deleted or skipped to obtain a green result.
-- Diff/conflict/RNG/import checks: PASS. Clean local branch and final numeric SHA are recorded after the explicit local merge.
+- Diff/conflict/RNG/import checks: PASS. The explicit local merge left a clean working tree. This following documentation-only commit records its numeric code SHA and verified ancestry.
 
 ## Deferred product work and recommendation
 
@@ -115,3 +115,5 @@ Focused read-only review confirmed the V1 projection preserves every persisted f
 The combined V4 test additionally loads its blocked Training record through the V1 parser and asserts complete physicalAttempt equality plus VERIFIED_UNAVAILABLE status. This extended five-test cross-system rerun passes 5/5 (`cross-v1-final.json`).
 
 Raw failure accounting: 20 stale cases repaired with passing focal coverage; 10 cases reproduced on frozen O (eight Match/rating/navigation cases plus SeasonContent and World DB Staff); two direct-loop stale expectations with captured media/season-stop exceptions; five timeout/artifact-environment failures, three subsequently green in focused reruns, with the exact-Y5 external-artifact dependency and inherited 100-day budget left visible; one unresolved ten-year stop. The failed preparation hook accounts for pending assertions separately. The additional intermittent crypto-seeded monthly NCAA failure seen during focused runs was reproduced on O and then made replayable; it was not one of the original 38 full-suite failures.
+
+Final Git state: O/C/S ancestry to the integrated code SHA all true; second merge has exactly two parents. main remains `8a0b359e9ae48fe372668241788c9d5aa7a33b03`, origin/main remains O. No fetch/pull, push, main merge, branch/worktree deletion or later-source import. The local branch is composed but NOT functionally certified. All 13 pending season assertions from the full-run setup timeout were exercised by green focused reruns; the other 46 original skips belong to existing opt-in suites, including the real World DB smoke later run successfully with the actual DB slice. No skip was introduced by this convergence.
