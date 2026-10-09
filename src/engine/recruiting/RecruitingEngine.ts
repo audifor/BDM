@@ -1,3 +1,5 @@
+import { attemptRecruitingFacilityDemonstration } from './RecruitingFacilityDemonstration'
+import type { RecruitingFacilitySelection } from '@/domain/recruiting'
 import { getRecruitingPeriod, RECRUITING_PREFERENCE_DIMENSIONS, type RecruitingBoardEntry, type RecruitingCycle, type RecruitingEvaluationEvent, type RecruitingInterest, type RecruitingOffer, type RecruitProfile, type RecruitingPreferenceDimension, type RecruitingNegotiationTopic, type RecruitingProgramResponseKind, type RecruitingRpgState, type RecruitingStaffDesignation } from '@/domain/recruiting'
 import type { GameDate } from '@/domain/date'
 import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
@@ -166,7 +168,13 @@ function activeRecruitingDesignations(cycle: RecruitingCycle, programTeamId: Tea
  * There is no separate Head Coach negotiation-intervention operation. This table describes the
  * existing entry points; it makes missing AI/evaluator variants explicit instead of implying parity.
  */
-export function performRecruitingAction(world: GameWorld, cycleId: string, recruitId: string, programTeamId: TeamId, kind: 'contact'|'pitch'|'visit', visitDetails?: { readonly type: 'official'|'unofficial'; readonly startsOn: GameDate; readonly endsOn: GameDate; readonly lodgingNights: number; readonly participants?: readonly string[]; readonly offCampus?: boolean; readonly offCampusSite?: 'educationalInstitution'|'residence'|'other'; readonly staffPersonId?: StaffPersonId }): RecruitingResult<GameWorld> {
+export function performRecruitingAction(world: GameWorld, cycleId: string, recruitId: string, programTeamId: TeamId, kind: 'contact'|'pitch'|'visit', visitDetails?: { readonly requestId?: string; readonly facilityDemonstration?: RecruitingFacilitySelection; readonly type: 'official'|'unofficial'; readonly startsOn: GameDate; readonly endsOn: GameDate; readonly lodgingNights: number; readonly participants?: readonly string[]; readonly offCampus?: boolean; readonly offCampusSite?: 'educationalInstitution'|'residence'|'other'; readonly staffPersonId?: StaffPersonId }): RecruitingResult<GameWorld> {
+  // Replayed manager confirmation is the same visit, not another Staff/RPG action.
+  if (kind === 'visit' && visitDetails?.requestId !== undefined) {
+    const prior = Object.values(world.recruitingVisitsById).find(visit => visit.requestId === visitDetails.requestId)
+    if (prior !== undefined) return prior.cycleId === cycleId && prior.recruitId === recruitId && prior.programTeamId === programTeamId
+      ? { ok: true, value: world } : { ok: false, reason: 'VISIT_REQUEST_CONFLICT' }
+  }
   const cycle = world.recruitingCyclesById[cycleId]
   if (!cycle) return { ok: false, reason: 'INVALID_RECRUIT' }
   const recruit = world.recruitProfilesById[recruitId]
@@ -253,7 +261,7 @@ export function performRecruitingAction(world: GameWorld, cycleId: string, recru
   const updatedProfile = { ...profile, recruitingRpg: { ...rpg, relationships, intel, story } }
   const actionId = `recruiting-action:${cycleId}:${programTeamId}:${recruitId}:${kind}:${world.currentDate}:${Object.keys(world.recruitingActionHistoryById).length}`
   const history = { id: actionId, cycleId, recruitId, programTeamId, kind, date: world.currentDate, cost: cycle.rules.costs[kind], effect: kind === 'visit' ? visitEffect : relationship.rapport, countsAsOpportunity, ...(staffId === undefined ? {} : { staffPersonId: staffId }), ...(involvedStaffIds.length === 0 ? {} : { staffPersonIds: involvedStaffIds }), offCampus }
-  const visits = kind === 'visit' ? [...Object.values(world.recruitingVisitsById), { id: `visit:${cycleId}:${programTeamId}:${recruitId}:${world.currentDate}:${Object.keys(world.recruitingVisitsById).length}`, cycleId, recruitId, programTeamId, date: world.currentDate, cost: cycle.rules.costs.visit, outcome: visitEffect, type: visitType, startsOn: visitDetails?.startsOn ?? world.currentDate, endsOn: visitDetails?.endsOn ?? world.currentDate, lodgingNights: visitDetails?.lodgingNights ?? 0, participants: visitDetails?.participants ?? (staffId === undefined ? [] : [staffId]), sourceActionId: actionId, legalStatus: 'allowed' as const }] : Object.values(world.recruitingVisitsById)
+  const visits = kind === 'visit' ? [...Object.values(world.recruitingVisitsById), { ...(visitDetails?.requestId === undefined ? {} : { requestId: visitDetails.requestId }), ...(visitDetails?.facilityDemonstration === undefined ? {} : { facilityDemonstration: { capability: visitDetails.facilityDemonstration.capability, attempts: [attemptRecruitingFacilityDemonstration(world, programTeamId, visitDetails.facilityDemonstration)] } }), id: `visit:${cycleId}:${programTeamId}:${recruitId}:${world.currentDate}:${Object.keys(world.recruitingVisitsById).length}`, cycleId, recruitId, programTeamId, date: world.currentDate, cost: cycle.rules.costs.visit, outcome: visitEffect, type: visitType, startsOn: visitDetails?.startsOn ?? world.currentDate, endsOn: visitDetails?.endsOn ?? world.currentDate, lodgingNights: visitDetails?.lodgingNights ?? 0, participants: visitDetails?.participants ?? (staffId === undefined ? [] : [staffId]), sourceActionId: actionId, legalStatus: 'allowed' as const }] : Object.values(world.recruitingVisitsById)
   return { ok: true, value: updateGameWorld(world, { recruitProfiles: [...Object.values(world.recruitProfilesById).filter((item) => item.id !== recruitId), updatedProfile], recruitingInterests: updatedInterests, recruitingCapacityByProgramId: { ...world.recruitingCapacityByProgramId, [programTeamId]: result.value.capacity }, recruitingActionHistory: [...Object.values(world.recruitingActionHistoryById), history], recruitingVisits: visits }) }
 }
 

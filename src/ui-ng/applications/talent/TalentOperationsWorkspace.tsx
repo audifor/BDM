@@ -8,6 +8,7 @@ import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { navigateToPlayer, navigateToTalentApp, navigateToTalentDestination } from '@/ui-ng/workspace/workspaceApps'
 import { TalentOperationsNav } from './TalentOperationsNav'
 import { buildTalentAttentionItems, buildTalentDeadlineItems } from './TalentAttentionProjection'
+import { TalentFacilitiesContext } from './TalentFacilitiesContext'
 
 export function TalentOperationsWorkspace() {
   const world = useGameStore((state) => state.world)
@@ -40,6 +41,7 @@ export function TalentOperationsWorkspace() {
     <NgHoloShell appLabel="Talent Operations" meta={model.team?.name ?? 'Talent pathways'} region="talent-operations-workspace" title="Operations overview">
       <TalentOperationsNav current="talent" />
       <div className="ng-canon__content talent-operations-overview">
+        {model.team && <TalentFacilitiesContext world={world} teamId={model.team.id} />}
         <section aria-label="Players requiring attention" className="ng-canon__panel ng-holo-panel">
           <h2 className="ng-canon__title">Priority actions</h2>
           <p>{model.board.length} recruiting targets · {model.capabilities.hasDraft ? `${activeDraftEntries} Draft decisions · ` : ''}{model.portal.length} authorized Portal entries</p>

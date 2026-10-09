@@ -1,6 +1,22 @@
 import type { EcosystemId, PlayerId, SeasonId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
 import type { BasketballPosition } from '@/domain/primitives'
+import type { FacilityComponentCapability } from '@/domain/facilities/FacilityComponentCapability'
+import type { SportingPhysicalAttempt } from '@/domain/facilities/SportingOperationPhysical'
+
+export interface RecruitingFacilitySelection {
+  readonly capability: FacilityComponentCapability
+  readonly componentId?: string
+}
+/** Historical owner execution evidence, not current derived Facilities availability. */
+export interface RecruitingFacilityDemonstration {
+  readonly capability: FacilityComponentCapability
+  readonly attempts: readonly {
+    readonly selectedComponentId?: string
+    readonly result: 'COMPLETED' | 'NOT_EXECUTED'
+    readonly physical: SportingPhysicalAttempt
+  }[]
+}
 export type RecruitingStatus='scheduled'|'open'|'signing'|'completed'
 export type RecruitOrigin='preCollege'|'international'|'academy'|'transfer'
 export type Priority='high'|'normal'|'low'
@@ -100,7 +116,7 @@ export interface RecruitProfile{readonly id:string;readonly playerId:PlayerId;re
 export interface RecruitingInterest{readonly recruitId:string;readonly programTeamId:TeamId;readonly value:number}
 export interface RecruitingBoardEntry{readonly programTeamId:TeamId;readonly recruitId:string;readonly priority:Priority}
 export interface RecruitingOffer{readonly id:string;readonly cycleId:string;readonly recruitId:string;readonly programTeamId:TeamId;readonly status:'active'|'withdrawn'|'committed'|'signed';readonly madeOn:GameDate}
-export interface RecruitingVisit{readonly id:string;readonly cycleId:string;readonly recruitId:string;readonly programTeamId:TeamId;readonly date:GameDate;readonly cost:number;readonly outcome:number;readonly type?:'official'|'unofficial';readonly startsOn?:GameDate;readonly endsOn?:GameDate;readonly lodgingNights?:number;readonly participants?:readonly string[];readonly sourceActionId?:string;readonly legalStatus?:'allowed'|'violation'}
+export interface RecruitingVisit{readonly requestId?:string;readonly facilityDemonstration?:RecruitingFacilityDemonstration;readonly id:string;readonly cycleId:string;readonly recruitId:string;readonly programTeamId:TeamId;readonly date:GameDate;readonly cost:number;readonly outcome:number;readonly type?:'official'|'unofficial';readonly startsOn?:GameDate;readonly endsOn?:GameDate;readonly lodgingNights?:number;readonly participants?:readonly string[];readonly sourceActionId?:string;readonly legalStatus?:'allowed'|'violation'}
 export interface RecruitingActionRecord{readonly id:string;readonly cycleId:string;readonly recruitId:string;readonly programTeamId:TeamId;readonly kind:RecruitAction|'evaluation'|'negativeRecruiting'|'offer'|'promise'|'negotiation'|'headCoachIntervention';readonly date:GameDate;readonly cost:number;readonly effect:number;readonly countsAsOpportunity?:boolean;readonly staffPersonId?:string;readonly staffPersonIds?:readonly string[];readonly offCampus?:boolean;readonly eventType?:RecruitingEvaluationEvent}
 export interface RecruitingCommitment{readonly id:string;readonly cycleId:string;readonly recruitId:string;readonly programTeamId:TeamId;readonly offerId:string;readonly committedOn:GameDate}
 export type RecruitSigningAgreement = 'athleticsAidAgreement'|'settlementRelatedBenefitsAgreement'
