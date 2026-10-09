@@ -1,6 +1,6 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
-import { createFinancialCommitment, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
+import { bindTeamContractCapacity, createFinancialCommitment, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
@@ -62,18 +62,19 @@ export function completeAcceptedFreeAgentSigning(
     || (negotiation.agentFee !== undefined && (!Number.isSafeInteger(negotiation.agentFee) || negotiation.agentFee < 0))) {
     return result('BLOCKED', world, negotiation, 'ACCEPTED_TERMS_INVALID')
   }
+  const contractId = contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
   // Binding recheck: the accepted terms were negotiated against an earlier world, so canonical Finance
-  // is re-evaluated against the current world immediately before the signing becomes a fact.
-  const finance = evaluateTeamGameplayFinancialDecision(world, {
+  // is re-evaluated against the current world immediately before the signing becomes a fact, and the
+  // reservation that protects the exact evaluated amount is published with the same transition.
+  const capacity = bindTeamContractCapacity(world, {
     teamId: team.id,
     action: 'PLAYER_SIGNING',
     legacyAnnualAmountMajorUnits: negotiation.salary,
+    contractId: String(contractId),
     effectiveDate: world.currentDate,
-    sourceAuthority: 'FREE_AGENT_SIGNING',
-    sourceEntityId: negotiation.id,
   })
-  if (!finance.allowed) {
-    return result('FINANCIAL_BLOCK', world, negotiation, gameplayFinancialBlockReason(finance))
+  if (!capacity.allowed) {
+    return result('FINANCIAL_BLOCK', world, negotiation, gameplayFinancialBlockReason(capacity.decision))
   }
 
   const owner = resolveSigningExecutionAuthority(world, team.id)
@@ -83,7 +84,6 @@ export function completeAcceptedFreeAgentSigning(
   const governance = resolvePlayerContractSigningGovernance(world, team.id, negotiation.id)
   if (governance.status !== 'AUTHORIZED') return result(governance.status, world, negotiation, governance.reason)
 
-  const contractId = contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
   const transactionId = playerTransactionIdFromString(`transaction:signed-free-agent:${negotiation.id}`)
   const existingContract = world.contractsById[contractId]
   const existingTransaction = world.playerTransactionsById[transactionId]
@@ -172,6 +172,7 @@ export function completeAcceptedFreeAgentSigning(
     negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== negotiation.id), signed],
     ...(rolePromise === undefined ? {} : { rolePromises: [...Object.values(world.rolePromisesById), rolePromise] }),
     ...(feeCommitment === undefined ? {} : { financialCommitments: [...Object.values(world.financialCommitmentsById), feeCommitment] }),
+    financialReservations: [...capacity.reservations],
     governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), executed],
   })
   const planned = reviewClubManagementPlanning(changed, team.id, 'MATERIAL_ROSTER_CHANGE').world

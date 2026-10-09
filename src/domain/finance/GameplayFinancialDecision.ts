@@ -3,7 +3,7 @@ import { organizationIdFromString, type OrganizationId, type TeamId } from '@/do
 import type { GameWorld } from '@/domain/world/GameWorld'
 import type { FinancialPlanningPeriod } from './BudgetForecasting'
 import type { FinancialCommitmentDecision, FinancialCommitmentLiquidity, FinancialDecisionStatus, FinancialReasonCode, FinancialReservation } from './FinancialAuthority'
-import { evaluateOrganizationFinancialCommitment } from './FinancialAuthorization'
+import { evaluateOrganizationFinancialCommitment, reserveOrganizationFinancialCommitment } from './FinancialAuthorization'
 import { legacyMajorUnitsToMoney, resolveOrganizationCurrency } from './FinanceCurrencyPolicy'
 import { createMoney, type CurrencyCode, type Money } from './FinancialLedger'
 
@@ -111,6 +111,35 @@ export interface TeamGameplayFinancialDecisionInput {
 }
 
 /**
+ * BS16M-B1. The reservation of a binding contract belongs to the economic contract, not to the
+ * gameplay action that created it: this is the single provenance authority the payroll
+ * `AuthorizedEconomicEvent` already carries (`sourceAuthority = CONTRACT`, `sourceEntityId = contractId`),
+ * so `contractId → reservation → payroll event → FinancialCommitment` is exact and deterministic.
+ * `PLAYER_SIGNING` / `PLAYER_RETENTION` / `STAFF_HIRING` stay diagnostic action kinds only.
+ */
+export const CONTRACT_RESERVATION_SOURCE_AUTHORITY = 'CONTRACT'
+
+export interface TeamGameplayContractCapacityInput {
+  readonly teamId: TeamId
+  readonly action: GameplayFinancialActionKind
+  /** Legacy whole-major-unit annual amount of the contract; crossed into canonical Money exactly once. */
+  readonly legacyAnnualAmountMajorUnits: number
+  /** Final canonical contract id: player `ContractId` or `StaffContractId`, exactly as the payroll event uses it. */
+  readonly contractId: string
+  readonly effectiveDate?: GameDate | string
+  readonly reservations?: readonly FinancialReservation[]
+}
+
+export interface TeamGameplayContractCapacityResult {
+  /** True only when an OPEN canonical reservation now protects this exact contract. */
+  readonly allowed: boolean
+  readonly decision: GameplayFinancialDecision
+  readonly reservation: FinancialReservation | null
+  /** Canonical reservation collection after the operation; publish it with the binding mutation. */
+  readonly reservations: readonly FinancialReservation[]
+}
+
+/**
  * Canonical status → gameplay/AI outcome. Precedence is explicit so two different canonical
  * situations can never collapse into one label.
  */
@@ -212,6 +241,61 @@ export function evaluateTeamGameplayFinancialDecision(world: GameWorld, input: T
 }
 
 /**
+ * BS16M-B1 thin binding helper. A gameplay action that creates a contract must both re-evaluate
+ * canonical Finance against the current world *and* reserve the exact evaluated amount, so several
+ * sequential binding actions can never spend the same authorized capacity. It owns no rule of its
+ * own: it resolves the Team's Organization and currency exactly as the preview seam does, maps the
+ * action onto the canonical category, and delegates evaluate → reserve to
+ * `reserveOrganizationFinancialCommitment` (which creates a reservation only for `AFFORDABLE_NOW`).
+ *
+ * The caller publishes `reservations` in the same `updateGameWorld` transition that creates the
+ * contract, so a blocked or failed binding leaves no orphan reservation and no contract without a
+ * reservation. Replaying the same contract id is idempotent: the reservation is never duplicated.
+ */
+export function bindTeamContractCapacity(world: GameWorld, input: TeamGameplayContractCapacityInput): TeamGameplayContractCapacityResult {
+  const team = world.teams[input.teamId]
+  if (team === undefined) throw new RangeError(`Gameplay contract capacity binding needs a known Team (${input.teamId})`)
+  const organizationId = organizationIdFromString(team.organizationId)
+  const category = GAMEPLAY_FINANCIAL_ACTION_CATEGORY[input.action]
+  const currencyCode = resolveGameplayFinanceCurrencyCode(world, organizationId)
+  if (currencyCode === null) {
+    return Object.freeze({
+      allowed: false,
+      decision: unavailableCurrencyDecision(world, { action: input.action, effectiveDate: input.effectiveDate, sourceAuthority: CONTRACT_RESERVATION_SOURCE_AUTHORITY, sourceEntityId: input.contractId }, organizationId, category),
+      reservation: null,
+      reservations: Object.freeze([...(input.reservations ?? Object.values(world.financialReservationsById))]),
+    })
+  }
+  const amount = legacyMajorUnitsToMoney(input.legacyAnnualAmountMajorUnits, currencyCode)
+  const reserved = reserveOrganizationFinancialCommitment(world, {
+    organizationId,
+    currency: currencyCode,
+    amount,
+    category,
+    ...(input.effectiveDate === undefined ? {} : { asOfDate: input.effectiveDate }),
+    ...(input.reservations === undefined ? {} : { reservations: input.reservations }),
+    sourceAuthority: CONTRACT_RESERVATION_SOURCE_AUTHORITY,
+    sourceEntityId: input.contractId,
+    createdOn: input.effectiveDate ?? world.currentDate,
+  })
+  const decisionInput: GameplayFinancialDecisionInput = {
+    organizationId,
+    action: input.action,
+    amount,
+    sourceAuthority: CONTRACT_RESERVATION_SOURCE_AUTHORITY,
+    sourceEntityId: input.contractId,
+    ...(input.effectiveDate === undefined ? {} : { effectiveDate: input.effectiveDate }),
+    ...(input.reservations === undefined ? {} : { reservations: input.reservations }),
+  }
+  return Object.freeze({
+    allowed: reserved.reservation !== null && reserved.reservation.status === 'OPEN',
+    decision: freezeDecision(world, reserved.decision, decisionInput, category),
+    reservation: reserved.reservation,
+    reservations: Object.freeze([...reserved.reservations]),
+  })
+}
+
+/**
  * Persisted canonical currency wins, exactly as the activation authority decides it: an Organization
  * whose profile exists keeps its currency even when a policy would derive a different one, and an
  * Organization with no profile resolves its currency from the currency policy. Null means Finance
@@ -255,7 +339,7 @@ function authorizationStateOf(decision: FinancialCommitmentDecision): GameplayFi
   })
 }
 
-function unavailableCurrencyDecision(world: GameWorld, input: TeamGameplayFinancialDecisionInput, organizationId: OrganizationId, category: string): GameplayFinancialDecision {
+function unavailableCurrencyDecision(world: GameWorld, input: Pick<TeamGameplayFinancialDecisionInput, 'action' | 'effectiveDate' | 'sourceAuthority' | 'sourceEntityId'>, organizationId: OrganizationId, category: string): GameplayFinancialDecision {
   return Object.freeze({
     allowed: false,
     outcome: 'INVALID_FINANCE_STATE' as const,

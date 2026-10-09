@@ -27,6 +27,7 @@ import {
   type RevenueRecognition,
 } from './Recognition'
 import { createFinancialDimensions, createFinancialSource, type FinancialDimensionsInput, type FinancialSource, type FinancialTransaction } from './FinancialLedger'
+import { consumeFinancialReservation, findFinancialReservationByProvenance, type FinancialReservation } from './FinancialAuthority'
 import { createOwnerFundingTransaction, createPayable, createReceivable, type TreasuryCounterparty } from './Treasury'
 
 export const ECONOMIC_EVENT_AUTHORITIES = [
@@ -264,12 +265,14 @@ export function processOwnerFundingEconomicEvent(world: GameWorld, event: Author
 function processExpenseEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions, recognizeDefault: boolean, teamId: TeamId | null): EconomicEventAdapterResult {
   const existing = existingArtifacts(world, event)
   assertReplayCompatible(event, existing)
-  if (existing.commitment !== undefined || existing.recognition !== undefined || existing.payable !== undefined || existing.transaction !== undefined) return alreadyProcessed(world, event, existing)
+  if (existing.commitment !== undefined || existing.recognition !== undefined || existing.payable !== undefined || existing.transaction !== undefined) return alreadyProcessed(world, event, existing, consumeContractCapacityReservation(world, event))
+  const contractReservations = consumeContractCapacityReservation(world, event)
+  const reservationPatch = contractReservations === null ? {} : { financialReservations: contractReservations }
   const dimensions = event.dimensions ?? { ...(teamId === null ? {} : { teamId }) }
   const category = event.expenseCategory ?? event.eventType
   const commitment = createFinancialCommitment({ id: `commitment:authorized:${eventKey(event)}`, organizationId: event.organizationId, amount: event.amount, startsOn: event.effectiveOn, dueOn: event.dueOn!, category, provenance: eventProvenance(event), counterparty: event.counterparty, dimensions })
   const shouldRecognize = options.recognize ?? recognizeDefault
-  if (!shouldRecognize) return accepted(world, event, { financialCommitments: [...Object.values(world.financialCommitmentsById), commitment] }, { commitment })
+  if (!shouldRecognize) return accepted(world, event, { financialCommitments: [...Object.values(world.financialCommitmentsById), commitment], ...reservationPatch }, { commitment })
   if (options.ledger === undefined) throw new TypeError('Expense economic recognition requires explicit ledger account mapping')
   const shouldMaterialize = options.materializeSubledger ?? true
   const payableId = `payable:authorized:${eventKey(event)}`
@@ -277,7 +280,30 @@ function processExpenseEvent(world: GameWorld, event: AuthorizedEconomicEvent, o
   const payable = shouldMaterialize ? createPayable({ id: payableId, organizationId: event.organizationId, amount: event.amount, counterparty: event.counterparty ?? { kind: 'EXTERNAL', label: 'Authorized economic event' }, recognizedOn: event.effectiveOn, dueOn: event.dueOn!, provenance: { kind: 'EXPENSE_RECOGNITION', id: String(recognitionBase.id) }, dimensions: recognitionBase.dimensions }) : undefined
   if (options.ledger.resultAccountId === undefined) throw new TypeError('Expense economic recognition requires a result ledger account')
   const ledgerResult = createExpenseRecognitionLedgerTransaction(world, recognitionBase, { transactionId: `financial:authorized:${eventKey(event)}:expense`, offsetAccountId: options.ledger.offsetAccountId, resultAccountId: options.ledger.resultAccountId })
-  return accepted(world, event, { financialCommitments: [...Object.values(world.financialCommitmentsById), commitment], expenseRecognitions: [...Object.values(world.expenseRecognitionsById), ledgerResult.recognition], ...(payable === undefined ? {} : { payables: [...Object.values(world.payablesById), payable] }), financialTransactions: [...Object.values(world.financialTransactionsById), ledgerResult.transaction] }, { commitment, recognition: ledgerResult.recognition, ...(payable === undefined ? {} : { payable }), transaction: ledgerResult.transaction })
+  return accepted(world, event, { financialCommitments: [...Object.values(world.financialCommitmentsById), commitment], expenseRecognitions: [...Object.values(world.expenseRecognitionsById), ledgerResult.recognition], ...(payable === undefined ? {} : { payables: [...Object.values(world.payablesById), payable] }), financialTransactions: [...Object.values(world.financialTransactionsById), ledgerResult.transaction], ...reservationPatch }, { commitment, recognition: ledgerResult.recognition, ...(payable === undefined ? {} : { payable }), transaction: ledgerResult.transaction })
+}
+
+/**
+ * BS16M-B1 replacement boundary. The payroll `AuthorizedEconomicEvent` of a contract replaces the
+ * binding-capacity reservation that protected it: the OPEN reservation whose provenance is the exact
+ * economic contract (`CONTRACT` + `event.sourceEntityId`) is consumed in the *same* pure transition
+ * that creates or resolves the canonical `FinancialCommitment`, so the contract's own footprint is
+ * protected by exactly one mechanism at every observable world (the reservation before the obligation
+ * exists, the canonical commitment/contractual schedule after it) and it is counted exactly once.
+ * The returned collection is `null` when nothing changed, so an event without provenance never
+ * rewrites the reservation collection.
+ *
+ * A rejected event never reaches this point (the reservation stays OPEN), an already `CONSUMED`
+ * reservation is a deterministic no-op, and a missing reservation is left missing: historical
+ * commitments stay valid and no retroactive reservation is ever synthesized. A reservation is never
+ * released here — release is a different business outcome.
+ */
+function consumeContractCapacityReservation(world: GameWorld, event: AuthorizedEconomicEvent): readonly FinancialReservation[] | null {
+  if (event.sourceAuthority !== 'CONTRACT') return null
+  const reservations = Object.values(world.financialReservationsById)
+  const existing = findFinancialReservationByProvenance(reservations, { organizationId: event.organizationId, sourceAuthority: 'CONTRACT', sourceEntityId: event.sourceEntityId })
+  if (existing === null || existing.status !== 'OPEN') return null
+  return reservations.map((reservation) => reservation === existing ? consumeFinancialReservation(existing) : reservation)
 }
 
 function processRevenueEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions, teamId: TeamId | null): EconomicEventAdapterResult {
@@ -322,8 +348,8 @@ function existingArtifacts(world: GameWorld, event: AuthorizedEconomicEvent): Pi
   return { commitment, entitlement, recognition, receivable, payable, transaction }
 }
 
-function alreadyProcessed(world: GameWorld, event: AuthorizedEconomicEvent, artifacts: Pick<EconomicEventAdapterResult, 'commitment' | 'entitlement' | 'recognition' | 'receivable' | 'payable' | 'transaction'>): EconomicEventAdapterResult {
-  return Object.freeze({ status: 'alreadyProcessed', alreadyProcessed: true, world, event, ...artifacts })
+function alreadyProcessed(world: GameWorld, event: AuthorizedEconomicEvent, artifacts: Pick<EconomicEventAdapterResult, 'commitment' | 'entitlement' | 'recognition' | 'receivable' | 'payable' | 'transaction'>, reservations: readonly FinancialReservation[] | null = null): EconomicEventAdapterResult {
+  return Object.freeze({ status: 'alreadyProcessed', alreadyProcessed: true, world: reservations === null ? world : apply(world, { financialReservations: reservations }), event, ...artifacts })
 }
 
 function assertReplayCompatible(event: AuthorizedEconomicEvent, artifacts: Pick<EconomicEventAdapterResult, 'commitment' | 'entitlement' | 'recognition' | 'receivable' | 'payable' | 'transaction'>): void {

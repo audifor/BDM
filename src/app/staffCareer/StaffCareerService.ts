@@ -26,7 +26,7 @@ import { createStaffContract, isStaffContractActiveOn, staffContractIdFromString
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { staffReputationScore } from '@/domain/staffReputation'
 import { addInboxItem, addNewsItem, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
-import { evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason } from '@/domain/finance'
+import { bindTeamContractCapacity, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, type FinancialReservation } from '@/domain/finance'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
 import { detachStaffFromFutureTrainingSessions } from '@/engine/training'
 
@@ -152,7 +152,18 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   // since, so the exact check `createStaffJobOffer` ran must run again here, or two individually
   // valid offers could both be accepted and jointly exceed what canonical Finance permits.
   const annualSalary = offer.annualSalary ?? calculateStaffOfferSalary(world, opening, offer.staffId)
-  requireCanonicalStaffHiringFinance(world, opening.teamId, annualSalary, String(offer.id))
+  // The reservation belongs to the exact contract this transition creates, so the canonical staff
+  // contract id is derived from the input world first and canonical Finance is rechecked against that
+  // same world; the reservation is published with the contract in the single transition below.
+  const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
+  const capacity = bindTeamContractCapacity(world, {
+    teamId: opening.teamId,
+    action: 'STAFF_HIRING',
+    legacyAnnualAmountMajorUnits: annualSalary,
+    contractId: String(newContractId),
+    effectiveDate: world.currentDate,
+  })
+  if (!capacity.allowed) throw new Error(`Team cannot afford this Staff job offer under canonical Finance (${gameplayFinancialBlockReason(capacity.decision)})`)
 
   const accepted = decideStaffJobOffer(offer, 'accepted')
   const hired = transitionStaffJobCandidacy(candidacy, 'hired')
@@ -185,7 +196,6 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   if (!appointed.ok) throw new Error('Staff cannot be appointed')
   const newAssignmentId = `staff-assignment:${offer.staffId}:${opening.teamId}:${opening.roleId}:${world.currentDate}`
   assignments = [...assignments, { id: newAssignmentId as never, staffPersonId: offer.staffId, teamId: opening.teamId, role: opening.roleId, assignedOn: world.currentDate }]
-  const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
   contracts[newContractId] = createStaffContract({ id: newContractId, staffId: offer.staffId, teamId: opening.teamId, kind: 'standard', term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, 2) }, compensation: { annualSalary } })
 
   openings[opening.id] = { ...opening, status: 'filled' }
@@ -194,7 +204,7 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   for (const candidate of Object.values(candidacies) as (typeof candidacy)[]) if (candidate.jobOpeningId === opening.id && candidate.id !== candidacy.id && ['identified', 'interviewing', 'offered'].includes(candidate.status)) { const rejected = transitionStaffJobCandidacy(candidate, 'rejected'); if (rejected.ok) candidacies[candidate.id] = rejected.candidacy }
   for (const other of Object.values(offers) as (typeof offer)[]) if (other.jobOpeningId === opening.id && other.id !== offer.id && other.status === 'pending') offers[other.id] = { ...other, status: 'withdrawn' }
 
-  const next = rebuild(world, { assignments, openings, candidacies: candidacies as never, offers: offers as never, contracts, employment: { ...world.staffEmploymentByStaffId, [offer.staffId]: appointed.employment }, history: { ...world.staffCareerHistoryByStaffId, [offer.staffId]: appointed.history }, responsibilities })
+  const next = rebuild(world, { assignments, openings, candidacies: candidacies as never, offers: offers as never, contracts, employment: { ...world.staffEmploymentByStaffId, [offer.staffId]: appointed.employment }, history: { ...world.staffCareerHistoryByStaffId, [offer.staffId]: appointed.history }, responsibilities, financialReservations: capacity.reservations })
 
   const staff = world.staffPeopleById[offer.staffId]!
   const team = world.teams[opening.teamId]!
@@ -457,6 +467,7 @@ function rebuild(world: GameWorld, changes: Partial<{
   employment: typeof world.staffEmploymentByStaffId
   history: typeof world.staffCareerHistoryByStaffId
   responsibilities: readonly (typeof world.responsibilitiesById)[keyof typeof world.responsibilitiesById][]
+  financialReservations: readonly FinancialReservation[]
 }>): GameWorld {
   return updateGameWorld(world, {
     ...(changes.assignments === undefined ? {} : { teamStaffAssignments: changes.assignments }),
@@ -468,5 +479,6 @@ function rebuild(world: GameWorld, changes: Partial<{
     staffEmploymentByStaffId: changes.employment ?? world.staffEmploymentByStaffId,
     staffCareerHistoryByStaffId: changes.history ?? world.staffCareerHistoryByStaffId,
     ...(changes.responsibilities === undefined ? {} : { responsibilities: changes.responsibilities }),
+    ...(changes.financialReservations === undefined ? {} : { financialReservations: changes.financialReservations }),
   } as never)
 }
