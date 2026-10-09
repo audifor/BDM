@@ -1,3 +1,4 @@
+import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import type { MatchSetup } from '@/engine/match-next'
@@ -45,7 +46,7 @@ export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNex
   }
 
   /** Applies the result; `FULL` when the user watched it live (provenance only: the same canonical application). */
-  public complete(world: GameWorld, result: MatchNextResult, resolution: 'FULL' | 'FAST' = 'FAST'): GameWorld {
-    return completeMatchNext(world, result, resolution)
+  public complete(world: GameWorld, result: MatchNextResult, resolution: 'FULL' | 'FAST' = 'FAST', pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
+    return completeMatchNext(world, result, resolution, pendingEvidence)
   }
 }

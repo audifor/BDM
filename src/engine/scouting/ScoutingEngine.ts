@@ -34,6 +34,7 @@ export function evaluatorProfile(world: GameWorld, staffId: StaffPersonId): Eval
 export function requestScouting(world: GameWorld, input: { organizationId: OrganizationId; playerId: PlayerId; missionType: ScoutingMission; priority?: ScoutingPriority; evaluatorStaffId?: StaffPersonId; targetDimension?: string; teamContextId?: TeamId; gameId?: string; requestedBy?: 'HEAD_COACH' | 'SCOUTING_DEPARTMENT'; staffQualityScore?: number }): GameWorld {
   const evaluatorStaffId = input.evaluatorStaffId ?? chooseEvaluator(world, input.organizationId, input.missionType, input.teamContextId)
   if (!world.players[input.playerId] || !world.staffPeopleById[evaluatorStaffId]) throw new Error('Scouting request references missing entity')
+  if (world.players[input.playerId]!.careerEnd !== undefined) throw new Error('Scouting cannot target a Player whose career has ended')
   if (input.missionType === 'SKILL_EVALUATION' && input.targetDimension !== undefined && !isSkillTarget(input.targetDimension)) throw new Error(`Unknown scouting skill family ${input.targetDimension}`)
   if (input.missionType === 'LIVE_GAME' && !isValidLiveGameTarget(world, input.playerId, input.gameId)) throw new Error('Live Game requires a scheduled game involving the Player and their current team')
   if (input.teamContextId !== undefined) {
@@ -49,7 +50,7 @@ export function requestScouting(world: GameWorld, input: { organizationId: Organ
 
 /** Bounded candidate input keeps department autonomy out of a world-wide daily scan. */
 export function deriveScoutingNeeds(world: GameWorld, organizationId: OrganizationId, candidatePlayerIds: readonly PlayerId[]): GameWorld {
-  const candidate = [...candidatePlayerIds].sort().find((id) => world.players[id] !== undefined && !world.organizationKnowledge.some((k) => k.organizationId === organizationId && k.subjectPlayerId === id))
+  const candidate = [...candidatePlayerIds].sort().find((id) => world.players[id] !== undefined && world.players[id]!.careerEnd === undefined && !world.organizationKnowledge.some((k) => k.organizationId === organizationId && k.subjectPlayerId === id))
   return candidate === undefined ? world : requestScouting(world, { organizationId, playerId: candidate, missionType: 'QUICK_LOOK', requestedBy: 'SCOUTING_DEPARTMENT' })
 }
 /** Explicit source boundary for public data, stats, combine, workout and event integrations. */
@@ -168,7 +169,27 @@ function durationDaysWithWorkload(world: GameWorld, assignment: ScoutingAssignme
   const relevant = assignment.missionType === 'POTENTIAL_EVALUATION' ? staff.professional.attributes.potentialEvaluation : assignment.missionType === 'TACTICAL_FIT' ? Math.round((staff.professional.attributes.tacticalKnowledge + staff.professional.attributes.analysis) / 2) : staff.professional.attributes.talentEvaluation
   return Math.max(1, missionDays[assignment.missionType] + (relevant < 50 ? 1 : 0) + (profile.experience < 30 ? 1 : 0) + (workload >= 4 ? 1 : 0))
 }
-export function activeWorkload(world: GameWorld, staffId: StaffPersonId): number { return Object.values(world.scoutingAssignmentsById).filter((item) => item.evaluatorStaffId === staffId && item.status === 'ACTIVE').reduce((sum, item) => sum + missionUnits[item.missionType], 0) + Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === staffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST }
+// Derived workload follows immutable ledger identity; weak keys retain no old world.
+const assignmentWorkloads = new WeakMap<GameWorld['scoutingAssignmentsById'], ReadonlyMap<StaffPersonId, number>>()
+const territoryWorkloads = new WeakMap<GameWorld['scoutingTerritoryAssignmentsById'], ReadonlyMap<StaffPersonId, number>>()
+
+export function activeWorkload(world: GameWorld, staffId: StaffPersonId): number {
+  let assignments = assignmentWorkloads.get(world.scoutingAssignmentsById)
+  if (!assignments) {
+    const counts = new Map<StaffPersonId, number>()
+    for (const item of Object.values(world.scoutingAssignmentsById)) if (item.status === 'ACTIVE') counts.set(item.evaluatorStaffId, (counts.get(item.evaluatorStaffId) ?? 0) + missionUnits[item.missionType])
+    assignments = counts
+    assignmentWorkloads.set(world.scoutingAssignmentsById, assignments)
+  }
+  let territories = territoryWorkloads.get(world.scoutingTerritoryAssignmentsById)
+  if (!territories) {
+    const counts = new Map<StaffPersonId, number>()
+    for (const item of Object.values(world.scoutingTerritoryAssignmentsById)) if (item.status === 'ACTIVE') counts.set(item.scoutStaffId, (counts.get(item.scoutStaffId) ?? 0) + SCOUTING_TERRITORY_WORKLOAD_COST)
+    territories = counts
+    territoryWorkloads.set(world.scoutingTerritoryAssignmentsById, territories)
+  }
+  return (assignments.get(staffId) ?? 0) + (territories.get(staffId) ?? 0)
+}
 
 /** The evidence, report and consolidated knowledge one completed assignment adds (the world's players, staff and evaluators are read only). */
 function completionArtifacts(world: GameWorld, assignment: ScoutingAssignment, knowledge: readonly OrganizationKnowledge[]): { readonly evidence: Evidence; readonly report: EvaluatorReport; readonly knowledge: readonly OrganizationKnowledge[] } {

@@ -1,5 +1,5 @@
 import { createOrganizationPlayerAwareness, createScoutingTerritoryAssignment as makeScoutingTerritoryAssignment, SCOUTING_TERRITORY_WORKLOAD_COST, scoutingTerritoryKey, type ScoutingTerritory, type ScoutingTerritoryAssignment } from '@/domain/scouting'
-import { calculateStaffWorkload, getPlayersInScoutingTerritory, getTeamsInScoutingTerritory, isStaffRoleSuitableForScoutingTerritory, updateGameWorld, type GameWorld } from '@/domain/world'
+import { calculateStaffWorkload, getPlayersInScoutingTerritory, getTeamsInScoutingTerritory, isStaffRoleSuitableForScoutingTerritory, updateGameWorld, updateGameWorldBatch, type GameWorld } from '@/domain/world'
 import { calculateStaffRoleProficiencyByRoleId, type StaffRoleId } from '@/domain/staff'
 import type { StaffPersonId } from '@/domain/ids'
 import { hashStringToSeed } from '@/engine/random'
@@ -53,53 +53,55 @@ export function getScoutingTerritoryCoverage(world: GameWorld, organizationId: i
 
 /** Progresses only persisted active operations. No rating or potential knowledge is produced. */
 export function progressScoutingTerritoryAssignments(world: GameWorld): GameWorld {
-  let next = world
-  const priorityRank = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
-  const assignments = Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.status === 'ACTIVE').sort((a, b) => priorityRank[a.priority ?? 'NORMAL'] - priorityRank[b.priority ?? 'NORMAL'] || a.id.localeCompare(b.id))
-  for (const original of assignments) {
-    const assignment = next.scoutingTerritoryAssignmentsById[original.id]
-    if (assignment === undefined || assignment.status !== 'ACTIVE' || assignment.lastProcessedAt === next.currentDate) continue
-    const team = next.teams[assignment.requestingTeamId]
-    const staff = next.staffPeopleById[assignment.scoutStaffId]
-    const staffAssignment = Object.values(next.teamStaffAssignmentsById).find((item) => item.teamId === assignment.requestingTeamId && item.staffPersonId === assignment.scoutStaffId)
-    const employment = next.staffEmploymentByStaffId[assignment.scoutStaffId]
-    if (team === undefined || team.organizationId !== assignment.organizationId || staff === undefined
-      || staffAssignment === undefined || employment?.status !== 'employed' || employment.teamId !== team.id
-      || !isStaffRoleSuitableForScoutingTerritory(next, team.id, staffAssignment.role, assignment.territory)) continue
+  return updateGameWorldBatch(world, (initial, update) => {
+    let next = initial
+    const priorityRank = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
+    const assignments = Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.status === 'ACTIVE').sort((a, b) => priorityRank[a.priority ?? 'NORMAL'] - priorityRank[b.priority ?? 'NORMAL'] || a.id.localeCompare(b.id))
+    for (const original of assignments) {
+      const assignment = next.scoutingTerritoryAssignmentsById[original.id]
+      if (assignment === undefined || assignment.status !== 'ACTIVE' || assignment.lastProcessedAt === next.currentDate) continue
+      const team = next.teams[assignment.requestingTeamId]
+      const staff = next.staffPeopleById[assignment.scoutStaffId]
+      const staffAssignment = Object.values(next.teamStaffAssignmentsById).find((item) => item.teamId === assignment.requestingTeamId && item.staffPersonId === assignment.scoutStaffId)
+      const employment = next.staffEmploymentByStaffId[assignment.scoutStaffId]
+      if (team === undefined || team.organizationId !== assignment.organizationId || staff === undefined
+        || staffAssignment === undefined || employment?.status !== 'employed' || employment.teamId !== team.id
+        || !isStaffRoleSuitableForScoutingTerritory(next, team.id, staffAssignment.role, assignment.territory)) continue
 
-    const awareness = new Set(Object.values(next.organizationPlayerAwarenessById).filter((item) => item.organizationId === assignment.organizationId).map((item) => item.playerId))
-    const evaluated = new Set(next.organizationKnowledge.filter((item) => item.organizationId === assignment.organizationId).map((item) => item.subjectPlayerId))
-    const ownRoster = new Set(Object.values(next.teams).filter((item) => item.organizationId === assignment.organizationId).flatMap((item) => item.rosterPlayerIds))
-    const focus = assignment.recruitmentFocusId === undefined ? undefined : next.scoutingRecruitmentFocusesById[assignment.recruitmentFocusId]
-    if (assignment.recruitmentFocusId !== undefined && (focus === undefined || focus.status !== 'ACTIVE')) continue
-    const eligible = getPlayersInScoutingTerritory(next, assignment.territory).filter((id) => {
-      if (awareness.has(id) || evaluated.has(id) || ownRoster.has(id)) return false
-      if (focus === undefined) return true
-      const player = next.players[id]!
-      const age = player.bio.dateOfBirth
-      const currentAge = Number(next.currentDate.slice(0, 4)) - Number(age.slice(0, 4)) - (next.currentDate.slice(5) < age.slice(5) ? 1 : 0)
-      return focus.positions.includes(player.basketball.primaryPosition) && (focus.minimumAge === undefined || currentAge >= focus.minimumAge) && (focus.maximumAge === undefined || currentAge <= focus.maximumAge)
-    })
-    const quality = operationalQuality(next, assignment.scoutStaffId, staffAssignment.role)
-    const loadPenalty = workloadPenalty(next, assignment.scoutStaffId)
-    const throughput = Math.max(0, Math.min(MAX_DAILY_DISCOVERIES, 1 + Math.floor(quality / 40) - loadPenalty))
-    const selectionSeed = `${assignment.organizationId}:${assignment.scoutStaffId}:${scoutingTerritoryKey(assignment.territory)}:${next.currentDate}`
-    const selected = [...eligible].sort((left, right) => hashStringToSeed(`${selectionSeed}:${left}`) - hashStringToSeed(`${selectionSeed}:${right}`) || left.localeCompare(right)).slice(0, throughput)
-    const added = selected.map((playerId) => createOrganizationPlayerAwareness({
-      id: `player-awareness:${assignment.organizationId}:${playerId}`,
-      organizationId: assignment.organizationId,
-      playerId,
-      discoveredAt: next.currentDate,
-      source: 'TERRITORY_DISCOVERY',
-      discoveredByStaffId: assignment.scoutStaffId,
-      territory: assignment.territory,
-    }))
-    next = updateGameWorld(next, {
-      organizationPlayerAwareness: [...Object.values(next.organizationPlayerAwarenessById), ...added],
-      scoutingTerritoryAssignments: Object.values(next.scoutingTerritoryAssignmentsById).map((item) => item.id === assignment.id ? { ...item, lastProcessedAt: next.currentDate } : item),
-    })
-  }
-  return next
+      const awareness = new Set(Object.values(next.organizationPlayerAwarenessById).filter((item) => item.organizationId === assignment.organizationId).map((item) => item.playerId))
+      const evaluated = new Set(next.organizationKnowledge.filter((item) => item.organizationId === assignment.organizationId).map((item) => item.subjectPlayerId))
+      const ownRoster = new Set(Object.values(next.teams).filter((item) => item.organizationId === assignment.organizationId).flatMap((item) => item.rosterPlayerIds))
+      const focus = assignment.recruitmentFocusId === undefined ? undefined : next.scoutingRecruitmentFocusesById[assignment.recruitmentFocusId]
+      if (assignment.recruitmentFocusId !== undefined && (focus === undefined || focus.status !== 'ACTIVE')) continue
+      const eligible = getPlayersInScoutingTerritory(next, assignment.territory).filter((id) => {
+        if (awareness.has(id) || evaluated.has(id) || ownRoster.has(id)) return false
+        if (focus === undefined) return true
+        const player = next.players[id]!
+        const age = player.bio.dateOfBirth
+        const currentAge = Number(next.currentDate.slice(0, 4)) - Number(age.slice(0, 4)) - (next.currentDate.slice(5) < age.slice(5) ? 1 : 0)
+        return focus.positions.includes(player.basketball.primaryPosition) && (focus.minimumAge === undefined || currentAge >= focus.minimumAge) && (focus.maximumAge === undefined || currentAge <= focus.maximumAge)
+      })
+      const quality = operationalQuality(next, assignment.scoutStaffId, staffAssignment.role)
+      const loadPenalty = workloadPenalty(next, assignment.scoutStaffId)
+      const throughput = Math.max(0, Math.min(MAX_DAILY_DISCOVERIES, 1 + Math.floor(quality / 40) - loadPenalty))
+      const selectionSeed = `${assignment.organizationId}:${assignment.scoutStaffId}:${scoutingTerritoryKey(assignment.territory)}:${next.currentDate}`
+      const selected = [...eligible].sort((left, right) => hashStringToSeed(`${selectionSeed}:${left}`) - hashStringToSeed(`${selectionSeed}:${right}`) || left.localeCompare(right)).slice(0, throughput)
+      const added = selected.map((playerId) => createOrganizationPlayerAwareness({
+        id: `player-awareness:${assignment.organizationId}:${playerId}`,
+        organizationId: assignment.organizationId,
+        playerId,
+        discoveredAt: next.currentDate,
+        source: 'TERRITORY_DISCOVERY',
+        discoveredByStaffId: assignment.scoutStaffId,
+        territory: assignment.territory,
+      }))
+      next = update(next, {
+        ...(added.length === 0 ? {} : { organizationPlayerAwareness: [...Object.values(next.organizationPlayerAwarenessById), ...added] }),
+        scoutingTerritoryAssignments: Object.values(next.scoutingTerritoryAssignmentsById).map((item) => item.id === assignment.id ? { ...item, lastProcessedAt: next.currentDate } : item),
+      })
+    }
+    return next
+  })
 }
 
 export function scoutingDiscoveryThroughput(world: GameWorld, assignmentId: string): number {

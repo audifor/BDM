@@ -23,6 +23,7 @@ import {
   GAME_WORLD_SCHEMA_VERSION,
   GameWorldValidationError,
   updateGameWorld,
+  updateGameWorldBatch,
 } from './index'
 import { createValidGameWorldInput } from './testFixtures'
 
@@ -281,4 +282,27 @@ describe('GameWorld', () => {
     expect(updated.staffPeopleById).toBe(world.staffPeopleById)
     expect(updated.draftsById).toBe(world.draftsById)
   })
+})
+
+
+describe('historical awareness validation reuse', () => {
+  it('revalidates unchanged awareness when its territory Country is removed', () => {
+    const base = createNewGame({ seed: 15015 })
+    const country = createCountry({ id: countryIdFromString('awareness-only-country'), name: 'Awareness territory', code: 'ZZ' })
+    const team = Object.values(base.teams)[0]!
+    const world = updateGameWorld(base, { countries: [...Object.values(base.countries), country], organizationPlayerAwareness: [{
+      id: 'awareness-dependency', organizationId: team.organizationId, playerId: team.rosterPlayerIds[0]!,
+      discoveredAt: base.currentDate, source: 'TERRITORY_DISCOVERY', discoveredByStaffId: Object.values(base.staffPeopleById)[0]!.id,
+      territory: { kind: 'COUNTRY', countryId: country.id },
+    }] })
+    expect(updateGameWorld(world, { currentDate: world.currentDate }).organizationPlayerAwarenessById).toBe(world.organizationPlayerAwarenessById)
+    expect(() => updateGameWorld(world, { countries: Object.values(base.countries) })).toThrow(/Awareness territory Country/)
+  })
+})
+
+
+it('validates a batched result before returning it and preserves the original world on rejection', () => {
+  const world = createNewGame({ seed: 15015 })
+  expect(() => updateGameWorldBatch(world, (initial, update) => update(initial, { userCoachId: coachIdFromString('missing-batch-coach') }))).toThrow(/User coach/)
+  expect(world.coaches[world.userCoachId]).toBeDefined()
 })

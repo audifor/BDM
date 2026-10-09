@@ -49,10 +49,14 @@ import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
+import { considerDraftEntry, declareDraftEntry, withdrawDraftEntry } from '@/engine/draft'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
-import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
-import type { Priority } from '@/domain/recruiting'
+import { addRecruitingBoardEntry, addTransferRecruitToCycle, applyRecruitingPressure, completeCollegeTransfer, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, resolveBasketballChampionshipDate, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
+import { basketballTransferWindow } from '@/domain/eligibility'
+import { ensureTransferPortalRuleset } from '@/engine/eligibility'
+import { canRecruitTransferPlayer, completeTransferEducationModule as completeTransferModule, processTransferPortalEntry as processPortalEntry, submitTransferNotice, withdrawTransferPortalEntry as withdrawPortalEntry } from '@/engine/eligibility'
+import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKind } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
@@ -187,10 +191,25 @@ interface GameStore {
   saveDesignerPlaybook(playbook: Playbook): void
   deleteDesignerPlaybook(playbookId: string): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
+  considerDraftEntry(draftId: string, playerId: PlayerId): string | null
+  declareDraftEntry(draftId: string, playerId: PlayerId): string | null
+  withdrawDraftEntry(draftId: string, playerId: PlayerId): string | null
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
+  discoverRecruitingTalent(cycleId: string): string | null
   removeRecruitingTarget(recruitId: string): void
   performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
+  signRecruit(cycleId: string, recruitId: string): string | null
+  submitTransferNotice(playerId: PlayerId): string | null
+  completeTransferEducationModule(entryId: string): string | null
+  processTransferPortalEntry(entryId: string): string | null
+  withdrawTransferPortalEntry(entryId: string): string | null
+  addTransferRecruitToCycle(entryId: string): string | null
+  completeCollegeTransfer(recruitId: string): string | null
+  promiseRecruitingRole(cycleId: string, recruitId: string): string | null
+  openRecruitingNegotiation(cycleId: string, recruitId: string): string | null
+  respondToRecruitingConcern(negotiationId: string, topic: RecruitingNegotiationTopic, kind: RecruitingProgramResponseKind): string | null
+  applyRecruitingPressure(negotiationId: string): string | null
   acceptNilOpportunity(opportunityId: string): void
   requestBoosterSupport(boosterId: string): void
   setUserCoachLifestyle(lifestyle: Lifestyle): void
@@ -521,10 +540,63 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveDesignerPlaybook: (playbook) => set({ world: saveDesignerPlaybook(requireWorld(get().world), playbook) }),
   deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
+  considerDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: considerDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft consideration failed' } },
+  declareDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: declareDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft declaration failed' } },
+  withdrawDraftEntry: (draftId, playerId) => { const world = requireWorld(get().world); try { set({ world: withdrawDraftEntry(world, draftId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Draft withdrawal failed' } },
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
+  discoverRecruitingTalent: (cycleId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = discoverRecruitingTalentCandidate(world, cycleId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  signRecruit: (cycleId, recruitId) => { const result = signCommittedRecruit(requireWorld(get().world), cycleId, recruitId); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  submitTransferNotice: (playerId) => {
+    let world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (!team || !team.rosterPlayerIds.includes(playerId)) return 'PLAYER_NOT_ON_CONTROLLED_ROSTER'
+    const season = world.seasons[world.currentSeasonId]
+    const competition = season && world.competitions[season.competitionId]
+    if (!season || !competition || !competition.participantTeamIds.includes(team.id) || world.ecosystems[competition.ecosystemId]?.kind !== 'ncaaLike') return 'NO_CONTROLLED_PROGRAM'
+    world = ensureTransferPortalRuleset(world, season.id)
+    const cycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === season.id && item.ecosystemId === competition.ecosystemId && item.status === 'open')
+    const finalDate = cycle && resolveBasketballChampionshipDate(world, cycle)
+    const ruleset = Object.values(world.transferPortalRulesetsById).filter((item) => item.ecosystemId === competition.ecosystemId && item.effectiveFrom <= world.currentDate).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0]
+    if (!cycle || !finalDate || !ruleset) return 'TRANSFER_RULESET_OR_CHAMPIONSHIP_UNAVAILABLE'
+    const entryId = `portal:${playerId}:${world.currentDate}`
+    const result = submitTransferNotice(world, { id: entryId, playerId, sourceTeamId: team.id, ecosystemId: competition.ecosystemId, rulesetId: ruleset.id }, basketballTransferWindow(finalDate, ruleset))
+    if (!result.ok) return result.reason
+    set({ world: result.world })
+    return null
+  },
+  completeTransferEducationModule: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = completeTransferModule(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  processTransferPortalEntry: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = processPortalEntry(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  withdrawTransferPortalEntry: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = withdrawPortalEntry(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  addTransferRecruitToCycle: (entryId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const entry = world.transferPortalEntriesById[entryId]
+    if (!team || !entry || !canRecruitTransferPlayer(world, entry.playerId, team.id)) return 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED'
+    const cycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === world.currentSeasonId && item.ecosystemId === entry.ecosystemId && item.status === 'open')
+    if (!cycle) return 'RECRUITING_NOT_OPEN'
+    const season = world.seasons[cycle.sourceSeasonId]
+    const competition = season === undefined ? undefined : world.competitions[season.competitionId]
+    if (!competition?.participantTeamIds.includes(team.id)) return 'TRANSFER_DESTINATION_UNAVAILABLE'
+    const result = addTransferRecruitToCycle(world, cycle.id, entryId)
+    if (result.ok) { set({ world: result.value }); return null }
+    return result.reason
+  },
+  completeCollegeTransfer: (recruitId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const signing = Object.values(world.recruitSigningsById).find((item) => item.recruitId === recruitId)
+    if (!team || signing?.programTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'
+    const result = completeCollegeTransfer(world, recruitId)
+    if (result.ok) { set({ world: result.value }); return null }
+    return result.reason
+  },
+  promiseRecruitingRole: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = promiseRecruitingRole(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  openRecruitingNegotiation: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = openRecruitingNegotiation(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  respondToRecruitingConcern: (negotiationId, topic, kind) => { const result = respondToRecruitingConcern(requireWorld(get().world), negotiationId, topic, kind); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  applyRecruitingPressure: (negotiationId) => { const result = applyRecruitingPressure(requireWorld(get().world), negotiationId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
   acceptNilOpportunity: (opportunityId) => { const result = acceptNilOpportunity(requireWorld(get().world), opportunityId); if (result.ok) set({ world: result.value }) },
   requestBoosterSupport: (boosterId) => { const result=requestBoosterSupport(requireWorld(get().world),boosterId);if(result.ok)set({world:result.value}) },
   setUserCoachLifestyle: (lifestyle) => set({ world: setCoachLifestyle(requireWorld(get().world), requireWorld(get().world).userCoachId, lifestyle) }),

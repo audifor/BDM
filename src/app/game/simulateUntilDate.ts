@@ -1,9 +1,11 @@
 import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
+import type { SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
-import type { GameWorld } from '@/domain/world'
+import { withSingleWorldValidation, type GameWorld } from '@/domain/world'
+import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 
-import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday } from './advanceGameDay'
+import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday, type WorldDayAdvanceObserver } from './advanceGameDay'
 import { getContinueStopReason, getExplicitAdvanceStopReason, noProgressStop, type ContinueStopReason } from './ContinueFlow'
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { getScheduledGamesToday } from '@/engine/calendar'
@@ -43,6 +45,13 @@ export interface SimulateUntilTick {
   readonly event: SimulateUntilEvent
 }
 
+/** Optional transient timings for certification and diagnostics; it does not affect lifecycle order. */
+export interface SimulateUntilObserver {
+  readonly simulationContext?: SimulationResolutionContext
+  readonly onDayAdvance?: WorldDayAdvanceObserver
+  readonly onSeasonLifecycle?: (elapsedMs: number, transitionCount: number) => void
+}
+
 /**
  * One canonical holiday step so the UI can paint the date and user results as they happen.
  *
@@ -56,19 +65,19 @@ export interface SimulateUntilTick {
  * that is reported as an explicit `unsupportedLifecycle` stop rather than silently skipped,
  * silently deleting its orphaned fixtures, or moving their dates -- see Paso 10.
  */
-export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed): SimulateUntilTick {
-  const plan = planSimulateUntilTick(world, targetDate)
-  return 'tick' in plan ? plan.tick : { world: advanceGameDay(world, createSeed, plan.advanceAllowing), event: { type: 'dayAdvanced' } }
+export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed, observer?: SimulateUntilObserver): SimulateUntilTick {
+  const plan = planSimulateUntilTick(world, targetDate, observer)
+  return 'tick' in plan ? plan.tick : { world: advanceGameDay(world, createSeed, plan.advanceAllowing, observer?.onDayAdvance, observer?.simulationContext), event: { type: 'dayAdvanced' } }
 }
 
 /** ME-LOCK1.1: the same tick with the day's match simulations on `runner` (parallel workers in the app). */
-export async function tickSimulateUntilDateAsync(world: GameWorld, targetDate: GameDate, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed): Promise<SimulateUntilTick> {
-  const plan = planSimulateUntilTick(world, targetDate)
-  return 'tick' in plan ? plan.tick : { world: await advanceGameDayAsync(world, runner, createSeed, plan.advanceAllowing), event: { type: 'dayAdvanced' } }
+export async function tickSimulateUntilDateAsync(world: GameWorld, targetDate: GameDate, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, observer?: SimulateUntilObserver): Promise<SimulateUntilTick> {
+  const plan = planSimulateUntilTick(world, targetDate, observer)
+  return 'tick' in plan ? plan.tick : { world: await advanceGameDayAsync(world, runner, createSeed, plan.advanceAllowing, observer?.onDayAdvance, observer?.simulationContext), event: { type: 'dayAdvanced' } }
 }
 
 /** What one tick does: a finished/rolled-over tick decided without advancing, or an ordinary day advance allowing these breakpoints. */
-function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readonly tick: SimulateUntilTick } | { readonly advanceAllowing: readonly string[] } {
+function planSimulateUntilTick(world: GameWorld, targetDate: GameDate, observer?: SimulateUntilObserver): { readonly tick: SimulateUntilTick } | { readonly advanceAllowing: readonly string[] } {
   const target = parseGameDate(targetDate)
   if (compareGameDates(world.currentDate, target) >= 0) {
     return { tick: { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } } }
@@ -87,7 +96,9 @@ function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readon
   // ever reaches a date past them and throws its "scheduled game in the past" integrity guard.
   // `startNextSeasonFor` never moves `currentDate` (see startNextSeason.ts), so a rollover here
   // can never overshoot `target` the way an eager clock jump could.
+  const seasonLifecycleStarted = performance.now()
   const advanced = advanceCompetitionLifecycles(world)
+  observer?.onSeasonLifecycle?.(performance.now() - seasonLifecycleStarted, advanced.transitions.length)
   if (advanced.blockedOn !== undefined) {
     return { tick: { world: advanced.world, event: { type: 'finished', stopReason: getContinueStopReason(advanced.world) ?? { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn }, transitions: advanced.transitions } } }
   }
@@ -107,7 +118,7 @@ function planSimulateUntilTick(world: GameWorld, targetDate: GameDate): { readon
 }
 
 /** Advances the canonical daily pipeline until the chosen morning, simulating every pending event on the way. */
-export function simulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed): SimulateUntilResult {
+export function simulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed, observer?: SimulateUntilObserver): SimulateUntilResult {
   const target = parseGameDate(targetDate)
   if (compareGameDates(target, world.currentDate) <= 0) {
     throw new RangeError('Simulate-until date must be after the current game date')
@@ -126,7 +137,7 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
       return result(current, daysAdvanced, { type: 'safetyLimit' }, seasonTransitions)
     }
 
-    const tick = tickSimulateUntilDate(current, target, createSeed)
+    const tick = tickSimulateUntilDate(current, target, createSeed, observer)
     if (tick.event.type === 'seasonRolledOver') seasonTransitions.push(...tick.event.transitions)
     if (tick.event.type === 'finished' && tick.event.transitions !== undefined) seasonTransitions.push(...tick.event.transitions)
     if (tick.event.type === 'finished') {
@@ -142,7 +153,15 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
   }
 
   if (getExplicitAdvanceStopReason(current) === undefined && getScheduledGamesToday(current).length > 0) {
-    current = simulateRemainingGamesToday(current, createSeed)
+    // Arriving at the requested morning resolves its fixtures too. Apply the
+    // same pre-match repair as a daily advance, without advancing the date.
+    current = withSingleWorldValidation(current, initial => {
+      const teams = [...new Set(getScheduledGamesToday(initial).flatMap(game => [game.homeTeamId, game.awayTeamId]))].sort((a, b) => a.localeCompare(b))
+      const repair = repairWorldAtLifecycleBoundary(initial, teams)
+      const invalid = repair.reports.find(report => report.classification === 'UNRECOVERABLE' && report.sourceDomain === 'MARKET_ROSTER_CONTRACT')
+      if (invalid) throw new Error(invalid.diagnostics[0]?.message ?? 'Roster/contract integrity could not be reconciled.')
+      return simulateRemainingGamesToday(repair.world, createSeed, ['userGame'], [...repair.reports], observer?.simulationContext)
+    }, { validationMode: observer?.simulationContext?.dailyValidationMode ?? 'incremental' })
   }
   return result(current, daysAdvanced, getExplicitAdvanceStopReason(current) ?? { type: 'arrived' }, seasonTransitions)
 }

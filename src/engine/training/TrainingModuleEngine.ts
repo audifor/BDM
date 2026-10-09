@@ -37,7 +37,16 @@ export function resolveTrainingModule(world: GameWorld, moduleId: string): { rea
 export function assignTrainingModuleToPlayer(
   world: GameWorld,
   input: { readonly teamId: TeamId; readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[] },
+  update: typeof updateGameWorld = updateGameWorld,
 ): GameWorld {
+  const session = createIndividualTrainingModuleSession(world, input)
+  return scheduleTrainingSession(world, session, {}, update)
+}
+
+export function createIndividualTrainingModuleSession(
+  world: GameWorld,
+  input: { readonly teamId: TeamId; readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[] },
+): ScheduledTrainingSession {
   const { definition, intensity, scope } = resolveTrainingModule(world, input.moduleId)
   if (scope === 'team') throw new RangeError('Cannot assign a team-only module to individual training')
   const player = world.players[input.playerId]
@@ -57,7 +66,7 @@ export function assignTrainingModuleToPlayer(
     intensity,
     assignedStaffPersonIds: input.assignedStaffPersonIds,
   })
-  return scheduleTrainingSession(world, session)
+  return session
 }
 
 /**
@@ -73,7 +82,16 @@ export function assignTrainingModuleToPlayer(
 export function scheduleTeamModuleSession(
   world: GameWorld,
   input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[]; readonly participationByPlayerId?: Readonly<Record<string, import('@/domain/training').TrainingParticipation>> },
+  update: typeof updateGameWorld = updateGameWorld,
 ): GameWorld {
+  const session = createTeamModuleTrainingSession(world, input)
+  return scheduleTrainingSession(world, session, {}, update)
+}
+
+export function createTeamModuleTrainingSession(
+  world: GameWorld,
+  input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[]; readonly participationByPlayerId?: Readonly<Record<string, import('@/domain/training').TrainingParticipation>> },
+): ScheduledTrainingSession {
   const { definition, intensity: resolvedIntensity, scope } = resolveTrainingModule(world, input.moduleId)
   if (scope === 'individual') throw new RangeError('Cannot schedule an individual-only module as a team session')
   const isUserModule = world.userTrainingModulesById[input.moduleId] !== undefined
@@ -92,7 +110,7 @@ export function scheduleTeamModuleSession(
     assignedStaffPersonIds: input.assignedStaffPersonIds,
     participationByPlayerId: input.participationByPlayerId ?? previousParticipation,
   })
-  return scheduleTrainingSession(world, session)
+  return session
 }
 
 /** Real day-level load classification for a team/date, derived from actually scheduled sessions. */

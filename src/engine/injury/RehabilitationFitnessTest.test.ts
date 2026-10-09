@@ -19,6 +19,14 @@ function injuryAt(world: ReturnType<typeof createNewGame>, input: { id: string; 
 }
 
 describe('BS12E rehabilitation and fitness testing', () => {
+  it('does not start rehabilitation before a future-dated injury', () => {
+    const world = createNewGame()
+    const team = Object.values(world.teams).find(item => item.coachId !== world.userCoachId)!
+    const injury = injuryAt(world, { id: 'future-rehab', playerId: team.rosterPlayerIds[0]!, injuredOn: addDays(world.currentDate, 10), expectedReturnDate: addDays(world.currentDate, 15) })
+    const future = updateGameWorld(world, { injuries: [injury] })
+    expect(setRehabilitationPlan(future, { injuryId: injury.id, mode: 'ACCELERATED_REHAB', actor: { kind: 'AI', teamId: team.id } })).toEqual({ ok: false, reason: 'NOT_RECOVERING' })
+    expect(progressAiMedicalLifecycle(future).world).toBe(future)
+  })
   it('lets the user change an active rehab plan and applies small elapsed recovery projections without changing fatigue', () => {
     const world = createNewGame()
     const playerId = getUserTeam(world)!.rosterPlayerIds[0]!

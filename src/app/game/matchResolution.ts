@@ -1,5 +1,6 @@
+import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import type { Game } from '@/domain/game'
-import { withDailyResultBatch, withSingleWorldValidation, type GameWorld } from '@/domain/world'
+import { updateGameWorld, withDailyResultBatch, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import type { WorldRepairReport } from '@/domain/repair'
 import type { MatchTacticalPlan } from '@/engine/match'
 import { createMatchEnginePort, prepareMatchSetupWithReports, type MatchNextResult } from '@/app/matchNext'
@@ -7,7 +8,7 @@ import type { MatchSetup } from '@/engine/match-next'
 import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { simulateBackgroundMatch, type BackgroundMatchResult } from '@/engine/world-sim/background/BackgroundMatchModel'
 import { completeBackgroundMatch } from '@/app/worldSim/BackgroundMatchCompletion'
-import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationDetailSettings } from '@/app/worldSim/SimulationResolutionPolicy'
+import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationDetailSettings, type SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { requireUserGameToday, userMatchTacticalPlans } from './playUserGame'
 
 /**
@@ -18,7 +19,7 @@ import { requireUserGameToday, userMatchTacticalPlans } from './playUserGame'
  */
 
 /** The resolutions a world day can use for Games nobody is watching. */
-export type DayResolution = 'FAST' | 'BACKGROUND'
+export type DayResolution = 'FULL' | 'FAST' | 'BACKGROUND'
 
 /** WSR1 seam for the user's simulation-detail setting (persisted settings will be read here; until then the default). */
 export function simulationDetailFor(_world: GameWorld): SimulationDetailSettings {
@@ -26,10 +27,10 @@ export function simulationDetailFor(_world: GameWorld): SimulationDetailSettings
 }
 
 /** Resolves one scheduled Game (FAST unless told otherwise) and applies its result exactly once (fails closed on a second application). */
-export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[], resolution: DayResolution = 'FAST'): GameWorld {
+export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[], resolution: DayResolution = 'FAST', pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
   const prepared = prepareMatchSetupWithReports(world, game, matchSeed)
   repairReports?.push(...prepared.repairReports)
-  return applyDayOutcome(world, simulateDayGameInline({ game, setup: prepared.setup, resolution }))
+  return applyDayOutcome(world, simulateDayGameInline({ game, setup: prepared.setup, resolution }), pendingEvidence)
 }
 
 /**
@@ -51,7 +52,7 @@ export interface PreparedDayGame {
 }
 
 export type DayOutcome =
-  | { readonly resolution: 'FAST'; readonly result: MatchNextResult }
+  | { readonly resolution: 'FULL' | 'FAST'; readonly result: MatchNextResult }
   | { readonly resolution: 'BACKGROUND'; readonly result: BackgroundMatchResult }
 
 export function dayGamesAreIndependent(games: readonly Game[]): boolean {
@@ -60,19 +61,19 @@ export function dayGamesAreIndependent(games: readonly Game[]): boolean {
 }
 
 /** Phase 1: prepare the day's Games from one world, seeds drawn in the given order, each with its policy resolution. */
-export function prepareDayGames(world: GameWorld, games: readonly Game[], createSeed: () => number, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world)): PreparedDayGame[] {
-  const decisions = decideResolutions(world, games, settings)
+export function prepareDayGames(world: GameWorld, games: readonly Game[], createSeed: () => number, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world), context: SimulationResolutionContext = {}): PreparedDayGame[] {
+  const decisions = decideResolutions(world, games, settings, context)
   return games.map((game, index) => {
     const prepared = prepareMatchSetupWithReports(world, game, createSeed())
     repairReports?.push(...prepared.repairReports)
-    return { game, setup: prepared.setup, resolution: decisions[index]!.resolution === 'BACKGROUND' ? 'BACKGROUND' : 'FAST' }
+    return { game, setup: prepared.setup, resolution: decisions[index]!.resolution }
   })
 }
 
 function simulateDayGameInline(item: PreparedDayGame): DayOutcome {
   return (item.resolution ?? 'FAST') === 'BACKGROUND'
     ? { resolution: 'BACKGROUND', result: simulateBackgroundMatch(item.setup) }
-    : { resolution: 'FAST', result: createMatchEnginePort('match-next').simulate(item.setup, 'FAST') }
+    : { resolution: item.resolution === 'FULL' ? 'FULL' : 'FAST', result: createMatchEnginePort('match-next').simulate(item.setup, item.resolution === 'FULL' ? 'FULL' : 'FAST') }
 }
 
 /** Phase 2 (inline): every prepared Game at its resolution. */
@@ -87,7 +88,7 @@ export function simulateDayOutcomesInline(prepared: readonly PreparedDayGame[]):
 export async function simulateDayOutcomes(prepared: readonly PreparedDayGame[], runner: MatchSimulationRunner): Promise<DayOutcome[]> {
   const exact = prepared.map((item, index) => ({ item, index })).filter(({ item }) => (item.resolution ?? 'FAST') === 'FAST')
   const pending = exact.length === 0 ? Promise.resolve([] as MatchNextResult[]) : runner.simulate(exact.map(({ item }) => item.setup))
-  const outcomes: (DayOutcome | undefined)[] = prepared.map((item) => item.resolution === 'BACKGROUND' ? { resolution: 'BACKGROUND', result: simulateBackgroundMatch(item.setup) } : undefined)
+  const outcomes: (DayOutcome | undefined)[] = prepared.map((item) => item.resolution === 'BACKGROUND' ? { resolution: 'BACKGROUND', result: simulateBackgroundMatch(item.setup) } : item.resolution === 'FULL' ? simulateDayGameInline(item) : undefined)
   const results = await pending
   exact.forEach(({ index }, at) => { outcomes[index] = { resolution: 'FAST', result: results[at]! } })
   return outcomes as DayOutcome[]
@@ -102,12 +103,12 @@ export function simulateDayGamesInline(prepared: readonly PreparedDayGame[]): Ma
   })
 }
 
-function applyDayOutcome(world: GameWorld, outcome: DayOutcome): GameWorld {
-  return outcome.resolution === 'BACKGROUND' ? completeBackgroundMatch(world, outcome.result) : completeMatchNextFast(world, outcome.result)
+function applyDayOutcome(world: GameWorld, outcome: DayOutcome, pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
+  return outcome.resolution === 'BACKGROUND' ? completeBackgroundMatch(world, outcome.result, pendingEvidence) : completeMatchNextExact(world, outcome.result, outcome.resolution, pendingEvidence)
 }
 
-function completeMatchNextFast(world: GameWorld, result: MatchNextResult): GameWorld {
-  return createMatchEnginePort('match-next').complete(world, result)
+function completeMatchNextExact(world: GameWorld, result: MatchNextResult, resolution: 'FULL' | 'FAST', pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
+  return createMatchEnginePort('match-next').complete(world, result, resolution, pendingEvidence)
 }
 
 /** Phase 3: apply the outcomes in the order of `prepared` (schedule order), each exactly once. */
@@ -117,12 +118,16 @@ export function applyDayOutcomes(world: GameWorld, prepared: readonly PreparedDa
   // WSR2.1: and one result batch (`withDailyResultBatch`): every result still runs the canonical chain in schedule order on the world the
   // previous one left, while the world-sized records the chain rewrites are copied once per day instead of once per result. Outcomes are
   // indexed by `prepared` (schedule order), never by the order simulations finished.
-  return withDailyResultBatch(() => withSingleWorldValidation(world, (start) => prepared.reduce((current, item, index) => {
-    const outcome = outcomes[index]!
-    if (outcome.result.gameId !== item.game.id) throw new Error(`Match result ${outcome.result.gameId} does not belong to Game ${item.game.id}`)
-    if (outcome.resolution !== (item.resolution ?? 'FAST')) throw new Error(`Game ${item.game.id} was prepared for ${item.resolution ?? 'FAST'} but resolved ${outcome.resolution}`)
-    return applyDayOutcome(current, outcome)
-  }, start)))
+  return withDailyResultBatch(() => withSingleWorldValidation(world, (start) => {
+    const pendingEvidence: DevelopmentStimulusEvent[] = []
+    const resolved = prepared.reduce((current, item, index) => {
+      const outcome = outcomes[index]!
+      if (outcome.result.gameId !== item.game.id) throw new Error(`Match result ${outcome.result.gameId} does not belong to Game ${item.game.id}`)
+      if (outcome.resolution !== (item.resolution ?? 'FAST')) throw new Error(`Game ${item.game.id} was prepared for ${item.resolution ?? 'FAST'} but resolved ${outcome.resolution}`)
+      return applyDayOutcome(current, outcome, pendingEvidence)
+    }, start)
+    return pendingEvidence.length === 0 ? resolved : updateGameWorld(resolved, { developmentStimulusEventAdditions: pendingEvidence })
+  }))
 }
 
 /** Phase 3 for FAST results only (callers that simulate exact Games themselves). */
@@ -131,21 +136,25 @@ export function applyDayResults(world: GameWorld, prepared: readonly PreparedDay
 }
 
 /** `resolveDayGames` with exact simulations on `runner`; the same world for the same seeds. */
-export async function resolveDayGamesAsync(world: GameWorld, games: readonly Game[], createSeed: () => number, runner: MatchSimulationRunner, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world)): Promise<GameWorld> {
-  if (!dayGamesAreIndependent(games)) return resolveDayGames(world, games, createSeed, repairReports, settings)
-  const prepared = prepareDayGames(world, games, createSeed, repairReports, settings)
+export async function resolveDayGamesAsync(world: GameWorld, games: readonly Game[], createSeed: () => number, runner: MatchSimulationRunner, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world), context: SimulationResolutionContext = {}): Promise<GameWorld> {
+  if (!dayGamesAreIndependent(games)) return resolveDayGames(world, games, createSeed, repairReports, settings, context)
+  const prepared = prepareDayGames(world, games, createSeed, repairReports, settings, context)
   const outcomes = prepared.length === 0 ? [] : await simulateDayOutcomes(prepared, runner)
   return applyDayOutcomes(world, prepared, outcomes)
 }
 
 /** Resolves the given Games of one day: phased when they are independent, strictly sequential otherwise. */
-export function resolveDayGames(world: GameWorld, games: readonly Game[], createSeed: () => number, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world)): GameWorld {
+export function resolveDayGames(world: GameWorld, games: readonly Game[], createSeed: () => number, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world), context: SimulationResolutionContext = {}): GameWorld {
   if (!dayGamesAreIndependent(games)) {
     // The day's resolutions are decided once, on the start-of-day world; each Game is then prepared on the world before it.
-    const decisions = decideResolutions(world, games, settings)
-    return games.reduce((current, game, index) => simulateAndApplyGame(current, game, createSeed(), repairReports, decisions[index]!.resolution === 'BACKGROUND' ? 'BACKGROUND' : 'FAST'), world)
+    const decisions = decideResolutions(world, games, settings, context)
+    return withDailyResultBatch(() => withSingleWorldValidation(world, initial => {
+      const pendingEvidence: DevelopmentStimulusEvent[] = []
+      const resolved = games.reduce((current, game, index) => simulateAndApplyGame(current, game, createSeed(), repairReports, decisions[index]!.resolution, pendingEvidence), initial)
+      return pendingEvidence.length === 0 ? resolved : updateGameWorld(resolved, { developmentStimulusEventAdditions: pendingEvidence })
+    }))
   }
-  const prepared = prepareDayGames(world, games, createSeed, repairReports, settings)
+  const prepared = prepareDayGames(world, games, createSeed, repairReports, settings, context)
   return applyDayOutcomes(world, prepared, simulateDayOutcomesInline(prepared))
 }
 

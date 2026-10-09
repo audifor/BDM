@@ -6,7 +6,7 @@ import { DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
-import { generateRecruitingPool } from '@/engine/recruiting'
+import { generateLegacyFixtureRecruitingPool as generateRecruitingPool } from '@/engine/recruiting'
 import { RecruitingScreen } from './RecruitingScreen'
 
 function fixture(controlled: boolean): GameWorld {
@@ -16,6 +16,6 @@ function fixture(controlled: boolean): GameWorld {
 const handlers = () => ({ onAddTarget: vi.fn(), onRemoveTarget: vi.fn(), onAction: vi.fn(() => null), onOffer: vi.fn(() => null) })
 
 describe('RecruitingScreen', () => {
-  it('renders recruits and the connected action controls for a controlled NCAA program', () => { const props = handlers(); const markup = renderToStaticMarkup(createElement(RecruitingScreen, { world: fixture(true), ...props })); expect(markup).toContain('RECRUITING CENTER'); expect(markup).toContain('TARGET'); expect(markup).toContain('CONTACT'); expect(markup).toContain('PITCH'); expect(markup).toContain('VISIT'); expect(markup).toContain('OFFER') })
+  it('renders recruits and the connected action controls for a controlled NCAA program', () => { const props = handlers(); const markup = renderToStaticMarkup(createElement(RecruitingScreen, { world: fixture(true), ...props })); expect(markup).toContain('RECRUITING CENTER'); expect(markup).toContain('COLLEGE CONTINUATION'); expect(markup).toContain('TRANSFER PORTAL'); expect(markup).toContain('TARGET'); expect(markup).toContain('CONTACT'); expect(markup).toContain('PITCH'); expect(markup).toContain('VISIT'); expect(markup).toContain('OFFER') })
   it('uses read-only presentation outside a controlled NCAA program', () => { const props = handlers(); const markup = renderToStaticMarkup(createElement(RecruitingScreen, { world: fixture(false), ...props })); expect(markup).toContain('Modo consulta'); expect(markup).not.toContain('>CONTACT<') })
 })

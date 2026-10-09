@@ -12,7 +12,7 @@ export function careerFatigueToMatchSession(value: number): number {
 }
 
 /** Applies legacy match load at the canonical result boundary. */
-export function applyPlayerMatchConsequences(worldBeforeMatch: GameWorld, completedWorld: GameWorld, simulation: MatchSimulation): GameWorld {
+export function applyPlayerMatchConsequences(worldBeforeMatch: GameWorld, completedWorld: GameWorld, simulation: MatchSimulation, pendingEvidence?: ReturnType<typeof createDevelopmentStimulusEvent>[]): GameWorld {
   const initialFatigue = initialMatchFatigue(simulation.squads, worldBeforeMatch.careerFatigueByPlayerId)
   const finalFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events, initialFatigue)
   const fatigue = { ...completedWorld.careerFatigueByPlayerId }
@@ -36,7 +36,8 @@ export function applyPlayerMatchConsequences(worldBeforeMatch: GameWorld, comple
       changed = true
     }
   }
-  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, developmentStimulusEvents: [...Object.values(completedWorld.developmentStimulusEventsById), ...stimulusEvents] }) : completedWorld
+  pendingEvidence?.push(...stimulusEvents)
+  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, ...(pendingEvidence === undefined ? { developmentStimulusEventAdditions: stimulusEvents } : {}) }) : completedWorld
 }
 
 export function initialMatchFatigue(squads: MatchSimulation['squads'], careerFatigueByPlayerId: GameWorld['careerFatigueByPlayerId']): FatigueByPlayerId {

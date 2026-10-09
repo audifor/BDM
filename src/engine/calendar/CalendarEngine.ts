@@ -1,3 +1,4 @@
+import { progressCollegeEligibilityExits } from '@/engine/eligibility/CollegeEligibilityLifecycle'
 import { addDays, compareGameDates } from '@/domain/date'
 import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { applyOffseasonDevelopment } from '@/engine/development'
@@ -8,11 +9,15 @@ import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/
 import { progressAiTrainingPlanning } from '@/engine/training/TrainingPlanning'
 import { isStaffWeeklyCheckpoint } from '@/engine/staff'
 import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
-import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments } from '@/engine/recruiting'
+import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments, signCommittedRecruit } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
+import { ensureNcaaSportBudgets, progressStaffActivitySanctions } from '@/engine/enforcement/EnforcementRemedies'
+import { progressInstitutionBenefitsReporting, rolloverInstitutionBenefitsCaps } from '@/engine/eligibility/CollegeCompensationEngine'
+import { runCollegeRosterContinuationAndTransferAI } from '@/engine/eligibility/CollegeTransferAI'
+import { ensureCollegeRulesetContinuity } from '@/engine/eligibility/EligibilityEngine'
 import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressAdvisoryScoutingReports, progressAiScoutingOperations, progressDelegatedScouting, progressRecruitmentFocuses, progressScoutingAssignments, progressScoutingTerritoryAssignments } from '@/engine/scouting'
@@ -29,11 +34,14 @@ import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignati
 import { advanceFacilitiesConditionFromHistory } from '@/engine/facilities'
 import { expireStaleRetentionNegotiations } from '@/engine/contractRetention/ContractRetentionEngine'
 import { progressAiRetentionNegotiationsWithEvidence, type AiRetentionDecisionEvidence } from '@/engine/contractRetention/AiRetentionEngine'
+import { progressPlayerCareerEnds } from '@/engine/career/PlayerCareerLifecycle'
+import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
+import { progressAiProfessionalPathways } from '@/engine/career/AiProfessionalPathways'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
-  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
-  'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT',
+  'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT', 'PROFESSIONAL_PATHWAYS',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
   'STAFF_CAREER_AUTONOMY', 'FACILITY_CONDITION', 'CLUB_FINANCE_V2', 'GOVERNANCE', 'EVENT_COLLECTION',
 ] as const
@@ -110,8 +118,11 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
 
   try {
     const nextDate = addDays(world.currentDate, 1)
-    run('DATE_ADVANCE', nextDate, true, (input) => migrateCurrentSeasonIfElapsed(updateGameWorld(input, { currentDate: nextDate })), 'Always runs exactly one calendar day forward.')
+    run('DATE_ADVANCE', nextDate, true, (input) => ensureCollegeRulesetContinuity(migrateCurrentSeasonIfElapsed(updateGameWorld(input, { currentDate: nextDate }))), 'Always runs exactly one calendar day forward and carries supplied college policies through offseason gaps.')
     run('ANNUAL_PLAYER_DEVELOPMENT', current.currentDate, current.currentDate.slice(5) === '07-01' && !hasAppliedAnnualDevelopmentCycle(current, annualDevelopmentCycleId(current.currentDate)), progressAnnualPlayerDevelopment, 'Runs once on the annual 1 July checkpoint.')
+    run('ANNUAL_TALENT_SUPPLY', current.currentDate, current.currentDate.slice(5) === '07-01', progressAnnualTalentSupply, 'Creates the deterministic simulated talent age cohort once each year.')
+    run('PLAYER_CAREER_END', current.currentDate, current.currentDate.slice(5) === '07-01', progressPlayerCareerEnds, 'Ends careers beyond the structural player age limit and closes current sporting membership.')
+    run('COLLEGE_ELIGIBILITY_EXITS', current.currentDate, true, progressCollegeEligibilityExits, 'Permanent college clock or participation exhaustion ends sporting program membership, preserving identity and academic history.')
     run('CAREER_FATIGUE_RECOVERY', current.currentDate, true, recoverCareerFatigueForDay, 'Career fatigue recovery runs every simulation day.')
     run('EXPIRED_CONTRACT_RECONCILIATION', current.currentDate, true, (input) => reconcileExpiredPlayerContracts(input, input.currentDate), 'Expired player contracts are reconciled every simulation day.')
     run('RETENTION_NEGOTIATION_INVALIDATION', current.currentDate, true, expireStaleRetentionNegotiations, 'Retention negotiations are invalidated when predecessor or roster context changes.')
@@ -154,7 +165,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('MONTHLY_BOOSTER_AUTONOMY', current.currentDate, current.currentDate.slice(-2) === '01', progressAiBoosters, 'Booster progression runs on the first day of each month.')
     run('COACH_FINANCE', current.currentDate, current.currentDate.slice(-2) === '01', processCoachFinancesForMonth, 'Coach Finance runs once on the first day of each month.')
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
-    run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
+    run('ENFORCEMENT', current.currentDate, true, (input) => progressStaffActivitySanctions(progressEnforcement(progressInstitutionBenefitsReporting(rolloverInstitutionBenefitsCaps(ensureNcaaSportBudgets(input))))), 'Enforcement, contest suspensions, sport budgets, benefits cap rollover and institutional reporting are checked every simulation day.')
     run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressRecruitmentFocuses(progressScoutingTerritoryAssignments(progressAiScoutingOperations(progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input)))))), 'AI Scouting departments plan on days 1, 8, 15 and 22/29; delegated reports, Recruitment Focus duration and active territory discovery are checked daily.')
     run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
     let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
@@ -168,10 +179,17 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       sourceId: decision.sourceId,
     })))
     run('SCOUTING_ASSIGNMENTS', current.currentDate, true, progressScoutingAssignments, 'Scouting assignments are progressed every simulation day.')
+    const rightsBeforeDraft = Object.keys(current.playerRightsById).length
     run('DRAFT', current.currentDate, true, (input) => Object.values(input.draftsById).sort((a, b) => a.id.localeCompare(b.id)).reduce((updated, draft) => {
       const opened = openDraft(updated, draft.id)
       return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id) : opened
     }, input), 'Drafts are opened and eligible AI picks/advisories progress every simulation day.')
+    let professionalDecisions: ReturnType<typeof progressAiProfessionalPathways>['decisions'] = []
+    run('PROFESSIONAL_PATHWAYS', current.currentDate, current.currentDate.slice(-2) === '01' || Object.keys(current.playerRightsById).length > rightsBeforeDraft, input => {
+      const result = progressAiProfessionalPathways(input)
+      professionalDecisions = result.decisions
+      return result.world
+    }, 'Professional pathways are evaluated after new Draft selections and at monthly unsigned-rights/undrafted follow-up.', () => professionalDecisions.map(decision => ({ code: decision.signed ? 'AI_PROFESSIONAL_SIGNED' : `AI_PROFESSIONAL_${decision.blocker ?? 'SIGNING_NOT_COMPLETED'}`, message: `${decision.playerId}: ${decision.signed ? 'signed through the canonical professional gateway' : decision.blocker}; attempted=${decision.attempted}`, sourceId: decision.rightsId ?? `${decision.draftId}:${decision.playerId}:${decision.teamId}` })))
     run('STAFF_HUMAN_STATE', current.currentDate, true, progressStaffHumanState, 'Staff human-state projection is refreshed every simulation day.')
     run('STAFF_CONFLICTS', current.currentDate, true, progressStaffConflicts, 'Staff conflicts progress every simulation day.')
     run('STAFF_CULTURE_COHESION', current.currentDate, true, progressStaffCultureAndCohesion, 'Staff culture and cohesion progress every simulation day.')
@@ -246,13 +264,38 @@ function progressRecruiting(world: GameWorld): GameWorld {
   let next = world
   for (const cycle of Object.values(world.recruitingCyclesById)) {
     const status = next.currentDate < cycle.opensOn ? 'scheduled' : next.currentDate < cycle.signingOn ? 'open' : next.currentDate <= cycle.closesOn ? 'signing' : 'completed'
-    if (cycle.status !== status) next = updateGameWorld(next, { recruitingCycles: Object.values(next.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status } : item) })
+    if (cycle.status !== status) {
+      const capacities = { ...next.recruitingCapacityByProgramId }
+      // A new annual cycle owns a fresh configured action budget, not a lifetime balance.
+      if (cycle.status === 'scheduled' && (status === 'open' || status === 'signing') && next.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike') {
+        const programs = new Set(Object.values(next.competitions).filter(item => item.ecosystemId === cycle.ecosystemId).flatMap(item => item.participantTeamIds))
+        for (const programId of programs) {
+          const reduction = Object.values(next.sanctionsById).filter(item => item.programTeamId === programId && item.kind === 'recruitingCapacityReduction' && item.status === 'active' && item.startsAt <= next.currentDate && (item.endsAt === undefined || item.endsAt >= next.currentDate)).reduce((sum, item) => sum + (item.amount ?? 0), 0)
+          capacities[programId] = Math.max(0, cycle.rules.periodCapacity - reduction)
+        }
+      }
+      next = updateGameWorld(next, { recruitingCycles: Object.values(next.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status } : item), recruitingCapacityByProgramId: capacities })
+    }
     if (status === 'open' || status === 'signing') {
+      if (status === 'open') next = runCollegeRosterContinuationAndTransferAI(next, cycle.id)
       next = generateRecruitingPool(next, cycle.id)
       if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
       next = progressRecruitingAdvisories(next, cycle.id)
       next = resolveRecruitingCommitments(next, cycle.id)
+      if (status === 'signing') next = progressAiRecruitingSignings(next, cycle.id)
     }
   }
   return arriveSignedRecruits(next)
+}
+
+function progressAiRecruitingSignings(world: GameWorld, cycleId: string): GameWorld {
+  const cycle = world.recruitingCyclesById[cycleId]
+  if (cycle === undefined || world.ecosystems[cycle.ecosystemId]?.kind !== 'ncaaLike') return world
+  const userProgramTeamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)?.id
+  return Object.values(world.recruitingCommitmentsById)
+    .filter((commitment) => commitment.cycleId === cycleId && commitment.programTeamId !== userProgramTeamId)
+    .reduce((current, commitment) => {
+      const result = signCommittedRecruit(current, cycleId, commitment.recruitId)
+      return result.ok ? result.value : current
+    }, world)
 }

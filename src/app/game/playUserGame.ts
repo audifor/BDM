@@ -1,3 +1,6 @@
+import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
+import { simulateAndApplyGame as resolveProductionGame } from './matchResolution'
+import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import type { Game } from '@/domain/game'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { TeamRotationIntent } from '@/domain/tactics'
@@ -21,6 +24,7 @@ import type { WorldRepairReport } from '@/domain/repair'
 import { applyPostMatchInjuries } from '@/engine/injury'
 import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
+import { isStaffActivityRestricted } from '@/engine/enforcement/EnforcementRemedies'
 import { LiveMatchController } from './LiveMatchController'
 import { getEffectiveTacticalPlan, getGamePlan } from './TacticalPlanning'
 import { applyPlayerMatchConsequences, initialMatchFatigue } from './PlayerMatchConsequences'
@@ -190,6 +194,7 @@ function coachInput(world: GameWorld, teamId: TeamId): { readonly id: string; re
   const coachId = world.teams[teamId]?.coachId
   if (coachId === undefined) return undefined
   const coach = world.coaches[coachId]
+  if (coach !== undefined && isStaffActivityRestricted(world, coach.staffProfileId, 'COACHING')) return undefined
   return coach === undefined ? undefined : { id: String(coachId), ...(world.staffPeopleById[coach.staffProfileId] === undefined ? {} : { staff: world.staffPeopleById[coach.staffProfileId] }), ...(world.coachRpgProfilesByCoachId[coachId] === undefined ? {} : { rpg: world.coachRpgProfilesByCoachId[coachId] }) }
 }
 
@@ -202,9 +207,15 @@ function availableSquads(world: GameWorld, game: Game) {
 
 
 /** Applies a completed viewer simulation to GameWorld exactly through the result boundary. */
-export function completeMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
+export function completeMatch(world: GameWorld, simulation: MatchSimulation, pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
   const completed = applyCompletedMatch(world, simulation)
-  return applyPostMatchInjuries(applyPlayerMatchConsequences(world, completed, simulation), simulation.gameId)
+  return applyPostMatchInjuries(applyPlayerMatchConsequences(world, completed, simulation, pendingEvidence), simulation.gameId)
 }
 
 // ME-LOCK1: instantResult, playUserGame and simulateAndApplyGame resolve through Match Next now (`matchResolution.ts`).
+
+/** Compatibility entry point for older callers; production resolution stays in Match Next. */
+export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[], context: SimulationResolutionContext = {}): GameWorld {
+  const decision = decideResolutions(world, [game], DEFAULT_SIMULATION_DETAIL, context)[0]!
+  return resolveProductionGame(world, game, matchSeed, repairReports, decision.resolution)
+}

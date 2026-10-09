@@ -1,3 +1,5 @@
+import { withDailyWorldValidation } from './DailyWorldValidation'
+import type { SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { compareGameDates } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
 import { advanceDayWithTrace, getScheduledGamesToday, type CalendarDayLifecycleResult, type DailyLifecycleDiagnostic } from '@/engine/calendar'
@@ -9,7 +11,7 @@ import { applyDayOutcomes, dayGamesAreIndependent, prepareDayGames, resolveDayGa
 import type { SimulationDetailSettings } from '@/app/worldSim/SimulationResolutionPolicy'
 
 /** WSR1: how much of the world is simulated exactly (the user's simulation-detail setting); omitted: the world's setting/default. */
-export interface DayAdvanceOptions {
+export interface DayAdvanceOptions extends SimulationResolutionContext {
   readonly simulationDetail?: SimulationDetailSettings
 }
 import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
@@ -50,6 +52,7 @@ export interface WorldDayAdvanceResult {
   readonly seasonPointerChanged: boolean
   readonly failure?: { readonly kind: 'INVARIANT_VIOLATION' | 'TECHNICAL_FAILURE'; readonly phaseId: string; readonly message: string }
 }
+export type WorldDayAdvanceObserver = (result: WorldDayAdvanceResult) => void
 
 /** Direct day commands may explicitly quick-sim today's user game; all other reasons need resolution first. */
 export function assertSimulationMayAdvance(world: GameWorld, allowedRequiredReasons: readonly string[] = ['userGame']): SimulationBreakpointResult {
@@ -64,31 +67,66 @@ export function assertSimulationMayAdvance(world: GameWorld, allowedRequiredReas
 /** Resolves every remaining game today without changing the calendar date. */
 export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = [], options: DayAdvanceOptions = {}): GameWorld {
   assertSimulationMayAdvance(world, allowedRequiredReasons)
-  return resolveDayGames(world, getScheduledGamesToday(world), createSeed, repairReports, options.simulationDetail ?? simulationDetailFor(world))
+  return resolveDayGames(world, getScheduledGamesToday(world), createSeed, repairReports, options.simulationDetail ?? simulationDetailFor(world), options)
 }
 
 /** The same resolution with the simulation phase on `runner` (parallel workers in the app); identical result for the same seeds. */
 export async function simulateRemainingGamesTodayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = [], options: DayAdvanceOptions = {}): Promise<GameWorld> {
   assertSimulationMayAdvance(world, allowedRequiredReasons)
-  return resolveDayGamesAsync(world, getScheduledGamesToday(world), createSeed, runner, repairReports, options.simulationDetail ?? simulationDetailFor(world))
+  return resolveDayGamesAsync(world, getScheduledGamesToday(world), createSeed, runner, repairReports, options.simulationDetail ?? simulationDetailFor(world), options)
 }
 
 /** Resolves today's pending games, then advances the game calendar by one day. */
-export function advanceGameDay(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): GameWorld {
-  const result = advanceGameDayWithResult(world, createSeed, allowedRequiredReasons)
+export function advanceGameDay(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], observe?: WorldDayAdvanceObserver, context: DayAdvanceOptions = {}): GameWorld {
+  const result = advanceGameDayWithResult(world, createSeed, allowedRequiredReasons, context)
+  observe?.(result)
   if (result.status === 'BREAKPOINT_PREVENTED') throw new SimulationAdvanceBlockedError(result.breakpointBefore)
   if (result.status === 'FAILED') throw new Error(result.failure?.message ?? 'World day lifecycle failed')
   return result.world
 }
 
+/** Validate and publish the complete day atomically, retaining all per-update append guards. */
+export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], context: DayAdvanceOptions = {}): WorldDayAdvanceResult {
+  let result: WorldDayAdvanceResult | undefined
+  let validationStarted = 0
+  try {
+    withDailyWorldValidation(world, initial => {
+      result = executeGameDayWithResult(initial, createSeed, allowedRequiredReasons, context)
+      validationStarted = performance.now()
+      return result.world
+    }, context.dailyValidationMode ?? 'incremental')
+    return addDayPublication(result!, validationStarted)
+  } catch (error) {
+    return failedDayPublication(world, result, error)
+  }
+}
+
+function addDayPublication(result: WorldDayAdvanceResult, started: number): WorldDayAdvanceResult {
+  if (result.status === 'FAILED' || result.status === 'BREAKPOINT_PREVENTED') return result
+  const publication: WorldDayAdvancePhase = { phaseId: 'DAY_PUBLICATION', order: 0, date: result.world.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: 'Validated complete world day', elapsedMs: performance.now() - started }
+  const phases = [...result.phases]
+  const completeIndex = phases.findIndex(phase => phase.phaseId === 'DAY_COMPLETE')
+  phases.splice(completeIndex < 0 ? phases.length : completeIndex, 0, publication)
+  return { ...result, phases: phases.map((phase, index) => ({ ...phase, order: index + 1 })) }
+}
+
+function failedDayPublication(world: GameWorld, result: WorldDayAdvanceResult | undefined, error: unknown): WorldDayAdvanceResult {
+  const message = error instanceof Error ? error.message : String(error)
+  const diagnostic = { code: 'INVARIANT_VIOLATION', message }
+  const phases = result?.phases.filter(phase => phase.phaseId !== 'DAY_COMPLETE') ?? []
+  phases.push({ phaseId: 'DAY_PUBLICATION', order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: [diagnostic], summary: `Day publication failed: ${message}` })
+  return { ...(result ?? { breakpointBefore: evaluateSimulationBreakpoints(world), repairReports: [] }), status: 'FAILED', world, phases, diagnostics: [...(result?.diagnostics ?? []), diagnostic], seasonPointerChanged: false, failure: { kind: 'INVARIANT_VIOLATION', phaseId: 'DAY_PUBLICATION', message } }
+
+}
+
 /** Executes one application day boundary and returns transient lifecycle evidence. */
-export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], options: DayAdvanceOptions = {}): WorldDayAdvanceResult {
+function executeGameDayWithResult(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], options: DayAdvanceOptions = {}): WorldDayAdvanceResult {
   const process = advanceGameDayProcess(world, createSeed, allowedRequiredReasons, options)
   let step = process.next()
   while (!step.done) {
     let results: DayOutcome[]
     try {
-      results = simulateDayOutcomesInline(step.value)
+      results = simulateDayOutcomesInline(step.value.games)
     } catch (error) {
       step = process.throw(error)
       continue
@@ -105,23 +143,35 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
  */
 export async function advanceGameDayWithResultAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], options: DayAdvanceOptions = {}): Promise<WorldDayAdvanceResult> {
   const process = advanceGameDayProcess(world, createSeed, allowedRequiredReasons, options)
-  let step = process.next()
-  while (!step.done) {
-    let results: DayOutcome[]
-    try {
-      results = await simulateDayOutcomes(step.value, runner)
-    } catch (error) {
-      step = process.throw(error)
-      continue
-    }
-    step = process.next(results)
+  let segmentWorld = world
+  let step: ReturnType<typeof process.next>
+  let publicationStarted = 0
+  const resume = (outcomes?: DayOutcome[], error?: unknown) => {
+    withDailyWorldValidation(segmentWorld, () => {
+      step = error === undefined ? process.next(outcomes!) : process.throw(error)
+      publicationStarted = performance.now()
+      return step.value.world
+    }, options.dailyValidationMode ?? 'incremental')
+    if (!step!.done) segmentWorld = step!.value.world
   }
-  return step.value
+  try {
+    resume()
+    while (!step!.done) {
+      let outcomes: DayOutcome[]
+      try { outcomes = await simulateDayOutcomes(step!.value.games, runner) }
+      catch (error) { resume(undefined, error); continue }
+      resume(outcomes)
+    }
+    return addDayPublication(step!.value, publicationStarted)
+  } catch (error) {
+    return failedDayPublication(world, step!?.done ? step!.value : undefined, error)
+  }
 }
 
 /** `advanceGameDay` with the simulation phase on `runner`. */
-export async function advanceGameDayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): Promise<GameWorld> {
-  const result = await advanceGameDayWithResultAsync(world, runner, createSeed, allowedRequiredReasons)
+export async function advanceGameDayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], observe?: WorldDayAdvanceObserver, options: DayAdvanceOptions = {}): Promise<GameWorld> {
+  const result = await advanceGameDayWithResultAsync(world, runner, createSeed, allowedRequiredReasons, options)
+  observe?.(result)
   if (result.status === 'BREAKPOINT_PREVENTED') throw new SimulationAdvanceBlockedError(result.breakpointBefore)
   if (result.status === 'FAILED') throw new Error(result.failure?.message ?? 'World day lifecycle failed')
   return result.world
@@ -132,7 +182,7 @@ export async function advanceGameDayAsync(world: GameWorld, runner: MatchSimulat
  * that may run elsewhere (the synchronous driver simulates inline; the asynchronous one hands the setups to a runner). A failure of
  * that step is thrown back into the process at the yield, so it ends the day as FAILED with the world untouched, as before.
  */
-function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, allowedRequiredReasons: readonly string[], options: DayAdvanceOptions): Generator<readonly PreparedDayGame[], WorldDayAdvanceResult, DayOutcome[]> {
+function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, allowedRequiredReasons: readonly string[], options: DayAdvanceOptions): Generator<{ readonly world: GameWorld; readonly games: readonly PreparedDayGame[] }, WorldDayAdvanceResult, DayOutcome[]> {
   const phases: WorldDayAdvancePhase[] = []
   const initialBreakpoint = evaluateSimulationBreakpoints(world)
   const validationTime = performance.now()
@@ -171,11 +221,11 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     const lineupReports: WorldRepairReport[] = []
     assertSimulationMayAdvance(current, allowedRequiredReasons)
     if (dayGamesAreIndependent(matches)) {
-      const prepared = prepareDayGames(current, matches, createSeed, lineupReports, options.simulationDetail ?? simulationDetailFor(current))
-      const results: DayOutcome[] = prepared.length === 0 ? [] : yield prepared
+      const prepared = prepareDayGames(current, matches, createSeed, lineupReports, options.simulationDetail ?? simulationDetailFor(current), options)
+      const results: DayOutcome[] = prepared.length === 0 ? [] : yield { world: current, games: prepared }
       current = applyDayOutcomes(current, prepared, results)
     } else {
-      current = resolveDayGames(current, matches, createSeed, lineupReports, options.simulationDetail ?? simulationDetailFor(current))
+      current = resolveDayGames(current, matches, createSeed, lineupReports, options.simulationDetail ?? simulationDetailFor(current), options)
     }
     current = reviewMajorInjuryChanges(world, current)
     repairReports.push(...lineupReports)
@@ -253,7 +303,9 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     phases.push(signingGovernanceCheckpointPhase('AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE', phases.length + 1, current, counterAcceptedIds.length, counterSigning.results))
 
     activePhaseId = 'POST_TRANSITION_SELF_HEALING'
-    const changedTeamIds = Object.values(beforeCalendar.teams).filter((team) => team.rosterPlayerIds.join('|') !== current.teams[team.id]?.rosterPlayerIds.join('|')).map((team) => team.id).sort((a, b) => a.localeCompare(b))
+    const eligibilityBoundary = beforeCalendar.academicProfilesById !== current.academicProfilesById || beforeCalendar.eligibilityRestrictionsById !== current.eligibilityRestrictionsById || beforeCalendar.eligibilityProfilesById !== current.eligibilityProfilesById || current.currentDate.slice(5) === '09-01'
+    const collegeTeams = eligibilityBoundary ? new Set(Object.values(current.competitions).filter(item => current.ecosystems[item.ecosystemId]?.kind === 'ncaaLike').flatMap(item => item.participantTeamIds)) : new Set<string>()
+    const changedTeamIds = Object.values(beforeCalendar.teams).filter((team) => collegeTeams.has(team.id) || team.rosterPlayerIds.join('|') !== current.teams[team.id]?.rosterPlayerIds.join('|')).map((team) => team.id).sort((a, b) => a.localeCompare(b))
     if (changedTeamIds.length > 0) {
       const repairStart = performance.now()
       const postTransitionRepair = repairWorldAtLifecycleBoundary(current, changedTeamIds)

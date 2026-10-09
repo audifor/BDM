@@ -1,14 +1,12 @@
+import { getPlayerMarketTerms, type FreeAgentMarketTerms } from '@/engine/market/PlayerMarketTerms'
+export { getPlayerMarketTerms, calculateBootstrapSalaryBase, type FreeAgentMarketTerms } from '@/engine/market/PlayerMarketTerms'
 import { addYears } from '@/domain/date'
 import { createPlayerContract } from '@/domain/contract'
 import { contractIdFromString, playerTransactionIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
-import { calculateBootstrapAbilityProxy } from '@/domain/player'
 import { canTeamAffordAdditionalSalary, getPlayerRosterTeamId, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
-import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { executeContractRelease } from './ContractReleaseService'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
-export interface FreeAgentMarketTerms{readonly playerId:PlayerId;readonly annualSalary:number;readonly contractYears:number}
-export const calculateBootstrapSalaryBase=(ability:number)=>100_000+Math.pow(Math.max(0,ability-40),2)*1_000
-export function getFreeAgentMarketTerms(world:GameWorld,playerId:PlayerId,onDate=world.currentDate):FreeAgentMarketTerms{const player=world.players[playerId];if(!player||!isPlayerFreeAgent(world,playerId,onDate))throw new Error('Player is not a free agent');const ability=calculateBootstrapAbilityProxy(player.basketball.ratings);const variance=new SeededRandomSource(hashStringToSeed(`free-agent-market-salary-v1:${world.currentSeasonId}:${playerId}`)).nextFloat(.95,1.15);return{playerId,annualSalary:Math.max(1,Math.round(calculateBootstrapSalaryBase(ability)*variance/10_000)*10_000),contractYears:new SeededRandomSource(hashStringToSeed(`free-agent-market-term-v1:${world.currentSeasonId}:${playerId}`)).nextInt(1,4)}}
+export function getFreeAgentMarketTerms(world:GameWorld,playerId:PlayerId,onDate=world.currentDate):FreeAgentMarketTerms{if(!isPlayerFreeAgent(world,playerId,onDate))throw new Error('Player is not a free agent');return getPlayerMarketTerms(world,playerId)}
 export function releasePlayer(world: GameWorld, teamId: TeamId, playerId: PlayerId): GameWorld {
   const result = executeContractRelease(world, teamId, playerId)
   if (result.status === 'RELEASED' || result.status === 'ALREADY_TERMINATED') return result.world

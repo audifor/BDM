@@ -1,5 +1,5 @@
 import type { Game } from '@/domain/game'
-import type { CompetitionId, GameId } from '@/domain/ids'
+import type { CompetitionId, GameId, TeamId } from '@/domain/ids'
 import type { MatchResolution } from '@/domain/stats/MatchStatLog'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
@@ -38,6 +38,7 @@ export const DEFAULT_SIMULATION_DETAIL: SimulationDetailSettings = {
 }
 
 export type ResolutionReason =
+  | 'COMMAND_DETAIL' | 'OBSERVED_GAME' | 'FOLLOWED_CONTEXT'
   | 'USER_GAME' | 'LIVE_SCOUTING' | 'USER_COMPETITION' | 'HIGH_DETAIL_COMPETITION' | 'KNOCKOUT_GAME' | 'WITHIN_BUDGET'
   | 'LOW_DETAIL_COMPETITION' | 'OVER_BUDGET' | 'MINIMAL_DETAIL'
 
@@ -47,7 +48,7 @@ export interface ResolutionDecision {
   readonly reason: ResolutionReason
 }
 
-export interface ResolutionContext {
+export interface ResolutionContext extends SimulationResolutionContext {
   /** The user's Game being watched live today, if any (FULL). */
   readonly liveGameId?: GameId
 }
@@ -61,9 +62,16 @@ export function decideResolutions(world: GameWorld, games: readonly Game[], sett
   const decisions = new Map<GameId, ResolutionDecision>()
   const candidates: { readonly game: Game; readonly priority: number; readonly reason: ResolutionReason; readonly order: number }[] = []
   games.forEach((game, order) => {
+    if (context.forceDetail !== undefined) {
+      decisions.set(game.id, { gameId: game.id, resolution: context.forceDetail === 'STANDARD' ? 'FAST' : context.forceDetail, reason: 'COMMAND_DETAIL' }); return
+    }
+    if (context.observedGameIds?.includes(game.id)) { decisions.set(game.id, { gameId: game.id, resolution: 'FULL', reason: 'OBSERVED_GAME' }); return }
     const userGame = userTeam !== undefined && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id)
     if (userGame) { decisions.set(game.id, { gameId: game.id, resolution: context.liveGameId === game.id ? 'FULL' : 'FAST', reason: 'USER_GAME' }); return }
     if (scoutedGames.has(game.id)) { decisions.set(game.id, { gameId: game.id, resolution: 'FAST', reason: 'LIVE_SCOUTING' }); return }
+    if (context.followedCompetitionIds?.includes(game.competitionId) || context.followedTeamIds?.some(id => id === game.homeTeamId || id === game.awayTeamId)) {
+      decisions.set(game.id, { gameId: game.id, resolution: 'FAST', reason: 'FOLLOWED_CONTEXT' }); return
+    }
     if (settings.level === 'MINIMAL') { decisions.set(game.id, { gameId: game.id, resolution: 'BACKGROUND', reason: 'MINIMAL_DETAIL' }); return }
     if (userCompetitions.has(game.competitionId)) { decisions.set(game.id, { gameId: game.id, resolution: 'FAST', reason: 'USER_COMPETITION' }); return }
     if (low.has(game.competitionId)) { decisions.set(game.id, { gameId: game.id, resolution: 'BACKGROUND', reason: 'LOW_DETAIL_COMPETITION' }); return }
@@ -80,4 +88,24 @@ export function decideResolutions(world: GameWorld, games: readonly Game[], sett
       : { gameId: candidate.game.id, resolution: 'BACKGROUND', reason: 'OVER_BUDGET' })
   })
   return games.map((game) => decisions.get(game.id)!)
+}
+
+export type SimulationDetail = 'FULL' | 'STANDARD' | 'BACKGROUND'
+/** Command-scoped preferences. Derived decisions and detail are never persisted in GameWorld. */
+export interface SimulationResolutionContext {
+  /** Debug/reference validation choice, independent of sporting resolution detail. */
+  readonly dailyValidationMode?: 'full' | 'incremental'
+  readonly forceDetail?: SimulationDetail
+  readonly observedGameIds?: readonly GameId[]
+  readonly followedTeamIds?: readonly TeamId[]
+  readonly followedCompetitionIds?: readonly CompetitionId[]
+}
+
+/** Compatibility vocabulary over the same policy; sparse exact budget for legacy fixtures. */
+export function resolveSimulationDetail(world: GameWorld, game: Game, context: SimulationResolutionContext = {}): SimulationDetail {
+  const user = getUserTeam(world)
+  const watched = user !== undefined && (game.homeTeamId === user.id || game.awayTeamId === user.id)
+    || Object.values(world.scoutingAssignmentsById).some(a => a.status === 'ACTIVE' && a.missionType === 'LIVE_GAME' && a.gameId === game.id)
+  const resolution = decideResolutions(world, [game], { ...DEFAULT_SIMULATION_DETAIL, exactBudgetPerDay: 0 }, { ...context, ...(watched ? { liveGameId: game.id, observedGameIds: [...(context.observedGameIds ?? []), game.id] } : {}) })[0]!.resolution
+  return resolution === 'FAST' ? 'STANDARD' : resolution
 }

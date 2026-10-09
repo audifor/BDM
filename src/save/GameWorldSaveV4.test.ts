@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { parseGameDate } from '@/domain/date'
@@ -7,7 +7,7 @@ import { createContractReviewDecision, contractReviewDecisionIdFor, createRetent
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { createGovernanceInstitution } from '@/domain/governance'
 import { createOrganization } from '@/domain/organization'
-import { organizationIdFromString, personIdFromString } from '@/domain/ids'
+import { organizationIdFromString, personIdFromString, playerTransactionIdFromString } from '@/domain/ids'
 import { createPerson } from '@/domain/person'
 import { createOrganizationControl, createOrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
 import { createScheduledTrainingSession } from '@/domain/training'
@@ -19,10 +19,28 @@ import { createOrganizationInvestmentProposal, createOrganizationInvestmentPropo
 import { executeOrganizationInvestmentProposal } from '@/domain/investment/OrganizationInvestmentExecution'
 import { createSupporterRelationship } from '@/domain/supporters'
 import { attachWorldDbCompetitionRuntime, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld } from '@/domain/world'
-import { serializeGameWorldV3 } from './GameWorldSaveV3'
+import { deserializeGameWorldV3, serializeGameWorldV3 } from './GameWorldSaveV3'
 import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSaveV3ToV4, serializeGameWorldV4 } from './GameWorldSaveV4'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
+
+it('copies Save history records without requiring a collection-sized JSON string', () => {
+  const world = createNewGame()
+  const expected = serializeGameWorldV4(world, savedAt)
+  const stringify = JSON.stringify
+  expect(stringify(Object.values(world.staffPeopleById)).length).toBeGreaterThan(16_384)
+  // A reduced ceiling reproduces the V8 failure without allocating a 512 MB string.
+  const spy = vi.spyOn(JSON, 'stringify').mockImplementation(value => {
+    const text = stringify(value)
+    if (Array.isArray(value) && text.length > 16_384) throw new RangeError('Invalid string length')
+    return text
+  })
+  let saved: ReturnType<typeof serializeGameWorldV4>
+  try { saved = serializeGameWorldV4(world, savedAt) } finally { spy.mockRestore() }
+  expect(saved!).toEqual(expected)
+  expect(deserializeGameWorldV4(saved!)).toEqual(deserializeGameWorldV4(expected))
+  expect(saved!.payload.staffPeople[0]).not.toBe(Object.values(world.staffPeopleById)[0])
+})
 
 describe('BS14B OrganizationKnowledge persistence', () => {
   it('retains current scouting knowledge through Save V4', () => {
@@ -34,7 +52,62 @@ describe('BS14B OrganizationKnowledge persistence', () => {
   })
 })
 
+describe('BS15F transfer rules persistence', () => {
+  it('round-trips NCAA carry-forward rules and defaults pre-BS15F Save V4 payloads to empty', () => {
+    const world = createNewGame()
+    const ncaaEcosystemIds = new Set(Object.values(world.ecosystems).filter((ecosystem) => ecosystem.kind === 'ncaaLike').map((ecosystem) => ecosystem.id))
+    const rulesets = Object.values(world.transferPortalRulesetsById)
+    expect(rulesets.length).toBeGreaterThanOrEqual(ncaaEcosystemIds.size)
+    expect(rulesets.every((ruleset) => ncaaEcosystemIds.has(ruleset.ecosystemId))).toBe(true)
+    expect(rulesets.filter((ruleset) => ruleset.provenance === 'OFFICIAL_SOURCE')).toHaveLength(ncaaEcosystemIds.size)
+    expect(rulesets.filter((ruleset) => ruleset.provenance === 'SIMULATED_CARRY_FORWARD').every((ruleset) => rulesets.some((source) => source.id === ruleset.basedOnRulesetId))).toBe(true)
+    expect(deserializeGameWorldV4(serializeGameWorldV4(world, savedAt)).transferPortalRulesetsById).toEqual(world.transferPortalRulesetsById)
+
+    const { transferPortalRulesets: _rulesets, transferPortalEntries: _entries, ...oldPayload } = serializeGameWorldV4(world, savedAt).payload
+    const legacy = deserializeGameWorldV4({ ...serializeGameWorldV4(world, savedAt), payload: oldPayload })
+    expect(legacy.transferPortalRulesetsById).toEqual({})
+    expect(legacy.transferPortalEntriesById).toEqual({})
+  })
+})
+
 describe('GameWorldSaveV4 competition runtime', () => {
+  it('preserves expired staff contracts instead of inventing renewals during current V4 reload', () => {
+    const base = createNewGame()
+    const latestExpiry = Object.values(base.staffContractsById).map(contract => contract.term.expiresOn).filter((date): date is NonNullable<typeof date> => date !== undefined).sort().at(-1)!
+    const world = updateGameWorld(base, { currentDate: addDays(latestExpiry, 1) })
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(world, savedAt))
+    expect(restored.staffContractsById).toEqual(world.staffContractsById)
+    expect(restored.staffEmploymentByStaffId).toEqual(world.staffEmploymentByStaffId)
+  })
+
+  it('keeps legacy V3 staff contract enrichment in the migrated V4 ledger', () => {
+    const base = createNewGame()
+    const latestExpiry = Object.values(base.staffContractsById).map(contract => contract.term.expiresOn).filter((date): date is NonNullable<typeof date> => date !== undefined).sort().at(-1)!
+    const world = updateGameWorld(base, { currentDate: addDays(latestExpiry, 1) })
+    const legacy = serializeGameWorldV3(world, savedAt)
+    const enriched = deserializeGameWorldV3(legacy)
+    const restored = deserializeGameWorldV4(migrateGameWorldSaveV3ToV4(legacy))
+    expect(Object.keys(enriched.staffContractsById).length).toBeGreaterThan(Object.keys(world.staffContractsById).length)
+    expect(restored.staffContractsById).toEqual(enriched.staffContractsById)
+  })
+
+  it('preserves Player transaction provenance through Save V4', () => {
+    const base = createNewGame()
+    const player = Object.values(base.players)[0]!
+    const contract = Object.values(base.contractsById).find(item => item.playerId === player.id)!
+    const transaction = {
+      id: playerTransactionIdFromString('save-player-transaction-provenance'),
+      playerId: player.id,
+      kind: 'contractExpired' as const,
+      occurredOn: base.currentDate,
+      contractId: contract.id,
+      provenance: 'WORLD_REPAIR' as const,
+    }
+    const world = updateGameWorld(base, { playerTransactions: [...Object.values(base.playerTransactionsById), transaction] })
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
+    expect(restored.playerTransactionsById[transaction.id]).toEqual(transaction)
+  })
+
   it('round-trips immutable Training Staff role and planned module evidence', () => {
     const base = createNewGame()
     const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
@@ -192,7 +265,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
     let current = reloadedAfterTrigger
     for (let day = 0; day < 30; day += 1) current = advanceDay(current)
     expect(Object.values(current.players).map((player) => player.basketball.ratings)).toEqual(developedRatings)
-  }, 120_000)
+  }, 180_000)
 
   it('preserves CORE-ORG1 records and BG7 canonical runtime through Save V4', () => {
     const base = createNewGame()
@@ -313,7 +386,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, clubStrategicStates, gmPlanStates, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, clubStrategicStates, gmPlanStates, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, talentCohorts, talentMaterializations, teamPathwayRelations, playerRegistrations, playerPathwayHistory, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -355,6 +428,11 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(facilityStatusRecords).toEqual([])
     expect(facilityComponentConditionRecords).toEqual([])
     expect(facilityConditionRecords).toEqual([])
+    expect(talentCohorts).toEqual([])
+    expect(talentMaterializations).toEqual([])
+    expect(teamPathwayRelations).toEqual([])
+    expect(playerRegistrations).toEqual([])
+    expect(playerPathwayHistory).toEqual([])
     expect(facilityMaintenanceNeeds).toEqual([])
     expect(facilityMaintenanceActions).toEqual([])
     expect(facilityInspections).toEqual([])

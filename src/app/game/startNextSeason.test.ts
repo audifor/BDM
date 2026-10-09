@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 
 import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { addYears } from '@/domain/date'
+import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
 import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
@@ -19,6 +20,8 @@ import { withShortGameFormat } from './testFixtures'
 import { createScoutingTerritoryAssignment } from '@/app/scouting'
 import { progressScoutingAssignments, requestScouting } from '@/engine/scouting'
 import { progressScoutingTerritoryAssignments } from '@/engine/scouting/ScoutingTerritoryOperations'
+import { reconcileExpiredPlayerContracts } from '@/engine/market/ContractLifecycle'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
 // ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
 const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
@@ -34,6 +37,18 @@ function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId:
     .filter((season) => season.competitionId === competitionId)
     .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
 }
+
+// The completed input is immutable. Resolve its 182 matches once, rather than repeating
+// the same expensive fixture setup inside every rollover assertion's ten-second budget.
+let completedWorld: ReturnType<typeof createNewGame>
+beforeAll(() => {
+  const fixtureStart = performance.now()
+  completedWorld = completeCurrentSeason(createNewGame())
+  const setupMs = performance.now() - fixtureStart
+  const rolloverStart = performance.now()
+  startNextSeason(completedWorld)
+  process.stdout.write(`[BS15I rollover fixture] ${JSON.stringify({ setupMs, rolloverMs: performance.now() - rolloverStart })}\n`)
+}, 30_000)
 
 describe('startNextSeason', () => {
   it('configures a successor in the same competition and ecosystem without rolling window dates forward', () => {
@@ -64,13 +79,13 @@ describe('startNextSeason', () => {
   })
 
   it('requires an existing history record even when the games are complete', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
     const withoutHistory = updateGameWorld(completed, { seasonHistory: [] })
     expect(() => startNextSeason(withoutHistory)).toThrow('history record')
   }, 10_000)
 
   it('creates a deterministic new season without replacing canonical history', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
     const priorGames = Object.values(completed.games)
     const priorLogs = Object.values(completed.matchStatLogsByGameId)
     const priorHistory = Object.values(completed.seasonHistoryBySeasonId)
@@ -107,8 +122,39 @@ describe('startNextSeason', () => {
     expect(() => advanceGameDay(next)).not.toThrow()
   }, 10_000)
 
+  it('does not release players early when the next season starts after their contract expiry', () => {
+    const completed = completedWorld
+    const expiring = Object.values(completed.contractsById)[0]!
+    const expiry = addYears(expiring.term.startsOn, 1)
+    const contract = createPlayerContract({ ...expiring, term: { ...expiring.term, expiresOn: expiry } })
+    const world = updateGameWorld(completed, { contracts: [...Object.values(completed.contractsById).filter(item => item.id !== expiring.id), contract] })
+    const identity = { playerId: contract.playerId, personId: world.players[contract.playerId]!.personId }
+    const beforeRolloverTeam = world.teams[contract.teamId]!
+    expect(beforeRolloverTeam.rosterPlayerIds).toContain(contract.playerId)
+
+    const next = startNextSeason(world)
+
+    expect(next.currentDate).toBe(world.currentDate)
+    expect(next.teams[contract.teamId]!.rosterPlayerIds).toContain(contract.playerId)
+    expect(Object.values(next.playerTransactionsById).some(transaction => transaction.kind === 'contractExpired' && transaction.contractId === contract.id)).toBe(false)
+
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(next, '2033-01-01T00:00:00.000Z'))
+    expect(restored.contractsById[contract.id]).toEqual(contract)
+    expect(getPlayerContractStatus(restored.contractsById[contract.id]!, restored.currentDate)).toBe('active')
+    expect(Object.values(restored.contractsById).filter(item => item.id === contract.id)).toHaveLength(1)
+    expect(restored.players[identity.playerId]!.id).toBe(identity.playerId)
+    expect(restored.players[identity.playerId]!.personId).toBe(identity.personId)
+    expect(restored.teams[contract.teamId]!.rosterPlayerIds.filter(playerId => playerId === identity.playerId)).toHaveLength(1)
+    expect(Object.values(restored.playerTransactionsById).filter(transaction => transaction.contractId === contract.id)).toHaveLength(0)
+
+    const atExpiry = reconcileExpiredPlayerContracts(restored, expiry)
+    expect(atExpiry.teams[contract.teamId]!.rosterPlayerIds).not.toContain(contract.playerId)
+    expect(Object.values(atExpiry.playerTransactionsById).filter(transaction => transaction.kind === 'contractExpired' && transaction.contractId === contract.id)).toHaveLength(1)
+    expect(reconcileExpiredPlayerContracts(atExpiry, expiry)).toEqual(atExpiry)
+  }, 30_000)
+
   it('keeps career stats, resets season projections, finalizes season two, and supports season three', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
     const primaryCompetitionId = getCurrentSeason(completed).competitionId
     const playerId = Object.values(completed.players)[0]!.id
     const career = getPlayerCareerStats(completed, playerId)
@@ -128,7 +174,7 @@ describe('startNextSeason', () => {
   }, 10_000)
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {
-    const next = startNextSeason(completeCurrentSeason(createNewGame()))
+    const next = startNextSeason(completedWorld)
     const envelope = serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z')
     const loaded = deserializeGameWorldV1(envelope)
     const single = serializeGameWorldV1(createNewGame(), '2032-10-01T00:00:00.000Z').payload
@@ -146,19 +192,19 @@ describe('startNextSeason', () => {
   }, 10_000)
 
   it('startNextSeason preserves staff people exactly', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
 
     expect(startNextSeason(completed).staffPeopleById).toEqual(completed.staffPeopleById)
   }, 10_000)
 
   it('startNextSeason preserves staff assignments exactly', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
 
     expect(startNextSeason(completed).teamStaffAssignmentsById).toEqual(completed.teamStaffAssignmentsById)
   }, 10_000)
 
   it('preserves Player knowledge, reports, assignments, evidence, awareness and territory operations across season rollover', () => {
-    const completed = completeCurrentSeason(createNewGame())
+    const completed = completedWorld
     const team = Object.values(completed.teams).find((item) => item.coachId === completed.userCoachId)!
     const player = Object.values(completed.players).find((item) => !team.rosterPlayerIds.includes(item.id))!
     const evaluator = Object.values(completed.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
@@ -177,7 +223,7 @@ describe('startNextSeason', () => {
   }, 90_000)
 
   it('multi-season save/load preserves staff people exactly', () => {
-    const next = startNextSeason(completeCurrentSeason(createNewGame()))
+    const next = startNextSeason(completedWorld)
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z'))
 
     expect(loaded.staffPeopleById).toEqual(next.staffPeopleById)
@@ -187,7 +233,7 @@ describe('startNextSeason', () => {
   }, 10_000)
 
   it('multi-season save/load preserves staff assignments exactly', () => {
-    const next = startNextSeason(completeCurrentSeason(createNewGame()))
+    const next = startNextSeason(completedWorld)
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z'))
 
     expect(loaded.teamStaffAssignmentsById).toEqual(next.teamStaffAssignmentsById)

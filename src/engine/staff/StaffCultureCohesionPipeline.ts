@@ -39,8 +39,13 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
   const cohesionByUnit = new Map<string, StaffUnitCohesionState>(Object.entries(world.staffUnitCohesionStatesByUnitKey))
   let changed = false
 
+  const staffIdsByTeamId = new Map<string, readonly string[]>()
+  for (const team of Object.values(world.teams)) {
+    const ids = getRelevantTeamStaffIds(world, team.id)
+    if (ids.length > 0) staffIdsByTeamId.set(team.id, ids)
+  }
   const relevantTeamIds = Object.values(world.teams)
-    .filter((team) => getRelevantTeamStaffIds(world, team.id).length > 0)
+    .filter((team) => staffIdsByTeamId.has(team.id))
     .map((team) => team.id)
   const unitViewsByTeamId = new Map(relevantTeamIds.map((teamId) => [teamId, buildStaffUnitRuntimeViews(world, teamId)]))
 

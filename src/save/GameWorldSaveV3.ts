@@ -57,7 +57,7 @@ export function serializeGameWorldV3(world: GameWorld, savedAt: string): SaveGam
   return { schemaVersion: 3, savedAt: compatibilityPayload.savedAt, payload: v3Payload(compatibilityPayload.payload, world) }
 }
 
-export function deserializeGameWorldV3(value: unknown): GameWorld {
+export function deserializeGameWorldV3(value: unknown, options: { readonly backfillStaffContracts?: boolean } = {}): GameWorld {
   const envelope = record(value, 'Save V3 file')
   assertExactKeys(envelope, ['schemaVersion', 'savedAt', 'payload'], 'Save V3 envelope')
   if (envelope.schemaVersion !== 3) throw new Error('Unsupported save version')
@@ -113,7 +113,10 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     supportFundingPledges: runtime.supportFundingPledges, supportFundingPledgeEvents: runtime.supportFundingPledgeEvents, supportContributions: runtime.supportContributions,
     supportComplianceCases: runtime.supportComplianceCases, supportComplianceCaseEvents: runtime.supportComplianceCaseEvents, supportComplianceFindings: runtime.supportComplianceFindings, supportConflictDisclosures: runtime.supportConflictDisclosures, supportConsequences: runtime.supportConsequences, supportRemediations: runtime.supportRemediations,
   })
-  const withCompleteStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withStaffCareer)))
+  const withEmployment = ensureStaffEmploymentStructure(withStaffCareer)
+  // Current V4 owns its persisted contract ledger. Legacy V3 migration retains
+  // enrichment, but loading a current save must not invent renewal contracts.
+  const withCompleteStaffCareer = ensureStaffReputationStructure(options.backfillStaffContracts === false ? withEmployment : ensureStaffContractStructure(withEmployment))
   const withTrainingStaff = restoreScheduledTrainingStaffAssignments(withCompleteStaffCareer, trainingStaffAssignments)
   return signedNegotiations.length === 0 && trades.executed.length === 0 ? withTrainingStaff : updateGameWorld(withTrainingStaff, {
     negotiations: [...Object.values(withTrainingStaff.negotiationsById).filter((item) => !signedNegotiations.some((signed) => signed.id === item.id)), ...signedNegotiations],

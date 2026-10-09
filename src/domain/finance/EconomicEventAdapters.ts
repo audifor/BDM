@@ -39,6 +39,7 @@ export const ECONOMIC_EVENT_AUTHORITIES = [
   'FUTURE_COST_ENGINE',
   'DEBT_ENGINE',
   'MANUAL_SYSTEM_ACTION',
+  'COLLEGE_COMPENSATION',
 ] as const
 
 export type EconomicEventAuthority = typeof ECONOMIC_EVENT_AUTHORITIES[number]
@@ -58,6 +59,7 @@ export type EconomicEventType =
   | 'OPERATING_COST_RECOGNITION'
   | 'OWNER_FUNDING'
   | 'DEBT_INTEREST_RECOGNITION'
+  | 'COLLEGE_INSTITUTIONAL_BENEFIT_OBLIGATION'
   | (string & {})
 
 export interface AuthorizedEconomicEvent {
@@ -223,6 +225,17 @@ export function processOperatingCostEconomicEvent(world: GameWorld, event: Autho
   } catch (error) {
     return rejected(world, event, error)
   }
+}
+
+/** A signed agreement is the authority for an institutional benefits accrual. */
+export function processCollegeInstitutionalBenefitEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions): EconomicEventAdapterResult {
+  try {
+    assertEventAuthority(event, 'COLLEGE_COMPENSATION')
+    if (event.eventType !== 'COLLEGE_INSTITUTIONAL_BENEFIT_OBLIGATION' || event.dueOn === null) throw new TypeError('Institutional benefit obligation requires a due date')
+    const agreement = world.settlementBenefitsAgreementsById[event.sourceEntityId]
+    if (agreement === undefined || agreement.status !== 'signed' || agreement.finalSignedOn !== event.effectiveOn || agreement.institutionId !== event.organizationId || agreement.teamId !== event.teamId || agreement.valueMinorUnits !== event.amount.minorUnits || event.provenance.kind !== 'SETTLEMENT_BENEFITS_AGREEMENT' || event.provenance.id !== agreement.id || event.dimensions?.reference?.kind !== 'SETTLEMENT_BENEFITS_AGREEMENT' || event.dimensions.reference.id !== agreement.id) throw new TypeError('Institutional benefit event does not match its signed agreement')
+    return processExpenseEvent(world, event, options, true, agreement.teamId)
+  } catch (error) { return rejected(world, event, error) }
 }
 
 export function processDebtInterestEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions = {}): EconomicEventAdapterResult {
