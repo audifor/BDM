@@ -41,27 +41,32 @@ function cashOf(world: GameWorld, organizationId: string, asOfDate?: string): nu
 }
 
 describe('BS16K shipped economic source authority', () => {
-  it('classifies every audited candidate honestly and materializes none of them', () => {
+  it('classifies every audited candidate honestly and activates only policy-grounded families', () => {
     expect(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.length).toBeGreaterThan(10)
     for (const candidate of SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION) {
       expect(candidate.meaning.length).toBeGreaterThan(0)
       expect(candidate.evidence.length).toBeGreaterThan(0)
-      expect(candidate.materialized).toBe(false)
-      expect(isMaterializableShippedEconomicSource(candidate.source)).toBe(false)
+      // Nothing may be materializable without an approved economic policy behind it.
+      if (candidate.materialized) expect(candidate.classification).toBe('SHIPPED_ECONOMIC_SOURCE')
+      else expect(candidate.classification).not.toBe('SHIPPED_ECONOMIC_SOURCE')
+      expect(isMaterializableShippedEconomicSource(candidate.source)).toBe(candidate.materialized)
     }
-    // Both families were audited, and no candidate reaches the only classification that may ship.
+    // Both families were audited, and exactly the two approved policy families are live.
     expect(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.some((candidate) => candidate.kind === 'REVENUE')).toBe(true)
     expect(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.some((candidate) => candidate.kind === 'OPERATING_COST')).toBe(true)
-    expect(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.filter((candidate) => candidate.classification === 'SHIPPED_ECONOMIC_SOURCE')).toEqual([])
+    expect(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.filter((candidate) => candidate.materialized).map((candidate) => candidate.source)).toEqual(expect.arrayContaining([
+      'CompetitionEconomicProfile — COMPETITION_PARTICIPATION_DISTRIBUTION',
+      'CompetitionEconomicProfile — MATCH_OPERATIONS',
+    ]))
   })
 
-  it('reports that no revenue or operating-cost source is producible yet', () => {
+  it('reports the activated families and the authorities still missing', () => {
     const report = getEconomicSourceAuthorityReport()
 
     expect(report.candidates).toBe(SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION.length)
-    expect(report.materializableSources).toEqual([])
-    expect(report.revenueSourceProducible).toBe(false)
-    expect(report.operatingCostSourceProducible).toBe(false)
+    expect(report.materializableSources).toHaveLength(2)
+    expect(report.revenueSourceProducible).toBe(true)
+    expect(report.operatingCostSourceProducible).toBe(true)
     expect(report.missingAuthorities).toEqual([...MISSING_ECONOMIC_SOURCE_AUTHORITIES])
   })
 
@@ -74,20 +79,28 @@ describe('BS16K shipped economic source authority', () => {
     }
     expect(MISSING_ECONOMIC_SOURCE_AUTHORITY_REGISTER.some((entry) => entry.kind === 'REVENUE')).toBe(true)
     expect(MISSING_ECONOMIC_SOURCE_AUTHORITY_REGISTER.some((entry) => entry.kind === 'OPERATING_COST')).toBe(true)
-    // The audited gaps the milestone named explicitly are all present.
-    for (const code of ['TICKETING_PRICE_AUTHORITY_NOT_MODELLED', 'MEDIA_REVENUE_AUTHORITY_NOT_MODELLED', 'COMMERCIAL_REVENUE_AUTHORITY_NOT_MODELLED', 'COMPETITION_DISTRIBUTION_SOURCE_NOT_MODELLED', 'FACILITY_OPEX_AUTHORITY_NOT_MODELLED'] as const) {
+    // The audited gaps the milestone named explicitly are all still present and still unsolved.
+    for (const code of ['TICKETING_PRICE_AUTHORITY_NOT_MODELLED', 'MEDIA_REVENUE_AUTHORITY_NOT_MODELLED', 'COMMERCIAL_REVENUE_AUTHORITY_NOT_MODELLED', 'COMPETITION_PRIZE_AND_MEDIA_DISTRIBUTION_NOT_MODELLED', 'FACILITY_OPEX_AUTHORITY_NOT_MODELLED'] as const) {
       expect(MISSING_ECONOMIC_SOURCE_AUTHORITIES).toContain(code)
     }
   })
 
-  it('keeps shipped careers free of any unauthorized revenue, operating cost or distribution source', () => {
-    for (const world of [createNewGame(), createAcbTestGame()]) {
-      expect(Object.keys(world.revenueSourcesById)).toEqual([])
-      expect(Object.keys(world.operatingCostSourcesById)).toEqual([])
-      expect(Object.keys(world.operatingCostFactsById)).toEqual([])
-      expect(Object.keys(world.competitionDistributionFactsById)).toEqual([])
+  it('keeps only the two approved policy families in shipped careers and nothing unauthorized', () => {
+    // Building a shipped career is expensive, because provisioning validates every economic source into the world.
+    const prototypeWorld = createNewGame()
+    const acbWorld = createAcbTestGame()
+    for (const world of [prototypeWorld, acbWorld]) {
       expect(getUngroundedEconomicSources(world)).toEqual([])
+      expect(Object.keys(world.competitionDistributionFactsById)).toEqual([])
+      expect(Object.values(world.revenueSourcesById).every((source) => source.category === 'COMPETITION')).toBe(true)
+      expect(Object.values(world.operatingCostSourcesById).every((source) => source.category === 'MATCH_OPERATIONS')).toBe(true)
     }
+    // The prototype universe has no approved economic profile, so it still carries no source at all.
+    expect(Object.keys(prototypeWorld.revenueSourcesById)).toEqual([])
+    expect(Object.keys(prototypeWorld.operatingCostSourcesById)).toEqual([])
+    // The demo ACB competition carries exactly one of each family per Organization.
+    expect(Object.keys(acbWorld.revenueSourcesById)).toHaveLength(18)
+    expect(Object.keys(acbWorld.operatingCostSourcesById)).toHaveLength(18)
   })
 
   it('never treats a spending authorization as revenue', () => {
@@ -105,7 +118,7 @@ describe('BS16K shipped economic source authority', () => {
     const career = createAcbTestGame()
     const organizationId = organizationIdsOf(career)[0]!
     expect(cashOf(career, organizationId, career.currentDate)).toBe(0)
-    expect(Object.keys(career.revenueSourcesById)).toEqual([])
+    expect(Object.values(career.revenueSourcesById).every((source) => source.sourceAuthority === 'COMPETITION')).toBe(true)
   })
 
   it('keeps the legacy money scale and the canonical scale distinct', () => {
@@ -149,12 +162,13 @@ describe('BS16K shipped economic source authority', () => {
     expect(ECONOMIC_SOURCES_EXCLUDED_FROM_BS16K.find((entry) => entry.source === 'CONTRACT_PAYROLL')?.reason).toContain('BS16I')
     // The canonical OPEX category list cannot express payroll at all, so no BS16K source can duplicate BS16I.
     expect(OPERATING_COST_CATEGORIES.filter((category) => /PAYROLL|SALARY/.test(category))).toEqual([])
+    const organizationId = organizationIdsOf(createAcbTestGame())[0]!
     for (const category of ['PAYROLL', 'PLAYER_SALARY', 'STAFF_SALARY']) {
-      expect(() => createOperatingCostSource({ id: `source:${category}`, organizationId: organizationIdsOf(createAcbTestGame())[0]!, category: category as never, currencyCode: EUR, amount: { currencyCode: EUR, minorUnits: 1_000 }, startsOn: '2026-09-26', endsOn: '2027-06-30', sourceAuthority: 'ORGANIZATION', costNature: 'OPERATING', generationPolicy: 'ANNUAL', dueDatePolicy: 'ON_RECOGNITION', provenance: { kind: 'TEST', id: category } })).toThrow()
+      expect(() => createOperatingCostSource({ id: `source:${category}`, organizationId, category: category as never, currencyCode: EUR, amount: { currencyCode: EUR, minorUnits: 1_000 }, startsOn: '2026-09-26', endsOn: '2027-06-30', sourceAuthority: 'ORGANIZATION', costNature: 'OPERATING', generationPolicy: 'ANNUAL', dueDatePolicy: 'ON_RECOGNITION', provenance: { kind: 'TEST', id: category } })).toThrow()
     }
   })
 
-  it('keeps a 90-day shipped career ledger explainable with no revenue and no unauthorized fact', { timeout: 180_000 }, () => {
+  it('keeps a 90-day policy-driven career ledger balanced and fully explained', { timeout: 180_000 }, () => {
     const organizationId = organizationIdsOf(createAcbTestGame())[0]!
     let world = updateGameWorld(createAcbTestGame(), { currentDate: createGameDate(2026, 9, 25) })
     const openingCash = cashOf(world, organizationId)
@@ -164,12 +178,13 @@ describe('BS16K shipped economic source authority', () => {
       world = advanced.world
     }
 
-    // Nothing unauthorized appeared during three months of simulation.
+    // Nothing unauthorized appeared during three months of simulation: only the two approved policy families.
     expect(getUngroundedEconomicSources(world)).toEqual([])
-    expect(Object.keys(world.revenueSourcesById)).toEqual([])
-    expect(Object.keys(world.operatingCostSourcesById)).toEqual([])
-    expect(Object.keys(world.expenseRecognitionsById).every((id) => world.expenseRecognitionsById[id as never]!.category === 'CONTRACT_PLAYER_SALARY_DUE' || world.expenseRecognitionsById[id as never]!.category === 'STAFF_CONTRACT_EXPENSE_DUE')).toBe(true)
-    // Cash identity: opening cash + inflows - outflows = ending cash, and there are no inflows or outflows at all.
+    expect(Object.keys(world.revenueSourcesById)).toHaveLength(18)
+    expect(Object.keys(world.operatingCostSourcesById)).toHaveLength(18)
+    expect(Object.values(world.expenseRecognitionsById).every((item) => ['CONTRACT_PLAYER_SALARY_DUE', 'STAFF_CONTRACT_EXPENSE_DUE', 'MATCH_OPERATIONS'].includes(String(item.category)))).toBe(true)
+    // Cash identity: opening cash + inflows - outflows = ending cash; these sources recognize a receivable and
+    // never cash, so with no funding the identity is 0 = 0 and there are no cash movements at all.
     const totals = getCashFlowTotalsBetween(world, organizationId, '2026-09-25', world.currentDate)
     expect(totals).toEqual([])
     const endingCash = cashOf(world, organizationId)
@@ -178,7 +193,8 @@ describe('BS16K shipped economic source authority', () => {
     // The ledger is still balanced: every debit has a matching credit.
     const trial = getTrialBalanceAsOfDate(world, world.currentDate)
     expect(trial.reduce((sum, row) => sum + row.debitMinorUnits, 0)).toBe(trial.reduce((sum, row) => sum + row.creditMinorUnits, 0))
-    // Obligations are outstanding and truthfully unfunded; nothing was settled because there is no liquidity.
+    // Revenue became receivables, obligations are outstanding, and nothing was settled because there is no liquidity.
+    expect(Object.values(world.receivablesById).filter((item) => String(item.organizationId) === organizationId).length).toBeGreaterThan(0)
     expect(getOpenPayables(world, organizationId, world.currentDate).length).toBeGreaterThan(0)
     expect(getEligibleDuePayablesForDate(world, { organizationId, currencyCode: EUR, date: world.currentDate }).length).toBeGreaterThan(0)
     expect(Object.keys(world.treasuryApplicationsById)).toEqual([])

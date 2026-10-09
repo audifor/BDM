@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import { createAcbTestGame, createNewGame } from '@/app/game'
 import { advanceGameDay } from '@/app/game/advanceGameDay'
-import { createGameDate } from '@/domain/date'
+import { createGameDate, type GameDate } from '@/domain/date'
 import {
   createOwnerFundingTransaction,
   evaluateOrganizationFinancialCommitment,
   getCashBalancesByCurrency,
+  getEligibleDuePayablesForDate,
   getOpenPayables,
   getOrganizationFinanceAccounts,
   legacyMajorUnitsToMoney,
@@ -43,6 +44,16 @@ function guaranteedDueOn(world: GameWorld, organizationId: string, date: string,
 
 function totalDueOn(world: GameWorld, organizationId: string, date: string): number {
   return guaranteedDueOn(world, organizationId, date).reduce((sum, entry) => sum + entry.amount.minorUnits, 0)
+}
+
+/** The canonical due batch of one Organization on one date: payroll plus any operating family already declared. */
+function dueBatchTotal(world: GameWorld, organizationId: string, date: GameDate): number {
+  return getEligibleDuePayablesForDate(world, { organizationId, currencyCode: EUR, date }).reduce((sum, entry) => sum + entry.remainingMinorUnits, 0)
+}
+
+/** A processed world (the date's payables exist only after the processor has materialized them). */
+function probeWorld(): GameWorld {
+  return processClubFinanceForDate(createAcbTestGame(), SEASON_START).world
 }
 
 function cashOf(world: GameWorld, organizationId: string, asOfDate?: string): number {
@@ -88,8 +99,11 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
   it('settles the complete due batch through the daily processor when the whole batch is fundable', () => {
     const career = createAcbTestGame()
     const organizationId = organizationIdsOf(career)[0]!
-    const totalDue = totalDueOn(career, organizationId, String(SEASON_START))
-    expect(totalDue).toBeGreaterThan(0)
+    // The batch the club would owe on that date is read from the canonical report of an unfunded run, because the
+    // date's payables (payroll and match operations) only exist once the processor has materialized them.
+    const probe = organizationResult(processClubFinanceForDate(career, SEASON_START), organizationId) as { treasury: { totalDueMinorUnits: number; eligiblePayableCount: number } }
+    const totalDue = probe.treasury.totalDueMinorUnits
+    expect(totalDue).toBeGreaterThan(totalDueOn(career, organizationId, String(SEASON_START)))
     const funded = fundOrganization(career, organizationId, totalDue)
 
     const application = processClubFinanceForDate(funded, SEASON_START)
@@ -98,13 +112,13 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
     expect(application.result.treasury.status).toBe('SETTLED')
     expect(organization.treasury.status).toBe('SETTLED')
     expect(organization.treasury.totalDueMinorUnits).toBe(totalDue)
-    expect(organization.treasury.settledCount).toBe(guaranteedDueOn(career, organizationId, String(SEASON_START)).length)
+    expect(organization.treasury.settledCount).toBe(probe.treasury.eligiblePayableCount)
     expect(organization.treasury.settledMinorUnits).toBe(totalDue)
     // The exact batch was paid from real cash, so the club is at zero and no obligation remains due.
     expect(cashOf(application.world, organizationId, SEASON_START)).toBe(0)
     expect(getOpenPayables(application.world, organizationId, SEASON_START)).toHaveLength(0)
     for (const settlement of Object.values(application.world.treasuryApplicationsById)) expect(settlement.obligationKind).toBe('PAYABLE')
-    // Settlement is not a second expense: the recognitions are still exactly the payroll occurrences.
+    // Settlement is not a second expense: the recognitions are still exactly the day's occurrences.
     const orgRecognitions = Object.values(application.world.expenseRecognitionsById).filter((item) => String(item.organizationId) === organizationId)
     expect(orgRecognitions).toHaveLength(organization.treasury.settledCount)
   })
@@ -112,7 +126,7 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
   it('replays a settled date as a no-op and never duplicates settlement facts', () => {
     const career = createAcbTestGame()
     const organizationId = organizationIdsOf(career)[0]!
-    const funded = fundOrganization(career, organizationId, totalDueOn(career, organizationId, String(SEASON_START)))
+    const funded = fundOrganization(career, organizationId, dueBatchTotal(probeWorld(), organizationId, SEASON_START))
     const first = processClubFinanceForDate(funded, SEASON_START)
     const replay = processClubFinanceForDate(first.world, SEASON_START)
 
@@ -126,7 +140,7 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
   it('preserves a settled batch across save/load and keeps replay idempotent afterwards', () => {
     const career = createAcbTestGame()
     const organizationId = organizationIdsOf(career)[0]!
-    const funded = fundOrganization(career, organizationId, totalDueOn(career, organizationId, String(SEASON_START)))
+    const funded = fundOrganization(career, organizationId, dueBatchTotal(probeWorld(), organizationId, SEASON_START))
     const settled = processClubFinanceForDate(funded, SEASON_START).world
 
     const reloaded = deserializeGameWorldV4(serializeGameWorldV4(settled, '2026-09-27T00:00:00.000Z'))
@@ -183,7 +197,7 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
     const funding = createOwnerFundingTransaction(world, {
       transactionId: `funding:late:${organizationId}`,
       organizationId,
-      amount: { currencyCode: EUR, minorUnits: totalDueOn(career, organizationId, String(SEASON_START)) },
+      amount: { currencyCode: EUR, minorUnits: dueBatchTotal(world, organizationId, createGameDate(2026, 10, 1)) },
       effectiveOn: '2026-10-01',
       cashAccountId: accounts.cashOperating.id,
       offsetAccountId: accounts.equityControl.id,
@@ -237,7 +251,7 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
   it('shows the settled payment through FinancialAuthority liquidity while reservations stay separate', () => {
     const career = createAcbTestGame()
     const organizationId = organizationIdsOf(career)[0]!
-    const totalDue = totalDueOn(career, organizationId, String(SEASON_START))
+    const totalDue = dueBatchTotal(probeWorld(), organizationId, SEASON_START)
     const funded = fundOrganization(career, organizationId, totalDue)
     const amount = legacyMajorUnitsToMoney(1_000_000, EUR)
 
