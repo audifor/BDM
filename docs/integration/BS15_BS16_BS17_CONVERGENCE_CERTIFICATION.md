@@ -1,6 +1,6 @@
 # BS15 / BS16 / BS17 controlled convergence certification
 
-Status: FAIL ? certification not established. Local semantic composition and focused gates pass, but the legacy World DB 2029 stop has no captured cause. This is not a global BS16 or BS17D completion certificate.
+Status: FAIL ? certification not established. The closure audit confirms identical bounded behavior on frozen BS15 and the integrated branch, but cannot recover the historical World DB 2029 stop from retained evidence. This is not a global BS16 or BS17D completion certificate.
 
 ## Frozen sources and isolation
 
@@ -117,3 +117,48 @@ The combined V4 test additionally loads its blocked Training record through the 
 Raw failure accounting: 20 stale cases repaired with passing focal coverage; 10 cases reproduced on frozen O (eight Match/rating/navigation cases plus SeasonContent and World DB Staff); two direct-loop stale expectations with captured media/season-stop exceptions; five timeout/artifact-environment failures, three subsequently green in focused reruns, with the exact-Y5 external-artifact dependency and inherited 100-day budget left visible; one unresolved ten-year stop. The failed preparation hook accounts for pending assertions separately. The additional intermittent crypto-seeded monthly NCAA failure seen during focused runs was reproduced on O and then made replayable; it was not one of the original 38 full-suite failures.
 
 Final Git state: O/C/S ancestry to the integrated code SHA all true; second merge has exactly two parents. main remains `8a0b359e9ae48fe372668241788c9d5aa7a33b03`, origin/main remains O. No fetch/pull, push, main merge, branch/worktree deletion or later-source import. The local branch is composed but NOT functionally certified. All 13 pending season assertions from the full-run setup timeout were exercised by green focused reruns; the other 46 original skips belong to existing opt-in suites, including the real World DB smoke later run successfully with the actual DB slice. No skip was introduced by this convergence.
+
+## Convergence closure audit ? 2026-10-09
+
+Closure base: `d7fce9afa6ee0cde3989b50523844d38fc9040c2`. Integrated production remains `7030f1b551e55368d90e477a956893fe6ae40fc7`; this closure changes only tests and documentation. No new merge, main/source-worktree write, production RNG change, clinical decision or system reopening.
+
+### Original execution and missing evidence
+
+Exact test: `World DB Spain ACB playable GameWorld bootstrap / RWS-BUG-002 ten-year run: reaches 2035-10-01 through canonical simulation, rollovers, and annual development`, in `src/app/game/WorldDbGameBootstrap.test.ts`. Function: one `simulateUntilDate(initialWorld, targetDate)` call. Origin: `createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: 'real-world.db', runtimeBundlePath: 'runtime-bundle.json' })`, an injected in-memory repository fixture, not a persisted historical external DB world.
+
+The fixture contains 18 male Teams and 90 Players (five positions per Team) plus their Head Coaches; primary competition `competition:ESP:liga-endesa`, season `season:2025_26`, edition `edition:ESP:liga-endesa:2025-26`, user Team `team:ESP:male:000`, coach `worlddb:coach:team:ESP:male:000`. Linked Copa format, deterministic derived schedule, runtime bundle BLAKE3 pin `'a'.repeat(64)`. Start `2025-10-01`; requested target `2035-10-01`.
+
+The original full.json records finalDate `2029-06-05`, then a target-date assertion failure at then-current line 647; duration 3,273,172.89 ms. The simulation returned a result: the reported exception is an assertion error, not a captured application exception. **Original stopReason, day count, returned world, last operation/phase and pending IDs remain UNKNOWN.**
+
+Search covered full.json's complete test-result structure, full.log, preserved convergence files, the test's checkpoint behavior and bounded relevant C:/Temp checkpoint/log inventories. No valid checkpoint for this fixture near June 2029 was found. The native-extracted world-db-slice.json is source content, not an advanced GameWorld. BS15I annual checkpoints belong to a different generated universe/configuration and cannot substitute. This test retained world/spy histories only in worker memory and did not write annual or stop checkpoints. Its original console report omitted stopReason; the retained JSON-reporter log has no historical world. Default match seeds came from Web Crypto and were not retained.
+
+There is therefore no exact origin-to-stop replay from these artifacts. Static unchanged policy, similar dates, a controlled Media decision or another seed do not identify the historical event. **No evidence establishes Medical/RTP as the June 2029 cause.**
+
+### Bounded paired reproduction
+
+Two `closure diagnostic:` tests reuse the existing source fixture. No existing target/date/cycle assertion was removed or relaxed; no skip or larger existing timeout was added. Transient diagnostic output records current/requested/reached dates, day count, full stopReason, pending decision types and IDs, phase/last operation, exception classification, injected seed and configuration/state fingerprints. None enters GameWorld/Save.
+
+- **Natural original fixture:** MatchSeedFactory `() => 151617`; daily progression from `2025-10-01` to `2025-10-05`, through its first match day on October 4. Four days advanced, nine Games resolved, `{ type: 'arrived' }`, no pending decision. Last phase `DAY_COMPLETE`, status `COMPLETED`, last match operation `Resolved 9 scheduled game(s) through the existing match application boundary.` Original saved payload unchanged. V4 reload retains reached date and explicit-stop projection. No direct future-date jump.
+- **Controlled Media fixture ? explicitly not historical reconstruction:** the first scheduled user Game on `2025-10-04` is marked final as an explicit fixture fact; canonical createPreMatchMediaOpportunity creates a pending opportunity. Current `2025-10-01`, target `2025-10-02`, reached `2025-10-01`, zero days and zero RNG draws. Phase `EXPLICIT_ADVANCE_PRECHECK`, exception classification `NO_EXCEPTION_RETURNED`. Exact stop type `mediaOpportunity`, level `ACTION_REQUIRED`, reason `mediaOpportunity`, source kind `MEDIA_OPPORTUNITY`, effective date `2025-10-04`, route `media`, source/opportunity ID `media:pre:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0001:pressure`.
+
+The controlled full stopReason equals getExplicitAdvanceStopReason(world). Save/reload preserves that decision and stopping date. An explicitly selected canonical skipMediaOpportunity clears only this Media decision; repeat skip is idempotent. Injury (including recovery/RTP facts), financial transactions and Governance decisions remain unchanged. No medical/institutional decision was accepted automatically.
+
+Both cases run against the integrated branch and exact frozen O production in the existing ignored archive inside this same worktree: **2/2 PASS each**. The added diagnostic harness copies do not modify any original archived production file or the actual BS15 worktree. The precise test-name filter matches neither long runs nor benchmarks. Complete emitted diagnostic objects are exactly equal between both executions.
+
+Source/configuration SHA-256 in both: `456153258a2d289fe7e22a4c10ef2154d6aeff83ccb280e0c39412c55021e471`. Relevant origin-state SHA-256: `b7183b463afe8181a7c2d22baf0910b0bad18f4a4383c9a3ac58113f4a27f7b8`; controlled pending-Media state: `a48afc327bbac5902b2ea0467cb344450fa76ea233ee2ff5fb331b73711defde`. These cover the explicit source/configuration and decision-relevant collections, not an assertion that every added Finance/Facilities field is identical to older BS15.
+
+ContinueFlow.ts, simulateUntilDate.ts, SimulationBreakpoints.ts, advanceGameDay.ts and MediaEngine.ts are identical Git blobs between O and closure base. Their archived text matches O with Windows line-ending normalization only. Injury Domain/Engine production is unchanged; the only added Injury-folder file is the prior MedicalPhysicalCompatibility test. Engine Calendar's added Finance phase remains the previously integrated authority, covered by the focal regressions.
+
+**Classification:** PREEXISTING_BASELINE for the demonstrated controlled Media behavior; unconditional one-call arrival contradicts this legitimate policy. **UNRESOLVED_FAILURE_CAUSE for the historical 2029-06-05 stop.** The probe does not relabel it STALE_TEST or prove absence of a later runtime defect. Neither a production repair nor weakening of the original ten-year assertion is justified.
+
+### Validation and verdict
+
+Focused regressions **61/61 PASS**: ContinueFlow 15, SimulationBreakpoints 16, CalendarEngine 25, cross-system convergence 5. New World DB diagnostics **2/2 integrated + 2/2 frozen O PASS**. Save/reload exercised in both stop and combined convergence coverage. No clinical-cause test was invented because no clinical cause was demonstrated.
+
+Typecheck **PASS** (`typecheck-final.log`), build **PASS** (`build-final.log`, existing chunk-size advisory). Final diff/source ancestry and clean branch are checked at closure commit. No full-suite or ten-/thirty-year replay. Previous full-suite result 4916/4819/38/59 and all other failure classifications are preserved; these focal results do not claim to resolve them.
+
+**Certification verdict: FAIL retained.** The required original-stop explanation gate remains unsatisfied. Missing evidence: the original returned SimulateUntilResult, particularly world/stopReason; alternatively, a valid checkpoint of this exact world immediately before the stop plus its intervening seed sequence and command/decision journal. Without it, the original phase, pending IDs and true stop class cannot be recovered. Next action: recover such a historical record from a valid backup if one exists. A replacement certification with another seed/horizon requires an explicitly different contract; this closure does not silently start a new ten-year run or substitute synthetic evidence.
+
+BS17D-T is **not enabled on a certified base**. Frozen BS16 certification remains through K-C; BS17D remains globally PARTIAL, specialized Medical NOT_IMPLEMENTED, Talent Facilities NOT_LIVE.
+
+Evidence: `node_modules/.cache/bs15-bs16-bs17-certification/closure/`: paired-match-diagnosis.json, current/frozen-bs15-match-diagnosis JSON/logs, relevant-regressions.json/log and final typecheck/build logs. Earlier probe setup failures also remain: the initial controlled test assumed a user Game existed on October 1; it now selects the actual first scheduled Game, keeping currentDate unchanged. This was a diagnostic fixture correction, not a production defect.

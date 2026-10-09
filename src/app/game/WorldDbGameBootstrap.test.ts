@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createGameWorld, updateGameWorld } from '@/domain/world'
+import { createHash } from 'node:crypto'
+import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import * as CalendarEngine from '@/engine/calendar'
 import * as PlayerDevelopmentEngine from '@/engine/development'
 import { addDays, parseGameDate } from '@/domain/date'
@@ -12,7 +13,7 @@ import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseReposito
 import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { WorldDbSessionV1 } from './WorldDbSession'
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDay, type WorldDayAdvanceResult } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { getEligibleResponsibilityCandidates } from '@/ui/staffPresentation'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
@@ -26,7 +27,10 @@ import { spainCopaCompetitionSeasonId } from '@/data/worldCompetitionCalendars'
 import { createWorldDbSpainGame } from './WorldDbSpainGame'
 import { startNextSeason, startNextSeasonFor } from './startNextSeason'
 import * as SeasonLifecycle from './startNextSeason'
-import { simulateUntilDate } from './simulateUntilDate'
+import { simulateUntilDate, type SimulateUntilResult } from './simulateUntilDate'
+import { getExplicitAdvanceStopReason } from './ContinueFlow'
+import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
+import { createPreMatchMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
 
 const source = { databaseId: 'real-world.db', schemaId: 'DDL-PHASE1-A' } as const
 const runtimeBundle: WorldCompetitionRuntimeBundle = { bundleSchemaVersion: 1, contentId: 'bdm-phase1-competition-runtime-v1', contentHashAlgorithm: 'BLAKE3', contentHash: 'a'.repeat(64), worldDbSchema: 'DDL-PHASE1-A', competitionFormats: [leagueFormat(), cupFormat()], initialScoreDocuments: [] }
@@ -66,7 +70,81 @@ function catalog(): WorldDbSelectionCatalogV1 { const teams = slice().teams; ret
 function repository(bootstrapSlice = slice()): WorldDatabaseRepository { const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [selection.competitionSeasonId, spainCopaCompetitionSeasonId(2025)] }; return { inspectDatabase: vi.fn(async () => info), loadSelectionCatalog: vi.fn(async () => catalog()), loadCompetitionSeason: vi.fn(), loadMatchRealizations: vi.fn(), loadGameBootstrapSlice: vi.fn(async () => bootstrapSlice), loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle) } }
 function openSession(repo = repository()): WorldDbSessionV1 { return new WorldDbSessionV1({ repository: repo, databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }) }
 
+/** Transient test evidence only; synthetic/bounded runs do not identify the historical 2029 stop. */
+function reportWorldDbStop(label: string, initial: GameWorld, target: string, result: SimulateUntilResult, seed: number, lastDay?: WorldDayAdvanceResult) {
+  const relevantState = { date: initial.currentDate, userCoachId: initial.userCoachId, teams: initial.teams, players: initial.players,
+    games: initial.games, seasons: initial.seasons, injuries: initial.injuriesById, media: initial.mediaOpportunitiesById }
+  const diagnosis = {
+    label, historicalStopRecovered: false,
+    originDate: initial.currentDate, currentDate: result.world.currentDate,
+    requestedTargetDate: target, actualReachedDate: result.finalDate, daysAdvanced: result.daysAdvanced,
+    stopReason: result.stopReason,
+    pendingDecisions: evaluateSimulationBreakpoints(result.world).candidates
+      .filter(item => item.level === 'ACTION_REQUIRED' || item.level === 'BLOCKING')
+      .map(item => ({ reason: item.reason, sourceKind: item.sourceKind, sourceId: item.sourceId, diagnostic: item.diagnostic })),
+    relevantIds: { userCoachId: result.world.userCoachId, currentSeasonId: result.world.currentSeasonId,
+      userTeamId: Object.values(result.world.teams).find(team => team.coachId === result.world.userCoachId)?.id },
+    phase: lastDay?.phases.at(-1)?.phaseId ?? 'EXPLICIT_ADVANCE_PRECHECK',
+    lastDayStatus: lastDay?.status ?? null,
+    lastMatchOperation: lastDay?.phases.find(phase => phase.phaseId === 'MATCH_RESOLUTION')?.summary ?? null,
+    completedGameIds: Object.values(result.world.games).filter(game => game.status === 'completed' && initial.games[game.id]?.status !== 'completed').map(game => game.id).sort(),
+    lastOperation: lastDay?.phases.at(-1)?.summary ?? 'Required-decision projection before advancing',
+    exceptionClassification: 'NO_EXCEPTION_RETURNED',
+    replay: { matchSeed: seed, factory: 'injected constant MatchSeedFactory', productionRngChanged: false },
+    sourceFixtureSha256: createHash('sha256').update(JSON.stringify({ slice: slice(), selection, runtimeBundle })).digest('hex'),
+    relevantOriginStateSha256: createHash('sha256').update(JSON.stringify(relevantState)).digest('hex'),
+  }
+  process.stdout.write(`[World DB closure diagnostic] ${JSON.stringify(diagnosis)}\n`)
+  return diagnosis
+}
+
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+  it('closure diagnostic: resolves the first scheduled match day from the original World DB fixture with a replayable seed', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const before = serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')
+    const firstUserGame = Object.values(initial.games).filter(game => game.status === 'scheduled' && [game.homeTeamId, game.awayTeamId].includes(selection.teamId as never)).sort((a, b) => a.date.localeCompare(b.date))[0]!
+    const target = addDays(firstUserGame.date, 1)
+    let lastDay: WorldDayAdvanceResult | undefined
+    const result = simulateUntilDate(initial, target, () => 151617, { onDayAdvance: day => { lastDay = day } })
+    reportWorldDbStop('bounded-original-fixture', initial, target, result, 151617, lastDay)
+    expect(result).toMatchObject({ finalDate: target, daysAdvanced: 4, stopReason: { type: 'arrived' } })
+    expect(Object.values(result.world.games).some(game => game.status === 'completed')).toBe(true)
+    expect(lastDay?.phases.find(phase => phase.phaseId === 'MATCH_RESOLUTION')?.ran).toBe(true)
+    expect(lastDay?.failure).toBeUndefined()
+    expect(lastDay?.phases.at(-1)?.phaseId).toBe('DAY_COMPLETE')
+    expect(serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')).toEqual(before)
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(result.world, '2025-10-02T00:00:00.000Z'))
+    expect(loaded.currentDate).toBe(result.finalDate)
+    expect(getExplicitAdvanceStopReason(loaded)).toEqual(getExplicitAdvanceStopReason(result.world))
+  }, 120_000)
+
+  it('closure diagnostic: preserves a controlled media stop through save/reload until its explicit canonical command', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const game = Object.values(initial.games).find(item => item.status === 'scheduled' && [item.homeTeamId, item.awayTeamId].includes(selection.teamId as never))!
+    expect(game).toBeDefined()
+    // Explicit controlled fixture fact, not a reconstruction of June 2029.
+    const important = updateGameWorld(initial, { games: [{ ...game, stakes: 'final' }] })
+    const world = createPreMatchMediaOpportunity(important, game.id)
+    const opportunity = Object.values(world.mediaOpportunitiesById).find(item => item.status === 'pending')!
+    expect(opportunity).toBeDefined()
+    const before = serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z')
+    let seedCalls = 0
+    const stopped = simulateUntilDate(world, addDays(world.currentDate, 1), () => { seedCalls += 1; return 151617 })
+    const diagnosis = reportWorldDbStop('controlled-media-fixture', world, addDays(world.currentDate, 1), stopped, 151617)
+    expect(stopped).toMatchObject({ world, finalDate: world.currentDate, daysAdvanced: 0, stopReason: { type: 'mediaOpportunity', opportunityId: opportunity.id } })
+    expect(stopped.stopReason).toEqual(getExplicitAdvanceStopReason(world))
+    expect(diagnosis.pendingDecisions).toContainEqual(expect.objectContaining({ reason: 'mediaOpportunity', sourceId: opportunity.id }))
+    expect(seedCalls).toBe(0)
+    expect(serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z')).toEqual(before)
+    const loaded = deserializeGameWorldV4(before)
+    expect(simulateUntilDate(loaded, addDays(loaded.currentDate, 1), () => 151617).stopReason).toEqual(stopped.stopReason)
+    const resolved = skipMediaOpportunity(loaded, opportunity.id)
+    expect(resolved.mediaOpportunitiesById[opportunity.id]?.status).toBe('skipped')
+    expect(getExplicitAdvanceStopReason(resolved)).toBeUndefined()
+    expect(skipMediaOpportunity(resolved, opportunity.id)).toEqual(resolved)
+    for (const key of ['injuriesById', 'financialTransactionsById', 'governanceDecisionsById'] as const) expect(resolved[key]).toEqual(loaded[key])
+  }, 120_000)
+
   it('materializes imported Staff career state and supports delegated team Training planning', () => {
     const world = worldWithAssistantCoach()
     for (const item of Object.values(world.teamStaffAssignmentsById)) {
