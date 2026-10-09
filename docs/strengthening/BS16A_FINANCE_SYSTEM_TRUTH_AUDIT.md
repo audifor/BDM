@@ -339,7 +339,7 @@ Do **not** blindly continue CF-roadmap ordering: the evidence says the minimum p
 | BS16H | Opening Economic State Authority | **PARTIAL** | `8cdf963` (authority), `884b420` (certification) |
 | BS16I | Contract Payroll & Daily Finance Lifecycle | **PASS** | `87a24a0`, `76a3dcf`; final closure `f176bc8` |
 | BS16J | Treasury & Settlement Truth | **PASS** | `f965995` (canonical due-payable batch settlement wired into `CLUB_FINANCE_V2`); certified by `src/domain/finance/TreasurySettlement.test.ts` + `src/engine/finance/ClubTreasuryLifecycle.test.ts` |
-| BS16K | Revenue & Operating Cost Source Authority | **PARTIAL** — the audit is complete and recorded, but no shipped data supplies a defensible recurring amount + timing, so no source was activated | `src/domain/finance/EconomicSourceAuthority.ts` (classification + missing-authority register); certified by `src/domain/finance/EconomicSourceAuthority.test.ts` |
+| BS16K | Revenue & Operating Cost Source Authority | **PASS** (BS16K-C closure: the audit stands, and two approved source families are now live through an approved economic policy) | `1e0f827` (shipped-data audit recorded as data), `5243622` (certification); BS16K-C closure delivered `CompetitionEconomicProfile` + `EconomicSourceProvisioning` + the approved `BDM DEMO ECONOMIC POLICY V1` data, wired into `createAcbTestGame`; certified by `src/domain/finance/CompetitionEconomicProfile.test.ts`, `src/domain/finance/EconomicSourceProvisioning.test.ts`, `src/engine/finance/ClubEconomicSourceLifecycle.test.ts` and the updated `src/domain/finance/EconomicSourceAuthority.test.ts` |
 
 Status rules that must not be relaxed:
 
@@ -347,7 +347,8 @@ Status rules that must not be relaxed:
 - **BS16E stays PARTIAL for its original milestone.** Its authorization activation was reconciled with the canonical finance foundation in `c9fbafb`, which belongs to the BS16F tranche.
 - **BS16I is PASS**, including the initial career date: `createNewGame` processes `processClubFinanceForDate(currentDate)` exactly once, and the first normal Advance Day processes the next GameDate.
 - **BS16J is PASS.** `settleDuePayableBatchForDate` is the single payable-to-payment authority and runs as the last step of the same `CLUB_FINANCE_V2` phase (so the initial career date uses it too); only a fully fundable due batch settles, nothing partial, no priority, no invented cash or financing, and replay/save-load are idempotent.
-- **BS16K is PARTIAL, not PASS, and is not promoted by inventing a source.** The shipped-data audit found no defensible recurring revenue or operating-cost amount with timing authority anywhere (the World DB economic tables `revenue_stream`, `expense_commitment` and `budget` ship with zero rows; everything present is authorization, a physical driver or a soft rating). BS16K therefore activates no source and records the exact missing product authorities instead. BS16K becomes PASS only when at least one legitimate shipped recurring source family exists — which requires an approved product decision, never a fabricated formula.
+- **BS16K is PASS through an approved policy, never through an invented formula.** Its shipped-data audit found no defensible recurring revenue or operating-cost amount with timing authority anywhere (the World DB economic tables `revenue_stream`, `expense_commitment` and `budget` ship with zero rows; everything present is authorization, a physical driver or a soft rating), and it recorded the exact missing product authorities instead of fabricating a source. The BS16K-C closure then implemented the generic policy mechanism (`CompetitionEconomicProfile` + `provisionEconomicSources`) and activated exactly the two families the product owner approved in **BDM DEMO ECONOMIC POLICY V1** (competition participation distribution and match operations). The mechanism contains no league branch: a competition's economy is data, and a competition without an approved profile still receives nothing. The remaining audited families stay unmodelled and stay in the register.
+- **The ACB test universe's own start date is an open boundary, recorded with evidence** (see §16.4). Every other career entry point processes its initial GameDate exactly once.
 - Every commit above is a **local** commit on `bdm-stage2-bs16-finance-canonical`; nothing is claimed as pushed or merged.
 
 ### 16.2 Approved continuation
@@ -367,20 +368,25 @@ Reason: BDM has no canonical creditor-priority policy, so BS16J must not invent 
 
 No consumer migration in BS16J.
 
-#### BS16K — Revenue & Operating Cost Source Authority — **DELIVERED (PARTIAL)**
+#### BS16K — Revenue & Operating Cost Source Authority — **DELIVERED (PARTIAL → PASS, closure BS16K-C)**
 
 Goal: create legitimate shipped economic-source producers so canonical Finance has real recurring inflows and outflows beyond payroll.
 
 Scope: audit existing shipped data; competition/media/commercial revenue authority; operating-cost authority; use only defensible source data and policy; feed the existing Revenue/OPEX engines; lifecycle, save and idempotency correctness; no reputation-based or random cash formulas.
 
-Outcome: the audit completed and is recorded as data (`src/domain/finance/EconomicSourceAuthority.ts`); **no source was activated**, because no shipped surface supplies a defensible recurring amount with timing authority. The register records the six missing authorities with the decision each requires, and `getUngroundedEconomicSources` guards against any unauthorized source appearing in a world. PASS requires an approved product decision for at least one of them:
+**Audit outcome (`1e0f827`, `5243622`):** the audit completed and is recorded as data (`src/domain/finance/EconomicSourceAuthority.ts`); no source was activated at that point, because no shipped surface supplied a defensible recurring amount with timing authority. `getUngroundedEconomicSources` guards against any unauthorized source appearing in a world, and the register records the missing authorities with the decision each requires:
 
 - `TICKETING_PRICE_AUTHORITY_NOT_MODELLED` — ticket price/attendance model;
 - `MEDIA_REVENUE_AUTHORITY_NOT_MODELLED` — media rights pool model;
 - `COMMERCIAL_REVENUE_AUTHORITY_NOT_MODELLED` — sponsorship/licensing contract model;
-- `COMPETITION_DISTRIBUTION_SOURCE_NOT_MODELLED` — per-competition distribution rules (prize, participation, solidarity, revenue share);
+- `COMPETITION_PRIZE_AND_MEDIA_DISTRIBUTION_NOT_MODELLED` — the remaining per-competition distribution families beyond participation;
 - `FACILITY_OPEX_AUTHORITY_NOT_MODELLED` — facility operating cost policy;
-- `OPERATING_COST_SOURCE_NOT_MODELLED` — non-payroll operating cost model (travel, medical, scouting, administration, venue, match operations).
+- `TRAVEL_MEDICAL_SCOUTING_ADMINISTRATION_COST_AUTHORITY_NOT_MODELLED` — the remaining non-payroll operating cost families;
+- `RECEIVABLE_COLLECTION_NOT_MODELLED` — how an outstanding receivable becomes cash.
+
+**Closure outcome (BS16K-C):** the product owner approved **BDM DEMO ECONOMIC POLICY V1**, so two families are live. The implementation is a generic, versioned data authority (`CompetitionEconomicProfile`, `src/domain/finance/CompetitionEconomicProfile.ts`) plus a deterministic, idempotent provisioner (`provisionEconomicSources`, `src/domain/finance/EconomicSourceProvisioning.ts`) that turns an approved profile into the canonical `RevenueSource` and `OperatingCostSource` the daily lifecycle already consumed. The demo policy itself is game data (`src/app/game/AcbDemoEconomicPolicy.ts`): EUR 2,400,000 per club per fiscal year as 12 installments of EUR 200,000, plus EUR 25,000 of match operations per home game timed by the real `Game` schedule. It is provisioned in `createAcbTestGame`, the New Game path of the ACB universe, and it is deliberately **not** the real-world ACB media contract.
+
+Semantics that did not change: revenue posts a receivable and never cash, so the ACB demo still runs on truthful zero cash and reports `INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES`; Treasury (BS16J) is untouched; payroll stays BS16I truth and cannot be expressed as a competition operating cost; financing/capital remains BS16L. The remaining families above are approved-but-unspecified product decisions, not missing engineering.
 
 Payroll is explicitly excluded (BS16I contract truth; the operating-cost category list cannot express payroll), and financing/capital remains BS16L.
 
@@ -410,9 +416,22 @@ This is the final BS16 Finance certification milestone. It supersedes the §15 d
 
 ### 16.3 Scope uniqueness
 
-**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. BS16J is delivered (`f965995`); BS16K is delivered as PARTIAL (audit + authority record, no activated source); the remaining roadmap is exactly BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
+**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. BS16J is delivered (`f965995`); BS16K is delivered and PASS (audit + authority record, then the approved BS16K-C policy activation); the remaining roadmap is exactly BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
 
-### 16.4 Product principles
+### 16.4 Open boundaries (recorded, never silently hidden)
+
+These are the states this roadmap knows are not yet System Truth. They are each reported by code, not only by prose, and none of them is patched with invented money.
+
+| Boundary | State | Evidence | What it needs |
+|---|---|---|---|
+| **ACB test-universe start date** | The ACB 2026/27 universe (marked `isTest: true` in the New Game catalog, reached through `createConfiguredGame`) is the one career entry point that does not process its own start date, so its 576 guaranteed staff payroll occurrences totalling EUR 48,173,000 due exactly on the fixture clock 2026-09-19 are never materialized | measured: 32 occurrences per club across 18 clubs, `financialTransactions = 0` after construction; the prototype career by contrast materializes its 63 initial-date payroll facts exactly once (`f176bc8`) | a decision plus work: date the ACB fixture's staff sandbox contracts before its fixture clock (fixture data, mirroring how its player contracts start at the season start), or make per-date payroll materialization cheap enough to batch a 576-occurrence day — the direct one-line fix was implemented and reverted because it costs ~24 ms per occurrence, growing `createAcbTestGame` from ~0.3 s to ~14.1 s and a 15-day advance from ~2.7 s to ~11.3 s |
+| **Opening economic state** | No shipped world declares a legitimate opening economic source, so shipped clubs keep truthful zero cash (`OPENING_ECONOMIC_STATE_UNAVAILABLE`) | BS16H (`8cdf963`, `884b420`) | an approved opening-balance authority (owner capital, retained net assets or a stated liability) |
+| **Receivable collection** | Competition revenue posts a receivable and never cash, so an ACB club can own receivables it cannot collect | `RECEIVABLE_COLLECTION_NOT_MODELLED` in the authority register | an approved settlement/collection policy, which belongs with Treasury rather than with the source |
+| **Remaining revenue and operating-cost families** | Ticketing, media, commercial, remaining competition distributions, facility OPEX and the other non-payroll cost families are still unmodelled | the authority register in `src/domain/finance/EconomicSourceAuthority.ts`, guarded by `getUngroundedEconomicSources` | one approved policy per family, expressed as `CompetitionEconomicProfile` data rather than engine code |
+| **Debt, financing and capital** | No canonical debt instrument or financing agreement exists | BS16L, not started | the BS16L milestone |
+| **Legacy consumer migration** | `TeamFinances` affordability is still the live gameplay rule for contracts, market and staff decisions | "Financial authority and reservations v1" in `docs/ARCHITECTURE.md` | BS16M, and only after the canonical lifecycle is economically trustworthy |
+
+### 16.5 Product principles
 
 The invariants that govern every milestone above (AUTHORIZATION ≠ CASH, CASH ≠ REVENUE, REVENUE ≠ FINANCING, LOAN ≠ CAPITAL CONTRIBUTION, PAYABLE ≠ PAYMENT, BUDGET ≠ OPENING BALANCE, ZERO CASH MAY BE TRUE, and "if Finance cannot explain where money came from, it must not create it") are recorded canonically in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) under "Finance invariants and principles".
 

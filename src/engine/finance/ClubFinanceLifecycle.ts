@@ -180,7 +180,7 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       if (operatingCost.status === 'rejected') diagnostics.push({ code: 'OPERATING_COST_REJECTED', message: operatingCost.error ?? 'Operating cost materialization was rejected.', sourceId: String(organizationId) })
       else {
         occurrences.operatingCost = operatingCost.entries.length
-        if (operatingCost.status === 'accepted') anyAccepted = true
+        if (operatingCost.status === 'accepted' && operatingCost.entries.length > 0) anyAccepted = true
         else if (operatingCost.entries.length > 0) anyAlreadyProcessed = true
         current = operatingCost.world
       }
@@ -195,7 +195,7 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       if (revenue.status === 'rejected') diagnostics.push({ code: 'REVENUE_REJECTED', message: revenue.error ?? 'Revenue materialization was rejected.', sourceId: String(organizationId) })
       else {
         occurrences.revenue = revenue.entries.length
-        if (revenue.status === 'accepted') anyAccepted = true
+        if (revenue.status === 'accepted' && revenue.entries.length > 0) anyAccepted = true
         else if (revenue.entries.length > 0) anyAlreadyProcessed = true
         current = revenue.world
       }
@@ -215,7 +215,7 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       if (debt.status === 'rejected') diagnostics.push({ code: 'DEBT_REJECTED', message: debt.error ?? 'Debt materialization was rejected.', sourceId: String(organizationId) })
       else {
         occurrences.debt = debt.entries.length
-        if (debt.status === 'accepted') anyAccepted = true
+        if (debt.status === 'accepted' && debt.entries.length > 0) anyAccepted = true
         else if (debt.entries.length > 0) anyAlreadyProcessed = true
         current = debt.world
       }

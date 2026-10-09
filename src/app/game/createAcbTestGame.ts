@@ -29,8 +29,9 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY } from '@/data/acb2026'
-import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { ensureCanonicalFinanceFoundation, provisionEconomicSources } from '@/domain/finance'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
+import { createAcbDemoEconomicProfileV1 } from './AcbDemoEconomicPolicy'
 
 const ACB_SEED = 20_260_827
 const SPAIN_ID = countryIdFromString('acb-country-spain')
@@ -189,7 +190,10 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensureTestGameOrganizationKnowledge(world)
-  return ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id)))
+  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id)))
+  // BDM DEMO ECONOMIC POLICY V1 (see AcbDemoEconomicPolicy.ts): the demo competition's approved economic profile
+  // is provisioned into canonical Finance sources. The engines contain no league branch, so this is data only.
+  return provisionEconomicSources(career, { profiles: [createAcbDemoEconomicProfileV1()] }).world
 }
 
 function createCanonicalCoach(input: Omit<Parameters<typeof createCoach>[0], 'personId' | 'staffProfileId'>) {
