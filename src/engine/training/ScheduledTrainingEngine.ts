@@ -1,3 +1,4 @@
+import { resolveUnreservedTrainingConsumption, type TrainingPhysicalConsumer } from './TrainingPhysicalConsumption'
 import { evaluatePhysicalAllocation, reallocateRescheduledTraining, transitionPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { createDevelopmentStimulusEvent, type DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
@@ -205,6 +206,7 @@ export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): 
   const due = scheduledTrainingSessionsOnDate(world.scheduledTrainingSessionsById, world.currentDate).filter((session) => session.status === 'scheduled')
   const blocked = due.filter((session) => !canTeamTrainOnDate(world, session.teamId, session.date))
   const executable = due.filter((session) => canTeamTrainOnDate(world, session.teamId, session.date))
+  const physicalConsumers: readonly TrainingPhysicalConsumer[] = executable.map(session => ({ session, requirements: trainingPhysicalRequirements(resolvePlanDelegation(world, session)?.definition ?? trainingDefinitionById(session.definitionId)) }))
   return {
     world: updateGameWorldBatch(world, (initial, update) => {
       const pendingEvidence: DevelopmentStimulusEvent[] = []
@@ -233,7 +235,7 @@ export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): 
           if (!permission.ok) throw new RangeError(`Training transfer authorization consequence unavailable: ${permission.reason}`)
           guarded = permission.world
         }
-        return executeScheduledSession(guarded, session, update, pendingEvidence, pendingSessions)
+        return executeScheduledSession(guarded, session, update, pendingEvidence, pendingSessions, physicalConsumers)
       }, initial)
       return flushEvidence(executed)
     }),
@@ -264,7 +266,7 @@ export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): 
  * assignment is consumed when the session completes so later dismissal does not rewrite history
  * or leave completed work coupled to current employment validation.
  */
-function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSession, update: typeof updateGameWorld, pendingEvidence: DevelopmentStimulusEvent[], pendingSessions: ScheduledTrainingSession[]): GameWorld {
+function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSession, update: typeof updateGameWorld, pendingEvidence: DevelopmentStimulusEvent[], pendingSessions: ScheduledTrainingSession[], physicalConsumers: readonly TrainingPhysicalConsumer[]): GameWorld {
   const planDelegation = resolvePlanDelegation(world, session)
   const intensityDelegation = resolveIntensityDelegation(world, session)
 
@@ -282,6 +284,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   } else if (allocationResult?.status === 'UNVERIFIED_PHYSICAL_CONTEXT') {
     physicalAttempt = { ...physicalAttempt, status: physicalAttempt.status === 'VERIFIED_UNAVAILABLE' ? 'VERIFIED_UNAVAILABLE' : 'UNVERIFIED_PHYSICAL_CONTEXT' }
   }
+  if (allocation === undefined) physicalAttempt = resolveUnreservedTrainingConsumption(world, { session, operationId: definition.id, requirements: trainingPhysicalRequirements(definition) }, physicalConsumers)
   if (physicalAttempt.status === 'VERIFIED_UNAVAILABLE') {
     pendingSessions.push({ ...session, physicalAttempt })
     return world

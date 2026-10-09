@@ -266,3 +266,151 @@ describe('BS17D-C1 canonical physical reservations and real Training consequence
     expect(physicalAllocations(executed)).toEqual([])
   })
 })
+
+// Permanent acceptance regressions: these assert the required behavior, not the diagnostic bypass.
+describe('BS17D-C1 P1 consumption closure', () => {
+  function releasedConflict() {
+    const f = allocationFixture()
+    let world = book(f)
+    const previous = physicalAllocations(world)[0]!
+    world = releaseTrainingPhysicalAllocation(world, f.session.id, previous.id)
+    world = book(f, world, f.second.id, 'senior')
+    return { f, world, previous }
+  }
+  function expectBlocked(world: GameWorld, id: string) {
+    const session = world.scheduledTrainingSessionsById[id]!
+    expect(session.status).toBe('scheduled')
+    expect(session.execution).toBeUndefined()
+    expect(session.physicalAttempt?.status).toBe('VERIFIED_UNAVAILABLE')
+    expect(session.physicalAttempt?.resources.some(resource => resource.reason === 'RESOURCE_OCCUPIED')).toBe(true)
+    expect(Object.values(world.developmentStimulusEventsById).some(event => event.sourceId === id)).toBe(false)
+  }
+  it('F1-A prevents an unallocated individual from consuming another Team exclusive reservation', () => {
+    const f = allocationFixture(), world = book(f)
+    expect(evaluatePhysicalAllocation(world, f.second, f.component.id).reason).toBe('RESOURCE_OCCUPIED')
+    const output = executeScheduledTrainingSessions(updateGameWorld(world, { currentDate: f.date }))
+    expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('completed')
+    expectBlocked(output, f.second.id)
+  })
+  it('F1-B release does not permit consumption of a later confirmed reservation', () => {
+    const { f, world, previous } = releasedConflict()
+    const output = executeScheduledTrainingSessions(updateGameWorld(world, { currentDate: f.date }))
+    expectBlocked(output, f.session.id)
+    expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+    expect(physicalAllocations(output).find(item => item.id === previous.id)?.status).toBe('RELEASED')
+  })
+  it('F1-C Save/reload preserves the confirmed authority and blocks released consumption', () => {
+    const { f, world, previous } = releasedConflict()
+    const restored = deserializeGameWorldV4(save(world))
+    expect(physicalAllocations(restored)).toEqual(physicalAllocations(world))
+    const output = executeScheduledTrainingSessions(updateGameWorld(restored, { currentDate: f.date }))
+    expectBlocked(output, f.session.id)
+    expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+    expect(physicalAllocations(output).find(item => item.id === previous.id)?.history).toEqual(previous.history.concat({ onDate: world.currentDate, status: 'RELEASED', reason: 'MANAGER_RELEASED' }))
+    expect(executeScheduledTrainingSessions(output)).toEqual(output)
+  })
+})
+
+describe('BS17D-C1 P1 complementary consumption paths', () => {
+  it('keeps two known unreserved exclusive consumers unresolved regardless of iteration order', () => {
+    const f = allocationFixture()
+    for (const sessions of [[f.session, f.second], [f.second, f.session]]) {
+      const world = updateGameWorld(f.world, { scheduledTrainingSessionsById: Object.fromEntries(sessions.map(item => [item.id, item])), currentDate: f.date })
+      const output = executeScheduledTrainingSessions(world)
+      expect(Object.values(output.scheduledTrainingSessionsById).every(item => item.status === 'scheduled')).toBe(true)
+      expect(Object.values(output.scheduledTrainingSessionsById).every(item => item.physicalAttempt?.resources.some(resource => resource.reason === 'PENDING_PRIORITY_DECISION'))).toBe(true)
+      expect(Object.values(output.developmentStimulusEventsById).filter(item => item.sourceId === f.session.id || item.sourceId === f.second.id)).toHaveLength(0)
+    }
+  })
+  it.each(['available', 'unknown', 'independent'] as const)('preserves unreserved %s continuity without an implicit reservation', mode => {
+    const f = allocationFixture()
+    const session = { ...f.session, ...(mode === 'independent' ? { definitionId: 'teamCohesion' } : {}) }
+    const world = updateGameWorld(f.world, { scheduledTrainingSessionsById: { [session.id]: session }, ...(mode === 'unknown' ? { facilityComponents: [], facilityUsageRights: [], facilityComponentConditionRecords: [] } : {}), currentDate: f.date })
+    const output = executeScheduledTrainingSessions(world)
+    expect(output.scheduledTrainingSessionsById[session.id]?.status).toBe('completed')
+    expect(physicalAllocations(output)).toEqual([])
+    if (mode === 'unknown') expect(output.scheduledTrainingSessionsById[session.id]?.physicalAttempt?.status).toBe('UNVERIFIED_PHYSICAL_CONTEXT')
+  })
+  it('allows consecutive unreserved sessions without confusing same-day use with overlap', () => {
+    const f = allocationFixture()
+    const world = updateGameWorld(f.world, { scheduledTrainingSessionsById: { [f.session.id]: f.session, [f.second.id]: { ...f.second, startTime: '11:00' } }, currentDate: f.date })
+    expect(Object.values(executeScheduledTrainingSessions(world).scheduledTrainingSessionsById).every(item => item.status === 'completed')).toBe(true)
+  })
+  it.each([10, 8])('shares only explicitly divisible capacity %s without iteration priority', capacity => {
+    const f = allocationFixture()
+    const world = updateGameWorld(f.world, { facilityComponents: [createFacilityComponent({ ...f.component, occupancySharing: 'SHARED_CAPACITY', specification: { kind: 'CAPACITY', unit: 'SIMULTANEOUS_PLAYERS', amount: capacity } })], currentDate: f.date })
+    const output = executeScheduledTrainingSessions(world)
+    expect([f.session.id, f.second.id].every(id => output.scheduledTrainingSessionsById[id]?.status === (capacity === 10 ? 'completed' : 'scheduled'))).toBe(true)
+  })
+  it('retains a released explicit resource and offers an alternative without moving automatically', () => {
+    const f = allocationFixture()
+    const alternate = createFacilityComponent({ ...f.component, id: 'fix:alternate' })
+    const condition = createFacilityComponentConditionRecord({ ...Object.values(f.world.facilityComponentConditionRecordsById)[0]!, id: 'fix:alternate-condition', componentId: alternate.id })
+    let world = updateGameWorld(f.world, { facilityComponents: [f.component, alternate], facilityComponentConditionRecords: [...Object.values(f.world.facilityComponentConditionRecordsById), condition] })
+    world = book(f, world)
+    world = releaseTrainingPhysicalAllocation(world, f.session.id, physicalAllocations(world)[0]!.id)
+    world = book(f, world, f.second.id, 'senior')
+    const output = executeScheduledTrainingSessions(updateGameWorld(world, { currentDate: f.date }))
+    expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('scheduled')
+    expect(allocationAlternatives(output, f.session)).toContain(alternate.id)
+    const tomorrow = scheduleTrainingSession(output, { ...output.scheduledTrainingSessionsById[f.session.id]!, date: addDays(f.date, 1) })
+    const chosen = requestTrainingPhysicalAllocation(tomorrow, { sessionId: f.session.id, componentId: alternate.id, requestId: 'manager:alternative', confirm: true })
+    const executed = executeScheduledTrainingSessions(updateGameWorld(deserializeGameWorldV4(save(chosen)), { currentDate: addDays(f.date, 1) }))
+    expect(executed.scheduledTrainingSessionsById[f.session.id]?.status).toBe('completed')
+    expect(executeScheduledTrainingSessions(executed)).toEqual(executed)
+  })
+  it('does not revive cancelled work when its old resource is confirmed by another Team', () => {
+    const f = allocationFixture()
+    const cancelled = cancelScheduledTrainingSession(book(f), f.session.id)
+    const world = book(f, cancelled, f.second.id, 'senior')
+    const output = executeScheduledTrainingSessions(updateGameWorld(world, { currentDate: f.date }))
+    expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('cancelled')
+    expect(output.scheduledTrainingSessionsById[f.session.id]?.execution).toBeUndefined()
+    expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+  })
+  it.each(['expired', 'insufficient', 'incompatible-unit', 'unknown-demand'] as const)('checks the unreserved %s physical context', mode => {
+    const f = allocationFixture()
+    const session = { ...f.session, ...(mode === 'unknown-demand' ? { selectedPlayerIds: undefined } : {}) }
+    const world = updateGameWorld(f.world, { scheduledTrainingSessionsById: { [session.id]: session }, currentDate: f.date,
+      ...(mode === 'expired' ? { facilityUsageRights: [createFacilityUsageRight({ ...f.teamRight, validTo: f.world.currentDate })] } : {}),
+      ...(mode === 'insufficient' || mode === 'incompatible-unit' ? { facilityComponents: [createFacilityComponent({ ...f.component, specification: { kind: 'CAPACITY', unit: mode === 'insufficient' ? 'SIMULTANEOUS_PLAYERS' : 'SEATS', amount: 5 } })] } : {}) })
+    const output = executeScheduledTrainingSessions(world)
+    expect(output.scheduledTrainingSessionsById[session.id]?.status).toBe(mode === 'expired' || mode === 'insufficient' ? 'scheduled' : 'completed')
+  })
+})
+
+it('invalidates physical consumption queries after confirm, release and rescheduling', () => {
+  const f = allocationFixture()
+  expect(evaluatePhysicalAllocation(f.world, f.second, f.component.id).status).toBe('AVAILABLE')
+  const confirmed = book(f)
+  expect(evaluatePhysicalAllocation(confirmed, f.second, f.component.id).reason).toBe('RESOURCE_OCCUPIED')
+  const released = releaseTrainingPhysicalAllocation(confirmed, f.session.id, physicalAllocations(confirmed)[0]!.id)
+  expect(evaluatePhysicalAllocation(released, f.second, f.component.id).status).toBe('AVAILABLE')
+  const repeated = book(f, released, f.session.id, 'new-confirmation')
+  expect(evaluatePhysicalAllocation(repeated, f.second, f.component.id).reason).toBe('RESOURCE_OCCUPIED')
+  const moved = scheduleTrainingSession(repeated, { ...repeated.scheduledTrainingSessionsById[f.session.id]!, startTime: '14:00' })
+  expect(evaluatePhysicalAllocation(moved, f.second, f.component.id).status).toBe('AVAILABLE')
+  expect(evaluatePhysicalAllocation(deserializeGameWorldV4(save(moved)), f.second, f.component.id).status).toBe('AVAILABLE')
+})
+
+it.each(['overlapping', 'separate'] as const)('respects %s explicit released component scopes without iteration priority', mode => {
+  const f = allocationFixture()
+  const parent = createFacilityComponent({ ...f.component, occupancySharing: 'SHARED_CAPACITY' })
+  const child = createFacilityComponent({ ...parent, id: 'fix:child', parentComponentId: mode === 'overlapping' ? parent.id : null })
+  const condition = createFacilityComponentConditionRecord({ ...Object.values(f.world.facilityComponentConditionRecordsById)[0]!, id: 'fix:child-condition', componentId: child.id })
+  let world = updateGameWorld(f.world, { facilityComponents: [parent, child], facilityComponentConditionRecords: [...Object.values(f.world.facilityComponentConditionRecordsById), condition] })
+  for (const [session, component] of [[f.session, parent], [f.second, child]] as const) {
+    world = requestTrainingPhysicalAllocation(world, { sessionId: session.id, componentId: component.id, requestId: 'explicit-scope', confirm: true })
+    world = releaseTrainingPhysicalAllocation(world, session.id, physicalAllocations(world).find(item => item.sessionId === session.id)!.id)
+  }
+  for (const entries of [Object.entries(world.scheduledTrainingSessionsById), Object.entries(world.scheduledTrainingSessionsById).reverse()]) {
+    const output = executeScheduledTrainingSessions(updateGameWorld(world, { scheduledTrainingSessionsById: Object.fromEntries(entries), currentDate: f.date }))
+    for (const id of [f.session.id, f.second.id]) {
+      expect(output.scheduledTrainingSessionsById[id]?.status).toBe(mode === 'overlapping' ? 'scheduled' : 'completed')
+      if (mode === 'overlapping') {
+        expect(output.scheduledTrainingSessionsById[id]?.execution).toBeUndefined()
+        expect(output.scheduledTrainingSessionsById[id]?.physicalAttempt?.resources.some(item => item.reason === 'PENDING_PRIORITY_DECISION')).toBe(true)
+      }
+    }
+  }
+})

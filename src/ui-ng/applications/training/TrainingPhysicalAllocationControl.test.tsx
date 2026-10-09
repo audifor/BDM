@@ -1,3 +1,4 @@
+import { requestTrainingPhysicalAllocation, releaseTrainingPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 // @vitest-environment jsdom
 import { afterEach, expect, it } from 'vitest'
@@ -9,7 +10,7 @@ import { createScheduledTrainingSession } from '@/domain/training'
 import { addDays } from '@/domain/date'
 import { getUserTeam } from '@/engine/calendar'
 import { updateGameWorld } from '@/domain/world'
-import { scheduleTrainingSession } from '@/engine/training/ScheduledTrainingEngine'
+import { executeScheduledTrainingSessions, scheduleTrainingSession } from '@/engine/training/ScheduledTrainingEngine'
 import { useGameStore } from '@/stores/gameStore'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { TrainingWorkspace } from './TrainingWorkspace'
@@ -55,4 +56,33 @@ it('uses the reachable Training manager flow to select, confirm, reload, reprogr
   cleanup()
   render(<NgWorkspaceNavigationProvider><FacilitiesWorkspace /></NgWorkspaceNavigationProvider>)
   expect(screen.getByRole('region', { name: 'Training physical reservations' })).toBeInTheDocument()
+})
+
+it('shows occupied unreserved Training as blocked after reload and allows legitimate manager rescheduling', () => {
+  const f = createFacilityClubScenario(), team = getUserTeam(f.world)!
+  const other = Object.values(f.world.teams).find(item => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+  const source = f.world.facilityComponentsById[f.courtComponentId]!
+  const component = createFacilityComponent({ ...source, id: 'ui:fix-court', specification: { kind: 'CAPACITY', amount: 10, unit: 'SIMULTANEOUS_PLAYERS' } })
+  const date = addDays(f.world.currentDate, 1)
+  const session = createScheduledTrainingSession({ id: 'ui:fix-own', teamId: team.id, date, startTime: '10:00', durationMinutes: 60, scope: 'team', selectedPlayerIds: team.rosterPlayerIds.slice(0, 8), definitionId: 'threePoint', intensity: 'normal' })
+  const reserved = createScheduledTrainingSession({ id: 'ui:fix-other', teamId: other.id, date, startTime: '10:30', durationMinutes: 60, scope: 'individual', playerId: other.rosterPlayerIds[0]!, definitionId: 'threePoint', intensity: 'normal' })
+  let world = updateGameWorld(f.world, { facilityComponents: [...Object.values(f.world.facilityComponentsById), component],
+    facilityComponentConditionRecords: [...Object.values(f.world.facilityComponentConditionRecordsById), createFacilityComponentConditionRecord({ id: 'ui:fix-condition', componentId: component.id, effectiveFrom: f.world.currentDate, serviceability: 'FULL', physicalCondition: 80 })],
+    facilityUsageRights: [...Object.values(f.world.facilityUsageRightsById).map(right => right.facilityId === component.facilityId ? createFacilityUsageRight({ ...right, exclusivity: 'SHARED' }) : right), ...[team, other].map(item => createFacilityUsageRight({ id: `ui:fix-right:${item.id}`, facilityId: component.facilityId, componentIds: [component.id], teamId: item.id, purpose: 'OTHER', exclusivity: 'SHARED', validFrom: f.world.currentDate }))],
+    scheduledTrainingSessionsById: { [session.id]: session, [reserved.id]: reserved } })
+  world = requestTrainingPhysicalAllocation(world, { sessionId: session.id, componentId: component.id, requestId: 'own', confirm: true })
+  world = releaseTrainingPhysicalAllocation(world, session.id, world.scheduledTrainingSessionsById[session.id]!.physicalAllocations![0]!.id)
+  world = requestTrainingPhysicalAllocation(world, { sessionId: reserved.id, componentId: component.id, requestId: 'other', confirm: true })
+  const blocked = executeScheduledTrainingSessions(updateGameWorld(world, { currentDate: date }))
+  useGameStore.getState().replaceWorld(deserializeGameWorldV4(serializeGameWorldV4(blocked, '2032-10-01T00:00:00.000Z')))
+  render(<NgWorkspaceNavigationProvider><TrainingWorkspace /></NgWorkspaceNavigationProvider>)
+  expect(screen.getAllByText(/RESOURCE_OCCUPIED/).length).toBeGreaterThan(0)
+  expect(screen.getByText(/Session not executed/)).toBeInTheDocument()
+  expect(useGameStore.getState().world!.scheduledTrainingSessionsById[session.id]?.execution).toBeUndefined()
+  fireEvent.click(screen.getByRole('button', { name: 'Reschedule for tomorrow' }))
+  const moved = useGameStore.getState().world!
+  expect(moved.scheduledTrainingSessionsById[session.id]?.date).toBe(addDays(date, 1))
+  const output = executeScheduledTrainingSessions(updateGameWorld(moved, { currentDate: addDays(date, 1) }))
+  expect(output.scheduledTrainingSessionsById[session.id]?.status).toBe('completed')
+  expect(executeScheduledTrainingSessions(output)).toEqual(output)
 })

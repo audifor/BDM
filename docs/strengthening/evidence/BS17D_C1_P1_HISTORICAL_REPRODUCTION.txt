@@ -1,0 +1,43 @@
+﻿import { it, expect } from 'vitest'
+import { allocationFixture } from '@/engine/facilities/PhysicalAllocationEngine.test'
+import { requestTrainingPhysicalAllocation, evaluatePhysicalAllocation, releaseTrainingPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
+import { executeScheduledTrainingSessions } from '@/engine/training/ScheduledTrainingEngine'
+import { updateGameWorld } from '@/domain/world'
+it('REVIEW: exclusive confirmed resource is consumed by an unallocated overlapping session', () => {
+ const f = allocationFixture()
+ const booked = requestTrainingPhysicalAllocation(f.world,{sessionId:f.session.id,componentId:f.component.id,requestId:'review',confirm:true})
+ expect(evaluatePhysicalAllocation(booked,f.second,f.component.id)).toMatchObject({status:'BLOCKED',reason:'RESOURCE_OCCUPIED'})
+ const output = executeScheduledTrainingSessions(updateGameWorld(booked,{currentDate:f.date}))
+ expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('completed')
+ expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+ expect(output.scheduledTrainingSessionsById[f.second.id]?.physicalAttempt?.status).toBe('VERIFIED_AVAILABLE')
+ expect(output.scheduledTrainingSessionsById[f.second.id]?.execution?.participants[0]?.developmentStimulusEventId).toBeDefined()
+ console.log('REVIEW_REPRO',JSON.stringify({component:f.component.id,reserved:output.scheduledTrainingSessionsById[f.session.id]?.physicalAllocations?.[0],unallocated:output.scheduledTrainingSessionsById[f.second.id]?.execution}))
+})
+it('REVIEW: releasing a known reservation bypasses a later exclusive reservation', () => {
+ const f = allocationFixture()
+ let world = requestTrainingPhysicalAllocation(f.world,{sessionId:f.session.id,componentId:f.component.id,requestId:'youth',confirm:true})
+ const allocation = world.scheduledTrainingSessionsById[f.session.id]!.physicalAllocations![0]!
+ world = releaseTrainingPhysicalAllocation(world,f.session.id,allocation.id)
+ world = requestTrainingPhysicalAllocation(world,{sessionId:f.second.id,componentId:f.component.id,requestId:'senior',confirm:true})
+ expect(evaluatePhysicalAllocation(world,f.session,f.component.id)).toMatchObject({status:'BLOCKED',reason:'RESOURCE_OCCUPIED'})
+ const output = executeScheduledTrainingSessions(updateGameWorld(world,{currentDate:f.date}))
+ expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('completed')
+ expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+})
+
+it('REVIEW: save/reload preserves the release bypass', () => {
+ const f = allocationFixture()
+ let world = requestTrainingPhysicalAllocation(f.world,{sessionId:f.session.id,componentId:f.component.id,requestId:'save-youth',confirm:true})
+ const allocation = world.scheduledTrainingSessionsById[f.session.id]!.physicalAllocations![0]!
+ world = releaseTrainingPhysicalAllocation(world,f.session.id,allocation.id)
+ world = requestTrainingPhysicalAllocation(world,{sessionId:f.second.id,componentId:f.component.id,requestId:'save-senior',confirm:true})
+ world = deserializeGameWorldV4(serializeGameWorldV4(world,'2032-10-01T00:00:00.000Z'))
+ expect(evaluatePhysicalAllocation(world,f.session,f.component.id)).toMatchObject({status:'BLOCKED',reason:'RESOURCE_OCCUPIED'})
+ const output = executeScheduledTrainingSessions(updateGameWorld(world,{currentDate:f.date}))
+ expect(output.scheduledTrainingSessionsById[f.session.id]?.status).toBe('completed')
+ expect(output.scheduledTrainingSessionsById[f.second.id]?.status).toBe('completed')
+ expect(output.scheduledTrainingSessionsById[f.session.id]?.physicalAttempt?.status).toBe('VERIFIED_AVAILABLE')
+ expect(output.scheduledTrainingSessionsById[f.session.id]?.execution?.participants.some(p => p.developmentStimulusEventId !== undefined)).toBe(true)
+})
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
