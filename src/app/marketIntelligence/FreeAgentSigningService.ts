@@ -1,6 +1,6 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
-import { bindTeamContractCapacity, createFinancialCommitment, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
+import { bindTeamContractCapacity, contractOwnsCapacityAuthority, createFinancialCommitment, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
@@ -64,8 +64,9 @@ export function completeAcceptedFreeAgentSigning(
   }
   const contractId = contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
   // Binding recheck: the accepted terms were negotiated against an earlier world, so canonical Finance
-  // is re-evaluated against the current world immediately before the signing becomes a fact, and the
-  // reservation that protects the exact evaluated amount is published with the same transition.
+  // is re-evaluated against the current world immediately before the signing becomes a fact. The
+  // reservation is an atomic bridge: it is published CONSUMED together with the contract, because the
+  // contractual schedule owns the signing's capacity from the moment the contract exists.
   const capacity = bindTeamContractCapacity(world, {
     teamId: team.id,
     action: 'PLAYER_SIGNING',
@@ -175,6 +176,11 @@ export function completeAcceptedFreeAgentSigning(
     financialReservations: [...capacity.reservations],
     governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), executed],
   })
+  // Capacity authority proof: the published world must already derive this contract's obligation, or the
+  // contract would exist without any authority owning the capacity its bridge released.
+  if (!contractOwnsCapacityAuthority(changed, { contractId: String(contractId), organizationId: team.organizationId })) {
+    return result('FINANCIAL_BLOCK', world, negotiation, 'CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE')
+  }
   const planned = reviewClubManagementPlanning(changed, team.id, 'MATERIAL_ROSTER_CHANGE').world
   return { status: 'SIGNED', world: planned, negotiation: signed, contractId: contract.id }
 }

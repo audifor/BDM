@@ -26,7 +26,7 @@ import { createStaffContract, isStaffContractActiveOn, staffContractIdFromString
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { staffReputationScore } from '@/domain/staffReputation'
 import { addInboxItem, addNewsItem, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
-import { bindTeamContractCapacity, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, type FinancialReservation } from '@/domain/finance'
+import { bindTeamContractCapacity, contractOwnsCapacityAuthority, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, type FinancialReservation } from '@/domain/finance'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
 import { detachStaffFromFutureTrainingSessions } from '@/engine/training'
 
@@ -152,9 +152,10 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   // since, so the exact check `createStaffJobOffer` ran must run again here, or two individually
   // valid offers could both be accepted and jointly exceed what canonical Finance permits.
   const annualSalary = offer.annualSalary ?? calculateStaffOfferSalary(world, opening, offer.staffId)
-  // The reservation belongs to the exact contract this transition creates, so the canonical staff
+  // The bridge reservation belongs to the exact contract this transition creates, so the canonical staff
   // contract id is derived from the input world first and canonical Finance is rechecked against that
-  // same world; the reservation is published with the contract in the single transition below.
+  // same world; the bridge is published CONSUMED with the contract because the staff contract schedule
+  // owns the hiring's capacity from the moment the contract exists.
   const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
   const capacity = bindTeamContractCapacity(world, {
     teamId: opening.teamId,
@@ -205,6 +206,10 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   for (const other of Object.values(offers) as (typeof offer)[]) if (other.jobOpeningId === opening.id && other.id !== offer.id && other.status === 'pending') offers[other.id] = { ...other, status: 'withdrawn' }
 
   const next = rebuild(world, { assignments, openings, candidacies: candidacies as never, offers: offers as never, contracts, employment: { ...world.staffEmploymentByStaffId, [offer.staffId]: appointed.employment }, history: { ...world.staffCareerHistoryByStaffId, [offer.staffId]: appointed.history }, responsibilities, financialReservations: capacity.reservations })
+  // Capacity authority proof: the hired StaffContract must already own the capacity its bridge released.
+  if (!contractOwnsCapacityAuthority(next, { contractId: String(newContractId), organizationId: world.teams[opening.teamId]!.organizationId })) {
+    throw new Error('Team cannot afford this Staff job offer under canonical Finance (CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE)')
+  }
 
   const staff = world.staffPeopleById[offer.staffId]!
   const team = world.teams[opening.teamId]!

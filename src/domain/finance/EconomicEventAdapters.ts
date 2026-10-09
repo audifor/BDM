@@ -284,14 +284,18 @@ function processExpenseEvent(world: GameWorld, event: AuthorizedEconomicEvent, o
 }
 
 /**
- * BS16M-B1 replacement boundary. The payroll `AuthorizedEconomicEvent` of a contract replaces the
- * binding-capacity reservation that protected it: the OPEN reservation whose provenance is the exact
+ * BS16M-B1C compatibility/recovery path — never the primary lifecycle boundary. Since BS16M-B1C a
+ * binding site publishes its reservation already `CONSUMED` in the same transition that creates the
+ * contract, because the contractual schedule that `knownCommitments` reads owns salary capacity from
+ * the moment the contract exists; the payroll `AuthorizedEconomicEvent` owns *accounting*
+ * materialization, not the initial capacity replacement. This function therefore only repairs worlds
+ * that still carry the superseded BS16M-B1 shape (contract plus a matching lingering OPEN reservation,
+ * for example a B1 save), so such a world cannot stay double-counted forever.
+ *
+ * The repair is the narrowest possible one: the OPEN reservation whose provenance is the exact
  * economic contract (`CONTRACT` + `event.sourceEntityId`) is consumed in the *same* pure transition
- * that creates or resolves the canonical `FinancialCommitment`, so the contract's own footprint is
- * protected by exactly one mechanism at every observable world (the reservation before the obligation
- * exists, the canonical commitment/contractual schedule after it) and it is counted exactly once.
- * The returned collection is `null` when nothing changed, so an event without provenance never
- * rewrites the reservation collection.
+ * that records or resolves the canonical `FinancialCommitment`. The returned collection is `null` when
+ * nothing changed, so an event without provenance never rewrites the reservation collection.
  *
  * A rejected event never reaches this point (the reservation stays OPEN), an already `CONSUMED`
  * reservation is a deterministic no-op, and a missing reservation is left missing: historical

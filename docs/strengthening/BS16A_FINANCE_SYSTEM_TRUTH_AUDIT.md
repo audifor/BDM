@@ -422,7 +422,7 @@ Scope includes the controlled migration of contracts, market, staff, relevant AI
 
 Requirements: explicit parity/divergence certification; no dual-write; retire legacy authority only when safe; AI understands liquidity, authorization, commitments and funding gaps.
 
-**Status: BS16M-A IMPLEMENTED. BS16M-B1 IMPLEMENTED (binding capacity reservations); BS16M OVERALL AWAITING BS16M-B2.** The gameplay migration and the reservation of binding capacity by the economic contract are implemented and covered by focused implementation tests; the full convergence certification (the complete §31 matrix of BS16M) is owned by the follow-up BS16M-B2 pass. See "Gameplay finance decision gateway v1 (BS16M-A)" and "Binding capacity reservations v1 (BS16M-B1)" in `docs/ARCHITECTURE.md`.
+**Status: BS16M-A IMPLEMENTED. BS16M-B1 IMPLEMENTED AND CORRECTED BY BS16M-B1C (binding capacity is an atomic bridge handed to the canonical contract); BS16M OVERALL AWAITING BS16M-B2.** The gameplay migration and the reservation/handoff of binding capacity by the economic contract are implemented and covered by focused implementation tests; the full convergence certification (the complete §31 matrix of BS16M) is owned by the follow-up BS16M-B2 pass. See "Gameplay finance decision gateway v1 (BS16M-A)" and "Binding capacity reservations and atomic handoff v1 (BS16M-B1 / BS16M-B1C)" in `docs/ARCHITECTURE.md`.
 
 #### BS16N — Long-Horizon Finance Certification
 

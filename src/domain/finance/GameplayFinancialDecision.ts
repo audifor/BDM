@@ -4,6 +4,8 @@ import type { GameWorld } from '@/domain/world/GameWorld'
 import type { FinancialPlanningPeriod } from './BudgetForecasting'
 import type { FinancialCommitmentDecision, FinancialCommitmentLiquidity, FinancialDecisionStatus, FinancialReasonCode, FinancialReservation } from './FinancialAuthority'
 import { evaluateOrganizationFinancialCommitment, reserveOrganizationFinancialCommitment } from './FinancialAuthorization'
+import { getContractFinancialSchedule } from './ContractFinancialSchedule'
+import { consumeFinancialReservation } from './FinancialAuthority'
 import { legacyMajorUnitsToMoney, resolveOrganizationCurrency } from './FinanceCurrencyPolicy'
 import { createMoney, type CurrencyCode, type Money } from './FinancialLedger'
 
@@ -131,11 +133,12 @@ export interface TeamGameplayContractCapacityInput {
 }
 
 export interface TeamGameplayContractCapacityResult {
-  /** True only when an OPEN canonical reservation now protects this exact contract. */
+  /** True only when canonical Finance allowed the binding and its bridge exists in the returned collection. */
   readonly allowed: boolean
   readonly decision: GameplayFinancialDecision
+  /** The bridge reservation of this exact contract: `CONSUMED` for the world the caller publishes. */
   readonly reservation: FinancialReservation | null
-  /** Canonical reservation collection after the operation; publish it with the binding mutation. */
+  /** Canonical reservation collection to publish with the binding mutation: the bridge is `CONSUMED`, never `OPEN`. */
   readonly reservations: readonly FinancialReservation[]
 }
 
@@ -241,16 +244,20 @@ export function evaluateTeamGameplayFinancialDecision(world: GameWorld, input: T
 }
 
 /**
- * BS16M-B1 thin binding helper. A gameplay action that creates a contract must both re-evaluate
+ * BS16M-B1C thin binding helper. A gameplay action that creates a contract must both re-evaluate
  * canonical Finance against the current world *and* reserve the exact evaluated amount, so several
  * sequential binding actions can never spend the same authorized capacity. It owns no rule of its
  * own: it resolves the Team's Organization and currency exactly as the preview seam does, maps the
  * action onto the canonical category, and delegates evaluate → reserve to
  * `reserveOrganizationFinancialCommitment` (which creates a reservation only for `AFFORDABLE_NOW`).
  *
- * The caller publishes `reservations` in the same `updateGameWorld` transition that creates the
- * contract, so a blocked or failed binding leaves no orphan reservation and no contract without a
- * reservation. Replaying the same contract id is idempotent: the reservation is never duplicated.
+ * The reservation is an **atomic bridge**, never a published long-lived hold: canonical Finance
+ * already derives salary commitment from `ContractFinancialSchedule` the moment the contract exists,
+ * so keeping the bridge OPEN after binding would count the same obligation twice. The returned
+ * `reservations` collection therefore already carries the bridge as `CONSUMED`, and the caller
+ * publishes it in the *same* `updateGameWorld` transition that creates the contract. A blocked or
+ * failed binding returns the original world, so no OPEN bridge can escape a transaction and no
+ * contract can exist without the capacity authority that follows it.
  */
 export function bindTeamContractCapacity(world: GameWorld, input: TeamGameplayContractCapacityInput): TeamGameplayContractCapacityResult {
   const team = world.teams[input.teamId]
@@ -287,12 +294,35 @@ export function bindTeamContractCapacity(world: GameWorld, input: TeamGameplayCo
     ...(input.effectiveDate === undefined ? {} : { effectiveDate: input.effectiveDate }),
     ...(input.reservations === undefined ? {} : { reservations: input.reservations }),
   }
+  const bridge = reserved.reservation !== null && reserved.reservation.status === 'OPEN' ? consumeFinancialReservation(reserved.reservation) : reserved.reservation
+  const handedOff = reserved.reservation !== null && reserved.reservation.status === 'OPEN'
+    ? reserved.reservations.map((reservation) => reservation === reserved.reservation ? bridge! : reservation)
+    : reserved.reservations
   return Object.freeze({
-    allowed: reserved.reservation !== null && reserved.reservation.status === 'OPEN',
+    allowed: reserved.outcome !== 'REJECTED' && reserved.decision.status === 'AFFORDABLE_NOW',
     decision: freezeDecision(world, reserved.decision, decisionInput, category),
-    reservation: reserved.reservation,
-    reservations: Object.freeze([...reserved.reservations]),
+    reservation: bridge,
+    reservations: Object.freeze([...handedOff]),
   })
+}
+
+/**
+ * BS16M-B1C capacity-authority proof. The published world may only carry the bridge as `CONSUMED`
+ * when the canonical contract-derived authority already sees the contract's obligation, i.e. when the
+ * contractual schedule that `knownCommitments` reads derives at least one GUARANTEED entry for it.
+ * A binding site calls this on the world it is about to publish and returns the original world when
+ * it is false, so capacity is never released without an authority that owns it.
+ *
+ * It deliberately does not require the entry to fall inside the current authorization period:
+ * a contract that starts next season is excluded from the current period by `FinancialAuthority`
+ * itself, and that canonical period semantics is preserved rather than overridden here.
+ */
+export function contractOwnsCapacityAuthority(world: GameWorld, input: { readonly contractId: string; readonly organizationId: OrganizationId | string; readonly currencyCode?: string }): boolean {
+  const organizationId = organizationIdFromString(input.organizationId)
+  const currencyCode = input.currencyCode ?? resolveGameplayFinanceCurrencyCode(world, organizationId)
+  if (currencyCode === null) return false
+  return getContractFinancialSchedule(world, { organizationId, contractId: input.contractId, currencyCode, includeConditional: true })
+    .some((entry) => entry.compensationStatus === 'GUARANTEED')
 }
 
 /**
