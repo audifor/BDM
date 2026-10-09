@@ -1,6 +1,7 @@
 import { type ContractNegotiation, type FormalOfferClubAction, type NegotiationResponsibleActor, type NegotiationTermSet } from '@/domain/market'
 import type { TeamId } from '@/domain/ids'
-import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import { respondToNegotiationCounter as applyNegotiationCounterResponse } from '@/engine/market'
 import { assessRoutedFreeAgentOfferIntelligence } from './FreeAgentOfferIntelligenceService'
 import { resolveOfferExecutionResponsibility } from '@/engine/market/NegotiationOfferAuthority'
@@ -101,7 +102,7 @@ export function progressAiNegotiationCounterResponses(world: GameWorld): { reado
       .some((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.playerId === latest.playerId
         && offer.sourcePlanId === latest.sourcePlanId && offer.sourceProposalId === latest.sourceProposalId)
     const canAccept = currentProposal && isPlayerFreeAgent(current, latest.playerId)
-      && canTeamAffordAdditionalSalary(current, latest.teamId, latest.salary)
+      && evaluateTeamGameplayFinancialDecision(current, { teamId: latest.teamId, action: 'MARKET_OFFER', legacyAnnualAmountMajorUnits: latest.salary, sourceAuthority: 'NEGOTIATION_COUNTER_RESPONSE', sourceEntityId: latest.id }).allowed
     results.push(respondToNegotiationCounter(current, {
       teamId: latest.teamId,
       negotiationId: latest.id,

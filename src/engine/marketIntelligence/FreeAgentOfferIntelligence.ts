@@ -3,7 +3,8 @@ import { isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, 
 import type { ResponsibilityMode } from '@/domain/responsibility'
 import { validateResponsibilityAssignment } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
-import { canTeamAffordAdditionalSalary, getResponsibility, getStaffAssignment, getStaffPerson, isPlayerFreeAgent } from '@/domain/world'
+import { getResponsibility, getStaffAssignment, getStaffPerson, isPlayerFreeAgent } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision, gameplayFinancialEvidence, type GameplayFinancialEvidence } from '@/domain/finance'
 import type { AcquisitionProposalIntelligence } from './AcquisitionProposalIntelligence'
 import type { Affordability, MarketSignalEvidence } from './MarketCandidateFeasibility'
 import type { GMWorkflowDecision } from '@/engine/gmPlanning'
@@ -67,6 +68,8 @@ export interface FreeAgentOfferIntelligence {
   readonly agentFee?: number
   readonly agentFeeAuthority: 'UNKNOWN'
   readonly payrollAffordability: PayrollAffordability
+  /** Canonical Finance evidence behind `payrollAffordability`. */
+  readonly canonicalFinance?: GameplayFinancialEvidence
   readonly bs10bAffordability?: Affordability
   readonly financeV2Context?: 'HEALTHY' | 'CONSTRAINED' | 'STRESSED' | 'UNKNOWN'
   readonly playerInterest?: MarketSignalEvidence
@@ -150,9 +153,20 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
   const representation = world.playerRepresentations.find((item) => item.playerId === playerId && item.startedOn <= world.currentDate)
   const preparedSalary = proposal.knownExpectedSalary
   const expectedTermYears = proposal.expectedTermYears
+  // The existing AFFORDABLE/OVER_BUDGET product label is derived from canonical Finance; the canonical
+  // decision is preserved next to it so downstream consumers keep the real status and reasons.
+  const finance = preparedSalary === undefined
+    ? undefined
+    : evaluateTeamGameplayFinancialDecision(world, {
+      teamId: proposal.teamId,
+      action: 'PLAYER_SIGNING',
+      legacyAnnualAmountMajorUnits: preparedSalary.value,
+      sourceAuthority: 'FREE_AGENT_OFFER_INTELLIGENCE',
+      sourceEntityId: playerId,
+    })
   const payrollAffordability: PayrollAffordability = preparedSalary === undefined
     ? 'UNKNOWN'
-    : canTeamAffordAdditionalSalary(world, proposal.teamId, preparedSalary.value) ? 'AFFORDABLE' : 'OVER_BUDGET'
+    : finance!.allowed ? 'AFFORDABLE' : 'OVER_BUDGET'
   const activeNegotiation = Object.values(world.negotiationsById).find((item) => isActiveNegotiation(item)
     && item.playerId === playerId
     && (item.teamId === proposal.teamId || (item.teamId === undefined && item.organizationId === organizationId)))
@@ -239,6 +253,7 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     ...(representation === undefined ? {} : { agentId: representation.agentId }),
     agentFeeAuthority: 'UNKNOWN',
     payrollAffordability,
+    ...(finance === undefined ? {} : { canonicalFinance: gameplayFinancialEvidence(finance) }),
     bs10bAffordability: candidate.feasibility.affordability,
     financeV2Context: candidate.feasibility.financeV2Context,
     ...(proposal.knownPlayerInterest === undefined ? {} : { playerInterest: proposal.knownPlayerInterest }),

@@ -2,7 +2,8 @@ import { isActiveNegotiation, negotiationIdForOpening, negotiationOpeningKeyStri
 import type { MarketSignalEvidence } from './MarketCandidateFeasibility'
 import type { FreeAgentOfferIntelligence } from './FreeAgentOfferIntelligence'
 import type { NegotiationRole } from '@/domain/market'
-import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision, gameplayFinancialEvidence, type GameplayFinancialEvidence } from '@/domain/finance'
 import { resolveOfferExecutionResponsibility, type OfferExecutionOwner } from '@/engine/market/NegotiationOfferAuthority'
 
 export type FormalOfferPreparationReadiness =
@@ -37,6 +38,8 @@ export interface FormalOfferPreparation {
   readonly agentFeeStatus: 'NOT_YET_PROPOSED' | 'PROPOSED'
   readonly agentFeeAuthority: 'NOT_REQUIRED_AT_OPEN' | 'UNKNOWN'
   readonly payrollAffordability: 'AFFORDABLE' | 'OVER_BUDGET' | 'UNKNOWN'
+  /** Canonical Finance evidence behind `payrollAffordability`. */
+  readonly canonicalFinance?: GameplayFinancialEvidence
   readonly executionResponsibility: {
     readonly kind: 'submitPlayerContractOffer'
     readonly status: 'USER_AUTHORITY' | 'RESOLVED_HOLDER' | 'NO_EXECUTION_OWNER' | 'BLOCKED'
@@ -95,9 +98,20 @@ export function assessFormalOfferPreparation(world: GameWorld, offer: FreeAgentO
   const termEvidence = offer.expectedTermYears
   const hasTerm = termEvidence !== undefined && Number.isSafeInteger(termEvidence.value) && termEvidence.value > 0
   const termProposalYears = hasTerm ? termEvidence!.value : undefined
+  // Derived from canonical Finance; the AFFORDABLE/OVER_BUDGET label stays because existing contracts
+  // consume it, while the canonical decision travels with it.
+  const finance = salaryProposal === undefined
+    ? undefined
+    : evaluateTeamGameplayFinancialDecision(world, {
+      teamId: offer.teamId,
+      action: 'PLAYER_SIGNING',
+      legacyAnnualAmountMajorUnits: salaryProposal.amount,
+      sourceAuthority: 'FORMAL_OFFER_PREPARATION',
+      sourceEntityId: offer.sourceProposalId,
+    })
   const payrollAffordability: FormalOfferPreparation['payrollAffordability'] = salaryProposal === undefined
     ? 'UNKNOWN'
-    : canTeamAffordAdditionalSalary(world, offer.teamId, salaryProposal.amount) ? 'AFFORDABLE' : 'OVER_BUDGET'
+    : finance!.allowed ? 'AFFORDABLE' : 'OVER_BUDGET'
   const executionResponsibility = {
     kind: 'submitPlayerContractOffer' as const,
     ...resolveOfferExecutionResponsibility(world, offer.teamId),
@@ -152,6 +166,7 @@ export function assessFormalOfferPreparation(world: GameWorld, offer: FreeAgentO
     agentFeeStatus: offer.agentFee === undefined ? 'NOT_YET_PROPOSED' : 'PROPOSED',
     agentFeeAuthority: offer.agentFee === undefined ? 'NOT_REQUIRED_AT_OPEN' : 'UNKNOWN',
     payrollAffordability,
+    ...(finance === undefined ? {} : { canonicalFinance: gameplayFinancialEvidence(finance) }),
     executionResponsibility,
     governanceAuthority: 'NOT_REQUIRED',
     signingGovernanceDecisionType: 'PLAYER_CONTRACT_SIGNING',

@@ -1,6 +1,7 @@
 import { getFreeAgentMarketTerms, signFreeAgent } from './MarketService'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
-import { canTeamAffordAdditionalSalary, getFreeAgents, type GameWorld } from '@/domain/world'
+import { getFreeAgents, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision, type GameplayFinancialDecision } from '@/domain/finance'
 import type { WorldRepairReport } from '@/domain/repair'
 import { getUserTeam } from '@/engine/calendar'
 import type { TeamId } from '@/domain/ids'
@@ -11,6 +12,14 @@ export interface AiRosterMaintenanceResult {
   readonly reports: readonly WorldRepairReport[]
 }
 export interface AiFreeAgentCandidate { readonly playerId: import('@/domain/ids').PlayerId; readonly annualSalary: number; readonly priorityScore: number; readonly desirability: number }
+
+/** Truthful canonical attribution for a repair that canonical Finance blocked; never a generic "over budget". */
+function canonicalFinanceBlockerSummary(decisions: readonly GameplayFinancialDecision[]): string {
+  if (decisions.length === 0) return 'no eligible same-gender free agent is available'
+  const outcomes = [...new Set(decisions.map((decision) => decision.outcome))].sort().join('|')
+  const statuses = [...new Set(decisions.map((decision) => decision.status))].sort().join('|')
+  return `${outcomes} / ${statuses}`
+}
 
 export function freeAgentDesirability(priorityScore: number, annualSalary: number): number { return priorityScore - annualSalary / 100_000 }
 
@@ -48,15 +57,32 @@ export function maintainAiTeamMinimumRosters(world: GameWorld, context: { readon
     }
 
     const beforeRepair = current
+    let financeBlockers: readonly GameplayFinancialDecision[] = []
     while (current.teams[initialTeam.id]!.rosterPlayerIds.length < 5) {
-      const candidate = rankAiFreeAgentCandidates(current, initialTeam.id).find((item) => canTeamAffordAdditionalSalary(current, initialTeam.id, item.annualSalary))
-      if (candidate === undefined) break
+      // Canonical Finance is the candidate filter, and the canonical outcome is preserved rather than
+      // reduced to "over budget": an affordable candidate is one whose canonical decision allows the
+      // signing right now.
+      const evaluated = rankAiFreeAgentCandidates(current, initialTeam.id).map((item) => ({
+        item,
+        decision: evaluateTeamGameplayFinancialDecision(current, {
+          teamId: initialTeam.id,
+          action: 'PLAYER_SIGNING',
+          legacyAnnualAmountMajorUnits: item.annualSalary,
+          sourceAuthority: 'AI_MINIMUM_ROSTER_REPAIR',
+          sourceEntityId: String(item.playerId),
+        }),
+      }))
+      const candidate = evaluated.find((entry) => entry.decision.allowed)?.item
+      if (candidate === undefined) {
+        financeBlockers = evaluated.map((entry) => entry.decision)
+        break
+      }
       current = signFreeAgent(current, initialTeam.id, candidate.playerId, 'WORLD_REPAIR')
     }
     const afterCount = current.teams[initialTeam.id]!.rosterPlayerIds.length
     const restored = afterCount >= 5
     if (!restored) unresolvedTeamIds.push(initialTeam.id)
-    reports.push(rosterReport(initialTeam.id, restored ? 'RECOVERABLE' : 'UNRECOVERABLE', beforeCount, afterCount, restored ? 'Signed only affordable same-gender free agents until the playable minimum was reached.' : 'No affordable eligible free agent could restore the playable minimum; no player was fabricated.', current !== beforeRepair, false, restored ? undefined : { code: 'AI_MINIMUM_ROSTER_UNRESOLVED', message: 'The AI team remains below five rostered players because no affordable same-gender free agent is available.' }))
+    reports.push(rosterReport(initialTeam.id, restored ? 'RECOVERABLE' : 'UNRECOVERABLE', beforeCount, afterCount, restored ? 'Signed only canonically affordable same-gender free agents until the playable minimum was reached.' : 'No canonically affordable eligible free agent could restore the playable minimum; no player was fabricated.', current !== beforeRepair, false, restored ? undefined : { code: 'AI_MINIMUM_ROSTER_UNRESOLVED', message: `The AI team remains below five rostered players because canonical Finance blocked every eligible same-gender free agent (${canonicalFinanceBlockerSummary(financeBlockers)}).` }))
   }
   return { world: current, unresolvedTeamIds: Object.freeze(unresolvedTeamIds), reports: Object.freeze(reports) }
 }

@@ -77,7 +77,7 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
   return (
     <NgHoloShell
       appLabel="Market"
-      meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} remaining`}
+      meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} salary budget remaining`}
       region="market-workspace"
       teamId={team.id}
       title="Free agents"

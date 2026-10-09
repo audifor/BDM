@@ -1,10 +1,10 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
-import { createFinancialCommitment, legacyMajorUnitsToMoney } from '@/domain/finance'
+import { createFinancialCommitment, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
-import { getPlayerRosterTeamId, isPlayerFreeAgent, canTeamAffordAdditionalSalary, updateGameWorld, type GameWorld } from '@/domain/world'
+import { getPlayerRosterTeamId, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import { resolveSigningExecutionAuthority } from '@/engine/market'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 
@@ -62,8 +62,18 @@ export function completeAcceptedFreeAgentSigning(
     || (negotiation.agentFee !== undefined && (!Number.isSafeInteger(negotiation.agentFee) || negotiation.agentFee < 0))) {
     return result('BLOCKED', world, negotiation, 'ACCEPTED_TERMS_INVALID')
   }
-  if (!canTeamAffordAdditionalSalary(world, team.id, negotiation.salary, world.currentDate)) {
-    return result('FINANCIAL_BLOCK', world, negotiation, 'CURRENT_PAYROLL_CANNOT_AFFORD_ACCEPTED_SALARY')
+  // Binding recheck: the accepted terms were negotiated against an earlier world, so canonical Finance
+  // is re-evaluated against the current world immediately before the signing becomes a fact.
+  const finance = evaluateTeamGameplayFinancialDecision(world, {
+    teamId: team.id,
+    action: 'PLAYER_SIGNING',
+    legacyAnnualAmountMajorUnits: negotiation.salary,
+    effectiveDate: world.currentDate,
+    sourceAuthority: 'FREE_AGENT_SIGNING',
+    sourceEntityId: negotiation.id,
+  })
+  if (!finance.allowed) {
+    return result('FINANCIAL_BLOCK', world, negotiation, gameplayFinancialBlockReason(finance))
   }
 
   const owner = resolveSigningExecutionAuthority(world, team.id)

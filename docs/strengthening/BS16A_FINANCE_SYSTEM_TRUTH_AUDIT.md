@@ -422,6 +422,8 @@ Scope includes the controlled migration of contracts, market, staff, relevant AI
 
 Requirements: explicit parity/divergence certification; no dual-write; retire legacy authority only when safe; AI understands liquidity, authorization, commitments and funding gaps.
 
+**Status: BS16M-A IMPLEMENTED / AWAITING CERTIFICATION.** The gameplay migration itself is implemented and covered by focused implementation tests; the full convergence certification (the complete §31 matrix of BS16M) is owned by the follow-up BS16M-B pass. See "Gameplay finance decision gateway v1 (BS16M-A)" in `docs/ARCHITECTURE.md`.
+
 #### BS16N — Long-Horizon Finance Certification
 
 Goal: final System Truth certification for Finance, covering fiscal rollover, budget renewal authority, season close, long-horizon ledger integrity, save/load, revenue and cost continuity, debt/financing continuity, AI continuity, performance and growth, and multi-season economic plausibility.
