@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getFreeAgentMarketTerms, releasePlayer, signFreeAgent } from '@/app/market'
+import { executeContractRelease } from '@/app/market/ContractReleaseService'
 import { completeAcceptedFreeAgentSigning } from '@/app/marketIntelligence/FreeAgentSigningService'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer/StaffCareerService'
 import { recordPlayerContractSigningDecisionEvent } from '@/app/governance/PlayerContractSigningGovernanceService'
@@ -10,6 +11,8 @@ import { createRetentionNegotiation, retentionNegotiationIdFor, type RetentionTe
 import { addYears } from '@/domain/date'
 import {
   bindTeamContractCapacity,
+  contractOwnsCapacityAuthority,
+  createFinancialReservation,
   findFinancialReservationByProvenance,
   getEffectiveAuthorizedHeadroomMinorUnits,
   getOrganizationFinancialAuthorization,
@@ -19,7 +22,7 @@ import {
   type FinancialReservation,
 } from '@/domain/finance'
 import { authorizeTeamSalaryForTest, cashMinorUnitsForTest, financingDrawdownForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
-import { contractIdFromString, staffPersonIdFromString, type TeamId } from '@/domain/ids'
+import { contractIdFromString, staffPersonIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import type { ContractNegotiation } from '@/domain/market'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -28,74 +31,94 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
 /**
- * BS16M-B1. Binding capacity is reserved by the economic contract, not by the gameplay action that
- * created it (`sourceAuthority = CONTRACT`, `sourceEntityId = contractId`), and the payroll
- * `AuthorizedEconomicEvent` of that same contract replaces the reservation with the canonical
- * `FinancialCommitment`. Every proof below goes through a real authority: the canonical reservation
- * collections, the real binding services and the canonical economic-event adapter.
+ * BS16M-B1C. The binding reservation is an **atomic bridge**, never a published hold: canonical Finance
+ * derives salary commitment from `ContractFinancialSchedule` the moment a contract exists, so the
+ * reservation is published `CONSUMED` in the same transition that creates the contract and the
+ * contractual schedule owns capacity from then on. Every proof below goes through a real binding site
+ * or a real canonical reconciliation point.
+ *
+ * Identity is unchanged from BS16M-B1: `sourceAuthority = CONTRACT`, `sourceEntityId = contractId`.
  */
 const CURRENCY = 'EUR'
-/** 1 unit = 1,000 legacy whole-major units = 100,000 canonical minor units (the BS16G crossing). */
-const UNIT_MAJOR_UNITS = 1_000
-const UNIT_MINOR_UNITS = 100_000
 /** One legacy whole-major unit is 100 canonical minor units for every supported currency. */
 const MINOR_UNITS_PER_MAJOR_UNIT = 100
+/** 1 capacity unit = 1,000 legacy whole-major units = 100,000 canonical minor units. */
+const UNIT_MINOR_UNITS = 1_000 * MINOR_UNITS_PER_MAJOR_UNIT
 const RICH_AUTHORIZATION_MINOR_UNITS = 200_000_000_000
 const RICH_CASH_MINOR_UNITS = 10_000_000_000
-
-const majorUnits = (units: number) => units * UNIT_MAJOR_UNITS
-const minorUnits = (units: number) => units * UNIT_MINOR_UNITS
+const CONTRACT_RESERVATION_AUTHORITY = 'CONTRACT'
 
 function userTeam(world: GameWorld) {
   return Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
-}
-
-/**
- * A club whose canonical authorization is exactly `playerUnits` / `staffUnits` above what its existing
- * contractual payroll already commits, so "authorization 100" means exactly 100 units of headroom.
- */
-function club(input: { readonly playerUnits?: number; readonly staffUnits?: number } = {}) {
-  const base = createNewGame()
-  const team = userTeam(base)
-  const funded = fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS })
-  const baseline = getOrganizationFinancialAuthorization(funded, { organizationId: team.organizationId, currencyCode: CURRENCY })
-  const committed = (category: string) => baseline.lines.filter((line) => line.category === category).reduce((sum, line) => sum + line.committedMinorUnits, 0)
-  const world = authorizeTeamSalaryForTest(funded, team.id, {
-    currencyCode: CURRENCY,
-    playerSalaryMinorUnits: committed('PLAYER_SALARY') + minorUnits(input.playerUnits ?? 100),
-    staffSalaryMinorUnits: committed('STAFF_SALARY') + minorUnits(input.staffUnits ?? 50),
-  })
-  return { world, team, organizationId: team.organizationId }
 }
 
 function headroomMinorUnits(world: GameWorld, organizationId: string, category: 'PLAYER_SALARY' | 'STAFF_SALARY'): number {
   return getEffectiveAuthorizedHeadroomMinorUnits(getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: CURRENCY }), category)
 }
 
-function bind(world: GameWorld, teamId: TeamId, contractId: string, units: number, action: 'PLAYER_SIGNING' | 'STAFF_HIRING' = 'PLAYER_SIGNING') {
-  return bindTeamContractCapacity(world, { teamId, action, legacyAnnualAmountMajorUnits: majorUnits(units), contractId, effectiveDate: world.currentDate })
+/** The contractual (or, for categories without a schedule, outstanding) amount the authorization already commits. */
+function committedMinorUnits(world: GameWorld, organizationId: string, category: 'PLAYER_SALARY' | 'STAFF_SALARY'): number {
+  return getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: CURRENCY }).lines
+    .filter((line) => line.category === category)
+    .reduce((sum, line) => sum + line.committedMinorUnits, 0)
 }
 
-/** Publishes a reservation collection exactly as a binding site does: with the mutation it protects. */
-function publish(world: GameWorld, reservations: readonly FinancialReservation[]): GameWorld {
-  return updateGameWorld(world, { financialReservations: [...reservations] })
+/** Capacity still protected by OPEN reservations; BS16M-B1C requires this to be 0 after every successful binding. */
+function openReservedMinorUnits(world: GameWorld, organizationId: string): number {
+  return sumReservedCapacity(Object.values(world.financialReservationsById), organizationId, CURRENCY).minorUnits
 }
 
 function reservationsOf(world: GameWorld, contractId: string): readonly FinancialReservation[] {
   return Object.values(world.financialReservationsById).filter((reservation) => reservation.sourceEntityId === contractId)
 }
 
-function staffOfferOf(world: GameWorld, offerId: string) {
-  const offer = Object.values(world.staffJobOffersById).find((item) => String(item.id) === offerId)
-  if (offer === undefined) throw new Error(`Missing Staff job offer ${offerId}`)
-  return offer
+function bridgeOf(world: GameWorld, contractId: string): FinancialReservation {
+  const matches = reservationsOf(world, contractId)
+  if (matches.length !== 1) throw new Error(`Expected exactly one reservation for ${contractId}, found ${matches.length}`)
+  return matches[0]!
 }
 
-function reservedMinorUnits(world: GameWorld, organizationId: string): number {
-  return sumReservedCapacity(Object.values(world.financialReservationsById), organizationId, CURRENCY).minorUnits
+function fundedClub(): GameWorld {
+  const base = createNewGame()
+  return fundTeamWithOpeningCapital(base, userTeam(base).id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS })
 }
 
-/** The canonical payroll materialization for one contract: the event that replaces its reservation. */
+/**
+ * Authorizes exactly `playerMinorUnits` / `staffMinorUnits` of headroom *above* whatever the club's own
+ * contractual payroll already commits, so a test states the capacity it wants in canonical minor units.
+ */
+function authorizeAboveCommitted(world: GameWorld, teamId: TeamId, input: { readonly playerMinorUnits: number; readonly staffMinorUnits: number }): GameWorld {
+  const organizationId = world.teams[teamId]!.organizationId
+  return authorizeTeamSalaryForTest(world, teamId, {
+    currencyCode: CURRENCY,
+    playerSalaryMinorUnits: committedMinorUnits(world, organizationId, 'PLAYER_SALARY') + input.playerMinorUnits,
+    staffSalaryMinorUnits: committedMinorUnits(world, organizationId, 'STAFF_SALARY') + input.staffMinorUnits,
+  })
+}
+
+/** Releases one player from another club (with roster room) so the test club can sign them as a free agent. */
+function availableFreeAgent(world: GameWorld, clubTeamId: TeamId, excludedTeamIds: readonly TeamId[] = []) {
+  const contract = Object.values(world.contractsById).find((item) => item.teamId !== undefined && item.teamId !== clubTeamId
+    && !excludedTeamIds.includes(item.teamId)
+    && getPlayerContractStatus(item, world.currentDate) === 'active'
+    && (world.teams[item.teamId]?.rosterPlayerIds.length ?? 0) >= 6
+    && world.teams[item.teamId]?.rosterPlayerIds.includes(item.playerId))
+  if (contract?.teamId === undefined) throw new Error('The fixture needs a releasable player from another club')
+  const released = releasePlayer(world, contract.teamId, contract.playerId)
+  return { world: released, playerId: contract.playerId, teamId: contract.teamId, salaryMinorUnits: marketSalaryMinorUnits(released, contract.playerId) }
+}
+
+function marketSalaryMinorUnits(world: GameWorld, playerId: PlayerId): number {
+  return getFreeAgentMarketTerms(world, playerId).annualSalary * MINOR_UNITS_PER_MAJOR_UNIT
+}
+
+/** The exact contract id the atomic Market binder derives from its input world. */
+function marketContractId(world: GameWorld, teamId: TeamId, playerId: PlayerId): string {
+  const ordinal = Object.values(world.contractsById).filter((contract) => contract.playerId === playerId && contract.term.startsOn === world.currentDate).length + 1
+  return `contract:${playerId}:${teamId}:${world.currentDate}:${ordinal}`
+}
+
+/** The canonical payroll materialization for one contract: accounting, not a capacity boundary any more. */
 function materializePayroll(world: GameWorld, teamId: TeamId, contractId: string, date: string) {
   const organizationId = world.teams[teamId]!.organizationId
   return materializeContractFinanceForDate(world, date, {
@@ -108,35 +131,68 @@ function materializePayroll(world: GameWorld, teamId: TeamId, contractId: string
   })
 }
 
+/** Represents the superseded BS16M-B1 published shape: the same canonical reservation, still OPEN. */
+function asSupersededOpenReservation(reservation: FinancialReservation): FinancialReservation {
+  return createFinancialReservation({
+    id: reservation.id,
+    organizationId: reservation.organizationId,
+    currency: reservation.currency,
+    amount: reservation.amount,
+    sourceAuthority: reservation.sourceAuthority,
+    sourceEntityId: reservation.sourceEntityId,
+    createdOn: reservation.createdOn,
+    status: 'OPEN',
+  })
+}
+
 function roundTrip(world: GameWorld): GameWorld {
   return deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, world.currentDate))))
 }
 
+function withStaffPerson(world: GameWorld, staffId: ReturnType<typeof staffPersonIdFromString>): GameWorld {
+  const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 90])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+  return updateGameWorld(world, {
+    staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Binding', lastName: 'Candidate' }, professional: { attributes } }],
+    staffReputationProfilesByStaffId: { ...world.staffReputationProfilesByStaffId, [staffId]: createDefaultStaffReputationProfile() },
+  })
+}
+
+function staffOffer(world: GameWorld, teamId: TeamId, staffId: ReturnType<typeof staffPersonIdFromString>, roleId: 'advanceScout' | 'headScout', seed: string) {
+  const ready = withStaffPerson(world, staffId)
+  const { world: opened, opening } = createStaffJobOpeningForTeam(ready, { teamId, roleId })
+  const candidate = identifyStaffCandidate(opened, { openingId: opening.id, staffId })
+  const interviewed = completeStaffInterview(startStaffInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
+  const offered = createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId, id: seed })
+  const salary = Object.values(offered.world.staffJobOffersById).find((offer) => String(offer.id) === offered.offerId)?.annualSalary
+  if (salary === undefined) throw new Error('The prepared Staff offer has no recorded salary')
+  return { world: offered.world, offerId: offered.offerId, salaryMinorUnits: salary * MINOR_UNITS_PER_MAJOR_UNIT }
+}
+
 function governanceFixture(world: GameWorld, negotiation: ContractNegotiation): GameWorld {
-  const institution = { id: 'governance:binding-capacity', universe: 'PROFESSIONAL_CLUB' as const, name: 'Binding capacity club', teamIds: [negotiation.teamId!] }
+  const institution = { id: 'governance:capacity-handoff', universe: 'PROFESSIONAL_CLUB' as const, name: 'Capacity handoff club', teamIds: [negotiation.teamId!] }
   const authorities = [
-    { id: 'authority:capacity-board-executive', fromBodyId: 'body:capacity-board', toBodyId: 'body:capacity-executive', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
-    { id: 'authority:capacity-owner-board', fromBodyId: 'body:capacity-owner', toBodyId: 'body:capacity-board', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
+    { id: 'authority:handoff-board-executive', fromBodyId: 'body:handoff-board', toBodyId: 'body:handoff-executive', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
+    { id: 'authority:handoff-owner-board', fromBodyId: 'body:handoff-owner', toBodyId: 'body:handoff-board', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
   ]
   const rights = [
-    { id: 'right:capacity-propose', authorityGrantId: authorities[0]!.id, bodyId: 'body:capacity-executive', edgeParticipant: 'DELEGATE' as const, right: 'PROPOSE' as const },
-    { id: 'right:capacity-execute', authorityGrantId: authorities[0]!.id, bodyId: 'body:capacity-executive', edgeParticipant: 'DELEGATE' as const, right: 'EXECUTE' as const },
-    { id: 'right:capacity-approve', authorityGrantId: authorities[1]!.id, bodyId: 'body:capacity-board', edgeParticipant: 'DELEGATE' as const, right: 'APPROVE' as const },
+    { id: 'right:handoff-propose', authorityGrantId: authorities[0]!.id, bodyId: 'body:handoff-executive', edgeParticipant: 'DELEGATE' as const, right: 'PROPOSE' as const },
+    { id: 'right:handoff-execute', authorityGrantId: authorities[0]!.id, bodyId: 'body:handoff-executive', edgeParticipant: 'DELEGATE' as const, right: 'EXECUTE' as const },
+    { id: 'right:handoff-approve', authorityGrantId: authorities[1]!.id, bodyId: 'body:handoff-board', edgeParticipant: 'DELEGATE' as const, right: 'APPROVE' as const },
   ]
-  const decision = { id: 'decision:binding-capacity', institutionId: institution.id, decisionType: 'PLAYER_CONTRACT_SIGNING' as const, proposedByBodyId: 'body:capacity-executive', proposedOn: world.currentDate, subject: { kind: 'GENERIC' as const, referenceId: negotiation.id } }
+  const decision = { id: 'decision:capacity-handoff', institutionId: institution.id, decisionType: 'PLAYER_CONTRACT_SIGNING' as const, proposedByBodyId: 'body:handoff-executive', proposedOn: world.currentDate, subject: { kind: 'GENERIC' as const, referenceId: negotiation.id } }
   return updateGameWorld(world, {
     governanceInstitutions: [institution],
     governanceBodies: [
-      { id: 'body:capacity-owner', institutionId: institution.id, kind: 'OWNERSHIP', name: 'Owner' },
-      { id: 'body:capacity-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' },
-      { id: 'body:capacity-executive', institutionId: institution.id, kind: 'EXECUTIVE', name: 'Executive' },
+      { id: 'body:handoff-owner', institutionId: institution.id, kind: 'OWNERSHIP', name: 'Owner' },
+      { id: 'body:handoff-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' },
+      { id: 'body:handoff-executive', institutionId: institution.id, kind: 'EXECUTIVE', name: 'Executive' },
     ],
     governanceAuthorityGrants: authorities,
     governanceDecisionParticipationGrants: rights,
     governanceDecisions: [decision],
     governanceDecisionEvents: [
-      { id: '01:capacity-proposed', decisionId: decision.id, kind: 'PROPOSED' as const, bodyId: 'body:capacity-executive', effectiveOn: world.currentDate, authorityGrantIds: [authorities[0]!.id] },
-      { id: '02:capacity-approved', decisionId: decision.id, kind: 'APPROVED' as const, bodyId: 'body:capacity-board', effectiveOn: world.currentDate, authorityGrantIds: [authorities[1]!.id] },
+      { id: '01:handoff-proposed', decisionId: decision.id, kind: 'PROPOSED' as const, bodyId: 'body:handoff-executive', effectiveOn: world.currentDate, authorityGrantIds: [authorities[0]!.id] },
+      { id: '02:handoff-approved', decisionId: decision.id, kind: 'APPROVED' as const, bodyId: 'body:handoff-board', effectiveOn: world.currentDate, authorityGrantIds: [authorities[1]!.id] },
     ],
   })
 }
@@ -152,11 +208,11 @@ function freeAgentAgreement() {
   )
   const playerId = team.rosterPlayerIds[0]!
   const negotiation: ContractNegotiation = {
-    id: 'negotiation:binding-capacity',
+    id: 'negotiation:capacity-handoff',
     organizationId: team.organizationId,
     teamId: team.id,
     playerId,
-    sourceProposalId: 'proposal:binding-capacity',
+    sourceProposalId: 'proposal:capacity-handoff',
     status: 'ACCEPTED',
     salary: 1_234_567,
     years: 3,
@@ -168,385 +224,428 @@ function freeAgentAgreement() {
     teams: Object.values(funded.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== playerId) } : item),
     lineupsByTeamId: Object.fromEntries(Object.entries(funded.lineupsByTeamId).map(([id, lineup]) => [id, clearPlayerFromLineup(lineup, playerId)])),
   }), negotiation)
-  return { world, team, negotiation, expectedContractId: `contract:signed-free-agent:${negotiation.id}` }
+  return { world, team, negotiation, contractId: `contract:signed-free-agent:${negotiation.id}`, salaryMinorUnits: negotiation.salary * MINOR_UNITS_PER_MAJOR_UNIT }
 }
 
-function withStaffPerson(world: GameWorld, staffId: ReturnType<typeof staffPersonIdFromString>): GameWorld {
-  const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 90])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
-  return updateGameWorld(world, {
-    staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Binding', lastName: 'Candidate' }, professional: { attributes } }],
-    staffReputationProfilesByStaffId: { ...world.staffReputationProfilesByStaffId, [staffId]: createDefaultStaffReputationProfile() },
+const retentionApproverId = staffPersonIdFromString('staff:handoff:retention-approver')
+
+/** Retention Governance graph plus the club's canonical capacity, for the future-dated successor proof. */
+function retentionSetup(extraTerms: Partial<RetentionTermSet> = {}) {
+  const base = createNewGame()
+  const team = userTeam(base)
+  const playerId = team.rosterPlayerIds[0]!
+  const predecessor = Object.values(base.contractsById).find((contract) => contract.playerId === playerId && contract.teamId === team.id)!
+  const funded = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
+    team.id,
+    { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
+  )
+  const terms: RetentionTermSet = { salary: predecessor.compensation.annualSalary, years: 1, guarantees: [{ year: 1, guaranteedAmount: predecessor.compensation.annualSalary }], ...extraTerms }
+  const negotiation = createRetentionNegotiation({
+    id: retentionNegotiationIdFor(team.id, playerId, predecessor.id, 'retention-capacity-handoff'),
+    openingActionId: 'retention-capacity-handoff', teamId: team.id, organizationId: team.organizationId, playerId,
+    predecessorContractId: predecessor.id, openedOn: funded.currentDate, openedByCoachId: team.coachId!,
+    status: 'ACCEPTED', acceptedTerms: terms, rounds: [],
   })
+  const institution = { id: 'institution:handoff-retention', universe: 'PROFESSIONAL_CLUB' as const, name: 'Retention capacity governance', teamIds: [team.id] }
+  const grants = [
+    { id: 'authority:handoff-retention-executive', fromBodyId: 'body:handoff-owner', toBodyId: 'body:handoff-executive', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: funded.currentDate },
+    { id: 'authority:handoff-retention-board', fromBodyId: 'body:handoff-owner', toBodyId: 'body:handoff-board', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: funded.currentDate },
+  ]
+  const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 70])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+  const world = updateGameWorld(funded, {
+    retentionNegotiations: [negotiation],
+    governanceInstitutions: [institution],
+    governanceBodies: [
+      { id: 'body:handoff-owner', institutionId: institution.id, kind: 'OWNERSHIP', name: 'Owner' },
+      { id: 'body:handoff-executive', institutionId: institution.id, kind: 'EXECUTIVE', name: 'Executive' },
+      { id: 'body:handoff-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' },
+    ],
+    governanceAppointments: [
+      { id: 'appointment:handoff-retention-proposer', bodyId: 'body:handoff-executive', actor: { kind: 'COACH', id: funded.userCoachId }, role: 'CEO', startedOn: funded.currentDate },
+      { id: 'appointment:handoff-retention-approver', bodyId: 'body:handoff-board', actor: { kind: 'STAFF', id: retentionApproverId }, role: 'BOARD_MEMBER', startedOn: funded.currentDate },
+    ],
+    governanceAuthorityGrants: grants,
+    governanceDecisionParticipationGrants: [
+      { id: 'right:handoff-retention-propose', authorityGrantId: grants[0]!.id, bodyId: 'body:handoff-executive', edgeParticipant: 'DELEGATE' as const, right: 'PROPOSE' as const },
+      { id: 'right:handoff-retention-execute', authorityGrantId: grants[0]!.id, bodyId: 'body:handoff-executive', edgeParticipant: 'DELEGATE' as const, right: 'EXECUTE' as const },
+      { id: 'right:handoff-retention-approve', authorityGrantId: grants[1]!.id, bodyId: 'body:handoff-board', edgeParticipant: 'DELEGATE' as const, right: 'APPROVE' as const, approvalRequirement: 'ALL_OF' as const },
+    ],
+    staffPeople: [...Object.values(funded.staffPeopleById), { id: retentionApproverId, identity: { firstName: 'Retention', lastName: 'Approver' }, professional: { attributes } }],
+  })
+  const pending = executeAcceptedRetentionAgreement(world, negotiation.id)
+  if (pending.status !== 'GOVERNANCE_REQUIRED') throw new Error(`The retention fixture expected a Governance proposal, received ${pending.status}:${pending.reason}`)
+  const decision = Object.values(pending.world.governanceDecisionsById).find((item) => item.subject.kind === 'GENERIC' && item.subject.referenceId === `retention:${negotiation.id}`)!
+  const approved = recordPlayerContractSigningDecisionEvent(pending.world, { decisionId: decision.id, kind: 'APPROVED', actor: { kind: 'STAFF', id: retentionApproverId }, bodyId: 'body:handoff-board' })
+  const signed = executeAcceptedRetentionAgreement(approved.world, negotiation.id)
+  if (signed.status !== 'SIGNED') throw new Error(`The retention fixture expected a signed successor, received ${signed.status}:${signed.reason}`)
+  return { signed, approvedWorld: approved.world, team, playerId, predecessor, terms, successorId: `contract:retention-successor:${negotiation.id}`, salaryMinorUnits: terms.salary * MINOR_UNITS_PER_MAJOR_UNIT }
 }
 
-describe('BS16M-B1 binding capacity reservations', () => {
-  describe('sequential authorized capacity', () => {
-    it('reserves the exact evaluated amount and refuses a second binding that would overcommit the authorization', () => {
-      const { world, team, organizationId } = club({ playerUnits: 100, staffUnits: 0 })
-      expect(headroomMinorUnits(world, organizationId, 'PLAYER_SALARY')).toBe(minorUnits(100))
-
-      const first = bind(world, team.id, 'contract:capacity:1', 70)
-      expect(first.allowed).toBe(true)
-      expect(first.decision.status).toBe('AFFORDABLE_NOW')
-      expect(first.decision.authorization.availableHeadroom?.minorUnits).toBe(minorUnits(100))
-      expect(first.reservation).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: 'contract:capacity:1', status: 'OPEN' })
-      expect(first.reservation!.amount.minorUnits).toBe(minorUnits(70))
-
-      const bound = publish(world, first.reservations)
-      expect(reservedMinorUnits(bound, organizationId)).toBe(minorUnits(70))
-      expect(headroomMinorUnits(bound, organizationId, 'PLAYER_SALARY')).toBe(minorUnits(30))
-
-      const second = bind(bound, team.id, 'contract:capacity:2', 70)
-      expect(second.allowed).toBe(false)
-      expect(second.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
-      expect(second.reservation).toBeNull()
-      expect(second.reservations).toEqual(first.reservations)
-      expect(reservedMinorUnits(bound, organizationId)).toBe(minorUnits(70))
-    })
-
-    it('binds 70 then 30 and refuses the next single unit', () => {
-      const { world, team, organizationId } = club({ playerUnits: 100, staffUnits: 0 })
-      const first = bind(world, team.id, 'contract:capacity:70', 70)
-      const bound = publish(world, first.reservations)
-      const second = bind(bound, team.id, 'contract:capacity:30', 30)
-      expect([first.allowed, second.allowed]).toEqual([true, true])
-      const both = publish(bound, second.reservations)
-      expect(headroomMinorUnits(both, organizationId, 'PLAYER_SALARY')).toBe(0)
-      expect(reservedMinorUnits(both, organizationId)).toBe(minorUnits(100))
-
-      const third = bind(both, team.id, 'contract:capacity:1', 1)
-      expect(third.allowed).toBe(false)
-      expect(third.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
-      expect(third.reservations).toEqual(second.reservations)
-      expect(reservedMinorUnits(both, organizationId)).toBe(minorUnits(100))
-    })
-
-    it('protects authorized headroom only: a reservation never moves cash', () => {
-      const { world, team, organizationId } = club({ playerUnits: 100, staffUnits: 0 })
+describe('BS16M-B1C binding capacity handoff', () => {
+  describe('atomic bridge', () => {
+    it('publishes the bridge CONSUMED in the binding transition and never leaves an OPEN reservation', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const world = authorizeAboveCommitted(base, team.id, { playerMinorUnits: 100 * UNIT_MINOR_UNITS, staffMinorUnits: 0 })
+      const organizationId = team.organizationId
       const cashBefore = cashMinorUnitsForTest(world, organizationId)
-      const capacity = bind(world, team.id, 'contract:capacity:cash', 70)
-      const bound = publish(world, capacity.reservations)
+
+      const capacity = bindTeamContractCapacity(world, {
+        teamId: team.id,
+        action: 'PLAYER_SIGNING',
+        legacyAnnualAmountMajorUnits: 70_000,
+        contractId: 'contract:handoff:bridge',
+        effectiveDate: world.currentDate,
+      })
       expect(capacity.allowed).toBe(true)
-      expect(cashMinorUnitsForTest(bound, organizationId)).toBe(cashBefore)
-      expect(Object.keys(bound.expenseRecognitionsById)).toHaveLength(Object.keys(world.expenseRecognitionsById).length)
-      expect(Object.keys(bound.payablesById)).toHaveLength(Object.keys(world.payablesById).length)
-      expect(Object.keys(bound.financialTransactionsById)).toHaveLength(Object.keys(world.financialTransactionsById).length)
-      expect(Object.keys(bound.financialCommitmentsById)).toHaveLength(Object.keys(world.financialCommitmentsById).length)
+      expect(capacity.decision.status).toBe('AFFORDABLE_NOW')
+      expect(capacity.reservation).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: 'contract:handoff:bridge', status: 'CONSUMED' })
+      expect(capacity.reservation!.amount.minorUnits).toBe(7_000_000)
+      expect(capacity.reservations.filter((reservation) => reservation.status === 'OPEN')).toHaveLength(0)
+
+      const published = updateGameWorld(world, { financialReservations: [...capacity.reservations] })
+      expect(bridgeOf(published, 'contract:handoff:bridge').status).toBe('CONSUMED')
+      // A CONSUMED bridge protects nothing: the contractual schedule, not the reservation, owns capacity.
+      expect(openReservedMinorUnits(published, organizationId)).toBe(0)
+      expect(headroomMinorUnits(published, organizationId, 'PLAYER_SALARY')).toBe(headroomMinorUnits(world, organizationId, 'PLAYER_SALARY'))
+      // It remains an authorization concern only: no cash, expense, payable, transaction or commitment.
+      expect(cashMinorUnitsForTest(published, organizationId)).toBe(cashBefore)
+      expect(Object.keys(published.expenseRecognitionsById)).toHaveLength(Object.keys(world.expenseRecognitionsById).length)
+      expect(Object.keys(published.payablesById)).toHaveLength(Object.keys(world.payablesById).length)
+      expect(Object.keys(published.financialTransactionsById)).toHaveLength(Object.keys(world.financialTransactionsById).length)
+      expect(Object.keys(published.financialCommitmentsById)).toHaveLength(Object.keys(world.financialCommitmentsById).length)
+    })
+
+    it('refuses a binding canonical Finance cannot afford and publishes no reservation', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const world = authorizeAboveCommitted(base, team.id, { playerMinorUnits: 0, staffMinorUnits: 0 })
+      const capacity = bindTeamContractCapacity(world, {
+        teamId: team.id,
+        action: 'PLAYER_SIGNING',
+        legacyAnnualAmountMajorUnits: 70_000,
+        contractId: 'contract:handoff:refused',
+        effectiveDate: world.currentDate,
+      })
+      expect(capacity.allowed).toBe(false)
+      expect(capacity.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
+      expect(capacity.reservation).toBeNull()
+      expect(capacity.reservations).toEqual([])
+      expect(world.financialReservationsById).toEqual({})
+    })
+  })
+
+  describe('sequential capacity through the canonical contract commitment', () => {
+    it('blocks a second signature of the same size because contract A owns capacity (70/70)', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const first = availableFreeAgent(base, team.id)
+      const second = availableFreeAgent(first.world, team.id, [first.teamId])
+      const world = authorizeAboveCommitted(second.world, team.id, {
+        playerMinorUnits: first.salaryMinorUnits + second.salaryMinorUnits - UNIT_MINOR_UNITS,
+        staffMinorUnits: 0,
+      })
+      const organizationId = team.organizationId
+      const committedBefore = committedMinorUnits(world, organizationId, 'PLAYER_SALARY')
+
+      const signed = signFreeAgent(world, team.id, first.playerId)
+      const contractA = marketContractId(world, team.id, first.playerId)
+      expect(signed.contractsById[contractA as never]).toBeDefined()
+      const bridgeA = bridgeOf(signed, contractA)
+      expect(bridgeA).toMatchObject({ sourceAuthority: CONTRACT_RESERVATION_AUTHORITY, sourceEntityId: contractA, status: 'CONSUMED' })
+      expect(bridgeA.amount.minorUnits).toBe(first.salaryMinorUnits)
+      // Exactly one mechanism owns the signing: no OPEN reservation, and the contract's guaranteed
+      // payroll already commits the exact reserved amount.
+      expect(openReservedMinorUnits(signed, organizationId)).toBe(0)
+      expect(committedMinorUnits(signed, organizationId, 'PLAYER_SALARY')).toBe(committedBefore + first.salaryMinorUnits)
+      expect(headroomMinorUnits(signed, organizationId, 'PLAYER_SALARY')).toBe(second.salaryMinorUnits - UNIT_MINOR_UNITS)
+
+      expect(() => signFreeAgent(signed, team.id, second.playerId)).toThrow(/INSUFFICIENT_AUTHORIZED_HEADROOM/)
+      expect(signed.contractsById[marketContractId(signed, team.id, second.playerId) as never]).toBeUndefined()
+      expect(openReservedMinorUnits(signed, organizationId)).toBe(0)
+    })
+
+    it('binds two signatures and refuses the next one (70/30/1)', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const first = availableFreeAgent(base, team.id)
+      const second = availableFreeAgent(first.world, team.id, [first.teamId])
+      const third = availableFreeAgent(second.world, team.id, [first.teamId, second.teamId])
+      const world = authorizeAboveCommitted(third.world, team.id, {
+        playerMinorUnits: first.salaryMinorUnits + second.salaryMinorUnits,
+        staffMinorUnits: 0,
+      })
+      const organizationId = team.organizationId
+
+      const afterFirst = signFreeAgent(world, team.id, first.playerId)
+      const afterSecond = signFreeAgent(afterFirst, team.id, second.playerId)
+      expect(openReservedMinorUnits(afterFirst, organizationId)).toBe(0)
+      expect(openReservedMinorUnits(afterSecond, organizationId)).toBe(0)
+      expect([bridgeOf(afterSecond, marketContractId(world, team.id, first.playerId)).status, bridgeOf(afterSecond, marketContractId(afterFirst, team.id, second.playerId)).status]).toEqual(['CONSUMED', 'CONSUMED'])
+      expect(headroomMinorUnits(afterSecond, organizationId, 'PLAYER_SALARY')).toBe(0)
+
+      expect(() => signFreeAgent(afterSecond, team.id, third.playerId)).toThrow(/INSUFFICIENT_AUTHORIZED_HEADROOM/)
+      expect(openReservedMinorUnits(afterSecond, organizationId)).toBe(0)
     })
 
     it('cannot be bypassed by BS16L financing: liquidity never creates authorization', () => {
-      const { world, team, organizationId } = club({ playerUnits: 100, staffUnits: 0 })
-      const first = bind(world, team.id, 'contract:capacity:exhaust', 100)
-      const exhausted = publish(world, first.reservations)
-      expect(headroomMinorUnits(exhausted, organizationId, 'PLAYER_SALARY')).toBe(0)
+      const base = fundedClub()
+      const team = userTeam(base)
+      const first = availableFreeAgent(base, team.id)
+      const second = availableFreeAgent(first.world, team.id, [first.teamId])
+      const world = authorizeAboveCommitted(second.world, team.id, { playerMinorUnits: first.salaryMinorUnits, staffMinorUnits: 0 })
+      const organizationId = team.organizationId
 
-      const fundedWorld = financingDrawdownForTest(exhausted, team.id, RICH_CASH_MINOR_UNITS)
-      expect(cashMinorUnitsForTest(fundedWorld, organizationId)).toBeGreaterThan(cashMinorUnitsForTest(exhausted, organizationId))
+      const signed = signFreeAgent(world, team.id, first.playerId)
+      expect(headroomMinorUnits(signed, organizationId, 'PLAYER_SALARY')).toBe(0)
+      const financed = financingDrawdownForTest(signed, team.id, RICH_CASH_MINOR_UNITS)
+      expect(cashMinorUnitsForTest(financed, organizationId)).toBeGreaterThan(cashMinorUnitsForTest(signed, organizationId))
 
-      const afterFinancing = bind(fundedWorld, team.id, 'contract:capacity:after-financing', 1)
-      expect(afterFinancing.allowed).toBe(false)
-      expect(afterFinancing.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
-      expect(afterFinancing.decision.outcome).toBe('HAS_LIQUIDITY_BUT_NO_AUTHORIZATION')
-      expect(afterFinancing.reservations).toEqual(first.reservations)
+      expect(() => signFreeAgent(financed, team.id, second.playerId)).toThrow(/INSUFFICIENT_AUTHORIZED_HEADROOM/)
+      expect(openReservedMinorUnits(financed, organizationId)).toBe(0)
     })
 
-    it('keeps the canonical categories separate and constrains the organization-wide headroom', () => {
-      const isolated = club({ playerUnits: 100, staffUnits: 0 })
-      const player = bind(isolated.world, isolated.team.id, 'contract:capacity:player', 70)
-      expect(player.allowed).toBe(true)
-      expect(player.decision.category).toBe('PLAYER_SALARY')
+    it('keeps player and staff authorization separate through real bindings', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const player = availableFreeAgent(base, team.id)
+      const staffId = staffPersonIdFromString('staff:handoff:isolation')
+      const staffSalary = staffOffer(player.world, team.id, staffId, 'advanceScout', 'staff-offer:handoff:isolation').salaryMinorUnits
 
-      // The staff category has its own authorization line, so a player action never grants staff
-      // permission: the staff contract is refused on the canonical category.
-      const staff = bind(isolated.world, isolated.team.id, 'contract:capacity:staff', 30, 'STAFF_HIRING')
-      expect(staff.allowed).toBe(false)
-      expect(staff.decision.category).toBe('STAFF_SALARY')
-      expect(staff.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
-      expect(staff.reservation).toBeNull()
-      expect(isolated.world.financialReservationsById).toEqual({})
+      const playerOnly = authorizeAboveCommitted(player.world, team.id, { playerMinorUnits: player.salaryMinorUnits, staffMinorUnits: 0 })
+      expect(signFreeAgent(playerOnly, team.id, player.playerId).contractsById[marketContractId(playerOnly, team.id, player.playerId) as never]).toBeDefined()
+      expect(() => staffOffer(playerOnly, team.id, staffId, 'advanceScout', 'staff-offer:handoff:isolation:blocked')).toThrow(/canonical Finance/)
 
-      // Reservations carry no canonical category, so they constrain the organization-wide headroom.
-      const split = club({ playerUnits: 60, staffUnits: 40 })
-      const staffFirst = bind(split.world, split.team.id, 'contract:capacity:staff-first', 40, 'STAFF_HIRING')
-      expect(staffFirst.allowed).toBe(true)
-      const staffBound = publish(split.world, staffFirst.reservations)
-      expect(headroomMinorUnits(staffBound, split.organizationId, 'PLAYER_SALARY')).toBe(minorUnits(60))
-      const playerAfter = bind(staffBound, split.team.id, 'contract:capacity:player-after', 60)
-      expect(playerAfter.allowed).toBe(true)
-      const consumed = publish(staffBound, playerAfter.reservations)
-      expect(headroomMinorUnits(consumed, split.organizationId, 'PLAYER_SALARY')).toBe(0)
-      expect(headroomMinorUnits(consumed, split.organizationId, 'STAFF_SALARY')).toBe(0)
-      expect(bind(consumed, split.team.id, 'contract:capacity:one-more', 1).allowed).toBe(false)
-    })
-
-    it('never reserves from a preview or a formal offer', () => {
-      const { world, team } = club({ playerUnits: 100, staffUnits: 200 })
-      const evaluated = bindTeamContractCapacity(world, { teamId: team.id, action: 'PLAYER_SIGNING', legacyAnnualAmountMajorUnits: majorUnits(70), contractId: 'contract:capacity:preview', effectiveDate: world.currentDate })
-      expect(evaluated.allowed).toBe(true)
-      // Evaluation is not binding: nothing was published, so the world still holds no reservation.
-      expect(world.financialReservationsById).toEqual({})
-      expect(evaluated.reservations).toHaveLength(1)
-
-      const staffId = staffPersonIdFromString('staff:capacity:preview')
-      const ready = withStaffPerson(world, staffId)
-      const { world: opened, opening } = createStaffJobOpeningForTeam(ready, { teamId: team.id, roleId: 'advanceScout' })
-      const candidate = identifyStaffCandidate(opened, { openingId: opening.id, staffId })
-      const interviewed = completeStaffInterview(startStaffInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
-      const offered = createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId })
-      expect(offered.world.financialReservationsById).toEqual({})
-      expect(staffOfferOf(offered.world, offered.offerId).status).toBe('pending')
-    })
-
-    it('refuses a stale player preview once another binding consumed the capacity', () => {
-      const { world, team } = club({ playerUnits: 100, staffUnits: 0 })
-      const preview = bindTeamContractCapacity(world, { teamId: team.id, action: 'PLAYER_SIGNING', legacyAnnualAmountMajorUnits: majorUnits(70), contractId: 'contract:capacity:stale-preview', effectiveDate: world.currentDate })
-      expect(preview.allowed).toBe(true)
-      const committedElsewhere = publish(world, bind(world, team.id, 'contract:capacity:elsewhere', 100).reservations)
-      const stale = bind(committedElsewhere, team.id, 'contract:capacity:stale-preview', 70)
-      expect(stale.allowed).toBe(false)
-      expect(stale.decision.status).toBe('INSUFFICIENT_AUTHORIZED_HEADROOM')
-      expect(committedElsewhere.contractsById['contract:capacity:stale-preview' as never]).toBeUndefined()
-    })
-
-    it('refuses a stale staff offer whose capacity was reserved after the offer was prepared', () => {
-      const { world, team } = club({ playerUnits: 0, staffUnits: 200 })
-      const staffId = staffPersonIdFromString('staff:capacity:stale')
-      const ready = withStaffPerson(world, staffId)
-      const { world: opened, opening } = createStaffJobOpeningForTeam(ready, { teamId: team.id, roleId: 'advanceScout' })
-      const candidate = identifyStaffCandidate(opened, { openingId: opening.id, staffId })
-      const interviewed = completeStaffInterview(startStaffInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
-      const offered = createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId })
-      const offeredSalary = staffOfferOf(offered.world, offered.offerId).annualSalary
-      if (offeredSalary === undefined) throw new Error('The prepared staff offer has no recorded salary')
-      const salaryUnits = offeredSalary / UNIT_MAJOR_UNITS
-      expect(staffOfferOf(offered.world, offered.offerId).status).toBe('pending')
-
-      // Another staff binding consumes the organization-wide headroom down to less than this offer,
-      // exactly as a second hiring would: the prepared offer is no longer affordable.
-      const other = bind(offered.world, team.id, 'contract:capacity:other-staff', 201 - Math.ceil(salaryUnits), 'STAFF_HIRING')
-      expect(other.allowed).toBe(true)
-      const constrained = publish(offered.world, other.reservations)
-      expect(() => acceptStaffJobOffer(constrained, offered.offerId)).toThrow(/canonical Finance/)
-      expect(constrained.staffContractsById[`staff-contract:${staffId}:${team.id}:${offered.world.currentDate}` as never]).toBeUndefined()
-      expect(reservationsOf(constrained, `staff-contract:${staffId}:${team.id}:${offered.world.currentDate}`)).toHaveLength(0)
+      const staffOnly = authorizeAboveCommitted(player.world, team.id, { playerMinorUnits: 0, staffMinorUnits: staffSalary })
+      expect(() => signFreeAgent(staffOnly, team.id, player.playerId)).toThrow(/INSUFFICIENT_AUTHORIZED_HEADROOM/)
+      const offered = staffOffer(staffOnly, team.id, staffId, 'advanceScout', 'staff-offer:handoff:isolation:allowed')
+      const hired = acceptStaffJobOffer(offered.world, offered.offerId)
+      expect(Object.keys(hired.staffContractsById).length).toBeGreaterThan(Object.keys(staffOnly.staffContractsById).length)
     })
   })
 
-  describe('binding site provenance and replacement', () => {
-    it('reserves exactly the free-agent contract id and replaces it with the payroll commitment', () => {
+  describe('previews and formal offers', () => {
+    it('never reserves from an evaluation or a prepared offer', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const world = authorizeAboveCommitted(base, team.id, { playerMinorUnits: 100 * UNIT_MINOR_UNITS, staffMinorUnits: 200 * UNIT_MINOR_UNITS })
+      const staffId = staffPersonIdFromString('staff:handoff:preview')
+      const offered = staffOffer(world, team.id, staffId, 'advanceScout', 'staff-offer:handoff:preview')
+      expect(offered.world.financialReservationsById).toEqual({})
+      expect(Object.values(offered.world.staffJobOffersById).find((offer) => String(offer.id) === offered.offerId)?.status).toBe('pending')
+      expect(openReservedMinorUnits(offered.world, team.organizationId)).toBe(0)
+    })
+
+    it('refuses a stale staff offer once the canonical contract owns the capacity it was prepared against', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const generous = authorizeAboveCommitted(base, team.id, { playerMinorUnits: 0, staffMinorUnits: 1_000 * UNIT_MINOR_UNITS })
+      const firstStaff = staffPersonIdFromString('staff:handoff:stale-first')
+      const secondStaff = staffPersonIdFromString('staff:handoff:stale-second')
+      const firstOffer = staffOffer(generous, team.id, firstStaff, 'advanceScout', 'staff-offer:handoff:first')
+      const secondOffer = staffOffer(firstOffer.world, team.id, secondStaff, 'headScout', 'staff-offer:handoff:second')
+
+      // Both offers were prepared when each was affordable on its own; canonical authorization fits one.
+      const tight = authorizeAboveCommitted(secondOffer.world, team.id, {
+        playerMinorUnits: 0,
+        staffMinorUnits: firstOffer.salaryMinorUnits + secondOffer.salaryMinorUnits - UNIT_MINOR_UNITS,
+      })
+      const hired = acceptStaffJobOffer(tight, firstOffer.offerId)
+      expect(openReservedMinorUnits(hired, team.organizationId)).toBe(0)
+      expect(() => acceptStaffJobOffer(hired, secondOffer.offerId)).toThrow(/canonical Finance/)
+      const secondContractId = `staff-contract:${secondStaff}:${team.id}:${hired.currentDate}`
+      expect(hired.staffContractsById[secondContractId as never]).toBeUndefined()
+      expect(reservationsOf(hired, secondContractId)).toHaveLength(0)
+    })
+  })
+
+  describe('production flow handoff', () => {
+    it('hands a free-agent signing to its contract, then keeps authorization stable at the first payroll occurrence', () => {
       const setup = freeAgentAgreement()
+      const organizationId = setup.team.organizationId
+      const committedBefore = committedMinorUnits(setup.world, organizationId, 'PLAYER_SALARY')
+      const headroomBefore = headroomMinorUnits(setup.world, organizationId, 'PLAYER_SALARY')
+
       const signed = completeAcceptedFreeAgentSigning(setup.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
       expect(signed.status).toBe('SIGNED')
       const contractId = String(signed.contractId)
-      expect(contractId).toBe(setup.expectedContractId)
+      expect(contractId).toBe(setup.contractId)
       expect(signed.world.contractsById[contractId as never]!.id).toBe(contractId)
-      expect(Object.keys(signed.world.financialReservationsById)).toHaveLength(1)
-      const open = reservationsOf(signed.world, contractId)
-      expect(open).toHaveLength(1)
-      expect(open[0]).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: contractId, status: 'OPEN' })
-      expect(open[0]!.amount.minorUnits).toBe(setup.negotiation.salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      expect(findFinancialReservationByProvenance(Object.values(signed.world.financialReservationsById), { organizationId: setup.team.organizationId, sourceAuthority: 'CONTRACT', sourceEntityId: contractId })).toEqual(open[0])
+
+      const bridge = bridgeOf(signed.world, contractId)
+      expect(bridge).toMatchObject({ sourceAuthority: CONTRACT_RESERVATION_AUTHORITY, sourceEntityId: contractId, status: 'CONSUMED' })
+      expect(bridge.amount.minorUnits).toBe(setup.salaryMinorUnits)
+      expect(findFinancialReservationByProvenance(Object.values(signed.world.financialReservationsById), { organizationId, sourceAuthority: 'CONTRACT', sourceEntityId: contractId })).toEqual(bridge)
+      expect(openReservedMinorUnits(signed.world, organizationId)).toBe(0)
+      expect(committedMinorUnits(signed.world, organizationId, 'PLAYER_SALARY')).toBe(committedBefore + setup.salaryMinorUnits)
+      expect(headroomMinorUnits(signed.world, organizationId, 'PLAYER_SALARY')).toBe(headroomBefore - setup.salaryMinorUnits)
       expect(signed.world.teamFinancesByTeamId).toEqual(setup.world.teamFinancesByTeamId)
 
+      // The first payroll occurrence is accounting materialization only: authorization must not move.
       const materialized = materializePayroll(signed.world, setup.team.id, contractId, signed.world.currentDate)
       expect(materialized.status).toBe('accepted')
       expect(materialized.results.map((result) => result.status)).toEqual(['accepted'])
-      const event = materialized.events[0]!
-      expect(event.sourceAuthority).toBe('CONTRACT')
-      expect(event.sourceEntityId).toBe(contractId)
-      expect(event.amount.minorUnits).toBe(setup.negotiation.salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      const commitment = Object.values(materialized.world.financialCommitmentsById).find((item) => item.provenance.kind === 'AUTHORIZED_ECONOMIC_EVENT' && item.provenance.id === `CONTRACT:${contractId}:${event.idempotencyKey}`)!
-      expect(commitment.amount.minorUnits).toBe(setup.negotiation.salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      // The contract's own footprint is protected by exactly one mechanism at every observable world:
-      // the OPEN reservation before the event, the canonical commitment after it.
-      expect(reservationsOf(signed.world, contractId).filter((reservation) => reservation.status === 'OPEN')).toHaveLength(1)
-      expect(Object.values(signed.world.financialCommitmentsById).some((item) => item.provenance.kind === 'AUTHORIZED_ECONOMIC_EVENT' && item.provenance.id === `CONTRACT:${contractId}:${event.idempotencyKey}`)).toBe(false)
-      const consumed = reservationsOf(materialized.world, contractId)
-      expect(consumed).toHaveLength(1)
-      expect(consumed[0]!.status).toBe('CONSUMED')
-      expect(sumReservedCapacity(consumed, setup.team.organizationId, CURRENCY).minorUnits).toBe(0)
+      expect(materialized.events[0]).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: contractId })
+      expect(materialized.events[0]!.amount.minorUnits).toBe(setup.salaryMinorUnits)
+      expect(headroomMinorUnits(materialized.world, organizationId, 'PLAYER_SALARY')).toBe(headroomMinorUnits(signed.world, organizationId, 'PLAYER_SALARY'))
+      expect(openReservedMinorUnits(materialized.world, organizationId)).toBe(0)
+      expect(bridgeOf(materialized.world, contractId).status).toBe('CONSUMED')
+      expect(Object.values(materialized.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'AUTHORIZED_ECONOMIC_EVENT' && item.provenance.id === `CONTRACT:${contractId}:${materialized.events[0]!.idempotencyKey}`)).toHaveLength(1)
     })
 
-    it('reserves the market ordinal contract id derived from the input world', () => {
-      const base = createNewGame()
+    it('hands the atomic Market signing over on its exact ordinal contract id', () => {
+      const base = fundedClub()
       const team = userTeam(base)
-      const world = authorizeTeamSalaryForTest(
-        fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
-        team.id,
-        { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
-      )
-      const donor = Object.values(world.contractsById).find((contract) => contract.teamId !== team.id && getPlayerContractStatus(contract, world.currentDate) === 'active' && world.teams[contract.teamId]?.rosterPlayerIds.includes(contract.playerId))!
-      const released = releasePlayer(world, donor.teamId, donor.playerId)
-      const terms = getFreeAgentMarketTerms(released, donor.playerId)
-      const ordinal = Object.values(released.contractsById).filter((contract) => contract.playerId === donor.playerId && contract.term.startsOn === released.currentDate).length + 1
-      const expectedContractId = `contract:${donor.playerId}:${team.id}:${released.currentDate}:${ordinal}`
+      const freeAgent = availableFreeAgent(base, team.id)
+      const world = authorizeAboveCommitted(freeAgent.world, team.id, { playerMinorUnits: freeAgent.salaryMinorUnits, staffMinorUnits: 0 })
+      const organizationId = team.organizationId
+      const committedBefore = committedMinorUnits(world, organizationId, 'PLAYER_SALARY')
 
-      const signed = signFreeAgent(released, team.id, donor.playerId)
-      expect(signed.contractsById[expectedContractId as never]).toBeDefined()
-      const reservation = reservationsOf(signed, expectedContractId)
-      expect(reservation).toHaveLength(1)
-      expect(reservation[0]).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: expectedContractId, status: 'OPEN' })
-      expect(reservation[0]!.amount.minorUnits).toBe(terms.annualSalary * MINOR_UNITS_PER_MAJOR_UNIT)
-      expect(signed.teamFinancesByTeamId).toEqual(released.teamFinancesByTeamId)
+      const signed = signFreeAgent(world, team.id, freeAgent.playerId)
+      const contractId = marketContractId(world, team.id, freeAgent.playerId)
+      expect(signed.contractsById[contractId as never]).toBeDefined()
+      const bridge = bridgeOf(signed, contractId)
+      expect(bridge).toMatchObject({ sourceAuthority: CONTRACT_RESERVATION_AUTHORITY, sourceEntityId: contractId, status: 'CONSUMED' })
+      expect(bridge.amount.minorUnits).toBe(freeAgent.salaryMinorUnits)
+      expect(openReservedMinorUnits(signed, organizationId)).toBe(0)
+      expect(committedMinorUnits(signed, organizationId, 'PLAYER_SALARY')).toBe(committedBefore + freeAgent.salaryMinorUnits)
+      expect(headroomMinorUnits(signed, organizationId, 'PLAYER_SALARY')).toBe(0)
+      expect(signed.teamFinancesByTeamId).toEqual(world.teamFinancesByTeamId)
     })
 
-    it('reserves exactly the staff contract id and replaces it with the staff payroll commitment', () => {
-      const { world, team } = club({ playerUnits: 0, staffUnits: 200 })
-      const staffId = staffPersonIdFromString('staff:capacity:hire')
-      const ready = withStaffPerson(world, staffId)
-      const { world: opened, opening } = createStaffJobOpeningForTeam(ready, { teamId: team.id, roleId: 'advanceScout' })
-      const candidate = identifyStaffCandidate(opened, { openingId: opening.id, staffId })
-      const interviewed = completeStaffInterview(startStaffInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
-      const offered = createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId })
-      const salary = staffOfferOf(offered.world, offered.offerId).annualSalary
-      if (salary === undefined) throw new Error('The prepared staff offer has no recorded salary')
-      const expectedContractId = `staff-contract:${staffId}:${team.id}:${offered.world.currentDate}`
+    it('hands a staff hire over on its exact staff contract id and stays stable at the first staff payroll', () => {
+      const base = fundedClub()
+      const team = userTeam(base)
+      const staffId = staffPersonIdFromString('staff:handoff:hire')
+      const offered = staffOffer(authorizeAboveCommitted(base, team.id, { playerMinorUnits: 0, staffMinorUnits: 1_000 * UNIT_MINOR_UNITS }), team.id, staffId, 'advanceScout', 'staff-offer:handoff:hire')
+      const organizationId = team.organizationId
+      const contractId = `staff-contract:${staffId}:${team.id}:${offered.world.currentDate}`
+      const committedBefore = committedMinorUnits(offered.world, organizationId, 'STAFF_SALARY')
+      const headroomBefore = headroomMinorUnits(offered.world, organizationId, 'STAFF_SALARY')
 
-      const accepted = acceptStaffJobOffer(offered.world, offered.offerId)
-      expect(accepted.staffContractsById[expectedContractId as never]).toBeDefined()
-      const open = reservationsOf(accepted, expectedContractId)
-      expect(open).toHaveLength(1)
-      expect(open[0]).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: expectedContractId, status: 'OPEN' })
-      expect(open[0]!.amount.minorUnits).toBe(salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      expect(accepted.teamFinancesByTeamId).toEqual(offered.world.teamFinancesByTeamId)
+      const hired = acceptStaffJobOffer(offered.world, offered.offerId)
+      expect(hired.staffContractsById[contractId as never]).toBeDefined()
+      const bridge = bridgeOf(hired, contractId)
+      expect(bridge).toMatchObject({ sourceAuthority: CONTRACT_RESERVATION_AUTHORITY, sourceEntityId: contractId, status: 'CONSUMED' })
+      expect(bridge.amount.minorUnits).toBe(offered.salaryMinorUnits)
+      expect(openReservedMinorUnits(hired, organizationId)).toBe(0)
+      expect(committedMinorUnits(hired, organizationId, 'STAFF_SALARY')).toBe(committedBefore + offered.salaryMinorUnits)
+      expect(headroomMinorUnits(hired, organizationId, 'STAFF_SALARY')).toBe(headroomBefore - offered.salaryMinorUnits)
+      expect(hired.teamFinancesByTeamId).toEqual(offered.world.teamFinancesByTeamId)
 
-      const materialized = materializePayroll(accepted, team.id, expectedContractId, accepted.currentDate)
+      const materialized = materializePayroll(hired, team.id, contractId, hired.currentDate)
       expect(materialized.status).toBe('accepted')
-      const event = materialized.events[0]!
-      expect(event.sourceAuthority).toBe('CONTRACT')
-      expect(event.sourceEntityId).toBe(expectedContractId)
-      const consumed = reservationsOf(materialized.world, expectedContractId)
-      expect(consumed).toHaveLength(1)
-      expect(consumed[0]!.status).toBe('CONSUMED')
-      expect(Object.values(materialized.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'AUTHORIZED_ECONOMIC_EVENT' && item.provenance.id === `CONTRACT:${expectedContractId}:${event.idempotencyKey}`)).toHaveLength(1)
+      expect(headroomMinorUnits(materialized.world, organizationId, 'STAFF_SALARY')).toBe(headroomMinorUnits(hired, organizationId, 'STAFF_SALARY'))
+      expect(bridgeOf(materialized.world, contractId).status).toBe('CONSUMED')
+      expect(openReservedMinorUnits(materialized.world, organizationId)).toBe(0)
     })
 
-    it('reserves the retention successor id, replaces the salary reservation and leaves the agent fee independent', () => {
-      const base = createNewGame()
-      const team = userTeam(base)
-      const playerId = team.rosterPlayerIds[0]!
-      const predecessor = Object.values(base.contractsById).find((contract) => contract.playerId === playerId && contract.teamId === team.id)!
-      const world = authorizeTeamSalaryForTest(
-        fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
-        team.id,
-        { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
-      )
-      const terms: RetentionTermSet = { salary: predecessor.compensation.annualSalary, years: 1, guarantees: [{ year: 1, guaranteedAmount: predecessor.compensation.annualSalary }], agentFee: 2_500, agentFeePayer: 'CLUB' }
-      const negotiation = createRetentionNegotiation({
-        id: retentionNegotiationIdFor(team.id, playerId, predecessor.id, 'retention-binding-capacity'),
-        openingActionId: 'retention-binding-capacity', teamId: team.id, organizationId: team.organizationId, playerId,
-        predecessorContractId: predecessor.id, openedOn: world.currentDate, openedByCoachId: team.coachId!,
-        status: 'ACCEPTED', acceptedTerms: terms, rounds: [],
-      })
-      const prepared = retentionWorld(world, team.id, negotiation)
-      const pending = executeAcceptedRetentionAgreement(prepared, negotiation.id)
-      expect(pending.status).toBe('GOVERNANCE_REQUIRED')
-      const decision = Object.values(pending.world.governanceDecisionsById).find((item) => item.subject.kind === 'GENERIC' && item.subject.referenceId === `retention:${negotiation.id}`)!
-      const approved = recordPlayerContractSigningDecisionEvent(pending.world, { decisionId: decision.id, kind: 'APPROVED', actor: { kind: 'STAFF', id: retentionApproverId }, bodyId: 'body:capacity-board' })
-      expect(approved.status).toBe('APPROVED')
+    it('hands a future-dated retention successor over immediately and keeps it out of the current period', () => {
+      const setup = retentionSetup({ agentFee: 2_500, agentFeePayer: 'CLUB' })
+      const organizationId = setup.team.organizationId
+      const headroomBefore = headroomMinorUnits(setup.approvedWorld, organizationId, 'PLAYER_SALARY')
 
-      const signed = executeAcceptedRetentionAgreement(approved.world, negotiation.id)
-      expect(signed.status, signed.reason).toBe('SIGNED')
-      const successorId = `contract:retention-successor:${negotiation.id}`
-      expect(String(signed.contractId)).toBe(successorId)
-      const open = reservationsOf(signed.world, successorId)
-      expect(open).toHaveLength(1)
-      expect(open[0]).toMatchObject({ sourceAuthority: 'CONTRACT', sourceEntityId: successorId, status: 'OPEN' })
-      expect(open[0]!.amount.minorUnits).toBe(terms.salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      // The club agent fee is an independent commitment, never a reserved salary.
-      const fee = Object.values(signed.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE')
+      const bridge = bridgeOf(setup.signed.world, setup.successorId)
+      expect(bridge).toMatchObject({ sourceAuthority: CONTRACT_RESERVATION_AUTHORITY, sourceEntityId: setup.successorId, status: 'CONSUMED' })
+      expect(bridge.amount.minorUnits).toBe(setup.salaryMinorUnits)
+      expect(openReservedMinorUnits(setup.signed.world, organizationId)).toBe(0)
+      // The successor owns its (next season) obligation, and canonical Finance keeps it out of the
+      // current authorization period: a current-period hold is not used to represent a future salary.
+      expect(contractOwnsCapacityAuthority(setup.signed.world, { contractId: setup.successorId, organizationId })).toBe(true)
+      const successor = setup.signed.world.contractsById[setup.successorId as never]!
+      expect(successor.term.startsOn > setup.signed.world.currentDate).toBe(true)
+      expect(headroomMinorUnits(setup.signed.world, organizationId, 'PLAYER_SALARY')).toBe(headroomBefore)
+      // The club agent fee stays an independent commitment and is never reserved.
+      const fee = Object.values(setup.signed.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE')
       expect(fee).toHaveLength(1)
-      expect(reservationsOf(signed.world, String(fee[0]!.id))).toHaveLength(0)
-
-      const successor = signed.world.contractsById[successorId as never]!
-      const materialized = materializePayroll(signed.world, team.id, successorId, successor.term.startsOn)
-      expect(materialized.status).toBe('accepted')
-      const event = materialized.events[0]!
-      expect(event.sourceEntityId).toBe(successorId)
-      const consumed = reservationsOf(materialized.world, successorId)
-      expect(consumed).toHaveLength(1)
-      expect(consumed[0]!.status).toBe('CONSUMED')
-      // Replacing the salary reservation leaves the fee commitment untouched.
-      expect(Object.values(materialized.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE')).toEqual(fee)
+      expect(reservationsOf(setup.signed.world, String(fee[0]!.id))).toHaveLength(0)
     })
 
-    it('creates exactly one reservation when Governance executes an approved signing', () => {
+    it('creates exactly one terminal reservation when Governance executes an approved signing', () => {
       const setup = freeAgentAgreement()
       const first = completeAcceptedFreeAgentSigning(setup.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
       expect(first.status).toBe('SIGNED')
-      const contractId = String(first.contractId)
-      expect(Object.values(first.world.financialReservationsById)).toHaveLength(Object.keys(setup.world.financialReservationsById).length + 1)
-      expect(Object.values(first.world.governanceDecisionEventsById).filter((event) => event.decisionId === 'decision:binding-capacity' && event.kind === 'EXECUTED')).toHaveLength(1)
+      expect(Object.values(first.world.financialReservationsById).filter((reservation) => reservation.status === 'OPEN')).toHaveLength(0)
+      expect(reservationsOf(first.world, setup.contractId)).toHaveLength(1)
+      expect(Object.values(first.world.governanceDecisionEventsById).filter((event) => event.decisionId === 'decision:capacity-handoff' && event.kind === 'EXECUTED')).toHaveLength(1)
+
       const retry = completeAcceptedFreeAgentSigning(first.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
       expect(retry.status).toBe('ALREADY_SIGNED')
       expect(retry.world).toBe(first.world)
-      expect(reservationsOf(retry.world, contractId)).toHaveLength(1)
+      expect(reservationsOf(retry.world, setup.contractId)).toHaveLength(1)
+    })
+  })
+
+  describe('compatibility and durability', () => {
+    it('leaves no OPEN reservation when a bound contract is released before its first payroll', () => {
+      const setup = retentionSetup()
+      expect(bridgeOf(setup.signed.world, setup.successorId).status).toBe('CONSUMED')
+      const released = executeContractRelease(setup.signed.world, setup.team.id, setup.playerId)
+      expect(released.status).toBe('RELEASED')
+      // Nothing to leak: the released successor never held an OPEN reservation, so no reservation-specific
+      // release patch is needed and released contractual salary follows the contract lifecycle alone.
+      expect(Object.values(released.world.financialReservationsById).filter((reservation) => reservation.status === 'OPEN')).toHaveLength(0)
+      expect(openReservedMinorUnits(released.world, setup.team.organizationId)).toBe(0)
+      expect(bridgeOf(released.world, setup.successorId).status).toBe('CONSUMED')
     })
 
-    it('keeps OPEN and CONSUMED reservations across save/load', () => {
+    it('repairs a superseded BS16M-B1 world that still carries a matching OPEN reservation', () => {
       const setup = freeAgentAgreement()
       const signed = completeAcceptedFreeAgentSigning(setup.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
+      const organizationId = setup.team.organizationId
       const contractId = String(signed.contractId)
-      const restoredOpen = roundTrip(signed.world)
-      expect(restoredOpen.financialReservationsById).toEqual(signed.world.financialReservationsById)
-      expect(Object.values(restoredOpen.financialReservationsById)[0]!.status).toBe('OPEN')
-      expect(sumReservedCapacity(Object.values(restoredOpen.financialReservationsById), setup.team.organizationId, CURRENCY).minorUnits).toBe(setup.negotiation.salary * MINOR_UNITS_PER_MAJOR_UNIT)
-      expect(headroomMinorUnits(restoredOpen, setup.team.organizationId, 'PLAYER_SALARY')).toBe(headroomMinorUnits(signed.world, setup.team.organizationId, 'PLAYER_SALARY'))
+      const published = signed.world
+      expect(openReservedMinorUnits(published, organizationId)).toBe(0)
 
-      const materialized = materializePayroll(signed.world, setup.team.id, contractId, signed.world.currentDate)
-      const restoredConsumed = roundTrip(materialized.world)
-      expect(restoredConsumed.financialReservationsById).toEqual(materialized.world.financialReservationsById)
-      expect(Object.values(restoredConsumed.financialReservationsById)[0]!.status).toBe('CONSUMED')
-      expect(sumReservedCapacity(Object.values(restoredConsumed.financialReservationsById), setup.team.organizationId, CURRENCY).minorUnits).toBe(0)
-    })
+      // A club whose authorization still has exactly this contract's amount free.
+      const free = setup.salaryMinorUnits
+      const tightened = authorizeAboveCommitted(published, setup.team.id, { playerMinorUnits: free, staffMinorUnits: 0 })
+      expect(openReservedMinorUnits(tightened, organizationId)).toBe(0)
+      expect(headroomMinorUnits(tightened, organizationId, 'PLAYER_SALARY')).toBe(free)
 
-    it('replays a binding and a payroll event without duplicating a reservation or a commitment', () => {
-      const base = createNewGame()
-      const team = userTeam(base)
-      const world = authorizeTeamSalaryForTest(
-        fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
-        team.id,
-        { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
-      )
-      const donor = Object.values(world.contractsById).find((contract) => contract.teamId !== team.id && getPlayerContractStatus(contract, world.currentDate) === 'active' && world.teams[contract.teamId]?.rosterPlayerIds.includes(contract.playerId))!
-      const released = releasePlayer(world, donor.teamId, donor.playerId)
-      const first = signFreeAgent(released, team.id, donor.playerId)
-      const replay = signFreeAgent(released, team.id, donor.playerId)
-      expect(Object.values(replay.financialReservationsById)).toEqual(Object.values(first.financialReservationsById))
-      expect(Object.values(replay.contractsById).map((contract) => contract.id).sort()).toEqual(Object.values(first.contractsById).map((contract) => contract.id).sort())
-      const contractId = String(Object.values(first.financialReservationsById)[0]!.sourceEntityId)
+      // The BS16M-B1 shape is representable from the canonical facts: the same reservation, still OPEN.
+      const superseded = updateGameWorld(tightened, {
+        financialReservations: Object.values(tightened.financialReservationsById).map((reservation) => reservation.sourceEntityId === contractId ? asSupersededOpenReservation(reservation) : reservation),
+      })
+      expect(openReservedMinorUnits(superseded, organizationId)).toBe(free)
+      // Superseded shape: the same obligation is counted twice, so the free authorization disappears.
+      expect(headroomMinorUnits(superseded, organizationId, 'PLAYER_SALARY')).toBe(0)
 
-      const materialized = materializePayroll(first, team.id, contractId, first.currentDate)
-      expect(materialized.status).toBe('accepted')
-      const commitmentsAfterFirst = Object.keys(materialized.world.financialCommitmentsById).length
-      const second = materializePayroll(materialized.world, team.id, contractId, first.currentDate)
-      expect(second.status).toBe('alreadyProcessed')
-      expect(second.world).toBe(materialized.world)
-      expect(Object.keys(second.world.financialCommitmentsById)).toHaveLength(commitmentsAfterFirst)
-      const reservations = reservationsOf(second.world, contractId)
-      expect(reservations).toHaveLength(1)
-      expect(reservations[0]!.status).toBe('CONSUMED')
-      expect(sumReservedCapacity(reservations, team.organizationId, CURRENCY).minorUnits).toBe(0)
+      // The canonical reconciliation point (payroll materialization) repairs it in one transition.
+      const reconciled = materializePayroll(superseded, setup.team.id, contractId, superseded.currentDate)
+      expect(reconciled.status).toBe('accepted')
+      expect(bridgeOf(reconciled.world, contractId).status).toBe('CONSUMED')
+      expect(openReservedMinorUnits(reconciled.world, organizationId)).toBe(0)
+      expect(headroomMinorUnits(reconciled.world, organizationId, 'PLAYER_SALARY')).toBe(free)
+      expect(contractOwnsCapacityAuthority(reconciled.world, { contractId, organizationId })).toBe(true)
+
+      // The defensive path also covers an already processed event: a lingering OPEN reservation is
+      // consumed rather than left double-counted indefinitely.
+      const reOpened = updateGameWorld(reconciled.world, {
+        financialReservations: Object.values(reconciled.world.financialReservationsById).map((reservation) => reservation.sourceEntityId === contractId ? asSupersededOpenReservation(reservation) : reservation),
+      })
+      const replay = materializePayroll(reOpened, setup.team.id, contractId, reOpened.currentDate)
+      expect(replay.status).toBe('alreadyProcessed')
+      expect(bridgeOf(replay.world, contractId).status).toBe('CONSUMED')
+      expect(openReservedMinorUnits(replay.world, organizationId)).toBe(0)
+      expect(headroomMinorUnits(replay.world, organizationId, 'PLAYER_SALARY')).toBe(free)
+      expect(Object.keys(replay.world.financialCommitmentsById)).toHaveLength(Object.keys(reOpened.financialCommitmentsById).length)
     })
 
     it('keeps a historical commitment without a reservation valid', () => {
-      const base = createNewGame()
+      const base = fundedClub()
       const team = userTeam(base)
-      const world = authorizeTeamSalaryForTest(
-        fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
-        team.id,
-        { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
-      )
-      const donor = Object.values(world.contractsById).find((contract) => contract.teamId !== team.id && getPlayerContractStatus(contract, world.currentDate) === 'active' && world.teams[contract.teamId]?.rosterPlayerIds.includes(contract.playerId))!
-      const released = releasePlayer(world, donor.teamId, donor.playerId)
-      const legacyContractId = 'contract:capacity:legacy'
-      const withLegacy = updateGameWorld(released, {
-        contracts: [...Object.values(released.contractsById), createPlayerContract({
+      const freeAgent = availableFreeAgent(base, team.id)
+      const world = authorizeAboveCommitted(freeAgent.world, team.id, { playerMinorUnits: 100 * UNIT_MINOR_UNITS, staffMinorUnits: 0 })
+      const legacyContractId = 'contract:handoff:legacy'
+      const withLegacy = updateGameWorld(world, {
+        contracts: [...Object.values(world.contractsById), createPlayerContract({
           id: contractIdFromString(legacyContractId),
-          playerId: donor.playerId,
+          playerId: freeAgent.playerId,
           teamId: team.id,
           kind: 'standard',
-          term: { startsOn: released.currentDate, expiresOn: addYears(released.currentDate, 2) },
+          term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, 2) },
           compensation: { annualSalary: 400_000 },
         })],
       })
@@ -554,45 +653,44 @@ describe('BS16M-B1 binding capacity reservations', () => {
 
       const materialized = materializePayroll(withLegacy, team.id, legacyContractId, withLegacy.currentDate)
       expect(materialized.status).toBe('accepted')
-      expect(materialized.results.map((result) => result.status)).toEqual(['accepted'])
-      // No retroactive reservation is synthesized for a commitment that never had one.
       expect(materialized.world.financialReservationsById).toEqual({})
       expect(Object.values(materialized.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'AUTHORIZED_ECONOMIC_EVENT' && item.provenance.id === `CONTRACT:${legacyContractId}:${materialized.events[0]!.idempotencyKey}`)).toHaveLength(1)
-      const retry = materializePayroll(materialized.world, team.id, legacyContractId, withLegacy.currentDate)
-      expect(retry.status).toBe('alreadyProcessed')
-      expect(retry.world).toBe(materialized.world)
+      const replay = materializePayroll(materialized.world, team.id, legacyContractId, withLegacy.currentDate)
+      expect(replay.status).toBe('alreadyProcessed')
+      expect(replay.world).toBe(materialized.world)
+    })
+
+    it('keeps a terminal bridge across save/load and replay without duplicating anything', () => {
+      const setup = freeAgentAgreement()
+      const signed = completeAcceptedFreeAgentSigning(setup.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
+      const contractId = String(signed.contractId)
+      const organizationId = setup.team.organizationId
+
+      const restored = roundTrip(signed.world)
+      expect(restored.financialReservationsById).toEqual(signed.world.financialReservationsById)
+      expect(bridgeOf(restored, contractId).status).toBe('CONSUMED')
+      expect(headroomMinorUnits(restored, organizationId, 'PLAYER_SALARY')).toBe(headroomMinorUnits(signed.world, organizationId, 'PLAYER_SALARY'))
+
+      const materialized = materializePayroll(restored, setup.team.id, contractId, restored.currentDate)
+      expect(materialized.status).toBe('accepted')
+      const replay = materializePayroll(materialized.world, setup.team.id, contractId, restored.currentDate)
+      expect(replay.status).toBe('alreadyProcessed')
+      expect(replay.world).toBe(materialized.world)
+      expect(bridgeOf(replay.world, contractId).status).toBe('CONSUMED')
+      expect(openReservedMinorUnits(replay.world, organizationId)).toBe(0)
+      expect(roundTrip(materialized.world).financialReservationsById).toEqual(materialized.world.financialReservationsById)
+    })
+
+    it('proves the capacity authority predicate the binders guard on', () => {
+      const setup = freeAgentAgreement()
+      const signed = completeAcceptedFreeAgentSigning(setup.world, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
+      const organizationId = setup.team.organizationId
+      expect(contractOwnsCapacityAuthority(signed.world, { contractId: String(signed.contractId), organizationId })).toBe(true)
+      expect(contractOwnsCapacityAuthority(setup.world, { contractId: String(signed.contractId), organizationId })).toBe(false)
+      expect(contractOwnsCapacityAuthority(signed.world, { contractId: 'contract:handoff:missing', organizationId })).toBe(false)
+      // A future-dated successor is derivable capacity authority even though the current period excludes it.
+      const retention = retentionSetup()
+      expect(contractOwnsCapacityAuthority(retention.signed.world, { contractId: retention.successorId, organizationId: retention.team.organizationId })).toBe(true)
     })
   })
 })
-
-const retentionApproverId = staffPersonIdFromString('staff:capacity:retention-approver')
-
-/** Retention Governance graph for the successor signing proof. */
-function retentionWorld(world: GameWorld, teamId: TeamId, negotiation: ReturnType<typeof createRetentionNegotiation>): GameWorld {
-  const institution = { id: 'institution:capacity-retention', universe: 'PROFESSIONAL_CLUB' as const, name: 'Retention capacity governance', teamIds: [teamId] }
-  const grants = [
-    { id: 'authority:capacity-retention-executive', fromBodyId: 'body:capacity-owner', toBodyId: 'body:capacity-executive', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
-    { id: 'authority:capacity-retention-board', fromBodyId: 'body:capacity-owner', toBodyId: 'body:capacity-board', decision: 'PLAYER_CONTRACT_SIGNING' as const, grantedOn: world.currentDate },
-  ]
-  const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 70])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
-  return updateGameWorld(world, {
-    retentionNegotiations: [negotiation],
-    governanceInstitutions: [institution],
-    governanceBodies: [
-      { id: 'body:capacity-owner', institutionId: institution.id, kind: 'OWNERSHIP', name: 'Owner' },
-      { id: 'body:capacity-executive', institutionId: institution.id, kind: 'EXECUTIVE', name: 'Executive' },
-      { id: 'body:capacity-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' },
-    ],
-    governanceAppointments: [
-      { id: 'appointment:capacity-retention-proposer', bodyId: 'body:capacity-executive', actor: { kind: 'COACH', id: world.userCoachId }, role: 'CEO', startedOn: world.currentDate },
-      { id: 'appointment:capacity-retention-approver', bodyId: 'body:capacity-board', actor: { kind: 'STAFF', id: retentionApproverId }, role: 'BOARD_MEMBER', startedOn: world.currentDate },
-    ],
-    governanceAuthorityGrants: grants,
-    governanceDecisionParticipationGrants: [
-      { id: 'right:capacity-retention-propose', authorityGrantId: grants[0]!.id, bodyId: 'body:capacity-executive', edgeParticipant: 'DELEGATE' as const, right: 'PROPOSE' as const },
-      { id: 'right:capacity-retention-execute', authorityGrantId: grants[0]!.id, bodyId: 'body:capacity-executive', edgeParticipant: 'DELEGATE' as const, right: 'EXECUTE' as const },
-      { id: 'right:capacity-retention-approve', authorityGrantId: grants[1]!.id, bodyId: 'body:capacity-board', edgeParticipant: 'DELEGATE' as const, right: 'APPROVE' as const, approvalRequirement: 'ALL_OF' as const },
-    ],
-    staffPeople: [...Object.values(world.staffPeopleById), { id: retentionApproverId, identity: { firstName: 'Retention', lastName: 'Approver' }, professional: { attributes } }],
-  })
-}
