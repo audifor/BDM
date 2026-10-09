@@ -1465,7 +1465,7 @@ These invariants hold across every Finance milestone and are the test any new Fi
 - **LOAN ≠ CAPITAL CONTRIBUTION.** Debt creates a liability; capital contribution creates equity. Neither is inferred from the other and neither is invented to make a payment possible.
 - **PAYABLE ≠ PAYMENT.** An outstanding obligation is not a settled expense; recognition never implies settlement.
 - **BUDGET ≠ OPENING BALANCE.** A spending pool is not an opening cash position.
-- **ZERO CASH MAY BE TRUE.** A club with no canonical cash source legitimately holds zero and accumulates outstanding obligations; that state is reported (`AUTOMATIC_SETTLEMENT_POLICY_NOT_MODELLED`, `OPENING_ECONOMIC_STATE_UNAVAILABLE`), never patched with invented money.
+- **ZERO CASH MAY BE TRUE.** A club with no canonical cash source legitimately holds zero and accumulates outstanding obligations; that state is reported (`INSUFFICIENT_LIQUIDITY_FOR_DUE_PAYABLES`, `OPENING_ECONOMIC_STATE_UNAVAILABLE`), never patched with invented money.
 - **If Finance cannot explain where money came from, it must not create it.** Every ledger mutation carries canonical provenance and a deterministic idempotency key, and a missing authority performs zero work instead of being manufactured.
 
 The milestone sequence that governs these invariants — including the completed lineage and the approved remaining scope BS16J–BS16N — is recorded in [`docs/strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md`](strengthening/BS16A_FINANCE_SYSTEM_TRUTH_AUDIT.md) §16.

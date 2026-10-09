@@ -338,17 +338,19 @@ Do **not** blindly continue CF-roadmap ordering: the evidence says the minimum p
 | BS16G | Monetary Boundary & Fiscal Period Truth | **PASS** | `88a010b` (every legacy money boundary crossed once), `ecfa182` (fiscal periods derived from the fiscal year, not the season) |
 | BS16H | Opening Economic State Authority | **PARTIAL** | `8cdf963` (authority), `884b420` (certification) |
 | BS16I | Contract Payroll & Daily Finance Lifecycle | **PASS** | `87a24a0`, `76a3dcf`; final closure `f176bc8` |
+| BS16J | Treasury & Settlement Truth | **PASS** | `f965995` (canonical due-payable batch settlement wired into `CLUB_FINANCE_V2`); certified by `src/domain/finance/TreasurySettlement.test.ts` + `src/engine/finance/ClubTreasuryLifecycle.test.ts` |
 
 Status rules that must not be relaxed:
 
 - **BS16H stays PARTIAL and is not retroactively promoted to PASS.** The authority exists and is certified, but no shipped world carries a legitimate opening economic source (`OPENING_ECONOMIC_STATE_UNAVAILABLE`), so truthful zero cash remains canonical. This is not a blocker for BS16J/BS16K, because zero cash is a valid and honest state.
 - **BS16E stays PARTIAL for its original milestone.** Its authorization activation was reconciled with the canonical finance foundation in `c9fbafb`, which belongs to the BS16F tranche.
 - **BS16I is PASS**, including the initial career date: `createNewGame` processes `processClubFinanceForDate(currentDate)` exactly once, and the first normal Advance Day processes the next GameDate.
+- **BS16J is PASS.** `settleDuePayableBatchForDate` is the single payable-to-payment authority and runs as the last step of the same `CLUB_FINANCE_V2` phase (so the initial career date uses it too); only a fully fundable due batch settles, nothing partial, no priority, no invented cash or financing, and replay/save-load are idempotent.
 - Every commit above is a **local** commit on `bdm-stage2-bs16-finance-canonical`; nothing is claimed as pushed or merged.
 
 ### 16.2 Approved continuation
 
-#### BS16J — Treasury & Settlement Truth
+#### BS16J — Treasury & Settlement Truth — **DELIVERED (PASS, `f965995`)**
 
 Goal: turn canonical outstanding payables into real cash settlements when actual liquidity exists.
 
@@ -395,7 +397,7 @@ This is the final BS16 Finance certification milestone. It supersedes the §15 d
 
 ### 16.3 Scope uniqueness
 
-**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. The remaining roadmap after BS16I is exactly BS16J → BS16K → BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
+**BS16J has exactly one canonical definition: §16.2 of this document.** Any other description of BS16J — including session notes or prompts — is not canonical. BS16J is delivered (`f965995`); the remaining roadmap after it is exactly BS16K → BS16L → BS16M → BS16N, and no BS16 milestone beyond BS16N is defined.
 
 ### 16.4 Product principles
 
