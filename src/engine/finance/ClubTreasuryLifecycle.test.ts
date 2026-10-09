@@ -207,17 +207,21 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
     while (funded.currentDate !== '2026-10-01') funded = advanceDayWithTrace(funded).world
 
     // The overdue payroll batch of this club is still eligible and now fully fundable, so it settles exactly once.
-    const settledPayables = Object.keys(funded.treasuryApplicationsById)
+    // Collections are separate applications of the same canonical authority, so payables are counted on their own.
+    const settledApplications = Object.keys(funded.treasuryApplicationsById)
+    const settledPayables = Object.values(funded.treasuryApplicationsById).filter((application) => String(application.organizationId) === organizationId && application.obligationKind === 'PAYABLE')
     const ownPayables = Object.keys(funded.payablesById).filter((id) => String(funded.payablesById[id as never]!.organizationId) === organizationId)
-    expect(settledPayables.length).toBe(ownPayables.length)
+    expect(settledPayables).toHaveLength(ownPayables.length)
     expect(getOpenPayables(funded, organizationId, funded.currentDate)).toHaveLength(0)
     expect(Object.keys(funded.payablesById)).toEqual(payablesAfterDue)
     expect(Object.keys(funded.expenseRecognitionsById)).toEqual(recognitionsAfterDue)
-    expect(cashOf(funded, organizationId, funded.currentDate)).toBe(0)
+    // What remains in cash is exactly what the club collected from its own declared revenue sources.
+    const collectedTotal = Object.values(funded.treasuryApplicationsById).filter((application) => String(application.organizationId) === organizationId && application.obligationKind === 'RECEIVABLE').reduce((sum, application) => sum + application.amount.minorUnits, 0)
+    expect(cashOf(funded, organizationId, funded.currentDate)).toBe(collectedTotal)
 
     // And the settled state is stable on the next days.
     const stable = advanceDayWithTrace(funded).world
-    expect(Object.keys(stable.treasuryApplicationsById)).toEqual(settledPayables)
+    expect(Object.keys(stable.treasuryApplicationsById)).toEqual(settledApplications)
   })
 
   it('keeps the shipped prototype and its first Advance Day duplicate-free after settlement runs', () => {
@@ -281,9 +285,12 @@ describe('BS16J treasury settlement lifecycle', { timeout: 120_000 }, () => {
       expect(treasury.ran).toBe(true)
     }
 
-    expect(Object.keys(world.treasuryApplicationsById)).toEqual([])
+    // Nothing ever funded the obligations, and the only cash movements are the club's own declared collections:
+    // no payable was paid, every obligation stays open, and no fact was duplicated by running the phase ten times.
+    expect(Object.values(world.treasuryApplicationsById).some((application) => application.obligationKind === 'PAYABLE')).toBe(false)
     expect(getOpenPayables(world, organizationId, world.currentDate).length).toBeGreaterThan(0)
     expect(getPayableStatus(world, Object.keys(world.payablesById)[0] as never, world.currentDate)).toBe('OPEN')
-    expect(cashOf(world, organizationId, world.currentDate)).toBe(0)
+    const collectedTotal = Object.values(world.treasuryApplicationsById).filter((application) => String(application.organizationId) === organizationId && application.obligationKind === 'RECEIVABLE').reduce((sum, application) => sum + application.amount.minorUnits, 0)
+    expect(cashOf(world, organizationId, world.currentDate)).toBe(collectedTotal)
   })
 })

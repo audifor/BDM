@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { staffPersonIdFromString, teamIdFromString } from '@/domain/ids'
-import { createStaffContract, findActiveStaffContract, isStaffContractActiveOn, staffContractIdFromString, terminateStaffContract } from './StaffContract'
+import { createStaffContract, findActiveStaffContract, isStaffContractActiveOn, staffContractIdFromString, staffFinancialScheduleStartsOn, terminateStaffContract } from './StaffContract'
 
 const staffId = staffPersonIdFromString('staff-1')
 const teamId = teamIdFromString('team-1')
@@ -74,5 +74,29 @@ describe('terminateStaffContract', () => {
   it('rejects terminating an already-terminated contract', () => {
     const terminated = terminateStaffContract(baseContract(), '2033-01-01' as never, 'performance')
     expect(() => terminateStaffContract(terminated, '2033-02-01' as never, 'performance')).toThrow(RangeError)
+  })
+})
+
+describe('staff contract financial schedule start', () => {
+  it('anchors the payroll schedule on the term start when no financial start is declared', () => {
+    const contract = baseContract()
+    expect(contract.financialScheduleStartsOn).toBeUndefined()
+    expect(staffFinancialScheduleStartsOn(contract)).toBe('2032-10-01')
+  })
+
+  it('separates employment from its payroll schedule when a later financial start is declared', () => {
+    const contract = createStaffContract({ ...baseContract(), financialScheduleStartsOn: '2032-10-08' as never })
+
+    expect(contract.term.startsOn).toBe('2032-10-01')
+    expect(staffFinancialScheduleStartsOn(contract)).toBe('2032-10-08')
+    // Employment is untouched: the Staff member is under contract from the term start.
+    expect(isStaffContractActiveOn(contract, '2032-10-01' as never)).toBe(true)
+    expect(isStaffContractActiveOn(contract, '2032-10-08' as never)).toBe(true)
+  })
+
+  it('rejects a financial start outside the employment term', () => {
+    expect(() => createStaffContract({ ...baseContract(), financialScheduleStartsOn: '2032-09-30' as never })).toThrow(RangeError)
+    expect(() => createStaffContract({ ...baseContract(), financialScheduleStartsOn: '2034-10-01' as never })).toThrow(RangeError)
+    expect(() => createStaffContract({ ...baseContract(), financialScheduleStartsOn: '2035-01-01' as never })).toThrow(/inside the employment term/)
   })
 })

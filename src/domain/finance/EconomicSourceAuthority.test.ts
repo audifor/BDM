@@ -10,6 +10,7 @@ import {
   getEconomicSourceAuthorityReport,
   getEligibleDuePayablesForDate,
   getOpenPayables,
+  getReceivableRemaining,
   getTrialBalanceAsOfDate,
   getUngroundedEconomicSources,
   isMaterializableShippedEconomicSource,
@@ -183,20 +184,28 @@ describe('BS16K shipped economic source authority', () => {
     expect(Object.keys(world.revenueSourcesById)).toHaveLength(18)
     expect(Object.keys(world.operatingCostSourcesById)).toHaveLength(18)
     expect(Object.values(world.expenseRecognitionsById).every((item) => ['CONTRACT_PLAYER_SALARY_DUE', 'STAFF_CONTRACT_EXPENSE_DUE', 'MATCH_OPERATIONS'].includes(String(item.category)))).toBe(true)
-    // Cash identity: opening cash + inflows - outflows = ending cash; these sources recognize a receivable and
-    // never cash, so with no funding the identity is 0 = 0 and there are no cash movements at all.
+    // Cash identity: opening cash + receipts - payments = ending cash. These sources recognize a receivable and
+    // collect it on its declared contractual payment date, so the identity holds with receipts equal to the
+    // installments that fell inside the window, and no payment happened because the payroll batch is never fully
+    // fundable by that cash.
     const totals = getCashFlowTotalsBetween(world, organizationId, '2026-09-25', world.currentDate)
-    expect(totals).toEqual([])
+    const receipts = totals.reduce((sum, row) => sum + row.inflowMinorUnits, 0)
+    const payments = totals.reduce((sum, row) => sum + row.outflowMinorUnits, 0)
     const endingCash = cashOf(world, organizationId)
-    expect(openingCash + 0 - 0).toBe(endingCash)
-    expect(endingCash).toBe(0)
+    expect(openingCash + receipts - payments).toBe(endingCash)
+    expect(payments).toBe(0)
+    expect(receipts).toBe(3 * legacyMajorUnitsToMoney(200_000, EUR).minorUnits)
+    expect(endingCash).toBe(receipts)
     // The ledger is still balanced: every debit has a matching credit.
     const trial = getTrialBalanceAsOfDate(world, world.currentDate)
     expect(trial.reduce((sum, row) => sum + row.debitMinorUnits, 0)).toBe(trial.reduce((sum, row) => sum + row.creditMinorUnits, 0))
-    // Revenue became receivables, obligations are outstanding, and nothing was settled because there is no liquidity.
-    expect(Object.values(world.receivablesById).filter((item) => String(item.organizationId) === organizationId).length).toBeGreaterThan(0)
+    // Revenue became receivables and those receivables became cash; obligations are still outstanding and nothing
+    // was paid, because the club's collected cash cannot cover its whole due batch.
+    const receivables = Object.values(world.receivablesById).filter((item) => String(item.organizationId) === organizationId)
+    expect(receivables).toHaveLength(3)
+    expect(receivables.every((item) => getReceivableRemaining(world, item.id, world.currentDate).minorUnits === 0)).toBe(true)
     expect(getOpenPayables(world, organizationId, world.currentDate).length).toBeGreaterThan(0)
     expect(getEligibleDuePayablesForDate(world, { organizationId, currencyCode: EUR, date: world.currentDate }).length).toBeGreaterThan(0)
-    expect(Object.keys(world.treasuryApplicationsById)).toEqual([])
+    expect(Object.values(world.treasuryApplicationsById).every((item) => item.obligationKind === 'RECEIVABLE')).toBe(true)
   })
 })
