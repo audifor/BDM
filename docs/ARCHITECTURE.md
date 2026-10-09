@@ -1258,6 +1258,28 @@ PCB's Facilities tab renders the same NG workspace and read model; local levels,
 Facilities balance are no longer reachable. UI physical capabilities and recorded financial facts
 do not promise Training, Medical or Talent bonuses or spending permission.
 
+BS17C keeps continuous condition loss in canonical numeric snapshots; display rounding no longer
+changes monthly versus interval wear. No rate, threshold or utilization coefficient is recalibrated.
+Missing condition remains unknown. The existing utilization fallback is explicitly 2x the base rate
+(ratio 1 through `1 + ratio`); no real utilization source is claimed. Same-day condition/lifecycle
+records have an optional command sequence (legacy absence means zero), preserved by Save V4.
+Sequences order real operations, not simulated progress; superseded observations cannot outlive
+their successor. Repair identity records prevent repeat application without a parallel ledger.
+
+`FacilityPhysicalOperations` derives scoped work restrictions and physical availability. Disjoint
+component work may coexist; overlapping/retired/planned targets are blocked. Pausing preserves work
+restrictions and phase state; the final concurrent facility-wide operation restores the recorded
+prior lifecycle. Retired component identity remains queryable before its closure date. CFI8 courts,
+capabilities and the club inventory use the same physical restrictions without sporting modifiers.
+Nominal capacity retains its recorded unit; measured operating capacity and occupancy remain unknown.
+
+Planned dates are not executable construction durations. Calendar continues the existing monthly
+condition phase, never fabricating project percentages or automatic completion. Explicit CFI6
+completion is a command recording physical scope completion; incomplete or future-dated actual
+phase completion facts block it. No minimum duration is inferred from a plan. Source phase facts
+are inspected and pause/resume/cancel propagate their existing states, without a new work scheduler.
+The canonical UI exposes physical availability, units, affected work, phase blockers and history.
+
 Deliberate gaps remain: no project planning/blueprint authority, no policy mapping a maintenance
 need to an intervention, no canonical ledger account catalog for capital payments or funded
 maintenance, and no generation of absent physical anatomy. BS17C/D/E/F own those later concerns;

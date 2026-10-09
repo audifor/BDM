@@ -9,6 +9,8 @@ import { FACILITY_STATUSES, isFacilityStatus, type FacilityStatus } from './Faci
  * to its current `Facility.status` for every date, since CFI1 does not backfill unrecorded past).
  */
 export interface FacilityStatusRecord {
+  /** Canonical command order within one day; old records default to zero. */
+  readonly sequence?: number
   readonly id: FacilityStatusRecordId
   readonly facilityId: FacilityId
   readonly status: FacilityStatus
@@ -16,6 +18,8 @@ export interface FacilityStatusRecord {
 }
 
 export interface CreateFacilityStatusRecordInput {
+  /** Canonical command order within one day; old records default to zero. */
+  readonly sequence?: number
   readonly id: FacilityStatusRecordId | string
   readonly facilityId: FacilityId | string
   readonly status: FacilityStatus
@@ -23,8 +27,10 @@ export interface CreateFacilityStatusRecordInput {
 }
 
 export function createFacilityStatusRecord(input: CreateFacilityStatusRecordInput): FacilityStatusRecord {
+  if (input.sequence !== undefined && (!Number.isSafeInteger(input.sequence) || input.sequence < 0)) throw new RangeError('Physical record sequence must be a non-negative safe integer')
   if (!isFacilityStatus(input.status)) throw new TypeError(`Facility status record status is invalid: ${String(input.status)}`)
   return Object.freeze({
+    ...(input.sequence === undefined ? {} : { sequence: input.sequence }),
     id: facilityStatusRecordIdFromString(input.id),
     facilityId: facilityIdFromString(input.facilityId),
     status: input.status,
@@ -32,13 +38,13 @@ export function createFacilityStatusRecord(input: CreateFacilityStatusRecordInpu
   })
 }
 
-/** Deterministic: the latest record with `effectiveFrom <= onDate` wins; ties broken by record ID for total ordering. Falls back to `currentStatus` when no record qualifies. */
+/** Deterministic: the latest record with `effectiveFrom <= onDate` wins; same-day sequence precedes the legacy record-ID tie-break. Falls back to `currentStatus` when no record qualifies. */
 export function resolveFacilityStatusAt(records: readonly FacilityStatusRecord[], facilityId: FacilityId, onDate: GameDate, currentStatus: FacilityStatus): FacilityStatus {
   const candidates = records.filter((record) => record.facilityId === facilityId && compareGameDates(record.effectiveFrom, onDate) <= 0)
   if (candidates.length === 0) return currentStatus
   const latest = [...candidates].sort((a, b) => {
     const byDate = compareGameDates(b.effectiveFrom, a.effectiveFrom)
-    return byDate !== 0 ? byDate : b.id.localeCompare(a.id)
+    return byDate !== 0 ? byDate : (b.sequence ?? 0) - (a.sequence ?? 0) || b.id.localeCompare(a.id)
   })[0]!
   return latest.status
 }

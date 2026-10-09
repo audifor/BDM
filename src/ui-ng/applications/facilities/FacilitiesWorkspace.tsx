@@ -334,7 +334,7 @@ function FacilityInspector({ model, facility }: { readonly model: ClubFacilities
       <Table
         empty="No active component is recorded for this facility."
         gridId="ng-facilities-components"
-        headers={['Component', 'Type', 'Status', 'Condition', 'Serviceability', 'Open needs']}
+        headers={['Component', 'Type', 'Status', 'Condition', 'Serviceability', 'Physical availability', 'Team access', 'Nominal capacity', 'Operational capacity', 'Affected work', 'Open needs']}
         numericColumns={['Condition', 'Open needs']}
         rows={components.map((component) => [
           String(component.componentId),
@@ -343,10 +343,20 @@ function FacilityInspector({ model, facility }: { readonly model: ClubFacilities
           humanizeToken(component.status),
           conditionLabel(component.physicalCondition),
           serviceabilityLabel(component.serviceability),
+          component.availability.status === 'UNKNOWN' ? 'Not demonstrated' : humanizeToken(component.availability.status),
+          component.availability.access ? 'Recorded current right' : 'No current team right',
+          component.availability.nominalCapacity === null ? 'Not recorded' : `${component.availability.nominalCapacity} ${component.availability.capacityUnit ?? '(unit not recorded)'}`,
+          component.availability.operationalCapacity === null ? 'Not demonstrated' : `${component.availability.operationalCapacity} ${component.availability.capacityUnit}`,
+          component.availability.affectedProjectIds.join(', ') || 'None recorded',
           String(component.openNeedIds.length),
         ])}
       />
 
+      <p className="ng-canon__note">Nominal capacity is a recorded amount with its recorded unit. Court counts do not establish simultaneous player capacity. Shared rights do not supply an occupancy schedule.</p>
+      <p className="ng-canon__eyebrow">Physical history</p>
+      {facility.history.map((entry, index) => <p className="ng-canon__note" key={index}>{entry.date}: {entry.description}</p>)}
+      <p className="ng-canon__eyebrow">Recorded usage rights</p>
+      {facility.usageRights.map((right) => <p className="ng-canon__note" key={right.id}>{right.id}: {right.purpose} / {right.exclusivity} / {right.from} to {right.to ?? 'no recorded end'}</p>)}
       {needs.length === 0 ? null : (
         <>
           <p className="ng-canon__eyebrow">Maintenance needs</p>
@@ -478,6 +488,8 @@ function ProjectsPanel({
             {scheduleLabel(model.asOf, project.plannedStartDate, project.actualStartDate)} · planned completion{' '}
             {scheduleLabel(model.asOf, project.plannedCompletionDate, project.actualCompletionDate)}
           </p>
+          <p className="ng-canon__note">Physical progress: {project.progress === 'COMPLETED' ? 'completion explicitly recorded' : 'unknown; no executable duration or percentage authority'}. Completion is an explicit physical command, not a consequence of the planned date.</p>
+          {project.physicalBlockers.map((reason) => <p className="ng-canon__note" key={reason}>{reason === 'PHYSICAL_PHASES_INCOMPLETE' ? 'Recorded physical phases are incomplete.' : humanizeToken(reason)}</p>)}
           {project.currentPhase === null ? null : (
             <p className="ng-canon__note">
               Current phase: {project.currentPhase.name ?? `Phase ${project.currentPhase.sequence}`} · {humanizeToken(project.currentPhase.status)} ·{' '}

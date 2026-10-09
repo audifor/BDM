@@ -43,8 +43,10 @@ export function conditionAfterElapsedPeriod(startingCondition: number | null, co
   const wearProfile = wearProfileForComponentType(component.type, componentCategory(component.type))
   const baseRate = BASE_MONTHLY_DETERIORATION_RATE[wearProfile]
   const totalLoss = baseRate * utilizationMultiplier(utilizationRatio) * elapsedMonths
+  // Persist the existing continuous loss without rounding each interval.
+  // Repeated rounded snapshots previously changed the total wear with caller cadence.
   const next = startingCondition - totalLoss
-  return Math.max(0, Math.min(100, Math.round(next)))
+  return Math.max(0, Math.min(100, next))
 }
 
 const AVERAGE_DAYS_PER_MONTH = 30.436875
@@ -67,7 +69,7 @@ export interface ComponentDeteriorationResult {
   readonly nextCondition: number | null
   readonly previousServiceability: ReturnType<typeof worstServiceabilityImpliedByCondition> | null
   readonly nextServiceability: ReturnType<typeof worstServiceabilityImpliedByCondition> | null
-  /** `true` when this result should be written as a new `FacilityComponentConditionRecord` — i.e. condition or serviceability actually changed. A no-op period (zero elapsed days, or a period too short to move the rounded condition) produces `changed: false` and writes nothing, keeping CFI5's snapshot-on-material-change strategy honest. */
+  /** `true` when this result should be written as a new `FacilityComponentConditionRecord` — i.e. condition or serviceability actually changed. A no-op period (zero elapsed days, or a period with no condition or serviceability change) produces `changed: false` and writes nothing, keeping CFI5's snapshot-on-material-change strategy honest. */
   readonly changed: boolean
   /** One of the CFI5 "future RPG seam" observable outcome facts this component crossed during the period, if any — returned as plain data, never dispatched to any event bus. */
   readonly outcomes: readonly FacilityDeteriorationOutcome[]
@@ -91,7 +93,10 @@ export function calculateComponentDeterioration(world: GameWorld, facilityId: Fa
 }
 
 function calculateOneComponentDeterioration(world: GameWorld, component: FacilityComponent, fromDate: GameDate, toDate: GameDate, usageLoads: readonly FacilityUsageLoad[], thresholds: FacilityDeteriorationThresholds): ComponentDeteriorationResult {
-  const previousRecord = componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), component.id, fromDate)
+  const allRecords = Object.values(world.facilityComponentConditionRecordsById)
+  const previousRecord = componentConditionAt(allRecords, component.id, toDate)
+  // Never replay wear over a newer repair/observation or an already evaluated interval.
+  if (previousRecord !== undefined && previousRecord.effectiveFrom > fromDate) fromDate = previousRecord.effectiveFrom
   const previousCondition = previousRecord?.physicalCondition ?? null
   const previousServiceability = previousRecord?.serviceability ?? null
   const utilizationRatio = usageLoads.find((load) => load.componentId === component.id)?.utilizationRatio ?? 1
@@ -155,10 +160,11 @@ function applyDeteriorationResults(world: GameWorld, results: readonly Component
 
   for (const result of changed) {
     const activeRecord = componentConditionAt(existingConditionRecords, result.componentId, result.fromDate)
-    if (activeRecord !== undefined && activeRecord.effectiveTo === null) closedRecordIds.add(activeRecord.id)
+    for (const record of existingConditionRecords) if (record.componentId === result.componentId && (record.effectiveTo === null || record.effectiveTo >= toDate) && record.effectiveFrom < toDate) closedRecordIds.add(record.id)
     newConditionRecords.push(createFacilityComponentConditionRecord({
       id: facilityComponentConditionRecordIdFromString(`facility-component-condition:${result.componentId}:${toDate}`),
       componentId: result.componentId,
+      sequence: nextConditionSequence(existingConditionRecords, result.componentId, toDate),
       effectiveFrom: toDate,
       physicalCondition: result.nextCondition,
       serviceability: result.nextServiceability ?? 'FULL',
@@ -224,12 +230,8 @@ export function advanceFacilitiesCondition(world: GameWorld, fromDate: GameDate,
  * need not be 100), and a `PARTIAL`/`UNSUCCESSFUL` outcome leaves the referenced need open rather
  * than closing it — an unsuccessful repair attempt does not fabricate a resolution.
  *
- * Idempotent by construction: re-applying the same action a second time recomputes the identical new
- * condition-record id (`facility-component-condition:${componentId}:${completedAt}`) and the
- * identical need-completion patch, so a duplicate application either no-ops (need already
- * `COMPLETED`, condition record already present with the same values) or is rejected by
- * `GameWorld`'s own duplicate-ID guard — CFI5 relies on that existing mechanism rather than adding a
- * separate idempotency ledger.
+ * Applied condition records use the action identity and same-day sequence. Retrying a recorded
+ * action is a no-op even after later wear/repair; no second idempotency ledger is persisted.
  */
 export interface FacilityMaintenanceActionApplication {
   readonly world: GameWorld
@@ -244,23 +246,27 @@ export function applyFacilityMaintenanceAction(world: GameWorld, actionId: Facil
     return { world, conditionRecordWritten: false, needClosed: false }
   }
 
+  const appliedRecordId = `facility-component-condition:${action.componentId}:${action.completedAt}:maintenance:${action.id}`
+  if (Object.values(world.facilityComponentConditionRecordsById).some((r) => r.id === appliedRecordId)) return { world, conditionRecordWritten: false, needClosed: false }
+
   let conditionRecordWritten = false
   let updatedConditionRecords = Object.values(world.facilityComponentConditionRecordsById)
 
   if (action.componentId !== null && (action.resultingCondition !== null || action.resultingServiceability !== null)) {
     const activeRecord = componentConditionAt(updatedConditionRecords, action.componentId, action.completedAt)
-    const resultingServiceability = action.resultingServiceability ?? activeRecord?.serviceability ?? 'FULL'
+    const resultingServiceability = action.resultingServiceability ?? (action.resultingCondition === null ? activeRecord?.serviceability ?? 'FULL' : worstServiceabilityImpliedByCondition(action.resultingCondition))
     const resultingCondition = action.resultingCondition ?? activeRecord?.physicalCondition ?? null
     updatedConditionRecords = updatedConditionRecords.map((record) =>
-      activeRecord !== undefined && record.id === activeRecord.id && record.effectiveTo === null
+      record.componentId === action.componentId && (record.effectiveTo === null || record.effectiveTo >= action.completedAt!) && record.effectiveFrom < action.completedAt!
         ? { ...record, effectiveTo: subtractOneDay(action.completedAt as GameDate) }
         : record,
     )
     updatedConditionRecords = [
       ...updatedConditionRecords,
       createFacilityComponentConditionRecord({
-        id: facilityComponentConditionRecordIdFromString(`facility-component-condition:${action.componentId}:${action.completedAt}`),
+        id: facilityComponentConditionRecordIdFromString(appliedRecordId),
         componentId: action.componentId,
+        sequence: nextConditionSequence(updatedConditionRecords, action.componentId, action.completedAt),
         effectiveFrom: action.completedAt,
         physicalCondition: resultingCondition,
         serviceability: resultingServiceability,
@@ -299,4 +305,8 @@ function subtractOneDay(date: GameDate): GameDate {
   const utcMs = Date.UTC(year, month - 1, day) - 86_400_000
   const previous = new Date(utcMs)
   return parseGameDate(`${previous.getUTCFullYear().toString().padStart(4, '0')}-${(previous.getUTCMonth() + 1).toString().padStart(2, '0')}-${previous.getUTCDate().toString().padStart(2, '0')}`)
+}
+
+function nextConditionSequence(records: readonly FacilityComponentConditionRecord[], componentId: FacilityComponentId, date: GameDate): number {
+  return 1 + Math.max(0, ...records.filter((r) => r.componentId === componentId && r.effectiveFrom === date).map((r) => r.sequence ?? 0))
 }

@@ -1136,8 +1136,9 @@ function parseFacilityStatusRecords(value: unknown): readonly FacilityStatusReco
   if (!Array.isArray(value)) throw new TypeError('Save V4 facilityStatusRecords must be an array')
   return Object.freeze(value.map((entry) => {
     const record_ = record(entry, 'Save V4 FacilityStatusRecord')
-    exactKeys(record_, ['id', 'facilityId', 'status', 'effectiveFrom'], 'Save V4 FacilityStatusRecord')
+    exactKeys(record_, ['id', 'facilityId', 'status', 'effectiveFrom', ...(record_.sequence === undefined ? [] : ['sequence'])], 'Save V4 FacilityStatusRecord')
     return createFacilityStatusRecord({
+      ...(record_.sequence === undefined ? {} : { sequence: record_.sequence as number }),
       id: facilityStatusRecordIdFromString(nonEmptyText(record_.id, 'Save V4 FacilityStatusRecord id')),
       facilityId: facilityIdFromString(nonEmptyText(record_.facilityId, 'Save V4 FacilityStatusRecord facilityId')),
       status: record_.status as FacilityStatusRecord['status'],
@@ -1152,8 +1153,9 @@ function parseFacilityComponentConditionRecords(value: unknown): readonly Facili
   if (!Array.isArray(value)) throw new TypeError('Save V4 facilityComponentConditionRecords must be an array')
   return Object.freeze(value.map((entry) => {
     const record_ = record(entry, 'Save V4 FacilityComponentConditionRecord')
-    exactKeys(record_, ['id', 'componentId', 'effectiveFrom', 'effectiveTo', 'physicalCondition', 'serviceability', 'technicalStandard', 'notes'], 'Save V4 FacilityComponentConditionRecord')
+    exactKeys(record_, ['id', 'componentId', 'effectiveFrom', 'effectiveTo', 'physicalCondition', 'serviceability', 'technicalStandard', 'notes', ...(record_.sequence === undefined ? [] : ['sequence'])], 'Save V4 FacilityComponentConditionRecord')
     return createFacilityComponentConditionRecord({
+      ...(record_.sequence === undefined ? {} : { sequence: record_.sequence as number }),
       id: facilityComponentConditionRecordIdFromString(nonEmptyText(record_.id, 'Save V4 FacilityComponentConditionRecord id')),
       componentId: facilityComponentIdFromString(nonEmptyText(record_.componentId, 'Save V4 FacilityComponentConditionRecord componentId')),
       effectiveFrom: nonEmptyText(record_.effectiveFrom, 'Save V4 FacilityComponentConditionRecord effectiveFrom'),

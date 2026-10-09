@@ -1,3 +1,4 @@
+import { componentPhysicalAvailabilityAt, projectPhysicalBlocker } from '@/engine/facilities'
 import type { GameDate } from '@/domain/date'
 import {
   FACILITY_DEVELOPMENT_PROJECT_ALLOWED_TRANSITIONS,
@@ -65,6 +66,7 @@ export interface ClubFacilityAuthority {
 }
 
 export interface ClubFacilityComponentRow {
+  readonly availability: ReturnType<typeof componentPhysicalAvailabilityAt>
   readonly componentId: FacilityComponentId
   readonly facilityId: FacilityId
   readonly name: string
@@ -81,6 +83,8 @@ export interface ClubFacilityComponentRow {
 }
 
 export interface ClubFacilityRow {
+  readonly history: readonly { readonly date: GameDate; readonly sequence: number; readonly description: string }[]
+  readonly usageRights: readonly { readonly id: string; readonly purpose: string; readonly exclusivity: string; readonly from: GameDate; readonly to: GameDate | null }[]
   readonly facilityId: FacilityId
   readonly name: string
   readonly canonicalName: string
@@ -160,6 +164,8 @@ export interface ClubProjectMoneyRow {
 }
 
 export interface ClubProjectRow {
+  readonly progress: 'UNKNOWN' | 'COMPLETED'
+  readonly physicalBlockers: readonly string[]
   readonly projectId: FacilityDevelopmentProjectId
   readonly organizationId: OrganizationId
   readonly facilityId: FacilityId | null
@@ -361,6 +367,7 @@ export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: Team
       const componentReadiness = componentOperationalReadinessAt(conditionRecords, allNeeds, component.id, asOf)
       components.push(
         Object.freeze({
+          availability: componentPhysicalAvailabilityAt(world, component.id, asOf, teamId),
           componentId: component.id,
           facilityId,
           name: component.name ?? component.type,
@@ -418,6 +425,12 @@ export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: Team
 
     facilities.push(
       Object.freeze({
+        history: [
+          ...Object.values(world.facilityStatusRecordsById).filter((r) => r.facilityId === facilityId && r.effectiveFrom <= asOf).map((r) => ({ date: r.effectiveFrom, sequence: r.sequence ?? 0, description: `Facility status: ${r.status}` })),
+          ...conditionRecords.filter((r) => world.facilityComponentsById[r.componentId]?.facilityId === facilityId && r.effectiveFrom <= asOf).map((r) => ({ date: r.effectiveFrom, sequence: r.sequence ?? 0, description: `${componentLabel(world, r.componentId)}: condition ${r.physicalCondition ?? 'unknown'} / ${r.serviceability}` })),
+          ...allComponents.filter((c) => c.facilityId === facilityId && c.closedAt !== null && c.closedAt <= asOf).map((c) => ({ date: c.closedAt!, sequence: 0, description: `${c.name ?? c.id}: retired (identity retained)` })),
+        ].sort((a,b) => a.date.localeCompare(b.date) || a.sequence - b.sequence || a.description.localeCompare(b.description)),
+        usageRights: Object.values(world.facilityUsageRightsById).filter((r) => r.facilityId === facilityId).sort((a,b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, purpose: r.purpose, exclusivity: r.exclusivity, from: r.validFrom, to: r.validTo })),
         facilityId,
         name: facilityName,
         canonicalName: facility.canonicalName,
@@ -438,8 +451,8 @@ export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: Team
         knownConditionComponentCount: condition.knownConditionComponentCount,
         averageKnownCondition: condition.averageKnownCondition,
         worstKnownCondition: condition.worstKnownCondition,
-        outOfServiceComponentIds: condition.outOfServiceComponentIds,
-        limitedServiceComponentIds: condition.limitedServiceComponentIds,
+        outOfServiceComponentIds: facilityComponents.filter((c) => componentPhysicalAvailabilityAt(world, c.id, asOf).status === 'OUT_OF_SERVICE').map((c) => c.id),
+        limitedServiceComponentIds: facilityComponents.filter((c) => componentPhysicalAvailabilityAt(world, c.id, asOf).status === 'LIMITED').map((c) => c.id),
         openNeedIds: Object.freeze(readiness.openMaintenanceNeeds.map((need) => String(need.id))),
         criticalNeedIds: Object.freeze(readiness.criticalMaintenanceNeeds.map((need) => String(need.id))),
         maintenanceActionIds: Object.freeze(facilityActions.map((action) => String(action.id))),
@@ -471,6 +484,8 @@ export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: Team
         actualCompletion: phase.actualCompletion,
       })
     return Object.freeze({
+      progress: project.status === 'COMPLETED' ? 'COMPLETED' as const : 'UNKNOWN' as const,
+      physicalBlockers: [projectPhysicalBlocker(world, project, project.status === 'IN_PROGRESS' ? 'COMPLETE' : 'START', asOf)].filter((reason): reason is NonNullable<typeof reason> => reason !== null),
       projectId: project.id,
       organizationId: project.organizationId,
       facilityId: project.facilityId,
@@ -488,7 +503,7 @@ export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: Team
       eligibleToStart: eligibleProjectIds.has(project.id),
       currentPhase: current === undefined ? null : toPhaseRow(current),
       phases: Object.freeze(phases.map(toPhaseRow)),
-      actions: projectActionsFor(project),
+      actions: projectActionsFor(project).filter((action) => action !== 'START' && action !== 'COMPLETE' || projectPhysicalBlocker(world, project, action, asOf) === null),
       money: moneyRows(world, project.id, asOf),
       underfundedAsOfDate: isFacilityProjectUnderfundedAt(world, project.id, asOf),
     })

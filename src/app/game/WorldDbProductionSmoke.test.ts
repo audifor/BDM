@@ -1,3 +1,6 @@
+import { advanceDayWithTrace } from '@/engine/calendar'
+import { updateGameWorld } from '@/domain/world'
+import { parseGameDate } from '@/domain/date'
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { assertWorldDbGameBootstrapSliceV1, type WorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
@@ -46,6 +49,21 @@ describe.runIf(runProductionSmoke)('World DB production Spain ACB smoke', () => 
     expect(loaded.placesById).toEqual(world.placesById)
     expect(loaded.facilityTeamRelationshipsById).toEqual(world.facilityTeamRelationshipsById)
     expect(buildClubFacilitiesWorkspaceModel(loaded, team.teamId as never)).toEqual(model)
+    // BS17C: a real source slice remains physically unknown through the monthly Calendar seam.
+    const nextMonthDay = parseGameDate(`${world.currentDate.slice(0, 7)}-28`)
+    let progressed = updateGameWorld(loaded, { currentDate: nextMonthDay })
+    let withoutPhysical = updateGameWorld(deserializeGameWorldV4(serializeGameWorldV4(baseline, '2026-10-09T12:00:00.000Z')), { currentDate: nextMonthDay })
+    for (let day = 0; day < 4; day++) {
+      const actual = advanceDayWithTrace(progressed)
+      expect(actual.status).toBe('COMPLETED')
+      progressed = actual.world
+      withoutPhysical = advanceDayWithTrace(withoutPhysical).world
+    }
+    expect(progressed.facilitiesById).toEqual(world.facilitiesById)
+    expect(progressed.facilityComponentConditionRecordsById).toEqual({})
+    expect(progressed.facilityMaintenanceNeedsById).toEqual({})
+    for (const key of Object.keys(progressed) as (keyof typeof progressed)[]) if (!key.startsWith('facility') && key !== 'facilitiesById' && key !== 'placesById') expect(JSON.stringify(progressed[key]) === JSON.stringify(withoutPhysical[key]), `Calendar nonphysical collection ${key}`).toBe(true)
+
   })
   it('materializes the real slice, derives the first game and applies a real MatchEngine result', () => {
     const value: unknown = JSON.parse(readFileSync(slicePath!, 'utf8'))
