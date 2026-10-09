@@ -1,3 +1,4 @@
+import { evaluatePhysicalAllocation, reallocateRescheduledTraining, transitionPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { createDevelopmentStimulusEvent, type DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
@@ -102,6 +103,8 @@ export function nextEligibleTrainingDate(currentDate: GameDate): GameDate {
  * than relying only on UI validation.
  */
 export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrainingSession, options: { readonly commitUnauthorizedTransfer?: boolean } = {}, update: typeof updateGameWorld = updateGameWorld): GameWorld {
+  session = reallocateRescheduledTraining(world, session)
+  if (world.scheduledTrainingSessionsById[session.id]?.status === 'completed') throw new RangeError('Completed Training history is immutable')
   if (session.date <= world.currentDate) {
     throw new RangeError(`Scheduled session date ${session.date} must be after the current date ${world.currentDate}; it would never execute`)
   }
@@ -109,7 +112,7 @@ export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrai
   const existing = scheduledTrainingSessionsOnDate(world.scheduledTrainingSessionsById, session.date)
   const collision = findCollidingSession(session, existing)
   if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
-  const participants = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
+  const participants = session.scope === 'individual' ? [session.playerId!] : session.selectedPlayerIds ?? world.teams[session.teamId]!.rosterPlayerIds
   if (!options.commitUnauthorizedTransfer && participants.some((playerId) => !validateTransferAuthorization(world, playerId, session.teamId, 'ATHLETIC_ACTIVITY').ok)) throw new RangeError('TRANSFER_PORTAL_AUTHORIZATION_REQUIRED')
   validateAssignedStaff(world, session, existing)
   const updated = update(world, { scheduledTrainingSessionsById: updateScheduledTrainingSessionRecord(world.scheduledTrainingSessionsById, session) })
@@ -138,7 +141,7 @@ export function scheduleTrainingSessionsBatch(
     const existing = [...existingOnDate, ...sameDateAdditions]
     const collision = findCollidingSession(session, existing)
     if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
-    const participants = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
+    const participants = session.scope === 'individual' ? [session.playerId!] : session.selectedPlayerIds ?? world.teams[session.teamId]!.rosterPlayerIds
     if (!options.commitUnauthorizedTransfer && participants.some((playerId) => !validateTransferAuthorization(world, playerId, session.teamId, 'ATHLETIC_ACTIVITY').ok)) throw new RangeError('TRANSFER_PORTAL_AUTHORIZATION_REQUIRED')
     validateAssignedStaff(world, session, existing)
     const sameIdIndex = sameDateAdditions.findIndex((addition) => addition.id === session.id)
@@ -174,7 +177,10 @@ export function detachStaffFromFutureTrainingSessions(world: GameWorld, staffId:
 
 export function cancelScheduledTrainingSession(world: GameWorld, sessionId: string): GameWorld {
   const sessions = { ...world.scheduledTrainingSessionsById }
-  delete sessions[sessionId]
+  const session = sessions[sessionId]
+  if (session?.status === 'completed') throw new RangeError('Completed Training history is immutable')
+  if (session?.physicalAllocations !== undefined) sessions[sessionId] = { ...session, status: 'cancelled', assignedStaffPersonIds: undefined, physicalAllocations: session.physicalAllocations.map(item => ['CONFIRMED', 'PENDING', 'BLOCKED'].includes(item.status) ? transitionPhysicalAllocation(item, 'CANCELLED', 'TRAINING_CANCELLED', world) : item) }
+  else delete sessions[sessionId]
   return updateGameWorld(world, { scheduledTrainingSessionsById: sessions })
 }
 
@@ -215,7 +221,7 @@ export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): 
         return updated
       }
       const executed = executable.reduce((next, session) => {
-        const participants = session.scope === 'individual' ? [session.playerId!] : next.teams[session.teamId]!.rosterPlayerIds
+        const participants = session.scope === 'individual' ? [session.playerId!] : session.selectedPlayerIds ?? next.teams[session.teamId]!.rosterPlayerIds
         let guarded = next
         for (const playerId of participants) {
           let permission = validateTransferAuthorization(guarded, playerId, session.teamId, 'ATHLETIC_ACTIVITY')
@@ -265,14 +271,23 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const definition = planDelegation === undefined ? trainingDefinitionById(session.definitionId) : planDelegation.definition
   const intensity = intensityDelegation === undefined ? session.intensity : intensityDelegation.intensity
 
-  const physicalAttempt = resolveSportingOperation(world, { teamId: session.teamId, date: world.currentDate, operationId: definition.id,
-    requirements: trainingPhysicalRequirements(definition), interval: { startTime: session.startTime, durationMinutes: session.durationMinutes } })
+  const allocation = session.physicalAllocations?.find(item => item.status === 'CONFIRMED') ?? session.physicalAllocations?.filter(item => ['PENDING', 'BLOCKED'].includes(item.status)).at(-1)
+  const allocationResult = allocation === undefined || trainingPhysicalRequirements(definition).length === 0 ? undefined : evaluatePhysicalAllocation(world, session, allocation.componentId, trainingPhysicalRequirements(definition))
+  let physicalAttempt = resolveSportingOperation(world, { teamId: session.teamId, date: world.currentDate, operationId: definition.id,
+    requirements: trainingPhysicalRequirements(definition), ...(allocation === undefined ? {} : { componentId: allocation.componentId }), interval: { startTime: session.startTime, durationMinutes: session.durationMinutes } })
+  if (allocationResult !== undefined && allocationResult.status !== 'UNVERIFIED_PHYSICAL_CONTEXT' && (allocationResult.status === 'BLOCKED' || allocation?.status !== 'CONFIRMED')) {
+    const reason = allocationResult.status === 'BLOCKED' ? allocationResult.reason : 'ALLOCATION_NOT_CONFIRMED'
+    physicalAttempt = { ...physicalAttempt, status: 'VERIFIED_UNAVAILABLE', resources: physicalAttempt.resources.map(resource => ({ ...resource, status: 'VERIFIED_UNAVAILABLE', reason })) }
+    session = { ...session, physicalAllocations: session.physicalAllocations!.map(item => item.id === allocation!.id ? transitionPhysicalAllocation(item, item.status, reason, world) : item) }
+  } else if (allocationResult?.status === 'UNVERIFIED_PHYSICAL_CONTEXT') {
+    physicalAttempt = { ...physicalAttempt, status: physicalAttempt.status === 'VERIFIED_UNAVAILABLE' ? 'VERIFIED_UNAVAILABLE' : 'UNVERIFIED_PHYSICAL_CONTEXT' }
+  }
   if (physicalAttempt.status === 'VERIFIED_UNAVAILABLE') {
     pendingSessions.push({ ...session, physicalAttempt })
     return world
   }
 
-  const playerIds = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
+  const playerIds = session.scope === 'individual' ? [session.playerId!] : session.selectedPlayerIds ?? world.teams[session.teamId]!.rosterPlayerIds
   const load = trainingLoad(intensity)
   const executionMultiplier = trainingStaffExecutionMultiplier(world, session, definition)
 
@@ -359,6 +374,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     physicalAttempt,
     assignedStaffPersonIds: undefined,
     status: 'completed',
+    ...(session.physicalAllocations === undefined ? {} : { physicalAllocations: session.physicalAllocations.map(item => item.status === 'CONFIRMED' ? transitionPhysicalAllocation(item, 'RELEASED', 'TRAINING_EXECUTED', world) : item) }),
     execution: {
       completedOn: world.currentDate,
       moduleName,

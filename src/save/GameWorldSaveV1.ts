@@ -1,3 +1,4 @@
+import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
 import { coachProfileRefsForCoachId, createLegacyCoach } from '@/domain/coach'
 import { createPerson } from '@/domain/person'
 import { createCompetition, createCompetitionRules, FIBA_GAME_FORMAT, parseWorldCompetitionFormatDocument } from '@/domain/competition'
@@ -717,6 +718,8 @@ function readScheduledTrainingSessions(value: unknown) {
       startTime: string(v.startTime, 'Scheduled session startTime'),
       durationMinutes: number(v.durationMinutes, 'Scheduled session durationMinutes'),
       scope: string(v.scope, 'Scheduled session scope') as 'team' | 'individual',
+      ...(v.selectedPlayerIds === undefined ? {} : { selectedPlayerIds: array(v.selectedPlayerIds, 'Training selected participants').map(id => string(id, 'Training selected PlayerId') as import('@/domain/ids').PlayerId) }),
+      ...(v.physicalAllocations === undefined ? {} : { physicalAllocations: array(v.physicalAllocations, 'Training physical allocations').map(item => createPhysicalAllocation(record(item, 'Physical allocation') as unknown as PhysicalAllocation)) }),
       ...(v.playerId === undefined ? {} : { playerId: string(v.playerId, 'Scheduled session player') as import('@/domain/ids').PlayerId }),
       definitionId: string(v.definitionId, 'Scheduled session definitionId'),
       ...(v.moduleId === undefined ? {} : { moduleId: string(v.moduleId, 'Scheduled session moduleId') }),

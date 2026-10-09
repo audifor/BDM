@@ -44,7 +44,7 @@ describe('TrainingWorkspace', () => {
     mountTrainingWorkspace(blocked)
     expect(screen.getByRole('region', { name: 'Capacity and shared Training timetable' })).toBeInTheDocument()
     expect(screen.getByText(/Session not executed/)).toBeInTheDocument()
-    expect(screen.getByText(/Closed practice center/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Closed practice center/).length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Reschedule for tomorrow' }))
     const rescheduled = useGameStore.getState().world!.scheduledTrainingSessionsById[session.id]!
     expect(rescheduled.date).toBe(nextEligibleTrainingDate(date))

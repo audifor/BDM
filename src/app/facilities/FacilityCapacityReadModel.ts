@@ -1,3 +1,4 @@
+import { selectedTrainingDemand } from '@/engine/facilities/PhysicalAllocationEngine'
 import { addDays } from '@/domain/date'
 import type { FacilityId, TeamId } from '@/domain/ids'
 import { usableComponentsForTeamAt } from '@/domain/facilities'
@@ -35,8 +36,8 @@ export function buildFacilityCapacityContext(world: GameWorld, teamId: TeamId, f
         date: session.date, startTime: session.startTime, durationMinutes: session.durationMinutes,
         scope: session.scope, targetPlayerId: session.playerId ?? null, definitionId: session.definitionId,
         entitledComponentIds,
-        // A roster or a target PlayerId is not a simultaneous component demand measurement.
-        simultaneousDemand: null, demandUnit: null, assignedComponentId: null,
+        // Explicit Training selection is demand; the unselected legacy roster is not attendance.
+        simultaneousDemand: selectedTrainingDemand(session), demandUnit: selectedTrainingDemand(session) === null ? null : 'SIMULTANEOUS_PLAYERS', assignedComponentId: session.physicalAllocations?.find(item => item.status === 'CONFIRMED')?.componentId ?? null,
       }
     })
     .filter(session => session.teamId === teamId || session.entitledComponentIds.length > 0)
@@ -59,7 +60,7 @@ export function buildFacilityCapacityContext(world: GameWorld, teamId: TeamId, f
   return {
     asOf: world.currentDate, weekEnd,
     status: 'UNVERIFIED_PHYSICAL_CONTEXT' as const,
-    allocationStatus: 'BLOCKED_BY_PRODUCT_DECISION' as const,
+    allocationStatus: 'AVAILABLE_VIA_TRAINING_OWNER' as const,
     components, sessions,
     // Only timetable overlap + common dated entitlements. Neither session has requested or
     // been assigned these components; this does not prove an actual resource conflict.

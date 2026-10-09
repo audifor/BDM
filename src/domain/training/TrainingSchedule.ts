@@ -5,8 +5,9 @@ import type { TrainingIntensity } from './Training'
 import type { StaffRoleId } from '@/domain/staff'
 import { PHYSICAL_OPERATION_STATUSES, type SportingPhysicalAttempt } from '@/domain/facilities/SportingOperationPhysical'
 import { isFacilityComponentCapability } from '@/domain/facilities/FacilityComponentCapability'
+import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
 
-export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
+export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed' | 'cancelled'
 export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
 
 export interface TrainingParticipantExecutionEvidence {
@@ -32,6 +33,9 @@ export interface TrainingExecutionEvidence {
 }
 
 export interface ScheduledTrainingSession {
+  /** Explicit attendance selection; absence preserves legacy roster behavior. */
+  readonly selectedPlayerIds?: readonly PlayerId[]
+  readonly physicalAllocations?: readonly PhysicalAllocation[]
   readonly id: string
   readonly teamId: TeamId
   readonly date: GameDate
@@ -70,6 +74,11 @@ export function timeToMinutes(time: string): number {
 }
 
 export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSession, 'status'> & { readonly status?: ScheduledTrainingSessionStatus }): ScheduledTrainingSession {
+  if (input.status !== undefined && !['scheduled', 'completed', 'cancelled'].includes(input.status)) throw new RangeError('Invalid Training status')
+  if (input.selectedPlayerIds !== undefined && (input.selectedPlayerIds.length === 0 || new Set(input.selectedPlayerIds).size !== input.selectedPlayerIds.length)) throw new RangeError('Training selection requires unique participants')
+  if (input.scope === 'individual' && input.selectedPlayerIds !== undefined) throw new RangeError('Individual Training uses its existing PlayerId assignment')
+  const physicalAllocations = input.physicalAllocations?.map(createPhysicalAllocation)
+  if (physicalAllocations?.some(item => item.sessionId !== input.id || item.teamId !== input.teamId) || physicalAllocations && new Set(physicalAllocations.map(item => item.id)).size !== physicalAllocations.length || (physicalAllocations?.filter(item => item.status === 'CONFIRMED').length ?? 0) > 1) throw new RangeError('Invalid Training allocation linkage')
   if (!input.id.trim()) throw new RangeError('Scheduled session id is required')
   if (!input.teamId) throw new RangeError('Scheduled session teamId is required')
   timeToMinutes(input.startTime)
@@ -116,7 +125,7 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   const physicalAttempt = input.physicalAttempt === undefined ? undefined : Object.freeze({ ...input.physicalAttempt,
     resources: Object.freeze(input.physicalAttempt.resources.map((resource) => Object.freeze({ ...resource }))),
   })
-  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), ...(physicalAttempt === undefined ? {} : { physicalAttempt }), status: input.status ?? 'scheduled' }
+  return { ...input, ...(physicalAllocations === undefined ? {} : { physicalAllocations: Object.freeze(physicalAllocations) }), ...(input.selectedPlayerIds === undefined ? {} : { selectedPlayerIds: Object.freeze([...input.selectedPlayerIds]) }), ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), ...(physicalAttempt === undefined ? {} : { physicalAttempt }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */
@@ -132,6 +141,7 @@ function timeRangesOverlap(a: ScheduledTrainingSession, b: ScheduledTrainingSess
 /** Two sessions collide if they overlap in time and share a scope-relevant scheduling resource:
  * the same team (team sessions), or the same player (individual sessions for that player). */
 function sessionsCollide(a: ScheduledTrainingSession, b: ScheduledTrainingSession): boolean {
+  if (a.status === 'cancelled' || b.status === 'cancelled') return false
   if (!timeRangesOverlap(a, b)) return false
   if (a.scope === 'team' && b.scope === 'team') return a.teamId === b.teamId
   if (a.scope === 'individual' && b.scope === 'individual') return a.playerId === b.playerId

@@ -43,9 +43,9 @@ describe('BS17D-C factual capacity context without an allocation policy', () => 
     const context = buildFacilityCapacityContext(world, f.youth.id)
     expect(context.components[0]).toMatchObject({ name: 'Recorded component name', nominalCapacity: 8, capacityUnit: unit, operationalCapacity: null })
     expect(context.sessions.every(session => session.simultaneousDemand === null && session.demandUnit === null && session.assignedComponentId === null)).toBe(true)
-    expect(context.allocationStatus).toBe('BLOCKED_BY_PRODUCT_DECISION')
+    expect(context.allocationStatus).toBe('AVAILABLE_VIA_TRAINING_OWNER')
   })
-  it('keeps missing capacity unknown and does not infer a physical demand from an individual target', () => {
+  it('keeps missing capacity unknown and uses the approved explicit individual assignment as one participant', () => {
     const f = shared()
     const world = updateGameWorld(f.world, { scheduledTrainingSessionsById: { [f.session.id]: createScheduledTrainingSession({
       ...f.session, scope: 'individual', playerId: f.playerId, teamId: f.youth.id,
@@ -53,7 +53,7 @@ describe('BS17D-C factual capacity context without an allocation policy', () => 
     const context = buildFacilityCapacityContext(world, f.youth.id)
     expect(context.status).toBe('UNVERIFIED_PHYSICAL_CONTEXT')
     expect(context.components[0]).toMatchObject({ nominalCapacity: null, capacityUnit: null, operationalCapacity: null })
-    expect(context.sessions[0]).toMatchObject({ targetPlayerId: f.playerId, simultaneousDemand: null })
+    expect(context.sessions[0]).toMatchObject({ targetPlayerId: f.playerId, simultaneousDemand: 1 })
   })
   it.each([['10:30', 1], ['11:00', 0], ['14:00', 0]] as const)('shows timetable evidence at %s without allocating a winner', (time, count) => {
     const f = shared(time)

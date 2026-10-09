@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { GameWorld } from '@/domain/world'
 
 import {
@@ -16,6 +16,7 @@ import { NgPrecisionTable, ngCol } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import type { SportingCapabilityStatus } from '@/integration/facilitiesSporting'
 import { FacilityCapacityContext } from './FacilityCapacityContext'
+import { TrainingPhysicalAllocationControl } from '@/ui-ng/applications/training/TrainingPhysicalAllocationControl'
 
 import {
   accessLabel,
@@ -52,6 +53,8 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
   const resumeFacilityProject = useGameStore((state) => state.resumeFacilityProject)
   const completeFacilityProject = useGameStore((state) => state.completeFacilityProject)
   const cancelFacilityProject = useGameStore((state) => state.cancelFacilityProject)
+  const focusedFacilityId = useGameStore(state => state.focusedFacilityId)
+  useEffect(() => { if (focusedFacilityId !== null) { setSelectedFacilityId(focusedFacilityId); setTab('facilities') } }, [focusedFacilityId])
   const [tab, setTab] = useState<FacilitiesTabId>('overview')
   const [selectedFacilityId, setSelectedFacilityId] = useState<FacilityId | undefined>(undefined)
   const [commitmentProjectId, setCommitmentProjectId] = useState<FacilityDevelopmentProjectId | undefined>(undefined)
@@ -121,6 +124,7 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
           {selectedFacility === undefined ? null : <>
             <FacilityInspector model={model} facility={selectedFacility} />
             <FacilityCapacityContext world={world} teamId={team.id} facilityId={selectedFacility.facilityId} />
+            <TrainingPhysicalAllocationControl world={world} teamId={team.id} />
           </>}
         </>
       ) : null}

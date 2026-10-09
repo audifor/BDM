@@ -1,3 +1,7 @@
+import { validateGameWorld } from '@/domain/world'
+import { createScheduledTrainingSession } from '@/domain/training'
+import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
+import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
 import {
   EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
   EMPTY_WORLD_DB_COMPETITION_RUNTIME,
@@ -451,7 +455,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
-    payload: { ...v3CompatibilityPayload, staffCareerRuntime: { ...staffCareerRuntimePayload, governanceDecisionEvents: compatibilityGovernanceEvents } } as unknown as GameWorldSaveV3,
+    payload: { ...v3CompatibilityPayload, scheduledTrainingSessions: rawArray(v3CompatibilityPayload.scheduledTrainingSessions ?? [], 'Save V4 compatibility Training').map(value => { const { physicalAllocations: _allocations, ...legacy } = record(value, 'Compatibility Training session'); return legacy }), staffCareerRuntime: { ...staffCareerRuntimePayload, governanceDecisionEvents: compatibilityGovernanceEvents } } as unknown as GameWorldSaveV3,
   }, { backfillStaffContracts: false })
   const withOrganizations = organizations === undefined || organizationSections === undefined
     ? world
@@ -462,7 +466,15 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
   const withFacilities = updateGameWorld(withStructuralRegulation, { places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords })
-  const withFacilityOperations = updateGameWorld(withFacilities, { facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents })
+  const physicalBySession = new Map(rawArray(payload.scheduledTrainingSessions ?? [], 'Save V4 scheduled Training').map(value => { const item = record(value, 'Save V4 Training'); return [nonEmptyText(item.id, 'Training ID'), item.physicalAllocations] }))
+  // Rehydrate the complete Save snapshot after physical references exist; completed sessions are not commands.
+  const withPhysicalAllocations: GameWorld = Object.freeze({ ...withFacilities, scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.values(withFacilities.scheduledTrainingSessionsById).map(session => {
+    const raw = physicalBySession.get(session.id)
+    return [session.id, raw === undefined ? session : createScheduledTrainingSession({ ...session, physicalAllocations: rawArray(raw, 'Save V4 physical allocations').map(value => createPhysicalAllocation(record(value, 'Physical allocation') as unknown as PhysicalAllocation)) })]
+  }))) })
+  validateGameWorld(withPhysicalAllocations)
+  validatePhysicalAllocations(withPhysicalAllocations, Object.values(withPhysicalAllocations.scheduledTrainingSessionsById))
+  const withFacilityOperations = updateGameWorld(withPhysicalAllocations, { facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents })
   const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
   const withFinance = updateGameWorld(withFacilityDevelopment, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, financialReservations, revenueSources, operatingCostSources, operatingCostFacts, debtInstruments, competitionDistributionFacts, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions, financialRegulationAssessments, financeDecisionProposals, economicObservations, exchangeRates })
   const withFacilityFinanceIntegration = updateGameWorld(withFinance, { facilityFinancialBindings })
@@ -1079,7 +1091,7 @@ function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
     const hasParent = Object.prototype.hasOwnProperty.call(component, 'parentComponentId')
     const hasSpecification = Object.prototype.hasOwnProperty.call(component, 'specification')
     const hasEquipmentTags = Object.prototype.hasOwnProperty.call(component, 'equipmentTags')
-    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt', ...(hasParent ? ['parentComponentId'] : []), ...(hasSpecification ? ['specification'] : []), ...(hasEquipmentTags ? ['equipmentTags'] : [])], 'Save V4 FacilityComponent')
+    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt', ...(hasParent ? ['parentComponentId'] : []), ...(hasSpecification ? ['specification'] : []), ...(hasEquipmentTags ? ['equipmentTags'] : []), ...(component.occupancySharing === undefined ? [] : ['occupancySharing'])], 'Save V4 FacilityComponent')
     return createFacilityComponent({
       id: facilityComponentIdFromString(nonEmptyText(component.id, 'Save V4 FacilityComponent id')),
       facilityId: facilityIdFromString(nonEmptyText(component.facilityId, 'Save V4 FacilityComponent facilityId')),
@@ -1090,6 +1102,7 @@ function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
       quantity: nullableInteger(component.quantity, 'Save V4 FacilityComponent quantity'),
       openedAt: nullableText(component.openedAt, 'Save V4 FacilityComponent openedAt'),
       closedAt: nullableText(component.closedAt, 'Save V4 FacilityComponent closedAt'),
+      ...(component.occupancySharing === undefined ? {} : { occupancySharing: component.occupancySharing as 'EXCLUSIVE' | 'SHARED_CAPACITY' }),
       ...(hasParent ? { parentComponentId: nullableText(component.parentComponentId, 'Save V4 FacilityComponent parentComponentId') as FacilityComponent['parentComponentId'] } : {}),
       ...(hasSpecification ? { specification: parseFacilityComponentSpecification(component.specification) } : {}),
       ...(hasEquipmentTags ? { equipmentTags: stringArray(component.equipmentTags, 'Save V4 FacilityComponent equipmentTags') } : {}),

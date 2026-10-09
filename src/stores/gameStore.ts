@@ -1,3 +1,4 @@
+import { requestTrainingPhysicalAllocation, releaseTrainingPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
 import { retryRecruitingFacilityDemonstration } from '@/engine/recruiting/RecruitingFacilityDemonstration'
 import type { RecruitingFacilitySelection } from '@/domain/recruiting'
 import {
@@ -165,6 +166,10 @@ interface GameStore {
   applyUserCoachForJob(openingId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  requestPhysicalTrainingResource(input: Parameters<typeof requestTrainingPhysicalAllocation>[1]): void
+  releasePhysicalTrainingResource(sessionId: string, allocationId: string): void
+  focusedFacilityId: import('@/domain/ids').FacilityId | null
+  focusFacility(id: import('@/domain/ids').FacilityId): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
   scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[]; readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>> }): void
   scheduleAutomaticTeamTrainingWeek(weekStart: GameWorld['currentDate']): void
@@ -269,6 +274,18 @@ function applyClubGovernanceCommand(
 let liveController: LiveMatchController | null = null
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
+  focusedFacilityId: null,
+  focusFacility: id => set({ focusedFacilityId: id }),
+  requestPhysicalTrainingResource: input => {
+    const world = requireWorld(get().world)
+    if (world.scheduledTrainingSessionsById[input.sessionId]?.teamId !== getUserTeam(world)?.id) throw new RangeError('Training resource selection requires the manager team')
+    set({ world: requestTrainingPhysicalAllocation(world, input) })
+  },
+  releasePhysicalTrainingResource: (sessionId, id) => {
+    const world = requireWorld(get().world)
+    if (world.scheduledTrainingSessionsById[sessionId]?.teamId !== getUserTeam(world)?.id) throw new RangeError('Training resource release requires the manager team')
+    set({ world: releaseTrainingPhysicalAllocation(world, sessionId, id) })
+  },
   lastDayAdvanceResult: null,
   simulationBusy: false,
   newGame: () => set({ world: createNewGame(), lastDayAdvanceResult: null }),
@@ -613,7 +630,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   getActiveMatchSession: () => liveController,
   replaceWorld: (world) => { liveController = null; set({ world, lastDayAdvanceResult: null }) },
-  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null }) },
+  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null, focusedFacilityId: null }) },
 }))
 
 function requireWorld(world: GameWorld | null): GameWorld {

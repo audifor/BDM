@@ -1,3 +1,5 @@
+import { addDays } from '@/domain/date'
+import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
 import { staffAssignmentIndex, teamIndex } from './collectionIndexes'
 import { WorldValidationScope, type WorldValidationMode } from './WorldValidationScope'
 import { createFacilityFinancialBinding, validateFacilityFinancialBindingCollection, type FacilityFinancialBinding } from '@/domain/facilities/FacilityFinancialBinding'
@@ -1211,9 +1213,33 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
   return updated
 }
 
+function physicalAllocationEndDate(item: import('@/domain/facilities/PhysicalAllocation').PhysicalAllocation) {
+  return Number(item.startTime.slice(0, 2)) * 60 + Number(item.startTime.slice(3)) + item.durationMinutes > 1440 ? addDays(item.date, 1) : item.date
+}
+const activePhysicalSessionCache = new WeakMap<GameWorld['scheduledTrainingSessionsById'], ReadonlyMap<string, ScheduledTrainingSession>>()
+export function activePhysicalSessions(world: GameWorld, previous?: GameWorld): readonly ScheduledTrainingSession[] {
+  const records = world.scheduledTrainingSessionsById
+  const cached = activePhysicalSessionCache.get(records)
+  if (cached !== undefined) return [...cached.values()]
+  const metadata = scheduledTrainingSessionMapMetadata.get(records)
+  const old = previous === undefined ? undefined : activePhysicalSessionCache.get(previous.scheduledTrainingSessionsById)
+  const incremental = old !== undefined && metadata?.changedSessions !== undefined && metadata.previousRevision === scheduledRevision(previous!.scheduledTrainingSessionsById)
+  const active = new Map(incremental ? old : [])
+  const candidates = incremental ? metadata!.changedSessions!.map(change => records[change.id]) : Object.values(records)
+  for (const session of candidates) {
+    if (session === undefined) continue
+    if (session.physicalAllocations?.some(item => (item.status === 'CONFIRMED' || item.status === 'RELEASED' && item.history.at(-1)?.reason === 'TRAINING_EXECUTED') && physicalAllocationEndDate(item) >= world.currentDate)) active.set(session.id, session)
+    else active.delete(session.id)
+  }
+  for (const [id, session] of active) if (!session.physicalAllocations?.some(item => (item.status === 'CONFIRMED' || item.status === 'RELEASED' && item.history.at(-1)?.reason === 'TRAINING_EXECUTED') && physicalAllocationEndDate(item) >= world.currentDate)) active.delete(id)
+  activePhysicalSessionCache.set(records, active)
+  return [...active.values()]
+}
+
 function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | undefined, mode: WorldValidationMode = 'full'): void {
   const scope = new WorldValidationScope(canonical, previous, mode)
   const updated = scope.world
+  scope.run('BS17D-C1:physicalAllocationLinks', () => validatePhysicalAllocations(updated, activePhysicalSessions(updated, previous)), ['scheduledTrainingSessionsById', 'facilityComponentsById'])
   scope.run('boundary:validateFinancialPlanningCollections', () => { validateFinancialPlanningCollections(Object.values(updated.financialBudgetsById), Object.values(updated.budgetLinesById), Object.values(updated.budgetRevisionsById), Object.values(updated.budgetAllocationsById), Object.values(updated.forecastAssumptionsById)) })
   scope.run('boundary:validateRevenueSources', () => { validateRevenueSources(Object.values(updated.revenueSourcesById), updated) })
   scope.run('boundary:validateOperatingCostCollections', () => { validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated) })
@@ -1466,7 +1492,10 @@ function validateScheduledTrainingHistory(world: GameWorld, previous: GameWorld 
   }
   for (const session of sessionsToValidate) {
     // BS17 attempt facts must retain their constructor checks through BS15's Record update path.
-    if (session.physicalAttempt !== undefined) createScheduledTrainingSession(session)
+    if (session.physicalAttempt !== undefined || session.physicalAllocations !== undefined || session.selectedPlayerIds !== undefined) createScheduledTrainingSession(session)
+    for (const id of session.selectedPlayerIds ?? []) {
+      requireEntity(world.players, id, `Training ${session.id} selected player`)
+    }
     requireEntity(world.teams, session.teamId, `Scheduled training session ${session.id} team`)
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
     if (session.execution !== undefined) {
@@ -3764,11 +3793,15 @@ function assertTrainingSessionsAppendOnly(existing: Readonly<Record<string, Sche
 
 function assertTrainingSessionAppendOnly(session: ScheduledTrainingSession | undefined, next: ScheduledTrainingSession | undefined, id: string): void {
   if (session === undefined || next === session) return
+  for (const allocation of session.physicalAllocations ?? []) {
+    const successor = next?.physicalAllocations?.find(item => item.id === allocation.id)
+    if (successor === undefined || successor.history.length < allocation.history.length || allocation.history.some((event, index) => JSON.stringify(event) !== JSON.stringify(successor.history[index]))) throw new GameWorldValidationError('Physical allocation history must be preserved')
+  }
   if (session.status === 'completed' && (next === undefined || JSON.stringify(next) !== JSON.stringify(session))) throw new GameWorldValidationError(`Completed Training session ${id} is immutable`)
   if (session.execution !== undefined && next?.execution !== undefined && JSON.stringify(next.execution) !== JSON.stringify(session.execution)) throw new GameWorldValidationError(`Training execution evidence ${id} is immutable`)
   if (session.status === 'scheduled' && next?.status === 'completed') {
-    const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, physicalAttempt: _oldPhysical, ...oldSchedule } = session
-    const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, physicalAttempt: _newPhysical, ...newSchedule } = next
+    const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, physicalAttempt: _oldPhysical, physicalAllocations: _oldAllocations, ...oldSchedule } = session
+    const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, physicalAttempt: _newPhysical, physicalAllocations: _newAllocations, ...newSchedule } = next
     if (JSON.stringify(oldSchedule) !== JSON.stringify(newSchedule) || next.execution === undefined || JSON.stringify(next.execution.executingStaffPersonIds) !== JSON.stringify(session.assignedStaffPersonIds ?? [])) throw new GameWorldValidationError(`Completed Training session ${id} does not preserve its scheduled identity and executor`)
   }
 }
