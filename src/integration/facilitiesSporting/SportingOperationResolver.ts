@@ -12,12 +12,14 @@ export function resolveSportingOperation(world: GameWorld, input: {
   readonly operationId: string
   readonly requirements: readonly SportingPhysicalRequirement[]
   readonly interval?: { readonly startTime: string; readonly durationMinutes: number }
+  /** An explicitly chosen resource; alternatives remain a consumer choice. */
+  readonly componentId?: string
   readonly demand?: { readonly amount: number; readonly unit: string }
 }): SportingPhysicalAttempt {
   const resources: PhysicalResourceEvidence[] = []
   const statuses = input.requirements.map((requirement) => {
-    const candidates = Object.values(world.facilityComponentsById).sort((a, b) => a.id.localeCompare(b.id)).flatMap((component) => {
-      const capability = requirement.capabilities.find((value) => componentTypeSupportsCapability(component.type, value))
+    const candidates = Object.values(world.facilityComponentsById).filter(component => input.componentId === undefined || component.id === input.componentId).sort((a, b) => a.id.localeCompare(b.id)).flatMap((component) => {
+      const capability = requirement.capabilities.find((value) => componentTypeSupportsCapability(component.type, value)) ?? (input.componentId === component.id ? requirement.capabilities[0] : undefined)
       if (capability === undefined) return []
       const physical = componentPhysicalAvailabilityAt(world, component.id, input.date, input.teamId)
       const specification = component.specification
@@ -27,7 +29,7 @@ export function resolveSportingOperation(world: GameWorld, input: {
         : physical.status === 'UNKNOWN' || unknownCourt ? 'UNVERIFIED_PHYSICAL_CONTEXT'
           : physical.status === 'LIMITED' ? 'VERIFIED_LIMITED' : 'VERIFIED_AVAILABLE'
       return [{ facilityId: component.facilityId, componentId: component.id, capability, status,
-        reason: !physical.access ? 'NO_ACCESS' : physical.affectedProjectIds.length > 0 ? 'PHYSICAL_WORK' : physical.status === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : incompatible ? 'INCOMPATIBLE_COURT' : status === 'UNVERIFIED_PHYSICAL_CONTEXT' ? 'UNKNOWN_PHYSICAL_SPECIFICATION' : status === 'VERIFIED_LIMITED' ? 'LIMITED_COMPATIBLE' : 'AVAILABLE',
+        reason: !physical.access ? 'NO_ACCESS' : physical.affectedProjectIds.length > 0 ? 'PHYSICAL_WORK' : physical.status === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : incompatible ? !componentTypeSupportsCapability(component.type, capability) ? 'INCOMPATIBLE_CAPABILITY' : 'INCOMPATIBLE_COURT' : status === 'UNVERIFIED_PHYSICAL_CONTEXT' ? 'UNKNOWN_PHYSICAL_SPECIFICATION' : status === 'VERIFIED_LIMITED' ? 'LIMITED_COMPATIBLE' : 'AVAILABLE',
         hasAccess: physical.access === true, nominalCapacity: physical.nominalCapacity, capacityUnit: physical.capacityUnit, operationalCapacity: null,
       } satisfies PhysicalResourceEvidence]
     })

@@ -1,3 +1,4 @@
+import { RecruitingVisitControl, RecruitingVisitDemonstrations } from './RecruitingVisitControl'
 import { useEffect, useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
@@ -115,6 +116,7 @@ export function RecruitingWorkspace() {
       title="Recruiting center"
     >
       <TalentOperationsNav current="recruiting" />
+      {team && <RecruitingVisitDemonstrations world={world} teamId={team.id} run={run} />}
       {focusPlayerId !== null ? <p className="ng-canon__note">Focused Portal Player: {world.players[focusPlayerId as PlayerId]?.firstName ?? ''} {world.players[focusPlayerId as PlayerId]?.lastName ?? 'record unavailable'} · <button className="ng-canon__link" onClick={() => { clearRecruitingPlayerFocus(); setFocusPlayerId(null) }} type="button">Show all recruiting profiles</button></p> : null}
       {feedback !== null ? <p className="ng-canon__note">{feedback}</p> : null}
       {controlled && cycle !== undefined ? (
@@ -187,9 +189,7 @@ export function RecruitingWorkspace() {
                     <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(row.cycleId!, row.id, 'pitch'))} type="button">
                       Pitch
                     </button>
-                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(row.cycleId!, row.id, 'visit'))} type="button">
-                      Visit
-                    </button>
+                    <RecruitingVisitControl world={world} teamId={team!.id} cycleId={row.cycleId!} recruitId={row.id} run={run} />
                     <button className="ng-canon__action" onClick={() => run(() => makeRecruitingOffer(row.cycleId!, row.id))} type="button">
                       Offer
                     </button>

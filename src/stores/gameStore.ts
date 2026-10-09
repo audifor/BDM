@@ -1,3 +1,5 @@
+import { retryRecruitingFacilityDemonstration } from '@/engine/recruiting/RecruitingFacilityDemonstration'
+import type { RecruitingFacilitySelection } from '@/domain/recruiting'
 import {
   continueGame as runContinueGame,
   simulateUntilDate as runSimulateUntilDate,
@@ -197,7 +199,8 @@ interface GameStore {
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
   discoverRecruitingTalent(cycleId: string): string | null
   removeRecruitingTarget(recruitId: string): void
-  performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
+  performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit', visitDetails?: Parameters<typeof performRecruitingAction>[5]): string | null
+  retryRecruitingFacilityDemonstration(visitId: string, selection: RecruitingFacilitySelection): string | null
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
   signRecruit(cycleId: string, recruitId: string): string | null
   submitTransferNotice(playerId: PlayerId): string | null
@@ -546,7 +549,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
   discoverRecruitingTalent: (cycleId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = discoverRecruitingTalentCandidate(world, cycleId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },
-  performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  retryRecruitingFacilityDemonstration: (visitId, selection) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = retryRecruitingFacilityDemonstration(world, visitId, team.id, selection); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  performRecruitingAction: (cycleId, recruitId, kind, visitDetails) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind, visitDetails); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   signRecruit: (cycleId, recruitId) => { const result = signCommittedRecruit(requireWorld(get().world), cycleId, recruitId); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   submitTransferNotice: (playerId) => {
