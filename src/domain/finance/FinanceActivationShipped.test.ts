@@ -3,7 +3,7 @@ import { PROTOTYPE_GAME_CONFIGURATION, createAcbTestGame, createNewGame } from '
 import { createCompetition } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
-import { createFiscalPeriod, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, provisionOrganizationFinanceFoundation } from '@/domain/finance'
+import { createFiscalPeriod, authorizationRenewalBudgetIdFor, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, provisionOrganizationFinanceFoundation } from '@/domain/finance'
 import { getCashBalancesByCurrency } from '@/domain/finance/CashFlowQueries'
 import { competitionIdFromString, countryIdFromString, organizationIdFromString, organizationSectionIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import { createOrganization, createOrganizationSection } from '@/domain/organization'
@@ -185,17 +185,22 @@ describe('BS16F shipped finance activation', () => {
     // The preseason career date is inside its fiscal period, and no second period exists anywhere.
     expect(Object.values(career.fiscalPeriodsById).filter((period) => period.startsOn <= career.currentDate && period.endsOn >= career.currentDate)).toHaveLength(organizationIdsOf(career).length)
 
-    // Renewal stays unmodelled: the next fiscal year gains period truth, never a copied authorization.
+    // Renewal is the explicitly assigned policy (BS16N-R): the next fiscal year gains period truth and exactly
+    // one renewed authorization that repeats the previous fiscal year's approved limits.
     const organizationId = organizationIdsOf(career)[0]!
     const later = updateGameWorld(career, { currentDate: createGameDate(2028, 1, 10) })
     const next = getFinanceActivationReport(later).organizations.find((entry) => entry.organizationId === organizationId)!
-    expect(next.status).toBe('RENEWAL_NOT_MODELLED')
+    expect(next.status).toBe('ACTIVATED')
     const advanced = ensureCanonicalFinanceFoundation(later)
     expect(financeFiscalPeriodsOf(advanced, organizationId).map((period) => String(period.id))).toEqual([
       String(financeFiscalPeriodIdFor(organizationId, '2026-09-01')),
       String(financeFiscalPeriodIdFor(organizationId, '2027-09-01')),
     ])
-    expect(Object.values(advanced.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
+    const organizationBudgets = Object.values(advanced.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)
+    expect(organizationBudgets).toHaveLength(2)
+    const renewedId = authorizationRenewalBudgetIdFor(organizationId, financeFiscalPeriodIdFor(organizationId, '2027-09-01'))
+    expect(organizationBudgets.map((budget) => budget.id)).toContain(renewedId)
+    expect(organizationBudgets.find((budget) => budget.id === renewedId)!.fiscalPeriodId).toBe(String(financeFiscalPeriodIdFor(organizationId, '2027-09-01')))
     expect(ensureCanonicalFinanceFoundation(advanced)).toBe(advanced)
   })
 

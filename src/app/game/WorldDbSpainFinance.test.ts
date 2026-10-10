@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { ensureCanonicalFinanceFoundation, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, resolveOrganizationCurrency } from '@/domain/finance'
+import { createGameDate } from '@/domain/date'
+import { authorizationRenewalBudgetIdFor, ensureCanonicalFinanceFoundation, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, resolveOrganizationCurrency } from '@/domain/finance'
+import { authorizeTeamSalaryForTest } from '@/domain/finance/financeTestFixture'
 import { getCashBalancesByCurrency } from '@/domain/finance/CashFlowQueries'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
 import type { WorldDbGameBootstrapSelectionV1, WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
+import { advanceClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 
+import { annualAuthorizationContinuityAuthorities, BDM_ANNUAL_AUTHORIZATION_CONTINUITY_POLICY_V1 } from './AnnualAuthorizationContinuityPolicy'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 
 /**
@@ -112,5 +116,42 @@ describe('BS16G World DB Spain finance boundary', () => {
     expect(Object.keys(activated.financialTransactionsById)).toEqual([])
     expect(getCashBalancesByCurrency(activated, organizationId, activated.currentDate).every((row) => row.totalCashMinorUnits === 0)).toBe(true)
     expect(ensureCanonicalFinanceFoundation(activated)).toBe(activated)
+  })
+
+  it('receives the annual renewal policy only when its universe explicitly assigns it', () => {
+    const world = spainWorld()
+    const team = Object.values(world.teams)[0]!
+    const organizationId = team.organizationId
+
+    // Activation without an assignment: the profile records no policy, and the fiscal rollover therefore grants
+    // no authorization at all. Nothing about the Spain boundary is implicit.
+    const unassigned = authorizeTeamSalaryForTest(ensureCanonicalFinanceFoundation(world), team.id, { currencyCode: 'EUR', playerSalaryMinorUnits: 1_000_000_000, staffSalaryMinorUnits: 200_000_000 })
+    const profile = unassigned.organizationFinancialProfilesById[organizationId]!
+    const rolloverDate = createGameDate(Number(getFinanceFiscalYearFor(profile, unassigned.currentDate).startsOn.slice(0, 4)) + 1, profile.fiscalYearStartMonth, 2)
+    expect(profile.authorizationRenewalPolicy).toBeNull()
+    const rolledUnassigned = advanceClubFinanceForDate(unassigned, rolloverDate)
+    expect(financeFiscalPeriodsOf(rolledUnassigned, organizationId)).toHaveLength(2)
+    expect(getOrganizationFinancialAuthorization(rolledUnassigned, { organizationId, currencyCode: 'EUR', asOfDate: rolloverDate }).state).toBe('NOT_PROVISIONED')
+
+    // The same world with the shipped explicit assignment (exactly what WorldDbSpainGame.ts passes) renews the
+    // approved limits into the new fiscal year, and nothing else.
+    const assigned = authorizeTeamSalaryForTest(
+      ensureCanonicalFinanceFoundation(world, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world) }),
+      team.id,
+      { currencyCode: 'EUR', playerSalaryMinorUnits: 1_000_000_000, staffSalaryMinorUnits: 200_000_000 },
+    )
+    expect(assigned.organizationFinancialProfilesById[organizationId]!.authorizationRenewalPolicy).toMatchObject({ mode: BDM_ANNUAL_AUTHORIZATION_CONTINUITY_POLICY_V1.mode })
+    expect(Object.values(assigned.organizationFinancialProfilesById).every((entry) => entry.authorizationRenewalPolicy !== null)).toBe(true)
+
+    const rolled = advanceClubFinanceForDate(assigned, rolloverDate)
+    const nextFiscalYearStart = `${Number(getFinanceFiscalYearFor(profile, unassigned.currentDate).startsOn.slice(0, 4)) + 1}-${String(profile.fiscalYearStartMonth).padStart(2, '0')}-01`
+    const renewedId = authorizationRenewalBudgetIdFor(organizationId, financeFiscalPeriodIdFor(organizationId, nextFiscalYearStart))
+    const renewed = getOrganizationFinancialAuthorization(rolled, { organizationId, currencyCode: 'EUR', asOfDate: rolloverDate })
+
+    expect(renewed).toMatchObject({ state: 'ACTIVE', budgetId: renewedId, authorizedMinorUnits: 1_200_000_000 })
+    expect(Object.values(rolled.budgetLinesById).filter((line) => line.budgetId === renewedId).map((line) => [line.category, line.amount.minorUnits]).sort()).toEqual([['PLAYER_SALARY', 1_000_000_000], ['STAFF_SALARY', 200_000_000]])
+    // Renewal creates no money and no ledger fact: it is authorization policy only.
+    expect(Object.keys(rolled.financialTransactionsById)).toEqual(Object.keys(assigned.financialTransactionsById))
+    expect(getCashBalancesByCurrency(rolled, organizationId, rolloverDate).every((row) => row.totalCashMinorUnits === 0)).toBe(true)
   })
 })

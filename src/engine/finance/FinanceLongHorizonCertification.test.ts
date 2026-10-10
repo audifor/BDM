@@ -1,15 +1,17 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+﻿import { beforeAll, describe, expect, it } from 'vitest'
 import { createAcbTestGame } from '@/app/game'
 import { createPlayerContract } from '@/domain/contract'
 import { addDays, compareGameDates, createGameDate, parseGameDate } from '@/domain/date'
 import {
   ECONOMIC_POLICY_PROVENANCE_KIND,
+  authorizationRenewalBudgetIdFor,
   capitalContributionIdFor,
   createCapitalContribution,
   createCompetitionEconomicProfile,
   createCompetitionOperatingCostPolicy,
   createCompetitionRevenuePolicy,
   evaluateTeamGameplayFinancialDecision,
+  financeFiscalPeriodIdFor,
   financeFiscalPeriodsOf,
   getCashBalancesByCurrency,
   getFinanceActivationReport,
@@ -156,7 +158,7 @@ function buildCompactWorld(): GameWorld {
   ]
   let world = updateGameWorld(base, { contracts: [...Object.values(base.contractsById), ...contracts] })
   for (const organizationId of [HOME_ORGANIZATION, AWAY_ORGANIZATION]) world = provisionOrganizationFinanceFoundation(world, organizationId, { currencyCode: CURRENCY, asOfDate: START })
-  // Authorization for the first fiscal period only: the shipped product has no renewal producer (BS16N Â§9).
+  // Authorization for the first fiscal period only: the shipped product has no renewal producer (BS16N Ã‚Â§9).
   world = authorizeTeamSalaryForTest(world, HOME_TEAM, { currencyCode: CURRENCY, playerSalaryMinorUnits: 4_000_000_000, staffSalaryMinorUnits: 1_000_000_000 })
   // One explicit capital contribution and one explicit financing agreement: the only injected money.
   world = updateGameWorld(world, {
@@ -314,7 +316,7 @@ describe('BS16N long-horizon Finance certification', { timeout: 900_000 }, () =>
     expect(final.revenueRecognitions).toBe(declaredInstallmentCount * 2)
     expect(homeRevenue.map((entry) => String(entry.recognizedOn)).sort()).toEqual(declaredInstallments().map((installment) => String(installment.recognitionOn)).sort())
     // The shipped product materializes ONE fiscal period, and the declared policy covers only that period: no
-    // revenue is invented for the nine years that follow (BS16N Â§4/Â§13, registered product-policy gap).
+    // revenue is invented for the nine years that follow (BS16N Ã‚Â§4/Ã‚Â§13, registered product-policy gap).
     expect(homeRevenue.every((entry) => compareGameDates(entry.recognizedOn, createGameDate(2033, 10, 1)) < 0)).toBe(true)
 
     // Competition operating cost follows the same window: one occurrence per real home game the materialized
@@ -363,13 +365,17 @@ describe('BS16N long-horizon Finance certification', { timeout: 900_000 }, () =>
 
   it('reports the shipped renewal semantics honestly instead of leaking or falling back', () => {
     const final = checkpoints[checkpoints.length - 1]!
-    // The shipped product materializes the first fiscal period only: no silent renewal, no legacy fallback.
-    expect(final.periods).toBe(1)
+    // BS16N-R: materializing the fiscal period of every fiscal year the career enters is structural, so ten
+    // years own ten periods. Authorization is a different decision: this world assigned no renewal policy, so
+    // the periods after the first stay truthful period truth with no authorization at all.
+    expect(final.periods).toBe(10)
     expect(final.authorizationState).toBe('NOT_PROVISIONED')
     expect(final.gameplayStatus).toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
     expect(final.gameplayStatus).not.toContain('FINANCE_PROFILE_UNAVAILABLE')
     const report = getFinanceActivationReport(finalWorld).organizations.find((entry) => String(entry.organizationId) === HOME_ORGANIZATION)
     expect(report?.status).toBe('RENEWAL_NOT_MODELLED')
+    // No policy anywhere means no renewed authorization anywhere: ten periods, one authorization, unchanged.
+    expect(Object.values(finalWorld.financialBudgetsById).filter((budget) => budget.organizationId === HOME_ORGANIZATION)).toHaveLength(1)
     // Every period that does exist is unique and non-overlapping.
     for (const organizationId of [HOME_ORGANIZATION, AWAY_ORGANIZATION]) {
       const periods = financeFiscalPeriodsOf(finalWorld, organizationId)
@@ -397,7 +403,7 @@ describe('BS16N long-horizon Finance certification', { timeout: 900_000 }, () =>
     expect(checkpoints[checkpoints.length - 1]!.receivables).toBe(declaredInstallments().length * 2)
     expect(checkpoints[checkpoints.length - 1]!.payables).toBe(checkpoints[checkpoints.length - 1]!.expenseRecognitions)
     // Revenue is frozen after the materialized fiscal period while payroll keeps compounding: the horizon's
-    // growth is payroll-driven, which is the honest shape of the shipped product (BS16N Â§9).
+    // growth is payroll-driven, which is the honest shape of the shipped product (BS16N Ã‚Â§9).
     expect(checkpoints[checkpoints.length - 1]!.revenueRecognitions).toBe(checkpoints[0]!.revenueRecognitions)
   })
 
@@ -422,11 +428,11 @@ describe('BS16N long-horizon Finance certification', { timeout: 900_000 }, () =>
     expect(Object.keys(twice.financialTransactionsById)).toEqual(Object.keys(reloaded.financialTransactionsById))
     expect(Object.keys(twice.payablesById)).toEqual(Object.keys(reloaded.payablesById))
     // The first Finance pass after that repair settles what the repair made due, and it records only facts that
-    // did not exist before the round trip â€” a repair is never a duplicated longitudinal fact.
+    // did not exist before the round trip Ã¢â‚¬â€ a repair is never a duplicated longitudinal fact.
     const settled = advanceClubFinanceForDate(reloaded, reloaded.currentDate)
     const repairAdded = Object.keys(settled.financialTransactionsById).filter((id) => reloaded.financialTransactionsById[id as never] === undefined)
     const repairAddedExpenses = Object.keys(settled.expenseRecognitionsById).filter((id) => reloaded.expenseRecognitionsById[id as never] === undefined)
-    // The repair is one payroll occurrence — the repaired contract's first year — and never a backdated fact.
+    // The repair is one payroll occurrence â€” the repaired contract's first year â€” and never a backdated fact.
     expect(repairAddedExpenses).toHaveLength(1)
     expect(repairAdded.every((id) => settled.financialTransactionsById[id as never]!.effectiveOn === reloaded.currentDate)).toBe(true)
     // From there on, replaying the SAME processed date is a strict no-op, including the world identity.
@@ -456,16 +462,20 @@ describe('BS16N long-horizon Finance certification', { timeout: 900_000 }, () =>
     const beforeRollover = getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: CURRENCY, asOfDate: '2027-08-31' })
     const afterRollover = getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: CURRENCY, asOfDate: '2027-09-02' })
     const decision = evaluateTeamGameplayFinancialDecision(world, { teamId, action: 'PLAYER_SIGNING', legacyAnnualAmountMajorUnits: 100_000, sourceAuthority: 'BS16N', sourceEntityId: 'bs16n:acb', effectiveDate: '2027-09-02' })
-    const report = getFinanceActivationReport(world).organizations.find((entry) => String(entry.organizationId) === organizationId)
+    const report = getFinanceActivationReport(world, { asOfDate: '2027-09-02' }).organizations.find((entry) => String(entry.organizationId) === organizationId)
 
     expect(guard).toBeGreaterThan(300)
     expect(beforeRollover.state).toBe('ACTIVE')
-    expect(afterRollover.state).toBe('NOT_PROVISIONED')
-    expect(decision.reasons).toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
-    expect(report?.status).toBe('RENEWAL_NOT_MODELLED')
+    // BS16N-R: the assigned BDM Annual Authorization Continuity Policy V1 renews the approved limits into the
+    // new fiscal year, so a legitimate multi-year ACB career stays authorized and playable past the rollover.
+    expect(afterRollover.state).toBe('ACTIVE')
+    expect(afterRollover.budgetId).toBe(authorizationRenewalBudgetIdFor(organizationId, financeFiscalPeriodIdFor(organizationId, '2027-09-01')))
+    expect(afterRollover.authorizedMinorUnits).toBe(beforeRollover.authorizedMinorUnits)
+    expect(decision.reasons).not.toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
+    expect(report?.status).not.toBe('RENEWAL_NOT_MODELLED')
     // The rollover neither leaked the previous authorization nor fell back to the legacy pools.
     expect(world.teamFinancesByTeamId).toEqual(JSON.parse(legacyPools))
-    expect(financeFiscalPeriodsOf(world, organizationId)).toHaveLength(1)
+    expect(financeFiscalPeriodsOf(world, organizationId)).toHaveLength(2)
     // Economic life continues for everything contract-driven: payroll keeps materializing after the rollover.
     expect(Object.keys(world.financialTransactionsById).length).toBeGreaterThan(1000)
     const payrollAfterRollover = Object.values(world.expenseRecognitionsById).filter((entry) => String(entry.category).includes('SALARY') && compareGameDates(entry.recognizedOn, parseGameDate('2027-09-01')) > 0)
