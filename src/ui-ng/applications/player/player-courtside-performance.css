@@ -1116,7 +1116,7 @@
   stroke-width:2;
 }
 .po-pf-board--courtside .po-pf-nine__region.is-selected path {
-  fill:color-mix(in srgb,var(--cs-orange2) 38%,var(--cs-s1));
+  /* Retain efficiency fill; selection is an outline, not a new heat level. */
   stroke:var(--cs-orange2);
   stroke-width:2;
 }
