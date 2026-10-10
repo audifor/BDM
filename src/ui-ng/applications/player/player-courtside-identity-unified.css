@@ -1,0 +1,72 @@
+/*
+ * PLAYER Courtside shared identity contract.
+ * The whole PLAYER app uses one EntityIdentityBand. Previously OVERVIEW
+ * alone overrode the identity palette, name shadow and tab geometry, causing
+ * drift versus ATTRIBUTES / PERFORMANCE. This stylesheet loads LAST after
+ * the view-specific and compact layers, for both dark and light HOME themes.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root {
+  --po-ov-bg:var(--cs-bg);
+  --po-ov-panel-bg:var(--cs-s1);
+  --po-ov-panel-bg-neutral:var(--cs-s2);
+  --po-ov-border:var(--cs-line2);
+  --po-ov-border-muted:var(--cs-line);
+  --po-ov-cyan:var(--cs-lime);
+  --po-ov-cyan-soft:var(--cs-lime);
+  --po-ov-green:var(--cs-positive);
+  --po-ov-yellow:var(--cs-orange2);
+  --po-ov-red:var(--cs-negative);
+  --po-ov-text:var(--cs-text);
+  --po-ov-text-2:var(--cs-text2);
+  --po-ov-text-3:var(--cs-text3);
+  --po-player-lastname-glow:0 0 7px color-mix(in srgb,var(--cs-lime) 24%,transparent),
+    0 0 15px color-mix(in srgb,var(--cs-lime) 12%,transparent);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity {
+  background:var(--cs-s1);
+  color:var(--cs-text);
+  border-radius:14px;
+  font-family:var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity::before {
+  background:var(--cs-orange);
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__name {
+  font:700 clamp(27px,2.25cqi,39px)/.94 var(--cs-font-display);
+  letter-spacing:.04em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__firstname {
+  color:var(--cs-text);
+  text-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__lastname {
+  color:var(--cs-lime);
+  text-shadow:var(--po-player-lastname-glow);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__positions,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measures,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__condition {
+  border-color:var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .ng-workspace-tabs__tab {
+  color:var(--cs-text2);
+  font:700 15px/1.1 var(--cs-font-display);
+  letter-spacing:.075em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .ng-workspace-tabs__tab.is-active {
+  color:var(--cs-lime);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__team,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__meta-team-link.entity-link {
+  color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__section-label,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fact-label,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-label,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__pos-label {
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .po-root {
+  --po-player-lastname-glow:0 0 6px color-mix(in srgb,var(--cs-lime) 11%,transparent);
+}
