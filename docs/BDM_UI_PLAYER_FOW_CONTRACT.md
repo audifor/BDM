@@ -73,6 +73,29 @@ recruitment authorities. When a request is not possible, PLAYER must show
 whether the reason is an active assignment, a missing addressable identity or
 staff capacity, and offer the Scouting Centre as the discovery/workload route.
 
+## PLAYER OVERVIEW · specific FOW safeguards (10 October 2026)
+
+- PLAYER DNA basketball chips and the mental panel for rivals read only authorized
+  `ratingEvaluations` and explicitly label numeric estimates with uncertainty.
+  The authorized full-report coverage must never be called "individual abilities
+  unknown" simply because old broad scouting dimensions remain unpopulated.
+- Rival morale, private availability and medical risk are **not** read from
+  `PlayerWorkspaceModel.status`, regardless of raw world values being present.
+  The shared header and Overview must agree on their unknown state.
+- Overview's spider for rivals uses the exact same eight-family authorized
+  estimation and coverage/confidence threshold as ATTRIBUTES, never
+  `model.radarAxes` (reserved for own-roster truth). A partial profile cannot
+  create a closed polygon using missing axes.
+- Manager Read interprets only sufficiently supported family estimates and
+  acknowledges uncertainty. Public game stats may remain visible where their
+  competition provenance permits; private training, mental status, medical
+  readings and hidden contracts must not be inferred from those.
+- The expanded legacy analysis board is own-roster-only pending separate
+  FOW review of its contracts, medical, development and alert panels.
+- An SSR regression fixture injects private morale, availability, risk and
+  raw radar values into the model, and verifies no leaks for known/unknown
+  rival access. These tests require execution before certification.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
