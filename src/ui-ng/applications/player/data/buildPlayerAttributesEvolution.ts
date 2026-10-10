@@ -60,6 +60,45 @@ function competitionLeagueSample(world: GameWorld, player: Player): LeagueSample
   return { label: competition.name, players }
 }
 
+/**
+ * Players of the same primary position currently on any BDM team roster.
+ * Includes multiple competitions and levels, which is disclosed in the UI.
+ * Deduplicate multi-roster registrations and exclude the inspected player.
+ */
+function worldPositionSample(world: GameWorld, player: Player): LeagueSample {
+  const seen = new Set<string>()
+  const matches: Player[] = []
+  for (const team of Object.values(world.teams)) {
+    for (const id of team.rosterPlayerIds) {
+      if (id === player.id || seen.has(id)) continue
+      seen.add(id)
+      const candidate = world.players[id]
+      if (candidate?.basketball.primaryPosition === player.basketball.primaryPosition) {
+        matches.push(candidate)
+      }
+    }
+  }
+  return { label: player.basketball.primaryPosition + ' · BDM world active rosters', players: matches }
+}
+
+function buildWorldPositionBaseline(sample: LeagueSample, ratingId: PlayerTruthRatingKey): AttributeLeagueBaselineModel {
+  if (sample.players.length === 0) {
+    return {
+      status: 'unavailable', average: null, sampleSize: 0,
+      scopeLabel: sample.label,
+      note: 'No other rostered player of this primary position is available in the current BDM world.',
+    }
+  }
+  const total = sample.players.reduce((sum, candidate) => sum + candidate.basketball.ratings[ratingId], 0)
+  return {
+    status: 'available',
+    average: Math.round((total / sample.players.length) * 10) / 10,
+    sampleSize: sample.players.length,
+    scopeLabel: sample.label,
+    note: 'Worldwide rostered players in the same primary position, excluding the inspected player. Cross-competition baseline, not adjusted for playing level.',
+  }
+}
+
 /** Every other player rostered on the inspected player's current team. */
 function teamRosterSample(world: GameWorld, player: Player): TeamSample {
   const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))
@@ -189,6 +228,7 @@ function buildEvolution(
   player: Player,
   league: LeagueSample,
   team: TeamSample,
+  positionWorld: LeagueSample,
   assignment: AttributeTrainingAssignmentModel,
   ratingId: PlayerTruthRatingKey,
 ): RatingEvolutionModel {
@@ -228,6 +268,7 @@ function buildEvolution(
     accumulatedStimulus: null,
     league: buildLeagueBaseline(player, league, ratingId),
     team: buildTeamBaseline(team, ratingId),
+    worldPosition: buildWorldPositionBaseline(positionWorld, ratingId),
     standing: buildStanding(player, league, ratingId),
     trainings: buildTrainingOptions(world, player, ratingId),
     assignment,
@@ -311,8 +352,9 @@ export function buildPlayerAttributesEvolution(
   }
   const league = competitionLeagueSample(world, player)
   const team = teamRosterSample(world, player)
+  const positionWorld = worldPositionSample(world, player)
   const assignment = buildAssignmentContext()
   return Object.fromEntries(
-    PLAYER_TRUTH_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, team, assignment, key)]),
+    PLAYER_TRUTH_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, team, positionWorld, assignment, key)]),
   ) as Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
 }
