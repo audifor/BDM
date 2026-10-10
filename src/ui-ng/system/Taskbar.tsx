@@ -9,6 +9,8 @@ import { isClosableTaskbarApp, taskbarAppLabel } from '@/ui-ng/workspace/taskbar
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import type { WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
+const COURTSIDE_PINNED: readonly WorkspaceAppId[] = ['home', 'roster', 'tactics', 'match']
+
 function StartMenuMark() {
   return (
     <svg aria-hidden fill="none" height="16" viewBox="0 0 16 16" width="16">
@@ -25,7 +27,21 @@ export function Taskbar() {
   const simulationBusy = useGameStore((state) => state.simulationBusy)
   const [startOpen, setStartOpen] = useState(false)
   const [menu, setMenu] = useState<WorkspaceAppId | null>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [capacity, setCapacity] = useState(12)
   const activeApp = app === 'player' ? 'player' : app
+  const courtside = app === 'home'
+  const allCourtsideApps = [...COURTSIDE_PINNED, ...openApps.filter((id) => !COURTSIDE_PINNED.includes(id))]
+  const count = Math.max(1, capacity - (allCourtsideApps.length > capacity ? 1 : 0))
+  const shownApps = courtside ? allCourtsideApps.slice(0, count) : openApps
+  const overflowApps = courtside ? allCourtsideApps.slice(count) : []
+
+  useEffect(() => {
+    const measure = () => setCapacity(Math.max(2, Math.floor((window.innerWidth - 340) / 54)))
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   useEffect(() => {
     if (menu === null) return
@@ -50,9 +66,9 @@ export function Taskbar() {
         >
           <StartMenuMark />
         </button>
-        {openApps.map((id) => {
+        {shownApps.map((id) => {
           const label = taskbarAppLabel(id)
-          const closable = isClosableTaskbarApp(id)
+          const closable = isClosableTaskbarApp(id) && openApps.includes(id)
           const menuOpen = menu === id
           return (
             <div className="ng-taskbar__app-slot" data-app={id} key={id}>
@@ -61,7 +77,7 @@ export function Taskbar() {
                 aria-current={id === activeApp ? 'page' : undefined}
                 aria-expanded={closable ? menuOpen : undefined}
                 aria-haspopup={closable ? 'menu' : undefined}
-                className={`ng-taskbar__app${id === activeApp ? ' is-active' : ''}`}
+                className={`ng-taskbar__app${id === activeApp ? ' is-active' : ''}${openApps.includes(id) ? ' is-running' : ''}${courtside && COURTSIDE_PINNED.includes(id) ? ' is-pinned' : ''}`}
                 title={label}
                 onAuxClick={(event) => {
                   if (event.button !== 1 || !closable) return
@@ -116,6 +132,20 @@ export function Taskbar() {
             </div>
           )
         })}
+        {overflowApps.length > 0 ? (
+          <div className="ng-taskbar__overflow">
+            <button aria-expanded={moreOpen} aria-label={`${overflowApps.length} aplicaciones más`} className="ng-taskbar__app ng-taskbar__more" onClick={() => setMoreOpen((open) => !open)} title="Más aplicaciones" type="button">
+              <span aria-hidden="true">···</span><em>+{overflowApps.length}</em>
+            </button>
+            {moreOpen ? (
+              <div className="ng-taskbar__overflow-list" role="menu">
+                {overflowApps.map((id) => (
+                  <button key={id} onClick={() => { setMoreOpen(false); setActiveApp(id) }} role="menuitem" type="button">{taskbarAppLabel(id)}</button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <span className="ng-taskbar__status">{simulationBusy ? 'Simulation running' : 'Simulation idle'}</span>
     </footer>

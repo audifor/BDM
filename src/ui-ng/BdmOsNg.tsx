@@ -1,5 +1,6 @@
 import '@/ui-ng/styles/reset.css'
 import '@/ui-ng/styles/ng-global.css'
+import '@/ui-ng/applications/home/courtside-home.css'
 
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
@@ -17,7 +18,7 @@ import { WorkspaceHost } from '@/ui-ng/workspace/WorkspaceHost'
 
 function BdmOsNgShell() {
   const world = useGameStore((state) => state.world)
-  const { openEntity } = useNgWorkspaceNavigation()
+  const { openEntity, app } = useNgWorkspaceNavigation()
   const workspaceSize = useContainerSize<HTMLDivElement>()
   const workspaceStyle = {
     '--bdm-workspace-width': `${workspaceSize.width}px`,
@@ -35,7 +36,7 @@ function BdmOsNgShell() {
 
   return (
     <EntityContextMenuProvider onOpenEntity={openEntity} world={world}>
-      <div className="bdm-os-ng" data-ng-shell="bdm-os-ng">
+      <div className="bdm-os-ng" data-ng-shell="bdm-os-ng" data-bdm-courtside-home={app === 'home' ? 'true' : undefined}>
         <SystemBar />
         <div
           className="bdm-os-ng__workspace-region"

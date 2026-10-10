@@ -80,7 +80,13 @@ export function SystemBar() {
     <header className="ng-system-bar" data-ng-region="system-bar">
       <div className="ng-system-bar__left">
         <span className="ng-system-bar__mark">BDM</span>
-        <span className="ng-system-bar__club">{userTeam?.name ?? 'No team loaded'}</span>
+        <span className="ng-system-bar__club-group">
+          <span aria-hidden="true" className="ng-system-bar__club-crest">{userTeam?.name?.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() ?? 'BD'}</span>
+          <span className="ng-system-bar__club-identity">
+            <span className="ng-system-bar__club">{userTeam?.name ?? 'No team loaded'}</span>
+            <small className="ng-system-bar__role">Entrenador principal</small>
+          </span>
+        </span>
       </div>
 
       <div className="ng-system-bar__center">
