@@ -928,3 +928,44 @@
     overflow:visible;
   }
 }
+
+/* V1.4: seven-row standings digest. No nested scroll for the digest. */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings {gap:6px;align-content:start;min-height:0}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__digest {display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--cs-text2);font:600 12px var(--cs-font)}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__full,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__open {border:0;background:transparent;padding:0;color:var(--cs-orange);font:700 14px var(--cs-font-display);letter-spacing:.03em;text-transform:uppercase;cursor:pointer}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__full:hover,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__open:hover {text-decoration:underline}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {min-height:26px;padding:2px 4px}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li.has-gap {border-top:1px dashed var(--cs-line2);margin-top:4px;padding-top:5px}
+/* Other selectable widgets read exclusively canonical world records. */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module {display:flex;flex-direction:column;gap:8px;min-height:100%;min-width:0}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__list {display:grid;list-style:none;padding:0;margin:0;min-width:0}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__row {display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;min-width:0;border-bottom:1px solid var(--cs-line)}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__primary {display:flex;flex-direction:column;gap:3px;min-width:0}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__primary>.ng-canon__link,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__primary>strong {color:var(--cs-text);font:600 13px/1.2 var(--cs-font);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__primary small,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__when small {color:var(--cs-text2);font:500 11px/1.2 var(--cs-font)}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__result {color:var(--cs-text);font:700 23px/1 var(--cs-font-display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__result.is-win {color:var(--cs-positive)}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__result.is-loss {color:var(--cs-negative)}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__when {display:flex;flex-direction:column;align-items:flex-end;gap:3px;font:700 14px/1.2 var(--cs-font-display);white-space:nowrap}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__severity {color:var(--cs-orange);font:700 12px/1.2 var(--cs-font);white-space:nowrap}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-micro-module__open {align-self:flex-start;margin-top:auto;padding:6px 0 0}
+/* Light theme: canonical #12804a links and #463f52 readable text, rather than NG's cyan.
+   Keep Courtside's cream/off-white surfaces and its original palette untouched. */
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot {--ng-text-faint:#463f52;--ng-text-muted:#463f52;--ng-text-secondary:#463f52}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__link {color:#12804a !important;font-weight:600}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table .is-team,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link {color:#15111c !important}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__scope,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__team,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table__head,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__note,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__empty {color:#463f52 !important;font-weight:500}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .is-pts,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__value {color:#12804a !important}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {color:#15111c;font-weight:700}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-micro-module__result.is-win {color:#12804a}
+@media (max-width:1279px) {.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__digest {flex-wrap:wrap}}
