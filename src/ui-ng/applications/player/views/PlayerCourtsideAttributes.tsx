@@ -17,9 +17,11 @@ const FILTERS: readonly { id: AttributeFilter; label: string }[] = [
   { id: 'weaknesses', label: 'Weaknesses' }, { id: 'tracked', label: 'Watching' },
   { id: 'improved', label: 'Improved' }, { id: 'declined', label: 'Declined' },
 ]
-const BASELINES: readonly { id: AttributeBaselineScope; label: string }[] = [
-  { id: 'none', label: 'Player only' }, { id: 'team', label: 'Team' },
-  { id: 'league', label: 'League' }, { id: 'position', label: 'Position' },
+type ComparativeScope = Exclude<AttributeBaselineScope, 'none'>
+const BASELINES: readonly { id: ComparativeScope; label: string; color: string }[] = [
+  { id: 'team', label: 'Equipo', color: 'var(--cs-orange2)' },
+  { id: 'league', label: 'Liga', color: 'var(--cs-negative)' },
+  { id: 'position', label: 'Posición', color: 'var(--cs-positive)' },
 ]
 
 function storageKey(playerId: string): string {
@@ -56,7 +58,7 @@ export function PlayerCourtsideAttributes() {
   const playerId = model?.identity.playerId ?? ''
   const [filter, setFilter] = useState<AttributeFilter>('all')
   const [search, setSearch] = useState('')
-  const [scope, setScope] = useState<AttributeBaselineScope>('none')
+  const [visibleBaselines, setVisibleBaselines] = useState<readonly ComparativeScope[]>(['team', 'league', 'position'])
   const validIds = useMemo(() => new Set(model?.attributes.allRatings.map((rating) => rating.id) ?? []), [model?.attributes.allRatings])
   const [focusState, setFocusState] = useState(() => ({ playerId, ids: readFocus(playerId, validIds) }))
   useEffect(() => {
@@ -82,7 +84,19 @@ export function PlayerCourtsideAttributes() {
   const activeRating = ratings.find((rating) => rating.id === selectedRatingId) ?? ratings[0]
   const evolution = activeRating === undefined ? null : model.attributes.evolutionByRating[activeRating.id]
   const radarAxes = model.radarAxes
-  const overlay = comparisonProfile(model.attributes.categories, model.attributes.evolutionByRating, scope)
+  const baselineProfiles = BASELINES.map(({ id, label, color }) => ({
+    id, label, color,
+    axes: comparisonProfile(model.attributes.categories, model.attributes.evolutionByRating, id),
+  }))
+  const radarOverlays = baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null)
+    .map((item) => ({ key: item.id, label: item.label, color: item.color, axes: item.axes! }))
+  const selectedComparisons = baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null)
+    .map((item) => ({ ...item, value: getCategoryComparison(currentCategory, model.attributes.evolutionByRating, item.id) }))
+  const toggleComparison = (scope: ComparativeScope) => {
+    setVisibleBaselines((selected) => selected.includes(scope)
+      ? selected.filter((item) => item !== scope)
+      : [...selected, scope])
+  }
   const highFamily = [...model.attributes.categories].sort((a, b) => b.profileValue - a.profileValue)[0]
   const lowFamily = [...model.attributes.categories].sort((a, b) => a.profileValue - b.profileValue)[0]
   const activeFamily = activeRating === undefined
@@ -155,25 +169,37 @@ export function PlayerCourtsideAttributes() {
           <header className="pac-head"><h2>ATTRIBUTE PROFILE</h2><span>8 family radar · click an axis to explore</span></header>
           <div className="pac-profile__body">
             <div className="pac-profile__chart">
-              <div className="pac-profile__legend">
-                <span className="pac-dot pac-dot--player" /> Player
-                {scope !== 'none' && overlay !== null && <><span className="pac-dot pac-dot--reference"/> {BASELINES.find((option) => option.id === scope)?.label} avg.</>}
-                <label className="pac-profile__control">COMPARE
-                  <select value={scope} onChange={(event) => setScope(event.target.value as AttributeBaselineScope)}>
-                    {BASELINES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                  </select>
-                </label>
+              <div className="pac-profile__legend" role="group" aria-label="Comparar perfiles en el radar">
+                <span className="pac-radar-key pac-radar-key--player"><i aria-hidden="true" /> Jugador</span>
+                {baselineProfiles.map(({ id, label, color, axes }) => (
+                  <button
+                    className="pac-radar-toggle"
+                    key={id}
+                    type="button"
+                    aria-pressed={axes !== null && visibleBaselines.includes(id)}
+                    disabled={axes === null}
+                    title={axes === null ? 'Sin referencia completa para las ocho familias' : (visibleBaselines.includes(id) ? 'Ocultar ' : 'Mostrar ') + label.toLowerCase()}
+                    onClick={() => toggleComparison(id)}
+                  >
+                    <span className="pac-radar-toggle__mark" style={{ '--pac-series-color': color } as React.CSSProperties} aria-hidden="true" />
+                    {label}
+                  </button>
+                ))}
               </div>
-              <AttributeRadar
-                accent="var(--cs-lime)"
-                axes={radarAxes}
-                selectedCategory={currentCategory.category}
-                onCategorySelect={selectCategory}
-                comparisonAxes={overlay}
-                courtsideFraming
-                showValues
-              />
-              {scope !== 'none' && overlay === null && <p className="pac-benchmark-missing">No complete {scope} baseline available for these eight families.</p>}
+              <div className="pac-profile__radar-wrap">
+                <AttributeRadar
+                  accent="var(--cs-lime)"
+                  axes={radarAxes}
+                  selectedCategory={currentCategory.category}
+                  onCategorySelect={selectCategory}
+                  comparisonSeries={radarOverlays}
+                  courtsideFraming
+                  showValues
+                />
+              </div>
+              {baselineProfiles.every((entry) => entry.axes === null) && (
+                <p className="pac-benchmark-missing">Las comparaciones se activarán cuando exista una muestra válida.</p>
+              )}
             </div>
             <div className="pac-signals" aria-label="Current profile extremes">
               <h3>PROFILE SIGNALS</h3>
@@ -185,12 +211,9 @@ export function PlayerCourtsideAttributes() {
                 <span className="pac-signal__icon" aria-hidden="true">↓</span>
                 <div><strong>Lowest</strong><b>{lowFamily.label}</b><span>{lowFamily.profileValue} / 100</span></div>
               </div>}
-              {scope !== 'none' && overlay !== null && (
-                <p className="pac-signal__baseline">
-                  {currentCategory.label}: {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope)} / 100
-                  <span> reference</span>
-                </p>
-              )}
+              {selectedComparisons.length > 0 && <p className="pac-signal__baseline">
+                {currentCategory.label}: {selectedComparisons.map((item) => item.label + ' ' + item.value).join(' · ')}
+              </p>}
             </div>
           </div>
         </section>
