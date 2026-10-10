@@ -1,10 +1,11 @@
 # BS16N — Long-Horizon Finance Certification
 
-**Status: PARTIAL.** Every longitudinal Finance semantic the shipped product actually implements is certified
-green over a ten-year horizon. The milestone is PARTIAL for one registered product-policy reason: the product
-has **no producer that materializes a second fiscal period or renews an authorization**, so multi-year gameplay
-spending cannot be legitimately authorized after the first fiscal year. Nothing was patched with invented money
-to make that look green.
+**Status: PASS (closed by BS16N-R).** Every longitudinal Finance semantic is certified green over a ten-year
+horizon, and the one registered blocker of the first closure — no producer that materializes a second fiscal
+period or renews an authorization — was closed by the approved **BS16N-R** product decision: fiscal-period
+rollover is structural, authorization renewal is an explicit per-Organization policy, and the shipped financial
+ecosystems carry **BDM Annual Authorization Continuity Policy V1**. See §11 for the closure evidence. Nothing
+was patched with invented money to make either closure look green.
 
 **Run identification**
 
@@ -13,11 +14,13 @@ to make that look green.
 | Worktree | `C:\BDM-BS16-CANONICAL` |
 | Branch | `bdm-stage2-bs16-finance-canonical` |
 | Baseline SHA (BS16M-B2 closed) | `970d254` |
-| Production change in BS16N | **none** — this milestone adds certification coverage and documentation only |
+| Baseline SHA (BS16N-R closure) | `cdf1713` |
+| Production change | BS16N: none (certification only). BS16N-R: the annual fiscal and authorization renewal authority (§11) |
 | Certification artifact | `src/engine/finance/FinanceLongHorizonCertification.test.ts` (9 cases) |
-| Certification result | **9/9 PASS** (full-file run: 303.40 s) |
-| Regression closure | 13 files / 130 tests PASS (779.69 s) |
-| Final gates | `npm run typecheck` clean, `npm run build` ✓ 11.97 s, `git diff --check` clean |
+| Certification result | **9/9 PASS** with renewal (full-file run after the production change) |
+| Renewal certification | `src/domain/finance/AuthorizationRenewal.test.ts` (14 cases), `src/app/game/AnnualAuthorizationContinuity.test.ts` (3 cases), Spain rollover case in `src/app/game/WorldDbSpainFinance.test.ts` |
+| Regression closure | BS16N: 13 files / 130 tests PASS. BS16N-R: 14 files / 136 tests PASS (39.73 s) + focused persistence 7 files / 46 tests PASS |
+| Final gates | `npm run typecheck` clean, `npm run build` ✓ 11.54 s, `git diff --check` clean |
 | Pushed | no; local commits only |
 
 ---
@@ -196,12 +199,12 @@ Interpretation, stated honestly:
   purpose-built compact world and the ACB world gets the rollover proof instead. This cost profile is registered
   in §6 as an engineering gap, not a Finance-correctness defect.
 
-## 6. Registered gaps (why this milestone is PARTIAL)
+## 6. Registered gaps (status at BS16N-R closure)
 
 | # | Gap | Evidence | What it needs |
 |---|---|---|---|
-| 1 | **No fiscal-period or authorization renewal producer.** Nothing in production materializes a second `FiscalPeriod` or renews an authorization; `allowNewPeriodMaterialization` has no production caller, `startNextSeason` ignores Finance, the activation report returns `RENEWAL_NOT_MODELLED`, and a gameplay decision after the first fiscal year answers `BUDGET_AUTHORIZATION_NOT_MODELLED` (correctly unblocked by liquidity, never by a legacy pool). | certification case 5; ACB rollover proof (case 9) | one approved product policy for annual budget renewal (who sets the next period's authorization, from what source). **This is the BS16N blocker.** |
-| 2 | **Economic policies declare a single fiscal year.** `createCompetitionRevenuePolicy` requires installments to sum exactly to `annualAmount`, so a revenue policy covers one fiscal period; revenue and event OPEX therefore stop at the period boundary even when the world continues for a decade. | certification case 2; case 9 (zero revenue after rollover) | either an approved multi-year policy shape or the period renewal from gap 1. |
+| 1 | ~~**No fiscal-period or authorization renewal producer.**~~ **CLOSED by BS16N-R (§11).** Materializing the fiscal period of every fiscal year the career enters is now structural, and authorization renewal is an explicit per-Organization policy: nothing renews by default, the shipped ecosystems assign `CARRY_FORWARD_PREVIOUS_APPROVED_LIMITS`, and an Organization without a policy still answers `RENEWAL_NOT_MODELLED` truthfully. | §11; `AuthorizationRenewal.test.ts` (14 cases); certification cases 5 and 9 | nothing; delivered |
+| 2 | ~~**Economic policies declare a single fiscal year.**~~ **PARTLY CLOSED by BS16N-R.** The renewal authority no longer blocks multi-year operation: an authorized club stays authorized and playable past its fiscal rollover while its economic policies remain one fiscal year each. Revenue and event OPEX recurrence still belongs to the economic-source authority (BS16K), not to renewal, and the product intentionally keeps it that way so renewal can never invent revenue. | §11; certification case 2 and the ACB rollover proof (case 9) | an approved multi-year economic policy shape if competitions are meant to keep paying after their declared year |
 | 3 | **No shipped-world economic provisioning.** `provisionEconomicSources` is called only by the ACB test boundary (`createAcbTestGame`); no shipped career world provisions an economic policy. | acceptance audit recorded in the BS16A document (§16.4) | an approved provisioning point for shipped worlds. |
 | 4 | **Staff-contract lifecycle repair runs only at load.** `ensureStaffContractStructure` repairs a lapsed staff contract when a save is read; the calendar itself has no producer that keeps staff contracts alive. The repair is deterministic and idempotent (certified in case 8), but a long-running session that never saves/reloads does not receive it. | certification case 8 | a canonical calendar-time staff-contract lifecycle producer. |
 | 5 | **Per-day cost grows with total fact history** because every mutation validates the whole world. Not a Finance defect; a scaling characteristic of the world-update seam. | §5 | incremental/bounded world validation (outside Finance). |
@@ -264,17 +267,75 @@ code changed afterwards), `SystemsActivation`, broad `GameWorldSave*`, Foundatio
 
 ## 10. Verdict
 
-**BS16N: PARTIAL.**
+**BS16N: PASS** (closed by BS16N-R).
 
 - Certified PASS: trial balance, cash identity and cash provenance closure, revenue and operating-cost
-  exactness, contract-year payroll exactness, debt/capital/terminal states, renewal-semantics honesty (no leak,
-  no legacy fallback), growth without duplication, replay and load-repair idempotence, save/load fidelity at
-  every checkpoint, ordinary-day performance on the compact fixture, and the shipped ACB rollover behaviour.
-- PARTIAL because of gap 1: legitimate multi-year gameplay operation needs an annual fiscal-period/authorization
-  renewal authority that the product does not yet define. Gap 2 follows from it, and gaps 3–5 are registered
-  engineering boundaries.
-- No production defect was demonstrated, so BS16N contains **no repair commit**. Manufacturing one would have
-  meant inventing a renewal policy, which is a product decision, not an engineering one.
+  exactness, contract-year payroll exactness, debt/capital/terminal states, growth without duplication, replay
+  and load-repair idempotence, save/load fidelity at every checkpoint, ordinary-day performance on the compact
+  fixture, and the shipped ACB rollover behaviour — now including **annual fiscal-period materialization and
+  policy-driven authorization renewal**, certified in §11 and re-run as a full 9/9 after the production change.
+- The first closure was PARTIAL for exactly one reason (gap 1). That reason is gone: multi-year gameplay is
+  authorized by an approved product policy, and every Organization the policy is not assigned to keeps the
+  truthful `RENEWAL_NOT_MODELLED` answer.
+- BS16N (certification) contained no repair commit because no production defect was demonstrated; BS16N-R
+  contains the production commit that closes the registered blocker, and no product rule was altered beyond the
+  approved decision.
 
 `BS16N` is the last defined BS16 Finance milestone. Nothing in this document promotes `BS16E` or `BS16H` to
 PASS, and nothing turns a PROPOSAL into DECIDED.
+
+## 11. BS16N-R closure: annual fiscal and authorization renewal
+
+**Approved product decision.** (1) `FiscalPeriod` rollover is structural: at the first processed GameDate
+belonging to a new Organization fiscal year, the profile + GameDate materialize the new period exactly once,
+creating no cash, revenue, expense, authorization, debt or capital. (2) Authorization renewal is policy-driven
+through `FinancialAuthorizationRenewalPolicy` with modes `NONE` and
+`CARRY_FORWARD_PREVIOUS_APPROVED_LIMITS`; there is **no global carry-forward default**. (3) The shipped
+ecosystems carry **BDM Annual Authorization Continuity Policy V1**: the previous fiscal period's approved limits
+by category/currency become the new period's authorization, and spent amounts, commitments, reservations, cash,
+receivables, payables, debt, capital and used headroom are never carried. (4) The policy is assigned explicitly
+by the entry point that owns each universe — Prototype, ACB Demo and World DB Spain. (5) A future
+Governance-approved annual budget replaces it by assigning a different policy; Finance needs no redesign.
+
+**Implementation.** `src/domain/finance/AuthorizationRenewalPolicy.ts` (modes, type, validator),
+`src/domain/finance/AuthorizationRenewal.ts` (pure `planAuthorizationRenewal` + the single mutating
+`applyAuthorizationRenewal`, deterministic budget id `budget:authorization-renewal:<organization>:<period>` and
+provenance from the assigning policy), `ensureFinanceFiscalPeriodForDate` in
+`src/domain/finance/FinanceFoundation.ts` (structural period producer), the renewal-aware activation plan in
+`src/domain/finance/FinanceActivation.ts` (a career loaded inside a new fiscal year renews through the same
+planner), the daily hook in `src/engine/finance/ClubFinanceLifecycle.ts` (rollover + renewal before any economic
+stage reads the period), `OrganizationFinancialProfile.authorizationRenewalPolicy` as canonical persisted
+configuration (Save V4 reads it as an optional field, so pre-BS16N-R saves stay valid), and the shipped policy
+data in `src/app/game/AnnualAuthorizationContinuityPolicy.ts` wired into `createNewGame`, `createAcbTestGame`
+and `WorldDbSpainGame`. No Finance rule was added to the settlement, debt, financing, revenue or OPEX engines.
+
+**Certified cases.** Prototype and ACB rollovers (period truth for every club, limits renewed, authorization
+`ACTIVE`, payroll continuing, revenue and operating cost still following only their own source authority, no
+ledger fact created); Spain rollover (only with its explicit assignment, never implicitly); the exact rollover
+day (`processClubFinanceForDate` 2033-09-05) as a strict no-op on replay with one new period and one new
+authorization; explicit next-period authorization winning over renewal (`ALREADY_AUTHORIZED`, no overwrite);
+`NONE` and unassigned Organizations staying `NOT_PROVISIONED` with `BUDGET_AUTHORIZATION_NOT_MODELLED`; limits
+carried with zero recognized spending, zero copied commitments and the same single reservation fact; expired
+contracts excluded from new-period capacity while a retention successor enters the period its term belongs to;
+save/load across the rollover and a second consecutive rollover renewing exactly once more.
+
+**Evidence.**
+
+| Suite | Result |
+|---|---|
+| `src/domain/finance/AuthorizationRenewal.test.ts` | 14/14 PASS (rollover once, replay, limits-only carry, explicit override, `NONE`, unassigned Organization, Save V4 round trip, second rollover) |
+| `src/app/game/AnnualAuthorizationContinuity.test.ts` | 3/3 PASS (assignments only to shipped universes, Prototype rollover for all 48 Organizations, ACB rollover) |
+| `src/app/game/WorldDbSpainFinance.test.ts` (added case) | 3/3 PASS (Spain renews only with its explicit assignment) |
+| `src/engine/finance/FinanceLongHorizonCertification.test.ts` | **9/9 PASS** after the production change (re-run once, then frozen) |
+| BS16N-R regression closure | 14 files / 136 tests PASS (39.73 s) |
+| Focused persistence + rollover closure | 7 files / 46 tests PASS |
+| `GameWorldSaveV1` / `GameWorldSaveV3` | unchanged failure sets, reproduced identically at baseline `cdf1713` → KNOWN_BASELINE |
+| Final gates | typecheck clean, build ✓ 11.54 s, `git diff --check` clean |
+
+**Static guards at closure.** `Math.random(` in `src/`: 0. React/Zustand/Tauri imports in `src/domain` +
+`src/engine`: 0. Shipped policy referenced from `src/domain` or `src/engine`: 0. No global renewal fallback: the
+only `CARRY_FORWARD_PREVIOUS_APPROVED_LIMITS` sites are the policy definition, the shipped policy data and the
+renewal authority that reads the policy. Legacy `TeamFinances` allow/block authority: 0 production callers.
+Renewal authority writes no ledger transaction, obligation, reservation, recognition, receivable, payable, debt
+or capital — grep of `AuthorizationRenewal.ts` for those collections returns nothing, and the certification
+asserts fact-for-fact equality across the rollover.

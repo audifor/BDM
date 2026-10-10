@@ -1646,7 +1646,40 @@ career relies on, certified over 3,651 canonical days in
   so a career that runs longer keeps its contract-driven life and honestly reports the period-driven part as
   stopped rather than inventing revenue for periods that were never provisioned.
 - **Renewal is reported, never faked.** `RENEWAL_NOT_MODELLED` and `BUDGET_AUTHORIZATION_NOT_MODELLED` are the
-  honest answers after the first fiscal period; the previous authorization is never copied forward, no legacy
-  `TeamFinances` pool is consulted as a fallback, and the currency never drifts. Annual renewal of fiscal periods
-  and authorizations is a **product authority that does not exist yet**; it is the registered BS16N gap, and it
-  is the one thing that keeps BS16N PARTIAL.
+  honest answers for an Organization that was never assigned a renewal policy; the previous authorization is
+  never copied forward, no legacy `TeamFinances` pool is consulted as a fallback, and the currency never drifts.
+  Annual renewal of fiscal periods and authorizations is delivered by the approved policy below.
+
+## Annual authorization continuity v1 (BS16N-R)
+
+A career must survive its own fiscal years, and two different things happen at a rollover: the calendar moves,
+and someone decides whether the club may spend again. They are separate authorities.
+
+- **Structural period rollover.** At the first processed GameDate belonging to a new Organization fiscal year,
+  `ensureFinanceFiscalPeriodForDate` materializes the canonical `FiscalPeriod` for that fiscal year exactly once
+  (identity = organization + fiscal-year boundary, derived from `OrganizationFinancialProfile.fiscalYearStartMonth`
+  and the GameDate, never from a Season). Materializing a period creates **no** cash, revenue, expense,
+  authorization, debt or capital: period truth is neither permission nor money. Replaying the date, or any later
+  date in the same fiscal year, is an exact no-op.
+- **Policy-driven authorization renewal.** `FinancialAuthorizationRenewalPolicy` has modes `NONE` and
+  `CARRY_FORWARD_PREVIOUS_APPROVED_LIMITS`, and it is assigned per Organization through canonical, persisted
+  configuration (`OrganizationFinancialProfile.authorizationRenewalPolicy`). There is **no global carry-forward
+  default**: an Organization nobody assigned a policy to keeps `RENEWAL_NOT_MODELLED` /
+  `BUDGET_AUTHORIZATION_NOT_MODELLED`, with its new period existing as truthful period truth and no authorization.
+- **Limits carry; usage never does.** Under the carry-forward mode the previous fiscal period's approved limits
+  by category and currency become a new APPROVED authorization for the new period — new ids, new fiscal period,
+  same currency, deterministic provenance from the assigning policy. Spent amounts, commitments, reservations,
+  cash, receivables, payables, debt, capital and used headroom are not facts of that authorization and are never
+  copied. The same planner serves the daily rollover and activation, so a career loaded inside a new fiscal year
+  renews identically.
+- **An explicit next-period authorization always wins.** Renewal never overwrites, double-provisions or re-seeds:
+  a period that already has a budget (`ALREADY_AUTHORIZED`, including a Governance-approved annual budget) is
+  left exactly as it is.
+- **The shipped universes assign the policy explicitly.** `BDM Annual Authorization Continuity Policy V1` is
+  product data in `src/app/game/AnnualAuthorizationContinuityPolicy.ts`, passed by the entry point that owns each
+  universe: Prototype, ACB Demo (`createAcbTestGame`) and World DB Spain. No engine branch, no ecosystem default
+  and no other world inherits it, and a future Governance-approved annual budget replaces it by assigning a
+  different policy rather than by changing Finance.
+- **Economic life is unaffected by renewal.** Contracts, payroll, debt service, settlements and collections keep
+  following their own authorities across a rollover; revenue and event operating cost keep following the
+  economic-source authority (BS16K), so renewal can never invent income for a period that was not provisioned.
