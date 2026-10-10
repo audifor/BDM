@@ -2,6 +2,10 @@ import { useMemo } from 'react'
 
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import type { PlayerWorkspaceModel } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
+import {
+  buildScoutedFamilyProfiles, hasScoutedRadarProfile, opponentKnowledgeSummary,
+  type ScoutedFamilyProfile,
+} from '@/ui-ng/applications/player/data/buildOpponentAttributesPresentation'
 
 type MindsetKey = 'DECISION_MAKING' | 'COMPOSURE' | 'DISCIPLINE' | 'ADAPTABILITY'
 const MINDSET: readonly { key: MindsetKey; label: string }[] = [
@@ -26,6 +30,20 @@ function ratingBand(value: number): string {
   return 'Bajo'
 }
 
+/** Read only the same viewer-authorized projection used by rival ATTRIBUTES. */
+function evaluatedOpponentFamilies(model: PlayerWorkspaceModel): readonly ScoutedFamilyProfile[] {
+  return model.knowledgeAccess.kind === 'own-roster'
+    ? []
+    : buildScoutedFamilyProfiles(model.knowledgeAccess)
+}
+
+/** A meaningful sport interpretation requires enough evidence, even for complete rating reports. */
+function supportedScoutedFamilies(families: readonly ScoutedFamilyProfile[]): readonly ScoutedFamilyProfile[] {
+  return families.filter((family) =>
+    family.estimate !== null && family.observed > 0 &&
+    (family.coverage ?? 0) >= 50 && (family.confidence ?? 0) >= 50)
+}
+
 function fieldLabel(field: { readonly status: string; readonly value?: unknown; readonly label?: string }): string {
   return field.status === 'available' && field.value !== undefined ? String(field.value) : field.label ?? 'Sin datos'
 }
@@ -46,13 +64,28 @@ function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
     }
   }
   if (knowledgeAccess.kind === 'scouted') {
-    const observed = knowledgeAccess.knownDimensions.slice(0, 2)
+    const all = evaluatedOpponentFamilies(model)
+    const adequate = supportedScoutedFamilies(all)
+    const summary = opponentKnowledgeSummary(knowledgeAccess)
+    const sorted = [...adequate].sort((a, b) => b.estimate! - a.estimate!)
+    const highest = sorted[0]
+    const lowest = sorted.length >= 2 ? sorted[sorted.length - 1] : undefined
+    if (highest !== undefined && lowest !== undefined) {
+      return {
+        summary: `Tu club dispone de estimaciones para ${summary.knownRatings}/${summary.totalRatings} atributos. Según esos informes, el perfil parece más sólido en ${highest.label.toLowerCase()} (≈${highest.estimate}, intervalo ${highest.low}–${highest.high}) y menos desarrollado en ${lowest.label.toLowerCase()} (≈${lowest.estimate}, intervalo ${lowest.low}–${lowest.high}). No son sus ratings reales ni permiten evaluar su carácter.`,
+        strengths: [`Mayor estimación: ${highest.label} · ≈${highest.estimate} · confianza ${highest.confidence}%`],
+        watchouts: [`Menor estimación: ${lowest.label} · ≈${lowest.estimate} · confianza ${lowest.confidence}%`, 'Estado físico y carácter sin fuente autorizada'],
+      }
+    }
+    const partial = knowledgeAccess.knownDimensions.slice(0, 2)
     return {
-      summary: observed.length
-        ? `Los informes disponibles apuntan a ${observed.map(entry => `${entry.label.toLowerCase()}: ${entry.displayLabel}`).join(' y ')}. Es una primera lectura, no una valoración definitiva: faltan observaciones para completar su perfil deportivo y humano.`
-        : 'Hay indicios parciales de scouting, pero no bastan para describir con seguridad las capacidades o el comportamiento del jugador.',
-      strengths: observed.map(entry => `${entry.label}: ${entry.displayLabel}`),
-      watchouts: ['Información de scouting incompleta', 'Carácter sin evaluación autorizada'],
+      summary: summary.knownRatings > 0
+        ? `Tu club tiene estimaciones para ${summary.knownRatings}/${summary.totalRatings} atributos, pero aún no hay suficiente cobertura o confianza para describir con seguridad el perfil global. Revisa las familias evaluadas en Attributes.`
+        : partial.length > 0
+          ? `Solo hay observaciones generales de scouting: ${partial.map(entry => `${entry.label}: ${entry.displayLabel}`).join(' · ')}. Todavía no existe un perfil individual verificable.`
+          : 'Existen indicios parciales de scouting, pero aún no permiten describir las capacidades ni el comportamiento del jugador.',
+      strengths: [],
+      watchouts: ['Conocimiento deportivo aún limitado', 'Estado interno y carácter sin evaluación autorizada'],
     }
   }
 
