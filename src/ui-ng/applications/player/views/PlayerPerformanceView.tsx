@@ -7,7 +7,6 @@ import {
   PerformanceEfficiencyPanel,
   PerformanceFiltersBar,
   PerformanceGameInspectorPanel,
-  PerformanceGameLogPanel,
   PerformanceKpiStrip,
   PerformanceShotProfilePanel,
   PerformanceSplitsPanel,
@@ -22,6 +21,7 @@ import {
   type PerformancePhaseFilter,
   type PerformanceSplitFilter,
   type PerformanceRecentGame,
+  type PlayerGameLogRow,
 } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 
 type AnalysisTab = 'efficiency' | 'shot' | 'splits'
@@ -74,6 +74,39 @@ export function PerformanceCourtsideForm({
             <span className="po-pf-simple-form__date">{game.date}</span>
           </button>
         })}
+      </div>}
+  </section>
+}
+
+/**
+ * A readable eight-column game log. The inspector carries the remaining
+ * box-score fields, avoiding cramped horizontal scrolling of 16+ columns.
+ */
+export function PerformanceCourtsideGameLog({
+  rows, selectedGameId, onSelectGame,
+}: {
+  readonly rows: readonly PlayerGameLogRow[]
+  readonly selectedGameId: GameId | null
+  readonly onSelectGame: (id: GameId) => void
+}) {
+  return <section className="po-pf-panel po-pf-log po-pf-log--courtside" data-ng-region="performance-game-log">
+    <header className="po-pf-panel__head"><span className="po-pf-panel__title">GAME LOG</span>
+      <span className="po-pf-panel__meta">{rows.length} recorded games · select to inspect</span>
+    </header>
+    {rows.length === 0 ? <p className="po-pf-empty">No game matches this context.</p>
+      : <div className="po-pf-log__scroll">
+        <table className="po-pf-courtside-table">
+          <thead><tr><th>DATE</th><th>OPPONENT</th><th>RESULT</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>VAL</th></tr></thead>
+          <tbody>{rows.map((row) => <tr key={row.gameId}
+            className={row.gameId === selectedGameId ? 'is-selected' : ''}>
+            <td>{row.dateLabel}</td>
+            <td><button type="button" aria-pressed={row.gameId === selectedGameId}
+              title={row.competition + ' · ' + (row.homeAway === 'H' ? 'Home' : 'Away')}
+              onClick={() => onSelectGame(row.gameId)}>{row.opponent}</button></td>
+            <td><span className={'po-pf-result is-' + (row.outcome === 'W' ? 'win' : row.outcome === 'L' ? 'loss' : 'tie')}>{row.result}</span></td>
+            <td>{row.minutes}</td><td>{row.points}</td><td>{row.rebounds}</td><td>{row.assists}</td><td>{row.valuation}</td>
+          </tr>)}</tbody>
+        </table>
       </div>}
   </section>
 }
@@ -179,7 +212,7 @@ export function PlayerPerformanceView() {
         <div className="po-pf-games">
           <PerformanceCourtsideForm games={snapshot.recentForm}
             onSelectGame={onSelectGame} selectedGameId={activeGameId} />
-          <PerformanceGameLogPanel rows={snapshot.gameLogs}
+          <PerformanceCourtsideGameLog rows={snapshot.gameLogs}
             onSelectGame={onSelectGame} selectedGameId={activeGameId} />
         </div>
 
