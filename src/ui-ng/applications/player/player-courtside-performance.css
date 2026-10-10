@@ -964,3 +964,82 @@
 @container player-space (max-width:850px) {
   .po-pf-board--courtside .po-pf-shooting__stage {flex-basis:205px;}
 }
+
+
+/*
+ * V2 court composition: actual half-court remains the dominant visual.
+ * Analysis cards sit alongside it at desktop dimensions, not in a long stack
+ * that forces the court itself to shrink.
+ */
+.po-pf-board--courtside .po-pf-shot--courtside {
+  display:grid;
+  grid-template-columns:minmax(0,1.14fr) minmax(150px,.86fr);
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:7px;
+  height:100%;
+  min-height:0;
+}
+.po-pf-board--courtside .po-pf-shooting__stage {
+  grid-column:1;
+  grid-row:1;
+  display:flex;
+  flex:initial;
+  min-height:0;
+  height:100%;
+  align-items:center;
+  justify-content:center;
+}
+.po-pf-board--courtside .po-pf-shot--courtside .po-pf-shot__court {
+  flex:0 1 auto;
+  width:100%;
+  max-width:295px;
+  height:100%;
+  max-height:320px;
+}
+.po-pf-board--courtside .po-pf-shooting__breakdown {
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(2,minmax(0,1fr));
+  gap:7px;
+  min-height:0;
+}
+.po-pf-board--courtside .po-pf-shooting__zone {
+  gap:4px;
+  padding:7px 9px;
+  justify-content:center;
+}
+.po-pf-board--courtside .po-pf-shooting__reading {
+  grid-column:1/-1;
+  grid-row:2;
+  flex-direction:row;
+  align-items:baseline;
+  min-height:28px;
+  padding:7px 9px;
+  gap:10px;
+}
+.po-pf-board--courtside .po-pf-shooting__reading > span {
+  flex:none;
+  white-space:nowrap;
+}
+@container player-space (max-width:850px) {
+  .po-pf-board--courtside .po-pf-shot--courtside {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:205px auto auto;
+  }
+  .po-pf-board--courtside .po-pf-shooting__stage {
+    grid-column:1;
+    grid-row:1;
+  }
+  .po-pf-board--courtside .po-pf-shooting__breakdown {
+    grid-column:1;
+    grid-row:2;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:auto;
+  }
+  .po-pf-board--courtside .po-pf-shooting__reading {
+    grid-column:1;
+    grid-row:3;
+  }
+}
