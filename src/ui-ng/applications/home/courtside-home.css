@@ -89,6 +89,9 @@
 .bdm-os-ng[data-bdm-courtside-home='true'] .bdm-os-ng__workspace-region {
   background: transparent;
 }
+/* Keep the extra crest and role entirely out of NG when Home is not active. */
+.bdm-os-ng:not([data-bdm-courtside-home='true']) .ng-system-bar__club-crest,
+.bdm-os-ng:not([data-bdm-courtside-home='true']) .ng-system-bar__role {display:none;}
 /* 1:1 structural treatment of the source topbar */
 .bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar {
   display:flex;
@@ -318,6 +321,7 @@
   background:var(--cs-lime);
   box-shadow:none;
 }
+.bdm-os-ng[data-bdm-courtside-home='true'] .ng-taskbar__more > span {display:inline-flex !important;font-size:22px;}
 .bdm-os-ng[data-bdm-courtside-home='true'] .ng-taskbar__more em {
   position:absolute;
   right:2px;
