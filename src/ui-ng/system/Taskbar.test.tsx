@@ -67,10 +67,10 @@ describe('Grouped entity instances in the taskbar', () => {
     navigateToPlayer('player:alpha' as PlayerId)
     navigateToPlayer('player:beta' as PlayerId)
     act(() => navigateToStaff('staff:alpha' as StaffPersonId))
-    fireEvent.click(screen.getByRole('button', { name: 'Player', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: /^Player$/ }))
     expect(screen.queryByRole('button', { name: 'Ver 2 instancias de Player' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ver 1 instancias de Staff' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Staff', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: /^Staff$/ }))
     expect(screen.queryByRole('button', { name: 'Ver 1 instancias de Staff' })).not.toBeInTheDocument()
   })
 
