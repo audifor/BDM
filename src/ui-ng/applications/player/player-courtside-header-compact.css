@@ -177,3 +177,26 @@
     padding:3px 5px;
   }
 }
+
+
+/* A rival's private medical/mental state cannot be shown from Player Truth. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fow-condition {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  max-width:100%;
+  padding:3px 0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fow-condition strong {
+  color:var(--cs-text);
+  font:700 15px/1.2 var(--cs-font-display);
+  letter-spacing:.025em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fow-condition span,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fow-pathway {
+  color:var(--cs-text2);
+  font:400 12px/1.35 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__fow-pathway {
+  margin:8px 0;
+}
