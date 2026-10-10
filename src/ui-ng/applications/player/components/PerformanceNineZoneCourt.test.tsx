@@ -55,6 +55,7 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
     const open = screen.getByRole('button', { name: 'Enlarge shot map' })
     fireEvent.click(open)
     const dialog = screen.getByRole('dialog', { name: 'Nine-zone basketball shooting map' })
+    expect(screen.getByRole('button', { name: 'Close enlarged shot map' })).toHaveFocus()
     expect(dialog).toHaveAttribute('aria-modal', 'true')
     expect(document.querySelector('.po-pf-nine__portal .po-pf-nine.is-expanded')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' })).toHaveAttribute('aria-pressed', 'true')
@@ -62,6 +63,7 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(document.querySelector('.po-pf-nine__portal')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Enlarge shot map' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Enlarge shot map' })).toHaveFocus()
   })
 
   it('bases temperature on actual field goals and leaves zero-attempt zones neutral', () => {
