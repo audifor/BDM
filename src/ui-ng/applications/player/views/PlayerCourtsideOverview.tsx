@@ -70,7 +70,7 @@ function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
     const sorted = [...adequate].sort((a, b) => b.estimate! - a.estimate!)
     const highest = sorted[0]
     const lowest = sorted.length >= 2 ? sorted[sorted.length - 1] : undefined
-    if (highest !== undefined && lowest !== undefined) {
+    if (highest !== undefined && lowest !== undefined && hasScoutedRadarProfile(all)) {
       return {
         summary: `Tu club dispone de estimaciones para ${summary.knownRatings}/${summary.totalRatings} atributos. Según esos informes, el perfil parece más sólido en ${highest.label.toLowerCase()} (≈${highest.estimate}, intervalo ${highest.low}–${highest.high}) y menos desarrollado en ${lowest.label.toLowerCase()} (≈${lowest.estimate}, intervalo ${lowest.low}–${lowest.high}). No son sus ratings reales ni permiten evaluar su carácter.`,
         strengths: [`Mayor estimación: ${highest.label} · ≈${highest.estimate} · confianza ${highest.confidence}%`],
@@ -142,7 +142,8 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
       .slice(0, 4)
     : []
   const title = own ? model.overview.identityModule.archetypeTitle
-    : (totalScoutedRatings?.knownRatings ?? 0) > 0 ? 'SCOUTING PROFILE' : 'NOT SCOUTED'
+    : (totalScoutedRatings?.knownRatings ?? 0) > 0 ? 'SCOUTING PROFILE'
+      : model.knowledgeAccess.kind === 'scouted' ? 'SCOUTING PARCIAL' : 'NOT SCOUTED'
   const role = model.overview.identityModule.roleTitle
 
   return (
@@ -163,7 +164,7 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
       <div className="po-cs-dna__quadrants">
         <section className="po-cs-dna__quadrant">
           <div className="po-cs-dna__quadrant-head"><span>01</span><h4>BALONCESTO</h4></div>
-          <p>Fortalezas representativas por familia</p>
+          <p>{own ? 'Fortalezas representativas por familia' : 'Familias estimadas con evidencia suficiente'}</p>
           <div className="po-cs-dna__chips">
             {own ? chips.map((chip) => <span className="po-cs-chip" key={chip.id}>{chip.label} {chip.value}</span>)
               : estimatedHighlights.length > 0
