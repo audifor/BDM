@@ -96,6 +96,26 @@ staff capacity, and offer the Scouting Centre as the discovery/workload route.
   raw radar values into the model, and verifies no leaks for known/unknown
   rival access. These tests require execution before certification.
 
+## PLAYER FOW · clarity and usable vertical space (10 October 2026)
+
+- In rival ATTRIBUTES, remove the redundant `Lectura FOW` footer. The
+  authorized-knowledge banner, estimation labels and distinct unknown states
+  already communicate what is visible, leaving the family navigation uncluttered.
+- Scouting `RatingEvaluation.confidence` is a 0..100 internal index. Never
+  present it as a calibrated probability of a rating being correct:
+  show `Índice scout 100/100` rather than `100 % de confianza`. Preserve
+  the independently tracked per-rating coverage and estimated range, with
+  explicit explanation of uncertainty. Own-player canonical values are
+  unaffected.
+- Rival Overview's fourth DNA quadrant uses recorded competitive activity:
+  games played and the latest actual game box-score. Never substitute those
+  public observations for internal availability, morale, risk or medical data.
+  The owned-player Stability/Risk quadrant is unchanged.
+- At the reference desktop height, allocate a real bottom row for Manager Read
+  and its action buttons; if the available viewport is shorter, scroll the
+  Overview rather than hiding actions behind the dock. Recompose below the
+  existing Courtside container breakpoints.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
