@@ -242,6 +242,30 @@ Do not mark the nine-zone program or PERFORMANCE full PASS until complete.
 - Requires actual viewport/dark-light inspection, Vitest and typecheck before
   visual certification.
 
+## PERFORMANCE V3.2 · Approved refinements, bounded scope (October 2026)
+
+User-approved adjustments to the existing nine-zone shooting map are limited
+to **(2) softer efficiency colors / clear small-sample warning** and
+**(4) better use of the enlarged EXPAND right-hand reading column**.
+The basketball geometry and nine shapes (item 1), and the existing compact
+court dimensions, columns and spatial layout (item 3), are expressly
+approved and must remain untouched.
+
+- Palette attenuation affects efficiency fill saturation via Courtside
+  `--cs-*` tokens. The orange selected-zone outline and FG% thresholds
+  remain intact, for dark and light.
+- Attempt counts 1–4 are visually annotated with a dagger on list FG%,
+  with text in the selected region on EXPAND and an explicit meaning note.
+  It is a **sample-size caution**, not adjusted FG%, a statistical confidence
+  interval, or a reclassified zone. Zero attempts is unknown, not small
+  observed sample; five or more attempts do not trigger this heuristic.
+- The compact layout does not receive a new module or space-consuming row.
+  EXPAND alone receives larger selected-zone typography, clearer FGM/FGA
+  columns and list entries that utilize the available height.
+- Data sources, persistence, FOW, shot-zone identities, geometry and
+  existing game/season filters do not change.
+- Visual and runtime testing in Tauri dark/light remains required.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
