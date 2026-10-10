@@ -147,7 +147,7 @@ export function PlayerOpponentAttributes() {
               <div className="pac-opponent__radar-pending">
                 <span className="pac-opponent__unknown-icon" aria-hidden="true">?</span>
                 <h3>PERFIL AÚN INCOMPLETO</h3>
-                <p>Hay {totals.knownRatings} atributos evaluados, pero faltan estimaciones en algunas familias. El radar solo aparece al conocer las ocho familias completas.</p>
+                <p>Hay {totals.knownRatings} atributos evaluados. Para mostrar un radar fiable hacen falta valoraciones completas de las ocho familias y al menos un 50 % de cobertura y confianza media en cada una.</p>
                 <p>Selecciona una familia para consultar lo que ya sabemos de ella.</p>
               </div>
             )}
