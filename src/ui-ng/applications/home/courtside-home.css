@@ -977,6 +977,6 @@
 .bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta,
 .bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
   color:#463f52 !important;
-  font-size:max(12px,1em);
+  font-size:12px;
   font-weight:500;
 }
