@@ -38,8 +38,17 @@ Rival partially/advanced scouted: show only `ratingEvaluations` with non-null
 authorized evaluations, preserving their source-defined range/descriptor and
 confidence and coverage. Do not display exact Player Truth or numeric bars
 for `UNKNOWN`. The eight-family full-shape radar must not be fabricated from
-incomplete reports. Family selection remains available and shows unknown
-states until an evaluation exists. Re-entering the profile after new authorized
+incomplete reports. When all eight families have complete authorized
+individual evaluations and at least 50% mean source coverage and confidence
+per family, draw a single slim Courtside polygon of **the organization's
+estimated means**, with explicit uncertainty and a direct note that these
+are not the true player ratings. The selected family shows its aggregate
+estimated rating, indicative range, mean evidence coverage, mean confidence
+and the number of evaluated attributes. Never substitute old broad-dimension
+coverage (which can legitimately be zero while individual ratings have
+coverage) for the individual profile's evidence; do not display a misleading
+0% next to evaluable individual skills. Family selection remains available
+and shows unknown states until an evaluation exists. Re-entering the profile after new authorized
 knowledge naturally reveals more information from the updated projection.
 
 Header: exact private morale, fatigue, injury risk and availability are not
