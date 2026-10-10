@@ -23,4 +23,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
-      - run: npm test -- src/ui-ng/applications/home/homeLeaderCategories.test.ts src/ui-ng/applications/home/homeStandingsDigest.test.ts src/ui-ng/applications/home/HomeWorkspace.test.tsx
+      - run: npm test -- src/ui-ng/applications/home/homeLeaderCategories.test.ts src/ui-ng/applications/home/homeStandingsDigest.test.ts src/ui-ng/applications/home/HomeWorkspace.test.tsx src/ui-ng/system/NgStartMenu.test.tsx
