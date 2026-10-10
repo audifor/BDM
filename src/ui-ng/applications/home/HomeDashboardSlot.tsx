@@ -442,14 +442,14 @@ function UpcomingModule({ context }: { readonly context: HomeDashboardSlotContex
   return (
     <ul className="home-upcoming">
       {context.upcoming.map((game) => (
-        <li key={game.id}>
-          <div className="home-upcoming__main">
-            <HomeTeamLink name={game.opponentName} teamId={game.opponentTeamId} />
-            <span>{game.venue}</span>
-          </div>
-          <div className="home-upcoming__meta">
-            {formatGameDateLabel(game.date)} · {game.status}
-          </div>
+        <li
+          className="home-upcoming__row"
+          key={game.id}
+          title={`${game.opponentName} · ${formatGameDateLabel(game.date)} · ${game.venue} · Programado`}
+        >
+          <HomeTeamLink className="home-upcoming__opponent" name={game.opponentName} teamId={game.opponentTeamId} />
+          <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
+          <span className="home-upcoming__venue">{game.venue}</span>
         </li>
       ))}
     </ul>
