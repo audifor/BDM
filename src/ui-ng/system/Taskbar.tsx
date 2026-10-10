@@ -31,7 +31,7 @@ export function Taskbar() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [capacity, setCapacity] = useState(12)
   const activeApp = app === 'player' ? 'player' : app
-  const courtside = app === 'home'
+  const courtside = app === 'home' || new URLSearchParams(window.location.search).get('bdm-ui') === '1'
   const allCourtsideApps = [...COURTSIDE_PINNED, ...openApps.filter((id) => !COURTSIDE_PINNED.includes(id))]
   const count = Math.max(1, capacity - (allCourtsideApps.length > capacity ? 1 : 0))
   const shownApps = courtside ? allCourtsideApps.slice(0, count) : openApps
