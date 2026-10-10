@@ -253,7 +253,7 @@ function Radar({ model }: { readonly model: PlayerWorkspaceModel }) {
     }).join(' ')
 
   return (
-    <section className="po-cs-card po-cs-radar">
+    <section className={`po-cs-card po-cs-radar${own ? '' : ' po-cs-radar--scouted'}`}>
       <header className="po-cs-card__header">
         <h2>{own ? 'ATTRIBUTE RADAR' : 'RADAR ESTIMADO'}</h2>
         <span>{own ? 'Familias reales · 0 a 100' : 'Scouting de tu club · 0 a 100'}</span>
@@ -348,6 +348,7 @@ function Form({ model }: { readonly model: PlayerWorkspaceModel }) {
 function ManagerRead({ model }: { readonly model: PlayerWorkspaceModel }) {
   const { session } = usePlayerWorkspace()
   const assessment = useMemo(() => buildManagerRead(model), [model])
+  const own = model.knowledgeAccess.kind === 'own-roster'
   return <section className="po-cs-card po-cs-read">
     <header className="po-cs-card__header"><h2>MANAGER READ</h2><span>Interpretación basada en datos autorizados</span></header>
     <div className="po-cs-read__content">
@@ -358,8 +359,13 @@ function ManagerRead({ model }: { readonly model: PlayerWorkspaceModel }) {
       </div>
     </div>
     <div className="po-cs-read__links">
-      <button type="button" onClick={() => session.setActiveView('development')}>DESARROLLO ›</button>
-      <button type="button" onClick={() => session.setActiveView('medical')}>ESTADO FÍSICO ›</button>
+      {own ? <>
+        <button type="button" onClick={() => session.setActiveView('development')}>DESARROLLO ›</button>
+        <button type="button" onClick={() => session.setActiveView('medical')}>ESTADO FÍSICO ›</button>
+      </> : <>
+        <button type="button" onClick={() => session.setActiveView('attributes')}>EVALUACIONES ›</button>
+        <button type="button" onClick={() => session.setActiveView('performance')}>RENDIMIENTO ›</button>
+      </>}
       <button type="button" onClick={() => session.setActiveView('scouting')}>CONOCIMIENTO ›</button>
     </div>
   </section>
