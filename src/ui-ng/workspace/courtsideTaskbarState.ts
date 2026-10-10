@@ -40,12 +40,12 @@ export function moveTaskbarApp(
   source: WorkspaceAppId,
   target: WorkspaceAppId,
 ): WorkspaceAppId[] {
-  if (source === target || source === 'home' || target === 'home') return [...items]
+  if (source === target || source === 'home') return [...items]
   const list = [...items]
   const from = list.indexOf(source)
-  const to = list.indexOf(target)
-  if (from < 0 || to < 0) return list
-  list.splice(from, 1)
-  list.splice(list.indexOf(target), 0, source)
+  if (!list.includes(target)) return list
+  if (from >= 0) list.splice(from, 1)
+  const index = target === 'home' ? 1 : list.indexOf(target)
+  list.splice(index, 0, source)
   return list
 }
