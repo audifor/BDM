@@ -51,6 +51,7 @@ export interface HomeModuleUpcomingRow {
   readonly date: string
   readonly opponentTeamId: TeamId
   readonly opponentName: string
+  readonly competitionName: string | null
   readonly venue: 'Casa' | 'Fuera'
   readonly status: string
 }
@@ -456,19 +457,22 @@ function DynamicsModule({ context }: { readonly context: HomeDashboardSlotContex
 function UpcomingModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   if (context.upcoming.length === 0) return <p className="ng-canon__empty">Sin partidos programados.</p>
   return (
-    <ul className="home-upcoming">
-      {context.upcoming.map((game) => (
-        <li
-          className="home-upcoming__row"
-          key={game.id}
-          title={`${game.opponentName} · ${formatGameDateLabel(game.date)} · ${game.venue} · Programado`}
-        >
-          <HomeTeamLink className="home-upcoming__opponent" name={game.opponentName} teamId={game.opponentTeamId} />
-          <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
-          <span className="home-upcoming__venue">{game.venue}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="home-upcoming__module-content">
+      <p className="home-upcoming__summary">{context.upcoming.length} partidos pendientes · temporada actual</p>
+      <ul className="home-upcoming" aria-label="Todos los próximos partidos de la temporada" tabIndex={0}>
+        {context.upcoming.map((game) => (
+          <li className="home-upcoming__row" key={game.id}
+            title={`${game.opponentName} · ${game.competitionName ?? 'Competición no disponible'} · ${formatGameDateLabel(game.date)} · ${game.venue}`}>
+            <HomeTeamLink className="home-upcoming__opponent" name={game.opponentName} teamId={game.opponentTeamId} />
+            <span className="home-upcoming__competition" title={game.competitionName ?? 'Competición no disponible'}>
+              {game.competitionName ?? '—'}
+            </span>
+            <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
+            <span className="home-upcoming__venue">{game.venue}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
