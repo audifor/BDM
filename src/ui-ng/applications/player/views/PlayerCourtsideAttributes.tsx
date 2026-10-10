@@ -1,0 +1,296 @@
+import { useEffect, useMemo, useState } from 'react'
+
+import type { PlayerTruthRatingKey } from '@/domain/player'
+import { AttributeCategoryProfiles } from '@/ui-ng/applications/player/components/AttributeCategoryProfiles'
+import { AttributeEvolutionChart } from '@/ui-ng/applications/player/components/AttributeEvolutionChart'
+import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/BasketballVisuals'
+import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
+import {
+  comparisonProfile, filterCourtsideRatings, getCategoryComparison,
+  MAX_FOCUS_ATTRIBUTES, toggleFocusAttribute,
+  type AttributeBaselineScope, type AttributeFilter,
+} from '@/ui-ng/applications/player/data/courtsideAttributeLogic'
+import { ordinalPercentile } from '@/ui-ng/applications/player/data/ratingCatalog'
+
+const FILTERS: readonly { id: AttributeFilter; label: string }[] = [
+  { id: 'all', label: 'All' }, { id: 'strengths', label: 'Strengths' },
+  { id: 'weaknesses', label: 'Weaknesses' }, { id: 'tracked', label: 'Watching' },
+  { id: 'improved', label: 'Improved' }, { id: 'declined', label: 'Declined' },
+]
+const BASELINES: readonly { id: AttributeBaselineScope; label: string }[] = [
+  { id: 'none', label: 'Player only' }, { id: 'team', label: 'Team' },
+  { id: 'league', label: 'League' }, { id: 'position', label: 'Position' },
+]
+
+function storageKey(playerId: string): string {
+  return 'bdm-ui-player-attribute-focus:v1:' + playerId
+}
+function readFocus(playerId: string, valid: ReadonlySet<string>): readonly PlayerTruthRatingKey[] {
+  try {
+    if (typeof window === 'undefined') return []
+    const serialized = window.localStorage.getItem(storageKey(playerId))
+    const parsed: unknown = serialized === null ? [] : JSON.parse(serialized)
+    if (!Array.isArray(parsed)) return []
+    const unique = new Set<string>()
+    for (const value of parsed) {
+      if (typeof value === 'string' && valid.has(value)) unique.add(value)
+      if (unique.size >= MAX_FOCUS_ATTRIBUTES) break
+    }
+    return Array.from(unique) as PlayerTruthRatingKey[]
+  } catch {
+    return []
+  }
+}
+function writeFocus(playerId: string, ids: readonly PlayerTruthRatingKey[]): void {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(storageKey(playerId), JSON.stringify(ids))
+    }
+  } catch {
+    // Preferences may stay in memory when local browser storage is unavailable.
+  }
+}
+
+export function PlayerCourtsideAttributes() {
+  const { model, session } = usePlayerWorkspace()
+  const playerId = model?.identity.playerId ?? ''
+  const [filter, setFilter] = useState<AttributeFilter>('all')
+  const [search, setSearch] = useState('')
+  const [scope, setScope] = useState<AttributeBaselineScope>('none')
+  const validIds = useMemo(() => new Set(model?.attributes.allRatings.map((rating) => rating.id) ?? []), [model?.attributes.allRatings])
+  const [focusState, setFocusState] = useState(() => ({ playerId, ids: readFocus(playerId, validIds) }))
+  useEffect(() => {
+    setFocusState({ playerId, ids: readFocus(playerId, validIds) })
+  }, [playerId, validIds])
+  if (model === null || model.knowledgeAccess.kind !== 'own-roster') return null
+
+  const { attributesCategory, selectedRatingId } = session
+  const currentCategory = model.attributes.categories.find((entry) => entry.category === attributesCategory)
+    ?? model.attributes.categories[0]
+  if (currentCategory === undefined) return <p className="pac-empty">No attribute categories recorded for this player.</p>
+
+  const focus = focusState.playerId === playerId ? focusState.ids : []
+  const focusedIds = new Set(focus)
+  const strengthIds = new Set(model.attributes.signatureSkills.map((rating) => rating.id))
+  const weaknessIds = new Set(model.attributes.weakLinks.map((rating) => rating.id))
+  const availableRatings = search.trim() === '' ? currentCategory.all : model.attributes.allRatings
+  const ratings = filterCourtsideRatings(
+    availableRatings, filter, search, model.attributes.evolutionByRating,
+    strengthIds, weaknessIds, focusedIds,
+  )
+  const activeRating = ratings.find((rating) => rating.id === selectedRatingId) ?? ratings[0]
+  const evolution = activeRating === undefined ? null : model.attributes.evolutionByRating[activeRating.id]
+  const radarAxes = model.radarAxes
+  const overlay = comparisonProfile(model.attributes.categories, model.attributes.evolutionByRating, scope)
+  const highFamily = [...model.attributes.categories].sort((a, b) => b.profileValue - a.profileValue)[0]
+  const lowFamily = [...model.attributes.categories].sort((a, b) => a.profileValue - b.profileValue)[0]
+  const activeFamily = activeRating === undefined
+    ? currentCategory : model.attributes.categories.find((entry) => entry.category === activeRating.category) ?? currentCategory
+  const baselineDifference = activeRating !== undefined && evolution?.league.average !== null && evolution?.league.average !== undefined
+    ? Math.round((activeRating.value - evolution.league.average) * 10) / 10 : null
+
+  const selectCategory = (category: typeof attributesCategory) => {
+    const next = model.attributes.categories.find((entry) => entry.category === category)
+    session.setAttributesCategory(category)
+    session.setSelectedRatingId(next?.all[0]?.id ?? null)
+    setSearch('')
+    setFilter('all')
+  }
+  const selectRating = (ratingId: PlayerTruthRatingKey) => {
+    const rating = model.attributes.allRatings.find((entry) => entry.id === ratingId)
+    if (rating === undefined) return
+    session.setAttributesCategory(rating.category)
+    session.setSelectedRatingId(rating.id)
+    setSearch('')
+    setFilter('all')
+  }
+  const toggleFocus = (id: PlayerTruthRatingKey) => {
+    const next = toggleFocusAttribute(focus, id)
+    if (next === focus) return
+    setFocusState({ playerId, ids: next })
+    writeFocus(playerId, next)
+  }
+  const trackerFull = focus.length >= MAX_FOCUS_ATTRIBUTES
+
+  return (
+    <div className="pac-grid" data-ng-region="player-attributes-courtside">
+      <div className="pac-column pac-column--left">
+        <section className="pac-card pac-category">
+          <header className="pac-head"><h2>CATEGORY PROFILES</h2><span>Select a category to explore</span></header>
+          <AttributeCategoryProfiles
+            categories={model.attributes.categories}
+            selectedCategory={currentCategory.category}
+            structuralCompact={false}
+            onSelect={selectCategory}
+          />
+        </section>
+        <section className="pac-card pac-focus">
+          <header className="pac-head"><h2>FOCUS TRACKER</h2><span>{focus.length} / {MAX_FOCUS_ATTRIBUTES}</span></header>
+          <p className="pac-subtext">Watch up to three attributes across categories</p>
+          {focus.length === 0 ? (
+            <p className="pac-empty">Mark an attribute with the star to follow it here.</p>
+          ) : <div className="pac-focus__items">
+            {focus.map(id => {
+              const rating = model.attributes.allRatings.find((entry) => entry.id === id)
+              if (rating === undefined) return null
+              const family = model.attributes.categories.find((entry) => entry.category === rating.category)
+              const recorded = model.attributes.evolutionByRating[id]
+              return <div className="pac-focus__item" key={id}>
+                <button type="button" className="pac-focus__go" onClick={() => selectRating(id)}>
+                  <strong>{rating.label}</strong><small>{family?.label ?? rating.category}</small>
+                </button>
+                <div className="pac-focus__metric"><b>{rating.value}</b><span className="pac-meter"><i style={{width:rating.value + '%'}} /></span></div>
+                <button type="button" className="pac-focus__remove" aria-label={'Stop watching ' + rating.label} title="Remove from focus" onClick={() => toggleFocus(id)}>×</button>
+                {recorded?.hasRecordedHistory && <span className="pac-focus__change">{recorded.changeSinceFirst > 0 ? '+' : ''}{recorded.changeSinceFirst}</span>}
+              </div>
+            })}
+          </div>}
+          <p className="pac-focus__note">Saved locally on this device, separately from the game Save.</p>
+          <button className="pac-outline-action" type="button" disabled={activeRating === undefined || (trackerFull && !focusedIds.has(activeRating.id))}
+            onClick={() => activeRating !== undefined && toggleFocus(activeRating.id)}>
+            {activeRating !== undefined && focusedIds.has(activeRating.id) ? '★ REMOVE SELECTED' : '+ WATCH SELECTED ATTRIBUTE'}
+          </button>
+        </section>
+      </div>
+
+      <div className="pac-column pac-column--center">
+        <section className="pac-card pac-profile">
+          <header className="pac-head"><h2>ATTRIBUTE PROFILE</h2><span>8 family radar · click an axis to explore</span></header>
+          <div className="pac-profile__body">
+            <div className="pac-profile__chart">
+              <div className="pac-profile__legend"><span className="pac-dot pac-dot--player"/> Player
+                {scope !== 'none' && overlay !== null && <><span className="pac-dot pac-dot--reference"/> {BASELINES.find((option) => option.id === scope)?.label} avg.</>}
+              </div>
+              <AttributeRadar
+                accent="var(--cs-lime)"
+                axes={radarAxes}
+                selectedCategory={currentCategory.category}
+                onCategorySelect={selectCategory}
+                comparisonAxes={overlay}
+                showValues
+              />
+              <label className="pac-profile__control">COMPARE PROFILE
+                <select value={scope} onChange={(event) => setScope(event.target.value as AttributeBaselineScope)}>
+                  {BASELINES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                </select>
+              </label>
+              {scope !== 'none' && overlay === null && <p className="pac-benchmark-missing">No complete {scope} baseline available for these eight families.</p>}
+            </div>
+            <div className="pac-signals">
+              <h3>PROFILE SIGNALS</h3>
+              {highFamily !== undefined && <div className="pac-signal pac-signal--up">
+                <span className="pac-signal__icon">↑</span><div><strong>Strongest family</strong><b>{highFamily.label}</b>
+                <p>Current family rating {highFamily.profileValue} / 100</p></div>
+              </div>}
+              {lowFamily !== undefined && <div className="pac-signal pac-signal--down">
+                <span className="pac-signal__icon">↓</span><div><strong>Lowest family</strong><b>{lowFamily.label}</b>
+                <p>Current family rating {lowFamily.profileValue} / 100</p></div>
+              </div>}
+              {highFamily !== undefined && lowFamily !== undefined && <div className="pac-signal">
+                <span className="pac-signal__icon">◈</span><div><strong>Profile contrast</strong>
+                <b>{highFamily.label} vs {lowFamily.label}</b>
+                <p>{highFamily.profileValue - lowFamily.profileValue}-point difference across families</p></div>
+              </div>}
+              {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope) !== null && (
+                <p className="pac-signal__baseline">Selected family reference: {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope)} / 100</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="pac-card pac-attributes">
+          <header className="pac-head pac-attributes__heading">
+            <div><h2>{search.trim() ? 'SEARCH RESULTS' : currentCategory.label.toUpperCase() + ' ATTRIBUTES'}</h2><span>{search.trim() ? 'Search across all 80 attributes' : 'Only the selected family is shown'}</span></div>
+            <label className="pac-search"><span className="pac-sr-only">Search attributes</span>
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="⌕  Search attributes…" />
+            </label>
+          </header>
+          <div className="pac-filters" aria-label="Attribute filters">
+            {FILTERS.map(item => <button type="button" key={item.id} className={filter === item.id ? 'is-active' : ''}
+              aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label}</button>)}
+          </div>
+          <div className="pac-attributes__scroll">
+            <div className="pac-attr-table__head"><span>ATTRIBUTE</span><span>RATING</span><span>TEAM AVG</span><span>LEAGUE AVG</span><span>PERCENTILE</span><span>PROFILE</span><span>WATCH</span></div>
+            {ratings.length === 0 && <p className="pac-empty">No attributes match the selected filter. Change the filter or clear the search.</p>}
+            {ratings.map((rating) => {
+              const evolutionRow = model.attributes.evolutionByRating[rating.id]
+              const selected = activeRating?.id === rating.id
+              const watched = focusedIds.has(rating.id)
+              return <div className={'pac-attr-row' + (selected ? ' is-selected' : '')} key={rating.id}>
+                <button className="pac-attr-row__select" type="button" onClick={() => selectRating(rating.id)} aria-current={selected ? 'true' : undefined}>
+                  <span className="pac-attr-row__name">{rating.label}{search.trim() && <small>{rating.category}</small>}</span>
+                  <b>{rating.value}</b>
+                  <span>{evolutionRow?.team.average?.toFixed(1) ?? '—'}</span>
+                  <span>{evolutionRow?.league.average?.toFixed(1) ?? '—'}</span>
+                  <span>{evolutionRow?.standing.percentile === null || evolutionRow?.standing.percentile === undefined ? '—' : ordinalPercentile(evolutionRow.standing.percentile)}</span>
+                  <span className="pac-meter"><i style={{ width: rating.value + '%' }}/></span>
+                </button>
+                <button type="button" className={'pac-attr-row__watch' + (watched ? ' is-watched' : '')}
+                  disabled={!watched && trackerFull} aria-label={(watched ? 'Stop watching ' : 'Watch ') + rating.label}
+                  title={watched ? 'Remove from focus' : trackerFull ? 'Up to three attributes' : 'Track this attribute'} onClick={() => toggleFocus(rating.id)}>
+                  {watched ? '★' : '☆'}
+                </button>
+              </div>
+            })}
+          </div>
+        </section>
+      </div>
+
+      <div className="pac-column pac-column--right">
+        {activeRating === undefined || evolution === null ? (
+          <section className="pac-card pac-empty-detail"><h2>ATTRIBUTE DETAIL</h2><p>Select an attribute to see its ratings and comparisons.</p></section>
+        ) : <>
+          <section className="pac-card pac-detail">
+            <header className="pac-head"><div><h2>{activeRating.label.toUpperCase()}</h2><span>{activeFamily.label}</span></div>
+              <button type="button" className={'pac-detail__watch' + (focusedIds.has(activeRating.id) ? ' is-watched' : '')}
+                disabled={!focusedIds.has(activeRating.id) && trackerFull}
+                onClick={() => toggleFocus(activeRating.id)}>
+                {focusedIds.has(activeRating.id) ? '★ Watching' : '☆ Watch attribute'}
+              </button>
+            </header>
+            <div className="pac-detail__kpis">
+              <div><span>RATING</span><strong>{activeRating.value}</strong></div>
+              <div><span>PERCENTILE</span><b>{evolution.standing.percentile === null ? '—' : ordinalPercentile(evolution.standing.percentile)}</b></div>
+              <div><span>TEAM AVG</span><b>{evolution.team.average?.toFixed(1) ?? '—'}</b></div>
+              <div><span>LEAGUE AVG</span><b>{evolution.league.average?.toFixed(1) ?? '—'}</b></div>
+              <div><span>POSITION AVG</span><b>{evolution.standing.positionAverage?.toFixed(1) ?? '—'}</b></div>
+            </div>
+            <p className="pac-detail__description">{evolution.standing.note}</p>
+            <div className="pac-detail__evolution">
+              {evolution.hasRecordedHistory ? (
+                <AttributeEvolutionChart evolution={evolution} label={activeRating.label} title="RECORDED EVOLUTION"/>
+              ) : <div className="pac-detail__empty-history">
+                <strong>EVOLUTION</strong><p>No progression recorded yet. Changes appear after canonical offseason transitions.</p>
+              </div>}
+            </div>
+          </section>
+          <section className="pac-card pac-why">
+            <header className="pac-head"><h2>WHY IT MATTERS</h2></header>
+            <p>{baselineDifference === null
+              ? 'A competition baseline is not available yet. This rating can be inspected, but no league-relative judgement is warranted.'
+              : baselineDifference === 0
+                ? 'This rating matches the league average in the available comparison sample.'
+                : 'This rating is ' + Math.abs(baselineDifference).toFixed(1) + ' points ' +
+                  (baselineDifference > 0 ? 'above' : 'below') + ' the current league sample average. This is a comparison, not a projection of improvement.'}</p>
+          </section>
+          <div className="pac-right__bottom">
+            <section className="pac-card pac-related">
+              <header className="pac-head"><h2>SAME FAMILY</h2></header>
+              {activeFamily.all.filter((rating) => rating.id !== activeRating.id).slice(0, 4).map((rating) =>
+                <button type="button" key={rating.id} onClick={() => selectRating(rating.id)}>
+                  <span>{rating.label}</span><b>{rating.value}</b>
+                </button>)}
+            </section>
+            <section className="pac-card pac-training">
+              <header className="pac-head"><h2>TRAINING</h2></header>
+              {evolution.assignment.status === 'available' && evolution.trainings.length > 0 ? (
+                <p>Training options available: {evolution.trainings.length}. Open the full analysis for scheduling.</p>
+              ) : <p>{evolution.assignment.reason ?? 'No canonical training option can be assigned to this attribute.'}</p>}
+              <span className="pac-training__status">CANONICAL DATA ONLY</span>
+            </section>
+          </div>
+        </>}
+      </div>
+    </div>
+  )
+}
