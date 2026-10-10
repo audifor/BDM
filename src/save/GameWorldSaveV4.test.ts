@@ -240,7 +240,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
     const freshRestored = deserializeGameWorldV4(serializeGameWorldV4(freshWorld, savedAt))
     expect(freshRestored.worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
     expect(hasAppliedAnnualDevelopmentCycle(freshRestored, 'annual-development:2032')).toBe(false)
-  })
+  }, 15_000)
 
   it('save/load around the 1 July annual development trigger never re-applies development on reload', () => {
     // recruitingCyclesById is stripped to isolate this test from a separate, unrelated recruiting

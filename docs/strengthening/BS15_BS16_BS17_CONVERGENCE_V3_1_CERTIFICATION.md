@@ -1,6 +1,6 @@
 # BS15 / BS16 final / BS17D convergence V3.1 certification
 
-**PASS · BS15/BS16/BS17 CONVERGENCE V3.1 CERTIFIED** (one documented timeout caveat, see Limits).
+**PASS · BS15/BS16/BS17 CONVERGENCE V3.1 FINAL CLOSURE** (the earlier Save V4 timeout caveat is closed, see Final timeout closure).
 
 ## Authority and reproducibility
 
@@ -75,7 +75,7 @@ Raw JSON/logs remain under `node_modules/.cache/convergence-v3-1` (not committed
 | STAFF-CONTRACT V4-01 (`StaffContractV4Policy.test.ts`) | 9/9 PASS inside the focal runs; cross-policy 18/18; original red 0/1 -> reconciled green | db16c79 / d47591a |
 | Finance long-horizon | **9/9 PASS** (the former 8/9 case now keeps both causalities) | d47591a |
 | Finance continuity (renewal, financing agreement, lifecycle) | 33/33 PASS | d47591a |
-| Save V4 / persistence set (10 files) | 99/100 at default timeouts; the 1 failure is a 5000 ms timeout (see Limits) and PASSES with `--testTimeout=120000` (1/1) | d47591a |
+| Save V4 / persistence set (10 files) | 99/100 at default timeouts; the 1 failure was a 5000 ms timeout, closed below | d47591a |
 | Legacy Save V1/V2/V3 migration paths (6 selected cases) | 6/6 PASS | d47591a |
 | BS15 differential (`certify-convergence-v2.mjs`) | frozen 10/10, integrated 10/10, exit 0, 63 s | d47591a |
 | Professional Pathways | 5/5 PASS after fixing a test bug (see below); had never been run before this session | fee3d75 |
@@ -103,8 +103,24 @@ Checked and found no defect: renewal or hiring on V4 load (policy tests A-F), pa
 
 ## Limits and freeze scope
 
-- `GameWorldSaveV4.test.ts` > "round-trips a world with an already-applied annual development cycle..." builds two full worlds and exceeds vitest's default 5000 ms on this machine: 5.3-6.3 s here, and the same test also times out (5.07 s) in the frozen BS16 archive. It is a fixture-cost timeout, not a behavioral failure: it passes in 1/1 with a CLI `--testTimeout=120000`. No repository timeout was changed and the test was not skipped; strictly it is not green at default settings on this hardware.
+- Save V4 annual-development-cycle test: the former default-timeout caveat is closed (see Final timeout closure). Its cost remains a performance observation, not an optimization.
 - Fixture durations are not performance measurements. Prior V3 harness figures (ordinary day 88 ms, combined round trip 246 ms, blocked Training 11 ms) are bounded observations only.
 - No full repository suite, no new World DB Y1-Y30 certification and no BS15 re-certification is claimed. World DB 2029 remains unresolved. Historical full V1/V3 baseline failure sets are not repaired; the supported migration paths are checked focally. BS17E/F are out of scope. Rust and cargo gates are outside the narrowed closure set.
 - The dedicated standalone Staff renewal command remains a domain limitation (policy case D uses the existing reassignment command).
 - Protected `main`, `origin/main`, `C:\BDM` (Courtside) and the source branches were not touched. No push was performed.
+
+## Final timeout closure
+
+Justification: the test builds two full worlds with `createNewGame()` plus two Save V4 round trips. It timed out at Vitest's default 5000 ms (no global `testTimeout` is configured) at 5298 ms in the Save gate and 5937-6329 ms in isolation, and also timed out at 5069 ms in the frozen BS16 archive on this machine. Behavior was never failing: it passed with an external 120 s timeout.
+
+Change (commit following `7550503`): the test's own Vitest timeout argument was set to `15_000` (`}, 15_000)`), as other tests in the file already do. Only that closing line changed; no assertion, fixture, procedure, global timeout or other test was touched, and no production code changed (`git diff 7550503 --stat`: 1 file, 1 line).
+
+| Check | Before | After |
+|---|---|---|
+| Timeout | 5000 ms default | 15000 ms local |
+| Isolated test, default config | FAIL (timeout) | PASS x3: suite test time 6.01 s, 6.47 s, 6.37 s |
+| `GameWorldSaveV4.test.ts` complete | 24/25 | **25/25 PASS**, 0 skipped, 0 pending (target test 6.41 s) |
+| `tsc -b` | PASS | PASS |
+| `git diff --check` | clean | clean |
+
+The test still takes about 6 s; this is an observation of fixture cost, not an optimization. Reused gates (Finance long-horizon 9/9, Finance continuity, BS15 differential, focal Talent/Facilities/Training/Medical/Calendar, Pathways, Convergence, build) were run on trees whose production source is identical to this commit; the only delta is a timeout argument in a test file none of them import as a dependency, so they were not repeated.
