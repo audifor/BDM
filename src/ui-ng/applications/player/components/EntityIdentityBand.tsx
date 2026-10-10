@@ -158,10 +158,8 @@ export function EntityIdentityBand() {
           ) : (
             <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
           )}
-        </div
-      </div>>
-
->
+        </div>
+      </div>
     </section>
   )
 }
