@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe,expect,it } from 'vitest'
 import {
+  type TaskbarInstance,
   closeTaskbarAppInstances,
   closeTaskbarInstance,
   rememberTaskbarInstance,
@@ -27,7 +28,7 @@ describe('grouped taskbar instance identity',()=>{
       route('roster','teamId','team:a'),route('roster','teamId','team:b'),
       route('competition','competitionId','competition:a'),route('competition','competitionId','competition:b'),
     ]
-    const instances=cases.reduce(rememberTaskbarInstance,[] as ReturnType<typeof taskbarInstanceFromUrl>[])
+    const instances=cases.reduce<readonly TaskbarInstance[]>((all, item) => rememberTaskbarInstance(all, item), [])
     expect(instances).toHaveLength(8)
     expect(closeTaskbarAppInstances(instances,'staff')).toHaveLength(6)
     expect(closeTaskbarAppInstances(instances,'club').filter(x=>x.app==='roster')).toHaveLength(2)
