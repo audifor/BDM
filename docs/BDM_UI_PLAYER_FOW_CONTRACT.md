@@ -48,6 +48,22 @@ until there is an explicit authorized source. Do not render the raw global
 Talent Pathway band for rival players until individually knowledge-gated.
 Own-player status and pathway controls are preserved.
 
+## Scouting actions and bounded candidate access
+
+PLAYER ATTRIBUTES for rivals launches the existing `RequestScoutingModal`,
+which delegates to `requestScoutingAssignment` and applies all existing staff,
+mission, capacity and duplicate-assignment guards. The selected attribute
+family is carried into a `SKILL_EVALUATION` mission. Results are not immediate:
+assigned staff must progress through normal game days.
+
+A player's publicly scheduled fixture against the user-controlled team grants
+access to their roster **identity** for scouting requests, not their ratings.
+This includes later fixtures and is not limited to the next opponent. Other
+unseen players remain subject to awareness/market/territory discovery and
+recruitment authorities. When a request is not possible, PLAYER must show
+whether the reason is an active assignment, a missing addressable identity or
+staff capacity, and offer the Scouting Centre as the discovery/workload route.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
