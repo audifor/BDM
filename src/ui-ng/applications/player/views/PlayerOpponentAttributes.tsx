@@ -117,10 +117,6 @@ export function PlayerOpponentAttributes() {
             <span>{entry.evaluated === 0 ? 'Sin evaluar' : entry.evaluated + '/' + entry.total + ' observados'}</span>
           </button>)}
         </div>
-        <div className="pac-opponent__family-foot">
-          <strong>LECTURA FOW</strong>
-          <p>El conocimiento pertenece a tu organización. Los valores internos y el potencial oculto no se revelan.</p>
-        </div>
       </section>
 
       <section className="pac-card pac-opponent__profile" aria-label="Perfil de juego estimado">
@@ -172,7 +168,7 @@ export function PlayerOpponentAttributes() {
                   </div>
                   <div className="pac-opponent__confidence-row">
                     <span>Cobertura de informes <strong>{selectedProfile.coverage ?? 0}%</strong></span>
-                    <span>Confianza de estimaciones <strong>{selectedProfile.confidence ?? 0}%</strong></span>
+                    <span title="Índice interno del scout de 0 a 100; no representa probabilidad de acierto.">Índice scout <strong>{selectedProfile.confidence ?? 0}/100</strong></span>
                   </div>
                 </>
               ) : <p className="pac-opponent__insufficient">Esta familia todavía no tiene una evaluación individual utilizable.</p>}
@@ -185,7 +181,7 @@ export function PlayerOpponentAttributes() {
           </div>
         )}
         <div className="pac-opponent__profile-foot">
-          <span>Estimaciones, no ratings reales. Los intervalos reflejan incertidumbre del scouting.</span>
+          <span>Valores estimados: el índice scout no es probabilidad de certeza. Revisa los rangos y la cobertura.</span>
         </div>
       </section>
 
@@ -242,9 +238,9 @@ function ScoutedRatingDetail({ rating }: { readonly rating: AuthorizedScoutedRat
     <span className="pac-opponent__detail-label">{rating.label.toUpperCase()}</span>
     <strong className="pac-opponent__estimate">{rating.displayLabel}</strong>
     <div className="pac-opponent__metrics">
-      <div><span>CONFIANZA</span><strong>{scoutingConfidenceLabel(evaluation.confidence)}</strong></div>
+      <div><span>ÍNDICE SCOUT</span><strong>{scoutingConfidenceLabel(evaluation.confidence)}</strong></div>
       <div><span>COBERTURA</span><strong>{rating.coveragePercent}%</strong></div>
     </div>
-    <p>Estimación registrada por tu organización. Puede variar con nuevas observaciones; no representa el rating real interno.</p>
+    <p>Índice scout: escala interna de 0 a 100, no porcentaje de certeza. El rango y la cobertura reflejan incertidumbre; no es el rating real.</p>
   </div>
 }
