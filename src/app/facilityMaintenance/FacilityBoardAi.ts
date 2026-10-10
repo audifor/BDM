@@ -21,7 +21,8 @@ import {
 import { evaluateOrganizationFinancialCommitment, getOrganizationFinancialAuthorization } from '@/domain/finance'
 import type { GovernanceActor } from '@/domain/governance'
 import type { GameWorld } from '@/domain/world'
-import { GAME_BALANCE_BOARD_ROUTINE_SHARE_PERMILLE } from '@/app/gameBalance/BdmGameBalanceV1'
+import { GAME_BALANCE_BOARD_ROUTINE_SHARE_PERMILLE, GAME_BALANCE_BOARD_CAPITAL_LIQUIDITY_BUFFER_PERMILLE, GAME_BALANCE_INVESTMENT } from '@/app/gameBalance/BdmGameBalanceV1'
+import { componentConditionAt } from '@/domain/facilities'
 import { facilityMaintenanceDecisionState, recordFacilityMaintenanceDecisionEvent } from './FacilityMaintenanceCommands'
 
 function activeAppointee(world: GameWorld, bodyId: string): GovernanceActor | undefined {
@@ -47,6 +48,34 @@ function boardApprovesWork(world: GameWorld, operationId: string): boolean {
   return offer.amount.minorUnits * 1_000 <= line.availableHeadroomMinorUnits * GAME_BALANCE_BOARD_ROUTINE_SHARE_PERMILLE
 }
 
+/**
+ * Capital rule: the physical situation must justify the investment today (the same thresholds the manager sees), and Finance must
+ * allow the price PLUS a liquidity buffer (a share of the FACILITY maintenance authorization) so a club never invests away the
+ * cash it needs to keep its facilities running.
+ */
+function boardApprovesInvestment(world: GameWorld, operationId: string): boolean {
+  const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
+  if (lifecycle === null || lifecycle.selectedOfferId === null || lifecycle.organizationId === null || lifecycle.projectId === null) return false
+  const offer = world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
+  const project = world.facilityDevelopmentProjectsById[lifecycle.projectId as never]
+  if (offer === undefined || offer.recordKind !== 'CAPITAL_OFFER' || project === undefined || world.currentDate < offer.validFrom || world.currentDate > offer.validUntil) return false
+  const records = Object.values(world.facilityComponentConditionRecordsById)
+  if (project.scope.kind === 'RENOVATE_COMPONENT' || project.scope.kind === 'REPLACE_COMPONENT') {
+    const componentId = project.scope.kind === 'RENOVATE_COMPONENT' ? project.scope.componentId : project.scope.retiredComponentId
+    const condition = componentConditionAt(records, componentId, world.currentDate)?.physicalCondition ?? null
+    const threshold = project.scope.kind === 'RENOVATE_COMPONENT' ? GAME_BALANCE_INVESTMENT.RENOVATION.eligibleAtOrBelowCondition : GAME_BALANCE_INVESTMENT.REPLACEMENT.eligibleAtOrBelowCondition
+    if (condition === null || condition > threshold) return false
+  } else if (project.scope.kind === 'ADD_COMPONENT') {
+    const courts = Object.values(world.facilityComponentsById).filter((component) => component.facilityId === project.facilityId && component.type === 'PRACTICE_COURT' && component.status === 'ACTIVE' && component.closedAt === null).length
+    if (courts >= GAME_BALANCE_INVESTMENT.EXPANSION.eligibleWhenPracticeCourtsBelow) return false
+  }
+  const authorization = getOrganizationFinancialAuthorization(world, { organizationId: lifecycle.organizationId, currencyCode: offer.amount.currencyCode })
+  const maintenanceLine = authorization.lines.find((line) => line.category === 'FACILITY')
+  const buffer = maintenanceLine === undefined ? 0 : Math.round(maintenanceLine.authorizedMinorUnits * GAME_BALANCE_BOARD_CAPITAL_LIQUIDITY_BUFFER_PERMILLE / 1_000)
+  const preview = evaluateOrganizationFinancialCommitment(world, { organizationId: lifecycle.organizationId, currency: offer.amount.currencyCode, amount: { currencyCode: offer.amount.currencyCode, minorUnits: offer.amount.minorUnits + buffer }, category: 'FACILITY_DEVELOPMENT' })
+  return preview.status === 'AFFORDABLE_NOW'
+}
+
 /** Decides every Facilities decision that was requested before today and still awaits its approvers. Deterministic and idempotent. */
 export function processBoardFacilityDecisions(world: GameWorld): GameWorld {
   let current = world
@@ -66,7 +95,7 @@ export function processBoardFacilityDecisions(world: GameWorld): GameWorld {
       const actor = activeAppointee(current, bodyId)
       // The user's own appointments are never decided by the AI: only simulated people act as the Board.
       if (actor === undefined || (actor.kind === 'COACH' && actor.id === current.userCoachId)) continue
-      const approve = purpose === 'CANCELLATION' ? lifecycle.costFactId === null : boardApprovesWork(current, operationId)
+      const approve = purpose === 'CANCELLATION' ? lifecycle.stage !== 'WORK_COMPLETED' && lifecycle.costFactId === null : lifecycle.projectId !== null ? boardApprovesInvestment(current, operationId) : boardApprovesWork(current, operationId)
       const outcome = recordFacilityMaintenanceDecisionEvent(current, { teamId, decisionId, kind: approve ? 'APPROVED' : 'REJECTED', bodyId, actor })
       if (outcome.status === 'APPLIED') current = outcome.world
     }

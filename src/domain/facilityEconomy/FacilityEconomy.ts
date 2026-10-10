@@ -25,6 +25,16 @@ export const FACILITY_MAINTENANCE_INTERVENTION_TYPES = ['ROUTINE_MAINTENANCE', '
 export type FacilityMaintenanceInterventionType = (typeof FACILITY_MAINTENANCE_INTERVENTION_TYPES)[number]
 
 /**
+ * BS17E-B capital interventions: improvements that change the physical asset (renovation to a promised condition,
+ * capitalizable replacement of a component, expansion with a new component). They are CAPEX candidates by nature and
+ * scope; mixed work is not representable (it needs an accredited breakdown and no source offers one).
+ */
+export const FACILITY_CAPITAL_INTERVENTION_TYPES = ['CAPITAL_RENOVATION', 'CAPITAL_REPLACEMENT', 'CAPITAL_EXPANSION'] as const
+export type FacilityCapitalInterventionType = (typeof FACILITY_CAPITAL_INTERVENTION_TYPES)[number]
+export type FacilityOperationInterventionType = FacilityMaintenanceInterventionType | FacilityCapitalInterventionType
+const FACILITY_ALL_INTERVENTION_TYPES = [...FACILITY_MAINTENANCE_INTERVENTION_TYPES, ...FACILITY_CAPITAL_INTERVENTION_TYPES] as const
+
+/**
  * OPEX candidates approved by Economic Gameplay V1 for BS17E-A. A capitalizable improvement, a mixed work
  * or an integral replacement has NO classification here: it stays pending BS17E-B or a compatible source.
  */
@@ -42,6 +52,10 @@ export type FacilityCostSourceKind = (typeof FACILITY_COST_SOURCE_KINDS)[number]
 
 export const FACILITY_PROVIDER_IDENTITY_KINDS = ['DOCUMENTED_ENTITY', 'SYNTHETIC_SIMULATED'] as const
 export type FacilityProviderIdentityKind = (typeof FACILITY_PROVIDER_IDENTITY_KINDS)[number]
+
+export const FACILITY_CAPITAL_COST_CLASSIFICATIONS = ['CAPEX_RENOVATION', 'CAPEX_REPLACEMENT', 'CAPEX_EXPANSION'] as const
+export type FacilityCapitalCostClassification = (typeof FACILITY_CAPITAL_COST_CLASSIFICATIONS)[number]
+const CAPITAL_CLASSIFICATION_BY_INTERVENTION: Readonly<Record<FacilityCapitalInterventionType, FacilityCapitalCostClassification>> = { CAPITAL_RENOVATION: 'CAPEX_RENOVATION', CAPITAL_REPLACEMENT: 'CAPEX_REPLACEMENT', CAPITAL_EXPANSION: 'CAPEX_EXPANSION' }
 
 export const FACILITY_OPERATION_EVENT_KINDS = [
   'PROPOSAL_CREATED',
@@ -66,7 +80,7 @@ export interface FacilityEconomyMoney {
 export interface FacilityCostCatalogEntry {
   readonly recordKind: 'COST_CATALOG_ENTRY'
   readonly id: string
-  readonly interventionType: FacilityMaintenanceInterventionType
+  readonly interventionType: FacilityOperationInterventionType
   readonly physicalUnit: string
   readonly componentType: string | null
   readonly market: string
@@ -121,6 +135,38 @@ export interface FacilityMaintenanceOffer {
   readonly terms: FacilityOfferTerms
 }
 
+/** One contractual payment milestone: a share (permille) of the price that Finance recognizes when the trigger is reached. */
+export interface FacilityCapitalTranche {
+  readonly label: string
+  readonly permille: number
+  readonly trigger: 'WORK_STARTED' | 'WORK_ACCEPTED'
+}
+
+export interface FacilityCapitalOffer {
+  readonly recordKind: 'CAPITAL_OFFER'
+  readonly id: string
+  readonly version: number
+  readonly organizationId: string
+  readonly facilityId: string
+  readonly projectId: string
+  readonly componentId: string | null
+  readonly interventionType: FacilityCapitalInterventionType
+  readonly classification: FacilityCapitalCostClassification
+  readonly providerId: string
+  readonly sourceKind: FacilityCostSourceKind
+  readonly evidence: { readonly sourceId: string; readonly catalogEntryId: string | null; readonly modelVersion: string | null }
+  readonly amount: FacilityEconomyMoney
+  readonly market: string
+  readonly issuedOn: GameDate
+  readonly validFrom: GameDate
+  readonly validUntil: GameDate
+  readonly paymentDueDays: number | null
+  readonly executionDays: number | null
+  /** The physical result the contract promises: the component condition after renovation, or the new component condition. */
+  readonly promisedCondition: number | null
+  readonly tranches: readonly FacilityCapitalTranche[]
+}
+
 export interface FacilityOperationEvent {
   readonly recordKind: 'OPERATION_EVENT'
   readonly id: string
@@ -132,16 +178,19 @@ export interface FacilityOperationEvent {
   readonly organizationId: string | null
   readonly facilityId: string | null
   readonly needId: string | null
-  readonly interventionType: FacilityMaintenanceInterventionType | null
+  readonly projectId: string | null
+  readonly interventionType: FacilityOperationInterventionType | null
   readonly offerId: string | null
   readonly decisionId: string | null
   readonly reservationId: string | null
   readonly costFactId: string | null
+  /** BS17E-B: the Finance expense recognition produced by a capital milestone (the tranche economic event). */
+  readonly recognitionId: string | null
   readonly actionId: string | null
   readonly reasonCode: string | null
 }
 
-export type FacilityEconomyRecord = FacilityCostCatalogEntry | FacilityProvider | FacilityMaintenanceOffer | FacilityOperationEvent
+export type FacilityEconomyRecord = FacilityCostCatalogEntry | FacilityProvider | FacilityMaintenanceOffer | FacilityCapitalOffer | FacilityOperationEvent
 
 const CURRENCY = /^[A-Z]{3}$/
 
@@ -172,7 +221,7 @@ function oneOf<T extends string>(list: readonly T[], value: unknown, label: stri
 
 export interface CreateFacilityCostCatalogEntryInput {
   readonly id: string
-  readonly interventionType: FacilityMaintenanceInterventionType
+  readonly interventionType: FacilityOperationInterventionType
   readonly physicalUnit: string
   readonly componentType?: string | null
   readonly market: string
@@ -201,7 +250,7 @@ export function createFacilityCostCatalogEntry(input: CreateFacilityCostCatalogE
   return Object.freeze({
     recordKind: 'COST_CATALOG_ENTRY' as const,
     id: text(input.id, 'Facility cost catalog id'),
-    interventionType: oneOf(FACILITY_MAINTENANCE_INTERVENTION_TYPES, input.interventionType, 'Facility cost catalog interventionType'),
+    interventionType: oneOf(FACILITY_ALL_INTERVENTION_TYPES, input.interventionType, 'Facility cost catalog interventionType'),
     physicalUnit: text(input.physicalUnit, 'Facility cost catalog physicalUnit'),
     componentType: nullableText(input.componentType, 'Facility cost catalog componentType'),
     market: text(input.market, 'Facility cost catalog market'),
@@ -302,6 +351,79 @@ export function createFacilityMaintenanceOffer(input: CreateFacilityMaintenanceO
   })
 }
 
+export interface CreateFacilityCapitalOfferInput {
+  readonly id: string
+  readonly version?: number
+  readonly organizationId: string
+  readonly facilityId: string
+  readonly projectId: string
+  readonly componentId?: string | null
+  readonly interventionType: FacilityCapitalInterventionType
+  readonly providerId: string
+  readonly sourceKind: FacilityCostSourceKind
+  readonly evidence: { readonly sourceId: string; readonly catalogEntryId?: string | null; readonly modelVersion?: string | null }
+  readonly amount: FacilityEconomyMoney
+  readonly market: string
+  readonly issuedOn: GameDate | string
+  readonly validFrom: GameDate | string
+  readonly validUntil: GameDate | string
+  readonly paymentDueDays?: number | null
+  readonly executionDays?: number | null
+  readonly promisedCondition?: number | null
+  readonly tranches: readonly FacilityCapitalTranche[]
+}
+
+export function createFacilityCapitalOffer(input: CreateFacilityCapitalOfferInput): FacilityCapitalOffer {
+  const interventionType = oneOf(FACILITY_CAPITAL_INTERVENTION_TYPES, input.interventionType, 'Facility capital offer interventionType')
+  const sourceKind = oneOf(FACILITY_COST_SOURCE_KINDS, input.sourceKind, 'Facility capital offer sourceKind')
+  const catalogEntryId = nullableText(input.evidence.catalogEntryId, 'Facility capital offer catalogEntryId')
+  const modelVersion = nullableText(input.evidence.modelVersion, 'Facility capital offer modelVersion')
+  if (sourceKind === 'SIMULATED_MODEL' && (catalogEntryId === null || modelVersion === null)) throw new RangeError('A simulated Facility capital offer requires a calibrated catalog entry and a model version')
+  if (sourceKind !== 'SIMULATED_MODEL' && (catalogEntryId !== null || modelVersion !== null)) throw new RangeError('Only a simulated Facility capital offer may reference a catalog entry or model version')
+  const amount = Object.freeze({ currencyCode: currency(input.amount.currencyCode, 'Facility capital offer currency'), minorUnits: positiveInt(input.amount.minorUnits, 'Facility capital offer amount') })
+  const issuedOn = parseGameDate(input.issuedOn)
+  const validFrom = parseGameDate(input.validFrom)
+  const validUntil = parseGameDate(input.validUntil)
+  if (compareGameDates(validFrom, issuedOn) < 0) throw new RangeError('Facility capital offer validFrom cannot precede issuedOn')
+  if (compareGameDates(validUntil, validFrom) < 0) throw new RangeError('Facility capital offer validUntil cannot precede validFrom')
+  const tranches = Object.freeze(input.tranches.map((tranche) => Object.freeze({
+    label: text(tranche.label, 'Facility capital tranche label'),
+    permille: positiveInt(tranche.permille, 'Facility capital tranche permille'),
+    trigger: oneOf(['WORK_STARTED', 'WORK_ACCEPTED'] as const, tranche.trigger, 'Facility capital tranche trigger'),
+  })))
+  if (tranches.length === 0 || tranches.reduce((sum, tranche) => sum + tranche.permille, 0) !== 1_000) throw new RangeError('Facility capital offer tranches must be present and add up to the whole price (1000 permille)')
+  if (new Set(tranches.map((tranche) => tranche.label)).size !== tranches.length) throw new RangeError('Facility capital offer tranche labels must be unique')
+  if (tranches.filter((tranche) => tranche.trigger === 'WORK_ACCEPTED').length !== 1) throw new RangeError('A Facility capital offer must have exactly one acceptance milestone')
+  for (const tranche of tranches) if ((amount.minorUnits * tranche.permille) % 1_000 !== 0) throw new RangeError('Facility capital offer tranches must split the price into whole minor units')
+  const promisedCondition = nullableNonNegativeInt(input.promisedCondition, 'Facility capital offer promisedCondition')
+  if (promisedCondition !== null && promisedCondition > 100) throw new RangeError('Facility capital offer promisedCondition must be between 0 and 100')
+  return Object.freeze({
+    recordKind: 'CAPITAL_OFFER' as const,
+    id: text(input.id, 'Facility capital offer id'),
+    version: input.version === undefined ? 1 : positiveInt(input.version, 'Facility capital offer version'),
+    organizationId: text(input.organizationId, 'Facility capital offer organizationId'),
+    facilityId: text(input.facilityId, 'Facility capital offer facilityId'),
+    projectId: text(input.projectId, 'Facility capital offer projectId'),
+    componentId: nullableText(input.componentId, 'Facility capital offer componentId'),
+    interventionType,
+    classification: CAPITAL_CLASSIFICATION_BY_INTERVENTION[interventionType],
+    providerId: text(input.providerId, 'Facility capital offer providerId'),
+    sourceKind,
+    evidence: Object.freeze({ sourceId: text(input.evidence.sourceId, 'Facility capital offer evidence sourceId'), catalogEntryId, modelVersion }),
+    amount,
+    market: text(input.market, 'Facility capital offer market'),
+    issuedOn, validFrom, validUntil,
+    paymentDueDays: nullableNonNegativeInt(input.paymentDueDays, 'Facility capital offer paymentDueDays'),
+    executionDays: nullableNonNegativeInt(input.executionDays, 'Facility capital offer executionDays'),
+    promisedCondition,
+    tranches,
+  })
+}
+
+/** The minor units recognized for one tranche. */
+export function facilityCapitalTrancheAmount(offer: FacilityCapitalOffer, tranche: FacilityCapitalTranche): number { return (offer.amount.minorUnits * tranche.permille) / 1_000 }
+export function facilityCapitalTrancheId(operationId: string, tranche: FacilityCapitalTranche): string { return `capital-tranche:${operationId}:${tranche.label.toLowerCase()}` }
+
 export interface CreateFacilityOperationEventInput {
   readonly operationId: string
   readonly sequence: number
@@ -311,11 +433,13 @@ export interface CreateFacilityOperationEventInput {
   readonly organizationId?: string | null
   readonly facilityId?: string | null
   readonly needId?: string | null
-  readonly interventionType?: FacilityMaintenanceInterventionType | null
+  readonly projectId?: string | null
+  readonly interventionType?: FacilityOperationInterventionType | null
   readonly offerId?: string | null
   readonly decisionId?: string | null
   readonly reservationId?: string | null
   readonly costFactId?: string | null
+  readonly recognitionId?: string | null
   readonly actionId?: string | null
   readonly reasonCode?: string | null
 }
@@ -339,11 +463,13 @@ export function createFacilityOperationEvent(input: CreateFacilityOperationEvent
     organizationId: nullableText(input.organizationId, 'Facility operation organizationId'),
     facilityId: nullableText(input.facilityId, 'Facility operation facilityId'),
     needId: nullableText(input.needId, 'Facility operation needId'),
-    interventionType: input.interventionType === undefined || input.interventionType === null ? null : oneOf(FACILITY_MAINTENANCE_INTERVENTION_TYPES, input.interventionType, 'Facility operation interventionType'),
+    projectId: nullableText(input.projectId, 'Facility operation projectId'),
+    interventionType: input.interventionType === undefined || input.interventionType === null ? null : oneOf(FACILITY_ALL_INTERVENTION_TYPES, input.interventionType, 'Facility operation interventionType'),
     offerId: nullableText(input.offerId, 'Facility operation offerId'),
     decisionId: nullableText(input.decisionId, 'Facility operation decisionId'),
     reservationId: nullableText(input.reservationId, 'Facility operation reservationId'),
     costFactId: nullableText(input.costFactId, 'Facility operation costFactId'),
+    recognitionId: nullableText(input.recognitionId, 'Facility operation recognitionId'),
     actionId: nullableText(input.actionId, 'Facility operation actionId'),
     reasonCode: nullableText(input.reasonCode, 'Facility operation reasonCode'),
   })
@@ -355,6 +481,7 @@ export function createFacilityEconomyRecord(record: FacilityEconomyRecord): Faci
     case 'COST_CATALOG_ENTRY': return createFacilityCostCatalogEntry(record)
     case 'PROVIDER': return createFacilityProvider(record)
     case 'OFFER': return createFacilityMaintenanceOffer({ ...record, evidence: record.evidence, terms: record.terms })
+    case 'CAPITAL_OFFER': return createFacilityCapitalOffer(record)
     case 'OPERATION_EVENT': return createFacilityOperationEvent(record)
     default: throw new TypeError(`Facility economy record kind is invalid: ${String((record as { recordKind?: unknown }).recordKind)}`)
   }
@@ -402,11 +529,13 @@ export interface FacilityOperationLifecycle {
   readonly organizationId: string | null
   readonly facilityId: string | null
   readonly needId: string | null
-  readonly interventionType: FacilityMaintenanceInterventionType | null
+  readonly projectId: string | null
+  readonly interventionType: FacilityOperationInterventionType | null
   readonly selectedOfferId: string | null
   readonly decisionId: string | null
   readonly reservationId: string | null
   readonly costFactId: string | null
+  readonly recognitionIds: readonly string[]
   readonly actionId: string | null
   readonly cancellationRequestedDecisionId: string | null
   readonly lastReasonCode: string | null
@@ -421,7 +550,9 @@ export function deriveFacilityOperationLifecycle(events: readonly FacilityOperat
   let organizationId: string | null = null
   let facilityId: string | null = null
   let needId: string | null = null
-  let interventionType: FacilityMaintenanceInterventionType | null = null
+  let projectId: string | null = null
+  const recognitionIds: string[] = []
+  let interventionType: FacilityOperationInterventionType | null = null
   let selectedOfferId: string | null = null
   let decisionId: string | null = null
   let reservationId: string | null = null
@@ -437,6 +568,8 @@ export function deriveFacilityOperationLifecycle(events: readonly FacilityOperat
     organizationId = event.organizationId ?? organizationId
     facilityId = event.facilityId ?? facilityId
     needId = event.needId ?? needId
+    projectId = event.projectId ?? projectId
+    if (event.recognitionId !== null) recognitionIds.push(event.recognitionId)
     interventionType = event.interventionType ?? interventionType
     lastReasonCode = event.reasonCode ?? lastReasonCode
     switch (event.kind) {
@@ -453,7 +586,7 @@ export function deriveFacilityOperationLifecycle(events: readonly FacilityOperat
       case 'CANCELLED': cancelled = true; cancelledAfter = maxStage; stage = 'CANCELLED'; break
     }
   }
-  return Object.freeze({ operationId: ordered[0]!.operationId, stage, organizationId, facilityId, needId, interventionType, selectedOfferId, decisionId, reservationId, costFactId, actionId, cancellationRequestedDecisionId, lastReasonCode, cancelled, cancelledAfter })
+  return Object.freeze({ operationId: ordered[0]!.operationId, stage, organizationId, facilityId, needId, projectId, interventionType, selectedOfferId, decisionId, reservationId, costFactId, recognitionIds: Object.freeze([...recognitionIds]), actionId, cancellationRequestedDecisionId, lastReasonCode, cancelled, cancelledAfter })
 }
 
 /** True when the offer is in force on the given date. Expiry blocks contracting; it never deletes the offer. */
@@ -474,7 +607,7 @@ export function facilityOperationCostStatus(world: Pick<GameWorld, 'facilityEcon
 
 type EconomyWorld = Pick<GameWorld,
   | 'organizationsById' | 'facilitiesById' | 'facilityComponentsById' | 'facilityMaintenanceNeedsById' | 'facilityMaintenanceActionsById'
-  | 'operatingCostFactsById' | 'financialReservationsById' | 'governanceDecisionsById'>
+  | 'operatingCostFactsById' | 'financialReservationsById' | 'governanceDecisionsById' | 'facilityDevelopmentProjectsById' | 'expenseRecognitionsById'>
 
 export function validateFacilityEconomyRecordCollection(records: readonly FacilityEconomyRecord[], world: EconomyWorld): void {
   const byId = new Map<string, FacilityEconomyRecord>()
@@ -496,6 +629,18 @@ export function validateFacilityEconomyRecordCollection(records: readonly Facili
         if (entry === undefined || entry.recordKind !== 'COST_CATALOG_ENTRY' || entry.sourceKind !== 'SIMULATED_MODEL' || entry.calibration === null) throw new Error(`Facility offer ${record.id} references a catalog entry without authorized calibration`)
         if (entry.currencyCode !== record.amount.currencyCode || entry.market !== record.market || entry.interventionType !== record.interventionType) throw new Error(`Facility offer ${record.id} does not match its catalog entry scope, market or currency`)
       }
+    } else if (record.recordKind === 'CAPITAL_OFFER') {
+      if (world.organizationsById[record.organizationId as never] === undefined) throw new Error(`Facility capital offer ${record.id} references an unknown Organization`)
+      if (world.facilitiesById[record.facilityId as never] === undefined) throw new Error(`Facility capital offer ${record.id} references an unknown Facility`)
+      if (world.facilityDevelopmentProjectsById[record.projectId as never] === undefined) throw new Error(`Facility capital offer ${record.id} references an unknown development project`)
+      if (record.componentId !== null && world.facilityComponentsById[record.componentId as never] === undefined) throw new Error(`Facility capital offer ${record.id} references an unknown component`)
+      const provider = byId.get(record.providerId)
+      if (provider === undefined || provider.recordKind !== 'PROVIDER') throw new Error(`Facility capital offer ${record.id} references an unknown provider`)
+      if (record.evidence.catalogEntryId !== null) {
+        const entry = byId.get(record.evidence.catalogEntryId)
+        if (entry === undefined || entry.recordKind !== 'COST_CATALOG_ENTRY' || entry.sourceKind !== 'SIMULATED_MODEL' || entry.calibration === null) throw new Error(`Facility capital offer ${record.id} references a catalog entry without authorized calibration`)
+        if (entry.currencyCode !== record.amount.currencyCode || entry.market !== record.market || entry.interventionType !== record.interventionType) throw new Error(`Facility capital offer ${record.id} does not match its catalog entry scope, market or currency`)
+      }
     } else if (record.recordKind === 'OPERATION_EVENT') {
       const list = perOperation.get(record.operationId) ?? []
       list.push(record)
@@ -503,7 +648,9 @@ export function validateFacilityEconomyRecordCollection(records: readonly Facili
       if (record.organizationId !== null && world.organizationsById[record.organizationId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Organization`)
       if (record.facilityId !== null && world.facilitiesById[record.facilityId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Facility`)
       if (record.needId !== null && world.facilityMaintenanceNeedsById[record.needId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown maintenance need`)
-      if (record.offerId !== null && byId.get(record.offerId)?.recordKind !== 'OFFER') throw new Error(`Facility operation event ${record.id} references an unknown offer`)
+      if (record.projectId !== null && world.facilityDevelopmentProjectsById[record.projectId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown development project`)
+      if (record.recognitionId !== null && world.expenseRecognitionsById[record.recognitionId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown expense recognition`)
+      if (record.offerId !== null) { const referenced = byId.get(record.offerId)?.recordKind; if (referenced !== 'OFFER' && referenced !== 'CAPITAL_OFFER') throw new Error(`Facility operation event ${record.id} references an unknown offer`) }
       if (record.decisionId !== null && world.governanceDecisionsById[record.decisionId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Governance decision`)
       if (record.reservationId !== null && world.financialReservationsById[record.reservationId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Finance reservation`)
       if (record.costFactId !== null && world.operatingCostFactsById[record.costFactId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown operating cost fact`)

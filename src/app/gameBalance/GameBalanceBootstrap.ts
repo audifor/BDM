@@ -46,6 +46,7 @@ import {
   BDM_GAME_BALANCE_V1_ID,
   GAME_BALANCE_ACTOR_PREFIX,
   GAME_BALANCE_FACILITY_COMPONENTS,
+  GAME_BALANCE_INVESTMENT_KINDS,
   GAME_BALANCE_MARKETS,
   GAME_BALANCE_PROVIDERS,
   GAME_BALANCE_WORK_KINDS,
@@ -162,6 +163,13 @@ export function gameBalanceCostRecords(registeredOn: GameDate): readonly Facilit
       records.push(createFacilityCostCatalogEntry({
         id: gameBalanceCatalogEntryId(kind, workKind), interventionType: interventionFor(workKind), physicalUnit: 'COMPONENT', componentType: null, market: market.key,
         currencyCode: market.currencyCode, unitAmountMinorUnits: market.basePriceMinorUnits[workKind], effectiveOn: registeredOn, validUntil: null, sourceKind: 'SIMULATED_MODEL',
+        sourceId: gameBalanceId('catalog-source', kind), version: '1', calibration: GAME_BALANCE_CATALOG_CALIBRATION,
+      }))
+    }
+    for (const investment of GAME_BALANCE_INVESTMENT_KINDS) {
+      records.push(createFacilityCostCatalogEntry({
+        id: gameBalanceCatalogEntryId(kind, `CAPITAL_${investment}`), interventionType: `CAPITAL_${investment}` as const, physicalUnit: 'COMPONENT', componentType: null, market: market.key,
+        currencyCode: market.currencyCode, unitAmountMinorUnits: market.investmentPriceMinorUnits[investment], effectiveOn: registeredOn, validUntil: null, sourceKind: 'SIMULATED_MODEL',
         sourceId: gameBalanceId('catalog-source', kind), version: '1', calibration: GAME_BALANCE_CATALOG_CALIBRATION,
       }))
     }

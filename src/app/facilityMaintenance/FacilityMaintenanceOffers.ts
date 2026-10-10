@@ -9,7 +9,7 @@
 
 import { addDays } from '@/domain/date'
 import { componentConditionAt } from '@/domain/facilities'
-import { createFacilityMaintenanceOffer, deriveFacilityOperationLifecycle, facilityOperationEvents, type FacilityMaintenanceOffer } from '@/domain/facilityEconomy'
+import { createFacilityMaintenanceOffer, deriveFacilityOperationLifecycle, facilityOperationEvents, type FacilityMaintenanceInterventionType, type FacilityMaintenanceOffer } from '@/domain/facilityEconomy'
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import {
@@ -59,7 +59,7 @@ export function requestFacilityOffers(world: GameWorld, input: { readonly teamId
   const team = world.teams[input.teamId]
   if (team === undefined) return blocked('UNKNOWN_TEAM')
   const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, input.operationId))
-  if (lifecycle === null) return blocked('OPERATION_NOT_FOUND')
+  if (lifecycle === null || lifecycle.projectId !== null) return blocked('OPERATION_NOT_FOUND')
   if (lifecycle.organizationId !== String(team.organizationId)) return blocked('NOT_CLUB_FACILITY')
   if (lifecycle.cancelled) return blocked('OPERATION_CANCELLED')
   if (lifecycle.decisionId !== null) return blocked('OFFER_LOCKED_BY_DECISION')
@@ -81,7 +81,7 @@ export function requestFacilityOffers(world: GameWorld, input: { readonly teamId
       const resultingCondition = current === null ? null : result.mode === 'ADD' ? Math.min(100, Math.round(current + result.points)) : Math.max(Math.round(current), result.points)
       issued.push(createFacilityMaintenanceOffer({
         id, organizationId: String(team.organizationId), facilityId: lifecycle.facilityId, needId: String(need.id), componentId: need.componentId === null ? null : String(need.componentId),
-        interventionType: lifecycle.interventionType, classification: CLASSIFICATION[workKind], providerId: gameBalanceProviderId(slug), sourceKind: 'SIMULATED_MODEL',
+        interventionType: lifecycle.interventionType as FacilityMaintenanceInterventionType, classification: CLASSIFICATION[workKind], providerId: gameBalanceProviderId(slug), sourceKind: 'SIMULATED_MODEL',
         evidence: { sourceId: gameBalanceId('catalog-source', kind), catalogEntryId: gameBalanceCatalogEntryId(kind, workKind), modelVersion: '1' },
         amount: { currencyCode: market.currencyCode, minorUnits: roundToWholeUnits(market.basePriceMinorUnits[workKind] * provider.priceFactorPermille / 1_000) }, market: market.key,
         issuedOn: world.currentDate, validFrom: world.currentDate, validUntil: addDays(world.currentDate, GAME_BALANCE_OFFER_VALID_DAYS),

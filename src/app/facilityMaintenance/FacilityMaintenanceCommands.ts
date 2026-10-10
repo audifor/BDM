@@ -40,6 +40,7 @@ import {
   isFacilityOfferValidOn,
   type FacilityEconomyRecord,
   type FacilityMaintenanceInterventionType,
+  type FacilityCapitalOffer,
   type FacilityMaintenanceOffer,
   type FacilityOperationEvent,
   type FacilityOperationEventKind,
@@ -68,6 +69,7 @@ import {
 import type { TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { applyFacilityMaintenanceAction } from '@/engine/facilities'
+import { componentPhysicalAvailabilityAt } from '@/engine/facilities/FacilityPhysicalOperations'
 import { resolveClubFacilityAuthority } from '@/app/facilities/ClubFacilitiesReadModel'
 
 export const FACILITY_MAINTENANCE_REASONS = [
@@ -105,6 +107,12 @@ export const FACILITY_MAINTENANCE_REASONS = [
   'ECONOMIC_FACTS_RECORDED_CANNOT_CANCEL',
   'CANCELLATION_DECISION_REQUIRED',
   'INVALID_INPUT',
+  'INVESTMENT_NOT_JUSTIFIED',
+  'COMPONENT_NOT_FOUND',
+  'PHYSICAL_WORK_CONFLICT',
+  'PROJECT_NOT_STARTABLE',
+  'PHYSICAL_PHASES_INCOMPLETE',
+  'PROJECT_NOT_FOUND',
 ] as const
 export type FacilityMaintenanceReason = (typeof FACILITY_MAINTENANCE_REASONS)[number]
 
@@ -143,6 +151,12 @@ export const FACILITY_MAINTENANCE_REASON_TEXT: Readonly<Record<FacilityMaintenan
   ECONOMIC_FACTS_RECORDED_CANNOT_CANCEL: 'The cost is already authorized in Finance; the operation can no longer be cancelled.',
   CANCELLATION_DECISION_REQUIRED: 'An approved cancellation decision is required after the original approval.',
   INVALID_INPUT: 'The command input is invalid.',
+  INVESTMENT_NOT_JUSTIFIED: 'The physical situation does not justify this investment.',
+  COMPONENT_NOT_FOUND: 'The component does not exist.',
+  PHYSICAL_WORK_CONFLICT: 'Another work already occupies the same physical area.',
+  PROJECT_NOT_STARTABLE: 'The development project cannot be started from its current status.',
+  PHYSICAL_PHASES_INCOMPLETE: 'The project phases are not complete.',
+  PROJECT_NOT_FOUND: 'The development project does not exist.',
 })
 
 export type FacilityMaintenanceCommandStatus = 'APPLIED' | 'BLOCKED' | 'FUNDING_BLOCKED' | 'NO_CHANGE'
@@ -174,9 +188,9 @@ export type DecisionPurpose = 'WORK' | 'CANCELLATION'
 // Shared resolution helpers
 // ---------------------------------------------------------------------------------------------
 
-function userActor(world: GameWorld): GovernanceActor { return { kind: 'COACH', id: world.userCoachId } }
+export function userActor(world: GameWorld): GovernanceActor { return { kind: 'COACH', id: world.userCoachId } }
 
-function clubInstitution(world: GameWorld, teamId: TeamId): { readonly institutionId: string } | { readonly reason: FacilityMaintenanceReason } {
+export function clubInstitution(world: GameWorld, teamId: TeamId): { readonly institutionId: string } | { readonly reason: FacilityMaintenanceReason } {
   const institutions = Object.values(world.governanceInstitutionsById).filter((item) => item.teamIds.includes(teamId))
   return institutions.length === 1 ? { institutionId: institutions[0]!.id } : { reason: 'INSTITUTIONAL_AUTHORITY_UNVERIFIED' }
 }
@@ -184,54 +198,58 @@ function clubInstitution(world: GameWorld, teamId: TeamId): { readonly instituti
 function governanceGraph(world: GameWorld) {
   return { bodies: Object.values(world.governanceBodiesById), authorityGrants: Object.values(world.governanceAuthorityGrantsById), participationGrants: Object.values(world.governanceDecisionParticipationGrantsById) }
 }
-function rightsAt(world: GameWorld, institutionId: string, asOfDate: GameDate): GovernanceDecisionRightsResolution {
-  return resolveGovernanceDecisionRights({ ...governanceGraph(world), decisionType: 'FACILITIES', institutionId, asOfDate })
+export type FacilityDecisionType = 'FACILITIES' | 'CAPITAL_EXPENDITURE'
+export function rightsAt(world: GameWorld, institutionId: string, asOfDate: GameDate, decisionType: FacilityDecisionType = 'FACILITIES'): GovernanceDecisionRightsResolution {
+  return resolveGovernanceDecisionRights({ ...governanceGraph(world), decisionType, institutionId, asOfDate })
 }
-function eventGrantIds(world: GameWorld, kind: GovernanceDecisionEventKind, bodyId: string, institutionId: string, effectiveOn: GameDate): readonly string[] {
-  return resolveGovernanceDecisionEventAuthorityGrantIds({ event: { kind, bodyId, effectiveOn }, decisionType: 'FACILITIES', institutionId, ...governanceGraph(world) })
+export function eventGrantIds(world: GameWorld, kind: GovernanceDecisionEventKind, bodyId: string, institutionId: string, effectiveOn: GameDate, decisionType: FacilityDecisionType = 'FACILITIES'): readonly string[] {
+  return resolveGovernanceDecisionEventAuthorityGrantIds({ event: { kind, bodyId, effectiveOn }, decisionType, institutionId, ...governanceGraph(world) })
 }
-function activeBodiesOf(world: GameWorld, actor: GovernanceActor, institutionId: string, eligible: readonly string[]): readonly string[] {
+/** Maintenance and repair are FACILITIES decisions; a capital project is a CAPITAL_EXPENDITURE decision. */
+export function decisionTypeOfLifecycle(lifecycle: { readonly projectId: string | null }): FacilityDecisionType { return lifecycle.projectId === null ? 'FACILITIES' : 'CAPITAL_EXPENDITURE' }
+export function activeBodiesOf(world: GameWorld, actor: GovernanceActor, institutionId: string, eligible: readonly string[]): readonly string[] {
   const on = world.currentDate
   return [...new Set(Object.values(world.governanceAppointmentsById)
     .filter((a) => a.actor.kind === actor.kind && a.actor.id === actor.id && eligible.includes(a.bodyId) && world.governanceBodiesById[a.bodyId]?.institutionId === institutionId && a.startedOn <= on && (a.endedOn === undefined || a.endedOn >= on))
     .map((a) => a.bodyId))]
 }
-function decisionEventId(decisionId: string, date: GameDate, kind: GovernanceDecisionEventKind, bodyId: string): string {
+export function decisionEventId(decisionId: string, date: GameDate, kind: GovernanceDecisionEventKind, bodyId: string): string {
   const order: Readonly<Record<GovernanceDecisionEventKind, string>> = { PROPOSED: '00', REVIEW_STARTED: '10', APPROVED: '20', REJECTED: '30', VETOED: '40', WITHDRAWN: '50', EXECUTED: '99' }
   return `event:${decisionId}:${date}:${order[kind]}:${kind}:${encodeURIComponent(bodyId)}`
 }
-function decisionEvents(world: GameWorld, decisionId: string): readonly GovernanceDecisionEvent[] {
+export function decisionEvents(world: GameWorld, decisionId: string): readonly GovernanceDecisionEvent[] {
   return Object.values(world.governanceDecisionEventsById).filter((event) => event.decisionId === decisionId)
 }
-function approvalsComplete(events: readonly GovernanceDecisionEvent[], required: readonly string[]): boolean {
+export function approvalsComplete(events: readonly GovernanceDecisionEvent[], required: readonly string[]): boolean {
   const approved = new Set(events.filter((event) => event.kind === 'APPROVED').map((event) => event.bodyId))
   return required.length > 0 && required.every((id) => approved.has(id))
 }
 
-function appendRecords(world: GameWorld, records: readonly FacilityEconomyRecord[], patch: Parameters<typeof updateGameWorld>[1] = {}): GameWorld {
+export function appendRecords(world: GameWorld, records: readonly FacilityEconomyRecord[], patch: Parameters<typeof updateGameWorld>[1] = {}): GameWorld {
   return updateGameWorld(world, { ...patch, facilityEconomyRecords: [...Object.values(world.facilityEconomyRecordsById), ...records] })
 }
 
-function nextEvent(world: GameWorld, operationId: string, kind: FacilityOperationEventKind, extra: Omit<Parameters<typeof createFacilityOperationEvent>[0], 'operationId' | 'sequence' | 'kind' | 'effectiveOn'>): FacilityOperationEvent {
+export function nextEvent(world: GameWorld, operationId: string, kind: FacilityOperationEventKind, extra: Omit<Parameters<typeof createFacilityOperationEvent>[0], 'operationId' | 'sequence' | 'kind' | 'effectiveOn'>): FacilityOperationEvent {
   const events = facilityOperationEvents(world, operationId)
   return createFacilityOperationEvent({ operationId, sequence: events.length + 1, kind, effectiveOn: world.currentDate, ...extra })
 }
 
-function lifecycleOf(world: GameWorld, operationId: string): FacilityOperationLifecycle | null {
+export function lifecycleOf(world: GameWorld, operationId: string): FacilityOperationLifecycle | null {
   return deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
 }
 
-function clubOperation(world: GameWorld, teamId: TeamId, operationId: string): { readonly lifecycle: FacilityOperationLifecycle; readonly organizationId: string } | { readonly reason: FacilityMaintenanceReason } {
+export function clubOperation(world: GameWorld, teamId: TeamId, operationId: string, scope: 'MAINTENANCE' | 'CAPITAL' | 'ANY' = 'MAINTENANCE'): { readonly lifecycle: FacilityOperationLifecycle; readonly organizationId: string } | { readonly reason: FacilityMaintenanceReason } {
   const team = world.teams[teamId]
   if (team === undefined) return { reason: 'UNKNOWN_TEAM' }
   const lifecycle = lifecycleOf(world, operationId)
   if (lifecycle === null) return { reason: 'OPERATION_NOT_FOUND' }
+  if ((scope === 'MAINTENANCE' && lifecycle.projectId !== null) || (scope === 'CAPITAL' && lifecycle.projectId === null)) return { reason: 'OPERATION_NOT_FOUND' }
   if (lifecycle.organizationId !== team.organizationId) return { reason: 'NOT_CLUB_FACILITY' }
   if (lifecycle.cancelled) return { reason: 'OPERATION_CANCELLED' }
   return { lifecycle, organizationId: String(team.organizationId) }
 }
 
-function canonicalCurrency(world: GameWorld, organizationId: string): string | null {
+export function canonicalCurrency(world: GameWorld, organizationId: string): string | null {
   const profile = world.organizationFinancialProfilesById[organizationId as never]
   return profile === undefined ? null : String(profile.baseCurrencyCode)
 }
@@ -298,12 +316,25 @@ export function openFacilityMaintenanceProposal(world: GameWorld, input: OpenFac
 
 export interface SelectFacilityMaintenanceOfferInput { readonly teamId: TeamId; readonly operationId: string; readonly offerId: string }
 
-function checkOfferForOperation(world: GameWorld, lifecycle: FacilityOperationLifecycle, organizationId: string, offerId: string): { readonly offer: FacilityMaintenanceOffer } | { readonly reason: FacilityMaintenanceReason } {
+export function checkOfferForOperation(world: GameWorld, lifecycle: FacilityOperationLifecycle, organizationId: string, offerId: string): { readonly offer: FacilityMaintenanceOffer } | { readonly reason: FacilityMaintenanceReason } {
   const offer = world.facilityEconomyRecordsById[offerId]
   if (offer === undefined || offer.recordKind !== 'OFFER') return { reason: 'OFFER_NOT_FOUND' }
   if (offer.organizationId !== organizationId || offer.facilityId !== lifecycle.facilityId || offer.needId !== lifecycle.needId || offer.interventionType !== lifecycle.interventionType) return { reason: 'OFFER_SCOPE_MISMATCH' }
   if (compareGameDates(world.currentDate, offer.validFrom) < 0) return { reason: 'OFFER_NOT_YET_VALID' }
   if (!isFacilityOfferValidOn(offer, world.currentDate)) return { reason: 'OFFER_EXPIRED' }
+  const currency = canonicalCurrency(world, organizationId)
+  if (currency === null) return { reason: 'FINANCE_PROFILE_UNAVAILABLE' }
+  if (offer.amount.currencyCode !== currency) return { reason: 'OFFER_CURRENCY_MISMATCH' }
+  return { offer }
+}
+
+/** Same checks for a capital offer: club, facility, project, intervention, validity and canonical currency. */
+export function checkCapitalOfferForOperation(world: GameWorld, lifecycle: FacilityOperationLifecycle, organizationId: string, offerId: string): { readonly offer: FacilityCapitalOffer } | { readonly reason: FacilityMaintenanceReason } {
+  const offer = world.facilityEconomyRecordsById[offerId]
+  if (offer === undefined || offer.recordKind !== 'CAPITAL_OFFER') return { reason: 'OFFER_NOT_FOUND' }
+  if (offer.organizationId !== organizationId || offer.facilityId !== lifecycle.facilityId || offer.projectId !== lifecycle.projectId || offer.interventionType !== lifecycle.interventionType) return { reason: 'OFFER_SCOPE_MISMATCH' }
+  if (compareGameDates(world.currentDate, offer.validFrom) < 0) return { reason: 'OFFER_NOT_YET_VALID' }
+  if (compareGameDates(world.currentDate, offer.validUntil) > 0) return { reason: 'OFFER_EXPIRED' }
   const currency = canonicalCurrency(world, organizationId)
   if (currency === null) return { reason: 'FINANCE_PROFILE_UNAVAILABLE' }
   if (offer.amount.currencyCode !== currency) return { reason: 'OFFER_CURRENCY_MISMATCH' }
@@ -341,13 +372,13 @@ export interface RequestFacilityMaintenanceDecisionInput {
  */
 export function requestFacilityMaintenanceDecision(world: GameWorld, input: RequestFacilityMaintenanceDecisionInput): FacilityMaintenanceCommandResult {
   const purpose: DecisionPurpose = input.purpose ?? 'WORK'
-  const resolved = clubOperation(world, input.teamId, input.operationId)
+  const resolved = clubOperation(world, input.teamId, input.operationId, 'ANY')
   if ('reason' in resolved) return blocked(world, input.operationId, resolved.reason)
   const { lifecycle, organizationId } = resolved
   if (purpose === 'WORK') {
     if (lifecycle.selectedOfferId === null) return blocked(world, input.operationId, 'COST_UNKNOWN')
     if (lifecycle.decisionId !== null) return result('NO_CHANGE', world, input.operationId, [], [], lifecycle.decisionId)
-    const offer = checkOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId)
+    const offer = lifecycle.projectId === null ? checkOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId) : checkCapitalOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId)
     if ('reason' in offer) return blocked(world, input.operationId, offer.reason)
   } else {
     if (lifecycle.decisionId === null) return blocked(world, input.operationId, 'OPERATION_STAGE_INVALID')
@@ -356,18 +387,19 @@ export function requestFacilityMaintenanceDecision(world: GameWorld, input: Requ
   }
   const institution = clubInstitution(world, input.teamId)
   if ('reason' in institution) return blocked(world, input.operationId, institution.reason)
-  const rights = rightsAt(world, institution.institutionId, world.currentDate)
+  const decisionType = decisionTypeOfLifecycle(lifecycle)
+  const rights = rightsAt(world, institution.institutionId, world.currentDate, decisionType)
   if (rights.proposerBodyIds.length === 0 || rights.approverBodyIds.length === 0) return blocked(world, input.operationId, 'INSTITUTIONAL_AUTHORITY_UNVERIFIED')
   const initiator = input.initiator ?? (world.teams[input.teamId]?.coachId === world.userCoachId ? userActor(world) : undefined)
   if (initiator === undefined) return blocked(world, input.operationId, 'INITIATOR_HAS_NO_PROPOSER_APPOINTMENT')
   const candidates = activeBodiesOf(world, initiator, institution.institutionId, rights.proposerBodyIds).filter((id) => input.proposerBodyId === undefined || id === input.proposerBodyId)
   if (candidates.length !== 1) return blocked(world, input.operationId, 'INITIATOR_HAS_NO_PROPOSER_APPOINTMENT')
   const proposerBodyId = candidates[0]!
-  const grantIds = eventGrantIds(world, 'PROPOSED', proposerBodyId, institution.institutionId, world.currentDate)
+  const grantIds = eventGrantIds(world, 'PROPOSED', proposerBodyId, institution.institutionId, world.currentDate, decisionType)
   if (grantIds.length === 0) return blocked(world, input.operationId, 'INSTITUTIONAL_AUTHORITY_UNVERIFIED')
   const decisionId = facilityMaintenanceDecisionId(institution.institutionId, input.operationId, purpose)
   if (world.governanceDecisionsById[decisionId] !== undefined) return result('NO_CHANGE', world, input.operationId, [], [], decisionId)
-  const decision = createGovernanceDecision({ id: decisionId, institutionId: institution.institutionId, decisionType: 'FACILITIES', proposedByBodyId: proposerBodyId, proposedOn: world.currentDate, subject: { kind: 'FACILITY', facilityId: lifecycle.facilityId! } })
+  const decision = createGovernanceDecision({ id: decisionId, institutionId: institution.institutionId, decisionType, proposedByBodyId: proposerBodyId, proposedOn: world.currentDate, subject: { kind: 'FACILITY', facilityId: lifecycle.facilityId! } })
   const proposed = createGovernanceDecisionEvent({ id: decisionEventId(decisionId, world.currentDate, 'PROPOSED', proposerBodyId), decisionId, kind: 'PROPOSED', bodyId: proposerBodyId, effectiveOn: world.currentDate, authorityGrantIds: [...grantIds] })
   const operationEvent = nextEvent(world, input.operationId, purpose === 'WORK' ? 'APPROVAL_REQUESTED' : 'CANCELLATION_REQUESTED', { decisionId, offerId: purpose === 'WORK' ? lifecycle.selectedOfferId : null, actor: initiator })
   const next = appendRecords(world, [operationEvent], {
@@ -395,9 +427,9 @@ export function recordFacilityMaintenanceDecisionEvent(world: GameWorld, input: 
   const decision = world.governanceDecisionsById[input.decisionId]
   if (decision === undefined) return result('BLOCKED', world, null, ['DECISION_NOT_FOUND'], [], input.decisionId)
   const link = operationForDecision(world, input.decisionId)
-  if (decision.decisionType !== 'FACILITIES' || link === null) return result('BLOCKED', world, null, ['DECISION_NOT_FACILITY_MAINTENANCE'], [], input.decisionId)
+  if ((decision.decisionType !== 'FACILITIES' && decision.decisionType !== 'CAPITAL_EXPENDITURE') || link === null) return result('BLOCKED', world, null, ['DECISION_NOT_FACILITY_MAINTENANCE'], [], input.decisionId)
   const operationId = link.operationId
-  const resolved = clubOperation(world, input.teamId, operationId)
+  const resolved = clubOperation(world, input.teamId, operationId, 'ANY')
   if ('reason' in resolved) return result('BLOCKED', world, operationId, [resolved.reason], [], input.decisionId)
   const institution = world.governanceInstitutionsById[decision.institutionId]
   if (institution === undefined || !institution.teamIds.includes(input.teamId)) return result('BLOCKED', world, operationId, ['NOT_CLUB_FACILITY'], [], input.decisionId)
@@ -405,8 +437,8 @@ export function recordFacilityMaintenanceDecisionEvent(world: GameWorld, input: 
   if (actor === undefined) return result('BLOCKED', world, operationId, ['ACTOR_NOT_APPOINTED_WITH_RIGHT'], [], input.decisionId)
   const events = decisionEvents(world, decision.id)
   try { validateGovernanceDecisionLifecycle(events) } catch { return result('BLOCKED', world, operationId, ['DECISION_NOT_FOUND'], ['LIFECYCLE_INVALID'], input.decisionId) }
-  const atProposal = rightsAt(world, decision.institutionId, decision.proposedOn)
-  const current = rightsAt(world, decision.institutionId, world.currentDate)
+  const atProposal = rightsAt(world, decision.institutionId, decision.proposedOn, decision.decisionType as FacilityDecisionType)
+  const current = rightsAt(world, decision.institutionId, world.currentDate, decision.decisionType as FacilityDecisionType)
   const eligible = input.kind === 'APPROVED' || input.kind === 'REJECTED' ? atProposal.approverBodyIds : input.kind === 'VETOED' ? current.vetoBodyIds : atProposal.proposerBodyIds
   if (!eligible.includes(input.bodyId) || !activeBodiesOf(world, actor, decision.institutionId, [input.bodyId]).includes(input.bodyId)) return result('BLOCKED', world, operationId, ['ACTOR_NOT_APPOINTED_WITH_RIGHT'], [], input.decisionId)
   const status = deriveGovernanceDecisionStatus(events, atProposal.approverBodyIds)
@@ -417,10 +449,10 @@ export function recordFacilityMaintenanceDecisionEvent(world: GameWorld, input: 
     // Approval is of one exact cost: an expired selected offer cannot be approved against.
     const lifecycle = resolved.lifecycle
     const offer = lifecycle.selectedOfferId === null ? undefined : world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
-    if (offer === undefined || offer.recordKind !== 'OFFER') return result('BLOCKED', world, operationId, ['COST_UNKNOWN'], [], input.decisionId)
-    if (!isFacilityOfferValidOn(offer, world.currentDate)) return result('BLOCKED', world, operationId, ['OFFER_EXPIRED'], [], input.decisionId)
+    if (offer === undefined || (offer.recordKind !== 'OFFER' && offer.recordKind !== 'CAPITAL_OFFER')) return result('BLOCKED', world, operationId, ['COST_UNKNOWN'], [], input.decisionId)
+    if (compareGameDates(world.currentDate, offer.validFrom) < 0 || compareGameDates(world.currentDate, offer.validUntil) > 0) return result('BLOCKED', world, operationId, ['OFFER_EXPIRED'], [], input.decisionId)
   }
-  const grantIds = eventGrantIds(world, input.kind, input.bodyId, decision.institutionId, world.currentDate)
+  const grantIds = eventGrantIds(world, input.kind, input.bodyId, decision.institutionId, world.currentDate, decision.decisionType as FacilityDecisionType)
   if (grantIds.length === 0) return result('BLOCKED', world, operationId, ['INSTITUTIONAL_AUTHORITY_UNVERIFIED'], [], input.decisionId)
   const event = createGovernanceDecisionEvent({ id: decisionEventId(decision.id, world.currentDate, input.kind, input.bodyId), decisionId: decision.id, kind: input.kind, bodyId: input.bodyId, effectiveOn: world.currentDate, authorityGrantIds: [...grantIds] })
   return result('APPLIED', updateGameWorld(world, { governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), event] }), operationId, [], [], decision.id)
@@ -429,7 +461,7 @@ export function recordFacilityMaintenanceDecisionEvent(world: GameWorld, input: 
 /** Read-only summary of an operation's decision (also used by the read model). */
 export function facilityMaintenanceDecisionState(world: GameWorld, decision: GovernanceDecision | undefined): { readonly status: ReturnType<typeof deriveGovernanceDecisionStatus>; readonly requiredBodyIds: readonly string[]; readonly approvedBodyIds: readonly string[]; readonly complete: boolean } | null {
   if (decision === undefined) return null
-  const required = rightsAt(world, decision.institutionId, decision.proposedOn).approverBodyIds
+  const required = rightsAt(world, decision.institutionId, decision.proposedOn, decision.decisionType as FacilityDecisionType).approverBodyIds
   const events = decisionEvents(world, decision.id)
   const approved = required.filter((id) => events.some((event) => event.kind === 'APPROVED' && event.bodyId === id))
   return { status: deriveGovernanceDecisionStatus(events, required), requiredBodyIds: required, approvedBodyIds: approved, complete: approvalsComplete(events, required) }
@@ -504,12 +536,14 @@ export function reserveAndContractFacilityMaintenance(world: GameWorld, input: C
   return result('APPLIED', finalWorld, input.operationId, [], reservationNote === null ? [] : [reservationNote], decision.id)
 }
 
-function facilityLineGuard(world: GameWorld, organizationId: string, currencyCode: string, minorUnits: number, ownFactId: string): string | null {
+export function facilityLineGuard(world: GameWorld, organizationId: string, currencyCode: string, minorUnits: number, ownEntityPrefix: string, category: 'FACILITY' | 'FACILITY_DEVELOPMENT' = 'FACILITY'): string | null {
   const authorization = getOrganizationFinancialAuthorization(world, { organizationId, currencyCode })
-  const line = authorization.lines.find((item) => item.category === 'FACILITY')
+  const line = authorization.lines.find((item) => item.category === category)
   if (authorization.state !== 'ACTIVE' || line === undefined) return null
+  // Maintenance reservations are keyed by an operating-cost fact id, capital reservations by a tranche id: each line only counts its own.
+  const belongs = (entityId: string) => category === 'FACILITY' ? !entityId.startsWith('capital-tranche:') : entityId.startsWith('capital-tranche:')
   const heldByOthers = Object.values(world.financialReservationsById)
-    .filter((reservation) => reservation.sourceAuthority === 'FACILITY' && reservation.status === 'OPEN' && String(reservation.organizationId) === organizationId && String(reservation.currency) === currencyCode && reservation.sourceEntityId !== ownFactId)
+    .filter((reservation) => reservation.sourceAuthority === 'FACILITY' && reservation.status === 'OPEN' && String(reservation.organizationId) === organizationId && String(reservation.currency) === currencyCode && belongs(reservation.sourceEntityId) && reservation.sourceEntityId !== ownEntityPrefix && !reservation.sourceEntityId.startsWith(`${ownEntityPrefix}:`))
     .reduce((sum, reservation) => sum + reservation.amount.minorUnits, 0)
   // Only when Finance alone would allow the amount: an exhausted line is reported by Finance with its own canonical code.
   return minorUnits <= line.availableHeadroomMinorUnits && minorUnits > line.availableHeadroomMinorUnits - heldByOthers ? 'FACILITY_LINE_HELD_BY_OTHER_OPERATIONS' : null
@@ -530,8 +564,13 @@ export function startFacilityMaintenanceWork(world: GameWorld, input: StartFacil
   if (input.startedOn !== undefined && input.startedOn !== world.currentDate) return blocked(world, input.operationId, 'WORK_SCHEDULE_NOT_CURRENT')
   const need = world.facilityMaintenanceNeedsById[lifecycle.needId as never]
   if (need === undefined || !isFacilityMaintenanceNeedOpenStatus(need.status)) return blocked(world, input.operationId, 'NEED_NOT_OPEN')
+  // One physical work at a time on a component: a development project (or another maintenance action) already occupying it blocks the start.
+  if (need.componentId !== null) {
+    const occupancy = componentPhysicalAvailabilityAt(world, need.componentId, world.currentDate)
+    if (occupancy.affectedProjectIds.length > 0 || occupancy.affectedMaintenanceActionIds.length > 0) return blocked(world, input.operationId, 'PHYSICAL_WORK_CONFLICT')
+  }
   const actionId = facilityMaintenanceActionId(input.operationId)
-  const action = createFacilityMaintenanceAction({ id: actionId, needId: need.id, facilityId: need.facilityId, componentId: need.componentId, type: lifecycle.interventionType!, startedAt: world.currentDate })
+  const action = createFacilityMaintenanceAction({ id: actionId, needId: need.id, facilityId: need.facilityId, componentId: need.componentId, type: lifecycle.interventionType as FacilityMaintenanceInterventionType, startedAt: world.currentDate })
   const event = nextEvent(world, input.operationId, 'WORK_STARTED', { actionId, actor: world.teams[input.teamId]?.coachId === world.userCoachId ? userActor(world) : null })
   const next = appendRecords(world, [event], {
     facilityMaintenanceActions: [...Object.values(world.facilityMaintenanceActionsById), action],
@@ -626,6 +665,33 @@ export function completeFacilityMaintenanceWork(world: GameWorld, input: Complet
 // 6. Cancellation
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * The Governance side of a cancellation, shared by maintenance and capital operations. Before any approval the proposer
+ * withdraws the pending decision; once the original decision is approved, an approved linked cancellation decision is
+ * required and the original decision is preserved untouched. Returns the world patch (possibly empty) or the exact reason.
+ */
+export function cancellationGovernancePatch(world: GameWorld, lifecycle: FacilityOperationLifecycle, actor: GovernanceActor | undefined, bodyId: string | undefined): { readonly patch: Parameters<typeof updateGameWorld>[1] } | { readonly reason: FacilityMaintenanceReason } {
+  if (lifecycle.decisionId === null) return { patch: {} }
+  const decision = world.governanceDecisionsById[lifecycle.decisionId]
+  const state = facilityMaintenanceDecisionState(world, decision)
+  if (decision === undefined || state === null) return { reason: 'DECISION_NOT_FOUND' }
+  if (state.status === 'APPROVED' || state.status === 'EXECUTED') {
+    const cancelDecision = lifecycle.cancellationRequestedDecisionId === null ? undefined : world.governanceDecisionsById[lifecycle.cancellationRequestedDecisionId]
+    const cancelState = facilityMaintenanceDecisionState(world, cancelDecision)
+    if (cancelState === null || !cancelState.complete || cancelState.status === 'REJECTED' || cancelState.status === 'VETOED' || cancelState.status === 'WITHDRAWN') return { reason: 'CANCELLATION_DECISION_REQUIRED' }
+    return { patch: {} }
+  }
+  if (state.status === 'PROPOSED' || state.status === 'REVIEW_STARTED') {
+    if (actor === undefined) return { reason: 'ACTOR_NOT_APPOINTED_WITH_RIGHT' }
+    const bodies = activeBodiesOf(world, actor, decision.institutionId, [decision.proposedByBodyId]).filter((id) => bodyId === undefined || id === bodyId)
+    const grantIds = bodies.length === 1 ? eventGrantIds(world, 'WITHDRAWN', bodies[0]!, decision.institutionId, world.currentDate, decision.decisionType as FacilityDecisionType) : []
+    if (bodies.length !== 1 || grantIds.length === 0) return { reason: 'ACTOR_NOT_APPOINTED_WITH_RIGHT' }
+    const withdrawn = createGovernanceDecisionEvent({ id: decisionEventId(decision.id, world.currentDate, 'WITHDRAWN', bodies[0]!), decisionId: decision.id, kind: 'WITHDRAWN', bodyId: bodies[0]!, effectiveOn: world.currentDate, authorityGrantIds: [...grantIds] })
+    return { patch: { governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), withdrawn] } }
+  }
+  return { patch: {} }
+}
+
 export interface CancelFacilityMaintenanceInput { readonly teamId: TeamId; readonly operationId: string; readonly actor?: GovernanceActor; readonly bodyId?: string }
 
 /**
@@ -643,23 +709,9 @@ export function cancelFacilityMaintenanceOperation(world: GameWorld, input: Canc
   const actor = input.actor ?? (world.teams[input.teamId]?.coachId === world.userCoachId ? userActor(world) : undefined)
   let patch: Parameters<typeof updateGameWorld>[1] = {}
   let current = world
-  if (lifecycle.decisionId !== null) {
-    const decision = world.governanceDecisionsById[lifecycle.decisionId]
-    const state = facilityMaintenanceDecisionState(world, decision)
-    if (decision === undefined || state === null) return blocked(world, input.operationId, 'DECISION_NOT_FOUND')
-    if (state.status === 'APPROVED' || state.status === 'EXECUTED') {
-      const cancelDecision = lifecycle.cancellationRequestedDecisionId === null ? undefined : world.governanceDecisionsById[lifecycle.cancellationRequestedDecisionId]
-      const cancelState = facilityMaintenanceDecisionState(world, cancelDecision)
-      if (cancelState === null || !cancelState.complete || cancelState.status === 'REJECTED' || cancelState.status === 'VETOED' || cancelState.status === 'WITHDRAWN') return blocked(world, input.operationId, 'CANCELLATION_DECISION_REQUIRED')
-    } else if (state.status === 'PROPOSED' || state.status === 'REVIEW_STARTED') {
-      if (actor === undefined) return blocked(world, input.operationId, 'ACTOR_NOT_APPOINTED_WITH_RIGHT')
-      const bodies = activeBodiesOf(world, actor, decision.institutionId, [decision.proposedByBodyId]).filter((id) => input.bodyId === undefined || id === input.bodyId)
-      const grantIds = bodies.length === 1 ? eventGrantIds(world, 'WITHDRAWN', bodies[0]!, decision.institutionId, world.currentDate) : []
-      if (bodies.length !== 1 || grantIds.length === 0) return blocked(world, input.operationId, 'ACTOR_NOT_APPOINTED_WITH_RIGHT')
-      const withdrawn = createGovernanceDecisionEvent({ id: decisionEventId(decision.id, world.currentDate, 'WITHDRAWN', bodies[0]!), decisionId: decision.id, kind: 'WITHDRAWN', bodyId: bodies[0]!, effectiveOn: world.currentDate, authorityGrantIds: [...grantIds] })
-      patch = { ...patch, governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), withdrawn] }
-    }
-  }
+  const governance = cancellationGovernancePatch(world, lifecycle, actor, input.bodyId)
+  if ('reason' in governance) return blocked(world, input.operationId, governance.reason)
+  patch = { ...patch, ...governance.patch }
   if (lifecycle.reservationId !== null) {
     const reservation = world.financialReservationsById[lifecycle.reservationId]
     if (reservation !== undefined && reservation.status === 'OPEN') {

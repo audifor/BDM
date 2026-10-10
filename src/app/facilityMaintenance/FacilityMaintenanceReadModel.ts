@@ -164,7 +164,7 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
   const events = facilityOperationEvents(world, operationId)
   const lifecycle = deriveFacilityOperationLifecycle(events)
   const team = world.teams[teamId]
-  if (lifecycle === null || team === undefined || lifecycle.organizationId !== team.organizationId || lifecycle.needId === null || lifecycle.facilityId === null || lifecycle.interventionType === null) return null
+  if (lifecycle === null || team === undefined || lifecycle.organizationId !== team.organizationId || lifecycle.needId === null || lifecycle.projectId !== null || lifecycle.facilityId === null || lifecycle.interventionType === null) return null
   const offerRecord = lifecycle.selectedOfferId === null ? undefined : world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
   const offer = offerRecord?.recordKind === 'OFFER' ? offerRecord : undefined
   const provider = offer === undefined ? undefined : world.facilityEconomyRecordsById[offer.providerId]
@@ -246,7 +246,7 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
     operationId,
     needId: lifecycle.needId,
     facilityId: lifecycle.facilityId,
-    interventionType: lifecycle.interventionType,
+    interventionType: lifecycle.interventionType as FacilityMaintenanceInterventionType,
     stage: lifecycle.stage,
     cost: Object.freeze({
       status: facilityOperationCostStatus(world, lifecycle),

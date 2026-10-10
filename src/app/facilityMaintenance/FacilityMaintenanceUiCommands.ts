@@ -13,6 +13,7 @@ import {
   type FacilityMaintenanceCommandResult,
 } from './FacilityMaintenanceCommands'
 import { requestFacilityOffers } from './FacilityMaintenanceOffers'
+import { acceptFacilityInvestmentWork, cancelFacilityInvestment, openFacilityInvestmentProposal, requestFacilityInvestmentOffers, reserveAndContractFacilityInvestment, selectFacilityInvestmentOffer, startFacilityInvestmentWork, type FacilityInvestmentKind } from './FacilityCapitalCommands'
 
 /** The manager surface invokes exactly these real commands; nothing here changes state on its own. */
 export type FacilityMaintenanceUiCommand =
@@ -26,6 +27,9 @@ export type FacilityMaintenanceUiCommand =
   | { readonly kind: 'COMPLETE_WORK'; readonly operationId: string; readonly inspectionId?: string }
   | { readonly kind: 'REQUEST_CANCELLATION'; readonly operationId: string }
   | { readonly kind: 'CANCEL'; readonly operationId: string }
+  | { readonly kind: 'INVEST_OPEN'; readonly facilityId: string; readonly investment: FacilityInvestmentKind; readonly componentId: string | null }
+  | { readonly kind: 'INVEST_REQUEST_OFFERS' | 'INVEST_REQUEST_APPROVAL' | 'INVEST_RESERVE' | 'INVEST_START' | 'INVEST_ACCEPT' | 'INVEST_REQUEST_CANCELLATION' | 'INVEST_CANCEL'; readonly operationId: string }
+  | { readonly kind: 'INVEST_SELECT_OFFER'; readonly operationId: string; readonly offerId: string }
 
 export function executeFacilityMaintenanceUiCommand(world: GameWorld, teamId: TeamId, command: FacilityMaintenanceUiCommand): FacilityMaintenanceCommandResult {
   switch (command.kind) {
@@ -41,5 +45,14 @@ export function executeFacilityMaintenanceUiCommand(world: GameWorld, teamId: Te
     case 'COMPLETE_WORK': return completeFacilityMaintenanceWork(world, { teamId, operationId: command.operationId, ...(command.inspectionId === undefined ? {} : { inspectionId: command.inspectionId }) })
     case 'REQUEST_CANCELLATION': return requestFacilityMaintenanceDecision(world, { teamId, operationId: command.operationId, purpose: 'CANCELLATION' })
     case 'CANCEL': return cancelFacilityMaintenanceOperation(world, { teamId, operationId: command.operationId })
+    case 'INVEST_OPEN': return openFacilityInvestmentProposal(world, { teamId, facilityId: command.facilityId, kind: command.investment, componentId: command.componentId })
+    case 'INVEST_REQUEST_OFFERS': return requestFacilityInvestmentOffers(world, { teamId, operationId: command.operationId })
+    case 'INVEST_SELECT_OFFER': return selectFacilityInvestmentOffer(world, { teamId, operationId: command.operationId, offerId: command.offerId })
+    case 'INVEST_REQUEST_APPROVAL': return requestFacilityMaintenanceDecision(world, { teamId, operationId: command.operationId })
+    case 'INVEST_RESERVE': return reserveAndContractFacilityInvestment(world, { teamId, operationId: command.operationId })
+    case 'INVEST_START': return startFacilityInvestmentWork(world, { teamId, operationId: command.operationId })
+    case 'INVEST_ACCEPT': return acceptFacilityInvestmentWork(world, { teamId, operationId: command.operationId })
+    case 'INVEST_REQUEST_CANCELLATION': return requestFacilityMaintenanceDecision(world, { teamId, operationId: command.operationId, purpose: 'CANCELLATION' })
+    case 'INVEST_CANCEL': return cancelFacilityInvestment(world, { teamId, operationId: command.operationId })
   }
 }

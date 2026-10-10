@@ -19,6 +19,7 @@ import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import type { SportingCapabilityStatus } from '@/integration/facilitiesSporting'
 import { FacilityCapacityContext } from './FacilityCapacityContext'
 import { FacilityMaintenanceOperationsPanel } from './FacilityMaintenanceOperationsPanel'
+import { FacilityInvestmentsPanel } from './FacilityInvestmentsPanel'
 import { TrainingPhysicalAllocationControl } from '@/ui-ng/applications/training/TrainingPhysicalAllocationControl'
 
 import {
@@ -135,6 +136,8 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
       ) : null}
 
       {tab === 'maintenance' ? <MaintenancePanel execute={executeFacilityMaintenance} model={model} world={world} /> : null}
+
+      {tab === 'projects' ? <FacilityInvestmentsPanel execute={executeFacilityMaintenance} teamId={model.teamId} world={world} /> : null}
 
       {tab === 'projects' ? (
         <ProjectsPanel
