@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { MatchShotZoneId } from '@/domain/stats/MatchStatLog'
 import type { DetailedPerformanceShotZone, PerformanceShotProfileModel } from '../data/buildPlayerPerformanceModel'
@@ -41,6 +41,8 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
   const zones = profile.detailedZones ?? []
   const [selectedId, setSelectedId] = useState<MatchShotZoneId>('RESTRICTED')
   const [expanded, setExpanded] = useState(false)
+  const expandButtonRef = useRef<HTMLButtonElement>(null)
+  const wasExpandedRef = useRef(false)
   const selected = zones.find((zone) => zone.id === selectedId) ?? zones[0]
   const totalPoints = zones.reduce((total, zone) => total + zone.points, 0)
   const provenance = profile.detailedProvenance === 'OBSERVED'
@@ -57,6 +59,11 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
     return () => window.removeEventListener('keydown', escape)
   }, [expanded])
 
+  useEffect(() => {
+    if (expanded) wasExpandedRef.current = true
+    if (expanded || wasExpandedRef.current) expandButtonRef.current?.focus()
+  }, [expanded])
+
   const renderRegion = (zone: DetailedPerformanceShotZone) =>
     <g className={'po-pf-nine__region is-' + courtZoneTemperature(zone) +
       (selected?.id === zone.id ? ' is-selected' : '')}
@@ -70,12 +77,27 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
 
   const courtView = <section className={'po-pf-panel po-pf-shot po-pf-nine' + (expanded ? ' is-expanded' : '')}
     data-ng-region="performance-shot-profile" aria-label="Nine-zone basketball shooting map"
-    role={expanded ? 'dialog' : undefined} aria-modal={expanded || undefined}>
+    role={expanded ? 'dialog' : undefined} aria-modal={expanded || undefined}
+    onKeyDown={expanded ? (event) => {
+      if (event.key !== 'Tab') return
+      const candidates = [...event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [role="button"][tabindex="0"]',
+      )]
+      const first = candidates[0], last = candidates[candidates.length - 1]
+      if (first === undefined || last === undefined) return
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    } : undefined}>
     <div className="po-pf-nine__stage">
       <div className="po-pf-nine__source">
         <div><span>{provenance}</span>
           <small>{profile.detailedProvenance === 'OBSERVED' ? 'MatchEngine shot events' : 'Statistical subdivision · provisional'}</small></div>
-        <button type="button" className="po-pf-nine__expand"
+        <button ref={expandButtonRef} type="button" className="po-pf-nine__expand"
           aria-label={expanded ? 'Close enlarged shot map' : 'Enlarge shot map'}
           aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
           {expanded ? 'CLOSE ×' : 'EXPAND ↗'}
