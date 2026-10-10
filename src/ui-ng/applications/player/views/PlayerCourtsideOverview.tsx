@@ -149,6 +149,14 @@ function Season({ model }: { readonly model: PlayerWorkspaceModel }) {
   const { session } = usePlayerWorkspace()
   const season = model.overview.season
   const metrics = season.headline.slice(0, 5)
+  const gameBars = model.overview.recentForm.games.slice(-5).map(game => {
+    const statistic = (id: string) => {
+      const item = game.figures.find(figure => figure.id === id)
+      return item === undefined ? null : Number.isFinite(Number(item.value)) ? Number(item.value) : null
+    }
+    return { id: game.id, opponent: game.opponent, points: statistic('pts'), rebounds: statistic('reb'), assists: statistic('ast') }
+  })
+  const maxStat = Math.max(1, ...gameBars.flatMap(game => [game.points ?? 0, game.rebounds ?? 0, game.assists ?? 0]))
   return <section className="po-cs-card po-cs-season">
     <header className="po-cs-card__header"><h2>SEASON SNAPSHOT</h2><span>{season.seasonLabel ?? 'Sin temporada'} · {season.competitionLabel ?? 'Sin competición'}</span></header>
     <div className="po-cs-season__metrics">
@@ -156,6 +164,19 @@ function Season({ model }: { readonly model: PlayerWorkspaceModel }) {
         <strong>{metric.value}</strong><span>{metric.label}</span>
       </div>) : <div className="po-cs-empty">Todavía no hay partidos disputados esta temporada.</div>}
     </div>
+    <div className="po-cs-season__chart-legend" aria-hidden="true"><span>PTS</span><span>REB</span><span>AST</span></div>
+    {gameBars.length > 0 && <div className="po-cs-season__chart" role="img" aria-label="Puntos, rebotes y asistencias en partidos recientes">
+      {gameBars.map(game => <div className="po-cs-season__chart-game" key={game.id}>
+        <div className="po-cs-season__bars">
+          {([['points', game.points], ['rebounds', game.rebounds], ['assists', game.assists]] as const).map(([id, value]) =>
+            <span key={id} className={`is-${id}`} title={`${id}: ${value === null ? 'sin datos' : value}`}>
+              {value !== null && <i style={{ height: `${Math.max(2, (value / maxStat) * 100)}%` }} />}
+            </span>
+          )}
+        </div>
+        <small>vs {game.opponent}</small>
+      </div>)}
+    </div>}
     <p className="po-cs-season__caption">{season.gamesPlayed} partidos registrados</p>
     <button className="po-cs-text-link" type="button" onClick={() => session.setActiveView('performance')}>ANALIZAR RENDIMIENTO ›</button>
   </section>
