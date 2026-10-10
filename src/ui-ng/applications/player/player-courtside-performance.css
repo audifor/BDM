@@ -357,7 +357,7 @@
 .po-pf-board--courtside .po-pf-splits__row.is-unavailable {opacity:.6;}
 .po-pf-board--courtside .po-pf-games {
   display:grid;
-  grid-template-rows:minmax(205px,43fr) minmax(255px,57fr);
+  grid-template-rows:minmax(150px,43fr) minmax(180px,57fr);
   overflow:hidden;
 }
 .po-pf-board--courtside .po-pf-games > .po-pf-panel {
