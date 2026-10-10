@@ -336,12 +336,6 @@ export function PlayerCourtsideAttributes() {
               </div>
             )}
 
-            <div className="pac-detail__training">
-              <strong>TRAINING</strong>
-              <span>{evolution.assignment.status === 'available' && evolution.trainings.length > 0
-                ? evolution.trainings.length + ' available modules. Scheduling remains in the full attribute analysis.'
-                : evolution.assignment.reason ?? 'Direct training assignment is not available for this attribute.'}</span>
-            </div>
           </section>
         )}
       </div>
