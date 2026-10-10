@@ -9,6 +9,7 @@ import { GapList } from '@/ui-ng/applications/player/components/DeclaredGaps'
 import { RatingAttributeRow } from '@/ui-ng/applications/player/components/RatingAttributeRow'
 import { AttributeCategoryProfiles } from '@/ui-ng/applications/player/components/AttributeCategoryProfiles'
 import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/BasketballVisuals'
+import { PlayerCourtsideAttributes } from '@/ui-ng/applications/player/views/PlayerCourtsideAttributes'
 import { ordinalPercentile, CATEGORY_LABELS } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { useStructuralCompact } from '@/ui-ng/system/responsive/useStructuralCompact'
@@ -137,7 +138,11 @@ export function PlayerAttributesView() {
   }))
 
   return (
-    <div
+    <div className="pac-workspace" data-ng-region="player-attributes">
+      <PlayerCourtsideAttributes />
+      <details className="pac-deep-dive">
+        <summary>FULL ATTRIBUTE ANALYSIS · ORIGINAL INSIGHTS AND ACTIONS</summary>
+        <div
       className="po-attributes po-at-board"
       data-bdm-attributes-width={structuralCompact.width}
       data-bdm-structural-compact={structuralCompact.isStructuralCompact ? 'true' : 'false'}
@@ -434,6 +439,8 @@ export function PlayerAttributesView() {
           </button>
         </div>
       </div>
+        </div>
+      </details>
     </div>
   )
 }
