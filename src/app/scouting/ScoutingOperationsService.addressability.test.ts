@@ -54,6 +54,7 @@ describe('Player scouting addressability from public fixtures', () => {
 
     const staffId = staffPersonIdFromString('player-fow-scouting-evaluator')
     const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 65]))
+      as Record<(typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS)[number], number>
     const role = 'advanceScout' as const
     const world = updateGameWorld(original, {
       staffPeople: [...Object.values(original.staffPeopleById), {
