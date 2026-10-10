@@ -106,6 +106,7 @@ export function opponentKnowledgeSummary(access: OpponentAccess): {
 
 export function scoutingConfidenceLabel(confidence: number | undefined): string {
   if (confidence === undefined || !Number.isFinite(confidence)) return 'Sin confianza registrada'
-  // RatingEvaluation.confidence is recorded in 0..100 percentage units.
-  return Math.round(Math.max(0, Math.min(100, confidence))) + '% de confianza'
+  // Canonical Evaluation confidence is an internal 0..100 scouting index.
+  // Displaying it as a probability ("100% certainty") would be misleading.
+  return Math.round(Math.max(0, Math.min(100, confidence))) + '/100'
 }
