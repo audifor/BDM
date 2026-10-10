@@ -595,7 +595,7 @@
 .pac-grid {
   grid-template-columns:minmax(280px,24fr) minmax(375px,38fr) minmax(470px,38fr);
   height:100%;
-  min-height:585px;
+  min-height:520px;
   align-items:stretch;
 }
 .pac-column--center {
