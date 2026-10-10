@@ -31,13 +31,12 @@ describe('HomeWorkspace', () => {
   it('renders the top strip and four swappable module columns', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
-    const team = getUserTeam(world)!
     render(
       <NgWorkspaceNavigationProvider>
         <HomeWorkspace />
       </NgWorkspaceNavigationProvider>,
     )
-    expect(screen.getByText(team.name, { selector: '.ng-canon-header__team' })).toBeInTheDocument()
+    expect(document.querySelector('[data-ng-region="home-workspace"] .ng-canon-header')).toBeNull()
     expect(screen.getByText('Próximo partido')).toBeInTheDocument()
     expect(screen.getByText('Dinámicas del choque')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Clasificación de la liga/i })).toBeInTheDocument()
@@ -53,13 +52,12 @@ describe('HomeWorkspace', () => {
     expect(screen.queryByRole('button', { name: /^Objetivos/i })).not.toBeInTheDocument()
   })
 
-  it('renders full standings with playoff/relegation zone cues', () => {
+  it('renders every standings row with NBA-style metrics and canonical zones', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
     const model = buildCompetitionWorkspaceModel(world, undefined, getUserTeam(world)?.id)
     expect(model).not.toBeNull()
     const expectedRows = model!.standings.length
-    const expectedDigest = Math.min(expectedRows, 7)
     expect(expectedRows).toBeGreaterThan(0)
 
     render(
@@ -70,8 +68,8 @@ describe('HomeWorkspace', () => {
 
     const standings = document.querySelector('.home-standings .home-slot-table')
     expect(standings).not.toBeNull()
-    expect(standings!.querySelectorAll('li')).toHaveLength(expectedDigest)
-    expect(screen.getByText(`${expectedDigest} de ${expectedRows} equipos`)).toBeInTheDocument()
+    expect(standings!.querySelectorAll('li')).toHaveLength(expectedRows)
+    expect(screen.getByText(`${model!.competitionName} · ${expectedRows} equipos`)).toBeInTheDocument()
     expect(standings!.querySelectorAll('li.is-zone-playoff').length).toBeGreaterThan(0)
     if (model!.standingsZoneBands.relegationFrom !== null) {
       expect(standings!.querySelectorAll('li.is-zone-relegation').length).toBeGreaterThan(0)
@@ -82,8 +80,11 @@ describe('HomeWorkspace', () => {
     expect(head?.textContent).toMatch(/PJ/)
     expect(head?.textContent).toMatch(/G/)
     expect(head?.textContent).toMatch(/P/)
-    expect(head?.textContent).toMatch(/Dif/)
-    expect(head?.textContent).toMatch(/Pts/)
+    expect(head?.textContent).toMatch(/DIF/)
+    expect(head?.textContent).toMatch(/PF/)
+    expect(head?.textContent).toMatch(/PC/)
+    expect(head?.textContent).toMatch(/RAC/)
+    expect(head?.textContent).toMatch(/%/)
     const teamLink = document.querySelector('.home-standings .home-slot-table .entity-link')
     expect(teamLink).not.toBeNull()
     fireEvent.click(teamLink!)
@@ -93,7 +94,7 @@ describe('HomeWorkspace', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
     render(<NgWorkspaceNavigationProvider><HomeWorkspace /></NgWorkspaceNavigationProvider>)
-    fireEvent.click(screen.getByRole('button', { name: /Clasificación completa/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Ver en Competición/i }))
     expect(window.location.search).toContain('app=competition')
     expect(window.location.search).toContain('competitionTab=standings')
   })
