@@ -72,9 +72,9 @@ function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
     const lowest = sorted.length >= 2 ? sorted[sorted.length - 1] : undefined
     if (highest !== undefined && lowest !== undefined && hasScoutedRadarProfile(all)) {
       return {
-        summary: `Tu club dispone de estimaciones para ${summary.knownRatings}/${summary.totalRatings} atributos. Según esos informes, el perfil parece más sólido en ${highest.label.toLowerCase()} (≈${highest.estimate}, intervalo ${highest.low}–${highest.high}) y menos desarrollado en ${lowest.label.toLowerCase()} (≈${lowest.estimate}, intervalo ${lowest.low}–${lowest.high}). No son sus ratings reales ni permiten evaluar su carácter.`,
-        strengths: [`Mayor estimación: ${highest.label} · ≈${highest.estimate} · confianza ${highest.confidence}%`],
-        watchouts: [`Menor estimación: ${lowest.label} · ≈${lowest.estimate} · confianza ${lowest.confidence}%`, 'Estado físico y carácter sin fuente autorizada'],
+        summary: `Tu club dispone de estimaciones para ${summary.knownRatings}/${summary.totalRatings} atributos. Según esos informes, el perfil parece más sólido en ${highest.label.toLowerCase()} (≈${highest.estimate}, intervalo ${highest.low}–${highest.high}) y menos desarrollado en ${lowest.label.toLowerCase()} (≈${lowest.estimate}, intervalo ${lowest.low}–${lowest.high}). El índice scout no expresa probabilidad de certeza; los intervalos reflejan incertidumbre. No son sus ratings reales ni permiten evaluar su carácter.`,
+        strengths: [`Mayor estimación: ${highest.label} · ≈${highest.estimate} · índice scout ${highest.confidence}/100`],
+        watchouts: [`Menor estimación: ${lowest.label} · ≈${lowest.estimate} · índice scout ${lowest.confidence}/100`, 'Estado físico y carácter sin fuente autorizada'],
       }
     }
     const partial = knowledgeAccess.knownDimensions.slice(0, 2)
@@ -169,7 +169,7 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
             {own ? chips.map((chip) => <span className="po-cs-chip" key={chip.id}>{chip.label} {chip.value}</span>)
               : estimatedHighlights.length > 0
                 ? estimatedHighlights.map((family) => <span className="po-cs-chip po-cs-chip--estimate" key={family.id}
-                    title={`Estimación de tu club: ${family.low}–${family.high}; confianza ${family.confidence}% y cobertura ${family.coverage}%`}>
+                    title={`Estimación de tu club: ${family.low}–${family.high}; índice scout ${family.confidence}/100 y cobertura ${family.coverage}%`}>
                     {family.label} ≈{family.estimate}
                   </span>)
                 : <span className="po-cs-unknown">Atributos individuales sin información suficiente</span>}
@@ -192,7 +192,7 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
                 {visible !== undefined && <i style={{ width: `${Math.max(0,Math.min(100,visible))}%` }} />}
               </span>
               <strong title={!own && known !== undefined
-                ? `Estimación de scouting: ${known.displayLabel}; confianza ${known.evaluation?.confidence ?? 0}%`
+                ? `Estimación de scouting: ${known.displayLabel}; índice scout ${known.evaluation?.confidence ?? 0}/100`
                 : undefined}>
                 {own ? value === undefined ? 'Sin datos' : ratingBand(value)
                   : known === undefined ? 'Sin datos' : known.displayLabel}
@@ -210,7 +210,7 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
           <button className="po-cs-text-link" onClick={() => session.setActiveView('scouting')} type="button">Consultar conocimiento ›</button>
         </section>
         <section className="po-cs-dna__quadrant">
-          <div className="po-cs-dna__quadrant-head"><span>04</span><h4>ESTABILIDAD / RIESGO</h4></div>
+          <div className="po-cs-dna__quadrant-head"><span>04</span><h4>{own ? 'ESTABILIDAD / RIESGO' : 'ACTIVIDAD COMPETITIVA'}</h4></div>
           {own ? (
             <>
               <div className="po-cs-meter-row"><span>Moral</span><span /><strong>{fieldLabel(model.status.morale)}</strong></div>
@@ -220,8 +220,22 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
             </>
           ) : (
             <>
-              <p className="po-cs-private-unknown">No disponemos de una fuente autorizada para conocer su moral, su disponibilidad privada o su riesgo físico.</p>
-              <button className="po-cs-text-link" onClick={() => session.setActiveView('scouting')} type="button">Consultar scouting ›</button>
+              <div className="po-cs-public-games">
+                <div><span>PARTIDOS REGISTRADOS</span>
+                  <strong>{model.overview.season.status === 'available'
+                    ? model.overview.season.gamesPlayed : 'Sin datos'}</strong>
+                </div>
+                {model.overview.recentForm.games.length > 0 ? (() => {
+                  const last = model.overview.recentForm.games[model.overview.recentForm.games.length - 1]!
+                  return <>
+                    <div><span>ÚLTIMO PARTIDO</span>
+                      <strong>{last.points} PTS · {last.minutes} MIN</strong>
+                    </div>
+                    <p>Último encuentro registrado{last.dateLabel ? ': ' + last.dateLabel : ''}. Los minutos disputados no indican su disponibilidad médica.</p>
+                  </>
+                })() : <p>Todavía no hay partidos registrados para mostrar su actividad.</p>}
+              </div>
+              <button className="po-cs-text-link" onClick={() => session.setActiveView('performance')} type="button">Ver partidos ›</button>
             </>
           )}
         </section>
