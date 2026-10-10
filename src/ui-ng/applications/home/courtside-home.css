@@ -1464,3 +1464,19 @@
     grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
   }
 }
+
+/*
+ * V2.2 · Seven upcoming games already fit in one-line rows on desktop.
+ * The scrollbar was forced by the final generic overflow:auto override.
+ * Keep the picker dropdown visible and do not introduce an empty scroll area.
+ * Compact viewports retain deliberate scrolling when truly necessary.
+ */
+@media (min-width:1400px) and (min-height:840px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) .home-upcoming__row {
+    min-height:0;
+    padding:3px 0;
+  }
+}
