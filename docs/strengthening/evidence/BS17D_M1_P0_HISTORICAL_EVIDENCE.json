@@ -1,0 +1,67 @@
+{
+  "classification": "RESOLVED_IMPLEMENTATION_DEFECTS",
+  "initialReview": {
+    "status": "FAIL_PENDING_REPAIR",
+    "diagnosticTests": 2,
+    "diagnosticPassed": 2,
+    "meaning": "Both bad behaviors reproduced; this was not acceptance PASS."
+  },
+  "findings": [
+    {
+      "id": "M1-P1",
+      "cause": "Save did not validate historical INDICATE authority",
+      "repair": "Dated accepted grant/assignment evidence on original Medical act; strict binding/domain validation; no live permission inferred from historical evidence."
+    },
+    {
+      "id": "M1-P2",
+      "cause": "Today accepted even though Calendar executes after next-day advance",
+      "repair": "Future-date-only new scheduling, matching UI; accepted command replay remains idempotent."
+    },
+    {
+      "id": "M1-HISTORY",
+      "cause": "First reference-based repair incorrectly required active assignment after Staff departure",
+      "repair": "Original assignment captured as historical source evidence, active PERFORM authority separately checked."
+    }
+  ],
+  "permanentRed": {
+    "failed": 3,
+    "passed": 19,
+    "log": "docs\\strengthening\\evidence\\BS17D_M1_P0_ADVERSARIAL_RED.txt"
+  },
+  "intermediateDepartureReproduction": {
+    "passed": 2,
+    "failed": 1,
+    "command": "npx vitest run --config .tmp/adversarial-review.config.ts .tmp/adversarial-review-corrected.test.ts",
+    "error": "Medical act m1:act lacks historical INDICATE authority after fireStaffFromTeam and Save reload"
+  },
+  "independentFinalReview": {
+    "status": "PASS",
+    "correctedReproductions": 3,
+    "passed": 3,
+    "timeoutMs": 30000,
+    "performanceCertification": false,
+    "reviewer": "/root/m1p0_adversarial",
+    "additionalReview": "Employment facts and stable UI indication/scheduling IDs reviewed; no material finding."
+  },
+  "originalArtifacts": [
+    {
+      "originalPath": ".tmp/adversarial-review.test.ts",
+      "originalSha256": "c5420b80c1d89a6b54e381e49af70c13d317ff08cb22286caa22fc44d17bd236",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_ADVERSARIAL_ORIGINAL_REPRODUCTION.txt",
+      "encodingNormalizedFrom": "utf-8"
+    },
+    {
+      "originalPath": ".tmp/adversarial-review-corrected.test.ts",
+      "originalSha256": "0ed7a99ee1e1a8f533fb6c15b7ba3dbfe4ed3c80dbc73eab0c544b63d8762554",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_ADVERSARIAL_CORRECTED_REPRODUCTION.txt",
+      "encodingNormalizedFrom": "utf-8"
+    },
+    {
+      "originalPath": ".tmp/bs17dm1p0/adversarial-regressions-red.log",
+      "originalSha256": "27f78113a5d5b6ad47a3ee1887cecae8a81d9c78acc2013e58f51edb7efaad32",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_ADVERSARIAL_RED.txt",
+      "encodingNormalizedFrom": "utf-16"
+    }
+  ],
+  "presentationNormalization": "Committed text uses UTF-8/LF without BOM or trailing whitespace; original files stay untouched and their original byte hashes are recorded."
+}

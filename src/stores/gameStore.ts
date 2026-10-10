@@ -1,3 +1,4 @@
+import { indicateEquippedRehabilitation, scheduleEquippedRehabilitation, cancelEquippedRehabilitation, equippedActs } from '@/engine/injury/EquippedRehabilitation'
 import { requestTrainingPhysicalAllocation, releaseTrainingPhysicalAllocation } from '@/engine/facilities/PhysicalAllocationEngine'
 import { retryRecruitingFacilityDemonstration } from '@/engine/recruiting/RecruitingFacilityDemonstration'
 import type { RecruitingFacilitySelection } from '@/domain/recruiting'
@@ -156,6 +157,9 @@ interface GameStore {
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   reviewReturnToPlay(injuryId: import('@/domain/ids').InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId): ReturnToPlayReviewResult
   setRehabilitationPlan(injuryId: InjuryId, mode: RehabilitationMode): SetRehabilitationPlanResult
+  indicateEquippedMedical(input: Parameters<typeof indicateEquippedRehabilitation>[1]): void
+  scheduleEquippedMedical(input: Parameters<typeof scheduleEquippedRehabilitation>[1]): void
+  cancelEquippedMedical(actId: string): void
   conductFitnessTest(injuryId: InjuryId): ConductFitnessTestResult
   grantStaffCareerRequest(requestId: string): void
   declineStaffCareerRequest(requestId: string): void
@@ -453,6 +457,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     })
     if (result.ok) set({ world: result.world })
     return result
+  },
+  indicateEquippedMedical: (input) => {
+    const world = requireWorld(get().world), team = Object.values(world.teams).find(item => item.coachId === world.userCoachId)
+    if (!team?.rosterPlayerIds.includes(world.injuriesById[input.injuryId]?.playerId as PlayerId)) throw new RangeError('Medical manager team access denied')
+    set({ world: indicateEquippedRehabilitation(world, input) })
+  },
+  scheduleEquippedMedical: (input) => {
+    const world = requireWorld(get().world), team = Object.values(world.teams).find(item => item.coachId === world.userCoachId)
+    if (equippedActs(world).find(item => item.id === input.actId)?.teamId !== team?.id) throw new RangeError('Medical manager team access denied')
+    set({ world: scheduleEquippedRehabilitation(world, input) })
+  },
+  cancelEquippedMedical: (actId) => {
+    const world = requireWorld(get().world), team = Object.values(world.teams).find(item => item.coachId === world.userCoachId)
+    if (equippedActs(world).find(item => item.id === actId)?.teamId !== team?.id) throw new RangeError('Medical manager team access denied')
+    set({ world: cancelEquippedRehabilitation(world, actId) })
   },
   setRehabilitationPlan: (injuryId, mode) => {
     const world = requireWorld(get().world)

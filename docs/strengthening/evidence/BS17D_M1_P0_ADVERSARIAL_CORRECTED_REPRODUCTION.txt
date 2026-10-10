@@ -1,0 +1,21 @@
+import { beforeAll, expect, it } from 'vitest'
+import { equippedMedicalFixture } from '@/app/game/testSupport/EquippedMedicalFixture'
+import { scheduleEquippedRehabilitation } from '@/engine/injury/EquippedRehabilitation'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { updateGameWorld } from '@/domain/world'
+import { fireStaffFromTeam } from '@/app/staffCareer/StaffCareerService'
+let f: ReturnType<typeof equippedMedicalFixture>
+beforeAll(()=>{f=equippedMedicalFixture()},30000)
+it('rejects new today scheduling',()=>{
+ expect(()=>scheduleEquippedRehabilitation(f.indicated,{...f.schedule,requestId:'today',interval:{...f.schedule.interval,date:f.world.currentDate}})).toThrow('cannot be scheduled')
+})
+it('rejects nonexistent prescribing authorization on SaveV4 load',()=>{
+ const save=JSON.parse(JSON.stringify(serializeGameWorldV4(f.scheduled,'2026-10-10T00:00:00.000Z')))
+ save.payload.injuries[0].equippedRehabilitationActs[0].prescribingAuthorizationId='NO_SUCH_GRANT'
+ expect(()=>deserializeGameWorldV4(save)).toThrow('historical INDICATE authority')
+})
+it('probes Staff firing after a historical indication',()=>{
+ const employed=updateGameWorld(f.indicated,{staffEmploymentByStaffId:{...f.indicated.staffEmploymentByStaffId,[f.staffId]:{status:'employed',teamId:f.team.id,roleId:'rehabilitationSpecialist',startedOn:f.world.currentDate}}})
+ const fired=fireStaffFromTeam(employed,f.staffId)
+ expect(()=>deserializeGameWorldV4(serializeGameWorldV4(fired,'2026-10-10T00:00:00.000Z'))).not.toThrow()
+})

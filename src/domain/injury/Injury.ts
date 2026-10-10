@@ -1,3 +1,4 @@
+import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from './EquippedRehabilitationAct'
 import { addDays, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { CoachId, GameId, InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
@@ -61,6 +62,7 @@ export interface ReturnToPlayState {
 }
 
 export interface InjuryRecord {
+  readonly equippedRehabilitationActs?: readonly EquippedRehabilitationAct[]
   readonly id: InjuryId
   readonly playerId: PlayerId
   readonly kind: InjuryKind
@@ -120,8 +122,11 @@ export function createInjury(input: InjuryRecord): InjuryRecord {
   if (new Set(rehabilitationSetbacks.map((item) => item.id)).size !== rehabilitationSetbacks.length || rehabilitationSetbacks.some((item) => compareGameDates(item.occurredOn, input.injuredOn) < 0 || item.reason !== 'REHAB_SETBACK' || !Number.isInteger(item.daysAdded) || item.daysAdded < 1 || item.daysAdded > 7)) throw new TypeError('Rehabilitation setback is invalid')
   const fitnessTests = input.fitnessTests ?? []
   if (new Set(fitnessTests.map((item) => item.id)).size !== fitnessTests.length || fitnessTests.some((item) => compareGameDates(item.testedOn, input.injuredOn) < 0 || !['PASS', 'BORDERLINE', 'FAIL'].includes(item.result) || (item.actor.kind !== 'USER' && item.actor.kind !== 'AI') || (item.qualityScore !== undefined && (!Number.isInteger(item.qualityScore) || item.qualityScore < 0 || item.qualityScore > 100)))) throw new TypeError('Fitness test record is invalid')
+  const acts = input.equippedRehabilitationActs?.map(createEquippedRehabilitationAct)
+  if (acts && (new Set(acts.map(item => item.id)).size !== acts.length || acts.some(item => item.injuryId !== input.id || item.playerId !== input.playerId || item.episodeStartedOn !== rehabilitation.startedOn))) throw new RangeError('Medical act episode identity mismatch')
   return {
     ...input,
+    ...(acts === undefined ? {} : { equippedRehabilitationActs: acts }),
     returnToPlay: { ...returnToPlay, reviews: returnToPlay.reviews.map((review) => ({ ...review, actor: { ...review.actor } })) },
     rehabilitation: { ...rehabilitation, history: rehabilitation.history.map((change) => ({ ...change, actor: { ...change.actor } })) },
     rehabilitationSetbacks: rehabilitationSetbacks.map((item) => ({ ...item })),

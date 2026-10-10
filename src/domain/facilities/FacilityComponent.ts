@@ -1,3 +1,4 @@
+import { createRehabilitationEquipmentEvidence, type RehabilitationEquipmentEvidence } from './RehabilitationEquipmentEvidence'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { facilityComponentIdFromString, facilityIdFromString, type FacilityComponentId, type FacilityId } from '@/domain/ids'
 import { requireNonEmptyString } from '@/domain/validation'
@@ -195,6 +196,7 @@ export interface FacilityComponent {
   readonly specification: FacilityComponentSpecification | null
   /** Explicit physical sharing semantics; absence does not authorize concurrent groups. */
   readonly occupancySharing?: 'EXCLUSIVE' | 'SHARED_CAPACITY'
+  readonly rehabilitationEquipmentEvidence?: RehabilitationEquipmentEvidence
   readonly equipmentTags: readonly string[]
 }
 
@@ -211,6 +213,7 @@ export interface CreateFacilityComponentInput {
   readonly parentComponentId?: FacilityComponentId | string | null
   readonly specification?: CreateFacilityComponentSpecificationInput | FacilityComponentSpecification | null
   readonly occupancySharing?: 'EXCLUSIVE' | 'SHARED_CAPACITY'
+  readonly rehabilitationEquipmentEvidence?: RehabilitationEquipmentEvidence
   readonly equipmentTags?: readonly string[]
 }
 
@@ -248,6 +251,7 @@ export function createFacilityComponent(input: CreateFacilityComponentInput): Fa
     specification,
     ...(input.occupancySharing === undefined ? {} : { occupancySharing: input.occupancySharing }),
     equipmentTags: Object.freeze([...equipmentTags]),
+    ...(input.rehabilitationEquipmentEvidence === undefined ? {} : { rehabilitationEquipmentEvidence: createRehabilitationEquipmentEvidence(input.rehabilitationEquipmentEvidence) }),
   })
 }
 

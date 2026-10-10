@@ -1,0 +1,21 @@
+> bdm@0.1.0 test
+
+> vitest run --passWithNoTests --maxWorkers=1 -t allows specifically src/engine/injury/EquippedRehabilitation.test.ts
+
+
+
+
+
+ RUN  v4.1.10 C:/BDM-BS17D-M1-IMPLEMENTATION
+
+
+
+
+
+ Test Files  1 passed (1)
+
+      Tests  1 passed | 24 skipped (25)
+
+   Start at  10:55:55
+
+   Duration  20.45s (transform 12.78s, setup 0ms, import 15.30s, tests 4.73s, environment 0ms)

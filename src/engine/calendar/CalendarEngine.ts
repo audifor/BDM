@@ -1,3 +1,4 @@
+import { executeEquippedRehabilitationForDay } from '@/engine/injury/EquippedRehabilitation'
 import { progressCollegeEligibilityExits } from '@/engine/eligibility/CollegeEligibilityLifecycle'
 import { addDays, compareGameDates } from '@/domain/date'
 import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
@@ -168,7 +169,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
     run('ENFORCEMENT', current.currentDate, true, (input) => progressStaffActivitySanctions(progressEnforcement(progressInstitutionBenefitsReporting(rolloverInstitutionBenefitsCaps(ensureNcaaSportBudgets(input))))), 'Enforcement, contest suspensions, sport budgets, benefits cap rollover and institutional reporting are checked every simulation day.')
     run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressRecruitmentFocuses(progressScoutingTerritoryAssignments(progressAiScoutingOperations(progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input)))))), 'AI Scouting departments plan on days 1, 8, 15 and 22/29; delegated reports, Recruitment Focus duration and active territory discovery are checked daily.')
-    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
+    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(executeEquippedRehabilitationForDay(input)))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
     let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
     run('AI_MEDICAL_DECISIONS', current.currentDate, true, (input) => {
       const result = progressAiMedicalLifecycle(input)

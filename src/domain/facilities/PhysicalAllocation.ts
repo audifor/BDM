@@ -4,6 +4,8 @@ export type PhysicalAllocationStatus = 'PENDING' | 'CONFIRMED' | 'RELEASED' | 'C
 /** Facilities reservation subordinate to its canonical Training session; no second agenda. */
 export interface PhysicalAllocation {
   readonly id: string
+  /** Legacy Training allocations omit consumer; Medical always declares its typed owner. */
+  readonly consumer?: { readonly kind: 'MEDICAL'; readonly id: string }
   readonly sessionId: string
   readonly teamId: TeamId
   readonly facilityId: FacilityId | null
@@ -24,13 +26,16 @@ export function createPhysicalAllocation(input: PhysicalAllocation): PhysicalAll
   parseGameDate(input.date)
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.startTime) || !Number.isInteger(input.durationMinutes) || input.durationMinutes < 1 || input.durationMinutes > 240) throw new RangeError('Invalid physical allocation interval')
   if (input.demand !== null && (!Number.isInteger(input.demand) || input.demand < 0) || input.unit !== null && input.unit !== 'SIMULTANEOUS_PLAYERS') throw new RangeError('Invalid physical allocation demand')
-  if ((input.status === 'CONFIRMED' || input.history?.some(item => item.status === 'CONFIRMED')) && (input.demand === null || input.unit === null || input.facilityId === null || !Number.isFinite(input.capacityAtConfirmation) || input.capacityAtConfirmation! < input.demand || !['EXCLUSIVE', 'SHARED_CAPACITY'].includes(input.sharingAtConfirmation!))) throw new RangeError('Confirmed allocation requires evidence')
+  if (input.consumer !== undefined && (input.consumer.kind !== 'MEDICAL' || input.consumer.id !== input.sessionId)) throw new RangeError('Invalid physical consumer identity')
+  const medicalExclusive = input.consumer?.kind === 'MEDICAL' && input.sharingAtConfirmation === 'EXCLUSIVE' && input.demand === null && input.unit === null
+  if (!medicalExclusive && (input.status === 'CONFIRMED' || input.history?.some(item => item.status === 'CONFIRMED')) && (input.demand === null || input.unit === null || input.facilityId === null || !Number.isFinite(input.capacityAtConfirmation) || input.capacityAtConfirmation! < input.demand || !['EXCLUSIVE', 'SHARED_CAPACITY'].includes(input.sharingAtConfirmation!))) throw new RangeError('Confirmed allocation requires evidence')
+  if (medicalExclusive && input.facilityId === null) throw new RangeError('Exclusive Medical allocation requires physical identity')
   if (!Array.isArray(input.history) || input.history.length === 0 || input.history.at(-1)?.status !== input.status) throw new RangeError('Invalid physical allocation history')
   for (const item of input.history) {
     parseGameDate(item.onDate)
     if (!statuses.includes(item.status) || typeof item.reason !== 'string' || !item.reason) throw new RangeError('Invalid physical allocation cause')
   }
-  return Object.freeze({ ...input, history: Object.freeze(input.history.map(item => Object.freeze({ ...item }))) })
+  return Object.freeze({ ...input, ...(input.consumer === undefined ? {} : { consumer: Object.freeze({ ...input.consumer }) }), history: Object.freeze(input.history.map(item => Object.freeze({ ...item }))) })
 }
 export function physicalIntervalsOverlap(a: Pick<PhysicalAllocation, 'date' | 'startTime' | 'durationMinutes'>, b: Pick<PhysicalAllocation, 'date' | 'startTime' | 'durationMinutes'>): boolean {
   if (a.date > b.date) return physicalIntervalsOverlap(b, a)

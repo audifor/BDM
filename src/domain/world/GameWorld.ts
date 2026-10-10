@@ -1239,7 +1239,7 @@ export function activePhysicalSessions(world: GameWorld, previous?: GameWorld): 
 function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | undefined, mode: WorldValidationMode = 'full'): void {
   const scope = new WorldValidationScope(canonical, previous, mode)
   const updated = scope.world
-  scope.run('BS17D-C1:physicalAllocationLinks', () => validatePhysicalAllocations(updated, activePhysicalSessions(updated, previous)), ['scheduledTrainingSessionsById', 'facilityComponentsById'])
+  scope.run('BS17D-C1:physicalAllocationLinks', () => validatePhysicalAllocations(updated, activePhysicalSessions(updated, previous)), ['scheduledTrainingSessionsById', 'facilityComponentsById', 'injuriesById'])
   scope.run('boundary:validateFinancialPlanningCollections', () => { validateFinancialPlanningCollections(Object.values(updated.financialBudgetsById), Object.values(updated.budgetLinesById), Object.values(updated.budgetRevisionsById), Object.values(updated.budgetAllocationsById), Object.values(updated.forecastAssumptionsById)) })
   scope.run('boundary:validateRevenueSources', () => { validateRevenueSources(Object.values(updated.revenueSourcesById), updated) })
   scope.run('boundary:validateOperatingCostCollections', () => { validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated) })
@@ -1874,6 +1874,7 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
   }, ["players","games","scheduledTrainingSessionsById","developmentStimulusEventsById"])
   const injuriesToValidate = Object.values(world.injuriesById).filter(injury => {
     if (previous === undefined || !preservedPlayers || previous.injuriesById[injury.id] !== injury) return true
+    if (injury.equippedRehabilitationActs?.length && (previous.staffPeopleById !== world.staffPeopleById || previous.teams !== world.teams || previous.facilityComponentsById !== world.facilityComponentsById || previous.facilitiesById !== world.facilitiesById)) return true
     if (injury.sourceGameId !== undefined && previous.games[injury.sourceGameId] !== world.games[injury.sourceGameId]) return true
     return injury.sourceTrainingSessionId !== undefined && previous.scheduledTrainingSessionsById[injury.sourceTrainingSessionId] !== world.scheduledTrainingSessionsById[injury.sourceTrainingSessionId]
   })
@@ -1888,7 +1889,7 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
       }
       for (const injury of Object.values(world.injuriesById)) if (affectedPlayers.has(injury.playerId)) validateInjury(world, injury, injuriesByPlayer.get(injury.playerId) ?? [])
     }
-  }, ["players","injuriesById","games","scheduledTrainingSessionsById"])
+  }, ["players","injuriesById","games","scheduledTrainingSessionsById","staffPeopleById","teams","facilityComponentsById","facilitiesById"])
   scope.run('40:contractsById', () => {
     for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
   })
@@ -3030,6 +3031,16 @@ function hasRelationshipPerson(world: GameWorld, id: string): boolean { return w
 
 function validateInjury(world: GameWorld, injury: InjuryRecord, samePlayerInjuries: readonly InjuryRecord[]): void {
   createInjury(injury)
+  for (const act of injury.equippedRehabilitationActs ?? []) {
+    requireEntity(world.teams, act.teamId, `Medical act ${act.id} Team`)
+    requireEntity(world.staffPeopleById, act.prescribingStaffId, `Medical act ${act.id} prescriber`)
+    if (act.performingStaffId !== undefined) requireEntity(world.staffPeopleById, act.performingStaffId, `Medical act ${act.id} performer`)
+    for (const allocation of act.physicalAllocations ?? []) {
+      requireEntity(world.facilityComponentsById, allocation.componentId, `Medical allocation ${allocation.id} Component`)
+      if (allocation.facilityId !== null) requireEntity(world.facilitiesById, allocation.facilityId, `Medical allocation ${allocation.id} Facility`)
+      if (allocation.consumer?.kind !== 'MEDICAL' || allocation.consumer.id !== act.id || allocation.teamId !== act.teamId) throw new RangeError('Medical allocation owner mismatch')
+    }
+  }
   requireEntity(world.players, injury.playerId, `Injury ${injury.id} Player`)
   if (injury.sourceGameId !== undefined) { const game = requireEntity(world.games, injury.sourceGameId, `Injury ${injury.id} Game`); if (game.date !== injury.injuredOn) throw new GameWorldValidationError(`Injury ${injury.id} date does not match source Game`) }
   if (injury.sourceTrainingSessionId !== undefined) { const session = requireEntity(world.scheduledTrainingSessionsById, injury.sourceTrainingSessionId, `Injury ${injury.id} Training session`); if (session.date !== injury.injuredOn || session.status !== 'completed') throw new GameWorldValidationError(`Injury ${injury.id} date does not match completed Training session`) }

@@ -1,3 +1,6 @@
+import { createInjury } from '@/domain/injury'
+import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from '@/domain/injury/EquippedRehabilitationAct'
+import type { RehabilitationEquipmentEvidence } from '@/domain/facilities/RehabilitationEquipmentEvidence'
 import { validateGameWorld } from '@/domain/world'
 import { createScheduledTrainingSession } from '@/domain/training'
 import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
@@ -455,7 +458,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
-    payload: { ...v3CompatibilityPayload, scheduledTrainingSessions: rawArray(v3CompatibilityPayload.scheduledTrainingSessions ?? [], 'Save V4 compatibility Training').map(value => { const { physicalAllocations: _allocations, ...legacy } = record(value, 'Compatibility Training session'); return legacy }), staffCareerRuntime: { ...staffCareerRuntimePayload, governanceDecisionEvents: compatibilityGovernanceEvents } } as unknown as GameWorldSaveV3,
+    payload: { ...v3CompatibilityPayload, injuries: rawArray(v3CompatibilityPayload.injuries ?? [], 'Compatibility injuries').map(value => { const { equippedRehabilitationActs: _acts, ...legacy } = record(value, 'Compatibility Injury'); return legacy }), scheduledTrainingSessions: rawArray(v3CompatibilityPayload.scheduledTrainingSessions ?? [], 'Save V4 compatibility Training').map(value => { const { physicalAllocations: _allocations, ...legacy } = record(value, 'Compatibility Training session'); return legacy }), staffCareerRuntime: { ...staffCareerRuntimePayload, governanceDecisionEvents: compatibilityGovernanceEvents } } as unknown as GameWorldSaveV3,
   }, { backfillStaffContracts: false })
   const withOrganizations = organizations === undefined || organizationSections === undefined
     ? world
@@ -468,7 +471,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withFacilities = updateGameWorld(withStructuralRegulation, { places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords })
   const physicalBySession = new Map(rawArray(payload.scheduledTrainingSessions ?? [], 'Save V4 scheduled Training').map(value => { const item = record(value, 'Save V4 Training'); return [nonEmptyText(item.id, 'Training ID'), item.physicalAllocations] }))
   // Rehydrate the complete Save snapshot after physical references exist; completed sessions are not commands.
-  const withPhysicalAllocations: GameWorld = Object.freeze({ ...withFacilities, scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.values(withFacilities.scheduledTrainingSessionsById).map(session => {
+  const medicalByInjury = new Map(rawArray(payload.injuries ?? [], 'Save V4 injuries').map(value => { const item = record(value, 'Save V4 Injury'); return [nonEmptyText(item.id, 'Injury ID'), item.equippedRehabilitationActs] }))
+  const withPhysicalAllocations: GameWorld = Object.freeze({ ...withFacilities, injuriesById: Object.freeze(Object.fromEntries(Object.values(withFacilities.injuriesById).map(injury => { const raw = medicalByInjury.get(injury.id); return [injury.id, raw === undefined ? injury : createInjury({ ...injury, equippedRehabilitationActs: rawArray(raw, 'Equipped Medical acts').map(item => createEquippedRehabilitationAct(item as EquippedRehabilitationAct)) })] }))), scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.values(withFacilities.scheduledTrainingSessionsById).map(session => {
     const raw = physicalBySession.get(session.id)
     return [session.id, raw === undefined ? session : createScheduledTrainingSession({ ...session, physicalAllocations: rawArray(raw, 'Save V4 physical allocations').map(value => createPhysicalAllocation(record(value, 'Physical allocation') as unknown as PhysicalAllocation)) })]
   }))) })
@@ -1091,7 +1095,7 @@ function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
     const hasParent = Object.prototype.hasOwnProperty.call(component, 'parentComponentId')
     const hasSpecification = Object.prototype.hasOwnProperty.call(component, 'specification')
     const hasEquipmentTags = Object.prototype.hasOwnProperty.call(component, 'equipmentTags')
-    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt', ...(hasParent ? ['parentComponentId'] : []), ...(hasSpecification ? ['specification'] : []), ...(hasEquipmentTags ? ['equipmentTags'] : []), ...(component.occupancySharing === undefined ? [] : ['occupancySharing'])], 'Save V4 FacilityComponent')
+    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt', ...(hasParent ? ['parentComponentId'] : []), ...(hasSpecification ? ['specification'] : []), ...(hasEquipmentTags ? ['equipmentTags'] : []), ...(component.occupancySharing === undefined ? [] : ['occupancySharing']), ...(component.rehabilitationEquipmentEvidence === undefined ? [] : ['rehabilitationEquipmentEvidence'])], 'Save V4 FacilityComponent')
     return createFacilityComponent({
       id: facilityComponentIdFromString(nonEmptyText(component.id, 'Save V4 FacilityComponent id')),
       facilityId: facilityIdFromString(nonEmptyText(component.facilityId, 'Save V4 FacilityComponent facilityId')),
@@ -1105,6 +1109,7 @@ function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
       ...(component.occupancySharing === undefined ? {} : { occupancySharing: component.occupancySharing as 'EXCLUSIVE' | 'SHARED_CAPACITY' }),
       ...(hasParent ? { parentComponentId: nullableText(component.parentComponentId, 'Save V4 FacilityComponent parentComponentId') as FacilityComponent['parentComponentId'] } : {}),
       ...(hasSpecification ? { specification: parseFacilityComponentSpecification(component.specification) } : {}),
+      ...(component.rehabilitationEquipmentEvidence === undefined ? {} : { rehabilitationEquipmentEvidence: component.rehabilitationEquipmentEvidence as RehabilitationEquipmentEvidence }),
       ...(hasEquipmentTags ? { equipmentTags: stringArray(component.equipmentTags, 'Save V4 FacilityComponent equipmentTags') } : {}),
     })
   }))

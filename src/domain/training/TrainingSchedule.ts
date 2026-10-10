@@ -78,7 +78,7 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (input.selectedPlayerIds !== undefined && (input.selectedPlayerIds.length === 0 || new Set(input.selectedPlayerIds).size !== input.selectedPlayerIds.length)) throw new RangeError('Training selection requires unique participants')
   if (input.scope === 'individual' && input.selectedPlayerIds !== undefined) throw new RangeError('Individual Training uses its existing PlayerId assignment')
   const physicalAllocations = input.physicalAllocations?.map(createPhysicalAllocation)
-  if (physicalAllocations?.some(item => item.sessionId !== input.id || item.teamId !== input.teamId) || physicalAllocations && new Set(physicalAllocations.map(item => item.id)).size !== physicalAllocations.length || (physicalAllocations?.filter(item => item.status === 'CONFIRMED').length ?? 0) > 1) throw new RangeError('Invalid Training allocation linkage')
+  if (physicalAllocations?.some(item => item.consumer !== undefined || item.sessionId !== input.id || item.teamId !== input.teamId) || physicalAllocations && new Set(physicalAllocations.map(item => item.id)).size !== physicalAllocations.length || (physicalAllocations?.filter(item => item.status === 'CONFIRMED').length ?? 0) > 1) throw new RangeError('Invalid Training allocation linkage')
   if (!input.id.trim()) throw new RangeError('Scheduled session id is required')
   if (!input.teamId) throw new RangeError('Scheduled session teamId is required')
   timeToMinutes(input.startTime)

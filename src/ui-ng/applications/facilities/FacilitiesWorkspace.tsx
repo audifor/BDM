@@ -1,3 +1,5 @@
+import { equippedActs } from '@/engine/injury/EquippedRehabilitation'
+import { EquippedMedicalPanel } from '@/ui-ng/applications/medical/EquippedMedicalPanel'
 import { useEffect, useMemo, useState } from 'react'
 import type { GameWorld } from '@/domain/world'
 
@@ -55,8 +57,8 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
   const cancelFacilityProject = useGameStore((state) => state.cancelFacilityProject)
   const focusedFacilityId = useGameStore(state => state.focusedFacilityId)
   useEffect(() => { if (focusedFacilityId !== null) { setSelectedFacilityId(focusedFacilityId); setTab('facilities') } }, [focusedFacilityId])
-  const [tab, setTab] = useState<FacilitiesTabId>('overview')
-  const [selectedFacilityId, setSelectedFacilityId] = useState<FacilityId | undefined>(undefined)
+  const [tab, setTab] = useState<FacilitiesTabId>(new URL(window.location.href).searchParams.has('requestId') ? 'facilities' : 'overview')
+  const [selectedFacilityId, setSelectedFacilityId] = useState<FacilityId | undefined>(() => world === null ? undefined : equippedActs(world).find(act => act.id === new URL(window.location.href).searchParams.get('requestId'))?.physicalAllocations?.at(-1)?.facilityId ?? undefined)
   const [commitmentProjectId, setCommitmentProjectId] = useState<FacilityDevelopmentProjectId | undefined>(undefined)
   const [commitmentAmount, setCommitmentAmount] = useState('')
   const [commitmentCurrency, setCommitmentCurrency] = useState('')
@@ -125,6 +127,7 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
             <FacilityInspector model={model} facility={selectedFacility} />
             <FacilityCapacityContext world={world} teamId={team.id} facilityId={selectedFacility.facilityId} />
             <TrainingPhysicalAllocationControl world={world} teamId={team.id} />
+            <EquippedMedicalPanel world={world} teamId={team.id} facilityId={selectedFacility.facilityId} />
           </>}
         </>
       ) : null}
