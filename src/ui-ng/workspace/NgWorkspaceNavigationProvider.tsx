@@ -1,6 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import type { CompetitionId, TeamId } from '@/domain/ids'
+import {
+  COURTSIDE_PIN_STORAGE_KEY,
+  COURTSIDE_ORDER_STORAGE_KEY,
+  readTaskbarApps,
+  withMandatoryHome,
+  orderedVisibleTaskbarApps,
+  moveTaskbarApp as moveOrderedApp,
+} from './courtsideTaskbarState'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 
 import {
@@ -30,6 +38,11 @@ interface NgWorkspaceNavigationValue {
   /** Canonical Governance request selected by a `governanceRequest` breakpoint (or a deep link). */
   readonly requestId: string | null
   readonly openApps: readonly WorkspaceAppId[]
+  readonly pinnedApps: readonly WorkspaceAppId[]
+  readonly taskbarApps: readonly WorkspaceAppId[]
+  readonly pinApp: (id: WorkspaceAppId) => void
+  readonly unpinApp: (id: WorkspaceAppId) => void
+  readonly moveTaskbarApp: (source: WorkspaceAppId, target: WorkspaceAppId) => void
   readonly setActiveApp: (app: WorkspaceAppId) => void
   readonly closeApp: (app: WorkspaceAppId) => void
   readonly openEntity: (destination: EntityDestination) => void
@@ -56,6 +69,18 @@ function seedOpenApps(): readonly WorkspaceAppId[] {
 export function NgWorkspaceNavigationProvider({ children }: { readonly children: ReactNode }) {
   const [navigation, setNavigation] = useState(readNavigation)
   const [openApps, setOpenApps] = useState<readonly WorkspaceAppId[]>(seedOpenApps)
+  const [pinnedApps, setPinnedApps] = useState<readonly WorkspaceAppId[]>(() =>
+    withMandatoryHome(readTaskbarApps(COURTSIDE_PIN_STORAGE_KEY, ['home'])))
+  const [taskbarOrder, setTaskbarOrder] = useState<readonly WorkspaceAppId[]>(() =>
+    withMandatoryHome(readTaskbarApps(COURTSIDE_ORDER_STORAGE_KEY, ['home'])))
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COURTSIDE_PIN_STORAGE_KEY, JSON.stringify(pinnedApps))
+      window.localStorage.setItem(COURTSIDE_ORDER_STORAGE_KEY, JSON.stringify(taskbarOrder))
+    } catch {
+      // Storage can be disabled; in-session interactions must still work.
+    }
+  }, [pinnedApps, taskbarOrder])
   const openAppsRef = useRef(openApps)
   openAppsRef.current = openApps
 
@@ -79,6 +104,18 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
     () => ({
       ...navigation,
       openApps: visibleTaskbarAppIds(openApps),
+      pinnedApps,
+      taskbarApps: orderedVisibleTaskbarApps(pinnedApps, openApps, taskbarOrder),
+      pinApp: (id: WorkspaceAppId) => {
+        setPinnedApps((old) => old.includes(id) ? old : [...old, id])
+      },
+      unpinApp: (id: WorkspaceAppId) => {
+        if (id === 'home') return
+        setPinnedApps((old) => old.filter((item) => item !== id))
+      },
+      moveTaskbarApp: (source: WorkspaceAppId, target: WorkspaceAppId) => {
+        setTaskbarOrder((old) => moveOrderedApp(orderedVisibleTaskbarApps(pinnedApps, openApps, old), source, target))
+      },
       setActiveApp: (app: WorkspaceAppId) => syncWorkspaceAppQuery(app),
       closeApp: (app: WorkspaceAppId) => {
         if (!isClosableTaskbarApp(app)) return
@@ -110,7 +147,7 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
         window.dispatchEvent(new Event('bdm-ng-nav'))
       },
     }),
-    [navigation, openApps],
+    [navigation, openApps, pinnedApps, taskbarOrder],
   )
 
   return (
