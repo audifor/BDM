@@ -441,3 +441,143 @@
   .pac-signals h3,.pac-signals .pac-signal__baseline {grid-column:1/-1;}
   .pac-related__list > button {font-size:13px;}
 }
+
+
+/*
+ * ATTRIBUTES V1.3 · multicomparison radar.
+ * The four profile lines are always independently toggleable.
+ * Reclaim the entire horizontal radar panel from Profile Signals.
+ */
+.pac-column--center {
+  grid-template-rows:minmax(355px,1.35fr) minmax(220px,.86fr);
+}
+.pac-profile__body {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-height:0;
+  padding:5px 12px 9px;
+}
+.pac-profile__chart {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  align-items:center;
+}
+.pac-profile__legend {
+  display:flex;
+  flex:0 0 auto;
+  min-height:34px;
+  width:100%;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  justify-content:center;
+  padding:1px 3px 4px;
+}
+.pac-radar-key,.pac-radar-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 9px;
+  border:1px solid var(--cs-line2);
+  border-radius:99px;
+  font:600 12px/1.15 var(--cs-font);
+  white-space:nowrap;
+}
+.pac-radar-key {color:var(--cs-text);background:var(--cs-s2);}
+.pac-radar-key i {
+  display:inline-block;width:11px;height:11px;border-radius:50%;
+  background:var(--cs-lime);
+}
+.pac-radar-toggle {
+  color:var(--cs-text2);
+  background:var(--cs-s2);
+  cursor:pointer;
+}
+.pac-radar-toggle[aria-pressed="true"] {
+  color:var(--cs-text);
+  border-color:var(--pac-series-color, var(--cs-line2));
+  background:color-mix(in srgb,var(--pac-series-color,var(--cs-text)) 9%,var(--cs-s2));
+}
+.pac-radar-toggle__mark {
+  display:inline-block;
+  width:15px;
+  height:4px;
+  border-top:3px dashed var(--pac-series-color,var(--cs-text2));
+}
+.pac-radar-toggle[aria-pressed="false"] .pac-radar-toggle__mark {opacity:.40;}
+.pac-radar-toggle:disabled {opacity:.4;cursor:not-allowed;}
+.pac-profile__radar-wrap {
+  display:flex;
+  flex:1 1 auto;
+  width:100%;
+  min-height:240px;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+.pac-profile__radar-wrap .po-radar {
+  flex:1 1 auto;
+  width:100%;
+  height:100%;
+  max-width:390px;
+  max-height:355px;
+  min-height:240px;
+  overflow:visible;
+}
+.pac-profile__radar-wrap .po-radar__label {font:700 13px var(--cs-font);fill:var(--cs-text2);}
+.pac-profile__radar-wrap .po-radar__value {font:700 18px var(--cs-font-display);fill:var(--cs-lime);}
+.pac-profile__radar-wrap .po-radar__axis:focus-visible {outline:2px solid var(--cs-lime);}
+.pac-signals {
+  display:grid;
+  flex:0 0 auto;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  align-self:stretch;
+  gap:0 12px;
+  margin-top:3px;
+  padding:4px 12px;
+  background:var(--cs-s2);
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+}
+.pac-signals h3 {display:none;}
+.pac-signals .pac-signal {
+  display:flex;
+  gap:8px;
+  min-width:0;
+  border:0;
+  padding:2px 0;
+}
+.pac-signals .pac-signal > div {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:0 7px;
+}
+.pac-signals .pac-signal strong {color:var(--cs-text2);font-size:12px;}
+.pac-signals .pac-signal b {font-size:13px;}
+.pac-signals .pac-signal > div > span {font-size:12px;margin:0;}
+.pac-signals .pac-signal__icon {width:20px;height:20px;font-size:12px;}
+.pac-signals .pac-signal__baseline {
+  grid-column:1/-1;
+  padding:5px 0 1px;
+  margin:2px 0 0;
+  font-size:12px;
+  border-top:1px solid var(--cs-line2);
+}
+@container player-space (max-width:1439px) {
+  .pac-column--center {grid-template-rows:minmax(350px,auto) minmax(250px,auto);}
+}
+@container player-space (max-width:860px) {
+  .pac-column--center {grid-template-rows:minmax(370px,auto) minmax(280px,auto);}
+  .pac-profile__body {display:flex;flex-direction:column;}
+  .pac-profile__radar-wrap {min-height:255px;}
+}
+@container player-space (max-width:520px) {
+  .pac-profile__body {display:flex;flex-direction:column;}
+  .pac-profile__radar-wrap {min-height:230px;}
+  .pac-profile__radar-wrap .po-radar {min-height:220px;max-height:325px;}
+  .pac-profile__legend {justify-content:flex-start;}
+  .pac-radar-key,.pac-radar-toggle {font-size:12px;padding:6px 8px;}
+  .pac-signals {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+}
