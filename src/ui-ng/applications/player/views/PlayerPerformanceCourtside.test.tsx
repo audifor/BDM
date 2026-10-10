@@ -9,11 +9,19 @@ import type { GameId } from '@/domain/ids'
 import type { PlayerWorkspaceContextValue } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { PlayerWorkspaceProvider } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { buildPlayerPerformanceModel } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
-import { PerformanceCourtsideForm, PerformanceCourtsideGameLog, PlayerPerformanceView } from './PlayerPerformanceView'
+import { compactPerformanceDate, PerformanceCourtsideForm, PerformanceCourtsideGameLog, PlayerPerformanceView } from './PlayerPerformanceView'
 
 afterEach(() => {
   cleanup()
   useGameStore.getState().resetGame()
+})
+
+describe('Performance compact dates', () => {
+  it('keeps the original date available while making labels short', () => {
+    expect(compactPerformanceDate('2025-10-04')).toBe('04 OCT')
+    expect(compactPerformanceDate('2025-01-18')).toBe('18 JAN')
+    expect(compactPerformanceDate('not-a-date')).toBe('not-a-date')
+  })
 })
 
 describe('PLAYER Courtside performance form', () => {
@@ -50,9 +58,14 @@ describe('PLAYER Courtside performance form', () => {
       Parameters<typeof PerformanceCourtsideGameLog>[0]['rows']}
       selectedGameId={id} onSelectGame={selected} />)
     expect(screen.getAllByRole('columnheader')).toHaveLength(8)
-    expect(screen.getByRole('button', { name: 'RMA' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'RMA' }))
+    const gameRow = screen.getByRole('row', { name: /10 OCT.*Real Madrid.*W 88-80.*19 points/i })
+    expect(gameRow).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('10 OCT')).toHaveAttribute('title', '10 OCT')
+    fireEvent.click(gameRow)
     expect(selected).toHaveBeenCalledWith(id)
+    fireEvent.keyDown(gameRow, { key: 'Enter' })
+    fireEvent.keyDown(gameRow, { key: ' ' })
+    expect(selected).toHaveBeenCalledTimes(3)
     expect(screen.queryByRole('columnheader', { name: 'FG' })).not.toBeInTheDocument()
   })
 
