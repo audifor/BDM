@@ -14,6 +14,7 @@ afterEach(cleanup)
 
 beforeEach(() => {
   window.history.replaceState({}, '', '/?ui=ng&app=home')
+  window.localStorage.clear() // each layout starts with the canonical three editable modules
   useGameStore.getState().resetGame()
 })
 
@@ -39,7 +40,8 @@ describe('HomeWorkspace', () => {
     expect(document.querySelector('[data-ng-region="home-workspace"] .ng-canon-header')).toBeNull()
     expect(screen.getByText('Próximo partido')).toBeInTheDocument()
     expect(screen.getByText('Dinámicas del choque')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Clasificación de la liga/i })).toBeInTheDocument()
+    expect(screen.getByText('Clasificación de la liga')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Clasificación de la liga/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Líderes estadísticos/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Objetivos/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Finanzas y sueldos/i })).toBeInTheDocument()
