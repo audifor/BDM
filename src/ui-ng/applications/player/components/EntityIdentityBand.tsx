@@ -9,6 +9,8 @@ import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import playerPortraitPlaceholder from '@/ui-ng/assets/images/player-portrait-placeholder.png'
+import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
+import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlayerPathwayBand'
 
 function presentationValue<T>(field: PresentationField<T>, formatter?: (value: T) => string): string {
   if (field.status === 'unavailable') return field.label ?? UNAVAILABLE_LABEL
@@ -163,9 +165,17 @@ export function EntityIdentityBand() {
         <div className="po-identity__contract-top">
           <span className="po-identity__section-label">Contract</span>
           <div className="po-identity__actions">
-            <button className="ng-btn ng-btn--ghost" type="button">Match Plan</button>
-            <button className="ng-btn ng-btn--ghost" type="button">Talk</button>
+            <button className="ng-btn ng-btn--ghost" disabled title="Acción aún no conectada" type="button">Match Plan</button>
+            <button className="ng-btn ng-btn--ghost" disabled title="Acción aún no conectada" type="button">Talk</button>
           </div>
+          <details className="po-identity__trajectory">
+            <summary aria-label="Mostrar navegación y trayectoria del jugador">TRAYECTORIA ▾</summary>
+            <div className="po-identity__trajectory-panel">
+              <h3>TRAYECTORIA DEL JUGADOR</h3>
+              <TalentOperationsNav current="player" />
+              <TalentPlayerPathwayBand playerId={identity.playerId} />
+            </div>
+          </details>
         </div>
         <div className="po-identity__contract-list">
           <StatusInstrument
