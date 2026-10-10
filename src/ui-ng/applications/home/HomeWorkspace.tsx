@@ -308,20 +308,20 @@ export function HomeWorkspace() {
             ) : (
               <ul className="home-upcoming">
                 {model.upcoming.map((game) => (
-                  <li key={game.id}>
-                    <div className="home-upcoming__main">
-                      <button
-                        className="ng-canon__link"
-                        onClick={() => openEntity({ type: 'team', teamId: game.opponentTeamId, section: 'overview' })}
-                        type="button"
-                      >
-                        {game.opponentName}
-                      </button>
-                      <span>{game.venue}</span>
-                    </div>
-                    <div className="home-upcoming__meta">
-                      {formatGameDateLabel(game.date)} · {game.status}
-                    </div>
+                  <li
+                    className="home-upcoming__row"
+                    key={game.id}
+                    title={`${game.opponentName} · ${formatGameDateLabel(game.date)} · ${game.venue} · Programado`}
+                  >
+                    <button
+                      className="ng-canon__link home-upcoming__opponent"
+                      onClick={() => openEntity({ type: 'team', teamId: game.opponentTeamId, section: 'overview' })}
+                      type="button"
+                    >
+                      {game.opponentName}
+                    </button>
+                    <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
+                    <span className="home-upcoming__venue">{game.venue}</span>
                   </li>
                 ))}
               </ul>
