@@ -22,6 +22,7 @@ import './player-courtside-attributes.css'
 import './player-courtside-opponent.css'
 import './player-courtside-typography.css'
 import './player-courtside-header-compact.css'
+import './player-courtside-identity-unified.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
