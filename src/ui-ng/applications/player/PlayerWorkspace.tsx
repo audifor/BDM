@@ -19,6 +19,7 @@ import './player-responsive.css'
 import './player-courtside-overview.css'
 import './player-courtside-attributes.css'
 import './player-courtside-typography.css'
+import './player-courtside-header-compact.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
