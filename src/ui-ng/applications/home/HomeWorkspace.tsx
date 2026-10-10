@@ -3,7 +3,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { getContinueStopReason } from '@/app/game/ContinueFlow'
 import { compareGameDates } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
-import { getInboxItemsForCoach, getTeamRoster } from '@/domain/world'
+import { getTeamRoster } from '@/domain/world'
 import type { GameWorld } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { calculateTeamStrength } from '@/engine/team'
@@ -127,7 +127,6 @@ export function HomeWorkspace() {
       competition,
       nextGame,
       stop,
-      inboxCount: getInboxItemsForCoach(world, world.userCoachId).length,
       homeDynamics: team === undefined ? undefined : buildTeamDynamics(world, team.id),
       awayDynamics: opponentId === undefined ? undefined : buildTeamDynamics(world, opponentId),
       upcoming: team === undefined ? [] : upcomingUserGames(world, team.id),
@@ -165,16 +164,9 @@ export function HomeWorkspace() {
   return (
     <NgHoloShell
       appLabel="Home"
-      meta={
-        <>
-          <span className="ng-type-numeric">{model.inboxCount}</span> inbox
-          {' · '}
-          {model.stop?.type === 'userGame' ? 'Match day' : model.stop?.type === 'mediaOpportunity' ? 'Press waiting' : 'Ready'}
-        </>
-      }
+      hideHeader
       region="home-workspace"
       teamId={homeTeam?.id}
-      title={homeName}
     >
       <div className="home-dashboard">
         <div className="home-dashboard__top">
