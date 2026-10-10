@@ -176,12 +176,13 @@ export function PlayerCourtsideAttributes() {
                     className="pac-radar-toggle"
                     key={id}
                     type="button"
+                    style={{ '--pac-series-color': color } as CSSProperties}
                     aria-pressed={axes !== null && visibleBaselines.includes(id)}
                     disabled={axes === null}
                     title={axes === null ? 'Sin referencia completa para las ocho familias' : (visibleBaselines.includes(id) ? 'Ocultar ' : 'Mostrar ') + label.toLowerCase()}
                     onClick={() => toggleComparison(id)}
                   >
-                    <span className="pac-radar-toggle__mark" style={{ '--pac-series-color': color } as CSSProperties} aria-hidden="true" />
+                    <span className="pac-radar-toggle__mark" aria-hidden="true" />
                     {label}
                   </button>
                 ))}
