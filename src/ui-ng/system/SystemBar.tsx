@@ -59,7 +59,13 @@ export function continueAction(stop: ContinueStopReason | undefined): ContinueAc
   return { label: 'Continue' }
 }
 
-export function SystemBar() {
+export function SystemBar({
+  courtsideTheme,
+  onToggleCourtsideTheme,
+}: {
+  readonly courtsideTheme?: 'dark' | 'light'
+  readonly onToggleCourtsideTheme?: () => void
+} = {}) {
   const world = useGameStore((state) => state.world)
   // ME-LOCK1.1: Continue simulates each day's matches in parallel workers.
   const continueGame = useGameStore((state) => state.continueGameAsync)
@@ -98,6 +104,27 @@ export function SystemBar() {
       </div>
 
       <div className="ng-system-bar__right">
+        {courtsideTheme !== undefined ? (
+          <button
+            aria-label={courtsideTheme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+            aria-pressed={courtsideTheme === 'light'}
+            className="ng-system-bar__theme-toggle"
+            onClick={onToggleCourtsideTheme}
+            title={courtsideTheme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            type="button"
+          >
+            {courtsideTheme === 'dark' ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 15.2A8.1 8.1 0 0 1 8.8 4a8.3 8.3 0 1 0 11.2 11.2Z" />
+              </svg>
+            )}
+          </button>
+        ) : null}
         {contractAttention && <button aria-label="Open contracts requiring attention" className="ng-btn ng-btn--ghost" onClick={() => syncWorkspaceAppQuery('contracts')} type="button">Contracts</button>}
         {action.unresolvedDiagnostic !== undefined && (
           <span className="ng-system-bar__diagnostic" data-ng-region="continue-diagnostic" role="status">{action.unresolvedDiagnostic}</span>
