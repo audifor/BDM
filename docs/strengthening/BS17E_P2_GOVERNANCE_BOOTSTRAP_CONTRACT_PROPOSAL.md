@@ -1,16 +1,18 @@
 # BS17E-P2 · Governance bootstrap contract proposal
 
-**Status:** `PROPOSED_NOT_APPROVED` · no grants or organizations are initialized here.
+**Status:** GOV-01–GOV-04 principles are `APPROVED_PRINCIPLE`; concrete templates, competencies, rights, appointments, grants, and bootstrap behavior remain `DETAIL_PENDING`. No grants or organizations are initialized here.
 **Baseline:** BS17E-P V1 `9469478380f84a4e10432ba2d662a92204f987b6`.
 **Execution:** `BLOCKED_BY_BS16_COMPLETE` for Facilities economic operations.
 
-## Approved principle and boundary
+## Ratified principles and limits
 
-V1 approved operational, institutional, and strategic authority levels and the principle that every permission must come from explicit, effective, traceable grants. It did not approve an operation-to-level mapping, a body topology, who gets a grant, or any organization bootstrap. This proposal recommends a deterministic, source-preserving way to fill that gap. It is not permission to write a grant or appoint a person.
+V1 approved operational, institutional, and strategic authority levels and explicit, effective, traceable grants. P2 V1 additionally approved (GOV-01) differentiated templates by actual domain-supported archetype without approving any organigram; (GOV-02) all authority must trace to a legitimate body, identified actor, valid appointment, effective grant, concrete right, applicable scope/date, and verifiable provenance; (GOV-03) user and AI parity; and (GOV-04) the option of a simulated administrative structure for a real organization whose institutional data is insufficient, visibly distinguished from documented fact and without creating people/grants absent a detailed bootstrap policy.
+
+No specific archetype-to-organigram mapping, authority competence, role-right assignment, generated person, grant, validity period, or revocation date is approved. This proposal offers candidate designs only and is not permission to write a grant or appoint a person.
 
 Governance remains the sole authority for institutional decisions. Finance remains sole authority for financial eligibility, reservations, commitments, recognition, payables, settlement, and ledger. Facilities owns physical need and work. The existing Governance structure initializer is structural only: `planGovernanceStructureInstantiation` uses caller-supplied IDs and creates missing bodies; it does not create appointments, actors, or authority grants. Its comments explicitly prohibit fabricating people or authority. There is no production bootstrap caller for Facilities grants identified at this base; test fixtures do create grants for tests.
 
-## Supported institutional archetypes found
+## Supported institutional archetypes found — structures are descriptive, not approved organigrams
 
 `GovernanceUniverseProfile` supports the following structural profiles and ownership models. These are code-supported profile kinds, not a guarantee that every production organization has a profile, verified governing documents, or usable grant.
 
@@ -20,9 +22,9 @@ Governance remains the sole authority for institutional decisions. Finance remai
 | `NBA_FRANCHISE`, `WNBA_FRANCHISE` | `PRIVATE`, `OWNERSHIP_GROUP` | `OWNERSHIP` → `BOARD` → `EXECUTIVE`. | Shared men/women teams may belong to one institution; grants currently resolve at institution + decision type, not team section. |
 | `NCAA_PROGRAM`, `NCAAW_PROGRAM` | `UNIVERSITY` | `BOARD` → `EXECUTIVE` → `ATHLETIC_DEPARTMENT`; `COMPLIANCE` optional. | These profiles map to the `NCAA` Governance universe. A profile does not prove a university parent, appointment, or spending authority. |
 | `FEDERATION` | `FEDERATION` | `BOARD` → `EXECUTIVE`; `COMPLIANCE` optional. | A federation structure is not evidence of authority over a club or facility unless explicit institutional relationships/grants establish it. |
-| Unsupported or insufficiently identified organization | None established by the profile enum | No safe template. | `INSTITUTIONAL_AUTHORITY_UNVERIFIED`; do not guess from country, competition, ownership label, or sport. |
+| Unsupported or insufficiently identified organization | None established by the profile enum | No approved structural template. A simulated administrative structure is an approved possibility under GOV-04 but has no detailed bootstrap policy yet. | Mark `SIMULATED_INSTITUTIONAL_STRUCTURE` if a future approved policy creates one; keep authority `INSTITUTIONAL_AUTHORITY_UNVERIFIED` until valid grant and appointment facts exist. |
 
-The underlying `Organization` is intentionally generic. Governance institutions separately identify their universe and linked `teamIds`, with an optional `parentInstitutionId`. The profile/structure resolver can recognize shared parent-body reuse, but it does not itself decide which shared parent may authorize Facility spending.
+The underlying `Organization` is intentionally generic. Governance institutions separately identify their universe and linked `teamIds`, with an optional `parentInstitutionId`. The profile/structure resolver can recognize shared parent-body reuse, but it does not itself decide which shared parent may authorize Facility spending. Existing body structures in the table describe current domain code only; GOV-01 explicitly leaves all specific organizational templates pending product policy.
 
 ## Recommended topology by archetype — proposal only
 
@@ -55,13 +57,20 @@ This is intentionally not a completed grant table: assigning a right to every ar
 
 **Candidate operation-level mapping for approval:** routine maintenance and restorative repairs whose scope preserves existing function → operational; extraordinary repairs and structural renovations → institutional; expansion, construction, and structural investment → strategic. Replacement and mixed-scope actions follow E-P01's evidenced nature/breakdown and remain unclassified if scope is unclear. “Extraordinary” must be defined by factual scope/authority policy, not an invented monetary threshold. This mapping does not grant any level's bodies rights.
 
-## Bootstrap proposal
+## GOV-04 · Simulated administrative structure for real organizations
+
+**Status:** possibility `APPROVED_PRINCIPLE`; bootstrap details `DETAIL_PENDING`.
+
+When authentic organizational information is insufficient, a later approved bootstrap policy may provide a simulated administrative structure. This possibility is approved; its eligibility, templates, source and lifecycle are not. It must remain labeled `SIMULATED_INSTITUTIONAL_STRUCTURE`, never replace known `DOCUMENTED_INSTITUTIONAL_FACT`, and must not by itself establish a decision right. If no valid appointment/grant follows, the affected authority remains `INSTITUTIONAL_AUTHORITY_UNVERIFIED` and the economic action stays blocked. The three labels are conceptual and should map to an existing canonical taxonomy if available.
+
+## Bootstrap proposal — details pending
 
 ### Imported / authentic organizations
 
 1. Link an organization to an institution only through a canonical source identity or an explicit reviewed mapping. Preserve imported bodies, appointments, grants, IDs, source facts, and dates exactly.
-2. Never synthesize a director, owner, trustee, board member, or grant to fill a missing profile slot. Missing information remains `INSTITUTIONAL_AUTHORITY_UNVERIFIED` and the affected command is unavailable.
-3. Structural discrepancies may be reported using the current structure resolver; do not “repair” them by overwriting an authentic record.
+2. A future approved policy may add a clearly labeled simulated structural template where authentic institutional facts are insufficient. It must never overwrite documented facts or imply an authentic organigram.
+3. Never synthesize a director, owner, trustee, board member, appointment, or grant to fill a missing source fact under this ratification. Without an actual authorized actor, appointment, and effective grant, authority remains `INSTITUTIONAL_AUTHORITY_UNVERIFIED` and the affected economic command is unavailable.
+4. Structural discrepancies may be reported using the current structure resolver; do not “repair” them by overwriting an authentic record.
 
 ### Fictional organizations generated by BDM
 
@@ -73,7 +82,7 @@ This is intentionally not a completed grant table: assigning a right to every ar
 
 ### Missing or ambiguous institutions
 
-If the universe/profile, parent, governing body, appointment, grant, actor identity, or effective date needed for an action is missing/ambiguous, return `INSTITUTIONAL_AUTHORITY_UNVERIFIED`. The game may still show the physical need and allow non-authoritative inspection. No approval, finance reservation, binding obligation, or economic work starts through that route.
+If the universe/profile, parent, governing body, appointment, grant, actor identity, or effective date needed for an action is missing/ambiguous, return `INSTITUTIONAL_AUTHORITY_UNVERIFIED`. A future simulated structure may clarify structural presentation but does not clear missing actor/grant authority. The game may still show the physical need and allow non-authoritative inspection. No approval, finance reservation, binding obligation, or economic work starts through that route.
 
 ## Effective dates, appointments, revocation, and continuity
 

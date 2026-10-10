@@ -1,17 +1,28 @@
 # BS17E · Minimum implementation plan after policy approval
 
-**Status:** plan remains proposed; only E-P01/E-P02/E-P04 principles are ratified. No implementation is authorized by this plan.
+**Status:** plan remains proposed; P1 and the nine P2 V1 principles are ratified, while all implementation details and E-P03/E-P05–E-P10 remain pending. No implementation is authorized by this plan.
 **Current gate:** `BS17E EXECUTION: BLOCKED_BY_BS16_COMPLETE`.
 
-This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. See [E-P02-SIM](BS17E_P2_SIMULATED_COST_CONTRACT_PROPOSAL.md) and [E-P04-GOV-BOOTSTRAP](BS17E_P2_GOVERNANCE_BOOTSTRAP_CONTRACT_PROPOSAL.md): both are proposals, not approvals. E-P02 simulated offers cannot be LIVE until its source/calibration/lifecycle contract is approved; Governance grants cannot be bootstrapped until their organization-specific policy is approved.
+This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. [P2 V1](BS17E_P2_V1_APPROVED_POLICY.md) ratifies principles only; its detailed cost and governance contracts remain proposals. Simulated offers cannot be LIVE until source/calibration/lifecycle detail is approved; Governance grants cannot be bootstrapped until organization-specific policy is approved.
 
 ## Preconditions for any implementation
 
 - BS16 global has a committed PASS and its canonical integration base is explicitly selected.
-- Product owner has resolved E-P01 category/breakdown details, approved E-P02-SIM and E-P04-GOV-BOOTSTRAP, ratified/replaced E-P03 and E-P05–E-P10, and approved the Governance operation/level mapping.
+- Product owner has approved the necessary E-P01 category/breakdown details, detailed E-P02-SIM and E-P04-GOV-BOOTSTRAP subcontracts, ratified/replaced E-P03 and E-P05–E-P10, and approved the Governance operation/level mapping.
 - Real source-backed cost/contract evidence exists for the operation being certified; unsupported worlds remain unknown.
 - Finance confirms the adapter contract for reservation, commitment, recognition, payable, settlement, currency, period, recurrence, and cancellation.
 - One isolated milestone branch/worktree is created from the approved base; no Finance or main worktree is modified incidentally.
+
+## Design gates before implementation
+
+The following documentary decisions remain prerequisites; do not implement them by inference from the ratified principles:
+
+- **A. Cost catalog sources and calibration:** authorize eligible sources, scope/unit matching, coverage, calibration evidence, versioning and validity. No values, formulas or price generation are approved yet.
+- **B. Synthetic counterparty identity and generation:** define provenance, identity, count/distribution, specialties, territory, capacity, offer selection and continuity before creating any simulated counterparty.
+- **C. Governance templates and bootstrap:** define supported archetype templates, legitimate bodies, bootstrap eligibility, actor appointments, rights, scope/date and provenance. No people or grants are approved for creation yet.
+- **D. Remaining product and Finance contracts:** resolve E-P03 and E-P05–E-P10 against the certified global BS16 contract, including applicable transitions and lifecycle gates.
+
+The last inspected BS16 Finance roadmap recorded BS16M PASS and BS16N as the final certification still pending; recheck the canonical certified state before any implementation. The gate remains `BS17E EXECUTION: BLOCKED_BY_BS16_COMPLETE` until BS16 global closure and all policy gates above are satisfied.
 
 ## E-A · Authorized maintenance and repair
 
