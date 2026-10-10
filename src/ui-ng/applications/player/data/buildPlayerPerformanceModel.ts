@@ -1,4 +1,5 @@
 import type { CompetitionId, GameId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
+import { MATCH_SHOT_ZONE_IDS, isThreePointZone, type MatchShotZoneId, type MatchShotZoneBreakdown } from '@/domain/stats/MatchStatLog'
 import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
 import { calculateStandingsForCompetition } from '@/engine/competition/standings'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
@@ -76,10 +77,29 @@ export interface PerformanceShotZoneModel {
   readonly share: number
 }
 
+export interface DetailedPerformanceShotZone {
+  readonly id: MatchShotZoneId
+  readonly label: string
+  readonly made: number
+  readonly attempted: number
+  readonly percentage: string | null
+  readonly share: number
+  readonly points: number
+}
+export const PERFORMANCE_ZONE_LABELS: Readonly<Record<MatchShotZoneId, string>> = {
+  RESTRICTED: 'Restricted', RIM: 'At the rim', SHORT_PAINT: 'Short paint',
+  FLOATER_RANGE: 'Floater range', MIDRANGE: 'Midrange', LONG_MIDRANGE: 'Long midrange',
+  CORNER_THREE: 'Corner 3', ABOVE_BREAK_THREE: 'Above break 3', DEEP: 'Deep 3',
+}
+
 export interface PerformanceShotProfileModel {
   readonly zones: readonly PerformanceShotZoneModel[]
   readonly totalAttempts: number
   readonly note: string
+  /** Present only when ALL selected matches with attempts have complete
+   * 9-zone evidence. Otherwise fall back to the exact 2PT/3PT aggregate. */
+  readonly detailedZones?: readonly DetailedPerformanceShotZone[]
+  readonly detailedProvenance?: 'OBSERVED' | 'MODELLED' | 'MIXED'
 }
 
 export interface PlayerGameLogRow {
@@ -460,9 +480,40 @@ function buildEfficiencyMetrics(
  * The two zones the save can support. Shot coordinates are not stored, so a six-zone chart would be
  * invention; two-point and three-point attempts are recorded per game and are shown as they are.
  */
-function buildShotProfile(aggregate: PlayerAggregateStats): PerformanceShotProfileModel {
+function buildShotProfile(
+  aggregate: PlayerAggregateStats,
+  filteredLogs: readonly { readonly stats: { readonly fieldGoalsAttempted: number }; readonly shotZones?: MatchShotZoneBreakdown }[],
+): PerformanceShotProfileModel {
   const attempts = aggregate.fieldGoalsAttempted
   const share = (value: number): number => (attempts === 0 ? 0 : Math.round((value / attempts) * 100))
+  const attemptedGames = filteredLogs.filter((line) => line.stats.fieldGoalsAttempted > 0)
+  const completeEvidence = attemptedGames.length > 0 && attemptedGames.every((line) => line.shotZones !== undefined)
+  const grouped = Object.fromEntries(MATCH_SHOT_ZONE_IDS.map((id) => [id, { made: 0, attempted: 0 }])) as
+    Record<MatchShotZoneId, { made: number; attempted: number }>
+  const provenances = new Set<'OBSERVED' | 'MODELLED'>()
+  if (completeEvidence) {
+    for (const line of attemptedGames) {
+      const evidence = line.shotZones!
+      provenances.add(evidence.provenance)
+      for (const id of MATCH_SHOT_ZONE_IDS) {
+        const tally = evidence.counts[id]
+        if (!tally) continue
+        grouped[id].made += tally.made
+        grouped[id].attempted += tally.attempted
+      }
+    }
+  }
+  const detailedZones: DetailedPerformanceShotZone[] | undefined = completeEvidence
+    ? MATCH_SHOT_ZONE_IDS.map((id) => ({
+      id, label: PERFORMANCE_ZONE_LABELS[id], made: grouped[id].made,
+      attempted: grouped[id].attempted,
+      percentage: formatPercentage(grouped[id].made, grouped[id].attempted),
+      share: share(grouped[id].attempted),
+      points: grouped[id].made * (isThreePointZone(id) ? 3 : 2),
+    })) : undefined
+  const detailedProvenance = !completeEvidence ? undefined :
+    provenances.size > 1 ? 'MIXED' as const : provenances.has('MODELLED') ? 'MODELLED' as const : 'OBSERVED' as const
+
   return {
     zones: [
       {
@@ -485,7 +536,11 @@ function buildShotProfile(aggregate: PlayerAggregateStats): PerformanceShotProfi
       },
     ],
     totalAttempts: attempts,
-    note: 'Two-point and three-point attempts are stored per game; the save records no shot coordinates, so the court shows the two zones it can support.',
+    note: completeEvidence
+      ? detailedProvenance === 'OBSERVED' ? '9 shot zones observed in MatchEngine events; individual shot coordinates are not stored.'
+        : '9-zone subdivisions include provisional background-model estimates, not observed shot locations.'
+      : 'Only 2PT/3PT totals are known for the full selection. Older matches cannot be divided into unrecorded zones.',
+    ...(detailedZones === undefined ? {} : { detailedZones, detailedProvenance }),
   }
 }
 
@@ -654,7 +709,7 @@ export function buildPerformanceViewSnapshot(
     contextLabel,
     kpiStrip: buildKpiStrip(aggregate, averages),
     efficiencyMetrics: buildEfficiencyMetrics(aggregate, teamTotalsFor(world, filteredLogs)),
-    shotProfile: buildShotProfile(aggregate),
+    shotProfile: buildShotProfile(aggregate, filteredLogs),
     splits: buildSplits(world, playerId, filteredLogs, seasonId),
     splitsNote: SPLITS_NOTE,
     recentForm,
