@@ -18,7 +18,8 @@ import { buildPlayerScoutingModel } from '@/ui-ng/applications/player/data/build
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { useGameStore } from '@/stores/gameStore'
 import { getUserTeam } from '@/engine/calendar'
-import { getAddressableScoutingPlayerIds } from '@/app/scouting'
+import { getAddressableScoutingPlayerIds, getAvailableScoutingEvaluators } from '@/app/scouting'
+import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { ScoutingModalFrame, RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
 import { ReportDetailModal } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import type { ScoutingMission, ScoutingPriority } from '@/domain/scouting'
@@ -32,6 +33,7 @@ import type { ScoutingMission, ScoutingPriority } from '@/domain/scouting'
  */
 export function PlayerScoutingReportView() {
   const { model, playerId } = usePlayerWorkspace()
+  const { setActiveApp } = useNgWorkspaceNavigation()
   const world = useGameStore((state) => state.world)
   const submitScouting = useGameStore((state) => state.requestScoutingAssignment)
   const updatePriority = useGameStore((state) => state.updateScoutingAssignmentPriority)
@@ -61,7 +63,18 @@ export function PlayerScoutingReportView() {
   const addressable = world !== null && team !== undefined && playerId !== null && getAddressableScoutingPlayerIds(world, team.id).includes(playerId)
   const priorityOrder: readonly ScoutingPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
   const canIncrease = assignment !== undefined && assignment.priority !== 'URGENT'
-  const canRequest = assignment === undefined && addressable
+  const scoutCapacity = world !== null && team !== undefined &&
+    (['QUICK_LOOK', 'FULL_REPORT', 'SKILL_EVALUATION'] as const)
+      .some((mission) => getAvailableScoutingEvaluators(world, team.id, mission).length > 0)
+  const requestReason = assignment !== undefined
+    ? 'El jugador tiene una evaluación ' + (assignment.status === 'ACTIVE' ? 'en curso' : 'en cola') +
+      '. Puedes seguirla, cambiar su prioridad o cancelarla desde esta pantalla.'
+    : !addressable
+      ? 'Este jugador aún no es abordable por tu club. Usa la cobertura de Scouting Centre para descubrir jugadores de su competición o país.'
+      : !scoutCapacity
+        ? 'No hay ningún scout elegible con capacidad disponible. Revisa las asignaciones y carga de trabajo.'
+        : null
+  const canRequest = requestReason === null
   const openRequest = (mission: ScoutingMission) => { setRequestMission(mission); setActionModal('request') }
   const onScoutingAction = (id: string) => {
     if (id === 'detailed-report' && latestReport !== undefined) setReportModalId(latestReport.id)
@@ -109,11 +122,18 @@ export function PlayerScoutingReportView() {
           weaknesses={scouting.weaknesses}
         />
         <ScoutingActionsPanel
-          note={assignment === undefined ? 'No active assignment.' : `${assignment.missionType.replaceAll('_', ' ')} · ${assignment.status.toLowerCase()} · ${assignment.priority.toLowerCase()} priority.`}
+          note={requestReason ?? (assignment === undefined ? 'Sin asignación activa. Puedes solicitar una evaluación.' : `${assignment.missionType.replaceAll('_', ' ')} · ${assignment.status.toLowerCase()} · ${assignment.priority.toLowerCase()} priority.`)}
           onAction={onScoutingAction}
           disabled={{ 'detailed-report': latestReport === undefined, 'assign-scout': !canRequest, 'request-report': !canRequest, 'watch-next-game': !canRequest || nextGame === undefined, 'increase-priority': !canIncrease, 'end-scouting': assignment === undefined }}
-          titles={{ 'detailed-report': latestReport === undefined ? 'No completed report exists.' : 'Open the latest report.', 'assign-scout': !canRequest ? 'An assignment is active or this Player is not addressable.' : 'Choose mission, Scout and priority.', 'request-report': !canRequest ? 'An assignment is active or this Player is not addressable.' : 'Configure a scouting report.', 'watch-next-game': nextGame === undefined ? 'No upcoming game involves this Player.' : 'Request a Live Game observation.', 'increase-priority': !canIncrease ? 'No active assignment, or already urgent.' : 'Increase to the next priority.', 'end-scouting': assignment === undefined ? 'No active assignment.' : 'Cancel the active assignment.' }}
+          titles={{ 'detailed-report': latestReport === undefined ? 'No completed report exists.' : 'Open the latest report.', 'assign-scout': requestReason ?? 'Choose mission, Scout and priority.', 'request-report': requestReason ?? 'Configure a scouting report.', 'watch-next-game': nextGame === undefined ? 'No upcoming game involves this Player.' : 'Request a Live Game observation.', 'increase-priority': !canIncrease ? 'No active assignment, or already urgent.' : 'Increase to the next priority.', 'end-scouting': assignment === undefined ? 'No active assignment.' : 'Cancel the active assignment.' }}
         />
+        {requestReason !== null && (
+          <div className="po-sc-request-guidance" role="status">
+            <strong>SOLICITUD DE EVALUACIÓN NO DISPONIBLE</strong>
+            <p>{requestReason}</p>
+            {!addressable && <button type="button" onClick={() => setActiveApp('scouting')}>ABRIR SCOUTING CENTRE ›</button>}
+          </div>
+        )}
       </div>
 
       {/* Band 3 — projection, potential, character and fit. */}
