@@ -53,14 +53,15 @@ export function PlayerOpponentAttributes() {
       (item.status === 'QUEUED' || item.status === 'ACTIVE'))
   const addressable = world !== null && team !== undefined && playerId !== null &&
     getAddressableScoutingPlayerIds(world, team.id).includes(playerId)
-  const eligibleScouts = world === null || team === undefined ? [] :
-    getAvailableScoutingEvaluators(world, team.id, 'QUICK_LOOK')
+  const hasAvailableEvaluator = world !== null && team !== undefined &&
+    (['QUICK_LOOK', 'FULL_REPORT', 'SKILL_EVALUATION'] as const)
+      .some((mission) => getAvailableScoutingEvaluators(world, team.id, mission).length > 0)
   const requestBlocker = pending !== undefined
     ? 'Ya hay una evaluación ' + (pending.status === 'ACTIVE' ? 'en curso' : 'en cola') +
       '. Avanza días para completarla o gestiona la asignación desde Scouting Report.'
     : !addressable
       ? 'El jugador todavía no es una identidad abordable por tu club. Descúbrelo mediante cobertura territorial o contactos autorizados en Scouting.'
-      : eligibleScouts.length === 0
+      : !hasAvailableEvaluator
         ? 'No hay evaluadores autorizados con capacidad para Quick Look. Consulta las asignaciones y carga del staff en Scouting.'
         : null
   const requestAssessment = (mission: ScoutingMission) => {
@@ -161,6 +162,7 @@ export function PlayerOpponentAttributes() {
     {world !== null && team !== undefined && playerId !== null && requestOpen && requestBlocker === null && (
       <RequestScoutingModal
         world={world} teamId={team.id} playerId={playerId} initialMission={requestMission}
+        initialSkillFamily={selectedFamily}
         onClose={() => setRequestOpen(false)} onSubmit={submitScouting}
       />
     )}
