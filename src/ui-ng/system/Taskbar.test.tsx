@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
@@ -47,8 +47,10 @@ describe('Taskbar simulation status', () => {
 describe('Grouped entity instances in the taskbar', () => {
   it('shows two player dossiers, can close one and restore the other', () => {
     mountTaskbar()
-    navigateToPlayer('player:alpha' as PlayerId)
-    navigateToPlayer('player:beta' as PlayerId)
+    act(() => {
+      navigateToPlayer('player:alpha' as PlayerId)
+      navigateToPlayer('player:beta' as PlayerId)
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Ver 2 instancias de Player' }))
     const list = screen.getByRole('menu', { name: 'Instancias de Player' })
     expect(within(list).getByRole('menuitem', { name: 'player:alpha' })).toBeInTheDocument()
@@ -64,7 +66,7 @@ describe('Grouped entity instances in the taskbar', () => {
     mountTaskbar()
     navigateToPlayer('player:alpha' as PlayerId)
     navigateToPlayer('player:beta' as PlayerId)
-    navigateToStaff('staff:alpha' as StaffPersonId)
+    act(() => navigateToStaff('staff:alpha' as StaffPersonId))
     fireEvent.click(screen.getByRole('button', { name: 'Player', exact: true }))
     expect(screen.queryByRole('button', { name: 'Ver 2 instancias de Player' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ver 1 instancias de Staff' })).toBeInTheDocument()
@@ -74,8 +76,10 @@ describe('Grouped entity instances in the taskbar', () => {
 
   it('retains distinct staff dossiers, with names and individual actions', () => {
     mountTaskbar()
-    navigateToStaff('staff:first' as StaffPersonId)
-    navigateToStaff('staff:second' as StaffPersonId)
+    act(() => {
+      navigateToStaff('staff:first' as StaffPersonId)
+      navigateToStaff('staff:second' as StaffPersonId)
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Ver 2 instancias de Staff' }))
     const list = screen.getByRole('menu', { name: 'Instancias de Staff' })
     fireEvent.click(within(list).getByRole('menuitem', { name: 'staff:first' }))
