@@ -16,6 +16,7 @@ import './player-compare.css'
 import './player-scouting.css'
 import './player-scouting-board.css'
 import './player-responsive.css'
+import './player-courtside-overview.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -68,8 +69,6 @@ import { resolveBdmPlayerHeightMode } from '@/ui-ng/system/responsive/breakpoint
 import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 
 import { syncPlayerViewQueryFromApps } from '@/ui-ng/workspace/workspaceApps'
-import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
-import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlayerPathwayBand'
 
 function PlayerWorkspaceShell({
   data,
@@ -291,6 +290,7 @@ function PlayerWorkspaceLayout({
   return (
     <div
       className="po-root"
+      data-bdm-player-overview={activeView === 'overview' ? 'true' : undefined}
       data-bdm-player-height={playerSize.height}
       data-bdm-player-height-mode={playerSize.height > 0 ? resolveBdmPlayerHeightMode(playerSize.height) : undefined}
       data-bdm-player-width={playerSize.width}
@@ -338,8 +338,6 @@ function PlayerWorkspaceLayout({
           }
           main={
             <div className="po-workspace-content" data-ng-region="player-workspace-content">
-              <TalentOperationsNav current="player" />
-              <TalentPlayerPathwayBand playerId={model!.identity.playerId} />
               {activeView === 'overview' && <PlayerOverviewView />}
               {activeView === 'attributes' && <PlayerAttributesView />}
               {activeView === 'performance' && <PlayerPerformanceView />}
