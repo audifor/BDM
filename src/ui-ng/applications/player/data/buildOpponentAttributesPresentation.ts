@@ -76,10 +76,15 @@ export function buildScoutedFamilyProfiles(access: OpponentAccess): readonly Sco
   })
 }
 
-/** Never close the spider polygon by inventing values for unknown families. */
+/** Never close the spider polygon with unknown or low-evidence families.
+ * Requiring every rating and at least 50% mean evidence coverage/confidence
+ * is a visual guard only, not a change to canonical scouting authorization.
+ */
 export function hasScoutedRadarProfile(families: readonly ScoutedFamilyProfile[]): boolean {
   return families.length === RADAR_CATEGORY_ORDER.length
-    && families.every((family) => family.isComplete && family.estimate !== null)
+    && families.every((family) =>
+      family.isComplete && family.estimate !== null
+      && (family.coverage ?? 0) >= 50 && (family.confidence ?? 0) >= 50)
 }
 
 export function opponentKnowledgeSummary(access: OpponentAccess): {
