@@ -23,7 +23,12 @@ function splitMeasure(field: PresentationField<string>): { readonly value: strin
   }
   const match = field.value.match(/^(\d+(?:\.\d+)?)\s*(.*)$/)
   if (match === null) return { value: field.value, unit: '' }
-  return { value: match[1]!, unit: match[2] ?? '' }
+  // Presentation-only rounding. The canonical physical measurements retain full precision.
+  const measurement = Number(match[1])
+  return {
+    value: Number.isFinite(measurement) ? String(Math.round(measurement)) : match[1]!,
+    unit: match[2] ?? '',
+  }
 }
 
 export function TeamCrest({ code, size = 28 }: { readonly code: string; readonly size?: number }) {
