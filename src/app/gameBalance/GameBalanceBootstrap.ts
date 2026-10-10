@@ -173,6 +173,11 @@ export function gameBalanceCostRecords(registeredOn: GameDate): readonly Facilit
         sourceId: gameBalanceId('catalog-source', kind), version: '1', calibration: GAME_BALANCE_CATALOG_CALIBRATION,
       }))
     }
+    records.push(createFacilityCostCatalogEntry({
+      id: gameBalanceCatalogEntryId(kind, 'SERVICE_CONSERVATION'), interventionType: 'SERVICE_CONSERVATION', physicalUnit: 'COMPONENT', componentType: null, market: market.key,
+      currencyCode: market.currencyCode, unitAmountMinorUnits: market.servicePriceMinorUnits, effectiveOn: registeredOn, validUntil: null, sourceKind: 'SIMULATED_MODEL',
+      sourceId: gameBalanceId('catalog-source', kind), version: '1', calibration: GAME_BALANCE_CATALOG_CALIBRATION,
+    }))
   }
   for (const provider of GAME_BALANCE_PROVIDERS) {
     records.push(createFacilityProvider({

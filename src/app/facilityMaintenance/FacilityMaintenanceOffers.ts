@@ -59,7 +59,7 @@ export function requestFacilityOffers(world: GameWorld, input: { readonly teamId
   const team = world.teams[input.teamId]
   if (team === undefined) return blocked('UNKNOWN_TEAM')
   const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, input.operationId))
-  if (lifecycle === null || lifecycle.projectId !== null) return blocked('OPERATION_NOT_FOUND')
+  if (lifecycle === null || lifecycle.projectId !== null || lifecycle.interventionType === 'SERVICE_CONSERVATION') return blocked('OPERATION_NOT_FOUND')
   if (lifecycle.organizationId !== String(team.organizationId)) return blocked('NOT_CLUB_FACILITY')
   if (lifecycle.cancelled) return blocked('OPERATION_CANCELLED')
   if (lifecycle.decisionId !== null) return blocked('OFFER_LOCKED_BY_DECISION')

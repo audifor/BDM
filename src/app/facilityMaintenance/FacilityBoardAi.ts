@@ -76,6 +76,21 @@ function boardApprovesInvestment(world: GameWorld, operationId: string): boolean
   return preview.status === 'AFFORDABLE_NOW'
 }
 
+/**
+ * Service rule: a recurring contract is an annual commitment. The Board approves it only when Finance allows the first period now and the
+ * whole contract value fits within the FACILITY authorization headroom, so recurring costs can never crowd out the line.
+ */
+function boardApprovesService(world: GameWorld, operationId: string): boolean {
+  const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
+  if (lifecycle === null || lifecycle.selectedOfferId === null || lifecycle.organizationId === null) return false
+  const offer = world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
+  if (offer === undefined || offer.recordKind !== 'SERVICE_OFFER' || world.currentDate < offer.validFrom || world.currentDate > offer.validUntil) return false
+  const preview = evaluateOrganizationFinancialCommitment(world, { organizationId: lifecycle.organizationId, currency: offer.amountPerPeriod.currencyCode, amount: offer.amountPerPeriod, category: 'FACILITY' })
+  if (preview.status !== 'AFFORDABLE_NOW') return false
+  const line = getOrganizationFinancialAuthorization(world, { organizationId: lifecycle.organizationId, currencyCode: offer.amountPerPeriod.currencyCode }).lines.find((item) => item.category === 'FACILITY')
+  return line === undefined || offer.amountPerPeriod.minorUnits * offer.termPeriods <= line.availableHeadroomMinorUnits
+}
+
 /** Decides every Facilities decision that was requested before today and still awaits its approvers. Deterministic and idempotent. */
 export function processBoardFacilityDecisions(world: GameWorld): GameWorld {
   let current = world
@@ -95,7 +110,7 @@ export function processBoardFacilityDecisions(world: GameWorld): GameWorld {
       const actor = activeAppointee(current, bodyId)
       // The user's own appointments are never decided by the AI: only simulated people act as the Board.
       if (actor === undefined || (actor.kind === 'COACH' && actor.id === current.userCoachId)) continue
-      const approve = purpose === 'CANCELLATION' ? lifecycle.stage !== 'WORK_COMPLETED' && lifecycle.costFactId === null : lifecycle.projectId !== null ? boardApprovesInvestment(current, operationId) : boardApprovesWork(current, operationId)
+      const approve = purpose === 'CANCELLATION' ? lifecycle.stage !== 'WORK_COMPLETED' && lifecycle.costFactId === null : lifecycle.interventionType === 'SERVICE_CONSERVATION' ? boardApprovesService(current, operationId) : lifecycle.projectId !== null ? boardApprovesInvestment(current, operationId) : boardApprovesWork(current, operationId)
       const outcome = recordFacilityMaintenanceDecisionEvent(current, { teamId, decisionId, kind: approve ? 'APPROVED' : 'REJECTED', bodyId, actor })
       if (outcome.status === 'APPLIED') current = outcome.world
     }

@@ -41,6 +41,7 @@ import {
   type FacilityEconomyRecord,
   type FacilityMaintenanceInterventionType,
   type FacilityCapitalOffer,
+  type FacilityServiceOffer,
   type FacilityMaintenanceOffer,
   type FacilityOperationEvent,
   type FacilityOperationEventKind,
@@ -243,7 +244,7 @@ export function clubOperation(world: GameWorld, teamId: TeamId, operationId: str
   if (team === undefined) return { reason: 'UNKNOWN_TEAM' }
   const lifecycle = lifecycleOf(world, operationId)
   if (lifecycle === null) return { reason: 'OPERATION_NOT_FOUND' }
-  if ((scope === 'MAINTENANCE' && lifecycle.projectId !== null) || (scope === 'CAPITAL' && lifecycle.projectId === null)) return { reason: 'OPERATION_NOT_FOUND' }
+  if ((scope === 'MAINTENANCE' && (lifecycle.projectId !== null || lifecycle.interventionType === 'SERVICE_CONSERVATION')) || (scope === 'CAPITAL' && lifecycle.projectId === null)) return { reason: 'OPERATION_NOT_FOUND' }
   if (lifecycle.organizationId !== team.organizationId) return { reason: 'NOT_CLUB_FACILITY' }
   if (lifecycle.cancelled) return { reason: 'OPERATION_CANCELLED' }
   return { lifecycle, organizationId: String(team.organizationId) }
@@ -341,6 +342,18 @@ export function checkCapitalOfferForOperation(world: GameWorld, lifecycle: Facil
   return { offer }
 }
 
+export function checkServiceOffer(world: GameWorld, lifecycle: FacilityOperationLifecycle, organizationId: string, offerId: string): { readonly offer: FacilityServiceOffer } | { readonly reason: FacilityMaintenanceReason } {
+  const offer = world.facilityEconomyRecordsById[offerId]
+  if (offer === undefined || offer.recordKind !== 'SERVICE_OFFER') return { reason: 'OFFER_NOT_FOUND' }
+  if (offer.organizationId !== organizationId || offer.facilityId !== lifecycle.facilityId) return { reason: 'OFFER_SCOPE_MISMATCH' }
+  if (compareGameDates(world.currentDate, offer.validFrom) < 0) return { reason: 'OFFER_NOT_YET_VALID' }
+  if (compareGameDates(world.currentDate, offer.validUntil) > 0) return { reason: 'OFFER_EXPIRED' }
+  const profile = world.organizationFinancialProfilesById[organizationId as never]
+  if (profile === undefined) return { reason: 'FINANCE_PROFILE_UNAVAILABLE' }
+  if (offer.amountPerPeriod.currencyCode !== String(profile.baseCurrencyCode)) return { reason: 'OFFER_CURRENCY_MISMATCH' }
+  return { offer }
+}
+
 export function selectFacilityMaintenanceOffer(world: GameWorld, input: SelectFacilityMaintenanceOfferInput): FacilityMaintenanceCommandResult {
   const resolved = clubOperation(world, input.teamId, input.operationId)
   if ('reason' in resolved) return blocked(world, input.operationId, resolved.reason)
@@ -378,7 +391,7 @@ export function requestFacilityMaintenanceDecision(world: GameWorld, input: Requ
   if (purpose === 'WORK') {
     if (lifecycle.selectedOfferId === null) return blocked(world, input.operationId, 'COST_UNKNOWN')
     if (lifecycle.decisionId !== null) return result('NO_CHANGE', world, input.operationId, [], [], lifecycle.decisionId)
-    const offer = lifecycle.projectId === null ? checkOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId) : checkCapitalOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId)
+    const offer = lifecycle.interventionType === 'SERVICE_CONSERVATION' ? checkServiceOffer(world, lifecycle, organizationId, lifecycle.selectedOfferId) : lifecycle.projectId === null ? checkOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId) : checkCapitalOfferForOperation(world, lifecycle, organizationId, lifecycle.selectedOfferId)
     if ('reason' in offer) return blocked(world, input.operationId, offer.reason)
   } else {
     if (lifecycle.decisionId === null) return blocked(world, input.operationId, 'OPERATION_STAGE_INVALID')
@@ -449,7 +462,7 @@ export function recordFacilityMaintenanceDecisionEvent(world: GameWorld, input: 
     // Approval is of one exact cost: an expired selected offer cannot be approved against.
     const lifecycle = resolved.lifecycle
     const offer = lifecycle.selectedOfferId === null ? undefined : world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
-    if (offer === undefined || (offer.recordKind !== 'OFFER' && offer.recordKind !== 'CAPITAL_OFFER')) return result('BLOCKED', world, operationId, ['COST_UNKNOWN'], [], input.decisionId)
+    if (offer === undefined || (offer.recordKind !== 'OFFER' && offer.recordKind !== 'CAPITAL_OFFER' && offer.recordKind !== 'SERVICE_OFFER')) return result('BLOCKED', world, operationId, ['COST_UNKNOWN'], [], input.decisionId)
     if (compareGameDates(world.currentDate, offer.validFrom) < 0 || compareGameDates(world.currentDate, offer.validUntil) > 0) return result('BLOCKED', world, operationId, ['OFFER_EXPIRED'], [], input.decisionId)
   }
   const grantIds = eventGrantIds(world, input.kind, input.bodyId, decision.institutionId, world.currentDate, decision.decisionType as FacilityDecisionType)

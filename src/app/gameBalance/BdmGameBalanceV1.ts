@@ -41,6 +41,8 @@ export interface GameBalanceMarket {
   readonly basePriceMinorUnits: Readonly<Record<GameBalanceWorkKind, number>>
   /** Base price per capital investment kind (minor units): renovation < replacement < expansion. */
   readonly investmentPriceMinorUnits: Readonly<Record<GameBalanceInvestmentKind, number>>
+  /** Conservation service fee per period (simulated). */
+  readonly servicePriceMinorUnits: number
 }
 
 export const GAME_BALANCE_INVESTMENT_KINDS = ['RENOVATION', 'REPLACEMENT', 'EXPANSION'] as const
@@ -59,6 +61,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 400_000_000, MEDIUM: 600_000_000, LARGE: 900_000_000 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 1_200_000, PREVENTIVE_MAINTENANCE: 2_000_000, MINOR_REPAIR: 4_000_000, MINOR_REPLACEMENT: 9_000_000, MAJOR_REPAIR: 18_000_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 100_000_000, REPLACEMENT: 200_000_000, EXPANSION: 280_000_000 }),
+    servicePriceMinorUnits: 600_000,
   }),
   nbaLike: Object.freeze({
     key: 'BDM-SIM-USD-NBA', currencyCode: 'USD' as const,
@@ -67,6 +70,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 700_000_000, MEDIUM: 1_000_000_000, LARGE: 1_300_000_000 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 1_800_000, PREVENTIVE_MAINTENANCE: 3_000_000, MINOR_REPAIR: 6_000_000, MINOR_REPLACEMENT: 13_500_000, MAJOR_REPAIR: 27_000_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 150_000_000, REPLACEMENT: 300_000_000, EXPANSION: 420_000_000 }),
+    servicePriceMinorUnits: 900_000,
   }),
   ncaaLike: Object.freeze({
     key: 'BDM-SIM-EUR-COLLEGE', currencyCode: 'EUR' as const,
@@ -75,6 +79,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 90_000_000, MEDIUM: 130_000_000, LARGE: 180_000_000 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 480_000, PREVENTIVE_MAINTENANCE: 800_000, MINOR_REPAIR: 1_600_000, MINOR_REPLACEMENT: 3_600_000, MAJOR_REPAIR: 7_200_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 40_000_000, REPLACEMENT: 80_000_000, EXPANSION: 112_000_000 }),
+    servicePriceMinorUnits: 240_000,
   }),
 })
 
@@ -90,6 +95,9 @@ export const WORK_KIND_RESULT: Readonly<Record<GameBalanceWorkKind, { readonly m
 /** The Board approves a non-urgent (MINOR) quote only while it is at most this share (permille) of the remaining FACILITY authorization. */
 export const GAME_BALANCE_BOARD_ROUTINE_SHARE_PERMILLE = 250
 /** Capital investments: duration at the standard provider, promised result, and when the situation justifies the investment. */
+/** Recurring conservation contract (simulated): monthly periods, one year, 30 days' notice. */
+export const GAME_BALANCE_SERVICE = Object.freeze({ periodDays: 30, termPeriods: 12, noticeDays: 30 })
+
 export const GAME_BALANCE_INVESTMENT = Object.freeze({
   RENOVATION: Object.freeze({ durationDays: 30, promisedCondition: 96, eligibleAtOrBelowCondition: 85 }),
   REPLACEMENT: Object.freeze({ durationDays: 45, promisedCondition: 100, eligibleAtOrBelowCondition: 65 }),
@@ -115,12 +123,14 @@ export interface GameBalanceProviderSpec {
   readonly executionDays: number
   /** Capital works take this share (permille) of the standard duration with this provider. */
   readonly capitalDurationPermille: number
+  /** Condition points one conservation-service period restores. */
+  readonly serviceRestorationPoints: number
   readonly workKinds: readonly GameBalanceWorkKind[]
 }
 export const GAME_BALANCE_PROVIDERS: readonly GameBalanceProviderSpec[] = Object.freeze([
-  Object.freeze({ slug: 'budget-works', displayName: 'Budget Facility Works (simulated)', specialty: 'GENERAL' as const, priceFactorPermille: 920, executionDays: 6, capitalDurationPermille: 1_500, workKinds: GAME_BALANCE_WORK_KINDS }),
-  Object.freeze({ slug: 'standard-services', displayName: 'Standard Court Services (simulated)', specialty: 'COURTS_AND_SURFACES' as const, priceFactorPermille: 1_000, executionDays: 4, capitalDurationPermille: 1_000, workKinds: GAME_BALANCE_WORK_KINDS }),
-  Object.freeze({ slug: 'rapid-systems', displayName: 'Rapid Equipment & Systems (simulated)', specialty: 'EQUIPMENT_AND_SYSTEMS' as const, priceFactorPermille: 1_120, executionDays: 2, capitalDurationPermille: 700, workKinds: GAME_BALANCE_WORK_KINDS }),
+  Object.freeze({ slug: 'budget-works', displayName: 'Budget Facility Works (simulated)', specialty: 'GENERAL' as const, priceFactorPermille: 920, executionDays: 6, capitalDurationPermille: 1_500, serviceRestorationPoints: 2, workKinds: GAME_BALANCE_WORK_KINDS }),
+  Object.freeze({ slug: 'standard-services', displayName: 'Standard Court Services (simulated)', specialty: 'COURTS_AND_SURFACES' as const, priceFactorPermille: 1_000, executionDays: 4, capitalDurationPermille: 1_000, serviceRestorationPoints: 3, workKinds: GAME_BALANCE_WORK_KINDS }),
+  Object.freeze({ slug: 'rapid-systems', displayName: 'Rapid Equipment & Systems (simulated)', specialty: 'EQUIPMENT_AND_SYSTEMS' as const, priceFactorPermille: 1_120, executionDays: 2, capitalDurationPermille: 700, serviceRestorationPoints: 4, workKinds: GAME_BALANCE_WORK_KINDS }),
 ])
 
 /** Generic simulated training facility each organization starts with when no documented Facility exists. */

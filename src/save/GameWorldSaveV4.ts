@@ -1575,10 +1575,16 @@ function parseFacilityEconomyRecords(value: unknown): readonly FacilityEconomyRe
       if (rebuilt.recordKind !== 'CAPITAL_OFFER' || rebuilt.classification !== item.classification) throw new TypeError('Save V4 FacilityCapitalOffer classification does not match its intervention')
       return rebuilt
     }
+    if (kind === 'SERVICE_OFFER') {
+      exactKeys(item, ['recordKind', 'id', 'version', 'organizationId', 'facilityId', 'interventionType', 'providerId', 'sourceKind', 'evidence', 'amountPerPeriod', 'market', 'issuedOn', 'validFrom', 'validUntil', 'periodDays', 'termPeriods', 'noticeDays', 'paymentDueDays', 'restorationPoints'], 'Save V4 FacilityServiceOffer')
+      exactKeys(record(item.evidence, 'Save V4 FacilityServiceOffer evidence'), ['sourceId', 'catalogEntryId', 'modelVersion'], 'Save V4 FacilityServiceOffer evidence')
+      exactKeys(record(item.amountPerPeriod, 'Save V4 FacilityServiceOffer fee'), ['currencyCode', 'minorUnits'], 'Save V4 FacilityServiceOffer fee')
+      return createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
+    }
     if (kind === 'OPERATION_EVENT') {
-      // BS17E-B fields added after the first BS17E-A saves: absent means null.
-      for (const key of ['projectId', 'recognitionId']) if (!Object.prototype.hasOwnProperty.call(item, key)) item[key] = null
-      exactKeys(item, ['recordKind', 'id', 'operationId', 'sequence', 'kind', 'effectiveOn', 'actor', 'organizationId', 'facilityId', 'needId', 'projectId', 'interventionType', 'offerId', 'decisionId', 'reservationId', 'costFactId', 'recognitionId', 'actionId', 'reasonCode'], 'Save V4 FacilityOperationEvent')
+      // Fields added after the first BS17E-A saves: absent means null.
+      for (const key of ['projectId', 'recognitionId', 'endsOn']) if (!Object.prototype.hasOwnProperty.call(item, key)) item[key] = null
+      exactKeys(item, ['recordKind', 'id', 'operationId', 'sequence', 'kind', 'effectiveOn', 'actor', 'organizationId', 'facilityId', 'needId', 'projectId', 'interventionType', 'offerId', 'decisionId', 'reservationId', 'costFactId', 'recognitionId', 'actionId', 'endsOn', 'reasonCode'], 'Save V4 FacilityOperationEvent')
       if (item.actor !== null) exactKeys(record(item.actor, 'Save V4 FacilityOperationEvent actor'), ['kind', 'id'], 'Save V4 FacilityOperationEvent actor')
       const rebuilt = createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
       if (rebuilt.id !== item.id) throw new TypeError('Save V4 FacilityOperationEvent id does not match its operation, sequence and kind')

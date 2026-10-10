@@ -1,5 +1,6 @@
 import type { GameWorld } from '@/domain/world'
 import { processBoardFacilityDecisions } from './FacilityBoardAi'
+import { processFacilityServices } from './FacilityServiceCommands'
 
 /**
  * The single daily Calendar entry point for Facilities management. Board decisions are processed here; AI club
@@ -8,5 +9,5 @@ import { processBoardFacilityDecisions } from './FacilityBoardAi'
  */
 export function processFacilityManagement(world: GameWorld): GameWorld {
   if (Object.keys(world.facilityEconomyRecordsById).length === 0) return world
-  return processBoardFacilityDecisions(world)
+  return processFacilityServices(processBoardFacilityDecisions(world))
 }

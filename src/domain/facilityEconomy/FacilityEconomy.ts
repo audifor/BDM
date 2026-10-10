@@ -31,8 +31,14 @@ export type FacilityMaintenanceInterventionType = (typeof FACILITY_MAINTENANCE_I
  */
 export const FACILITY_CAPITAL_INTERVENTION_TYPES = ['CAPITAL_RENOVATION', 'CAPITAL_REPLACEMENT', 'CAPITAL_EXPANSION'] as const
 export type FacilityCapitalInterventionType = (typeof FACILITY_CAPITAL_INTERVENTION_TYPES)[number]
-export type FacilityOperationInterventionType = FacilityMaintenanceInterventionType | FacilityCapitalInterventionType
-const FACILITY_ALL_INTERVENTION_TYPES = [...FACILITY_MAINTENANCE_INTERVENTION_TYPES, ...FACILITY_CAPITAL_INTERVENTION_TYPES] as const
+/**
+ * BS17E-C recurring services: a recurring expense exists only because an explicit contract does. The conservation service is a
+ * periodic maintenance visit that physically restores the facility; it is never charged merely for owning a facility.
+ */
+export const FACILITY_SERVICE_INTERVENTION_TYPES = ['SERVICE_CONSERVATION'] as const
+export type FacilityServiceInterventionType = (typeof FACILITY_SERVICE_INTERVENTION_TYPES)[number]
+export type FacilityOperationInterventionType = FacilityMaintenanceInterventionType | FacilityCapitalInterventionType | FacilityServiceInterventionType
+const FACILITY_ALL_INTERVENTION_TYPES = [...FACILITY_MAINTENANCE_INTERVENTION_TYPES, ...FACILITY_CAPITAL_INTERVENTION_TYPES, ...FACILITY_SERVICE_INTERVENTION_TYPES] as const
 
 /**
  * OPEX candidates approved by Economic Gameplay V1 for BS17E-A. A capitalizable improvement, a mixed work
@@ -69,6 +75,10 @@ export const FACILITY_OPERATION_EVENT_KINDS = [
   'COST_FACT_AUTHORIZED',
   'CANCELLATION_REQUESTED',
   'CANCELLED',
+  'SERVICE_PERIOD_PROCESSED',
+  'SERVICE_PERIOD_SKIPPED',
+  'SERVICE_TERMINATION_NOTICED',
+  'SERVICE_ENDED',
 ] as const
 export type FacilityOperationEventKind = (typeof FACILITY_OPERATION_EVENT_KINDS)[number]
 
@@ -167,6 +177,32 @@ export interface FacilityCapitalOffer {
   readonly tranches: readonly FacilityCapitalTranche[]
 }
 
+/** A recurring-service offer: the contract terms the manager signs. Immutable like every issued offer; its terms ARE the contract. */
+export interface FacilityServiceOffer {
+  readonly recordKind: 'SERVICE_OFFER'
+  readonly id: string
+  readonly version: number
+  readonly organizationId: string
+  readonly facilityId: string
+  readonly interventionType: FacilityServiceInterventionType
+  readonly providerId: string
+  readonly sourceKind: FacilityCostSourceKind
+  readonly evidence: { readonly sourceId: string; readonly catalogEntryId: string | null; readonly modelVersion: string | null }
+  /** The fee for one service period. Currency and amount are fixed for the whole term. */
+  readonly amountPerPeriod: FacilityEconomyMoney
+  readonly market: string
+  readonly issuedOn: GameDate
+  readonly validFrom: GameDate
+  readonly validUntil: GameDate
+  readonly periodDays: number
+  readonly termPeriods: number
+  /** Days of notice a termination needs; the contract keeps running (and billing) until the notice elapses. */
+  readonly noticeDays: number
+  readonly paymentDueDays: number
+  /** The physical effect of one service period: condition points restored on the most worn serviceable component. */
+  readonly restorationPoints: number
+}
+
 export interface FacilityOperationEvent {
   readonly recordKind: 'OPERATION_EVENT'
   readonly id: string
@@ -187,10 +223,12 @@ export interface FacilityOperationEvent {
   /** BS17E-B: the Finance expense recognition produced by a capital milestone (the tranche economic event). */
   readonly recognitionId: string | null
   readonly actionId: string | null
+  /** BS17E-C: the date a termination notice takes effect. */
+  readonly endsOn: GameDate | null
   readonly reasonCode: string | null
 }
 
-export type FacilityEconomyRecord = FacilityCostCatalogEntry | FacilityProvider | FacilityMaintenanceOffer | FacilityCapitalOffer | FacilityOperationEvent
+export type FacilityEconomyRecord = FacilityCostCatalogEntry | FacilityProvider | FacilityMaintenanceOffer | FacilityCapitalOffer | FacilityServiceOffer | FacilityOperationEvent
 
 const CURRENCY = /^[A-Z]{3}$/
 
@@ -424,6 +462,62 @@ export function createFacilityCapitalOffer(input: CreateFacilityCapitalOfferInpu
 export function facilityCapitalTrancheAmount(offer: FacilityCapitalOffer, tranche: FacilityCapitalTranche): number { return (offer.amount.minorUnits * tranche.permille) / 1_000 }
 export function facilityCapitalTrancheId(operationId: string, tranche: FacilityCapitalTranche): string { return `capital-tranche:${operationId}:${tranche.label.toLowerCase()}` }
 
+export interface CreateFacilityServiceOfferInput {
+  readonly id: string
+  readonly version?: number
+  readonly organizationId: string
+  readonly facilityId: string
+  readonly interventionType: FacilityServiceInterventionType
+  readonly providerId: string
+  readonly sourceKind: FacilityCostSourceKind
+  readonly evidence: { readonly sourceId: string; readonly catalogEntryId?: string | null; readonly modelVersion?: string | null }
+  readonly amountPerPeriod: FacilityEconomyMoney
+  readonly market: string
+  readonly issuedOn: GameDate | string
+  readonly validFrom: GameDate | string
+  readonly validUntil: GameDate | string
+  readonly periodDays: number
+  readonly termPeriods: number
+  readonly noticeDays: number
+  readonly paymentDueDays: number
+  readonly restorationPoints: number
+}
+
+export function createFacilityServiceOffer(input: CreateFacilityServiceOfferInput): FacilityServiceOffer {
+  const interventionType = oneOf(FACILITY_SERVICE_INTERVENTION_TYPES, input.interventionType, 'Facility service offer interventionType')
+  const sourceKind = oneOf(FACILITY_COST_SOURCE_KINDS, input.sourceKind, 'Facility service offer sourceKind')
+  const catalogEntryId = nullableText(input.evidence.catalogEntryId, 'Facility service offer catalogEntryId')
+  const modelVersion = nullableText(input.evidence.modelVersion, 'Facility service offer modelVersion')
+  if (sourceKind === 'SIMULATED_MODEL' && (catalogEntryId === null || modelVersion === null)) throw new RangeError('A simulated Facility service offer requires a calibrated catalog entry and a model version')
+  if (sourceKind !== 'SIMULATED_MODEL' && (catalogEntryId !== null || modelVersion !== null)) throw new RangeError('Only a simulated Facility service offer may reference a catalog entry or model version')
+  const issuedOn = parseGameDate(input.issuedOn)
+  const validFrom = parseGameDate(input.validFrom)
+  const validUntil = parseGameDate(input.validUntil)
+  if (compareGameDates(validFrom, issuedOn) < 0) throw new RangeError('Facility service offer validFrom cannot precede issuedOn')
+  if (compareGameDates(validUntil, validFrom) < 0) throw new RangeError('Facility service offer validUntil cannot precede validFrom')
+  const restorationPoints = positiveInt(input.restorationPoints, 'Facility service offer restorationPoints')
+  if (restorationPoints > 100) throw new RangeError('Facility service offer restorationPoints must be between 1 and 100')
+  return Object.freeze({
+    recordKind: 'SERVICE_OFFER' as const,
+    id: text(input.id, 'Facility service offer id'),
+    version: input.version === undefined ? 1 : positiveInt(input.version, 'Facility service offer version'),
+    organizationId: text(input.organizationId, 'Facility service offer organizationId'),
+    facilityId: text(input.facilityId, 'Facility service offer facilityId'),
+    interventionType,
+    providerId: text(input.providerId, 'Facility service offer providerId'),
+    sourceKind,
+    evidence: Object.freeze({ sourceId: text(input.evidence.sourceId, 'Facility service offer evidence sourceId'), catalogEntryId, modelVersion }),
+    amountPerPeriod: Object.freeze({ currencyCode: currency(input.amountPerPeriod.currencyCode, 'Facility service offer currency'), minorUnits: positiveInt(input.amountPerPeriod.minorUnits, 'Facility service offer fee') }),
+    market: text(input.market, 'Facility service offer market'),
+    issuedOn, validFrom, validUntil,
+    periodDays: positiveInt(input.periodDays, 'Facility service offer periodDays'),
+    termPeriods: positiveInt(input.termPeriods, 'Facility service offer termPeriods'),
+    noticeDays: nullableNonNegativeInt(input.noticeDays, 'Facility service offer noticeDays') ?? 0,
+    paymentDueDays: nullableNonNegativeInt(input.paymentDueDays, 'Facility service offer paymentDueDays') ?? 0,
+    restorationPoints,
+  })
+}
+
 export interface CreateFacilityOperationEventInput {
   readonly operationId: string
   readonly sequence: number
@@ -441,6 +535,7 @@ export interface CreateFacilityOperationEventInput {
   readonly costFactId?: string | null
   readonly recognitionId?: string | null
   readonly actionId?: string | null
+  readonly endsOn?: GameDate | string | null
   readonly reasonCode?: string | null
 }
 
@@ -470,6 +565,7 @@ export function createFacilityOperationEvent(input: CreateFacilityOperationEvent
     reservationId: nullableText(input.reservationId, 'Facility operation reservationId'),
     costFactId: nullableText(input.costFactId, 'Facility operation costFactId'),
     recognitionId: nullableText(input.recognitionId, 'Facility operation recognitionId'),
+    endsOn: input.endsOn === undefined || input.endsOn === null ? null : parseGameDate(input.endsOn),
     actionId: nullableText(input.actionId, 'Facility operation actionId'),
     reasonCode: nullableText(input.reasonCode, 'Facility operation reasonCode'),
   })
@@ -482,6 +578,7 @@ export function createFacilityEconomyRecord(record: FacilityEconomyRecord): Faci
     case 'PROVIDER': return createFacilityProvider(record)
     case 'OFFER': return createFacilityMaintenanceOffer({ ...record, evidence: record.evidence, terms: record.terms })
     case 'CAPITAL_OFFER': return createFacilityCapitalOffer(record)
+    case 'SERVICE_OFFER': return createFacilityServiceOffer(record)
     case 'OPERATION_EVENT': return createFacilityOperationEvent(record)
     default: throw new TypeError(`Facility economy record kind is invalid: ${String((record as { recordKind?: unknown }).recordKind)}`)
   }
@@ -536,11 +633,22 @@ export interface FacilityOperationLifecycle {
   readonly reservationId: string | null
   readonly costFactId: string | null
   readonly recognitionIds: readonly string[]
+  /** BS17E-C: processed and skipped service periods (0-based indexes) and the effective end date of a noticed termination. */
+  readonly servicePeriodsProcessed: readonly number[]
+  readonly servicePeriodsSkipped: readonly number[]
+  readonly serviceEndsOn: GameDate | null
+  readonly serviceEnded: boolean
   readonly actionId: string | null
   readonly cancellationRequestedDecisionId: string | null
   readonly lastReasonCode: string | null
   readonly cancelled: boolean
   readonly cancelledAfter: 'PROPOSAL' | 'APPROVAL_REQUEST' | 'RESERVATION' | 'CONTRACT' | 'WORK_STARTED' | 'WORK_COMPLETED' | null
+}
+
+/** The 0-based service period a processed/skipped event refers to, encoded in its reason code as `period:<n>[:detail]`. */
+export function servicePeriodIndex(reasonCode: string | null): number | null {
+  const match = reasonCode === null ? null : /^period:(\d+)/.exec(reasonCode)
+  return match === null ? null : Number(match[1])
 }
 
 /** Pure fold over the operation's events. The stage is never stored. Returns null when the operation has no events. */
@@ -552,6 +660,10 @@ export function deriveFacilityOperationLifecycle(events: readonly FacilityOperat
   let needId: string | null = null
   let projectId: string | null = null
   const recognitionIds: string[] = []
+  const servicePeriodsProcessed: number[] = []
+  const servicePeriodsSkipped: number[] = []
+  let serviceEndsOn: GameDate | null = null
+  let serviceEnded = false
   let interventionType: FacilityOperationInterventionType | null = null
   let selectedOfferId: string | null = null
   let decisionId: string | null = null
@@ -584,9 +696,13 @@ export function deriveFacilityOperationLifecycle(events: readonly FacilityOperat
       case 'COST_FACT_AUTHORIZED': costFactId = event.costFactId; break
       case 'CANCELLATION_REQUESTED': cancellationRequestedDecisionId = event.decisionId; break
       case 'CANCELLED': cancelled = true; cancelledAfter = maxStage; stage = 'CANCELLED'; break
+      case 'SERVICE_PERIOD_PROCESSED': { const index = servicePeriodIndex(event.reasonCode); if (index !== null) servicePeriodsProcessed.push(index); break }
+      case 'SERVICE_PERIOD_SKIPPED': { const index = servicePeriodIndex(event.reasonCode); if (index !== null) servicePeriodsSkipped.push(index); break }
+      case 'SERVICE_TERMINATION_NOTICED': serviceEndsOn = event.endsOn ?? serviceEndsOn; break
+      case 'SERVICE_ENDED': serviceEnded = true; cancelled = true; stage = 'CANCELLED'; break
     }
   }
-  return Object.freeze({ operationId: ordered[0]!.operationId, stage, organizationId, facilityId, needId, projectId, interventionType, selectedOfferId, decisionId, reservationId, costFactId, recognitionIds: Object.freeze([...recognitionIds]), actionId, cancellationRequestedDecisionId, lastReasonCode, cancelled, cancelledAfter })
+  return Object.freeze({ operationId: ordered[0]!.operationId, stage, organizationId, facilityId, needId, projectId, interventionType, selectedOfferId, decisionId, reservationId, costFactId, recognitionIds: Object.freeze([...recognitionIds]), servicePeriodsProcessed: Object.freeze([...servicePeriodsProcessed]), servicePeriodsSkipped: Object.freeze([...servicePeriodsSkipped]), serviceEndsOn, serviceEnded, actionId, cancellationRequestedDecisionId, lastReasonCode, cancelled, cancelledAfter })
 }
 
 /** True when the offer is in force on the given date. Expiry blocks contracting; it never deletes the offer. */
@@ -641,6 +757,16 @@ export function validateFacilityEconomyRecordCollection(records: readonly Facili
         if (entry === undefined || entry.recordKind !== 'COST_CATALOG_ENTRY' || entry.sourceKind !== 'SIMULATED_MODEL' || entry.calibration === null) throw new Error(`Facility capital offer ${record.id} references a catalog entry without authorized calibration`)
         if (entry.currencyCode !== record.amount.currencyCode || entry.market !== record.market || entry.interventionType !== record.interventionType) throw new Error(`Facility capital offer ${record.id} does not match its catalog entry scope, market or currency`)
       }
+    } else if (record.recordKind === 'SERVICE_OFFER') {
+      if (world.organizationsById[record.organizationId as never] === undefined) throw new Error(`Facility service offer ${record.id} references an unknown Organization`)
+      if (world.facilitiesById[record.facilityId as never] === undefined) throw new Error(`Facility service offer ${record.id} references an unknown Facility`)
+      const provider = byId.get(record.providerId)
+      if (provider === undefined || provider.recordKind !== 'PROVIDER') throw new Error(`Facility service offer ${record.id} references an unknown provider`)
+      if (record.evidence.catalogEntryId !== null) {
+        const entry = byId.get(record.evidence.catalogEntryId)
+        if (entry === undefined || entry.recordKind !== 'COST_CATALOG_ENTRY' || entry.sourceKind !== 'SIMULATED_MODEL' || entry.calibration === null) throw new Error(`Facility service offer ${record.id} references a catalog entry without authorized calibration`)
+        if (entry.currencyCode !== record.amountPerPeriod.currencyCode || entry.market !== record.market || entry.interventionType !== record.interventionType) throw new Error(`Facility service offer ${record.id} does not match its catalog entry scope, market or currency`)
+      }
     } else if (record.recordKind === 'OPERATION_EVENT') {
       const list = perOperation.get(record.operationId) ?? []
       list.push(record)
@@ -650,7 +776,7 @@ export function validateFacilityEconomyRecordCollection(records: readonly Facili
       if (record.needId !== null && world.facilityMaintenanceNeedsById[record.needId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown maintenance need`)
       if (record.projectId !== null && world.facilityDevelopmentProjectsById[record.projectId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown development project`)
       if (record.recognitionId !== null && world.expenseRecognitionsById[record.recognitionId as never] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown expense recognition`)
-      if (record.offerId !== null) { const referenced = byId.get(record.offerId)?.recordKind; if (referenced !== 'OFFER' && referenced !== 'CAPITAL_OFFER') throw new Error(`Facility operation event ${record.id} references an unknown offer`) }
+      if (record.offerId !== null) { const referenced = byId.get(record.offerId)?.recordKind; if (referenced !== 'OFFER' && referenced !== 'CAPITAL_OFFER' && referenced !== 'SERVICE_OFFER') throw new Error(`Facility operation event ${record.id} references an unknown offer`) }
       if (record.decisionId !== null && world.governanceDecisionsById[record.decisionId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Governance decision`)
       if (record.reservationId !== null && world.financialReservationsById[record.reservationId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown Finance reservation`)
       if (record.costFactId !== null && world.operatingCostFactsById[record.costFactId] === undefined) throw new Error(`Facility operation event ${record.id} references an unknown operating cost fact`)
