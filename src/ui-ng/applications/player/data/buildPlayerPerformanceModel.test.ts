@@ -313,7 +313,12 @@ describe('buildPlayerPerformanceModel', () => {
     const shares = snapshot.shotProfile.zones.reduce((sum, zone) => sum + zone.share, 0)
     // The shares describe the recorded attempts: they add up to the whole (or to zero attempts).
     expect(line.stats.fieldGoalsAttempted === 0 ? shares : Math.abs(shares - 100) <= 1).toBeTruthy()
-    expect(snapshot.shotProfile.note).toContain('no shot coordinates')
+    if (snapshot.shotProfile.detailedProvenance === 'OBSERVED') {
+      expect(snapshot.shotProfile.note).toContain('shot coordinates are not stored')
+      expect(snapshot.shotProfile.detailedZones).toHaveLength(9)
+    } else {
+      expect(snapshot.shotProfile.note).toContain('2PT/3PT totals')
+    }
   })
 
   it('offers only filters the save can honour', () => {
