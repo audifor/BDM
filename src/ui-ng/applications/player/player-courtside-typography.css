@@ -1,0 +1,79 @@
+/*
+ * PLAYER · Courtside typography contract
+ *
+ * Reuse the same font faces and tokens as the approved HOME shell.
+ * This file is imported last by PlayerWorkspace, after the legacy PLAYER CSS.
+ * It changes typography only, leaving the individual page layouts intact.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root {
+  --po-font: var(--cs-font);
+  --po-font-display: var(--cs-font-display);
+  --ng-font-player: var(--cs-font);
+  --ng-font-grid: var(--cs-font);
+  font-family: var(--cs-font);
+}
+
+/* Legacy identity CSS replaces the display font with the UI font locally.
+ * Restore the Courtside distinction throughout the shared header. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root :is(
+  .po-identity__person,
+  .po-identity__positions,
+  .po-identity__measures
+) {
+  --ng-font-display: var(--cs-font-display);
+  --po-font-display: var(--cs-font-display);
+  --po-font: var(--cs-font);
+  font-family: var(--cs-font);
+}
+
+/* Display typography: names, navigation, numerical readings and headings. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root :is(
+  .po-identity__name,
+  .po-identity__firstname,
+  .po-identity__lastname,
+  .po-identity__measure-value,
+  .po-identity__pos-value,
+  .po-identity__number,
+  .po-status__value,
+  .po-identity__availability,
+  .ng-workspace-tabs__tab,
+  .po-cs-card__header h2,
+  .po-cs-dna__hero h3,
+  .po-cs-dna__quadrant h4,
+  .po-cs-season__metrics strong,
+  .po-cs-radar__value
+) {
+  font-family: var(--cs-font-display);
+}
+
+/* Reading typography: labels, help text, scouting information, narrative. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root :is(
+  .po-identity__section-label,
+  .po-identity__fact-label,
+  .po-identity__pos-label,
+  .po-identity__measure-label,
+  .po-identity__measure-unit,
+  .po-status__label,
+  .po-cs-card__header span,
+  .po-cs-dna__quadrant p,
+  .po-cs-meter-row,
+  .po-cs-character__unknown p,
+  .po-cs-read__content > p,
+  .po-cs-read__verdicts li,
+  .po-cs-form__game summary small
+) {
+  font-family: var(--cs-font);
+}
+
+/* Shared semantic minimum for the already-approved overview.
+ * Other PLAYER pages retain their currently approved layout and will be
+ * densified in their own design reviews rather than through a global zoom. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root[data-bdm-player-overview='true'] :is(
+  .po-cs-dna__quadrant p,
+  .po-cs-meter-row,
+  .po-cs-meter-row strong,
+  .po-cs-character__unknown p,
+  .po-cs-read__verdicts li
+) {
+  font-size: max(12px, 1em);
+}
