@@ -60,6 +60,8 @@ export function AttributeRadar({
   courtsideFraming = false,
 }: AttributeRadarProps) {
   const total = axes.length
+  // Increase the drawing radius only in the approved Courtside frame.
+  const radarRadius = courtsideFraming ? 54 : MAX_RADIUS
   const gridLevels = [0.25, 0.5, 0.75, 1]
 
   const comparisonPoints = comparisonAxes !== null && axes.every((axis) => {
@@ -67,28 +69,28 @@ export function AttributeRadar({
     return typeof value === 'number' && Number.isFinite(value)
   }) ? axes.map((axis, index) => {
     const value = comparisonAxes[axis.key] ?? 0
-    const [x, y] = polarPoint(index, total, (value / 100) * MAX_RADIUS)
+    const [x, y] = polarPoint(index, total, (value / 100) * radarRadius)
     return x + ',' + y
   }).join(' ') : null
 
   const polygonPoints = axes
     .map((axis, index) => {
-      const radius = (axis.value / 100) * MAX_RADIUS
+      const radius = (axis.value / 100) * radarRadius
       const [x, y] = polarPoint(index, total, radius)
       return `${x},${y}`
     })
     .join(' ')
 
   return (
-    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={courtsideFraming ? '-22 -22 164 164' : `${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
-      <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={MAX_RADIUS} />
+    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={courtsideFraming ? '-25 -25 170 170' : `${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
+      <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={radarRadius} />
       {[0.4, 0.7, 1].map((level) => (
         <circle
           key={`scope-${level}`}
           cx={CENTER}
           cy={CENTER}
           fill="none"
-          r={MAX_RADIUS * level}
+          r={radarRadius * level}
           stroke="rgba(116, 150, 168, 0.16)"
           strokeWidth="0.6"
         />
@@ -99,7 +101,7 @@ export function AttributeRadar({
           key={level}
           fill="none"
           points={Array.from({ length: total }, (_, index) => {
-            const [x, y] = polarPoint(index, total, MAX_RADIUS * level)
+            const [x, y] = polarPoint(index, total, radarRadius * level)
             return `${x},${y}`
           }).join(' ')}
           stroke="rgba(116, 150, 168, 0.38)"
@@ -108,7 +110,7 @@ export function AttributeRadar({
       ))}
 
       {axes.map((axis, index) => {
-        const [x, y] = polarPoint(index, total, MAX_RADIUS)
+        const [x, y] = polarPoint(index, total, radarRadius)
         const isActive = selectedCategory === axis.key
         return (
           <line
@@ -142,7 +144,7 @@ export function AttributeRadar({
           aria-label={series.label + ' comparison'}
           fill="none"
           points={axes.map((axis, index) => {
-            const radius = ((series.axes[axis.key] ?? 0) / 100) * MAX_RADIUS
+            const radius = ((series.axes[axis.key] ?? 0) / 100) * radarRadius
             const [x, y] = polarPoint(index, total, radius)
             return x + ',' + y
           }).join(' ')}
@@ -161,7 +163,7 @@ export function AttributeRadar({
       />
 
       {axes.map((axis, index) => {
-        const radius = (axis.value / 100) * MAX_RADIUS
+        const radius = (axis.value / 100) * radarRadius
         const [x, y] = polarPoint(index, total, radius)
         const isActive = selectedCategory === axis.key
         return (
@@ -192,7 +194,7 @@ export function AttributeRadar({
             role="button"
             tabIndex={0}
           >
-            <path className="po-radar__hit" d={wedgePath(index, total, MAX_RADIUS + 8)} />
+            <path className="po-radar__hit" d={wedgePath(index, total, radarRadius + 8)} />
             <text
               className="po-radar__label"
               dominantBaseline="middle"
