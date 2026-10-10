@@ -92,6 +92,13 @@ export function PlayerCourtsideAttributes() {
     .map((item) => ({ key: item.id, label: item.label, color: item.color, axes: item.axes! }))
   const selectedComparisons = baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null)
     .map((item) => ({ ...item, value: getCategoryComparison(currentCategory, model.attributes.evolutionByRating, item.id) }))
+    .filter((item): item is typeof item & { value: number } => item.value !== null)
+  const comparisonReading = selectedComparisons.length === 0 ? null
+    : selectedComparisons.every((item) => currentCategory.profileValue < item.value)
+      ? 'Por debajo de todas las referencias activas'
+      : selectedComparisons.every((item) => currentCategory.profileValue > item.value)
+        ? 'Por encima de todas las referencias activas'
+        : 'Posición mixta respecto a las referencias activas'
   const toggleComparison = (scope: ComparativeScope) => {
     setVisibleBaselines((selected) => selected.includes(scope)
       ? selected.filter((item) => item !== scope)
@@ -213,7 +220,9 @@ export function PlayerCourtsideAttributes() {
                 <div><strong>Lowest</strong><b>{lowFamily.label}</b><span>{lowFamily.profileValue} / 100</span></div>
               </div>}
               {selectedComparisons.length > 0 && <p className="pac-signal__baseline">
-                {currentCategory.label}: {selectedComparisons.map((item) => item.label + ' ' + item.value).join(' · ')}
+                <strong>{currentCategory.label} {currentCategory.profileValue}</strong>
+                {' · '}{selectedComparisons.map((item) => item.label + ' ' + item.value).join(' · ')}
+                {comparisonReading !== null && <span className="pac-signal__reading">{comparisonReading}</span>}
               </p>}
             </div>
           </div>
@@ -261,7 +270,7 @@ export function PlayerCourtsideAttributes() {
         {activeRating === undefined || evolution === null ? (
           <section className="pac-card pac-empty-detail"><h2>ATTRIBUTE DETAIL</h2><p>Select an attribute to see its ratings and comparisons.</p></section>
         ) : (
-          <section className="pac-card pac-detail">
+          <section className={`pac-card pac-detail ${evolution.hasRecordedHistory ? 'pac-detail--recorded' : 'pac-detail--pending'}`}>
             <header className="pac-head"><div><h2>{activeRating.label.toUpperCase()}</h2><span>{activeFamily.label}</span></div>
               <button type="button" className={'pac-detail__watch' + (focusedIds.has(activeRating.id) ? ' is-watched' : '')}
                 disabled={!focusedIds.has(activeRating.id) && trackerFull}
@@ -277,13 +286,22 @@ export function PlayerCourtsideAttributes() {
               <div><span>POSITION AVG</span><b>{evolution.standing.positionAverage?.toFixed(1) ?? '—'}</b></div>
             </div>
             <p className="pac-detail__description">{evolution.standing.note}</p>
-            <div className="pac-detail__evolution">
-              {evolution.hasRecordedHistory ? (
+            {evolution.hasRecordedHistory ? (
+              <div className="pac-detail__evolution pac-detail__evolution--recorded">
+                <div className="pac-detail__trend">
+                  <span>CAMBIO REGISTRADO</span>
+                  <strong className={evolution.changeSinceFirst > 0 ? 'is-positive' : evolution.changeSinceFirst < 0 ? 'is-negative' : ''}>
+                    {evolution.changeSinceFirst > 0 ? '+' : ''}{evolution.changeSinceFirst}
+                  </strong>
+                </div>
                 <AttributeEvolutionChart evolution={evolution} label={activeRating.label} title="RECORDED EVOLUTION"/>
-              ) : <div className="pac-detail__empty-history">
-                <strong>EVOLUTION</strong><p>No progression recorded yet. Changes appear after canonical offseason transitions.</p>
-              </div>}
-            </div>
+              </div>
+            ) : (
+              <div className="pac-detail__evolution pac-detail__evolution--pending" role="status">
+                <strong>EVOLUCIÓN PENDIENTE</strong>
+                <p>Todavía no se ha registrado ningún cambio entre temporadas. No se dibuja una tendencia inexistente.</p>
+              </div>
+            )}
 
             <div className="pac-detail__training">
               <strong>TRAINING</strong>
