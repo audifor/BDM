@@ -4,8 +4,11 @@ import { withShortGameFormat } from '@/app/game/testFixtures'
 import { advanceGameDayWithResult, advanceGameDayWithResultAsync } from '@/app/game/advanceGameDay'
 import { createInlineMatchRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { parseGameDate } from '@/domain/date'
+import { signFreeAgent } from '@/app/market/MarketService'
+import { isPlayerFreeAgent } from '@/domain/world/market'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityUsageRight, createPlace } from '@/domain/facilities'
-import { createFinancialReservation, createOperatingCostSource, createRevenueSource, ensureCanonicalFinanceFoundation, materializeOrganizationOpeningEconomicState, provisionOrganizationFinanceFoundation, getCashBalancesByCurrency } from '@/domain/finance'
+import { createFinancialReservation, createOperatingCostSource, createRevenueSource, ensureCanonicalFinanceFoundation, provisionOrganizationFinanceFoundation, getCashBalancesByCurrency } from '@/domain/finance'
 import { createScheduledTrainingSession } from '@/domain/training'
 import { getWorldValidationReport, updateGameWorld, updateScheduledTrainingSessionRecords, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { advanceDayWithTrace, getUserTeam } from '@/engine/calendar'
@@ -21,6 +24,7 @@ const date = parseGameDate('2033-07-01')
 let base: GameWorld
 let materializedPlayerId: string
 let payrollContractId: string
+let openingCashMinorUnits: number
 beforeAll(() => {
   let world = deserializeGameWorldV4(serializeGameWorldV4(createNewGame(), savedAt))
   const cohort = Object.values(world.talentCohortsById).find(item => item.candidateCapacity > 1)!
@@ -37,17 +41,18 @@ beforeAll(() => {
     facilityComponentConditionRecords: [createFacilityComponentConditionRecord({ id: 'integration:condition', componentId: component.id, effectiveFrom: '2033-06-30', physicalCondition: 80, serviceability: 'FULL' })],
     facilityUsageRights: [createFacilityUsageRight({ id: 'integration:right', facilityId: facility.id, teamId: team.id, purpose: 'OTHER', exclusivity: 'SHARED', validFrom: '2033-06-30' })],
   })
-  // One explicit controlled contract occurrence is due alongside the Talent/physical checkpoint.
-  const contract = Object.values(world.contractsById).find(item => item.teamId === team.id)!
-  payrollContractId = contract.id
-  world = updateGameWorld(world, { contracts: Object.values(world.contractsById).map(item => item.id === contract.id ? {
-    ...item, term: { startsOn: date, expiresOn: parseGameDate('2034-07-01') },
-    compensation: { annualSalary: 100, years: [{ cashSalary: 100, guaranteedAmount: 100, capTreatment: { policy: 'NOT_APPLICABLE' as const } }] },
-  } : item) })
+  // The canonical opening state already exists (createNewGame activates Finance) and its payroll for the
+  // original contracts is already recognized, so the due payroll occurrence comes from a legitimate signing
+  // funded and authorized through the canonical Finance authorities, never from rewriting recognized facts.
   world = ensureCanonicalFinanceFoundation(provisionOrganizationFinanceFoundation(world, team.organizationId, { currencyCode: 'EUR', asOfDate: world.currentDate }))
-  const funded = materializeOrganizationOpeningEconomicState(world, { sourceAuthority: 'WORLD_DB', sourceEntityId: 'integration:opening', organizationId: team.organizationId, currencyCode: 'EUR', effectiveOn: world.currentDate, cashMinorUnits: 1_000_000, counterpartKind: 'RETAINED_NET_ASSETS', counterpartId: null })
-  expect(funded.status).toBe('MATERIALIZED')
-  world = funded.world
+  world = authorizeTeamSalaryForTest(financingDrawdownForTest(world, team.id, 1_000_000_000, 'integration:funding'), team.id, { currencyCode: 'EUR', playerSalaryMinorUnits: 100_000_000_000, staffSalaryMinorUnits: 100_000_000_000 })
+  const freeAgentId = Object.values(world.players).find(player => isPlayerFreeAgent(world, player.id))!.id
+  world = signFreeAgent(world, team.id, freeAgentId)
+  const signed = Object.values(world.contractsById).find(item => item.playerId === freeAgentId && item.teamId === team.id)!
+  payrollContractId = signed.id
+  // The signed Contract has no recognized facts yet, so its first occurrence is aligned with the controlled checkpoint day.
+  world = updateGameWorld(world, { contracts: Object.values(world.contractsById).map(item => item.id === signed.id ? { ...item, term: { startsOn: date, expiresOn: parseGameDate('2034-07-01') } } : item) })
+  openingCashMinorUnits = getCashBalancesByCurrency(world, team.organizationId, world.currentDate).find(row => String(row.currencyCode) === 'EUR')?.totalCashMinorUnits ?? 0
   world = updateGameWorld(world, {
     revenueSources: [createRevenueSource({ id: 'integration:revenue', organizationId: team.organizationId, teamId: team.id, category: 'COMPETITION', currencyCode: 'EUR', amount: { currencyCode: 'EUR', minorUnits: 50_000 }, startsOn: date, endsOn: date, sourceAuthority: 'MANUAL_SYSTEM_ACTION', generationPolicy: 'ONE_OFF', dueDatePolicy: 'ON_RECOGNITION', provenance: { kind: 'TEST_AUTHORIZED_SOURCE', id: 'integration:revenue' } })],
     operatingCostSources: [createOperatingCostSource({ id: 'integration:cost', organizationId: team.organizationId, teamId: team.id, category: 'MATCH_OPERATIONS', currencyCode: 'EUR', amount: { currencyCode: 'EUR', minorUnits: 10_000 }, startsOn: date, endsOn: date, sourceAuthority: 'MANUAL_SYSTEM_ACTION', generationPolicy: 'ONE_OFF', dueDatePolicy: 'ON_RECOGNITION', provenance: { kind: 'TEST_AUTHORIZED_SOURCE', id: 'integration:cost' } })],
@@ -102,10 +107,13 @@ describe('Controlled BS15/BS16/BS17 production convergence', () => {
     expect(Object.values(available.developmentStimulusEventsById).filter(event => event.sourceId === 'integration:physical').length).toBeGreaterThan(0)
     for (const key of financialKeys) expect(blocked[key], key).toEqual(available[key])
     expect(Object.keys(blocked.revenueRecognitionsById)).toHaveLength(1)
-    expect(Object.keys(blocked.treasuryApplicationsById)).toHaveLength(2)
+    // With canonical liquidity the due batch settles: 12 opening Player payrolls + 4 Staff backfill payables + the controlled operating cost + the legitimately signed Player's payroll.
+    expect(Object.keys(blocked.treasuryApplicationsById)).toHaveLength(18)
     expect(Object.values(blocked.expenseRecognitionsById).filter(fact => fact.category === 'CONTRACT_PLAYER_SALARY_DUE' && String(fact.provenance.id).includes(payrollContractId))).toHaveLength(1)
     const team = getUserTeam(blocked)!
-    expect(getCashBalancesByCurrency(blocked, team.organizationId, date).find(row => String(row.currencyCode) === 'EUR')?.totalCashMinorUnits).toBe(980_000)
+    // Cash conservation: opening liquidity - every payable settled through Treasury (the operating cost is one of them); the recognized revenue stays a receivable, not same-day cash.
+    const settledMinorUnits = Object.values(blocked.treasuryApplicationsById).reduce((sum, application) => sum + ((application as { amount?: { minorUnits: number }; amountMinorUnits?: number }).amount?.minorUnits ?? (application as { amountMinorUnits?: number }).amountMinorUnits ?? 0), 0)
+    expect(getCashBalancesByCurrency(blocked, team.organizationId, date).find(row => String(row.currencyCode) === 'EUR')?.totalCashMinorUnits).toBe(openingCashMinorUnits - settledMinorUnits)
     expect(processClubFinanceForDate(blocked).world).toEqual(blocked)
     expect(Object.keys(blocked.players)).toEqual(Object.keys(available.players))
     expect(blocked.talentCohortsById).toEqual(available.talentCohortsById)

@@ -136,7 +136,7 @@ it('defers an individually affordable rookie contract that would leave the minim
   expect(evaluateProfessionalAcquisition(quoteWorld, input).blocker).toBe('AI_MINIMUM_ROSTER_UNFUNDED')
   const funded = authorizeTeamSalaryForTest(quoteWorld, team.id, { currencyCode, playerSalaryMinorUnits: limit, staffSalaryMinorUnits: 100_000_000_000 })
   expect(evaluateProfessionalAcquisition(funded, input).blocker).not.toBe('AI_MINIMUM_ROSTER_UNFUNDED')
-  const legacyChanged = updateGameWorld(quoteWorld, { teamFinances: Object.values(quoteWorld.teamFinancesByTeamId).map(item => ({ ...item, playerSalaryBudget: 100_000_000_000 })) })
+  const legacyChanged = updateGameWorld(quoteWorld, { teamFinances: Object.values(quoteWorld.teamFinancesByTeamId).map(item => ({ ...item, playerSalaryBudget: 1_000_000_000 })) })
   expect(evaluateProfessionalAcquisition(legacyChanged, input)).toEqual(evaluateProfessionalAcquisition(quoteWorld, input))
   expect(quoteWorld.playerRightsById[rights.id]).toEqual(world.playerRightsById[rights.id])
   expect(quoteWorld.salaryRulesBySeasonId).toBe(world.salaryRulesBySeasonId)
