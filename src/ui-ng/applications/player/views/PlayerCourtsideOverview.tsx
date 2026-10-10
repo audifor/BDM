@@ -389,7 +389,8 @@ function ManagerRead({ model }: { readonly model: PlayerWorkspaceModel }) {
 export function PlayerCourtsideOverview() {
   const { model } = usePlayerWorkspace()
   if (model === null) return null
-  return <div className="po-cs-board" data-ng-region="player-courtside-overview">
+  return <div className={`po-cs-board${model.knowledgeAccess.kind === 'own-roster' ? '' : ' po-cs-board--opponent'}`}
+    data-ng-region="player-courtside-overview">
     <PlayerDna model={model} />
     <Radar model={model} />
     <div className="po-cs-board__right"><Season model={model}/><Form model={model}/></div>
