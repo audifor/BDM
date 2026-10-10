@@ -81,6 +81,10 @@ describe('Opponent Attributes FOW projection', () => {
       coverage: 79, confidence: 86, isComplete: true,
     })
     expect(hasScoutedRadarProfile(families)).toBe(true)
+    expect(hasScoutedRadarProfile(families.map((row, index) =>
+      index === 0 ? { ...row, coverage: 0 } : row))).toBe(false)
+    expect(hasScoutedRadarProfile(families.map((row, index) =>
+      index === 0 ? { ...row, confidence: 30 } : row))).toBe(false)
     const withoutMental = { ...full, ratingEvaluations: full.ratingEvaluations.slice(0, -1) }
     expect(hasScoutedRadarProfile(buildScoutedFamilyProfiles(withoutMental))).toBe(false)
   })
