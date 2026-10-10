@@ -73,7 +73,8 @@ export function PlayerCourtsideAttributes() {
   const focusedIds = new Set(focus)
   const strengthIds = new Set(model.attributes.signatureSkills.map((rating) => rating.id))
   const weaknessIds = new Set(model.attributes.weakLinks.map((rating) => rating.id))
-  const availableRatings = search.trim() === '' ? currentCategory.all : model.attributes.allRatings
+  const availableRatings = search.trim() !== '' || filter === 'tracked'
+    ? model.attributes.allRatings : currentCategory.all
   const ratings = filterCourtsideRatings(
     availableRatings, filter, search, model.attributes.evolutionByRating,
     strengthIds, weaknessIds, focusedIds,
@@ -200,7 +201,7 @@ export function PlayerCourtsideAttributes() {
 
         <section className="pac-card pac-attributes">
           <header className="pac-head pac-attributes__heading">
-            <div><h2>{search.trim() ? 'SEARCH RESULTS' : currentCategory.label.toUpperCase() + ' ATTRIBUTES'}</h2><span>{search.trim() ? 'Search across all 80 attributes' : 'Only the selected family is shown'}</span></div>
+            <div><h2>{search.trim() ? 'SEARCH RESULTS' : filter === 'tracked' ? 'WATCHED ATTRIBUTES' : currentCategory.label.toUpperCase() + ' ATTRIBUTES'}</h2><span>{search.trim() ? 'Search across all 80 attributes' : filter === 'tracked' ? 'Watching across every category' : 'Only the selected family is shown'}</span></div>
             <label className="pac-search"><span className="pac-sr-only">Search attributes</span>
               <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="⌕  Search attributes…" />
             </label>
