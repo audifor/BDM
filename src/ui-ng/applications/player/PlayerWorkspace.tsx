@@ -17,6 +17,7 @@ import './player-scouting.css'
 import './player-scouting-board.css'
 import './player-responsive.css'
 import './player-courtside-overview.css'
+import './player-courtside-typography.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
