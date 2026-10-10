@@ -266,6 +266,33 @@ approved and must remain untouched.
   existing game/season filters do not change.
 - Visual and runtime testing in Tauri dark/light remains required.
 
+## DEVELOPMENT · Courtside V1 (October 2026)
+
+- Replaces the former 14-card, 4-row compression with one 4-KPI context band,
+  a two-mode dashboard/records control, and three manager-focused lanes.
+- OWN dashboard: eight category selections, actual seasonal career curve
+  (explicit empty state until transitions), canonical development stage,
+  real training plan/effect, category drill-down and dated events. Category
+  inspector labels must show the selected category, not the generic training
+  focus. No fictitious trend or potential ceiling.
+- OWN records: actual saved executed training sessions (paged by 12),
+  season rating checkpoint truth and stimulus source history (paged by 40),
+  biggest movers, real development drivers, scout-only projections and
+  declared missing-system gaps.
+- RIVAL: dedicated scouting-only DEVELOPMENT state. Only the
+  authorized `development.projection` and `development.scoutPotential`
+  models are rendered, even when the workspace carries private truth for
+  own-player views. Never render the rival's own training assignments, history,
+  changes, private ratings or internal growth/ceiling fields.
+- Uses the shared canonical Courtside HEADER and `--cs-*` theme tokens.
+  Three columns at wide player containers, two below 1440px and one below
+  850px. Does not change domain, training/medical/Save authorities.
+- Static/UI code is not a visual PASS; validate at 1680×900 and with
+  dark/light Tauri plus focused tests and lint/typecheck/build.
+- CI for isolated `feat/bdm-ui-player-redesign` is located at
+  `.github/workflows/bdm-ui-player-validation.yml`. Its technical verdict
+  must be grounded in actual workflow job results, not static code inspection.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
