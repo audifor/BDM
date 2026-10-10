@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
@@ -39,6 +39,8 @@ function mount(kind: 'own' | 'external' = 'own') {
   const mounted = render(<PlayerWorkspaceProvider value={value}><PlayerDevelopmentView /></PlayerWorkspaceProvider>)
   return { mounted, selected, development }
 }
+
+afterEach(cleanup)
 
 describe('PLAYER DEVELOPMENT Courtside navigation and Fog of War', () => {
   it('opens the manager dashboard with recorded progress and interactive eight-family categories', () => {
