@@ -218,7 +218,9 @@ export function PlayerCourtsideAttributes() {
             </div>
           </div>
         </section>
+      </div>
 
+      <div className="pac-column pac-column--right">
         <section className="pac-card pac-attributes">
           <header className="pac-head pac-attributes__heading">
             <div><h2>{search.trim() ? 'SEARCH RESULTS' : filter === 'tracked' ? 'WATCHED ATTRIBUTES' : currentCategory.label.toUpperCase() + ' ATTRIBUTES'}</h2><span>{search.trim() ? 'Search across all 80 attributes' : filter === 'tracked' ? 'Watching across every category' : 'Only the selected family is shown'}</span></div>
@@ -255,12 +257,10 @@ export function PlayerCourtsideAttributes() {
             })}
           </div>
         </section>
-      </div>
 
-      <div className="pac-column pac-column--right">
         {activeRating === undefined || evolution === null ? (
           <section className="pac-card pac-empty-detail"><h2>ATTRIBUTE DETAIL</h2><p>Select an attribute to see its ratings and comparisons.</p></section>
-        ) : <>
+        ) : (
           <section className="pac-card pac-detail">
             <header className="pac-head"><div><h2>{activeRating.label.toUpperCase()}</h2><span>{activeFamily.label}</span></div>
               <button type="button" className={'pac-detail__watch' + (focusedIds.has(activeRating.id) ? ' is-watched' : '')}
@@ -284,34 +284,15 @@ export function PlayerCourtsideAttributes() {
                 <strong>EVOLUTION</strong><p>No progression recorded yet. Changes appear after canonical offseason transitions.</p>
               </div>}
             </div>
-          </section>
-          <section className="pac-card pac-related" aria-label="Other attributes in the same category">
-            <header className="pac-head">
-              <h2>SAME FAMILY</h2>
-              <span>{Math.max(0, activeFamily.all.length - 1)} other attributes · {activeFamily.label}</span>
-            </header>
-            <div className="pac-related__list">
-              {activeFamily.all
-                .filter((rating) => rating.id !== activeRating.id)
-                .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
-                .map((rating) =>
-                  <button type="button" key={rating.id} onClick={() => selectRating(rating.id)}
-                    aria-label={rating.label + ', rating ' + rating.value + ', inspect attribute'}>
-                    <span>{rating.label}</span>
-                    <span className="pac-related__metric">
-                      <b>{rating.value}</b>
-                      <span className="pac-meter" aria-hidden="true"><i style={{ width: rating.value + '%' }} /></span>
-                    </span>
-                  </button>)}
-            </div>
-            <div className="pac-related__training">
+
+            <div className="pac-detail__training">
               <strong>TRAINING</strong>
               <span>{evolution.assignment.status === 'available' && evolution.trainings.length > 0
-                ? evolution.trainings.length + ' available modules. Schedule through the full attribute analysis.'
+                ? evolution.trainings.length + ' available modules. Scheduling remains in the full attribute analysis.'
                 : evolution.assignment.reason ?? 'Direct training assignment is not available for this attribute.'}</span>
             </div>
           </section>
-        </>}
+        )}
       </div>
     </div>
   )
