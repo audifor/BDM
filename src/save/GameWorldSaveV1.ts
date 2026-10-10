@@ -28,7 +28,7 @@ import {
 } from '@/domain/ids'
 import { CANONICAL_RATING_KEYS, calculateAge, createPlayer, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player'
 import { createSeason } from '@/domain/season'
-import type { MatchStatLog, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
+import { MATCH_SHOT_ZONE_IDS, validateShotZoneBreakdown, type MatchShotZoneBreakdown, type MatchShotZoneId, type MatchStatLog, type PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import type { SeasonHistoryRecord } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
@@ -827,7 +827,30 @@ function matchResult(value: unknown): 'win' | 'loss' { const result = string(val
 function seasonAchievement(value: unknown): 'champion' { return string(value, 'Coach reputation season achievement') === 'champion' ? 'champion' : fail('Coach reputation season achievement is invalid') }
 function coachReputationSource(value: unknown): CoachReputationSource { const source = string(value, 'Coach reputation source'); return ['matchResult', 'seasonAchievement', 'professionalEvent', 'developmentEvent', 'publicEvent'].includes(source) ? source as CoachReputationSource : fail('Coach reputation source is invalid') }
 function readFinalStanding(value: unknown) { const v = record(value, 'Final standing'); return { position: integer(v.position, 'Final standing position'), teamId: teamIdFromString(string(v.teamId, 'Final standing teamId')), played: integer(v.played, 'Final standing played'), wins: integer(v.wins, 'Final standing wins'), losses: integer(v.losses, 'Final standing losses'), pointsFor: integer(v.pointsFor, 'Final standing pointsFor'), pointsAgainst: integer(v.pointsAgainst, 'Final standing pointsAgainst'), pointDifference: integer(v.pointDifference, 'Final standing pointDifference') } }
-function readPlayerLine(value: unknown) { const v = record(value, 'Player stat line'); return { playerId: playerIdFromString(string(v.playerId, 'Player stat playerId')), teamId: teamIdFromString(string(v.teamId, 'Player stat teamId')), opponentTeamId: teamIdFromString(string(v.opponentTeamId, 'Player stat opponentTeamId')), isHome: boolean(v.isHome, 'Player stat isHome'), started: boolean(v.started, 'Player stat started'), stats: readStats(v.stats) } }
+function readPlayerLine(value: unknown) {
+  const v = record(value, 'Player stat line')
+  const stats = readStats(v.stats)
+  const zoneBreakdown = v.shotZones === undefined ? undefined : readShotZoneBreakdown(v.shotZones, stats)
+  return { playerId: playerIdFromString(string(v.playerId, 'Player stat playerId')), teamId: teamIdFromString(string(v.teamId, 'Player stat teamId')), opponentTeamId: teamIdFromString(string(v.opponentTeamId, 'Player stat opponentTeamId')), isHome: boolean(v.isHome, 'Player stat isHome'), started: boolean(v.started, 'Player stat started'), stats, ...(zoneBreakdown === undefined ? {} : { shotZones: zoneBreakdown }) }
+}
+function readShotZoneBreakdown(value: unknown, stats: PlayerGameStatsSnapshot): MatchShotZoneBreakdown {
+  const v = record(value, 'Shot-zone breakdown')
+  const raw = record(v.counts, 'Shot-zone counts')
+  const counts: Partial<Record<MatchShotZoneId, { made: number; attempted: number }>> = {}
+  for (const [id, value] of Object.entries(raw)) {
+    if (!MATCH_SHOT_ZONE_IDS.includes(id as MatchShotZoneId)) throw new TypeError('Unknown shot zone in save: ' + id)
+    const recordValue = record(value, 'Shot-zone '+id)
+    counts[id as MatchShotZoneId] = {
+      made: integer(recordValue.made, 'Shot-zone made'), attempted: integer(recordValue.attempted, 'Shot-zone attempted'),
+    }
+  }
+  const provenance = string(v.provenance, 'Shot-zone provenance')
+  if (provenance !== 'OBSERVED' && provenance !== 'MODELLED') throw new TypeError('Invalid shot-zone provenance')
+  const parsed: MatchShotZoneBreakdown = { provenance, counts,
+    ...(v.modelVersion === undefined ? {} : { modelVersion: string(v.modelVersion, 'Shot-zone model version') }) }
+  validateShotZoneBreakdown(parsed, stats)
+  return parsed
+}
 function readStats(value: unknown): PlayerGameStatsSnapshot { const v = record(value, 'Player stats'); return { playerId: playerIdFromString(string(v.playerId, 'Player stats playerId')), secondsPlayed: integer(v.secondsPlayed, 'Player stats secondsPlayed'), points: integer(v.points, 'Player stats points'), fieldGoalsMade: integer(v.fieldGoalsMade, 'Player stats fieldGoalsMade'), fieldGoalsAttempted: integer(v.fieldGoalsAttempted, 'Player stats fieldGoalsAttempted'), twoPointMade: integer(v.twoPointMade, 'Player stats twoPointMade'), twoPointAttempted: integer(v.twoPointAttempted, 'Player stats twoPointAttempted'), threePointMade: integer(v.threePointMade, 'Player stats threePointMade'), threePointAttempted: integer(v.threePointAttempted, 'Player stats threePointAttempted'), freeThrowsMade: integer(v.freeThrowsMade, 'Player stats freeThrowsMade'), freeThrowsAttempted: integer(v.freeThrowsAttempted, 'Player stats freeThrowsAttempted'), offensiveRebounds: integer(v.offensiveRebounds, 'Player stats offensiveRebounds'), defensiveRebounds: integer(v.defensiveRebounds, 'Player stats defensiveRebounds'), rebounds: integer(v.rebounds, 'Player stats rebounds'), assists: integer(v.assists, 'Player stats assists'), steals: integer(v.steals, 'Player stats steals'), blocks: integer(v.blocks, 'Player stats blocks'), turnovers: integer(v.turnovers, 'Player stats turnovers'), foulsCommitted: integer(v.foulsCommitted, 'Player stats foulsCommitted'), plusMinus: integer(v.plusMinus, 'Player stats plusMinus') } }
 // History collections can exceed V8's string limit; each canonical record remains small.
 function copyRecords(values: readonly object[]): readonly JsonRecord[] { return values.map(value => JSON.parse(JSON.stringify(value)) as JsonRecord) }
