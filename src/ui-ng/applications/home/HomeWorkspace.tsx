@@ -81,7 +81,7 @@ function buildTeamDynamics(world: GameWorld, teamId: TeamId): TeamDynamicsSnapsh
   }
 }
 
-function upcomingUserGames(world: GameWorld, teamId: TeamId, limit = 5): readonly UpcomingFixtureRow[] {
+function upcomingUserGames(world: GameWorld, teamId: TeamId, limit = 7): readonly UpcomingFixtureRow[] {
   return Object.values(world.games)
     .filter(
       (game) =>

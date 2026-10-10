@@ -58,7 +58,7 @@ describe('HomeWorkspace', () => {
 
     const rows = document.querySelectorAll('.home-dashboard__upcoming .home-upcoming__row')
     expect(rows.length).toBeGreaterThan(0)
-    expect(rows.length).toBeLessThanOrEqual(5)
+    expect(rows.length).toBeLessThanOrEqual(7)
     for (const row of rows) {
       expect(row.querySelector('.home-upcoming__opponent')).not.toBeNull()
       expect(row.querySelector('time.home-upcoming__date')).not.toBeNull()

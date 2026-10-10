@@ -16,15 +16,10 @@ import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 import { NgWorkspaceNavigationProvider, useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { WorkspaceHost } from '@/ui-ng/workspace/WorkspaceHost'
 
-/** Temporary opt-in shell preview; other NG screens are unchanged by default. */
-function courtsideShellPreviewEnabled(): boolean {
-  return new URLSearchParams(window.location.search).get('bdm-ui') === '1'
-}
-
 function BdmOsNgShell() {
   const world = useGameStore((state) => state.world)
-  const { openEntity, app } = useNgWorkspaceNavigation()
-  const courtsideShellActive = app === 'home' || courtsideShellPreviewEnabled()
+  const { openEntity } = useNgWorkspaceNavigation()
+  const courtsideShellActive = true
   const [courtsideTheme, setCourtsideTheme] = useState<'dark' | 'light'>(() => {
     try {
       return window.localStorage.getItem('bdm-courtside-theme') === 'light' ? 'light' : 'dark'
@@ -56,7 +51,7 @@ function BdmOsNgShell() {
 
   return (
     <EntityContextMenuProvider onOpenEntity={openEntity} world={world}>
-      <div className="bdm-os-ng" data-ng-shell="bdm-os-ng" data-bdm-courtside-home={courtsideShellActive ? 'true' : undefined} data-bdm-courtside-theme={courtsideShellActive ? courtsideTheme : undefined}>
+      <div className="bdm-os-ng" data-ng-shell="bdm-os-ng" data-bdm-courtside-shell={courtsideShellActive ? 'true' : undefined} data-bdm-courtside-theme={courtsideShellActive ? courtsideTheme : undefined}>
         <SystemBar courtsideTheme={courtsideShellActive ? courtsideTheme : undefined} onToggleCourtsideTheme={() => setCourtsideTheme((theme) => theme === 'dark' ? 'light' : 'dark')} />
         <div
           className="bdm-os-ng__workspace-region"
