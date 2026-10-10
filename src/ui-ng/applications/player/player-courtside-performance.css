@@ -1528,3 +1528,135 @@
 .bdm-os-ng[data-bdm-courtside-shell='true'] .po-pf-nine__portal > .po-pf-nine.is-expanded {
   pointer-events:auto;
 }
+
+
+/*
+ * PERFORMANCE V3.2 · approved color and EXPAND-only readability refinements.
+ * No geometric SVG changes, no change to compact court dimensions, columns,
+ * rows or typography. Selection stays orange; efficiency shading is calmer.
+ */
+.po-pf-board--courtside .po-pf-nine__region.is-low path {
+  fill:color-mix(in srgb,var(--cs-negative) 22%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__region.is-moderate path {
+  fill:color-mix(in srgb,var(--cs-orange2) 20%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__region.is-good path {
+  fill:color-mix(in srgb,var(--cs-lime) 26%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__region.is-strong path {
+  fill:color-mix(in srgb,var(--cs-lime) 44%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__region.is-limited-sample path {
+  fill-opacity:.76;
+}
+.po-pf-board--courtside .po-pf-nine__legend i.is-low,
+.po-pf-board--courtside .po-pf-nine__zone-name i.is-low {
+  background:color-mix(in srgb,var(--cs-negative) 68%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__legend i.is-moderate,
+.po-pf-board--courtside .po-pf-nine__zone-name i.is-moderate {
+  background:color-mix(in srgb,var(--cs-orange2) 70%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__legend i.is-good,
+.po-pf-board--courtside .po-pf-nine__zone-name i.is-good {
+  background:color-mix(in srgb,var(--cs-lime) 55%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__legend i.is-strong,
+.po-pf-board--courtside .po-pf-nine__zone-name i.is-strong {
+  background:color-mix(in srgb,var(--cs-lime) 78%,var(--cs-s1));
+}
+.po-pf-board--courtside .po-pf-nine__list button em sup {
+  margin-left:1px;
+  vertical-align:super;
+  font:700 9px/1 var(--cs-font);
+  color:var(--cs-orange2);
+}
+.po-pf-board--courtside .po-pf-nine__small-sample,
+.po-pf-board--courtside .po-pf-nine__sample-key {
+  display:none;
+}
+/* Readable right-side inspection ONLY when EXPAND is opened. */
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__details {
+  gap:10px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected {
+  position:relative;
+  min-height:150px;
+  box-sizing:border-box;
+  padding:19px 19px 17px;
+  gap:8px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected > span:first-child {
+  font-size:12px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected > strong {
+  font-size:31px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected b {
+  font-size:35px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected div span {
+  font-size:14px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__selected small {
+  font-size:12px;
+  line-height:1.35;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__small-sample {
+  display:inline-flex;
+  align-self:flex-start;
+  position:absolute;
+  top:17px;
+  right:17px;
+  margin:0;
+  padding:4px 7px;
+  border:1px solid var(--cs-orange2);
+  border-radius:5px;
+  color:var(--cs-orange2);
+  background:var(--cs-s1);
+  font:700 10px/1.1 var(--cs-font);
+  white-space:nowrap;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list {
+  display:grid;
+  grid-template-rows:minmax(29px,auto) repeat(9,minmax(40px,1fr));
+  flex:1 1 auto;
+  overflow:auto;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list-head {
+  align-items:center;
+  padding:8px 9px;
+  font-size:11px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list button {
+  box-sizing:border-box;
+  min-height:40px;
+  height:100%;
+  gap:8px;
+  padding:8px 9px;
+  font-size:14px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list button b,
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list button em {
+  font-size:13px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__zone-name {
+  gap:7px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__zone-name i {
+  width:10px;
+  height:10px;
+  flex-basis:10px;
+}
+.po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__sample-key {
+  display:block;
+  margin-top:6px;
+  color:var(--cs-orange2);
+  font-weight:600;
+}
+@media (max-width:720px) {
+  .po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list {
+    grid-template-rows:minmax(29px,auto) repeat(9,minmax(38px,auto));
+  }
+}
