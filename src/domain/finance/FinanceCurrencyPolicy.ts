@@ -70,6 +70,13 @@ export function getEcosystemCurrencyPolicy(ecosystemId: string): CurrencyCode | 
   return SHIPPED_ECOSYSTEM_CURRENCY_POLICY.find((entry) => entry.identity === ecosystemId)?.currencyCode ?? null
 }
 
+/** An explicit authority that names a currency canonical Finance cannot express is data error, not a fallback. */
+function explicitOrganizationCurrencyCode(currencyCode: CurrencyCode | string): CurrencyCode {
+  const currency = createCurrencyCode(String(currencyCode))
+  if (getMinorUnitsPerMajorUnit(currency) === null) throw new RangeError(`Explicit organization currency authority names unsupported currency ${currency}`)
+  return currency
+}
+
 export type FinanceCurrencyUnavailableReason =
   | 'NO_FINANCE_BEARING_TEAM'
   | 'JURISDICTION_AMBIGUOUS'
@@ -77,18 +84,32 @@ export type FinanceCurrencyUnavailableReason =
   | 'ECOSYSTEM_AMBIGUOUS'
   | 'ECOSYSTEM_UNKNOWN'
 
+/**
+ * BS16M-B2. Explicit Organization currency authority: data supplied by whoever builds the world (a universe or
+ * prototype policy) rather than a constant of this module. It enters as an argument precisely so canonical
+ * Finance never needs to know what a "prototype" is, while an Organization that receives none is still never
+ * guessed a currency.
+ */
+export interface ExplicitOrganizationCurrencyAuthority {
+  readonly organizationId: OrganizationId | string
+  readonly currencyCode: CurrencyCode | string
+}
+
 export type OrganizationCurrencyResolution =
-  | { readonly status: 'RESOLVED'; readonly currencyCode: CurrencyCode; readonly source: 'COUNTRY' | 'ECOSYSTEM'; readonly identity: string }
+  | { readonly status: 'RESOLVED'; readonly currencyCode: CurrencyCode; readonly source: 'EXPLICIT_ORGANIZATION' | 'COUNTRY' | 'ECOSYSTEM'; readonly identity: string }
   | { readonly status: 'FINANCE_CURRENCY_UNAVAILABLE'; readonly reason: FinanceCurrencyUnavailableReason }
 
 /**
- * Resolution precedence: explicit organization currency data (not modelled in GameWorld today), then the
- * canonical home-country policy, then the shipped ecosystem policy, otherwise no currency at all.
+ * Resolution precedence: explicit Organization currency authority supplied by world data, then the canonical
+ * home-country policy, then the shipped ecosystem policy, otherwise no currency at all.
  */
-export function resolveOrganizationCurrency(world: GameWorld, organizationId: OrganizationId | string): OrganizationCurrencyResolution {
+export function resolveOrganizationCurrency(world: GameWorld, organizationId: OrganizationId | string, explicitOrganizationCurrencies: readonly ExplicitOrganizationCurrencyAuthority[] = []): OrganizationCurrencyResolution {
   const organization = String(organizationIdFromString(organizationId))
   const teams = Object.values(world.teams).filter((team) => String(team.organizationId) === organization)
   if (teams.length === 0) return Object.freeze({ status: 'FINANCE_CURRENCY_UNAVAILABLE', reason: 'NO_FINANCE_BEARING_TEAM' })
+
+  const explicit = explicitOrganizationCurrencies.find((entry) => String(organizationIdFromString(entry.organizationId)) === organization)
+  if (explicit !== undefined) return Object.freeze({ status: 'RESOLVED' as const, currencyCode: explicitOrganizationCurrencyCode(explicit.currencyCode), source: 'EXPLICIT_ORGANIZATION' as const, identity: organization })
 
   const countryCodes = [...new Set(teams.map((team) => world.countries[team.countryId]?.code).filter((code): code is string => typeof code === 'string' && code.length > 0))].sort()
   if (countryCodes.length > 1) return Object.freeze({ status: 'FINANCE_CURRENCY_UNAVAILABLE', reason: 'JURISDICTION_AMBIGUOUS' })

@@ -4,7 +4,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createBudgetLine, createFinancialBudget, type BudgetLine, type FinancialBudget } from './BudgetForecasting'
 import { financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceFiscalYearFor, provisionOrganizationFinanceFoundation } from './FinanceFoundation'
 import { getOrganizationOpeningEconomicStateStatus, materializeOrganizationOpeningEconomicState, type OpeningEconomicStateSource, type OpeningEconomicStateStatus } from './FinanceOpeningState'
-import { legacyMajorUnitsToMoney, resolveOrganizationCurrency, type FinanceCurrencyUnavailableReason } from './FinanceCurrencyPolicy'
+import { legacyMajorUnitsToMoney, resolveOrganizationCurrency, type ExplicitOrganizationCurrencyAuthority, type FinanceCurrencyUnavailableReason } from './FinanceCurrencyPolicy'
 import { createFiscalPeriod, type FiscalPeriod } from './FinancialLedger'
 
 /**
@@ -13,9 +13,10 @@ import { createFiscalPeriod, type FiscalPeriod } from './FinancialLedger'
  * The only shipped gameplay budget amounts are `TeamFinances.playerSalaryBudget` / `staffSalaryBudget`,
  * produced deterministically by `generateInitialTeamFinances` and completed for legacy or partial saves by
  * `ensureTeamFinances`. BS16F supplies the missing currency authority: activation resolves the organization
- * currency through the canonical policy (country first, then the shipped ecosystem policy), provisions the
- * BS16B foundation (profile, account catalog, opening fiscal period), and then materializes the payroll
- * authorization from the legacy pools through one explicit major→minor conversion boundary.
+ * currency through the canonical policy (an explicit Organization currency authority supplied by the world's
+ * builder first, then the country policy, then the shipped ecosystem policy), provisions the BS16B foundation
+ * (profile, account catalog, opening fiscal period), and then materializes the payroll authorization from the
+ * legacy pools through one explicit major→minor conversion boundary.
  *
  * Activation never invents a currency, never overwrites an existing canonical profile, and never creates
  * cash, ledger transactions, revenue, capital or debt.
@@ -29,7 +30,7 @@ export type FinanceActivationStatus =
   | 'CURRENCY_POLICY_CONFLICT'
   | 'NO_LEGACY_BUDGET_SOURCE'
 
-export type FinanceCurrencySource = 'COUNTRY' | 'ECOSYSTEM' | 'CANONICAL_PROFILE'
+export type FinanceCurrencySource = 'EXPLICIT_ORGANIZATION' | 'COUNTRY' | 'ECOSYSTEM' | 'CANONICAL_PROFILE'
 
 export interface OrganizationFinanceActivation {
   readonly organizationId: OrganizationId
@@ -65,6 +66,12 @@ export interface EnsureCanonicalFinanceFoundationOptions {
    * action) supplies its own source instead of a hidden initialization shortcut.
    */
   readonly openingEconomicStates?: readonly OpeningEconomicStateSource[]
+  /**
+   * BS16M-B2 explicit Organization currency authority supplied by universe/prototype data. Canonical Finance
+   * stays generic: it resolves the currency an Organization was explicitly given and never guesses one, so a
+   * caller that supplies nothing keeps the unchanged "no currency" behavior.
+   */
+  readonly explicitOrganizationCurrencies?: readonly ExplicitOrganizationCurrencyAuthority[]
 }
 
 export const LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE = Object.freeze({
@@ -83,10 +90,11 @@ export function authorizationBudgetIdFor(organizationId: OrganizationId | string
 export function getFinanceActivationReport(world: GameWorld, options: EnsureCanonicalFinanceFoundationOptions = {}): FinanceActivationReport {
   const asOfDate = parseGameDate(options.asOfDate ?? world.currentDate)
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
+  const explicitOrganizationCurrencies = options.explicitOrganizationCurrencies ?? []
   return Object.freeze({
     asOfDate,
     organizations: Object.freeze(financeBearingOrganizationIds(world).map((organizationId) => Object.freeze({
-      ...plan(world, organizationId, asOfDate, allowNewPeriodMaterialization).activation,
+      ...plan(world, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies).activation,
       openingEconomicState: getOrganizationOpeningEconomicStateStatus(world, organizationId),
     }))),
   })
@@ -100,6 +108,7 @@ export function getFinanceActivationReport(world: GameWorld, options: EnsureCano
 export function ensureCanonicalFinanceFoundation(world: GameWorld, options: EnsureCanonicalFinanceFoundationOptions = {}): GameWorld {
   const asOfDate = parseGameDate(options.asOfDate ?? world.currentDate)
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
+  const explicitOrganizationCurrencies = options.explicitOrganizationCurrencies ?? []
   let current = world
   let changedAny = false
   const budgetAdds: FinancialBudget[] = []
@@ -112,7 +121,7 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
   }
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
-    const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization)
+    const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies)
     if (planned.provision !== null) {
       const provisioned = provisionOrganizationFinanceFoundation(current, organizationId, {
         currencyCode: planned.provision.currencyCode,
@@ -245,9 +254,9 @@ function noMaterialization(activation: OrganizationFinanceActivation, provision:
   return Object.freeze({ activation, provision, materializeAuthorization: false, currencyCode: null, fiscalPeriodId: null })
 }
 
-function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, allowNewPeriodMaterialization: boolean): OrganizationActivationPlan {
+function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, allowNewPeriodMaterialization: boolean, explicitOrganizationCurrencies: readonly ExplicitOrganizationCurrencyAuthority[]): OrganizationActivationPlan {
   const profile = world.organizationFinancialProfilesById[organizationId]
-  const resolution = resolveOrganizationCurrency(world, organizationId)
+  const resolution = resolveOrganizationCurrency(world, organizationId, explicitOrganizationCurrencies)
 
   if (profile !== undefined) {
     // Persisted canonical financial history wins: a policy that derives a different currency is a reported

@@ -22,6 +22,7 @@ import { createCoachJobOpeningForTeam } from '@/app/coachCareer'
 import { initializeBoardState } from '@/engine/board'
 import { initializeRecruitingCycle } from '@/engine/season'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
+import { prototypeOrganizationCurrencyAuthorities } from './PrototypeFinancePolicy'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -38,7 +39,9 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
   const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)
   if (userTeam !== undefined) world = initializeBoardState(world, userTeam.id)
   for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
-  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(world))
+  const planned = initializeAiClubManagementPlanning(world)
+  // BDM Prototype Finance Policy V1: the prototype supplies the currency its fictional jurisdiction cannot.
+  const career = ensureCanonicalFinanceFoundation(planned, { explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned) })
   return processClubFinanceForDate(career, career.currentDate).world
 }
 
