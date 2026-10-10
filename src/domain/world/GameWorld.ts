@@ -50,7 +50,7 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
-import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
+import { validateShotZoneBreakdown, type MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
@@ -3079,6 +3079,7 @@ function validateMatchStatLog(world: GameWorld, log: MatchStatLog): void {
     requireEntity(world.players, line.playerId, `MatchStatLog ${log.gameId} Player`)
     if (players.has(line.playerId)) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} has duplicate Player ${line.playerId}`)
     players.add(line.playerId)
+    if (line.shotZones !== undefined) validateShotZoneBreakdown(line.shotZones, line.stats)
     if (!((line.teamId === log.homeTeamId && line.opponentTeamId === log.awayTeamId && line.isHome) || (line.teamId === log.awayTeamId && line.opponentTeamId === log.homeTeamId && !line.isHome))) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} has invalid Team context`)
   }
   const homeLines = log.playerLines.filter((line) => line.isHome)
