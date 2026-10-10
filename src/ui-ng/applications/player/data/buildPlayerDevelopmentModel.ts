@@ -744,7 +744,7 @@ function buildDrivers(
       id: 'age-trend',
       label: 'Age trend',
       valueLabel: `${formatSignedTrend(trend)} per transition at age ${age}`,
-      tone: trend >= 0 ? 'positive' : 'negative',
+      tone: trend > 0 ? 'positive' : trend < 0 ? 'negative' : 'neutral',
     },
     {
       id: 'stage',
@@ -766,7 +766,7 @@ function buildDrivers(
       id: 'fatigue',
       label: 'Career fatigue',
       valueLabel: `${fatigue}%`,
-      tone: fatigue >= 70 ? 'negative' : fatigue >= 40 ? 'neutral' : 'positive',
+      tone: fatigue >= 70 ? 'negative' : 'neutral',
     },
     {
       id: 'minutes',
@@ -775,13 +775,13 @@ function buildDrivers(
         stats.gamesPlayed === 0
           ? 'No game tracked this season'
           : `${calculatePlayerStatAverages(stats).mpg.toFixed(1)} per game over ${stats.gamesPlayed} ${stats.gamesPlayed === 1 ? 'game' : 'games'}`,
-      tone: stats.gamesPlayed === 0 ? 'neutral' : 'positive',
+      tone: 'neutral',
     },
     {
       id: 'transitions',
       label: 'Transitions recorded',
       valueLabel: history.length === 0 ? 'None yet' : String(history.length),
-      tone: history.length === 0 ? 'neutral' : 'positive',
+      tone: 'neutral',
     },
   ]
 }
@@ -961,11 +961,15 @@ function buildTrainingPlan(
   const primary = ranked[0]
   const secondary = ranked.find((entry) => entry.id !== primary?.id)
   const hasCanonicalBreakdown = ranked.length > 0
-  // A season of stimulus above the player's own average category load reads as a heavy plan.
-  const averageLoad = ranked.length === 0 ? 0 : stimulusTotal / ranked.length
-  const loadFill = !hasCanonicalBreakdown || stimulusTotal === 0
-    ? null
-    : Math.min(100, Math.round((stimulusTotal / Math.max(1, averageLoad * 2)) * 100))
+  // The meter encodes the actual assigned intensity, never accumulated
+  // stimulus (which is not a workload or rating-gain percentage).
+  const assignedIntensity = trainingContext.individualPlanActive
+    ? trainingContext.individualIntensity
+    : trainingContext.teamIntensity
+  const intensityKey = assignedIntensity?.toLowerCase()
+  const loadFill = intensityKey === 'low' ? 28
+    : intensityKey === 'normal' ? 56
+    : intensityKey === 'high' ? 85 : null
 
   return {
     focusLabel: trainingContext.individualPlanActive
@@ -986,23 +990,9 @@ function buildTrainingPlan(
         ? 'No second category has received stimulus this season.'
         : `${primary?.categoryLabel ?? '—'} carries ${Math.round(primary?.stimulusTotal ?? 0)} of the ${Math.round(stimulusTotal)} stimulus points; ${secondary.categoryLabel} follows with ${Math.round(secondary.stimulusTotal)}.`,
     loadFill,
-    loadLabel: !hasCanonicalBreakdown
-      ? 'Unknown'
-      : stimulusTotal === 0
-        ? 'None'
-        : loadFill !== null && loadFill >= 75
-          ? 'High'
-          : loadFill !== null && loadFill >= 40
-            ? 'Moderate'
-            : 'Low',
-    loadTone:
-      !hasCanonicalBreakdown || stimulusTotal === 0
-        ? 'neutral'
-        : loadFill !== null && loadFill >= 75
-          ? 'high'
-          : loadFill !== null && loadFill >= 40
-            ? 'moderate'
-            : 'positive',
+    loadLabel: assignedIntensity ?? 'Not assigned',
+    loadTone: loadFill === null ? 'neutral'
+      : loadFill > 70 ? 'high' : loadFill > 40 ? 'moderate' : 'positive',
   }
 }
 
@@ -1011,8 +1001,7 @@ function buildTrainingEffect(
   playerId: PlayerId,
   seasonStimulus: DevelopmentSeasonStimulusModel,
 ): DevelopmentTrainingEffectModel {
-  const history = playerTruthHistory(world.playerRatingHistoryByPlayerId[playerId] ?? [])
-  const transitions = Math.max(1, history.length)
+  // Raw recorded stimulus, not an invented +rating prediction.
   const rows = [...seasonStimulus.categories]
     .filter((entry) => entry.stimulusTotal > 0)
     .sort((left, right) => right.stimulusTotal - left.stimulusTotal || left.id.localeCompare(right.id))
@@ -1020,25 +1009,16 @@ function buildTrainingEffect(
     .map((entry) => ({
       id: entry.id,
       label: entry.categoryLabel,
-      // The stimulus recorded, spread over the transitions the save has actually run.
-      impact: Number((entry.stimulusTotal / transitions / 10).toFixed(1)),
+      impact: Number(entry.stimulusTotal.toFixed(1)),
       tone: 'positive' as const,
     }))
-
   const covered = seasonStimulus.categories.filter((entry) => entry.stimulusTotal > 0).length
-  const confidenceFill =
-    seasonStimulus.categories.length === 0
-      ? null
-      : Math.round((covered / seasonStimulus.categories.length) * 100)
 
   return {
     rows,
-    confidenceLabel:
-      confidenceFill === null ? 'Unknown' : confidenceFill >= 75 ? 'High' : confidenceFill >= 40 ? 'Medium' : 'Low',
-    confidenceFill,
-    note: seasonStimulus.categories.length === 0
-      ? seasonStimulus.contextNote
-      : `Estimated impact (next transition), from the stimulus recorded this season over ${transitions} recorded ${transitions === 1 ? 'transition' : 'transitions'}. A projection, never a guarantee.`,
+    confidenceLabel: `${covered} / ${RADAR_CATEGORY_ORDER.length} families`,
+    confidenceFill: Math.round((covered / RADAR_CATEGORY_ORDER.length) * 100),
+    note: 'Recorded season stimulus by category, not rating increases. The development engine applies stimulus at the offseason checkpoint.',
   }
 }
 
