@@ -20,11 +20,12 @@ export function PlayerOverviewView() {
   if (model === null) return null
 
   const { overview } = model
+  const own = model.knowledgeAccess.kind === 'own-roster'
 
   return (
     <div className="po-cs-overview" data-ng-region="player-overview">
       <PlayerCourtsideOverview />
-      <details className="po-cs-depth">
+      {own && <details className="po-cs-depth">
         <summary>EXPLORAR ANÁLISIS COMPLETO · INFORMES Y DECISIONES</summary>
         <div className="po-overview" data-ng-region="player-overview-expanded">
       <div className="po-ov-row po-ov-row--identity">
@@ -46,7 +47,7 @@ export function PlayerOverviewView() {
         <OverviewTimeline onOpenPage={(view) => session.setActiveView(view)} overview={overview} />
       </div>
         </div>
-      </details>
+      </details>}
     </div>
   )
 }
