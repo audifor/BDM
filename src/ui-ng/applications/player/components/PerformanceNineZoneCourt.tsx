@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { MatchShotZoneId } from '@/domain/stats/MatchStatLog'
 import type { DetailedPerformanceShotZone, PerformanceShotProfileModel } from '../data/buildPlayerPerformanceModel'
 
@@ -67,7 +68,7 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
       {COURT_ZONE_PATHS[zone.id].map((shape, index) => <path key={index} d={shape} />)}
     </g>
 
-  return <section className={'po-pf-panel po-pf-shot po-pf-nine' + (expanded ? ' is-expanded' : '')}
+  const courtView = <section className={'po-pf-panel po-pf-shot po-pf-nine' + (expanded ? ' is-expanded' : '')}
     data-ng-region="performance-shot-profile" aria-label="Nine-zone basketball shooting map"
     role={expanded ? 'dialog' : undefined} aria-modal={expanded || undefined}>
     <div className="po-pf-nine__stage">
@@ -121,4 +122,13 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
       <p className="po-pf-nine__disclaimer">{profile.note}</p>
     </div>
   </section>
+
+  // Place the enlarged view directly under the Courtside shell, outside the
+  // clipped analysis/game panels. Retain the same component state/selection.
+  if (!expanded || typeof document === 'undefined') return courtView
+  const appRoot = document.querySelector('.bdm-os-ng[data-bdm-courtside-shell="true"]')
+  return createPortal(
+    <div className="po-pf-board--courtside po-pf-nine__portal">{courtView}</div>,
+    appRoot ?? document.body,
+  )
 }
