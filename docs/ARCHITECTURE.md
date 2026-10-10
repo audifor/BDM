@@ -1618,3 +1618,35 @@ Legacy `TeamFinances` amounts, legacy contract salaries, agent fees and buyouts 
 `ensureCanonicalFinanceFoundation` is the single shared activation authority. For every finance-bearing organization whose currency resolves it ensures the foundation — profile, account catalog and canonical fiscal period — and materializes one APPROVED authorization per organization and canonical period from the legacy pools, mapping `playerSalaryBudget` to the existing `PLAYER_SALARY` and `staffSalaryBudget` to `STAFF_SALARY` on per-team `BudgetLine`s. The foundation is currency and identity truth, so it is ensured independently of any budget authority (a World DB career that carries no `TeamFinances` still gets profile, catalog and period while its report says `NO_LEGACY_BUDGET_SOURCE`); no other category gains permission, the transition is one-way materialization with the approval recording its transitional origin (`MANUAL_SYSTEM_ACTION` with `MIGRATION` provenance), and activation creates no cash, account balance, ledger transaction, obligation or reservation.
 
 The canonical `FiscalPeriod` collection is the single period authority, and a Finance fiscal period is **the fiscal year containing the effective GameDate**, derived from `OrganizationFinancialProfile.fiscalYearStartMonth`: never a competition season. Season start provides only the default starting month as context. Period identity is deterministic from the organization and the fiscal-year boundary (`finance:fiscal-period:<organization>:<fiscal-year-start>`), so the same fiscal year always resolves the same period and crossing the boundary is a new period. Resolution never introduces a second, overlapping period: the period whose identity matches the fiscal year, then the period covering the date, then any existing period of the same fiscal year — which is how a pre-BS16G season-shaped period is preserved rather than rewritten, keeping its dates and its authorization semantics. An organization whose target fiscal year is covered by nothing resolves to the canonical fiscal-year identity the provisioning authority then creates. Because of that rule a career that starts before its first game sits inside a valid fiscal period and its authorization is `ACTIVE` on day one, while renewal stays unmodelled: `RENEWAL_NOT_MODELLED` is reported and the previous authorization is never copied forward into the new period. Activation is deterministic and idempotent, appends to the append-only planning collections instead of rewriting them, and leaves legacy `TeamFinances` as the live gameplay authority at every shipped career seam.
+
+## Long-horizon finance continuity v1 (BS16N)
+
+Ten years of processed days must not change a single Finance rule. These are the continuity invariants a long
+career relies on, certified over 3,651 canonical days in
+[`docs/strengthening/BS16N_LONG_HORIZON_FINANCE_CERTIFICATION.md`](strengthening/BS16N_LONG_HORIZON_FINANCE_CERTIFICATION.md):
+
+- **History grows with events, never with days.** A processed day with nothing due appends nothing: the
+  transaction count only rises when the world declares an economic event (a fiscal-period installment, a
+  contract year, a game, an explicit drawdown or contribution).
+- **Cash provenance is a closed and complete catalogue.** Exactly five transaction types may touch an
+  Organization cash account — `DEBT_DRAWDOWN`, `DEBT_PRINCIPAL_REPAYMENT`, `OWNER_FUNDING_RECEIPT`,
+  `PAYABLE_SETTLEMENT`, `RECEIVABLE_COLLECTION` — and their postings must sum exactly to the reported cash
+  balance at every point in time. A cash movement outside that catalogue is a certification failure, never a
+  silent balance.
+- **Longitudinal facts are minted once.** One guaranteed payroll occurrence per contract year inside the
+  contract term, one receivable per declared installment, one payable per expense, one debt service per due
+  agreement term, one capital contribution per declared contribution. No fact is ever duplicated by a replay, a
+  save/load round trip or a longer horizon, and every occurrence id is unique.
+- **Terminal states stay terminal.** A `CONSUMED` reservation is never reopened and no reservation is left
+  `OPEN` after the operation that created it completes; replaying an already processed date is a strict no-op,
+  including world identity.
+- **Period-driven and contract-driven life are different clocks.** Payroll and debt service follow contracts and
+  agreements and keep materializing across a fiscal rollover; competition revenue and competition operating cost
+  follow the materialized fiscal period and stop with it. The product materializes exactly **one** fiscal period,
+  so a career that runs longer keeps its contract-driven life and honestly reports the period-driven part as
+  stopped rather than inventing revenue for periods that were never provisioned.
+- **Renewal is reported, never faked.** `RENEWAL_NOT_MODELLED` and `BUDGET_AUTHORIZATION_NOT_MODELLED` are the
+  honest answers after the first fiscal period; the previous authorization is never copied forward, no legacy
+  `TeamFinances` pool is consulted as a fallback, and the currency never drifts. Annual renewal of fiscal periods
+  and authorizations is a **product authority that does not exist yet**; it is the registered BS16N gap, and it
+  is the one thing that keeps BS16N PARTIAL.
