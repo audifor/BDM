@@ -177,6 +177,46 @@ staff capacity, and offer the Scouting Centre as the discovery/workload route.
 - Implementation is pending typecheck, focused Vitest and actual dark/light
   visual certification before full PERFORMANCE PASS.
 
+## PLAYER PERFORMANCE · Nine-zone shot evidence V3 (10 October 2026)
+
+Nine zones are already present in `MatchEngine Next` (`ShotEcology`):
+RESTRICTED, RIM, SHORT_PAINT, FLOATER_RANGE, MIDRANGE,
+LONG_MIDRANGE, CORNER_THREE, ABOVE_BREAK_THREE and DEEP.
+
+**Persisted authority:**
+- Optional `PlayerGameStatLine.shotZones` in canonical `MatchStatLog`;
+  its count arrays are sparse and integer, and made/attempted totals MUST equal
+  the corresponding two-point/three-point box-score totals precisely.
+- `OBSERVED`: compact aggregates of Match Next `shotReleased` and
+  `shotMade` events, with misses and blocked attempts accounted for.
+  Any absent/ambiguous labels fall back to exact 2PT/3PT data, never an
+  invented nine-zone split.
+- `MODELLED`: the BACKGROUND solver's existing three fitted outcomes
+  (rim/mid/three) are subdivided deterministically, **without consuming
+  more simulation RNG or altering results**. Version:
+  `bg-zone-conditional-provisional-v1`. Conditional subdivision ratios
+  are provisional hypotheses, NOT empirically calibrated distributions.
+  They must not be represented in gameplay as observed or certified
+  until benchmarked against a Match Next FAST shot-zone corpus. This is
+  a quality gate to certify before worldwide promotion.
+- Legacy Save V1-V4 records without optional zones remain readable;
+  V1 parser and V4 current writer preserve new fields. No reconstruction
+  of historical zones.
+- On PERFORMANCE, all selected games with shot attempts must have
+  complete zone evidence for the nine-zone mode. Partial historical
+  selections show the exact 2PT/3PT court instead; empty zones use
+  missing-attempt labels rather than unsupported shooting percentages.
+  Filters, own/rival public shot stats, and matchup inspector keep their
+  existing authority.
+- Nine-zone Courtside court shows a schematic, not precise positions;
+  nine selectable regions, actual FGM/FGA, FG%, attempt share, points,
+  provenance and explicit uncertainty. Keep dark/light shared tokens.
+
+**Certification pending:** full TS typecheck, MatchNext & BACKGROUND
+regression tests, real Save V4 reload, statistical validation of the
+conditional BG split, benchmark/performance and UI visual inspection.
+Do not mark the nine-zone program or PERFORMANCE full PASS until complete.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
