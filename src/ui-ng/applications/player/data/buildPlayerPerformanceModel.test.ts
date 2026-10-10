@@ -42,6 +42,26 @@ describe('buildPlayerPerformanceModel', () => {
     expect(Number(snapshot.gameLogs[0]!.fgPercentage)).toBeGreaterThanOrEqual(0)
   })
 
+  it('shows nine observed zones only when the persisted match evidence is complete and conserved', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const updated = completeMatch(world, simulation)
+    const playerId = simulation.squads.home[0]!
+    const line = updated.matchStatLogsByGameId[simulation.gameId]!.playerLines.find((entry) => entry.playerId === playerId)!
+    const profile = buildPlayerPerformanceModel(updated, playerId).allSeasonSnapshot.shotProfile
+    if (line.stats.fieldGoalsAttempted > 0 && line.shotZones !== undefined) {
+      expect(profile.detailedProvenance).toBe('OBSERVED')
+      expect(profile.detailedZones).toHaveLength(9)
+      expect(profile.detailedZones!.reduce((total, zone) => total + zone.attempted, 0)).toBe(line.stats.fieldGoalsAttempted)
+      expect(profile.detailedZones!.reduce((total, zone) => total + zone.points, 0)).toBe(
+        2 * line.stats.twoPointMade + 3 * line.stats.threePointMade)
+    } else {
+      // Older or non-spatial simulation paths cannot be retroactively enhanced.
+      expect(profile.detailedZones).toBeUndefined()
+      expect(profile.zones).toHaveLength(2)
+    }
+  })
+
   it('returns empty shooting arrays when there are no appearances', () => {
     const world = createNewGame()
     const playerId = defaultPlayerIdForNg(world)!
@@ -125,7 +145,12 @@ describe('buildPlayerPerformanceModel', () => {
             100
           ).toFixed(1)
     expect(ef.value).toBe(expectedEf)
-    expect(snapshot.gaps.map((gap) => gap.label)).toContain('Shot profile by location')
+    if (snapshot.shotProfile.detailedProvenance === 'OBSERVED') {
+      expect(snapshot.shotProfile.detailedZones).toHaveLength(9)
+      expect(snapshot.gaps.map((gap) => gap.label)).not.toContain('Shot profile by location')
+    } else {
+      expect(snapshot.gaps.map((gap) => gap.label)).toContain('Shot profile by location')
+    }
     expect(snapshot.gaps.map((gap) => gap.label)).toContain('First half / second half')
     for (const gap of snapshot.gaps) {
       expect(gap.reason.length).toBeGreaterThan(0)
