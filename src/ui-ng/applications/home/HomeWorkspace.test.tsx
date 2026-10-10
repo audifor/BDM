@@ -54,28 +54,45 @@ describe('HomeWorkspace', () => {
     expect(screen.queryByRole('button', { name: /^Objetivos/i })).not.toBeInTheDocument()
   })
 
-  it('renders all upcoming matches in one line with rival, date and venue', () => {
-    useGameStore.getState().replaceWorld(createNewGame())
+  it('shows the entire scheduled season with the real competition in every airy single-line fixture', () => {
+    const world = createNewGame()
+    const teamId = getUserTeam(world)!.id
+    const endDate = world.seasons[world.currentSeasonId]?.endDate
+    const expected = Object.values(world.games)
+      .filter(game =>
+        game.status === 'scheduled' &&
+        game.date >= world.currentDate &&
+        (endDate === undefined || game.date <= endDate) &&
+        (game.homeTeamId === teamId || game.awayTeamId === teamId))
+      .sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id))
+    useGameStore.getState().replaceWorld(world)
     render(<NgWorkspaceNavigationProvider><HomeWorkspace /></NgWorkspaceNavigationProvider>)
 
     const rows = document.querySelectorAll('.home-dashboard__upcoming .home-upcoming__row')
-    expect(rows.length).toBeGreaterThan(0)
-    expect(rows.length).toBeLessThanOrEqual(7)
-    for (const row of rows) {
+    expect(expected.length).toBeGreaterThan(7)
+    expect(rows).toHaveLength(expected.length)
+    expect(screen.getByText(`${expected.length} partidos pendientes · temporada actual`)).toBeInTheDocument()
+    const list = screen.getByRole('list', { name: 'Todos los próximos partidos de la temporada' })
+    expect(list).toHaveAttribute('tabindex', '0')
+    rows.forEach((row,index)=>{
+      const game = expected[index]!
       expect(row.querySelector('.home-upcoming__opponent')).not.toBeNull()
-      expect(row.querySelector('time.home-upcoming__date')).not.toBeNull()
+      expect(row.querySelector('time.home-upcoming__date')).toHaveAttribute('datetime',game.date)
       expect(row.querySelector('.home-upcoming__venue')).not.toBeNull()
+      expect(row.querySelector('.home-upcoming__competition')).toHaveTextContent(
+        world.competitions[game.competitionId]?.name ?? '—')
       expect(row.querySelector('.home-upcoming__meta')).toBeNull()
       expect(row.querySelector('.home-upcoming__main')).toBeNull()
-    }
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /^Objetivos/i }))
     fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitemradio', { name: 'Próximos partidos' }))
     const selectableRows = document.querySelectorAll('.home-slot .home-upcoming__row')
-    expect(selectableRows).toHaveLength(rows.length)
+    expect(selectableRows).toHaveLength(expected.length)
     for (const row of selectableRows) {
       expect(row.querySelector('time.home-upcoming__date')).not.toBeNull()
       expect(row.querySelector('.home-upcoming__venue')).not.toBeNull()
+      expect(row.querySelector('.home-upcoming__competition')).not.toBeNull()
     }
   })
 
