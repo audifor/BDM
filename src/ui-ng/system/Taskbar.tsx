@@ -5,6 +5,7 @@ import './Taskbar.css'
 import { useGameStore } from '@/stores/gameStore'
 import { NgStartMenu } from '@/ui-ng/system/NgStartMenu'
 import { TaskbarIcon } from '@/ui-ng/system/TaskbarIcon'
+import { CourtsideGlyph, CourtsideTaskbarIcon } from '@/ui-ng/system/CourtsideGlyph'
 import { isClosableTaskbarApp, taskbarAppLabel } from '@/ui-ng/workspace/taskbarOpenApps'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import type { WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
@@ -64,7 +65,7 @@ export function Taskbar() {
           onClick={() => setStartOpen((open) => !open)}
           type="button"
         >
-          <StartMenuMark />
+          {courtside ? <CourtsideGlyph name="diamond" /> : <StartMenuMark />}
         </button>
         {shownApps.map((id) => {
           const label = taskbarAppLabel(id)
@@ -101,7 +102,7 @@ export function Taskbar() {
                 }}
                 type="button"
               >
-                <TaskbarIcon id={id} />
+                {courtside ? <CourtsideTaskbarIcon id={id} /> : <TaskbarIcon id={id} />}
                 <span>{label}</span>
               </button>
               {menuOpen ? (
@@ -135,7 +136,7 @@ export function Taskbar() {
         {overflowApps.length > 0 ? (
           <div className="ng-taskbar__overflow">
             <button aria-expanded={moreOpen} aria-label={`${overflowApps.length} aplicaciones más`} className="ng-taskbar__app ng-taskbar__more" onClick={() => setMoreOpen((open) => !open)} title="Más aplicaciones" type="button">
-              <span aria-hidden="true">···</span><em>+{overflowApps.length}</em>
+              <CourtsideGlyph name="more" /><em>+{overflowApps.length}</em>
             </button>
             {moreOpen ? (
               <div className="ng-taskbar__overflow-list" role="menu">
