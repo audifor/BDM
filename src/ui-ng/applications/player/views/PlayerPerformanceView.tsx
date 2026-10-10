@@ -36,6 +36,14 @@ const FORM_METRICS: readonly { readonly id: FormMetric; readonly label: string }
  * overlapping multiple bars and lines; the public recorded log remains the
  * only data source for both own roster and opponents.
  */
+/** Short visible label; full canonical date remains in each control's accessible label. */
+export function compactPerformanceDate(date: string): string {
+  const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(date)
+  if (match === null) return date
+  const month = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][Number(match[2]) - 1]
+  return month === undefined ? date : match[3] + ' ' + month
+}
+
 export function PerformanceCourtsideForm({
   games, selectedGameId, onSelectGame,
 }: {
@@ -71,7 +79,7 @@ export function PerformanceCourtsideForm({
               <i style={{height:Math.max(value > 0 ? 5 : 1,Math.min(100,Math.round((Math.max(0,value)/peak)*100))) + '%'}} />
             </span>
             <span className="po-pf-simple-form__opp">vs {game.opponent}</span>
-            <span className="po-pf-simple-form__date">{game.date}</span>
+            <span className="po-pf-simple-form__date">{compactPerformanceDate(game.date)}</span>
           </button>
         })}
       </div>}
@@ -98,11 +106,20 @@ export function PerformanceCourtsideGameLog({
         <table className="po-pf-courtside-table">
           <thead><tr><th>DATE</th><th>OPPONENT</th><th>RESULT</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>VAL</th></tr></thead>
           <tbody>{rows.map((row) => <tr key={row.gameId}
-            className={row.gameId === selectedGameId ? 'is-selected' : ''}>
-            <td>{row.dateLabel}</td>
-            <td><button type="button" aria-pressed={row.gameId === selectedGameId}
-              title={row.competition + ' · ' + (row.homeAway === 'H' ? 'Home' : 'Away')}
-              onClick={() => onSelectGame(row.gameId)}>{row.opponent}</button></td>
+            className={row.gameId === selectedGameId ? 'is-selected' : ''}
+            aria-label={row.dateLabel + ', ' + row.opponentName + ', ' + row.result + ', ' + row.points + ' points'}
+            aria-selected={row.gameId === selectedGameId}
+            tabIndex={0}
+            title={row.dateLabel + ' · ' + row.opponentName + ' · ' + row.competition + ' · ' + (row.homeAway === 'H' ? 'Home' : 'Away')}
+            onClick={() => onSelectGame(row.gameId)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onSelectGame(row.gameId)
+              }
+            }}>
+            <td title={row.dateLabel}>{row.dateLabel.replace(/\\s+\\d{4}$/, '')}</td>
+            <td>{row.opponent}</td>
             <td><span className={'po-pf-result is-' + (row.outcome === 'W' ? 'win' : row.outcome === 'L' ? 'loss' : 'tie')}>{row.result}</span></td>
             <td>{row.minutes}</td><td>{row.points}</td><td>{row.rebounds}</td><td>{row.assists}</td><td>{row.valuation}</td>
           </tr>)}</tbody>
