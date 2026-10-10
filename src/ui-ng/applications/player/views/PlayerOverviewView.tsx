@@ -9,6 +9,7 @@ import {
   OverviewTimeline,
 } from '@/ui-ng/applications/player/components/OverviewModules'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
+import { PlayerCourtsideOverview } from '@/ui-ng/applications/player/views/PlayerCourtsideOverview'
 
 /**
  * PLAYER · OVERVIEW — three fixed rows read as one screen:
@@ -21,7 +22,11 @@ export function PlayerOverviewView() {
   const { overview } = model
 
   return (
-    <div className="po-overview" data-ng-region="player-overview">
+    <div className="po-cs-overview" data-ng-region="player-overview">
+      <PlayerCourtsideOverview />
+      <details className="po-cs-depth">
+        <summary>EXPLORAR ANÁLISIS COMPLETO · INFORMES Y DECISIONES</summary>
+        <div className="po-overview" data-ng-region="player-overview-expanded">
       <div className="po-ov-row po-ov-row--identity">
         <OverviewIdentityModule overview={overview} />
         <OverviewSeasonSnapshot overview={overview} />
@@ -40,6 +45,8 @@ export function PlayerOverviewView() {
         <OverviewAlerts onOpenPage={(view) => session.setActiveView(view)} overview={overview} />
         <OverviewTimeline onOpenPage={(view) => session.setActiveView(view)} overview={overview} />
       </div>
+        </div>
+      </details>
     </div>
   )
 }
