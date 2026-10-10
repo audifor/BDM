@@ -115,7 +115,7 @@ export function PlayerCourtsideAttributes() {
 
   return (
     <div className="pac-grid" data-ng-region="player-attributes-courtside">
-      <div className="pac-column pac-column--left">
+      <div className="pac-column pac-column--left" data-focus-count={focus.length}>
         <section className="pac-card pac-category">
           <header className="pac-head"><h2>CATEGORY PROFILES</h2><span>Select a category to explore</span></header>
           <AttributeCategoryProfiles
@@ -126,10 +126,9 @@ export function PlayerCourtsideAttributes() {
           />
         </section>
         <section className="pac-card pac-focus">
-          <header className="pac-head"><h2>FOCUS TRACKER</h2><span>{focus.length} / {MAX_FOCUS_ATTRIBUTES}</span></header>
-          <p className="pac-subtext">Watch up to three attributes across categories</p>
+          <header className="pac-head"><h2>FOCUS TRACKER</h2><span title="Watchlist stored on this device, outside the game Save">{focus.length} / {MAX_FOCUS_ATTRIBUTES} · LOCAL</span></header>
           {focus.length === 0 ? (
-            <p className="pac-empty">Mark an attribute with the star to follow it here.</p>
+            <p className="pac-empty pac-focus__empty">Mark attributes with ☆ to watch them across categories. Saved only on this device.</p>
           ) : <div className="pac-focus__items">
             {focus.map(id => {
               const rating = model.attributes.allRatings.find((entry) => entry.id === id)
@@ -146,7 +145,6 @@ export function PlayerCourtsideAttributes() {
               </div>
             })}
           </div>}
-          <p className="pac-focus__note">Saved locally on this device, separately from the game Save.</p>
           <button className="pac-outline-action" type="button" disabled={activeRating === undefined || (trackerFull && !focusedIds.has(activeRating.id))}
             onClick={() => activeRating !== undefined && toggleFocus(activeRating.id)}>
             {activeRating !== undefined && focusedIds.has(activeRating.id) ? '★ REMOVE SELECTED' : '+ WATCH SELECTED ATTRIBUTE'}
