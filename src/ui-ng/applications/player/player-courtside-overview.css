@@ -294,3 +294,123 @@
     height:94px;
   }
 }
+
+
+/*
+ * PLAYER shared identity header typography · approved 2026-10-10.
+ * Applied across all 8 PLAYER pages; preserve Courtside colors, identity data and interactions.
+ * At narrow widths, recomposition replaces progressive font shrinkage.
+ */
+.po-root .po-identity .po-identity__section-label,
+.po-root .po-identity .po-identity__pos-label,
+.po-root .po-identity .po-identity__measure-label,
+.po-root .po-identity .po-status__label {
+  font-size: 13px;
+  line-height: 1.16;
+  letter-spacing: .08em;
+  color: var(--cs-text2);
+}
+.po-root .po-identity .po-identity__fact-label {
+  font-size: 12px;
+  line-height: 1.16;
+  color: var(--cs-text2);
+}
+.po-root .po-identity .po-status__value {
+  font-size: 16px;
+  line-height: 1.16;
+  letter-spacing: .01em;
+  min-width: 0;
+}
+.po-root .po-identity .po-identity__availability {
+  font-size: 16px;
+  letter-spacing: .08em;
+  line-height: 1.15;
+}
+.po-root .po-identity .po-identity__measure-unit {font-size:13px;color:var(--cs-text2);}
+.po-root .po-identity .po-identity__fact-value {font-size:15px;}
+.po-root .po-identity .po-identity__pos .ng-play-position {
+  min-width: 38px;
+  height: 26px;
+  padding-inline: 6px;
+  font-family: var(--cs-font-display);
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: .015em;
+}
+.po-root .po-identity .po-identity__pos-row {align-items:center;}
+.po-root .po-identity .po-identity__pos {gap:4px;}
+.po-root .po-identity .po-identity__status-list,
+.po-root .po-identity .po-identity__contract-list {gap:6px;}
+.po-root .po-identity .po-status {gap:6px;min-height:19px;}
+.po-root .po-identity .po-status__meter {flex:none;width:32px;}
+/* Reduce label/value distance while preserving readable columns in five-cell desktop layout. */
+@container player-space (min-width:1281px) {
+  .po-root .po-identity .po-identity__status-list .po-status {
+    grid-template-columns:minmax(68px,82px) minmax(0,1fr);
+  }
+  .po-root .po-identity .po-identity__contract-list .po-status {
+    grid-template-columns:minmax(52px,62px) minmax(0,1fr);
+  }
+  .po-root .po-identity .po-identity__condition {gap:7px;}
+  .po-root .po-identity .po-identity__contract {gap:7px;}
+}
+/* Responsive master: give the status labels more room without clipping the portrait or measures. */
+@container player-space (min-width:1281px) and (max-width:1440px) {
+  .po-root .po-identity {
+    grid-template-columns:minmax(240px,1.35fr) minmax(110px,.5fr) minmax(245px,1.03fr) minmax(195px,.9fr) minmax(240px,1.08fr);
+  }
+  .po-root .po-identity > * {padding:8px 9px;}
+  .po-root .po-identity__measures {gap:5px;}
+  .po-root .po-identity__measure-reading {gap:3px;}
+}
+/* The formerly crowded 3-column second row becomes tall enough to read full labels and values. */
+@container player-space (min-width:921px) and (max-width:1280px) {
+  .po-root .ng-application-workspace {--po-identity-height:260px;}
+  .po-root .po-identity {
+    grid-template-rows:minmax(116px,1fr) minmax(136px,1fr);
+  }
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {
+    grid-template-columns:minmax(70px,.78fr) minmax(0,1.22fr);
+    gap:5px;
+  }
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__condition,
+  .po-root .po-identity__contract {gap:8px;}
+}
+@container player-space (min-width:621px) and (max-width:920px) {
+  .po-root .ng-application-workspace {--po-identity-height:372px;}
+  .po-root .po-identity {
+    grid-template-rows:minmax(124px,auto) minmax(88px,auto) minmax(146px,auto);
+  }
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {
+    grid-template-columns:minmax(70px,.85fr) minmax(0,1.15fr);
+    gap:6px;
+  }
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__condition,.po-root .po-identity__contract {gap:8px;}
+}
+@container player-space (max-width:620px) {
+  .po-root .ng-application-workspace {--po-identity-height:575px;}
+  .po-root .po-identity {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:120px 72px 88px 135px 145px;
+  }
+  .po-root .po-identity > * {padding:6px 12px;min-width:0;}
+  .po-root .po-identity__person {grid-column:1;grid-row:1;grid-template-columns:72px minmax(0,1fr);}
+  .po-root .po-portrait {width:72px;height:105px;}
+  .po-root .po-identity__positions {grid-column:1;grid-row:2;align-items:flex-start;gap:4px;}
+  .po-root .po-identity__pos-row {justify-content:flex-start;}
+  .po-root .po-identity__measures {grid-column:1;grid-row:3;justify-content:space-between;gap:8px;}
+  .po-root .po-identity__condition {grid-column:1;grid-row:4;gap:5px;}
+  .po-root .po-identity__contract {grid-column:1;grid-row:5;gap:6px;}
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {grid-template-columns:minmax(100px,.45fr) minmax(0,.55fr);gap:6px;}
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__measure-reading {white-space:nowrap;}
+  .po-root .po-identity .po-status__value {font-size:15px;}
+}
