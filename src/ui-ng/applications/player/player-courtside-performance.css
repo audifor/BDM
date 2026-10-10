@@ -602,3 +602,80 @@
     height:auto;
   }
 }
+
+
+/* Game log: eight decision-useful columns; detailed box scores stay in inspector. */
+.po-pf-board--courtside .po-pf-courtside-table {
+  width:100%;
+  min-width:0;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font:600 12px/1.2 var(--cs-font);
+  color:var(--cs-text);
+}
+.po-pf-board--courtside .po-pf-courtside-table th {
+  position:sticky;
+  z-index:2;
+  top:0;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 11px/1.2 var(--cs-font);
+  text-align:right;
+  padding:9px 6px;
+  border-bottom:1px solid var(--cs-line2);
+}
+.po-pf-board--courtside .po-pf-courtside-table td {
+  padding:8px 6px;
+  text-align:right;
+  border-bottom:1px solid var(--cs-line);
+  font-variant-numeric:tabular-nums;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(1),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(1) {
+  width:88px;
+  text-align:left;
+  white-space:nowrap;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(2),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(2) {
+  width:22%;
+  text-align:left;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(3),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(3) {
+  width:110px;
+  white-space:nowrap;
+  text-align:left;
+}
+.po-pf-board--courtside .po-pf-courtside-table tbody tr:hover {
+  background:var(--cs-s2);
+}
+.po-pf-board--courtside .po-pf-courtside-table tbody tr.is-selected {
+  background:color-mix(in srgb,var(--cs-lime) 9%,var(--cs-s1));
+  box-shadow:inset 3px 0 var(--cs-lime);
+}
+.po-pf-board--courtside .po-pf-courtside-table td button {
+  display:block;
+  max-width:100%;
+  padding:3px 0;
+  border:0;
+  background:transparent;
+  color:var(--cs-text);
+  font:700 12px/1.2 var(--cs-font);
+  text-align:left;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.po-pf-board--courtside .po-pf-courtside-table td button:hover {
+  color:var(--cs-lime);
+}
+.po-pf-board--courtside .po-pf-courtside-table td button[aria-pressed='true'] {
+  color:var(--cs-lime);
+}
+@container player-space (max-width:850px) {
+  .po-pf-board--courtside .po-pf-courtside-table {
+    min-width:600px;
+  }
+}
