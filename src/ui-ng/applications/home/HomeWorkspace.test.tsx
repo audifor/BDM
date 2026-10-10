@@ -59,6 +59,7 @@ describe('HomeWorkspace', () => {
     const model = buildCompetitionWorkspaceModel(world, undefined, getUserTeam(world)?.id)
     expect(model).not.toBeNull()
     const expectedRows = model!.standings.length
+    const expectedDigest = Math.min(expectedRows, 7)
     expect(expectedRows).toBeGreaterThan(0)
 
     render(
@@ -69,9 +70,10 @@ describe('HomeWorkspace', () => {
 
     const standings = document.querySelector('.home-standings .home-slot-table')
     expect(standings).not.toBeNull()
-    expect(standings!.querySelectorAll('li')).toHaveLength(expectedRows)
+    expect(standings!.querySelectorAll('li')).toHaveLength(expectedDigest)
+    expect(screen.getByText(`${expectedDigest} de ${expectedRows} equipos`)).toBeInTheDocument()
     expect(standings!.querySelectorAll('li.is-zone-playoff').length).toBe(
-      Math.min(model!.standingsZoneBands.playoffThrough, expectedRows),
+      Math.min(2, model!.standingsZoneBands.playoffThrough),
     )
     if (model!.standingsZoneBands.relegationFrom !== null) {
       expect(standings!.querySelectorAll('li.is-zone-relegation').length).toBeGreaterThan(0)
@@ -89,6 +91,32 @@ describe('HomeWorkspace', () => {
     fireEvent.click(teamLink!)
     expect(window.location.search).toMatch(/app=club|app=team|teamId=/)
   })
+  it('deep-links directly to the official competition classification', () => {
+    const world = createNewGame()
+    useGameStore.getState().replaceWorld(world)
+    render(<NgWorkspaceNavigationProvider><HomeWorkspace /></NgWorkspaceNavigationProvider>)
+    fireEvent.click(screen.getByRole('button', { name: /Clasificación completa/i }))
+    expect(window.location.search).toContain('app=competition')
+    expect(window.location.search).toContain('competitionTab=standings')
+  })
+
+  it('offers the additional results, injury and training cards as optional modules', () => {
+    useGameStore.getState().replaceWorld(createNewGame())
+    render(<NgWorkspaceNavigationProvider><HomeWorkspace /></NgWorkspaceNavigationProvider>)
+    fireEvent.click(screen.getByRole('button', { name: /^Objetivos/i }))
+    const menu = screen.getByRole('menu')
+    for (const label of ['Últimos resultados', 'Parte médico', 'Entrenamientos programados'])
+      expect(within(menu).getByRole('menuitemradio', { name: label })).toBeInTheDocument()
+    fireEvent.click(within(menu).getByRole('menuitemradio', { name: 'Últimos resultados' }))
+    expect(screen.getByText('Todavía no hay partidos disputados.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Últimos resultados/i }))
+    fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitemradio', { name: 'Parte médico' }))
+    expect(screen.getByText('Sin lesiones activas registradas.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Parte médico/i }))
+    fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitemradio', { name: 'Entrenamientos programados' }))
+    expect(screen.getByText('No hay sesiones programadas.')).toBeInTheDocument()
+  })
+
   it('offers real leaders categories without a fake preseason ranking', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
