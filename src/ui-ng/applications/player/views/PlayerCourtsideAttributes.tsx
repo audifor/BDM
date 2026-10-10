@@ -155,8 +155,14 @@ export function PlayerCourtsideAttributes() {
           <header className="pac-head"><h2>ATTRIBUTE PROFILE</h2><span>8 family radar · click an axis to explore</span></header>
           <div className="pac-profile__body">
             <div className="pac-profile__chart">
-              <div className="pac-profile__legend"><span className="pac-dot pac-dot--player"/> Player
+              <div className="pac-profile__legend">
+                <span className="pac-dot pac-dot--player" /> Player
                 {scope !== 'none' && overlay !== null && <><span className="pac-dot pac-dot--reference"/> {BASELINES.find((option) => option.id === scope)?.label} avg.</>}
+                <label className="pac-profile__control">COMPARE
+                  <select value={scope} onChange={(event) => setScope(event.target.value as AttributeBaselineScope)}>
+                    {BASELINES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                  </select>
+                </label>
               </div>
               <AttributeRadar
                 accent="var(--cs-lime)"
@@ -167,11 +173,6 @@ export function PlayerCourtsideAttributes() {
                 courtsideFraming
                 showValues
               />
-              <label className="pac-profile__control">COMPARE PROFILE
-                <select value={scope} onChange={(event) => setScope(event.target.value as AttributeBaselineScope)}>
-                  {BASELINES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                </select>
-              </label>
               {scope !== 'none' && overlay === null && <p className="pac-benchmark-missing">No complete {scope} baseline available for these eight families.</p>}
             </div>
             <div className="pac-signals" aria-label="Current profile extremes">
