@@ -603,7 +603,8 @@
 }
 .pac-column--right {
   grid-template-columns:minmax(0,1fr);
-  grid-template-rows:minmax(215px,1.1fr) minmax(215px,1fr);
+  /* More room for comparisons and evolution, with attribute list scroll confined above. */
+  grid-template-rows:minmax(215px,.94fr) minmax(245px,1.06fr);
   min-height:0;
 }
 .pac-column--center .pac-profile {
