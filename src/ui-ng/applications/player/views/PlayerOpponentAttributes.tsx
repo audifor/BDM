@@ -30,7 +30,9 @@ export function PlayerOpponentAttributes() {
   const knownRatings = activeFamily?.ratings.filter((entry) => entry.evaluation !== null) ?? []
   const activeRating = knownRatings.find((entry) => entry.id === selectedRating) ?? knownRatings[0]
   const stateText = totals.knownRatings === 0 && totals.knownDimensions === 0
-    ? 'SIN EVALUAR' : totals.knownRatings === 0 ? 'CONOCIMIENTO GENERAL' : 'EVALUACIÓN PARCIAL'
+    ? 'SIN EVALUAR'
+    : totals.complete ? 'COBERTURA INDIVIDUAL COMPLETA · ESTIMACIONES'
+    : totals.knownRatings === 0 ? 'CONOCIMIENTO GENERAL' : 'EVALUACIÓN PARCIAL'
   const openScouting = () => session.setActiveView('scouting')
   const selectFamily = (family: RatingCategory) => {
     setSelectedFamily(family)
