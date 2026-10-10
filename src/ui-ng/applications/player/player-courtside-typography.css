@@ -64,16 +64,3 @@
 ) {
   font-family: var(--cs-font);
 }
-
-/* Shared semantic minimum for the already-approved overview.
- * Other PLAYER pages retain their currently approved layout and will be
- * densified in their own design reviews rather than through a global zoom. */
-.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root[data-bdm-player-overview='true'] :is(
-  .po-cs-dna__quadrant p,
-  .po-cs-meter-row,
-  .po-cs-meter-row strong,
-  .po-cs-character__unknown p,
-  .po-cs-read__verdicts li
-) {
-  font-size: max(12px, 1em);
-}
