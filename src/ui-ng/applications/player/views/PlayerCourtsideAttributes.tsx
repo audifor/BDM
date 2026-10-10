@@ -214,12 +214,8 @@ export function PlayerCourtsideAttributes() {
                   </div>
                 </div>
               )}
-              {visibleBaselines.length > 0 && <div className="pac-radar-active" aria-label="Comparativas activas">
-                {baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null).map((item) =>
-                  <span key={item.id} style={{ '--pac-series-color': item.color } as CSSProperties}>
-                    <i aria-hidden="true" /> {item.label}
-                  </span>)}
-              </div>}
+              {/* Reference names and swatches now live in the reserved comparison panel.
+                  Never mount an extra row above the radar when a reference is enabled. */}
               <div className="pac-profile__radar-wrap">
                 <AttributeRadar
                   accent="var(--cs-lime)"
