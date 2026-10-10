@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import { getContinueStopReason } from '@/app/game/ContinueFlow'
 import { compareGameDates } from '@/domain/date'
@@ -10,10 +10,8 @@ import { calculateTeamStrength } from '@/engine/team'
 import { useGameStore } from '@/stores/gameStore'
 import { buildCompetitionWorkspaceModel } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
 import { HomeDashboardSlot } from '@/ui-ng/applications/home/HomeDashboardSlot'
-import {
-  HOME_DASHBOARD_DEFAULT_SLOTS,
-  type HomeDashboardModuleId,
-} from '@/ui-ng/applications/home/homeDashboardModules'
+import { HOME_SELECTABLE_IDS, readHomeLayout, saveHomeLayout, type HomeSelectableModuleId } from './homeLayoutSettings'
+import { homeDashboardModuleLabel } from '@/ui-ng/applications/home/homeDashboardModules'
 import { deriveTeamColors, formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -105,10 +103,42 @@ function upcomingUserGames(world: GameWorld, teamId: TeamId, limit = 7): readonl
     })
 }
 
+function HomePanelPicker({title,onSelect}:{readonly title:string;readonly onSelect:(value:HomeSelectableModuleId)=>void}){
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  useEffect(()=>{
+    if(!open)return
+    const close=(event:PointerEvent)=>{if(ref.current&&!ref.current.contains(event.target as Node))setOpen(false)}
+    const key=(event:KeyboardEvent)=>{if(event.key==='Escape')setOpen(false)}
+    window.addEventListener('pointerdown',close);window.addEventListener('keydown',key)
+    return()=>{window.removeEventListener('pointerdown',close);window.removeEventListener('keydown',key)}
+  },[open])
+  return <div className="home-native-picker" ref={ref}>
+    <button type="button" className="home-native-picker__trigger"
+      aria-haspopup="menu" aria-expanded={open} aria-label={`Cambiar módulo: ${title}`}
+      onClick={()=>setOpen(value=>!value)}>{title} <span aria-hidden="true">▾</span></button>
+    {open?<div className="home-native-picker__menu" role="menu" aria-label={`Elegir módulo para ${title}`}>
+      {HOME_SELECTABLE_IDS.map(id=><button key={id} type="button" role="menuitem"
+        onClick={()=>{onSelect(id);setOpen(false)}}>{id==='fixture'?'Próximo partido':homeDashboardModuleLabel(id)}</button>)}
+    </div>:null}
+  </div>
+}
+
 export function HomeWorkspace() {
   const world = useGameStore((state) => state.world)
   const { openEntity } = useNgWorkspaceNavigation()
-  const [slots, setSlots] = useState<readonly HomeDashboardModuleId[]>(() => [...HOME_DASHBOARD_DEFAULT_SLOTS])
+  const homeTeamId = world===null?undefined:getUserTeam(world)?.id
+  const [layout,setLayout]=useState(()=>readHomeLayout(homeTeamId))
+  useEffect(()=>setLayout(readHomeLayout(homeTeamId)),[homeTeamId])
+  const selectModule=(section:'fixture'|'dynamics'|'upcoming'|0|1|2, next:HomeSelectableModuleId)=>{
+    setLayout(current=>{
+      const updated=typeof section==='number'
+        ? {...current,slots:current.slots.map((item,index)=>index===section?next:item) as unknown as typeof current.slots}
+        : {...current,[section]:next}
+      saveHomeLayout(homeTeamId,updated)
+      return updated
+    })
+  }
 
   const model = useMemo(() => {
     if (world === null) return null
@@ -170,7 +200,7 @@ export function HomeWorkspace() {
     >
       <div className="home-dashboard">
         <div className="home-dashboard__top">
-          <section className="home-dashboard__fixture ng-holo-panel">
+          {layout.fixture==='fixture'?<section className="home-dashboard__fixture ng-holo-panel">
             <div className="home-dashboard__fixture-side">
               {homeTeam === undefined ? null : (
                 <button
@@ -197,7 +227,7 @@ export function HomeWorkspace() {
             </div>
 
             <div className="home-dashboard__fixture-center">
-              <p className="ng-canon__eyebrow">Próximo partido</p>
+              <HomePanelPicker title="Próximo partido" onSelect={value=>selectModule('fixture',value)}/>
               <p className="home-dashboard__fixture-vs">VS</p>
               <p className="home-dashboard__fixture-meta">
                 {model.nextGame === undefined
@@ -246,10 +276,11 @@ export function HomeWorkspace() {
                 )}
               </p>
             </div>
-          </section>
+          </section>:<HomeDashboardSlot className="home-dashboard__fixture home-dashboard__alternative" context={slotContext}
+            moduleId={layout.fixture} onSelectModule={value=>selectModule('fixture',value)}/>}
 
-          <section className="home-dashboard__module home-dashboard__dynamics ng-holo-panel">
-            <p className="ng-canon__eyebrow">Dinámicas del choque</p>
+          {layout.dynamics==='dynamics'?<section className="home-dashboard__module home-dashboard__dynamics ng-holo-panel">
+            <HomePanelPicker title="Dinámicas del choque" onSelect={value=>selectModule('dynamics',value)}/>
             {model.homeDynamics === undefined ? (
               <p className="ng-canon__empty">Sin datos de dinámicas.</p>
             ) : (
@@ -299,10 +330,11 @@ export function HomeWorkspace() {
                 </div>
               </div>
             )}
-          </section>
+          </section>:<HomeDashboardSlot className="home-dashboard__module home-dashboard__dynamics home-dashboard__alternative" context={slotContext}
+            moduleId={layout.dynamics} onSelectModule={value=>selectModule('dynamics',value)}/>}
 
-          <section className="home-dashboard__module home-dashboard__upcoming ng-holo-panel">
-            <p className="ng-canon__eyebrow">Próximos partidos</p>
+          {layout.upcoming==='upcoming'?<section className="home-dashboard__module home-dashboard__upcoming ng-holo-panel">
+            <HomePanelPicker title="Próximos partidos" onSelect={value=>selectModule('upcoming',value)}/>
             {model.upcoming.length === 0 ? (
               <p className="ng-canon__empty">Sin partidos programados.</p>
             ) : (
@@ -326,19 +358,15 @@ export function HomeWorkspace() {
                 ))}
               </ul>
             )}
-          </section>
+          </section>:<HomeDashboardSlot className="home-dashboard__module home-dashboard__upcoming home-dashboard__alternative" context={slotContext}
+            moduleId={layout.upcoming} onSelectModule={value=>selectModule('upcoming',value)}/>}
         </div>
 
         <div className="home-dashboard__modules">
-          {slots.map((moduleId, index) => (
-            <HomeDashboardSlot
-              context={slotContext}
-              key={`${index}-${moduleId}`}
-              moduleId={moduleId}
-              onSelectModule={(nextId) => {
-                setSlots((current) => current.map((id, slotIndex) => (slotIndex === index ? nextId : id)))
-              }}
-            />
+          <HomeDashboardSlot context={slotContext} moduleId="standings" slotIndex={0}/>
+          {layout.slots.map((moduleId,index)=>(
+            <HomeDashboardSlot context={slotContext} key={index} slotIndex={index+1}
+              moduleId={moduleId} onSelectModule={next=>selectModule(index as 0|1|2,next)}/>
           ))}
         </div>
       </div>
