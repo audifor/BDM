@@ -277,10 +277,10 @@ function LeadersModule({ context }: { readonly context: HomeDashboardSlotContext
   const [category, setCategory] = useState<HomeLeaderCategory>('points')
   const stat = HOME_LEADER_CATEGORIES.find((entry) => entry.id === category)!
   const hasOfficialStats = (context.competition?.leaders.length ?? 0) > 0
-  const leaders = rankHomeLeaders(context.competition?.leaders ?? [], category)
+  const leaders = rankHomeLeaders(context.competition?.leaders ?? [], category).slice(0, 4)
   // Do not present the unsorted preseason roster as a statistical ranking.
   const roster = !hasOfficialStats && context.teamId !== undefined
-    ? getTeamRoster(context.world, context.teamId).slice(0, 6)
+    ? getTeamRoster(context.world, context.teamId).slice(0, 4)
     : []
 
   return (
