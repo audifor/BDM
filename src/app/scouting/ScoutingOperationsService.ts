@@ -31,6 +31,16 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     ...world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId).map((entry) => entry.playerId),
     ...getFreeAgents(world).map((player) => player.id),
   ])
+  // Publicly scheduled fixtures give the manager legitimate access to the
+  // identities of the opposing roster, not to any hidden player ratings.
+  // The previous rule only exposed the NEXT opponent and blocked evaluations
+  // of opponents already visible elsewhere in the fixture calendar.
+  for (const game of Object.values(world.games)) {
+    if (game.status !== 'scheduled' || game.date < world.currentDate) continue
+    if (game.homeTeamId !== teamId && game.awayTeamId !== teamId) continue
+    const opponentId = game.homeTeamId === teamId ? game.awayTeamId : game.homeTeamId
+    for (const playerId of world.teams[opponentId]?.rosterPlayerIds ?? []) ids.add(playerId)
+  }
   const nextGame = getNextScheduledGame(world, teamId)
   if (nextGame !== undefined) {
     const opponentId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
