@@ -25,6 +25,7 @@ import {
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { homeStandingStreaks } from './homeStandingsMetrics'
+import { HOME_SIZE_IDS, type HomeCardSize } from './homeLayoutSettings'
 import { HomeRecentResults, HomeMedicalReport, HomeTrainingAgenda } from './HomeExtraModules'
 import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
 import {
@@ -67,10 +68,16 @@ export function HomeDashboardSlot({
   moduleId,
   context,
   onSelectModule,
+  cardSize = 'normal',
+  onCardSizeChange,
+  slotIndex,
 }: {
   readonly moduleId: HomeDashboardModuleId
   readonly context: HomeDashboardSlotContext
   readonly onSelectModule: (id: HomeDashboardModuleId) => void
+  readonly cardSize?: HomeCardSize
+  readonly onCardSizeChange?: (size:HomeCardSize) => void
+  readonly slotIndex?: number
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLElement | null>(null)
@@ -95,7 +102,7 @@ export function HomeDashboardSlot({
   }, [open])
 
   return (
-    <section className={`home-slot ng-holo-panel home-slot--${moduleId}`} ref={rootRef}>
+    <section className={`home-slot ng-holo-panel home-slot--${moduleId}${open?' is-choosing-module':''}`} data-home-card-size={moduleId==='standings'?'large':cardSize} data-home-slot-index={slotIndex} ref={rootRef}>
       <header className="home-slot__header">
         <button
           aria-controls={menuId}
@@ -110,6 +117,15 @@ export function HomeDashboardSlot({
             ▾
           </span>
         </button>
+        {moduleId!=='standings'&&onCardSizeChange ? (
+          <select aria-label={`Tamaño del módulo ${homeDashboardModuleLabel(moduleId)}`}
+            className="home-slot__size-picker"
+            value={cardSize} onChange={event=>onCardSizeChange(event.target.value as HomeCardSize)}>
+            {HOME_SIZE_IDS.map(size=><option key={size} value={size}>
+              {size==='compact'?'Compacto':size==='normal'?'Normal':'Grande'}
+            </option>)}
+          </select>
+        ) : null}
         {open ? (
           <ul className="home-slot__menu ng-holo-float" id={menuId} role="menu">
             {HOME_DASHBOARD_MODULE_IDS.map((id) => (
