@@ -8,9 +8,11 @@ import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModa
 import type { ScoutingMission } from '@/domain/scouting'
 
 import type { AuthorizedScoutedRating } from '@/app/player/PlayerKnowledgeAccess'
+import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/BasketballVisuals'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
-  buildOpponentFamilyKnowledge, opponentKnowledgeSummary, scoutingConfidenceLabel,
+  buildOpponentFamilyKnowledge, buildScoutedFamilyProfiles, hasScoutedRadarProfile,
+  opponentKnowledgeSummary, scoutingConfidenceLabel,
 } from '@/ui-ng/applications/player/data/buildOpponentAttributesPresentation'
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 
@@ -44,6 +46,20 @@ export function PlayerOpponentAttributes() {
   if (opponentAccess === null) return null
 
   const totals = opponentKnowledgeSummary(opponentAccess)
+  const familyProfiles = buildScoutedFamilyProfiles(opponentAccess)
+  const radarReady = hasScoutedRadarProfile(familyProfiles)
+  const radarAxes = radarReady ? familyProfiles.map((family) => ({
+    key: family.id,
+    label: { shooting: 'SHOOT', finishing: 'FIN', ballHandling: 'HANDLE',
+      playmaking: 'PLAY', offBall: 'OFF', defense: 'DEF', physical: 'PHYS', mental: 'MENT' }[family.id],
+    value: family.estimate!,
+  })) : []
+  const estimatedFamilies = familyProfiles.filter((family) => family.estimate !== null)
+  const strongestFamily = estimatedFamilies.length === 8
+    ? [...estimatedFamilies].sort((left, right) => right.estimate! - left.estimate!)[0] : undefined
+  const weakestFamily = estimatedFamilies.length === 8
+    ? [...estimatedFamilies].sort((left, right) => left.estimate! - right.estimate!)[0] : undefined
+  const selectedProfile = familyProfiles.find((family) => family.id === selectedFamily)
   const activeFamily = groups.find((entry) => entry.id === selectedFamily) ?? groups[0]
   const knownRatings = activeFamily?.ratings.filter((entry) => entry.evaluation !== null) ?? []
   const activeRating = knownRatings.find((entry) => entry.id === selectedRating) ?? knownRatings[0]
@@ -107,26 +123,70 @@ export function PlayerOpponentAttributes() {
         </div>
       </section>
 
-      <section className="pac-card pac-opponent__profile">
-        <header className="pac-head"><h2>PERFIL DE SCOUTING</h2><span>Información autorizada</span></header>
-        {totals.knownRatings === 0 && totals.knownDimensions === 0 ? <div className="pac-opponent__unknown">
+      <section className="pac-card pac-opponent__profile" aria-label="Perfil de juego estimado">
+        <header className="pac-head"><h2>PERFIL DE JUEGO ESTIMADO</h2><span>Solo informes de tu club</span></header>
+        {totals.knownRatings === 0 ? <div className="pac-opponent__unknown">
           <span className="pac-opponent__unknown-icon" aria-hidden="true">?</span>
-          <h3>PERFIL SIN EVALUAR</h3>
-          <p>No existe una evaluación deportiva contrastada. El radar permanecerá vacío hasta disponer de información verificable.</p>
+          <h3>SIN PERFIL DEPORTIVO</h3>
+          <p>Este club todavía no dispone de atributos individuales suficientes para describir el juego del rival. Lo desconocido no es una debilidad.</p>
+          {totals.knownDimensions > 0 && <p>Existen {totals.knownDimensions} observaciones generales, consultables en Scouting Report.</p>}
           <button className="pac-outline-action" type="button" onClick={() => requestAssessment('QUICK_LOOK')} disabled={requestBlocker !== null}>INICIAR EVALUACIÓN ›</button>
-        </div> : <div className="pac-opponent__known">
-          <h3>INFORMACIÓN DISPONIBLE</h3>
-          <p>Los informes proporcionan observaciones estimadas, no los valores internos del jugador.</p>
-          {opponentAccess.knownDimensions.length > 0
-            ? opponentAccess.knownDimensions.map((entry) => <div className="pac-opponent__dimension" key={entry.id}>
-                <span>{entry.label}</span><strong>{entry.displayLabel}</strong>
-                <small>{entry.coveragePercent}% cobertura registrada</small>
-              </div>)
-            : <p className="pac-opponent__missing">Todavía no hay evaluaciones globales por dimensión.</p>}
-          <p className="pac-opponent__missing">La araña de 8 familias no se dibuja a partir de datos parciales o no certificados.</p>
-        </div>}
-        <div className="pac-opponent__profile-foot"><span>OBSERVACIONES INDIVIDUALES</span>
-          <strong>{totals.knownRatings} / {totals.totalRatings}</strong></div>
+        </div> : (
+          <div className="pac-opponent__profile-content">
+            <div className="pac-opponent__profile-key">
+              <span className="pac-opponent__estimated-key"><i aria-hidden="true" /> ESTIMACIÓN DEL CLUB</span>
+              <span>{totals.knownRatings}/{totals.totalRatings} atributos evaluados</span>
+            </div>
+            {radarReady ? (
+              <div className="pac-opponent__radar" aria-label="Radar de ocho familias, construido únicamente con las estimaciones de scouting">
+                <AttributeRadar axes={radarAxes}
+                  selectedCategory={selectedFamily} onCategorySelect={selectFamily}
+                  accent="var(--cs-lime)" showValues courtsideFraming />
+              </div>
+            ) : (
+              <div className="pac-opponent__radar-pending">
+                <span className="pac-opponent__unknown-icon" aria-hidden="true">?</span>
+                <h3>PERFIL AÚN INCOMPLETO</h3>
+                <p>Hay {totals.knownRatings} atributos evaluados, pero faltan estimaciones en algunas familias. El radar solo aparece al conocer las ocho familias completas.</p>
+                <p>Selecciona una familia para consultar lo que ya sabemos de ella.</p>
+              </div>
+            )}
+            <div className="pac-opponent__family-reading">
+              <div className="pac-opponent__family-reading-head">
+                <div><strong>{(selectedProfile?.label ?? 'FAMILIA').toUpperCase()}</strong>
+                  <span>{selectedProfile?.observed ?? 0}/{selectedProfile?.total ?? 0} atributos evaluados</span>
+                </div>
+                <strong className="pac-opponent__family-estimate">
+                  {selectedProfile?.estimate === null || selectedProfile?.estimate === undefined
+                    ? 'SIN DATOS' : '≈ ' + selectedProfile.estimate}
+                </strong>
+              </div>
+              {selectedProfile?.estimate !== null && selectedProfile?.estimate !== undefined ? (
+                <>
+                  <div className="pac-opponent__range">
+                    <span>Intervalo orientativo</span>
+                    <strong>{selectedProfile.low}–{selectedProfile.high}</strong>
+                  </div>
+                  <div className="pac-opponent__family-meter" aria-hidden="true">
+                    <i style={{ width: selectedProfile.estimate + '%' }} />
+                  </div>
+                  <div className="pac-opponent__confidence-row">
+                    <span>Cobertura de informes <strong>{selectedProfile.coverage ?? 0}%</strong></span>
+                    <span>Confianza de estimaciones <strong>{selectedProfile.confidence ?? 0}%</strong></span>
+                  </div>
+                </>
+              ) : <p className="pac-opponent__insufficient">Esta familia todavía no tiene una evaluación individual utilizable.</p>}
+              {radarReady && strongestFamily !== undefined && weakestFamily !== undefined && (
+                <p className="pac-opponent__shape-read">
+                  Perfil estimado: más alto en <strong>{strongestFamily.label}</strong> y más bajo en <strong>{weakestFamily.label}</strong>.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="pac-opponent__profile-foot">
+          <span>Estimaciones, no ratings reales. Los intervalos reflejan incertidumbre del scouting.</span>
+        </div>
       </section>
 
       <div className="pac-opponent__right">
