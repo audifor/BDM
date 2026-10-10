@@ -1480,3 +1480,85 @@
     padding:3px 0;
   }
 }
+
+/* HOME V2.3: entire current-season fixture queue, scrollable by choice.
+   Unlike the former 7-row preview this is a complete pending calendar.
+   The header/count stay visible; scroll belongs to the list only. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__summary {
+  flex:none;
+  margin:5px 0 7px;
+  color:var(--cs-text2);
+  font:600 12px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+  display:flex;
+  flex-direction:column;
+  overflow:visible;
+  gap:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) > .home-upcoming {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming__row,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--upcoming .home-upcoming__row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(66px,98px) max-content 40px;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:7px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+  display:block;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding:5px 6px;
+  border:1px solid var(--cs-line2);
+  border-radius:6px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+  text-align:center;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__opponent {
+  font-size:13px;
+  line-height:1.25;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__module-content {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  height:100%;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--upcoming .home-upcoming {
+  flex:0 0 auto;
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+  background:var(--cs-s2);
+  color:#312b38;
+  border-color:var(--cs-line2);
+}
+@media (min-width:1400px) and (min-height:840px) {
+  /* Override the obsolete seven-row squeeze rule from V2.2. */
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) .home-upcoming__row {
+    min-height:42px;
+    padding:7px 0;
+  }
+}
+@media (max-width:1100px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__row {
+    grid-template-columns:minmax(0,1fr) minmax(54px,76px) max-content 40px;
+    gap:5px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+    font-size:9px;
+  }
+}
