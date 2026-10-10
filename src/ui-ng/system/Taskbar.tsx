@@ -17,7 +17,8 @@ function draggedApp(event: DragEvent): WorkspaceAppId | null {
 }
 function instanceLabel(instance: TaskbarInstance, world: ReturnType<typeof useGameStore.getState>['world']) {
   const { entityId, entityKind } = instance
-  if (entityId === null || world === null) return taskbarAppLabel(instance.app)
+  if (entityId === null) return taskbarAppLabel(instance.app)
+  if (world === null) return entityId
   if (entityKind === 'playerId' || entityKind === 'focusPlayerId') {
     const player = world.players[entityId as PlayerId]
     if (player) return [player.firstName, player.lastName].filter(Boolean).join(' ')
