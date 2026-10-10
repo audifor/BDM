@@ -81,6 +81,7 @@ import {
   type Place,
 } from '@/domain/facilities'
 import { createAuthorizedOperatingCostFact, createBudgetAllocation, createBudgetLine, createBudgetRevision, createDebtInstrument, createFinancingAgreement, createFinancingDrawdown, createCapitalContribution, createCompetitionDistributionFact, createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createForecastAssumption, createOperatingCostSource, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createRevenueSource, createTreasurySettlement, createFinancialAuthorizationRenewalPolicy, type AuthorizedOperatingCostFact, type BudgetAllocation, type BudgetLine, type BudgetRevision, type CapitalContribution, type CompetitionDistributionFact, type DebtInstrument, type FinancingAgreement, type FinancingDrawdown, type ExpenseRecognition, type FinancialAccount, type FinancialAuthorizationRenewalPolicy, type FinancialBudget, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OperatingCostSource, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
+import { createFacilityEconomyRecord, type FacilityEconomyRecord } from '@/domain/facilityEconomy'
 import { createFacilityFinancialBinding, type FacilityFinancialBinding, type FacilityFinancialBindingSourceKind, type FacilityFinancialFactKind } from '@/domain/facilities'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
@@ -182,6 +183,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly facilityDevelopmentProjectPhases: readonly FacilityDevelopmentProjectPhase[]
   /** CFI7 — Finance Integration. Non-monetary cross-references only; every amount stays in the referenced Finance collection. Optional/additive for backward compatibility with pre-CFI7 saves. */
   readonly facilityFinancialBindings?: readonly FacilityFinancialBinding[]
+  /** BS17E-A — maintenance/repair economic records (catalog, providers, offers, operation events). Absent in older V4 saves and defaulted to empty. Amounts stay in Finance. */
+  readonly facilityEconomyRecords?: readonly FacilityEconomyRecord[]
   readonly financialAccounts?: readonly FinancialAccount[]
   readonly financialTransactions?: readonly FinancialTransaction[]
   readonly fiscalPeriods?: readonly FiscalPeriod[]
@@ -260,6 +263,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       facilityMaintenanceNeeds: [], facilityMaintenanceActions: [], facilityInspections: [], facilityOperationalIncidents: [],
       facilityDevelopmentProjects: [], facilityDevelopmentProjectPhases: [],
       facilityFinancialBindings: [],
+      facilityEconomyRecords: [],
       talentCohorts: [], talentMaterializations: [], teamPathwayRelations: [], playerRegistrations: [],
       playerPathwayHistory: Object.values(world.players).flatMap((player) => player.pathwayHistory?.length ? [{ playerId: player.id, pathwayHistory: player.pathwayHistory }] : []),
     }),
@@ -322,6 +326,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       operatingCostSources: Object.values(world.operatingCostSourcesById), operatingCostFacts: Object.values(world.operatingCostFactsById),
       debtInstruments: Object.values(world.debtInstrumentsById), financingAgreements: Object.values(world.financingAgreementsById), financingDrawdowns: Object.values(world.financingDrawdownsById), capitalContributions: Object.values(world.capitalContributionsById), competitionDistributionFacts: Object.values(world.competitionDistributionFactsById),
       facilityFinancialBindings: Object.values(world.facilityFinancialBindingsById),
+      facilityEconomyRecords: Object.values(world.facilityEconomyRecordsById),
       talentCohorts: Object.values(world.talentCohortsById),
       talentMaterializations: Object.values(world.talentMaterializationsByCandidateKey),
       playerPathwayHistory: Object.values(world.players).flatMap((player) => player.pathwayHistory?.length ? [{ playerId: player.id, pathwayHistory: player.pathwayHistory }] : []),
@@ -441,6 +446,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const budgetAllocations = Object.prototype.hasOwnProperty.call(payload, 'budgetAllocations') ? parseBudgetAllocations(payload.budgetAllocations) : []
   const forecastAssumptions = Object.prototype.hasOwnProperty.call(payload, 'forecastAssumptions') ? parseForecastAssumptions(payload.forecastAssumptions) : []
   const facilityFinancialBindings = Object.prototype.hasOwnProperty.call(payload, 'facilityFinancialBindings') ? parseFacilityFinancialBindings(payload.facilityFinancialBindings) : []
+  const facilityEconomyRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityEconomyRecords') ? parseFacilityEconomyRecords(payload.facilityEconomyRecords) : []
   const financialRegulationAssessments = Object.prototype.hasOwnProperty.call(payload, 'financialRegulationAssessments') ? parseFinancialAssessments(payload.financialRegulationAssessments) : []
   const financeDecisionProposals = Object.prototype.hasOwnProperty.call(payload, 'financeDecisionProposals') ? parseFinanceDecisionProposals(payload.financeDecisionProposals) : []
   const economicObservations = Object.prototype.hasOwnProperty.call(payload, 'economicObservations') ? parseEconomicObservations(payload.economicObservations) : []
@@ -449,7 +455,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, financialReservations: _financialReservations, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, financingAgreements: _financingAgreements, financingDrawdowns: _financingDrawdowns, capitalContributions: _capitalContributions, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, financialReservations: _financialReservations, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, financingAgreements: _financingAgreements, financingDrawdowns: _financingDrawdowns, capitalContributions: _capitalContributions, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, facilityEconomyRecords: _facilityEconomyRecords, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const { teamPathwayRelations: _pathwayPayload, playerRegistrations: _registrationPayload, ...v3CompatibilityPayload } = compatibilityPayload
   const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
   const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
@@ -490,7 +496,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
   const withFinance = updateGameWorld(withFacilityDevelopment, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, financialReservations, revenueSources, operatingCostSources, operatingCostFacts, debtInstruments, financingAgreements, financingDrawdowns, capitalContributions, competitionDistributionFacts, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions, financialRegulationAssessments, financeDecisionProposals, economicObservations, exchangeRates })
   const withFacilityFinanceIntegration = updateGameWorld(withFinance, { facilityFinancialBindings })
-  const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])), gmPlanStates })
+  const withFacilityEconomy = updateGameWorld(withFacilityFinanceIntegration, { facilityEconomyRecords })
+  const withClubStrategy = updateGameWorld(withFacilityEconomy, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])), gmPlanStates })
   const withContractReviewDecisions = updateGameWorld(withClubStrategy, { contractReviewDecisions })
   const withRetentionNegotiations = updateGameWorld(withContractReviewDecisions, { retentionNegotiations })
   const withTalentSupply = updateGameWorld(withRetentionNegotiations, { talentCohorts, talentMaterializations, teamPathwayRelations, playerRegistrations })
@@ -1524,6 +1531,45 @@ function parseFacilityFinancialBindings(value: unknown): readonly FacilityFinanc
       createdOn: nonEmptyText(binding.createdOn, 'Save V4 FacilityFinancialBinding createdOn'),
       role: nonEmptyText(binding.role, 'Save V4 FacilityFinancialBinding role'),
     })
+  }))
+}
+
+function parseFacilityEconomyRecords(value: unknown): readonly FacilityEconomyRecord[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityEconomyRecords must be an array')
+  return Object.freeze(value.map((entry): FacilityEconomyRecord => {
+    const item = record(entry, 'Save V4 FacilityEconomyRecord')
+    const kind = nonEmptyText(item.recordKind, 'Save V4 FacilityEconomyRecord recordKind')
+    if (kind === 'COST_CATALOG_ENTRY') {
+      exactKeys(item, ['recordKind', 'id', 'interventionType', 'physicalUnit', 'componentType', 'market', 'currencyCode', 'unitAmountMinorUnits', 'effectiveOn', 'validUntil', 'sourceKind', 'sourceId', 'version', 'calibration'], 'Save V4 FacilityCostCatalogEntry')
+      let calibration: { modelId: string; evidenceId: string; authorizedBy: string } | null = null
+      if (item.calibration !== null) {
+        const raw = record(item.calibration, 'Save V4 FacilityCostCatalogEntry calibration')
+        exactKeys(raw, ['modelId', 'evidenceId', 'authorizedBy'], 'Save V4 FacilityCostCatalogEntry calibration')
+        calibration = { modelId: nonEmptyText(raw.modelId, 'calibration modelId'), evidenceId: nonEmptyText(raw.evidenceId, 'calibration evidenceId'), authorizedBy: nonEmptyText(raw.authorizedBy, 'calibration authorizedBy') }
+      }
+      return createFacilityEconomyRecord({ ...item, calibration } as unknown as FacilityEconomyRecord)
+    }
+    if (kind === 'PROVIDER') {
+      exactKeys(item, ['recordKind', 'id', 'displayName', 'identityKind', 'market', 'provenance', 'registeredOn'], 'Save V4 FacilityProvider')
+      const provenance = record(item.provenance, 'Save V4 FacilityProvider provenance')
+      exactKeys(provenance, ['kind', 'id'], 'Save V4 FacilityProvider provenance')
+      return createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
+    }
+    if (kind === 'OFFER') {
+      exactKeys(item, ['recordKind', 'id', 'version', 'organizationId', 'facilityId', 'needId', 'componentId', 'interventionType', 'classification', 'providerId', 'sourceKind', 'evidence', 'amount', 'market', 'issuedOn', 'validFrom', 'validUntil', 'terms'], 'Save V4 FacilityMaintenanceOffer')
+      exactKeys(record(item.evidence, 'Save V4 FacilityMaintenanceOffer evidence'), ['sourceId', 'catalogEntryId', 'modelVersion'], 'Save V4 FacilityMaintenanceOffer evidence')
+      exactKeys(record(item.amount, 'Save V4 FacilityMaintenanceOffer amount'), ['currencyCode', 'minorUnits'], 'Save V4 FacilityMaintenanceOffer amount')
+      exactKeys(record(item.terms, 'Save V4 FacilityMaintenanceOffer terms'), ['paymentDueDays', 'executionDays'], 'Save V4 FacilityMaintenanceOffer terms')
+      return createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
+    }
+    if (kind === 'OPERATION_EVENT') {
+      exactKeys(item, ['recordKind', 'id', 'operationId', 'sequence', 'kind', 'effectiveOn', 'actor', 'organizationId', 'facilityId', 'needId', 'interventionType', 'offerId', 'decisionId', 'reservationId', 'costFactId', 'actionId', 'reasonCode'], 'Save V4 FacilityOperationEvent')
+      if (item.actor !== null) exactKeys(record(item.actor, 'Save V4 FacilityOperationEvent actor'), ['kind', 'id'], 'Save V4 FacilityOperationEvent actor')
+      const rebuilt = createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
+      if (rebuilt.id !== item.id) throw new TypeError('Save V4 FacilityOperationEvent id does not match its operation, sequence and kind')
+      return rebuilt
+    }
+    throw new TypeError(`Save V4 FacilityEconomyRecord recordKind is invalid: ${kind}`)
   }))
 }
 

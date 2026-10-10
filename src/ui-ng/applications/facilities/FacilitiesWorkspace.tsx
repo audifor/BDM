@@ -18,6 +18,7 @@ import { NgPrecisionTable, ngCol } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import type { SportingCapabilityStatus } from '@/integration/facilitiesSporting'
 import { FacilityCapacityContext } from './FacilityCapacityContext'
+import { FacilityMaintenanceOperationsPanel } from './FacilityMaintenanceOperationsPanel'
 import { TrainingPhysicalAllocationControl } from '@/ui-ng/applications/training/TrainingPhysicalAllocationControl'
 
 import {
@@ -55,6 +56,7 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
   const resumeFacilityProject = useGameStore((state) => state.resumeFacilityProject)
   const completeFacilityProject = useGameStore((state) => state.completeFacilityProject)
   const cancelFacilityProject = useGameStore((state) => state.cancelFacilityProject)
+  const executeFacilityMaintenance = useGameStore((state) => state.executeFacilityMaintenance)
   const focusedFacilityId = useGameStore(state => state.focusedFacilityId)
   useEffect(() => { if (focusedFacilityId !== null) { setSelectedFacilityId(focusedFacilityId); setTab('facilities') } }, [focusedFacilityId])
   const [tab, setTab] = useState<FacilitiesTabId>(new URL(window.location.href).searchParams.has('requestId') ? 'facilities' : 'overview')
@@ -132,7 +134,7 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
         </>
       ) : null}
 
-      {tab === 'maintenance' ? <MaintenancePanel model={model} /> : null}
+      {tab === 'maintenance' ? <MaintenancePanel execute={executeFacilityMaintenance} model={model} world={world} /> : null}
 
       {tab === 'projects' ? (
         <ProjectsPanel
@@ -429,7 +431,7 @@ function MaintenanceActionsTable({ rows }: { readonly rows: ClubFacilitiesWorksp
   )
 }
 
-function MaintenancePanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel }) {
+function MaintenancePanel({ model, world, execute }: { readonly model: ClubFacilitiesWorkspaceModel; readonly world: GameWorld; readonly execute: Parameters<typeof FacilityMaintenanceOperationsPanel>[0]['execute'] }) {
   return (
     <>
       <div className="ng-canon__panel ng-holo-panel">
@@ -439,11 +441,8 @@ function MaintenancePanel({ model }: { readonly model: ClubFacilitiesWorkspaceMo
       <div className="ng-canon__panel ng-holo-panel">
         <p className="ng-canon__eyebrow">Recorded interventions</p>
         <MaintenanceActionsTable rows={model.maintenanceActions} />
-        <p className="ng-canon__note" data-ng-region="facilities-maintenance-gap">
-          Recording an intervention is not yet a club action: no canonical policy maps a maintenance need to an intervention
-          type, outcome and resulting condition, so this workspace reports maintenance truth read-only.
-        </p>
       </div>
+      <FacilityMaintenanceOperationsPanel execute={execute} teamId={model.teamId} world={world} />
     </>
   )
 }

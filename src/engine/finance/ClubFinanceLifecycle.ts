@@ -244,9 +244,10 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       }
     }
 
-    // 2-4. Operating cost, revenue and debt: only when the world actually declares such a source, so a missing
+    // 2-4. Operating cost, revenue and debt: only when the world actually declares such a source (BS17E-A: or an
+    // authorized operating cost FACT, which is the same declaration for a one-off obligation), so a missing
     // authority performs zero work instead of being manufactured here.
-    const operatingCost = runWhenSourcesExist(current, Object.values(current.operatingCostSourcesById).some((source) => String(source.organizationId) === String(organizationId)), () => materializeOperatingCostsForDate(current, date, {
+    const operatingCost = runWhenSourcesExist(current, Object.values(current.operatingCostSourcesById).some((source) => String(source.organizationId) === String(organizationId)) || Object.values(current.operatingCostFactsById).some((fact) => String(fact.organizationId) === String(organizationId)), () => materializeOperatingCostsForDate(current, date, {
       organizationId,
       currencyCode,
       ledger: { offsetAccountId: accounts.payableControl.id, resultAccountId: accounts.expenseOperating.id },

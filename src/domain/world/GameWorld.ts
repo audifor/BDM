@@ -3,6 +3,7 @@ import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysica
 import { staffAssignmentIndex, teamIndex } from './collectionIndexes'
 import { WorldValidationScope, type WorldValidationMode } from './WorldValidationScope'
 import { createFacilityFinancialBinding, validateFacilityFinancialBindingCollection, type FacilityFinancialBinding } from '@/domain/facilities/FacilityFinancialBinding'
+import { createFacilityEconomyRecord, validateFacilityEconomyRecordCollection, type FacilityEconomyRecord } from '@/domain/facilityEconomy/FacilityEconomy'
 import type { Coach } from '@/domain/coach'
 import type { Person } from '@/domain/person'
 import { createPerson, personIdForProfile } from '@/domain/person'
@@ -181,6 +182,7 @@ export interface GameWorld {
   readonly facilityDevelopmentProjectPhasesById: Readonly<Record<FacilityDevelopmentProjectPhaseId, FacilityDevelopmentProjectPhase>>
   /** CFI7 Ã¢â‚¬â€ non-monetary cross-references from a Facilities fact (maintenance action / development project) to a Finance fact. No amount lives here; see src/integration/facilitiesFinance. */
   readonly facilityFinancialBindingsById: Readonly<Record<string, FacilityFinancialBinding>>
+  readonly facilityEconomyRecordsById: Readonly<Record<string, FacilityEconomyRecord>>
   readonly facilityOrganizationRelationshipsById: Readonly<Record<FacilityOrganizationRelationshipId, FacilityOrganizationRelationship>>
   readonly facilityTeamRelationshipsById: Readonly<Record<FacilityTeamRelationshipId, FacilityTeamRelationship>>
   readonly facilityUsageRightsById: Readonly<Record<FacilityUsageRightId, FacilityUsageRight>>
@@ -476,6 +478,7 @@ export interface CreateGameWorldInput {
   facilityDevelopmentProjects?: readonly FacilityDevelopmentProject[]
   facilityDevelopmentProjectPhases?: readonly FacilityDevelopmentProjectPhase[]
   facilityFinancialBindings?: readonly FacilityFinancialBinding[]
+  facilityEconomyRecords?: readonly FacilityEconomyRecord[]
   facilityOrganizationRelationships?: readonly FacilityOrganizationRelationship[]
   facilityTeamRelationships?: readonly FacilityTeamRelationship[]
   facilityUsageRights?: readonly FacilityUsageRight[]
@@ -816,6 +819,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     facilityOperationalIncidentsById: indexById((input.facilityOperationalIncidents ?? []).map(createFacilityOperationalIncident), 'Facility operational incident'),
     facilityDevelopmentProjectsById: indexById((input.facilityDevelopmentProjects ?? []).map(createFacilityDevelopmentProject), 'Facility development project'),
     facilityFinancialBindingsById: indexById((input.facilityFinancialBindings ?? []).map(createFacilityFinancialBinding), 'Facility financial binding'),
+    facilityEconomyRecordsById: indexById((input.facilityEconomyRecords ?? []).map(createFacilityEconomyRecord), 'Facility economy record'),
     facilityDevelopmentProjectPhasesById: indexById((input.facilityDevelopmentProjectPhases ?? []).map(createFacilityDevelopmentProjectPhase), 'Facility development project phase'),
     facilityOrganizationRelationshipsById: indexById((input.facilityOrganizationRelationships ?? []).map(createFacilityOrganizationRelationship), 'Facility organization relationship'),
     facilityTeamRelationshipsById: indexById((input.facilityTeamRelationships ?? []).map(createFacilityTeamRelationship), 'Facility team relationship'),
@@ -1009,6 +1013,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   validateCapitalContributionCollections(Object.values(world.capitalContributionsById), world)
   validateCompetitionDistributionFacts(Object.values(world.competitionDistributionFactsById), world)
   validateFacilityFinancialBindingCollection(Object.values(world.facilityFinancialBindingsById), world)
+  validateFacilityEconomyRecordCollection(Object.values(world.facilityEconomyRecordsById), world)
   validateWorld(world)
   return world
 }
@@ -1194,6 +1199,7 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     if (inputKey === 'expenseRecognitions') assertExpenseRecognitionsAppendOnly(world, value as readonly ExpenseRecognition[])
     if (inputKey === 'financialCommitments') assertFinancialCommitmentsAppendOnly(world, value as readonly FinancialCommitment[])
     if (inputKey === 'facilityFinancialBindings') assertFacilityFinancialBindingsAppendOnly(world, value as readonly FacilityFinancialBinding[])
+    if (inputKey === 'facilityEconomyRecords') assertImmutableCollection(world.facilityEconomyRecordsById, (value as readonly FacilityEconomyRecord[]).map(createFacilityEconomyRecord), 'Facility economy record')
     if (inputKey === 'financialEntitlements') assertFinancialEntitlementsAppendOnly(world, value as readonly FinancialEntitlement[])
     if (inputKey === 'revenueSources') assertRevenueSourcesAppendOnly(world, value as readonly RevenueSource[])
     if (inputKey === 'operatingCostSources') assertOperatingCostSourcesAppendOnly(world, value as readonly OperatingCostSource[])
@@ -1263,6 +1269,7 @@ function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | un
   scope.run('boundary:validateCapitalContributionCollections', () => { validateCapitalContributionCollections(Object.values(updated.capitalContributionsById), updated) })
   scope.run('boundary:validateCompetitionDistributionFacts', () => { validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated) })
   scope.run('boundary:validateFacilityFinancialBindingCollection', () => { validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated) })
+  scope.run('boundary:validateFacilityEconomyRecordCollection', () => { validateFacilityEconomyRecordCollection(Object.values(updated.facilityEconomyRecordsById), updated) })
   validateWorld(canonical, previous, scope)
 }
 export function validateGameWorld(world: GameWorld): void { validateUpdatedGameWorld(world, undefined) }
@@ -1294,7 +1301,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
-  places: 'placesById', talentCohorts: 'talentCohortsById', talentMaterializations: 'talentMaterializationsByCandidateKey', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById', facilityComponentConditionRecords: 'facilityComponentConditionRecordsById', facilityConditionRecords: 'facilityConditionRecordsById', facilityMaintenanceNeeds: 'facilityMaintenanceNeedsById', facilityMaintenanceActions: 'facilityMaintenanceActionsById', facilityInspections: 'facilityInspectionsById', facilityOperationalIncidents: 'facilityOperationalIncidentsById', facilityDevelopmentProjects: 'facilityDevelopmentProjectsById', facilityDevelopmentProjectPhases: 'facilityDevelopmentProjectPhasesById', facilityFinancialBindings: 'facilityFinancialBindingsById',
+  places: 'placesById', talentCohorts: 'talentCohortsById', talentMaterializations: 'talentMaterializationsByCandidateKey', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById', facilityComponentConditionRecords: 'facilityComponentConditionRecordsById', facilityConditionRecords: 'facilityConditionRecordsById', facilityMaintenanceNeeds: 'facilityMaintenanceNeedsById', facilityMaintenanceActions: 'facilityMaintenanceActionsById', facilityInspections: 'facilityInspectionsById', facilityOperationalIncidents: 'facilityOperationalIncidentsById', facilityDevelopmentProjects: 'facilityDevelopmentProjectsById', facilityDevelopmentProjectPhases: 'facilityDevelopmentProjectPhasesById', facilityFinancialBindings: 'facilityFinancialBindingsById', facilityEconomyRecords: 'facilityEconomyRecordsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
@@ -1323,6 +1330,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   revenueSources: (value) => indexById((value as readonly RevenueSource[]).map(createRevenueSource), 'Revenue source'),
   operatingCostSources: (value) => indexById((value as readonly OperatingCostSource[]).map(createOperatingCostSource), 'Operating cost source'),
   facilityFinancialBindings: (value) => indexById((value as readonly FacilityFinancialBinding[]).map(createFacilityFinancialBinding), 'Facility financial binding'),
+  facilityEconomyRecords: (value) => indexById((value as readonly FacilityEconomyRecord[]).map(createFacilityEconomyRecord), 'Facility economy record'),
   operatingCostFacts: (value) => indexById((value as readonly AuthorizedOperatingCostFact[]).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
   debtInstruments: (value) => indexById((value as readonly DebtInstrument[]).map(createDebtInstrument), 'Debt instrument'),
   financingAgreements: (value) => indexById((value as readonly FinancingAgreement[]).map(createFinancingAgreement), 'Financing agreement'),

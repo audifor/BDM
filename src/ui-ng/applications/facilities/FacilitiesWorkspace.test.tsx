@@ -69,7 +69,8 @@ describe('MX0.6 Facilities workspace', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Condition & maintenance' }))
     expect(screen.getByText('Physiotherapy Room')).toBeInTheDocument()
-    expect(screen.getByText(/Recording an intervention is not yet a club action/)).toBeInTheDocument()
+    expect(screen.getByText('Maintenance & repair operations')).toBeInTheDocument()
+    expect(screen.getAllByText('No sourced offer exists for this need: its cost is unknown.').length).toBeGreaterThan(0)
   })
 
   it('shows the canonical sporting effect of the club facilities', () => {

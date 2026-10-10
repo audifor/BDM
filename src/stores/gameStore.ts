@@ -88,6 +88,7 @@ import {
   type ClubFacilityCommandResult,
   type ClubFacilityCommitmentInput,
 } from '@/app/facilities'
+import { executeFacilityMaintenanceUiCommand, type FacilityMaintenanceCommandResult, type FacilityMaintenanceUiCommand } from '@/app/facilityMaintenance'
 import {
   executeClubGovernanceDecision,
   recordClubGovernanceDecisionEvent,
@@ -233,6 +234,7 @@ interface GameStore {
   resumeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
   completeFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
   cancelFacilityProject(projectId: FacilityDevelopmentProjectId): ClubFacilityCommandResult
+  executeFacilityMaintenance(command: FacilityMaintenanceUiCommand): FacilityMaintenanceCommandResult
   recordGovernanceDecisionEvent(decisionId: string, kind: GovernanceDecisionEventChoice, bodyId: string): GovernanceCommandResult
   executeGovernanceDecision(decisionId: string, executorBodyId: string): GovernanceCommandResult
   getActiveMatchSession(): LiveMatchController | null
@@ -493,6 +495,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resumeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => resumeClubFacilityProject(world, { teamId, projectId })),
   completeFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => completeClubFacilityProject(world, { teamId, projectId })),
   cancelFacilityProject: (projectId) => applyClubFacilityCommand(get, set, (world, teamId) => cancelClubFacilityProject(world, { teamId, projectId })),
+  executeFacilityMaintenance: (command) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'BLOCKED', world, operationId: null, reasons: ['UNKNOWN_TEAM'], canonicalReasons: [], decisionId: null }
+    const result = executeFacilityMaintenanceUiCommand(world, team.id, command)
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
   recordGovernanceDecisionEvent: (decisionId, kind, bodyId) =>
     applyClubGovernanceCommand(get, set, (world, teamId) => recordClubGovernanceDecisionEvent(world, { teamId, decisionId, kind, bodyId }), decisionId),
   executeGovernanceDecision: (decisionId, executorBodyId) =>

@@ -5,6 +5,7 @@ import type { GameWorld } from '@/domain/world'
 import { executeGovernanceCoachFiringDecision } from './GovernanceDecisionExecutionService'
 import { recordPlayerContractSigningDecisionEvent } from './PlayerContractSigningGovernanceService'
 import { recordTradeCommitmentEvent } from '@/app/trades'
+import { recordFacilityMaintenanceDecisionEvent } from '@/app/facilityMaintenance/FacilityMaintenanceCommands'
 
 /**
  * MX0.7 — club-scoped application commands for canonical Governance decisions.
@@ -35,7 +36,7 @@ export type GovernanceDecisionEventChoice = 'APPROVED' | 'REJECTED' | 'VETOED'
  * are owned by canon elsewhere (for example a `COACH_FIRING` approval comes from the board-side
  * evaluation flow), so the manager surface shows them read-only instead of inventing an event.
  */
-export const GOVERNANCE_EVENT_COMMAND_DECISION_TYPES: readonly GovernanceDecision['decisionType'][] = ['PLAYER_CONTRACT_SIGNING', 'PLAYER_TRADE_COMMITMENT']
+export const GOVERNANCE_EVENT_COMMAND_DECISION_TYPES: readonly GovernanceDecision['decisionType'][] = ['PLAYER_CONTRACT_SIGNING', 'PLAYER_TRADE_COMMITMENT', 'FACILITIES']
 
 export function governanceDecisionTypeHasEventCommand(decisionType: GovernanceDecision['decisionType']): boolean {
   return GOVERNANCE_EVENT_COMMAND_DECISION_TYPES.includes(decisionType)
@@ -165,6 +166,12 @@ export function recordClubGovernanceDecisionEvent(world: GameWorld, input: Recor
   if (decision.decisionType === 'PLAYER_TRADE_COMMITMENT') {
     const result = recordTradeCommitmentEvent(world, { decisionId: decision.id, kind: input.kind, bodyId: input.bodyId, actor: userActor(world) })
     return fromCanonical(world, result.world, decision.id, result.status, result.reasons, TRADE_RECORDED_STATUSES)
+  }
+
+  if (decision.decisionType === 'FACILITIES') {
+    // BS17E-A: only a maintenance/repair operation's decision has a canonical event command; any other FACILITIES decision is refused by it.
+    const result = recordFacilityMaintenanceDecisionEvent(world, { teamId: input.teamId, decisionId: decision.id, kind: input.kind, bodyId: input.bodyId, actor: userActor(world) })
+    return fromCanonical(world, result.world, decision.id, result.status, result.reasons, ['APPLIED', 'NO_CHANGE'])
   }
 
   return blocked(world, decision.id, 'DECISION_TYPE_NOT_ACTIONABLE')
