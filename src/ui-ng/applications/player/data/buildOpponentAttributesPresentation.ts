@@ -50,5 +50,6 @@ export function opponentKnowledgeSummary(access: OpponentAccess): {
 
 export function scoutingConfidenceLabel(confidence: number | undefined): string {
   if (confidence === undefined || !Number.isFinite(confidence)) return 'Sin confianza registrada'
-  return Math.round(Math.max(0, Math.min(1, confidence)) * 100) + '% de confianza'
+  // RatingEvaluation.confidence is recorded in 0..100 percentage units.
+  return Math.round(Math.max(0, Math.min(100, confidence))) + '% de confianza'
 }
