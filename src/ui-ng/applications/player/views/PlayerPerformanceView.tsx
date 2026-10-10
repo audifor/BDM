@@ -31,19 +31,15 @@ const FORM_METRICS: readonly { readonly id: FormMetric; readonly label: string }
   { id: 'assists', label: 'AST' }, { id: 'valuation', label: 'VAL' },
 ]
 
-/**
- * Compact single-series form chart. One visible metric at a time avoids
- * overlapping multiple bars and lines; the public recorded log remains the
- * only data source for both own roster and opponents.
- */
 /** Short visible label; full canonical date remains in each control's accessible label. */
 export function compactPerformanceDate(date: string): string {
-  const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(date)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
   if (match === null) return date
   const month = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][Number(match[2]) - 1]
   return month === undefined ? date : match[3] + ' ' + month
 }
 
+/** One visible recorded metric at a time, with synchronized match selection. */
 export function PerformanceCourtsideForm({
   games, selectedGameId, onSelectGame,
 }: {
@@ -118,7 +114,7 @@ export function PerformanceCourtsideGameLog({
                 onSelectGame(row.gameId)
               }
             }}>
-            <td title={row.dateLabel}>{row.dateLabel.replace(/\\s+\\d{4}$/, '')}</td>
+            <td title={row.dateLabel}>{row.dateLabel.replace(/\s+\d{4}$/, '')}</td>
             <td>{row.opponent}</td>
             <td><span className={'po-pf-result is-' + (row.outcome === 'W' ? 'win' : row.outcome === 'L' ? 'loss' : 'tie')}>{row.result}</span></td>
             <td>{row.minutes}</td><td>{row.points}</td><td>{row.rebounds}</td><td>{row.assists}</td><td>{row.valuation}</td>
