@@ -1218,3 +1218,53 @@
     display:grid;grid-template-rows:none;grid-auto-rows:minmax(24px,auto);overflow:visible;
   }
 }
+
+/* HOME V2.1 · Single line per upcoming game:
+   opponent (interactive, ellipsized when necessary) | date | home/away.
+   The game status is already implied by the Upcoming view and retained
+   in the row tooltip. All five games remain visible. */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content 40px;
+  gap:8px;
+  align-items:center;
+  min-height:30px;
+  padding:4px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__opponent {
+  display:block;
+  min-width:0;
+  width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:left;
+  color:var(--cs-text);
+  font:600 13px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__date {
+  font:600 12px/1.15 var(--cs-font);
+  color:var(--cs-text2);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__venue {
+  display:block;
+  width:40px;
+  text-align:right;
+  color:var(--cs-lime);
+  font:700 11px/1.2 var(--cs-font);
+  white-space:nowrap;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__date {
+  color:#463f52;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__venue {
+  color:#12804a;
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__row {gap:5px;}
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__date {font-size:11px;}
+}
