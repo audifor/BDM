@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 
 import type { TeamId } from '@/domain/ids'
 import type { PresentationField } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
+import { formatPhysicalMeasurement } from '@/ui-ng/applications/player/data/formatPhysicalMeasurement'
 import { UNAVAILABLE_LABEL } from '@/ui-ng/applications/player/playerStructuralData'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { CountryNationalityMark } from '@/ui-ng/applications/player/components/CountryNationalityMark'
@@ -15,20 +16,6 @@ import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlaye
 function presentationValue<T>(field: PresentationField<T>, formatter?: (value: T) => string): string {
   if (field.status === 'unavailable') return field.label ?? UNAVAILABLE_LABEL
   return formatter === undefined ? String(field.value) : formatter(field.value as T)
-}
-
-function splitMeasure(field: PresentationField<string>): { readonly value: string; readonly unit: string } {
-  if (field.status === 'unavailable' || field.value === undefined) {
-    return { value: field.label ?? '—', unit: '' }
-  }
-  const match = field.value.match(/^(\d+(?:\.\d+)?)\s*(.*)$/)
-  if (match === null) return { value: field.value, unit: '' }
-  // Presentation-only rounding. The canonical physical measurements retain full precision.
-  const measurement = Number(match[1])
-  return {
-    value: Number.isFinite(measurement) ? String(Math.round(measurement)) : match[1]!,
-    unit: match[2] ?? '',
-  }
 }
 
 export function TeamCrest({ code, size = 28 }: { readonly code: string; readonly size?: number }) {
@@ -71,9 +58,9 @@ export function EntityIdentityBand() {
           section: 'overview',
         } as const)
       : null
-  const height = splitMeasure(identity.height)
-  const weight = splitMeasure(identity.weight)
-  const wingspan = splitMeasure(identity.wingspan)
+  const height = formatPhysicalMeasurement(identity.height)
+  const weight = formatPhysicalMeasurement(identity.weight)
+  const wingspan = formatPhysicalMeasurement(identity.wingspan)
   const jersey =
     identity.jerseyNumber.status === 'available' ? String(identity.jerseyNumber.value) : null
   const currentSalary =
