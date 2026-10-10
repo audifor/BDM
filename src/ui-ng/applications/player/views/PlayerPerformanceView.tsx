@@ -217,7 +217,9 @@ export function PlayerPerformanceView() {
           </div>
           <p className="po-pf-analysis__footer">
             {analysisTab === 'efficiency' ? 'Rates calculated from completed match box scores. — means insufficient attempts or data.'
-              : analysisTab === 'shot' ? '2PT and 3PT zones only. Shot coordinates are not recorded.'
+              : analysisTab === 'shot' ? snapshot.shotProfile.detailedZones === undefined
+                ? 'Only 2PT/3PT totals are available for these filters; detailed zones cannot be reconstructed from old matches.'
+                : 'Zone totals use all matches in the selected filters, not only the currently inspected game.'
               : 'Home, away and opponent splits use actual logged games. Unsupported halves remain unavailable.'}
           </p>
         </section>
