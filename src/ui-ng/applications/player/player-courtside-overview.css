@@ -510,3 +510,79 @@
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
+
+/*
+ * Courtside rival OVERVIEW V2.1
+ * Keep manager interpretation and its action row inside the visible board at
+ * the 1680x900 desktop reference. Smaller windows scroll the whole Overview
+ * instead of clipping text behind the OS dock.
+ * Own-roster geometry remains unchanged.
+ */
+@container player-space (min-width:1351px) {
+  .po-cs-board.po-cs-board--opponent {
+    box-sizing:border-box;
+    height:100%;
+    min-height:610px;
+    grid-template-rows:minmax(385px,1fr) minmax(188px,auto);
+    align-content:stretch;
+  }
+  .po-cs-board--opponent .po-cs-read {
+    min-height:188px;
+    overflow:visible;
+  }
+  .po-cs-board--opponent .po-cs-read__content {
+    flex:1 1 auto;
+    grid-template-columns:minmax(0,1.7fr) minmax(235px,1fr);
+    gap:14px;
+    align-items:start;
+    padding:8px 14px 4px;
+  }
+  .po-cs-board--opponent .po-cs-read__links {
+    flex:0 0 auto;
+    margin-top:auto;
+    padding:5px 14px 11px;
+  }
+}
+.po-cs-public-games {
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  flex-direction:column;
+  gap:7px;
+  padding:3px 0;
+}
+.po-cs-public-games > div {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  border-bottom:1px solid var(--cs-line2);
+  padding:2px 0 5px;
+}
+.po-cs-public-games span {
+  font:700 11px/1.2 var(--cs-font);
+  color:var(--cs-text2);
+  letter-spacing:.02em;
+}
+.po-cs-public-games strong {
+  font:700 19px/1 var(--cs-font-display);
+  color:var(--cs-text);
+  text-align:right;
+}
+.po-cs-public-games p {
+  margin:0;
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+@container player-space (max-width:1350px) {
+  .po-cs-board--opponent {
+    height:auto;
+    min-height:0;
+    grid-template-rows:auto;
+  }
+  .po-cs-board--opponent .po-cs-read {
+    overflow:visible;
+    min-height:188px;
+  }
+}
