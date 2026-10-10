@@ -5,6 +5,17 @@ import type { PlayerRatingRow, RatingEvolutionModel, AttributeCategoryModel } fr
 export type AttributeFilter = 'all' | 'strengths' | 'weaknesses' | 'tracked' | 'improved' | 'declined'
 export type AttributeBaselineScope = 'none' | 'team' | 'league' | 'position' | 'positionLeague'
 export const MAX_FOCUS_ATTRIBUTES = 3
+export const MAX_RADAR_COMPARISONS = 2
+
+/** Optional comparisons have a hard visible limit; no third overlay replaces another silently. */
+export function toggleRadarComparison<T extends Exclude<AttributeBaselineScope, 'none'>>(
+  current: readonly T[],
+  scope: T,
+): readonly T[] {
+  if (current.includes(scope)) return current.filter((item) => item !== scope)
+  if (current.length >= MAX_RADAR_COMPARISONS) return current
+  return [...current, scope]
+}
 
 type EvolutionReadings = Readonly<Partial<Record<PlayerTruthRatingKey, RatingEvolutionModel>>>
 
