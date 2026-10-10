@@ -20,70 +20,105 @@ import {
   type PlayerDevelopmentModel,
 } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
-import { ratingCategory, ratingLabel } from '@/ui-ng/applications/player/data/ratingCatalog'
+import { CATEGORY_LABELS, ratingCategory, ratingLabel } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { useGameStore } from '@/stores/gameStore'
 
 export function PlayerDevelopmentView() {
   const { model, session } = usePlayerWorkspace()
   const world = useGameStore((state) => state.world)
   const { selectedItemId, setSelectedItemId } = session.development
+  const [activePane, setActivePane] = useState<'dashboard' | 'records'>('dashboard')
 
   if (model === null) return null
 
   const development = model.development
   if (model.knowledgeAccess.kind !== 'own-roster') {
     return (
-      <div className="po-dev-board" data-ng-region="player-development">
-        <section className="po-dev-panel" data-ng-region="development-scouting-boundary">
-          <header className="po-dev-panel__head"><span className="po-dev-panel__title">Individual development</span></header>
-          <p className="po-dev-stat__note">Individual rating values and development history are unavailable for external players until rating-level scouting exists.</p>
-        </section>
-        <ScoutingProjectionPanel projection={development.projection} />
+      <div className="po-dev-board po-dev-board--courtside po-dev-board--scouted"
+        data-ng-region="player-development" data-knowledge="external">
+        <div className="po-dev-cs__fow">
+          <div className="po-dev-cs__fow-heading">
+            <span>SCOUTED DEVELOPMENT</span>
+            <strong>Knowledge from your organisation</strong>
+            <p>Private player ratings, recorded development history, training plans and internal potential ceilings are not available to rival clubs. The information below contains only authorized scouting estimates.</p>
+          </div>
+          <ScoutingProjectionPanel projection={development.projection} />
+          <section className="po-dev-panel po-dev-cs__knowledge" data-ng-region="development-scouting-boundary">
+            <header className="po-dev-panel__head">
+              <span className="po-dev-panel__title">SCOUTED POTENTIAL</span>
+              <span className="po-dev-panel__meta">{development.scoutPotential.status === 'available' ? 'Observed evaluations' : 'Awaiting scout report'}</span>
+            </header>
+            {development.scoutPotential.status === 'unavailable'
+              ? <p className="po-dev-stat__note">No authorized potential evaluation is available yet. Request scouting to learn more about this player.</p>
+              : <ul className="po-dev-cs__potential">
+                {development.scoutPotential.rows.filter((row) => row.evaluationLabel !== '?').map((row) =>
+                  <li key={row.id}><span>{row.domainLabel}</span><strong>{row.evaluationLabel}</strong></li>)}
+              </ul>}
+            <p className="po-dev-stat__note">{development.scoutPotential.contextNote}</p>
+          </section>
+        </div>
       </div>
     )
   }
+
   const selectedCategory = selectedCategoryOf(development, selectedItemId)
 
   return (
-    <div className="po-dev-board" data-ng-region="player-development">
-      <div className="po-dev-band po-dev-band--overview">
+    <div className="po-dev-board po-dev-board--courtside" data-ng-region="player-development"
+      data-knowledge="own">
+      <div className="po-dev-cs__overview">
         <DevelopmentOverviewPanel insight={development.insight} overview={development.overview} />
       </div>
-
-      <div className="po-dev-band po-dev-band--curve">
-        <CareerCurvePanel
-          markers={development.markers}
-          seasons={seasonLabelsOf(development)}
-          series={development.categoryCurve}
-        />
-        <DevelopmentStagePanel lifecycle={development.lifecycle} />
-        <DevelopmentDetailPanel
-          detail={development.detailByCategory[selectedCategory ?? 'shooting']}
-          onClose={() => setSelectedItemId(null)}
-          selectedCategoryLabel={selectedCategory === null ? null : development.lifecycle.focusLabel}
-        />
-      </div>
-
-      <div className="po-dev-band po-dev-band--middle">
-        <div className="po-dev-band__stack">
-          <CategoryDevelopmentPanel
-            onSelectCategory={setSelectedItemId}
-            rows={development.categoryDevelopment}
-            selectedCategory={selectedCategory}
-          />
-          <RatingMoversPanel note={development.longitudinal.note} rows={development.longitudinal.movers} />
-          <TrainingPlanPanel plan={development.trainingPlan} />
-          <TrainingEffectPanel effect={development.trainingEffect} />
+      <div className="po-dev-cs__navigation">
+        <div className="po-dev-cs__heading">
+          <strong>{activePane === 'dashboard' ? 'DEVELOPMENT DASHBOARD' : 'DEVELOPMENT RECORDS'}</strong>
+          <span>{activePane === 'dashboard'
+            ? 'Recorded progress · current training · selected attribute family'
+            : 'Training sessions · rating checkpoints · development events'}</span>
         </div>
-        <DevelopmentGapPanel gaps={development.gaps} />
+        <div className="po-dev-cs__tabs" role="group" aria-label="Development display">
+          <button type="button" aria-pressed={activePane === 'dashboard'}
+            onClick={() => setActivePane('dashboard')}>OVERVIEW</button>
+          <button type="button" aria-pressed={activePane === 'records'}
+            onClick={() => setActivePane('records')}>RECORDS</button>
+        </div>
       </div>
-
-      <div className="po-dev-band po-dev-band--last">
-        <DevelopmentDriversPanel rows={development.drivers} />
-        <DevelopmentEventsPanel events={development.longitudinal.events} />
-        <ScoutingProjectionPanel projection={development.projection} />
-      </div>
-      {world !== null && <PlayerHistoryPanels world={world} playerId={model.identity.playerId} />}
+      {activePane === 'dashboard'
+        ? <div className="po-dev-cs__main" data-ng-region="development-dashboard">
+          <div className="po-dev-cs__lane po-dev-cs__lane--category">
+            <CategoryDevelopmentPanel onSelectCategory={(id) => setSelectedItemId(id)}
+              rows={development.categoryDevelopment} selectedCategory={selectedCategory} />
+            <DevelopmentStagePanel lifecycle={development.lifecycle} />
+          </div>
+          <div className="po-dev-cs__lane po-dev-cs__lane--trajectory">
+            <CareerCurvePanel markers={development.markers}
+              seasons={seasonLabelsOf(development)} series={development.categoryCurve} />
+            <div className="po-dev-cs__training">
+              <TrainingPlanPanel plan={development.trainingPlan} />
+              <TrainingEffectPanel effect={development.trainingEffect} />
+            </div>
+          </div>
+          <div className="po-dev-cs__lane po-dev-cs__lane--details">
+            <DevelopmentDetailPanel
+              detail={development.detailByCategory[selectedCategory ?? 'shooting']}
+              onClose={() => setSelectedItemId(null)}
+              selectedCategoryLabel={selectedCategory === null ? null : CATEGORY_LABELS[selectedCategory]}
+            />
+            <DevelopmentEventsPanel events={development.longitudinal.events} />
+          </div>
+        </div>
+        : <div className="po-dev-cs__records" data-ng-region="development-records">
+          <div className="po-dev-cs__record-lane">
+            {world !== null && <PlayerHistoryPanels world={world} playerId={model.identity.playerId} />}
+          </div>
+          <div className="po-dev-cs__record-lane">
+            <RatingMoversPanel note={development.longitudinal.note}
+              rows={development.longitudinal.movers} />
+            <DevelopmentDriversPanel rows={development.drivers} />
+            <ScoutingProjectionPanel projection={development.projection} />
+            <DevelopmentGapPanel gaps={development.gaps} />
+          </div>
+        </div>}
     </div>
   )
 }
