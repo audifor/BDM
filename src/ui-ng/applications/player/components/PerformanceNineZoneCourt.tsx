@@ -37,6 +37,11 @@ export function courtZoneTemperature(zone: DetailedPerformanceShotZone):
   return 'strong'
 }
 
+/** UX caution only: fewer than five attempts is a small observed sample, not a confidence score. */
+export function hasLimitedShotSample(zone: DetailedPerformanceShotZone): boolean {
+  return zone.attempted > 0 && zone.attempted < 5
+}
+
 export function PerformanceNineZoneCourt({ profile }: { readonly profile: PerformanceShotProfileModel }) {
   const zones = profile.detailedZones ?? []
   const [selectedId, setSelectedId] = useState<MatchShotZoneId>('RESTRICTED')
@@ -66,12 +71,14 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
 
   const renderRegion = (zone: DetailedPerformanceShotZone) =>
     <g className={'po-pf-nine__region is-' + courtZoneTemperature(zone) +
+      (hasLimitedShotSample(zone) ? ' is-limited-sample' : '') +
       (selected?.id === zone.id ? ' is-selected' : '')}
       key={zone.id} role="button" tabIndex={0} aria-pressed={selected?.id === zone.id}
       aria-label={zone.label + ': ' + zone.made + ' made of ' + zone.attempted + ' attempted'}
       onClick={() => select(zone.id)}
       onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(zone.id) } }}>
-      <title>{zone.label + ' · ' + zone.made + '/' + zone.attempted + ' · ' + (zone.percentage ?? '—') + '%'}</title>
+      <title>{zone.label + ' · ' + zone.made + '/' + zone.attempted + ' · ' + (zone.percentage ?? '—') + '%' +
+        (hasLimitedShotSample(zone) ? ' · Small sample (' + zone.attempted + ' attempts)' : '')}</title>
       {COURT_ZONE_PATHS[zone.id].map((shape, index) => <path key={index} d={shape} />)}
     </g>
 
@@ -126,6 +133,10 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
     <div className="po-pf-nine__details">
       <div className="po-pf-nine__selected" aria-live="polite">
         <span>SELECTED ZONE</span>
+        {selected !== undefined && hasLimitedShotSample(selected) &&
+          <span className="po-pf-nine__small-sample" title="Fewer than five attempts; the observed shooting percentage may vary substantially.">
+            SMALL SAMPLE · {selected.attempted} {selected.attempted === 1 ? 'ATTEMPT' : 'ATTEMPTS'}
+          </span>}
         <strong>{selected?.label ?? 'No zone'}</strong>
         <div><b>{selected?.percentage === null || selected === undefined ? '—' : selected.percentage + '%'}</b>
           <span>{selected?.made ?? 0}/{selected?.attempted ?? 0} FG</span></div>
@@ -135,13 +146,18 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
       <div className="po-pf-nine__list" role="group" aria-label="Select a shooting zone">
         <div className="po-pf-nine__list-head"><span>SHOT ZONE</span><span>FGM/FGA</span><span>FG%</span></div>
         {zones.map((zone) => <button key={zone.id} type="button"
-          aria-pressed={zone.id === selected?.id} onClick={() => select(zone.id)}>
+          aria-pressed={zone.id === selected?.id}
+          title={hasLimitedShotSample(zone) ? 'Small sample: ' + zone.attempted + ' attempts. FG% may change substantially with additional shots.' : undefined}
+          onClick={() => select(zone.id)}>
           <span className="po-pf-nine__zone-name"><i className={'is-' + courtZoneTemperature(zone)} />{zone.label}</span>
           <b>{zone.made}/{zone.attempted}</b>
-          <em>{zone.percentage === null ? '—' : zone.percentage + '%'}</em>
+          <em>{zone.percentage === null ? '—' : zone.percentage + '%'}
+            {hasLimitedShotSample(zone) && <sup aria-hidden="true">†</sup>}</em>
         </button>)}
       </div>
-      <p className="po-pf-nine__disclaimer">{profile.note}</p>
+      <p className="po-pf-nine__disclaimer">{profile.note}
+        <span className="po-pf-nine__sample-key"> † Fewer than five attempts: interpret FG% cautiously.</span>
+      </p>
     </div>
   </section>
 
