@@ -80,9 +80,9 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
     role={expanded ? 'dialog' : undefined} aria-modal={expanded || undefined}
     onKeyDown={expanded ? (event) => {
       if (event.key !== 'Tab') return
-      const candidates = [...event.currentTarget.querySelectorAll<HTMLElement>(
+      const candidates = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [role="button"][tabindex="0"]',
-      )]
+      ))
       const first = candidates[0], last = candidates[candidates.length - 1]
       if (first === undefined || last === undefined) return
       if (event.shiftKey && document.activeElement === first) {
