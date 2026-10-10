@@ -322,3 +322,204 @@
   padding:8px 12px;
   font:700 13px var(--cs-font-display);
 }
+
+
+/*
+ * PLAYER FOW PROFILE V2
+ * One spider represents estimated sport shape, never raw Player Truth.
+ * No competing 0%-coverage legacy dimension listing or inner scroll.
+ * Clicking any radar axis updates the family selection across all columns.
+ */
+.pac-opponent__profile {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+.pac-opponent__profile-content {
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  flex-direction:column;
+  gap:6px;
+  padding:8px 12px 3px;
+}
+.pac-opponent__profile-key {
+  display:flex;
+  flex:0 0 auto;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  color:var(--cs-text2);
+  font:600 12px/1.25 var(--cs-font);
+}
+.pac-opponent__estimated-key {
+  color:var(--cs-lime);
+  white-space:nowrap;
+}
+.pac-opponent__estimated-key i {
+  display:inline-block;
+  width:9px;
+  height:9px;
+  margin-right:5px;
+  border-radius:50%;
+  background:var(--cs-lime);
+}
+.pac-opponent__radar {
+  display:flex;
+  flex:1 1 auto;
+  min-height:175px;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  width:100%;
+}
+.pac-opponent__radar .po-radar {
+  display:block;
+  flex:none;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-width:370px;
+  max-height:320px;
+  color:var(--cs-text);
+}
+.pac-opponent__radar .po-radar__label {
+  fill:var(--cs-text2);
+  font:700 7.5px var(--cs-font);
+}
+.pac-opponent__radar .po-radar__value {
+  fill:var(--cs-lime);
+  font:700 9.5px var(--cs-font-display);
+}
+.pac-opponent__radar .po-radar__axis.is-active .po-radar__label {
+  fill:var(--cs-lime);
+}
+.pac-opponent__radar .po-radar__axis {
+  cursor:pointer;
+}
+.pac-opponent__radar .po-radar__axis:focus-visible {
+  outline:2px solid var(--cs-lime);
+}
+.pac-opponent__family-reading {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex:0 0 auto;
+  min-height:123px;
+  padding:11px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+}
+.pac-opponent__family-reading-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.pac-opponent__family-reading-head > div {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.pac-opponent__family-reading-head > div > strong {
+  font:700 19px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.pac-opponent__family-reading-head > div > span {
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+.pac-opponent__family-estimate {
+  color:var(--cs-lime);
+  font:700 30px/1 var(--cs-font-display);
+  white-space:nowrap;
+}
+.pac-opponent__range {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  color:var(--cs-text2);
+  font:500 12px/1.2 var(--cs-font);
+}
+.pac-opponent__range strong {
+  color:var(--cs-text);
+  font:700 15px/1 var(--cs-font-display);
+}
+.pac-opponent__family-meter {
+  height:5px;
+  flex:0 0 5px;
+  background:var(--cs-s3);
+  border-radius:4px;
+  overflow:hidden;
+}
+.pac-opponent__family-meter > i {
+  display:block;
+  height:100%;
+  background:var(--cs-lime);
+  border-radius:4px;
+}
+.pac-opponent__confidence-row {
+  display:flex;
+  gap:7px 16px;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pac-opponent__confidence-row strong {
+  color:var(--cs-text);
+  font-weight:700;
+}
+.pac-opponent__shape-read {
+  margin:0;
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pac-opponent__shape-read strong {color:var(--cs-text);}
+.pac-opponent__insufficient {
+  margin:1px 0 0;
+  color:var(--cs-text2);
+  font:500 12px/1.4 var(--cs-font);
+}
+.pac-opponent__radar-pending {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:11px;
+  min-height:0;
+  padding:14px 18px;
+  text-align:center;
+}
+.pac-opponent__radar-pending h3 {
+  margin:0;
+  color:var(--cs-text);
+  font:700 24px/1.1 var(--cs-font-display);
+}
+.pac-opponent__radar-pending p {
+  margin:0;
+  max-width:365px;
+  color:var(--cs-text2);
+  font:500 13px/1.4 var(--cs-font);
+}
+.pac-opponent__profile .pac-opponent__profile-foot {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  min-height:35px;
+  padding:7px 12px;
+}
+.pac-opponent__profile .pac-opponent__profile-foot span {
+  color:var(--cs-text2);
+  font:500 11px/1.3 var(--cs-font);
+}
+@container player-space (max-width:1439px) {
+  .pac-opponent__profile {min-height:450px;}
+  .pac-opponent__radar .po-radar {max-height:330px;}
+}
