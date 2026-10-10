@@ -34,7 +34,7 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
       {SHAPES[zone.id].map((shape, index) => <path key={index} d={shape} />)}
     </g>
 
-  return <section className="po-pf-nine" aria-label="9 recorded or modelled shot zones">
+  return <section className="po-pf-panel po-pf-shot po-pf-nine" data-ng-region="performance-shot-profile" aria-label="9 recorded or modelled shot zones">
     <div className="po-pf-nine__stage">
       <div className="po-pf-nine__source"><span>{provenance}</span>
         <small>{profile.detailedProvenance === 'OBSERVED' ? 'MatchEngine shot events' : 'Statistical subdivision · provisional'}</small></div>
