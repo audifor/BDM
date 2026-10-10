@@ -10,7 +10,15 @@ const MINDSET: readonly { key: MindsetKey; label: string }[] = [
   { key: 'DISCIPLINE', label: 'Disciplina' },
   { key: 'ADAPTABILITY', label: 'Adaptabilidad' },
 ]
-const CHARACTER = ['Competitividad', 'Profesionalidad', 'Orientación al equipo', 'Temperamento'] as const
+const CATEGORY_NAMES: Readonly<Record<string, string>> = {
+  shooting: 'tiro', finishing: 'finalización', ballHandling: 'manejo',
+  playmaking: 'creación', offBall: 'juego sin balón', defense: 'defensa',
+  physical: 'físico', mental: 'mentalidad',
+}
+
+function describeCategory(key: string, fallback: string): string {
+  return CATEGORY_NAMES[key] ?? fallback.toLowerCase()
+}
 
 function ratingBand(value: number): string {
   if (value >= 75) return 'Alto'
@@ -22,32 +30,77 @@ function fieldLabel(field: { readonly status: string; readonly value?: unknown; 
   return field.status === 'available' && field.value !== undefined ? String(field.value) : field.label ?? 'Sin datos'
 }
 
-function buildManagerRead(model: PlayerWorkspaceModel): string {
+interface ManagerAssessment {
+  readonly summary: string
+  readonly strengths: readonly string[]
+  readonly watchouts: readonly string[]
+}
+
+function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
   const { overview, knowledgeAccess, status } = model
   if (knowledgeAccess.kind === 'unknown') {
-    return 'No existe información deportiva suficiente para definir este perfil. Una observación autorizada permitirá distinguir capacidades, mentalidad y posibles necesidades de gestión.'
+    return {
+      summary: 'Aún no existe información deportiva contrastada para elaborar un informe individual. La ficha mantiene los datos públicos, pero las capacidades y el carácter siguen sin evaluar.',
+      strengths: [],
+      watchouts: ['Perfil deportivo por conocer', 'Carácter sin evaluación autorizada'],
+    }
   }
   if (knowledgeAccess.kind === 'scouted') {
-    const dimensions = knowledgeAccess.knownDimensions.slice(0, 2).map((entry) => `${entry.label}: ${entry.displayLabel}`)
-    return dimensions.length
-      ? `El conocimiento disponible es parcial (${dimensions.join('; ')}). No se puede confirmar todavía un arquetipo completo ni emitir conclusiones sobre su personalidad.`
-      : 'La información observada todavía es insuficiente para una lectura integral. No se muestran ratings ni rasgos internos desconocidos.'
+    const observed = knowledgeAccess.knownDimensions.slice(0, 2)
+    return {
+      summary: observed.length
+        ? `Los informes disponibles apuntan a ${observed.map(entry => `${entry.label.toLowerCase()}: ${entry.displayLabel}`).join(' y ')}. Es una primera lectura, no una valoración definitiva: faltan observaciones para completar su perfil deportivo y humano.`
+        : 'Hay indicios parciales de scouting, pero no bastan para describir con seguridad las capacidades o el comportamiento del jugador.',
+      strengths: observed.map(entry => `${entry.label}: ${entry.displayLabel}`),
+      watchouts: ['Información de scouting incompleta', 'Carácter sin evaluación autorizada'],
+    }
   }
-  const best = [...overview.identityModule.chips].sort((a, b) => b.value - a.value).slice(0, 2)
-  const strengths = best.length
-    ? `Sus puntos más destacados son ${best.map((entry) => `${entry.label} (${entry.value})`).join(' y ')}.`
-    : 'Todavía no se dispone de un conjunto de fortalezas representativo.'
-  const stage = overview.developmentPulse.stageLabel
+
+  const strongestRatings = [...overview.identityModule.chips].sort((a, b) => b.value - a.value).slice(0, 2)
+  const sortedCategories = [...model.radarAxes].sort((a, b) => a.value - b.value)
+  const weakestCategory = sortedCategories[0]
+  const strongestCategory = sortedCategories[sortedCategories.length - 1]
+  const phase = overview.developmentPulse.stageLabel.toLowerCase()
   const trend = overview.developmentPulse.trendLabel
-  const condition = fieldLabel(status.availability)
-  const morale = fieldLabel(status.morale)
-  return `${strengths} Se encuentra en la etapa ${stage.toLowerCase()} de su desarrollo, con tendencia ${trend}. Su estado actual es ${condition.toLowerCase()} y su moral figura como ${morale.toLowerCase()}. La profesionalidad, la lealtad y el temperamento requieren una evaluación humana válida antes de extraer conclusiones.`
+  const age = model.identity.age.value
+  const top = strongestRatings.map(entry => `${entry.label.toLowerCase()} (${entry.value})`)
+  const profile = strongestCategory === undefined
+    ? 'Su identidad deportiva todavía requiere más información.'
+    : `Presenta un perfil con predominio de ${describeCategory(strongestCategory.key, strongestCategory.label)} (${strongestCategory.value}/100).`
+  const topRead = top.length ? ` Destaca especialmente en ${top.join(' y ')}.` : ''
+  const weaknessRead = weakestCategory === undefined
+    ? ''
+    : ` En comparación con sus otras facetas, ${describeCategory(weakestCategory.key, weakestCategory.label)} (${weakestCategory.value}/100) es el área menos desarrollada y conviene tenerla en cuenta al definir su función.`
+  const timeline = ` ${typeof age === 'number' ? `A sus ${age} años, s` : 'S'}e encuentra en la fase ${phase}, con una tendencia registrada de ${trend}.`
+  const available = status.availability.status === 'available' && status.availability.value === 'Available'
+  const medicalRead = available ? ' Está disponible para competir.' : ` Su disponibilidad actual es: ${fieldLabel(status.availability)}.`
+  const risk = status.risk.status === 'available' ? fieldLabel(status.risk) : null
+  return {
+    summary: `${profile}${topRead}${weaknessRead}${timeline}${medicalRead} No hay aún una evaluación humana autorizada para caracterizar su profesionalidad o temperamento.`,
+    strengths: [
+      ...(strongestRatings.length ? [`Destaca en ${strongestRatings[0]!.label.toLowerCase()}`] : []),
+      ...(available ? ['Disponible para competir'] : []),
+      ...(risk !== null && risk.toLowerCase().includes('low') ? ['Riesgo físico bajo según Medical'] : []),
+    ],
+    watchouts: [
+      ...(weakestCategory !== undefined ? [`Vigilar ${describeCategory(weakestCategory.key, weakestCategory.label)}`] : []),
+      ...(overview.developmentPulse.stageLabel.toLowerCase() === 'declining' ? ['Etapa de declive registrada'] : []),
+      ...(!available ? ['Revisar disponibilidad'] : []),
+      'Carácter pendiente de evaluación',
+    ],
+  }
 }
 
 function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
   const { session } = usePlayerWorkspace()
   const own = model.knowledgeAccess.kind === 'own-roster'
-  const chips = own ? model.overview.identityModule.chips.slice(0, 4) : []
+  const chips = own
+    ? [...model.ratings]
+      .sort((a, b) => b.value - a.value)
+      .filter((entry, index, all) =>
+        all.findIndex((candidate) => candidate.category === entry.category) === index)
+      .slice(0, 4)
+    : []
   const title = model.overview.identityModule.archetypeTitle
   const role = model.overview.identityModule.roleTitle
 
@@ -68,7 +121,7 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
       <div className="po-cs-dna__quadrants">
         <section className="po-cs-dna__quadrant">
           <div className="po-cs-dna__quadrant-head"><span>01</span><h4>BALONCESTO</h4></div>
-          <p>Identidad sobre la pista</p>
+          <p>Fortalezas representativas por familia</p>
           <div className="po-cs-dna__chips">
             {chips.length ? chips.map((chip) => <span className="po-cs-chip" key={chip.id}>{chip.label} {chip.value}</span>)
               : <span className="po-cs-unknown">Atributos individuales no conocidos</span>}
@@ -89,18 +142,18 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
         </section>
         <section className="po-cs-dna__quadrant">
           <div className="po-cs-dna__quadrant-head"><span>03</span><h4>CARÁCTER</h4></div>
-          {CHARACTER.map((label) => <div className="po-cs-meter-row" key={label}>
-            <span>{label}</span><span className="po-cs-meter-track is-unknown" /><strong>Sin evaluar</strong>
-          </div>)}
-          <button className="po-cs-text-link" onClick={() => session.setActiveView('scouting')} type="button">Ver conocimiento ›</button>
+          <div className="po-cs-character__unknown" role="status">
+            <strong>CARÁCTER POR CONOCER</strong>
+            <p>No hay una evaluación autorizada de profesionalidad, ambición, lealtad ni temperamento.</p>
+          </div>
+          <button className="po-cs-text-link" onClick={() => session.setActiveView('scouting')} type="button">Consultar conocimiento ›</button>
         </section>
         <section className="po-cs-dna__quadrant">
           <div className="po-cs-dna__quadrant-head"><span>04</span><h4>ESTABILIDAD / RIESGO</h4></div>
           <div className="po-cs-meter-row"><span>Moral</span><span /><strong>{fieldLabel(model.status.morale)}</strong></div>
           <div className="po-cs-meter-row"><span>Disponibilidad</span><span /><strong>{fieldLabel(model.status.availability)}</strong></div>
           <div className="po-cs-meter-row"><span>Riesgo físico</span><span /><strong>{fieldLabel(model.status.risk)}</strong></div>
-          <div className="po-cs-meter-row"><span>Fiabilidad</span><span /><strong>Sin evaluar</strong></div>
-          <button className="po-cs-text-link" onClick={() => session.setActiveView('medical')} type="button">Ver estado médico ›</button>
+                    <button className="po-cs-text-link" onClick={() => session.setActiveView('medical')} type="button">Ver estado médico ›</button>
         </section>
       </div>
     </section>
@@ -119,27 +172,31 @@ function Radar({ model }: { readonly model: PlayerWorkspaceModel }) {
   }, [values])
   const points = (factor: number, personalized: boolean): string =>
     nodes.map(({ angle, value }) => {
-      const radius = 88 * factor * (personalized ? Math.max(0, Math.min(100, value)) / 100 : 1)
-      return `${(170 + Math.cos(angle) * radius).toFixed(1)},${(142 + Math.sin(angle) * radius).toFixed(1)}`
+      const radius = 111 * factor * (personalized ? Math.max(0, Math.min(100, value)) / 100 : 1)
+      return `${(170 + Math.cos(angle) * radius).toFixed(1)},${(161 + Math.sin(angle) * radius).toFixed(1)}`
     }).join(' ')
 
   return (
     <section className="po-cs-card po-cs-radar">
       <header className="po-cs-card__header"><h2>ATTRIBUTE RADAR</h2><span>Familias reales · 0 a 100</span></header>
       {nodes.length < 3 ? <div className="po-cs-empty">El radar requiere conocimiento autorizado de los atributos.</div> : (
-        <svg viewBox="0 0 340 290" className="po-cs-radar__svg" role="img"
+        <svg viewBox="0 0 340 325" className="po-cs-radar__svg" role="img"
           aria-label={`Radar deportivo: ${values.map(a => `${a.label} ${a.value}`).join(', ')}`}>
           {[0.25, 0.5, 0.75, 1].map(f => <polygon key={f} points={points(f, false)} fill="none" stroke="currentColor" strokeOpacity=".18" />)}
-          {nodes.map(axis => <line key={axis.key} x1={170} y1={142} x2={170 + 88 * Math.cos(axis.angle)} y2={142 + 88 * Math.sin(axis.angle)} stroke="currentColor" strokeOpacity=".25"/>)}
+          {nodes.map(axis => <line key={axis.key} x1={170} y1={161} x2={170 + 111 * Math.cos(axis.angle)} y2={161 + 111 * Math.sin(axis.angle)} stroke="currentColor" strokeOpacity=".25"/>)}
           <polygon points={points(1, true)} className="po-cs-radar__shape" />
           {nodes.map(axis => {
-            const x = 170 + Math.cos(axis.angle) * 116
-            const y = 142 + Math.sin(axis.angle) * 116
+            const x = 170 + Math.cos(axis.angle) * 140
+            const y = 161 + Math.sin(axis.angle) * 140
             return <g key={axis.key}><text x={x} y={y - 2} textAnchor="middle" className="po-cs-radar__label">{axis.label}</text>
               <text x={x} y={y + 13} textAnchor="middle" className="po-cs-radar__value">{axis.value}</text></g>
           })}
         </svg>
       )}
+      {values.length > 0 && <div className="po-cs-radar__insights">
+        <span><b>FORTALEZA</b>{[...values].sort((a,b) => b.value - a.value)[0]?.label}</span>
+        <span><b>A MEJORAR</b>{[...values].sort((a,b) => a.value - b.value)[0]?.label}</span>
+      </div>}
       <button type="button" className="po-cs-radar__more" onClick={() => session.setActiveView('attributes')}>ANALIZAR ATRIBUTOS ›</button>
     </section>
   )
@@ -196,16 +253,25 @@ function Form({ model }: { readonly model: PlayerWorkspaceModel }) {
         <dl>{game.figures.map(stat => <div key={stat.id}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl>
       </details>) : <div className="po-cs-empty">{recentForm.averageLabel}</div>}
     </div>
+    {recentForm.games.length > 0 && recentForm.games.length < 5 && (
+      <p className="po-cs-form__sample">Muestra reducida: {recentForm.games.length} de 5 encuentros de referencia disponibles.</p>
+    )}
     <button className="po-cs-text-link" type="button" onClick={() => session.setActiveView('performance')}>VER PARTIDOS ›</button>
   </section>
 }
 
 function ManagerRead({ model }: { readonly model: PlayerWorkspaceModel }) {
   const { session } = usePlayerWorkspace()
-  const text = useMemo(() => buildManagerRead(model), [model])
+  const assessment = useMemo(() => buildManagerRead(model), [model])
   return <section className="po-cs-card po-cs-read">
     <header className="po-cs-card__header"><h2>MANAGER READ</h2><span>Interpretación basada en datos autorizados</span></header>
-    <p>{text}</p>
+    <div className="po-cs-read__content">
+      <p>{assessment.summary}</p>
+      <div className="po-cs-read__verdicts">
+        <ul className="po-cs-read__strengths">{assessment.strengths.map(item => <li key={item}>{item}</li>)}</ul>
+        <ul className="po-cs-read__watchouts">{assessment.watchouts.map(item => <li key={item}>{item}</li>)}</ul>
+      </div>
+    </div>
     <div className="po-cs-read__links">
       <button type="button" onClick={() => session.setActiveView('development')}>DESARROLLO ›</button>
       <button type="button" onClick={() => session.setActiveView('medical')}>ESTADO FÍSICO ›</button>
