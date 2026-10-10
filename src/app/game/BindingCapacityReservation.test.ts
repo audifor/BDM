@@ -21,7 +21,7 @@ import {
   sumReservedCapacity,
   type FinancialReservation,
 } from '@/domain/finance'
-import { authorizeTeamSalaryForTest, cashMinorUnitsForTest, financingDrawdownForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, cashMinorUnitsForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { contractIdFromString, staffPersonIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import type { ContractNegotiation } from '@/domain/market'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
@@ -40,6 +40,8 @@ import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSa
  * Identity is unchanged from BS16M-B1: `sourceAuthority = CONTRACT`, `sourceEntityId = contractId`.
  */
 const CURRENCY = 'EUR'
+/** The prototype career is immutable, so the fixtures share one instance instead of rebuilding it per test. */
+const PROTOTYPE_CAREER: GameWorld = createNewGame()
 /** One legacy whole-major unit is 100 canonical minor units for every supported currency. */
 const MINOR_UNITS_PER_MAJOR_UNIT = 100
 /** 1 capacity unit = 1,000 legacy whole-major units = 100,000 canonical minor units. */
@@ -79,8 +81,10 @@ function bridgeOf(world: GameWorld, contractId: string): FinancialReservation {
 }
 
 function fundedClub(): GameWorld {
-  const base = createNewGame()
-  return fundTeamWithOpeningCapital(base, userTeam(base).id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS })
+  const base = PROTOTYPE_CAREER
+  // BS16M-B2: the prototype clubs now carry canonical ledger history, so BS16H never invents an opening
+  // position for them; real liquidity comes from the canonical financing authority instead.
+  return financingDrawdownForTest(base, userTeam(base).id, RICH_CASH_MINOR_UNITS, 'bs16m-b1c')
 }
 
 /**
@@ -199,10 +203,10 @@ function governanceFixture(world: GameWorld, negotiation: ContractNegotiation): 
 
 /** A club with ample canonical capacity plus one accepted, Governance-approved free-agent agreement. */
 function freeAgentAgreement() {
-  const base = createNewGame()
+  const base = PROTOTYPE_CAREER
   const team = userTeam(base)
   const funded = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
+    financingDrawdownForTest(base, team.id, RICH_CASH_MINOR_UNITS, 'bs16m-b1c-negotiation'),
     team.id,
     { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
   )
@@ -231,12 +235,12 @@ const retentionApproverId = staffPersonIdFromString('staff:handoff:retention-app
 
 /** Retention Governance graph plus the club's canonical capacity, for the future-dated successor proof. */
 function retentionSetup(extraTerms: Partial<RetentionTermSet> = {}) {
-  const base = createNewGame()
+  const base = PROTOTYPE_CAREER
   const team = userTeam(base)
   const playerId = team.rosterPlayerIds[0]!
   const predecessor = Object.values(base.contractsById).find((contract) => contract.playerId === playerId && contract.teamId === team.id)!
   const funded = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(base, team.id, { currencyCode: CURRENCY, cashMinorUnits: RICH_CASH_MINOR_UNITS }),
+    financingDrawdownForTest(base, team.id, RICH_CASH_MINOR_UNITS, 'bs16m-b1c-retention'),
     team.id,
     { currencyCode: CURRENCY, playerSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS, staffSalaryMinorUnits: RICH_AUTHORIZATION_MINOR_UNITS },
   )

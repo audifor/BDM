@@ -13,7 +13,7 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { openNegotiation } from '@/engine/market/MarketEngine'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 
 /**
  * BS16M-A: gameplay decisions are answered by canonical Finance and by nothing else. Each test proves a
@@ -21,15 +21,20 @@ import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpe
  * with canonical status/reasons when canonical Finance does not — so a legacy payroll budget can no
  * longer be the deciding authority.
  */
-const USD = 'USD'
 const FUNDED = 10_000_000_000
-const AUTHORIZATION = { currencyCode: USD, playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 }
+const AUTHORIZATION = { playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 }
 
+/**
+ * BS16M-B2: the prototype clubs are provisioned and already carry canonical ledger history, so liquidity
+ * comes from the canonical financing authority and the currency is the club's own canonical one.
+ */
 function financed(world: GameWorld, teamId: TeamId): GameWorld {
+  const organizationId = world.teams[teamId]!.organizationId
+  const currencyCode = String(world.organizationFinancialProfilesById[organizationId]!.baseCurrencyCode)
   return authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(world, teamId, { currencyCode: USD, cashMinorUnits: 500_000_000 }),
+    financingDrawdownForTest(world, teamId, FUNDED, 'bs16m-a'),
     teamId,
-    AUTHORIZATION,
+    { currencyCode, ...AUTHORIZATION },
   )
 }
 

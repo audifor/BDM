@@ -30,6 +30,13 @@ import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSa
 const SAVED_AT = '2026-09-20T00:00:00.000Z'
 const eur = (minorUnits: number) => ({ currencyCode: 'EUR', minorUnits })
 
+/** The shipped worlds this suite audits, built once: its subject is the opening position, not world creation. */
+const SHIPPED_WORLDS = Object.freeze([
+  createNewGame(),
+  createAcbTestGame(),
+  generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true }),
+])
+
 function clubWorld(): GameWorld {
   return createAcbTestGame()
 }
@@ -68,19 +75,21 @@ describe('BS16H shipped opening economic sources', () => {
   })
 
   it('never converts a salary budget or an approval into cash', () => {
-    for (const world of [createNewGame(), clubWorld(), generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true })]) {
+    for (const world of SHIPPED_WORLDS) {
       const activated = ensureCanonicalFinanceFoundation(world)
       const report = getFinanceActivationReport(activated)
       const authorized = report.organizations.filter((entry) => entry.budgetId !== null)
 
       expect(authorized.length).toBeGreaterThan(0)
       expect(Object.keys(activated.financialBudgetsById).length).toBeGreaterThan(0)
-      // Authorization exists; liquidity does not, and no opening fact was invented for any organization.
-      expect(Object.keys(activated.financialTransactionsById)).toEqual([])
+      // Authorization exists; liquidity does not, and activation invented no fact of its own.
+      expect(Object.keys(activated.financialTransactionsById)).toEqual(Object.keys(world.financialTransactionsById))
       expect(getOpeningEconomicStateReport(activated, organizationIdsOf(activated)).every((entry) => entry.cashMinorUnits === 0)).toBe(true)
-      // Organizations whose currency does not resolve have no profile to hold a position; every other one
-      // reports the audited absence of an opening source rather than a materialized position.
-      expect(report.organizations.filter((entry) => entry.openingEconomicState !== 'FINANCE_PROFILE_UNAVAILABLE').every((entry) => entry.openingEconomicState === 'OPENING_ECONOMIC_STATE_UNAVAILABLE')).toBe(true)
+      // Organizations whose currency does not resolve have no profile to hold a position; an organization
+      // that already carries canonical ledger history keeps it untouched; every other one reports the
+      // audited absence of an opening source rather than a materialized position.
+      expect(report.organizations.filter((entry) => entry.openingEconomicState !== 'FINANCE_PROFILE_UNAVAILABLE')
+        .every((entry) => entry.openingEconomicState === 'OPENING_ECONOMIC_STATE_UNAVAILABLE' || entry.openingEconomicState === 'EXISTING_FINANCE_HISTORY_PRESERVED')).toBe(true)
       expect(report.organizations.some((entry) => entry.openingEconomicState === 'MATERIALIZED' || entry.openingEconomicState === 'ALREADY_MATERIALIZED')).toBe(false)
     }
   })

@@ -215,7 +215,8 @@ describe('BS16B finance foundation provisioning', () => {
     const reprovisioned = provisionOrganizationFinanceFoundation(restored, organizationId, { currencyCode: 'EUR' })
     expect(reprovisioned).toBe(restored)
     expect(Object.values(reprovisioned.fiscalPeriodsById).filter((period) => String(period.organizationId) === String(organizationId))).toHaveLength(1)
-    expect(Object.keys(reprovisioned.financialTransactionsById)).toHaveLength(0)
+    // Reprovisioning records nothing: the career's canonical facts are exactly the ones it already had.
+    expect(Object.keys(reprovisioned.financialTransactionsById)).toEqual(Object.keys(restored.financialTransactionsById))
   })
 
   it('supports representative existing Finance V2 operations through the mapping authority without new formulas', () => {

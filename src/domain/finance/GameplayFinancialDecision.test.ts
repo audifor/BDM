@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { createAcbTestGame, createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION, createAcbTestGame, createNewGame } from '@/app/game'
 import type { TeamId } from '@/domain/ids'
+import { generateWorld } from '@/engine/world'
+import { resolveOrganizationCurrency } from './FinanceCurrencyPolicy'
 import type { GameWorld } from '@/domain/world'
 import {
   GAMEPLAY_FINANCIAL_ACTION_CATEGORY,
@@ -156,9 +158,10 @@ describe('BS16M-A gameplay finance gateway', () => {
   })
 
   it('reports an organization without canonical Finance as an explicit invalid state instead of falling back', () => {
-    // Most prototype organizations cannot resolve a canonical currency, so they have no Finance at all.
-    const world = createNewGame()
-    const teamId = Object.values(world.teams)[0]!.id
+    // A world that was never provisioned has no canonical currency for its fictional clubs, so gameplay
+    // reports an explicit invalid state instead of falling back to the legacy spending authority.
+    const world = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, gender: 'male', includeNbaLike: true, includeNcaaLike: true })
+    const teamId = Object.values(world.teams).find((team) => world.organizationFinancialProfilesById[team.organizationId] === undefined && resolveOrganizationCurrency(world, team.organizationId).status === 'FINANCE_CURRENCY_UNAVAILABLE')!.id
     expect(world.organizationFinancialProfilesById[world.teams[teamId]!.organizationId]).toBeUndefined()
     const result = evaluateTeamGameplayFinancialDecision(world, {
       teamId,

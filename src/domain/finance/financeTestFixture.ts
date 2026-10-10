@@ -135,9 +135,10 @@ export function commitTeamLiquidityForTest(world: GameWorld, teamId: TeamId, min
 /**
  * Executes one explicit canonical financing drawdown (BS16L) so a test can add real ledger cash without
  * touching authorization. The agreement is external, unrelated-party and active, so no Governance
- * decision is involved; execution goes through the canonical financing execution authority.
+ * decision is involved; execution goes through the canonical financing execution authority. `key` keeps
+ * successive drawdowns of one club distinct, because a financing fact is immutable once recorded.
  */
-export function financingDrawdownForTest(world: GameWorld, teamId: TeamId, minorUnits: number): GameWorld {
+export function financingDrawdownForTest(world: GameWorld, teamId: TeamId, minorUnits: number, key = 'test'): GameWorld {
   const team = world.teams[teamId]
   if (team === undefined) throw new RangeError(`Test drawdown needs a known Team (${teamId})`)
   const organizationId = organizationIdFromString(team.organizationId)
@@ -146,7 +147,7 @@ export function financingDrawdownForTest(world: GameWorld, teamId: TeamId, minor
   const currencyCode = String(profile.baseCurrencyCode)
   const provenance = { kind: 'TEST_FIXTURE', id: 'bs16m-a-financing' }
   const agreement = createFinancingAgreement({
-    id: financingAgreementIdFor(organizationId, 'test-facility'),
+    id: financingAgreementIdFor(organizationId, `${key}-facility`),
     borrowerOrganizationId: organizationId,
     fundingParty: { kind: 'EXTERNAL', label: 'Test lender' },
     debtType: 'CREDIT_FACILITY',
@@ -157,7 +158,7 @@ export function financingDrawdownForTest(world: GameWorld, teamId: TeamId, minor
     provenance,
   })
   const drawdown = createFinancingDrawdown({
-    id: financingDrawdownIdFor(agreement.id, 'test-draw-1'),
+    id: financingDrawdownIdFor(agreement.id, `${key}-draw-1`),
     agreementId: agreement.id,
     organizationId,
     amount: { currencyCode, minorUnits },
