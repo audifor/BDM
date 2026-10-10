@@ -1,43 +1,63 @@
 # BS17E-P · Facilities economic policy proposal
 
-**Status:** `PROPOSED_POLICY — NOT APPROVED`
+**Status:** E-P01, E-P02, and E-P04 contain `APPROVED_PRINCIPLE` decisions recorded in [the V1 ratification](BS17E_P_V1_APPROVED_POLICY.md). Their detailed contracts remain `DETAIL_PENDING`. E-P03 and E-P05–E-P10 remain `PROPOSED_NOT_APPROVED`.
 **Basis:** BS17E-0 readiness audit at the supplied E0 base `cfa13c4b3808f24949620e8343615540acb1a671`.
 **Execution boundary:** documentary contract only. BS17E implementation remains `BLOCKED_BY_BS16_COMPLETE`.
 
-This proposal resolves the shape of E-P01–E-P10 for an explicit product decision. It does not authorize code, assign institutional rights, price work, or alter Finance. The BS17E-0 audit and authority matrix remain the evidence for existing capabilities; this document does not repeat their inventory.
+This proposal records only the approved principles and preserves unresolved detail as pending. It does not authorize code, assign institutional rights, generate prices, or alter Finance. The BS17E-0 audit and authority matrix remain the evidence for existing capabilities; this document does not repeat their inventory.
 
 ## Authority and evidence labels
 
 - `EXISTING_CERTIFIED_AUTHORITY`: a committed, certified Finance, Governance, or Facilities contract.
-- `APPROVED_POLICY`: a product rule expressly ratified by the product owner. No new E-P policy in this package has this status.
+- `APPROVED_PRINCIPLE`: a product decision expressly ratified by the product owner, while implementation details can remain pending.
+- `DETAIL_PENDING`: an approved principle does not settle its operational source, values, or transitions.
+- `PROPOSED_NOT_APPROVED`: recommendation requiring express approval.
 - `PROPOSED_POLICY`: recommendation requiring express approval.
 - `MISSING_SOURCE`: a required amount, contract, right, or event is not present as an approved source fact.
 - `BLOCKED_BY_BS16`: economic implementation cannot proceed until BS16 global completion and integration are certified.
 
 BS17E-0 observed BS16L as PASS, BS16M as partial pending M-B2, and BS16N as approved but not implemented; therefore BS16 global was partial at that audit. Uncommitted Finance work is not certification evidence. Recheck the canonical certified state before any later implementation milestone.
 
-## Proposed operation and accounting treatment (E-P01)
+## E-P01 · Classification by nature and evidenced scope
+
+**Status:** `APPROVED_PRINCIPLE` · `DETAIL_PENDING`.
+
+Classify an operation by its nature and accredited scope. Maintenance and restorative repair are OPEX candidates. Structural improvements, expansion, and construction are CAPEX candidates. Replacement and mixed work depend on evidenced scope and a legitimate breakdown. No additional accounting treatment is approved. Exact Finance category mapping and accepted breakdown evidence remain pending.
 
 The existing Finance categories `FACILITY` (OPEX) and `FACILITY_DEVELOPMENT` (CAPEX) are accounting dimensions, not a policy that classifies every physical action. Classification follows the approved scope and source evidence, not the asset's level, name, price, or physical completion.
 
-| Physical operation | Proposed treatment | Boundary / approval needed |
+| Physical operation | Ratified principle | Remaining detail |
 |---|---|---|
-| Routine maintenance that preserves existing function | OPEX, `FACILITY` | Proposed mapping; amount and scope still need a legitimate source. |
-| Repair restoring existing function | OPEX, `FACILITY` | Proposed default. A separately scoped capital improvement must be classified separately. |
-| Replacement | Unclassified until scope is approved | Like-for-like replacement may be OPEX or CAPEX under the chosen accounting policy; no automatic rule is asserted. |
-| Renovation/refurbishment | CAPEX candidate, `FACILITY_DEVELOPMENT` only when the approved scope is a capital project | Product approval required; “renovation” alone does not establish treatment. |
-| Expansion, new construction, or new facility | CAPEX candidate, `FACILITY_DEVELOPMENT` | Requires an approved project and source-backed scope. No depreciation, useful-life, impairment, or tax rule is proposed. |
-| Recurring service (for example, a contracted service) | OPEX only from an explicit economic source | Facility existence alone creates no recurring cost. |
+| Routine maintenance | OPEX candidate | Exact Finance category and cost evidence. |
+| Restorative repair | OPEX candidate | Exact mapping and any separately scoped improvement. |
+| Replacement | Depends on evidenced nature and scope | Legitimate breakdown for mixed work; no automatic classification. |
+| Structural improvement | CAPEX candidate | Approved project scope and exact category mapping. |
+| Expansion / construction | CAPEX candidate | Approved project scope and exact category mapping. |
+| Recurring service | Not decided by E-P01 | E-P07 remains proposed; no charge from facility existence. |
 
-Do not split or capitalize a mixed repair/replacement automatically. If a source contract contains multiple scopes, the product contract must define whether it supplies separate priced lines; otherwise the classification remains unresolved.
+Do not split or capitalize mixed work automatically. E-P01 approves the scope-based principle; accepted evidence format for a breakdown remains `DETAIL_PENDING`.
 
-## Cost evidence (E-P02)
+## E-P02 · Hybrid cost evidence
 
-Proposed evidence order: an accepted contract/award or registered offer with explicit scope, amount, currency, supplier, validity dates, and source identity; or an approved world/economic source carrying equivalent facts. An estimate is usable only where an approved source explicitly identifies it as an estimate and supplies its currency, scope, source, and validity. A budget is a ceiling/authorization input, not a price quote.
+**Status:** `APPROVED_PRINCIPLE` · `DETAIL_PENDING`.
 
-Manager-entered amounts are not a default source. Product approval must explicitly decide whether a manager can submit a quote, who verifies it, and whether it is evidence for a proposal or a binding amount. Missing or expired evidence yields `UNKNOWN_COST`; it must not be replaced with a formula based on facility category, level, capacity, area, club tier, or a fabricated vendor price.
+The approved model is hybrid: use documented costs; allow simulated offers only through a canonical, approved economic model; return `UNKNOWN_COST` when adequate sources are absent. This ratification generates no prices or offers. The model's sources, reference values, calibration, versions, offer creation, acceptance, and validity rules are deferred to `E-P02-SIM`.
+
+Until E-P02-SIM is approved and implemented, simulated offers are not LIVE. A budget remains an authorization ceiling, not a price.
+
+### E-P02-SIM · Pending sub-contract
+
+Define approved offer sources, reference values and provenance, calibration, model versions, offer identity/generation, acceptance/expiry, and validity dates. Specify how documented costs and simulated offers coexist and when missing inputs yield `UNKNOWN_COST`. This sub-contract approves no values, formulas, or generation mechanism.
+
+## Documented cost evidence
+
+Documented evidence may include an accepted contract/award or registered offer with explicit scope, amount, currency, supplier, validity dates, and source identity; or an approved world/economic source carrying equivalent facts. The accepted evidence set remains part of E-P02-SIM. An estimate is usable only if its approved source contract permits it. A budget is a ceiling/authorization input, not a price quote.
+
+Manager-entered amounts are not automatically accepted. E-P02-SIM must define whether a manager can attach a documented quote and how it is verified. Missing, expired, or inadequate evidence yields `UNKNOWN_COST`; do not substitute an unsupported formula or fabricated vendor price.
 
 ## Economic lifecycle proposal (E-P03, E-P05)
+
+**Status:** `PROPOSED_NOT_APPROVED`; economic execution is also `BLOCKED_BY_BS16_COMPLETE`.
 
 Recommended conceptual lifecycle:
 

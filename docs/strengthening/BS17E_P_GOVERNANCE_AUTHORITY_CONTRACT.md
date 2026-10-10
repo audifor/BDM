@@ -1,6 +1,6 @@
 # BS17E-P · Governance authority contract
 
-**Status:** `PROPOSED_POLICY — REQUIRES EXPRESS APPROVAL`
+**Status:** `APPROVED_PRINCIPLE` for three authority levels; `DETAIL_PENDING` for operation mapping, grants, and bootstrap. No authorization mechanism is implemented.
 **Implementation:** blocked by BS16 global completion; no rights or commands are added here.
 
 ## Existing institutional boundary
@@ -9,14 +9,20 @@ At this base, Governance already models generic `FACILITIES` and `CAPITAL_EXPEND
 
 `BoardGovernanceCommands.ts` currently routes only supported player-contract/trade decisions; unsupported types remain read-only. The CFI7 certification explicitly excludes a spending approval flow. Therefore an existing decision type or a Facility ownership fact does not itself grant anyone spending authority. No universal manager permission, monetary threshold, new Board, or body hierarchy is assumed.
 
-## Proposed authorization rules
+## Ratified Governance principle
 
-1. **Permission is institutional.** Resolve the actor, body, decision type, subject, effective date, and rights from the actual organization appointments/grants. If a required right is missing, revoked, expired, or ambiguous, block the command and explain why.
+Facilities decisions use three levels: **operational**, **institutional**, and **strategic**. Resolve every permission through explicit, effective, traceable grants. This does not assign grants. Do not infer grants from role, manager status, ownership, club category, or sport. The manager has no universal authority; no parallel Board is created.
+
+`E-P04-GOV-BOOTSTRAP` is a pending sub-contract for simulated organization initialization. It must define source-backed institutions, bodies/appointments, grant provenance and effective dates, and absent/unknown-grant behavior. Until approval, assign no default grants and do not claim simulated organizations can execute these permissions.
+
+## Authorization details pending
+
+1. **Permission is institutional.** Resolve actor, body, decision type, subject, authority level, effective date, and rights from explicit effective grants. Missing, revoked, expired, or ambiguous grants block the action. Exact level/type mapping remains pending.
 2. **Proposal is not approval.** A manager or Facilities lead may propose only if an effective `PROPOSE` right permits it. Proposal does not reserve money, contract work, or start a physical operation.
-3. **Approval type follows approved classification.** Use existing `FACILITIES` for approved maintenance/repair permission and `CAPITAL_EXPENDITURE` for an operation classified as capital. Replacement and mixed-scope work need the E-P01 classification policy before mapping. Do not create a new type unless the product owner later approves that gap.
+3. **Approval type follows approved classification.** Reuse `FACILITIES` and `CAPITAL_EXPENDITURE` subject to an approved operation/authority-level mapping. The E-P01 principle does not finalize this mapping.
 4. **Finance remains separate.** Governance approval grants institutional permission only. Finance independently validates currency, account, category, fiscal period, authorization/headroom, reservation, commitment, payable, and settlement under its certified contract.
 5. **Execution is gated.** A Facilities physical command that creates economically dependent work must require its linked approved decision and the Finance phase required by the approved lifecycle. A decision event by itself cannot create Finance facts or physical completion.
-6. **AI uses identical authority.** BS17F must call the same proposal/approval/execution commands and must not receive implicit `APPROVE` or `EXECUTE` rights.
+6. **AI uses identical authority.** BS17F must call the same commands and receives no implicit `APPROVE` or `EXECUTE` rights. Any AI grant requires explicit policy and an effective grant.
 
 ## Decision/event contract proposal
 
@@ -26,7 +32,7 @@ Current transition rules allow `WITHDRAWN` from proposal/review states, not afte
 
 Rejection, veto, withdrawal, and execution must remain distinguishable. A rejected/vetoed proposal cannot start physical work or create a Finance commitment. An `EXECUTED` Governance event records the authorized institutional action; it is not proof of physical completion, expense recognition, or payment.
 
-## Proposed authority matrix
+## Illustrative authority matrix — mapping not ratified
 
 The approving body and individual actor are intentionally resolved per organization from real effective grants. This matrix proposes operation-to-type mapping only; it does not grant rights.
 
@@ -44,4 +50,4 @@ For every row, rejection/veto must persist the canonical decision and leave the 
 
 ## Approval needed
 
-Product owner must approve or replace: the type mapping for each operation; who may propose; the institutional body/actor resolution rule and grant source; whether an approval needs review/veto stages; whether new facilities use a generic project subject; post-approval cancellation as a linked decision versus a new transition; and the exact point at which Governance permission gates Finance reservation, binding obligation, and physical start. The final effective grant topology remains organization data, not a universal product default.
+The three levels and explicit-grant principle are approved. Product owner must still define operation/type/level mapping; proposer eligibility; institutional body and grant source; review/veto stages; simulated-organization bootstrap; new-facility subjects; post-approval cancellation; and the point where Governance gates reservation, binding obligation, and physical start. Effective grant topology remains organization data, not a universal default.

@@ -1,14 +1,14 @@
 # BS17E · Minimum implementation plan after policy approval
 
-**Status:** proposal only. No implementation is authorized by this plan.
+**Status:** plan remains proposed; only E-P01/E-P02/E-P04 principles are ratified. No implementation is authorized by this plan.
 **Current gate:** `BS17E EXECUTION: BLOCKED_BY_BS16_COMPLETE`.
 
-This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. Product decisions E-P01–E-P10 and organization-specific Governance grants must be approved first.
+This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. E-P01, E-P02, and E-P04 principles are approved, but their detailed contracts (including E-P02-SIM and E-P04-GOV-BOOTSTRAP) and E-P03/E-P05–E-P10 remain unresolved. Do not begin implementation until required details and organization grants are approved.
 
 ## Preconditions for any implementation
 
 - BS16 global has a committed PASS and its canonical integration base is explicitly selected.
-- Product owner has ratified/replaced every E-P01–E-P10 rule and the Governance matrix.
+- Product owner has resolved E-P01 category/breakdown details, approved E-P02-SIM and E-P04-GOV-BOOTSTRAP, ratified/replaced E-P03 and E-P05–E-P10, and approved the Governance operation/level mapping.
 - Real source-backed cost/contract evidence exists for the operation being certified; unsupported worlds remain unknown.
 - Finance confirms the adapter contract for reservation, commitment, recognition, payable, settlement, currency, period, recurrence, and cancellation.
 - One isolated milestone branch/worktree is created from the approved base; no Finance or main worktree is modified incidentally.
