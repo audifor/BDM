@@ -428,6 +428,30 @@
     radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
     linear-gradient(115deg,var(--cs-s2),var(--cs-s1));
 }
+
+/*
+ * Required cross-skin correction: ng-holo.css intentionally sets all NG
+ * .ng-holo-panel surfaces to transparent !important and paints four corner
+ * ticks !important. Courtside's cards are filled, rounded and have an inset
+ * highlight. Restore the authentic Courtside surface only within HOME.
+ */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .ng-holo-panel {
+  border:0 !important;
+  border-radius:22px !important;
+  background:var(--cs-s1) !important;
+  background-color:var(--cs-s1) !important;
+  background-image:none !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture.ng-holo-panel {
+  background:
+    radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+  background-color:var(--cs-s2) !important;
+  background-image:
+    radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+}
 .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture::before {display:none;}
 .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
   width:78px;
