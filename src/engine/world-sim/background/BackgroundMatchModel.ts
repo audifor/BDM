@@ -157,8 +157,8 @@ const emptyLine = (playerId: PlayerId): Line => ({ playerId, secondsPlayed: 0, p
  * calibration and bump this presentation-only model version.
  */
 export const BACKGROUND_SHOT_ZONE_MODEL_VERSION = 'bg-zone-conditional-provisional-v1'
-function setuplessShotKey(version: string, playerId: PlayerId, attempt: number, zone: string): string {
-  return version + ':' + playerId + ':' + attempt + ':' + zone
+function shotSubzoneKey(version: string, gameId: string, playerId: PlayerId, attempt: number, zone: string): string {
+  return version + ':' + gameId + ':' + playerId + ':' + attempt + ':' + zone
 }
 export function backgroundSubzone(group: 'rim' | 'mid' | 'three', key: string): MatchShotZoneId {
   const value = hashStringToSeed(BACKGROUND_SHOT_ZONE_MODEL_VERSION + ':' + key) / 0x100000000
@@ -168,6 +168,7 @@ export function backgroundSubzone(group: 'rim' | 'mid' | 'three', key: string): 
 }
 
 interface TeamRun {
+  readonly gameId: string
   readonly features: BackgroundTeamFeatures
   readonly players: readonly BackgroundPlayerInput[]
   readonly lines: Line[]
@@ -188,8 +189,8 @@ export function simulateBackgroundMatch(setup: MatchSetup, params: BackgroundMod
   const features = deriveBackgroundFeatures(setup)
   const random = stream(hashStringToSeed(`world-sim-background-${params.version}:${setup.matchSeed}:${setup.gameId}`))
   const context = features.context
-  const home = prepareTeam(features.home, features.away, context, params, random)
-  const away = prepareTeam(features.away, features.home, context, params, random)
+  const home = prepareTeam(features.home, features.away, context, params, random, setup.gameId)
+  const away = prepareTeam(features.away, features.home, context, params, random, setup.gameId)
   // Pace: both teams' tendencies set the game's possessions per minute (one realised pace for the game, as FAST alternates possessions).
   const pace = (home.rates.pace + away.rates.pace) / 2
   const paceNoise = 1 + normal(random) * params.rates.pace.residualSd / Math.max(1e-6, params.rates.pace.intercept)
@@ -236,7 +237,7 @@ export function simulateBackgroundMatch(setup: MatchSetup, params: BackgroundMod
   }
 }
 
-function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatures, context: BackgroundMatchContext, params: BackgroundModelParams, random: () => number): TeamRun {
+function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatures, context: BackgroundMatchContext, params: BackgroundModelParams, random: () => number, gameId: string): TeamRun {
   const players = team.players
   const vector = rateFeatureVector(team, opponent, context)
   const rates = {} as Record<TeamRate, number>
@@ -273,7 +274,7 @@ function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatu
     rates[key] = Math.max(rate.min, Math.min(rate.max, rates[key] + normal(random) * rate.residualSd * 0.5))
   }
   return {
-    features: team, players, lines: players.map((player) => emptyLine(player.playerId)), minutes, samplers,
+    gameId, features: team, players, lines: players.map((player) => emptyLine(player.playerId)), minutes, samplers,
     zone, make,
     rates, points: 0, possessions: 0, trips: 0, fouls: players.map(() => 0),
   }
@@ -333,7 +334,7 @@ function playPossession(offense: TeamRun, defense: TeamRun, params: BackgroundMo
     const profile = offense.zone[shooter]!
     const zone = z < profile.rim ? 'rim' : z < profile.rim + profile.three ? 'three' : 'mid'
     const made = random() < offense.make[shooter]![zone]
-    const subzone = backgroundSubzone(zone, setuplessShotKey(params.version, line.playerId, line.fieldGoalsAttempted, zone))
+    const subzone = backgroundSubzone(zone, shotSubzoneKey(params.version, offense.gameId, line.playerId, line.fieldGoalsAttempted, zone))
     const prior = line.shotZoneCounts[subzone] ?? { made: 0, attempted: 0 }
     line.shotZoneCounts[subzone] = { made: prior.made + (made ? 1 : 0), attempted: prior.attempted + 1 }
     line.fieldGoalsAttempted += 1
