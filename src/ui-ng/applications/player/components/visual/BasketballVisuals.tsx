@@ -125,6 +125,13 @@ export function AttributeRadar({
         )
       })}
 
+      {courtsideFraming && (<polygon
+        fill={accent}
+        fillOpacity={courtsideFraming ? 0.075 : 0.13}
+        points={polygonPoints}
+        stroke={accent}
+        strokeWidth={courtsideFraming ? 1.5 : 2.2}
+      />)}
       {comparisonPoints !== null && (
         <polygon
           className="po-radar__comparison"
@@ -154,13 +161,14 @@ export function AttributeRadar({
           strokeLinejoin="round"
         />
       ))}
-      <polygon
+
+      {!courtsideFraming && (<polygon
         fill={accent}
         fillOpacity={courtsideFraming ? 0.075 : 0.13}
         points={polygonPoints}
         stroke={accent}
         strokeWidth={courtsideFraming ? 1.5 : 2.2}
-      />
+      />)}
 
       {axes.map((axis, index) => {
         const radius = (axis.value / 100) * radarRadius
