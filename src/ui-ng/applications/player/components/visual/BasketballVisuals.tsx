@@ -178,7 +178,10 @@ export function AttributeRadar({
       })}
 
       {axes.map((axis, index) => {
-        const [lx, ly] = polarPoint(index, total, LABEL_RADIUS)
+        // Courtside draws on a larger canvas. Keep labels clear of the polygon
+        // while giving long names enough room inside the SVG viewBox.
+        const labelRadius = courtsideFraming ? 67 : LABEL_RADIUS
+        const [lx, ly] = polarPoint(index, total, labelRadius)
         const isActive = selectedCategory === axis.key
         return (
           <g
