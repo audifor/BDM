@@ -89,20 +89,11 @@
   background:color-mix(in srgb,var(--cs-lime) 9%,var(--cs-s2));
 }
 .pac-opponent__family:hover,.pac-opponent__rating:hover {border-color:var(--cs-lime);}
-.pac-opponent__family-foot,.pac-opponent__profile-foot {
+.pac-opponent__profile-foot {
   margin-top:auto;
   padding:12px;
   background:var(--cs-s2);
   border-top:1px solid var(--cs-line2);
-}
-.pac-opponent__family-foot strong {
-  font:700 15px var(--cs-font-display);
-  color:var(--cs-orange2);
-}
-.pac-opponent__family-foot p {
-  margin:4px 0 0;
-  color:var(--cs-text2);
-  font:400 12px/1.4 var(--cs-font);
 }
 .pac-opponent__profile {min-height:0;}
 .pac-opponent__unknown {
@@ -522,4 +513,12 @@
 @container player-space (max-width:1439px) {
   .pac-opponent__profile {min-height:450px;}
   .pac-opponent__radar .po-radar {max-height:330px;}
+}
+
+
+/* Evidential confidence index: it is a score, never a 100%-certainty gauge. */
+.pac-opponent__confidence-row span[title] {cursor:help;}
+.pac-opponent__confidence-row span[title]:focus-visible {outline-color:var(--cs-lime);}
+.pac-opponent__profile .pac-opponent__family-reading {
+  min-height:128px;
 }
