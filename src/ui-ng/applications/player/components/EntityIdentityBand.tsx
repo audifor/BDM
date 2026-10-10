@@ -48,7 +48,7 @@ export function EntityIdentityBand() {
   const { openEntity } = useNgWorkspaceNavigation()
   if (model === null) return null
 
-  const { identity, status, contract } = model
+  const { identity, status } = model
   const teamLabel = presentationValue(identity.teamName)
   const teamDestination =
     identity.teamId.status === 'available'
@@ -63,8 +63,6 @@ export function EntityIdentityBand() {
   const wingspan = formatPhysicalMeasurement(identity.wingspan)
   const jersey =
     identity.jerseyNumber.status === 'available' ? String(identity.jerseyNumber.value) : null
-  const currentSalary =
-    contract.financialSchedule.find((row) => row.isCurrent) ?? contract.financialSchedule[0]
   const availability = presentationValue(status.availability)
   const availabilityTone = availability === 'Available' ? 'positive' : 'warning'
 
@@ -129,10 +127,20 @@ export function EntityIdentityBand() {
       </div>
 
       <div className="po-identity__condition">
-        <span className={`po-identity__availability po-identity__availability--${availabilityTone}`}>
-          <span className="po-identity__availability-dot" aria-hidden />
-          {availability}
-        </span>
+        <div className="po-identity__condition-top">
+          <span className={`po-identity__availability po-identity__availability--${availabilityTone}`}>
+            <span className="po-identity__availability-dot" aria-hidden />
+            {availability}
+          </span>
+          <details className="po-identity__trajectory">
+            <summary aria-label="Mostrar navegación y trayectoria del jugador">TRAYECTORIA ▾</summary>
+            <div className="po-identity__trajectory-panel">
+              <h3>TRAYECTORIA DEL JUGADOR</h3>
+              <TalentOperationsNav current="player" />
+              <TalentPlayerPathwayBand playerId={identity.playerId} />
+            </div>
+          </details>
+        </div>
         <div className="po-identity__status-list">
           {status.morale.status === 'available' && (
             <StatusInstrument label="Morale" tone="positive" value={presentationValue(status.morale)} />
@@ -150,43 +158,10 @@ export function EntityIdentityBand() {
           ) : (
             <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
           )}
-        </div>
-      </div>
+        </div
+      </div>>
 
-      <div className="po-identity__contract">
-        <div className="po-identity__contract-top">
-          <span className="po-identity__section-label">Contract</span>
-          <div className="po-identity__actions">
-            <button className="ng-btn ng-btn--ghost" disabled title="Acción aún no conectada" type="button">Match Plan</button>
-            <button className="ng-btn ng-btn--ghost" disabled title="Acción aún no conectada" type="button">Talk</button>
-          </div>
-          <details className="po-identity__trajectory">
-            <summary aria-label="Mostrar navegación y trayectoria del jugador">TRAYECTORIA ▾</summary>
-            <div className="po-identity__trajectory-panel">
-              <h3>TRAYECTORIA DEL JUGADOR</h3>
-              <TalentOperationsNav current="player" />
-              <TalentPlayerPathwayBand playerId={identity.playerId} />
-            </div>
-          </details>
-        </div>
-        <div className="po-identity__contract-list">
-          <StatusInstrument
-            label="Expires"
-            tone="neutral"
-            value={contract.statusBand?.endDate ?? UNAVAILABLE_LABEL}
-          />
-          <StatusInstrument
-            label="Salary"
-            tone="neutral"
-            value={currentSalary?.baseSalary.formatted ?? contract.compensationContextNote ?? UNAVAILABLE_LABEL}
-          />
-          <StatusInstrument
-            label="Status"
-            tone="neutral"
-            value={contract.statusBand?.statusLabel ?? UNAVAILABLE_LABEL}
-          />
-        </div>
-      </div>
+>
     </section>
   )
 }
