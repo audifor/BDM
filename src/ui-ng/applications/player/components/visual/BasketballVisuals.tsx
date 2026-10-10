@@ -36,6 +36,8 @@ export interface AttributeRadarProps {
   readonly showValues?: boolean
   /** Optional canonical aggregate per family; no polygon is drawn when a family is unknown. */
   readonly comparisonAxes?: Readonly<Partial<Record<RatingCategory, number>>> | null
+  /** Courtside framing enlarges the active radar without affecting legacy placements. */
+  readonly courtsideFraming?: boolean
 }
 
 export function AttributeRadar({
@@ -45,6 +47,7 @@ export function AttributeRadar({
   accent = 'var(--ng-cyan)',
   showValues = false,
   comparisonAxes = null,
+  courtsideFraming = false,
 }: AttributeRadarProps) {
   const total = axes.length
   const gridLevels = [0.25, 0.5, 0.75, 1]
@@ -67,7 +70,7 @@ export function AttributeRadar({
     .join(' ')
 
   return (
-    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={`${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
+    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={courtsideFraming ? '-22 -22 164 164' : `${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
       <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={MAX_RADIUS} />
       {[0.4, 0.7, 1].map((level) => (
         <circle
