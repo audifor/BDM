@@ -60,23 +60,24 @@ function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
   const sortedCategories = [...model.radarAxes].sort((a, b) => a.value - b.value)
   const weakestCategory = sortedCategories[0]
   const strongestCategory = sortedCategories[sortedCategories.length - 1]
-  const phase = overview.developmentPulse.stageLabel.toLowerCase()
+  const stageKey = overview.developmentPulse.stageLabel.toLowerCase()
+  const stages: Readonly<Record<string, string>> = {
+    early: 'formación', developing: 'crecimiento', prime: 'plenitud', declining: 'descenso',
+  }
+  const phase = stages[stageKey] ?? 'desarrollo'
   const trend = overview.developmentPulse.trendLabel
   const age = model.identity.age.value
   const top = strongestRatings.map(entry => `${entry.label.toLowerCase()} (${entry.value})`)
   const profile = strongestCategory === undefined
-    ? 'Su identidad deportiva todavía requiere más información.'
-    : `Presenta un perfil con predominio de ${describeCategory(strongestCategory.key, strongestCategory.label)} (${strongestCategory.value}/100).`
-  const topRead = top.length ? ` Destaca especialmente en ${top.join(' y ')}.` : ''
-  const weaknessRead = weakestCategory === undefined
-    ? ''
-    : ` En comparación con sus otras facetas, ${describeCategory(weakestCategory.key, weakestCategory.label)} (${weakestCategory.value}/100) es el área menos desarrollada y conviene tenerla en cuenta al definir su función.`
-  const timeline = ` ${typeof age === 'number' ? `A sus ${age} años, s` : 'S'}e encuentra en la fase ${phase}, con una tendencia registrada de ${trend}.`
+    ? 'Su perfil deportivo requiere una evaluación más amplia.'
+    : `Su perfil destaca por ${describeCategory(strongestCategory.key, strongestCategory.label)} (${strongestCategory.value}/100).`
+  const topRead = top.length ? ` Sobresale en ${top.join(' y ')}.` : ''
+  const timeline = ` ${typeof age === 'number' ? `A sus ${age} años, ` : ''}atraviesa una fase de ${phase}; evolución registrada: ${trend}.`
   const available = status.availability.status === 'available' && status.availability.value === 'Available'
-  const medicalRead = available ? ' Está disponible para competir.' : ` Su disponibilidad actual es: ${fieldLabel(status.availability)}.`
+  const medicalRead = available ? ' Está disponible.' : ` Disponibilidad: ${fieldLabel(status.availability)}.`
   const risk = status.risk.status === 'available' ? fieldLabel(status.risk) : null
   return {
-    summary: `${profile}${topRead}${weaknessRead}${timeline}${medicalRead} No hay aún una evaluación humana autorizada para caracterizar su profesionalidad o temperamento.`,
+    summary: `${profile}${topRead}${timeline}${medicalRead} El carácter sigue sin evaluar.`,
     strengths: [
       ...(strongestRatings.length ? [`Destaca en ${strongestRatings[0]!.label.toLowerCase()}`] : []),
       ...(available ? ['Disponible para competir'] : []),
