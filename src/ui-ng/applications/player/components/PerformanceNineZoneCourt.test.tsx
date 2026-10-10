@@ -50,16 +50,17 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
   })
 
   it('can expand the map without changing its selected zone and closes with Escape', () => {
-    const { container } = render(<PerformanceNineZoneCourt profile={fixture()} />)
+    render(<PerformanceNineZoneCourt profile={fixture()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' }))
     const open = screen.getByRole('button', { name: 'Enlarge shot map' })
     fireEvent.click(open)
     const dialog = screen.getByRole('dialog', { name: 'Nine-zone basketball shooting map' })
     expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(container.querySelector('.po-pf-nine.is-expanded')).toBeInTheDocument()
+    expect(document.querySelector('.po-pf-nine__portal .po-pf-nine.is-expanded')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(document.querySelector('.po-pf-nine__portal')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Enlarge shot map' })).toHaveAttribute('aria-expanded', 'false')
   })
 
