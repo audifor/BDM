@@ -527,3 +527,19 @@
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+.po-dev-board--courtside .po-dev-cs__record-lane .po-dev-cs__more {
+  align-self:flex-start;
+  min-height:29px;
+  margin:7px 0 0;
+  padding:6px 10px;
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  background:var(--cs-s2);
+  color:var(--cs-lime);
+  font:700 12px/1.1 var(--cs-font);
+  cursor:pointer;
+}
+.po-dev-board--courtside .po-dev-cs__record-lane .po-dev-cs__more:hover {
+  background:var(--cs-s3);
+}
