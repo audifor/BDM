@@ -52,12 +52,14 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     ...cycle,
     institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
   })) })
-  const planned = initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world)))
+  const planned = initializeAiClubManagementPlanning(ensureInstitutionBenefitsCaps(world))
   const career = ensureCanonicalFinanceFoundation(planned, {
     explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned),
     authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(planned),
   })
-  return processClubFinanceForDate(career, career.currentDate).world
+  // Seed current-period Finance authorization before adding the independent completed-year
+  // college sport budgets: those historical facts must not suppress the initial salary authority.
+  return processClubFinanceForDate(ensureNcaaSportBudgets(career), career.currentDate).world
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number }, gender: 'male' | 'female'): GameWorld {

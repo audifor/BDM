@@ -42,7 +42,12 @@ describe('BS16F shipped finance activation', () => {
     for (const organizationId of provisioned) {
       const profile = career.organizationFinancialProfilesById[organizationId as never]!
       expect(Object.values(career.fiscalPeriodsById).filter((period) => String(period.organizationId) === organizationId)).toHaveLength(1)
-      expect(Object.values(career.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
+      const budgets = Object.values(career.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)
+      expect(budgets.filter(budget => budget.fiscalPeriodId != null)).toHaveLength(1)
+      const historical = budgets.filter(budget => budget.fiscalPeriodId == null)
+      const college = Object.values(career.competitions).some(competition => career.ecosystems[competition.ecosystemId]?.kind === 'ncaaLike' && competition.participantTeamIds.some(teamId => career.teams[teamId]!.organizationId === organizationId))
+      expect(historical).toHaveLength(college ? 1 : 0)
+      expect(historical.every(budget => budget.provenance.kind === 'SIMULATED_NCAA_SPORT_BUDGET' && budget.period.endsOn < career.currentDate)).toBe(true)
       const authorization = getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: String(profile.baseCurrencyCode), asOfDate: career.currentDate })
       expect(authorization.state).toBe('ACTIVE')
       expect(authorization.authorizedMinorUnits).toBeGreaterThan(0)

@@ -2,6 +2,9 @@ import { progressCollegeEligibilityExits } from '@/engine/eligibility/CollegeEli
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
+import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import type { TeamId } from '@/domain/ids'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { chooseAiDraftProspect, createDraftForCompletedSeason, declareDraftEntry, getAvailableDraftProspects, getCurrentDraftPick, makeDraftSelection, openDraft, progressDraftAi, withdrawDraftEntry } from '@/engine/draft'
@@ -17,6 +20,11 @@ import { signDraftRightsToNba, signUndraftedPlayerToNba, transitionFibaPlayerToF
 function teamIn(world: ReturnType<typeof createNewGame>, kind: 'fibaLike' | 'nbaLike' | 'ncaaLike') {
   const competition = Object.values(world.competitions).find((candidate) => world.ecosystems[candidate.ecosystemId]!.kind === kind)!
   return world.teams[competition.participantTeamIds[0]!]!
+}
+
+function fundedProfessionalSigning(world: ReturnType<typeof createNewGame>, teamId: TeamId) {
+  const current = ensureCanonicalFinanceFoundation(world)
+  return authorizeTeamSalaryForTest(financingDrawdownForTest(current, teamId, 100_000_000_000, `pathway:${teamId}`), teamId, { currencyCode: String(current.organizationFinancialProfilesById[current.teams[teamId]!.organizationId]!.baseCurrencyCode), playerSalaryMinorUnits: 1_000_000_000_000, staffSalaryMinorUnits: 100_000_000_000 })
 }
 
 describe('EcosystemTransitions', () => {
@@ -133,7 +141,7 @@ describe('EcosystemTransitions', () => {
     }
     expect(world.draftsById[draft.id]!.entries?.find((entry) => entry.playerId === prospects[4])?.status).toBe('undrafted')
     const target = teamIn(world, 'nbaLike')
-    const moved = signUndraftedPlayerToNba(world, { id: 'transition:undrafted-nba', playerId: prospects[4]!, draftId: draft.id, toTeamId: target.id })
+    const moved = signUndraftedPlayerToNba(fundedProfessionalSigning(world, target.id), { id: 'transition:undrafted-nba', playerId: prospects[4]!, draftId: draft.id, toTeamId: target.id })
     expect(moved.players[prospects[4]!]!.personId).toBe(personId)
     expect(moved.teams[source.id]!.rosterPlayerIds).not.toContain(prospects[4])
     expect(moved.teams[target.id]!.rosterPlayerIds).toContain(prospects[4])
@@ -197,7 +205,7 @@ describe('EcosystemTransitions', () => {
     expect(aiOwnedPickCount).toBeGreaterThanOrEqual(3)
     expect(world.draftsById[draft.id]!.entries?.find((entry) => entry.playerId === withdrawerId)?.history?.map((event) => event.status)).toContain('withdrawnNCAAIneligible')
     expect(getAvailableDraftProspects(world, draft.id)).toHaveLength(0)
-    const undrafted = signUndraftedPlayerToNba(world, { id: 'transition:2045-undrafted-nba', playerId: undraftedId, draftId: draft.id, toTeamId: firstPick.ownerTeamId })
+    const undrafted = signUndraftedPlayerToNba(fundedProfessionalSigning(world, firstPick.ownerTeamId), { id: 'transition:2045-undrafted-nba', playerId: undraftedId, draftId: draft.id, toTeamId: firstPick.ownerTeamId })
     expect(undrafted.players[internationalPlayerId]!.personId).toBe(personId)
     expect(undrafted.playerRightsById[rights.id]!.contractId).toBeDefined()
     expect(undrafted.teams[firstPick.ownerTeamId]!.rosterPlayerIds).toContain(internationalPlayerId)

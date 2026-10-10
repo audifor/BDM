@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld, getResponsibilitiesHeldByStaff, getTeamStaffPayroll, type GameWorld } from '@/domain/world'
@@ -26,7 +26,7 @@ const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_AT
 
 /**
  * Canonical Finance — not a legacy payroll pool — decides whether a hiring may happen, so the fixture
- * gives the club real liquidity from the canonical opening authority and a real APPROVED salary
+ * gives the club real liquidity from an explicit financing drawdown and a real APPROVED salary
  * authorization. `createStaffJobOffer`'s offer amount is still generated from the legacy Staff payroll
  * pool (recorded as a remaining coupling), which is why tests may still tighten that pool.
  */
@@ -34,9 +34,9 @@ function baseCareer(): GameWorld {
   let world = createNewGame()
   for (const team of Object.values(world.teams).slice(0, 4)) {
     world = authorizeTeamSalaryForTest(
-      fundTeamWithOpeningCapital(world, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+      financingDrawdownForTest(world, team.id, 10_000_000_000, `staff-career:${team.id}`),
       team.id,
-      { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+      { currencyCode: String(world.organizationFinancialProfilesById[team.organizationId]!.baseCurrencyCode), playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
     )
   }
   return world

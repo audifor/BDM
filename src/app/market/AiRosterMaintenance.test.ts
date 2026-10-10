@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer } from './MarketService'
-import { fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
+import type { GameWorld } from '@/domain/world'
+import type { TeamId } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { freeAgentDesirability, maintainAiTeamMinimumRosters } from './AiRosterMaintenance'
 import { addDays } from '@/domain/date'
@@ -16,6 +18,10 @@ import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { arriveSignedRecruits, generateLegacyFixtureRecruitingPool, makeRecruitingOffer, resolveRecruitingCommitments, signCommittedRecruit } from '@/engine/recruiting/RecruitingEngine'
 import { signFreeAgent } from './MarketService'
 import { rankAiFreeAgentCandidates } from './AiRosterMaintenance'
+
+function fundedSigning(world: GameWorld, teamId: TeamId): GameWorld {
+  return authorizeTeamSalaryForTest(financingDrawdownForTest(world, teamId, 10_000_000_000, `roster:${teamId}`), teamId, { currencyCode: String(world.organizationFinancialProfilesById[world.teams[teamId]!.organizationId]!.baseCurrencyCode), playerSalaryMinorUnits: 100_000_000_000, staffSalaryMinorUnits: 100_000_000_000 })
+}
 
 describe('AI roster maintenance', () => {
   it('reserves signed future recruits and active rights while keeping genuine free agents eligible', () => {
@@ -47,7 +53,7 @@ describe('AI roster maintenance', () => {
     const rightsPlayerId = donorTeams[3]!.rosterPlayerIds[0]!
     world = releasePlayer(world, donorTeams[0]!.id, genuineFreeAgentId)
     world = releasePlayer(world, donorTeams[1]!.id, activeContractPlayerId)
-    world = signFreeAgent(world, donorTeams[0]!.id, activeContractPlayerId)
+    world = signFreeAgent(fundedSigning(world, donorTeams[0]!.id), donorTeams[0]!.id, activeContractPlayerId)
     world = releasePlayer(world, donorTeams[2]!.id, scheduledContractPlayerId)
     world = releasePlayer(world, donorTeams[3]!.id, rightsPlayerId)
     const scheduledOn = addDays(world.currentDate, 30)
@@ -74,7 +80,7 @@ describe('AI roster maintenance', () => {
       teams: Object.values(world.teams).map(team => team.id === aiTeam.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team),
       teamFinances: Object.values(world.teamFinancesByTeamId).map(finance => finance.teamId === aiTeam.id ? { ...finance, playerSalaryBudget: 100_000_000 } : finance),
     })
-    const repaired = maintainAiTeamMinimumRosters(shortWorld, { source: 'WORLD_REPAIR', teamIds: [aiTeam.id] })
+    const repaired = maintainAiTeamMinimumRosters(fundedSigning(shortWorld, aiTeam.id), { source: 'WORLD_REPAIR', teamIds: [aiTeam.id] })
     expect(repaired.world.teams[aiTeam.id]!.rosterPlayerIds).not.toContain(pendingPlayer.id)
     expect(Object.values(repaired.world.playerTransactionsById).some(transaction => transaction.playerId === pendingPlayer.id && transaction.kind === 'signedFreeAgent' && transaction.provenance === 'WORLD_REPAIR')).toBe(false)
     expect(repaired.reports.some(report => report.diagnostics.some(diagnostic => diagnostic.code === 'PENDING_BINDING_ROSTER_COMMITMENT' && diagnostic.message.includes(pendingPlayer.id)))).toBe(true)
@@ -120,7 +126,7 @@ describe('AI roster maintenance', () => {
       teamFinances: Object.values(released.teamFinancesByTeamId).map(finance => finance.teamId === ai.id ? { ...finance, playerSalaryBudget: 100_000_000 } : finance),
     })
     expect(getAvailablePlayersForCompetition(short, ai.id, game.competitionId, game.seasonId, game.date)).toHaveLength(4)
-    const result = maintainAiTeamMinimumRosters(short, { source: 'WORLD_REPAIR', teamIds: [ai.id] })
+    const result = maintainAiTeamMinimumRosters(fundedSigning(short, ai.id), { source: 'WORLD_REPAIR', teamIds: [ai.id] })
     expect(result.world.teams[ai.id]!.rosterPlayerIds).toHaveLength(6)
     expect(getAvailablePlayersForCompetition(result.world, ai.id, game.competitionId, game.seasonId, game.date)).toHaveLength(5)
     expect(result.world.injuriesById[injury.id]).toEqual(short.injuriesById[injury.id])
@@ -134,8 +140,8 @@ describe('AI roster maintenance', () => {
     const donor = Object.values(base.teams).find((team) => team.id !== user.id && team.id !== ai.id)!
     const released = releasePlayer(base, donor.id, donor.rosterPlayerIds[0]!)
     // Canonical Finance decides affordability, so the fixture gives the AI club real liquidity from the
-    // canonical opening authority instead of raising a legacy payroll pool.
-    const funded = fundTeamWithOpeningCapital(released, ai.id, { currencyCode: 'USD', cashMinorUnits: 500_000_000 })
+    // canonical financing authority instead of raising a legacy payroll pool.
+    const funded = fundedSigning(released, ai.id)
     const short = updateGameWorld(funded, {
       teams: Object.values(funded.teams).map((team) => team.id === ai.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team),
     })
