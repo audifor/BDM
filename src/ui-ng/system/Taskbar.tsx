@@ -1,4 +1,7 @@
 import { useEffect, useState, type DragEvent } from 'react'
+import { createPortal } from 'react-dom'
+import type { PlayerId, StaffPersonId, TeamId, CompetitionId } from '@/domain/ids'
+import type { TaskbarInstance } from '@/ui-ng/workspace/taskbarInstances'
 import './Taskbar.css'
 import { useGameStore } from '@/stores/gameStore'
 import { NgStartMenu } from '@/ui-ng/system/NgStartMenu'
@@ -12,8 +15,32 @@ function draggedApp(event: DragEvent): WorkspaceAppId | null {
   const value=event.dataTransfer.getData(APP_DRAG)
   return (WORKSPACE_APP_IDS as readonly string[]).includes(value) ? value as WorkspaceAppId : null
 }
+function instanceLabel(instance: TaskbarInstance, world: ReturnType<typeof useGameStore.getState>['world']) {
+  const { entityId, entityKind } = instance
+  if (entityId === null || world === null) return taskbarAppLabel(instance.app)
+  if (entityKind === 'playerId' || entityKind === 'focusPlayerId') {
+    const player = world.players[entityId as PlayerId]
+    if (player) return [player.firstName, player.lastName].filter(Boolean).join(' ')
+  }
+  if (entityKind === 'staffId') {
+    const person = world.staffPeopleById[entityId as StaffPersonId]
+    if (person) return [person.identity.firstName, person.identity.lastName].filter(Boolean).join(' ')
+  }
+  if (entityKind === 'teamId') {
+    const team = world.teams[entityId as TeamId]
+    if (team) return team.name
+  }
+  if (entityKind === 'competitionId') {
+    const competition = world.competitions[entityId as CompetitionId]
+    if (competition) return competition.name
+  }
+  return entityKind === 'staffDept' ? entityId : entityId
+}
 export function Taskbar() {
-  const {app,openApps,taskbarApps,pinnedApps,closeApp,setActiveApp,pinApp,unpinApp,moveTaskbarApp}=useNgWorkspaceNavigation()
+  const {app,openApps,taskbarApps,pinnedApps,instances,activeInstanceKey,activateInstance,closeInstance,closeApp,setActiveApp,pinApp,unpinApp,moveTaskbarApp}=useNgWorkspaceNavigation()
+  const world=useGameStore(s=>s.world)
+  const [instanceGroup,setInstanceGroup]=useState<WorkspaceAppId|null>(null)
+  const [groupAnchor,setGroupAnchor]=useState({left:0,bottom:0})
   const busy=useGameStore(s=>s.simulationBusy)
   const [startOpen,setStartOpen]=useState(false)
   const [menu,setMenu]=useState<WorkspaceAppId|null>(null)
@@ -24,6 +51,15 @@ export function Taskbar() {
   const isOpen=(id:WorkspaceAppId)=>openApps.includes(id)
   const isPinned=(id:WorkspaceAppId)=>pinnedApps.includes(id)
   const closeMenu=()=>setMenu(null)
+  const openInstanceGroup=(id:WorkspaceAppId, anchor:HTMLButtonElement)=>{
+    const box=anchor.getBoundingClientRect()
+    setGroupAnchor({left:Math.max(8,Math.min(box.left,window.innerWidth-320)),bottom:window.innerHeight-box.top+6})
+    setInstanceGroup(current=>current===id?null:id)
+    setMenu(null)
+    setMoreOpen(false)
+    setStartOpen(false)
+  }
+  const groupInstances=instanceGroup===null?[]:instances.filter(item=>item.app===instanceGroup)
   const beginDrag=(event:DragEvent,id:WorkspaceAppId)=>{
     if(id==='home'){event.preventDefault();return}
     event.dataTransfer.setData(APP_DRAG,id)
@@ -45,7 +81,7 @@ export function Taskbar() {
   },[])
   useEffect(()=>{
     const keys=(event:KeyboardEvent)=>{
-      if(event.key==='Escape'){setMenu(null);setMoreOpen(false)}
+      if(event.key==='Escape'){setMenu(null);setMoreOpen(false);setInstanceGroup(null)}
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){
         event.preventDefault();setStartOpen(true);setMenu(null)
       }
@@ -63,6 +99,7 @@ export function Taskbar() {
       </button>
       {shown.map(id=>{
         const label=taskbarAppLabel(id),active=app===id,pinned=isPinned(id),opened=isOpen(id),menuOpen=menu===id
+        const members=instances.filter(instance=>instance.app===id)
         const index=taskbarApps.indexOf(id)
         return <div key={id} className="ng-taskbar__app-slot" data-app={id}
           onDragOver={event=>event.preventDefault()} onDrop={event=>{event.stopPropagation();drop(event,id)}}>
@@ -70,17 +107,24 @@ export function Taskbar() {
             aria-expanded={id==='home'?undefined:menuOpen} aria-haspopup={id==='home'?undefined:'menu'}
             className={`ng-taskbar__app${active?' is-active':''}${opened?' is-running':''}${pinned?' is-pinned':''}`}
             title={label} draggable={id!=='home'} onDragStart={event=>beginDrag(event,id)}
-            onClick={()=>{setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false)}}
+            onClick={()=>{if(id!=='home'&&opened)closeApp(id);else setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);setInstanceGroup(null)}}
             onContextMenu={event=>{event.preventDefault();setStartOpen(false);setMenu(id==='home'?null:id)}}
             onAuxClick={event=>{if(event.button===1&&opened&&isClosableTaskbarApp(id)){event.preventDefault();closeApp(id);setMenu(null)}}}
             onMouseDown={event=>{if(event.button===1)event.preventDefault()}}>
             <CourtsideTaskbarIcon id={id}/><span>{label}</span>
           </button>
+          {members.length>0 && <button type="button"
+            className="ng-taskbar__instances-trigger"
+            aria-label={`Ver ${members.length} instancias de ${label}`}
+            aria-haspopup="menu" aria-expanded={instanceGroup===id}
+            onClick={event=>openInstanceGroup(id,event.currentTarget)}>
+            <b>{members.length}</b><span aria-hidden="true">▴</span>
+          </button>}
           {menuOpen?<><div className="ng-taskbar__menu-backdrop" data-ng-region="taskbar-app-menu" onPointerDown={closeMenu}/>
             <div className="ng-taskbar__menu" role="menu" aria-label={`Opciones de ${label}`}>
               <div className="ng-taskbar__menu-heading">{label}</div>
-              <button role="menuitem" type="button" onClick={()=>{setActiveApp(id);closeMenu()}}>Activar</button>
-              {opened&&isClosableTaskbarApp(id)?<button role="menuitem" type="button" onClick={()=>{closeApp(id);closeMenu()}}>Cerrar</button>:null}
+              <button role="menuitem" type="button" onClick={()=>{setActiveApp(id);closeMenu()}}>Activar última instancia</button>
+              {opened&&isClosableTaskbarApp(id)?<button role="menuitem" type="button" onClick={()=>{closeApp(id);closeMenu()}}>Cerrar todas las instancias</button>:null}
               <button role="menuitem" type="button" onClick={()=>{pinned?unpinApp(id):pinApp(id);closeMenu()}}>
                 {pinned?'Desanclar de barra':'Anclar a barra'}</button>
               <button role="menuitem" type="button" disabled={index<=1} onClick={()=>{moveTaskbarApp(id,taskbarApps[index-1]!);closeMenu()}}>Mover a la izquierda</button>
@@ -99,6 +143,26 @@ export function Taskbar() {
         </div>:null}
       </div>:null}
     </div>
+    {instanceGroup!==null && groupInstances.length>0 && createPortal(<>
+      <div className="ng-taskbar__instance-backdrop" onPointerDown={()=>setInstanceGroup(null)} />
+      <div className="ng-taskbar__instance-popover" role="menu"
+        aria-label={`Instancias de ${taskbarAppLabel(instanceGroup)}`}
+        style={{left:groupAnchor.left,bottom:groupAnchor.bottom}}>
+        <header><strong>{taskbarAppLabel(instanceGroup)}</strong><span>{groupInstances.length} abiertas</span></header>
+        {groupInstances.map(instance=><div key={instance.key} data-instance={instance.key}
+          className={'ng-taskbar__instance-row'+(activeInstanceKey===instance.key?' is-active':'')}>
+          <button type="button" role="menuitem" onClick={()=>{activateInstance(instance.key);setInstanceGroup(null)}}>
+            <CourtsideTaskbarIcon id={instance.app}/>
+            <span>{instanceLabel(instance,world)}</span>
+          </button>
+          <button type="button" className="ng-taskbar__instance-close"
+            aria-label={'Cerrar '+instanceLabel(instance,world)}
+            onClick={()=>{closeInstance(instance.key);if(groupInstances.length===1)setInstanceGroup(null)}}>×</button>
+        </div>)}
+        <button type="button" className="ng-taskbar__instance-close-all"
+          onClick={()=>{closeApp(instanceGroup);setInstanceGroup(null)}}>Cerrar todas</button>
+      </div>
+    </>,document.body)}
     <span className="ng-taskbar__status">{busy?'Simulation running':'Simulation idle'}</span>
   </footer>
 }
