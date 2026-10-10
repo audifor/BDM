@@ -818,3 +818,113 @@
     font-size:56px;
   }
 }
+
+/*
+ * V1.3 - Leaders in one view, without nested scrolling.
+ * Existing 6 real player links remain visible. Four statistical categories
+ * use the already computed competition PPG/RPG/APG/VPG averages.
+ */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot__body {
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__toolbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  min-height:30px;
+  min-width:0;
+  margin-bottom:1px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__scope {
+  color:var(--cs-text3);
+  font:500 11px/1.25 var(--cs-font);
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__category {
+  appearance:auto;
+  flex:none;
+  min-width:116px;
+  height:30px;
+  padding:0 8px 0 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:99px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  font:600 12px var(--cs-font);
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__category:focus-visible {
+  outline:2px solid var(--cs-orange);
+  outline-offset:2px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__category option {
+  color:var(--cs-text);
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__list {
+  display:grid;
+  gap:0;
+  min-height:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__row {
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-height:34px;
+  padding:4px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__identity {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:3px 9px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link {
+  color:var(--cs-text);
+  font:600 13px/1.15 var(--cs-font);
+  white-space:normal;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link:hover {
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__team {
+  font:400 11px/1.15 var(--cs-font);
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__value {
+  font:700 22px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__value small {
+  font:600 10px var(--cs-font);
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__no-value {
+  color:var(--cs-text3);
+  font:600 14px var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-leaders__row.is-unranked .home-slot-list__badge {
+  color:var(--cs-text3);
+  border-color:var(--cs-line2);
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--leaders {
+    height:auto;
+    min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot__body {
+    overflow:visible;
+  }
+}

@@ -24,6 +24,11 @@ import {
   type HomeDashboardModuleId,
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
+import {
+  HOME_LEADER_CATEGORIES,
+  rankHomeLeaders,
+  type HomeLeaderCategory,
+} from '@/ui-ng/applications/home/homeLeaderCategories'
 import { NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
@@ -87,7 +92,7 @@ export function HomeDashboardSlot({
   }, [open])
 
   return (
-    <section className="home-slot ng-holo-panel" ref={rootRef}>
+    <section className={`home-slot ng-holo-panel${moduleId === 'leaders' ? ' home-slot--leaders' : ''}`} ref={rootRef}>
       <header className="home-slot__header">
         <button
           aria-controls={menuId}
@@ -247,39 +252,62 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
 }
 
 function LeadersModule({ context }: { readonly context: HomeDashboardSlotContext }) {
-  const leaders = context.competition?.leaders.slice(0, 6) ?? []
-  const roster = context.teamId === undefined ? [] : getTeamRoster(context.world, context.teamId).slice(0, 6)
-  if (leaders.length === 0 && roster.length === 0) {
-    return <p className="ng-canon__empty">Sin líderes estadísticos todavía.</p>
-  }
+  const [category, setCategory] = useState<HomeLeaderCategory>('points')
+  const stat = HOME_LEADER_CATEGORIES.find((entry) => entry.id === category)!
+  const hasOfficialStats = (context.competition?.leaders.length ?? 0) > 0
+  const leaders = rankHomeLeaders(context.competition?.leaders ?? [], category)
+  // Do not present the unsorted preseason roster as a statistical ranking.
+  const roster = !hasOfficialStats && context.teamId !== undefined
+    ? getTeamRoster(context.world, context.teamId).slice(0, 6)
+    : []
+
   return (
-    <ul className="home-slot-list">
-      {leaders.length > 0
-        ? leaders.map((leader, index) => (
-            <li key={leader.playerId}>
-              <span aria-hidden className="home-slot-list__badge">
-                {index + 1}
-              </span>
-              <div>
-                <HomePlayerLink name={leader.playerName} playerId={leader.playerId} />
-                <div className="ng-canon__note">
-                  {leader.ppg.toFixed(1)} PPG · {leader.apg.toFixed(1)} AST · {leader.rpg.toFixed(1)} REB
-                </div>
-              </div>
-            </li>
-          ))
-        : roster.map((player, index) => (
-            <li key={player.id}>
-              <span aria-hidden className="home-slot-list__badge">
-                {index + 1}
-              </span>
-              <div>
-                <HomePlayerLink name={`${player.firstName} ${player.lastName}`} playerId={player.id} />
-                <div className="ng-canon__note">{player.basketball.primaryPosition} · Plantilla</div>
-              </div>
-            </li>
+    <div className="home-leaders">
+      <div className="home-leaders__toolbar">
+        <span className="home-leaders__scope">
+          {hasOfficialStats ? 'Liga · media por partido' : 'Plantilla · sin datos oficiales'}
+        </span>
+        <select
+          aria-label="Categoría estadística"
+          className="home-leaders__category"
+          onChange={(event) => setCategory(event.target.value as HomeLeaderCategory)}
+          value={category}
+        >
+          {HOME_LEADER_CATEGORIES.map((entry) => (
+            <option key={entry.id} value={entry.id}>{entry.label}</option>
           ))}
-    </ul>
+        </select>
+      </div>
+      {!hasOfficialStats && roster.length === 0 ? (
+        <p className="ng-canon__empty">Sin líderes estadísticos todavía.</p>
+      ) : (
+        <ol className="home-slot-list home-leaders__list" aria-label={hasOfficialStats ? `Líderes de ${stat.label.toLowerCase()}` : 'Jugadores pendientes de estadísticas'}>
+          {hasOfficialStats
+            ? leaders.map((leader, index) => (
+                <li className="home-leaders__row" key={leader.playerId}>
+                  <span aria-hidden="true" className="home-slot-list__badge">{index + 1}</span>
+                  <div className="home-leaders__identity">
+                    <HomePlayerLink name={leader.playerName} playerId={leader.playerId} />
+                    <span className="home-leaders__team">{leader.teamName}</span>
+                  </div>
+                  <strong className="home-leaders__value">
+                    {leader[stat.key].toFixed(1)} <small>{stat.abbrev}</small>
+                  </strong>
+                </li>
+              ))
+            : roster.map((player) => (
+                <li className="home-leaders__row is-unranked" key={player.id}>
+                  <span aria-hidden="true" className="home-slot-list__badge">–</span>
+                  <div className="home-leaders__identity">
+                    <HomePlayerLink name={`${player.firstName} ${player.lastName}`} playerId={player.id} />
+                    <span className="home-leaders__team">{player.basketball.primaryPosition} · Plantilla</span>
+                  </div>
+                  <span className="home-leaders__no-value" aria-label="Sin dato estadístico">—</span>
+                </li>
+              ))}
+        </ol>
+      )}
+    </div>
   )
 }
 

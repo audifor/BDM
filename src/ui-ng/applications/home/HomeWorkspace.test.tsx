@@ -89,4 +89,30 @@ describe('HomeWorkspace', () => {
     fireEvent.click(teamLink!)
     expect(window.location.search).toMatch(/app=club|app=team|teamId=/)
   })
+  it('offers real leaders categories without a fake preseason ranking', () => {
+    const world = createNewGame()
+    useGameStore.getState().replaceWorld(world)
+    render(
+      <NgWorkspaceNavigationProvider>
+        <HomeWorkspace />
+      </NgWorkspaceNavigationProvider>,
+    )
+
+    const category = screen.getByRole('combobox', { name: 'Categoría estadística' })
+    expect(category).toHaveValue('points')
+    expect(within(category).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Puntos', 'Rebotes', 'Asistencias', 'Valoración',
+    ])
+    expect(screen.getByText('Plantilla · sin datos oficiales')).toBeInTheDocument()
+    const list = screen.getByRole('list', { name: 'Jugadores pendientes de estadísticas' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(6)
+    expect(within(list).queryByText('1')).not.toBeInTheDocument()
+
+    fireEvent.change(category, { target: { value: 'rebounds' } })
+    expect(category).toHaveValue('rebounds')
+    expect(within(list).getAllByRole('listitem')).toHaveLength(6)
+    fireEvent.change(category, { target: { value: 'valuation' } })
+    expect(category).toHaveValue('valuation')
+  })
+
 })
