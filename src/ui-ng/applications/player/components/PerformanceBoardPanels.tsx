@@ -193,7 +193,9 @@ export function PerformanceShotProfilePanel({
               <div><span>EFFICIENCY</span><b>{zone.percentage === null ? '—' : zone.percentage + '%'}</b></div>
               <span className="po-pf-shooting__track"><i style={{width: zoneRate(zone) + '%'}} /></span>
             </div>
-            <p className="po-pf-shooting__share">{pointShare(zone)}% of recorded field-goal points</p>
+            <p className="po-pf-shooting__share">{fieldGoalPoints === 0
+              ? 'No made field goals in this selection'
+              : pointShare(zone) + '% of recorded field-goal points'}</p>
           </div>
         ))}
       </div>
