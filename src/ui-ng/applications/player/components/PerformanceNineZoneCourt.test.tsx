@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { MATCH_SHOT_ZONE_IDS } from '@/domain/stats/MatchStatLog'
 import type { PerformanceShotProfileModel } from '../data/buildPlayerPerformanceModel'
@@ -19,6 +19,8 @@ const fixture = (kind: 'OBSERVED' | 'MODELLED' = 'OBSERVED'): PerformanceShotPro
     percentage: id === 'CORNER_THREE' ? '50.0' : id === 'RIM' ? '0.0' : null,
   })),
 })
+
+afterEach(cleanup)
 
 describe('PLAYER PERFORMANCE nine-zone court', () => {
   it('exposes nine selectable true engine zones with accurate made/attempt totals', () => {
