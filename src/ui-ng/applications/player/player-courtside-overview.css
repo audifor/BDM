@@ -218,7 +218,7 @@
 .po-cs-radar__more {font-size:13px;}
 .po-cs-read {min-height:145px;gap:3px;}
 .po-cs-read__content {display:grid;grid-template-columns:minmax(0,1.8fr) minmax(210px,1fr);gap:10px;min-height:0;padding:8px 14px 4px;}
-.po-cs-read__content > p {padding:0;margin:0;max-width:none;font-size:13px;line-height:1.4;}
+.po-cs-read__content > p {padding:0;margin:0;max-width:none;font-size:13.5px;line-height:1.42;}
 .po-cs-read__verdicts {display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-left:10px;border-left:1px solid var(--cs-line2);min-width:0;}
 .po-cs-read__verdicts ul {display:flex;flex-direction:column;gap:5px;padding:0;margin:0;list-style:none;}
 .po-cs-read__verdicts li {position:relative;padding-left:15px;font-size:12px;line-height:1.32;color:var(--cs-text2);}
@@ -238,7 +238,7 @@
 .po-cs-season__caption {font-size:12px;}
 /* The identity composition is shared, but only the APPROVED overview gets its new geometry. */
 @container player-space (min-width:1441px) {
-  .po-root[data-bdm-player-overview='true'] .ng-application-workspace {
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='normal'] .ng-application-workspace {
     --po-identity-height: 134px;
   }
   .po-root[data-bdm-player-overview='true'] .po-identity {
@@ -246,7 +246,7 @@
   }
   .po-root[data-bdm-player-overview='true'] .po-identity > * {padding:7px 12px;}
   .po-root[data-bdm-player-overview='true'] .po-identity__person {grid-template-columns:86px minmax(0,1fr);gap:12px;}
-  .po-root[data-bdm-player-overview='true'] .po-portrait {width:86px;height:127px;}
+  .po-root[data-bdm-player-overview='true'] .po-portrait {width:86px;height:116px;}
   .po-root[data-bdm-player-overview='true'] .po-identity__who {gap:5px;}
   .po-root[data-bdm-player-overview='true'] .po-identity__name {font-size:clamp(32px,2.35cqi,42px);}
   .po-root[data-bdm-player-overview='true'] .po-identity__positions {gap:6px;}
@@ -268,7 +268,7 @@
 .po-root[data-bdm-player-overview='true'] .po-identity__pos-label,
 .po-root[data-bdm-player-overview='true'] .po-identity__measure-label,
 .po-root[data-bdm-player-overview='true'] .po-status__label {font-size:11px;}
-.po-root[data-bdm-player-overview='true'] .po-status__value {font-size:13px;white-space:nowrap;}
+.po-root[data-bdm-player-overview='true'] .po-status__value {font-size:14px;white-space:nowrap;}
 .po-root[data-bdm-player-overview='true'] .po-identity__trajectory > summary {min-height:32px;padding:7px 10px;font-size:14px;}
 @container player-space (max-width:1440px) {
   .po-cs-board {grid-template-rows:auto;align-content:start;}
@@ -282,4 +282,15 @@
 @container player-space (max-width:510px) {
   .po-cs-read__verdicts {grid-template-columns:1fr;}
   .po-cs-dna__hero h3 {font-size:29px;}
+}
+
+/* Height-aware header: keep the existing compact/dense responsive contract. */
+@container player-space (min-width:1441px) {
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns:68px minmax(0,1fr);
+  }
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='dense'] .po-portrait {
+    width:68px;
+    height:94px;
+  }
 }
