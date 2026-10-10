@@ -654,28 +654,87 @@
   background:color-mix(in srgb,var(--cs-lime) 9%,var(--cs-s1));
   box-shadow:inset 3px 0 var(--cs-lime);
 }
-.po-pf-board--courtside .po-pf-courtside-table td button {
-  display:block;
-  max-width:100%;
-  padding:3px 0;
-  border:0;
-  background:transparent;
-  color:var(--cs-text);
-  font:700 12px/1.2 var(--cs-font);
-  text-align:left;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  cursor:pointer;
-}
-.po-pf-board--courtside .po-pf-courtside-table td button:hover {
-  color:var(--cs-lime);
-}
-.po-pf-board--courtside .po-pf-courtside-table td button[aria-pressed='true'] {
-  color:var(--cs-lime);
-}
 @container player-space (max-width:850px) {
   .po-pf-board--courtside .po-pf-courtside-table {
     min-width:600px;
+  }
+}
+
+
+/*
+ * Performance visual QA V1.1 at 1708 x 892: stop DATE/OPPONENT collisions,
+ * use the full table row for mouse and keyboard selection, and distribute
+ * genuine inspector statistics through its available height.
+ */
+.po-pf-board--courtside .po-pf-headline {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:5px 11px;
+  min-width:0;
+}
+.po-pf-board--courtside .po-pf-headline small {
+  display:inline-block;
+  flex:0 1 auto;
+}
+.po-pf-board--courtside .po-pf-courtside-table th,
+.po-pf-board--courtside .po-pf-courtside-table td {
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(1),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(1) {
+  width:76px;
+  padding-left:8px;
+  padding-right:12px;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(2),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(2) {
+  width:20%;
+  padding-left:7px;
+  padding-right:10px;
+  text-align:left;
+}
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(2) {
+  font-weight:700;
+}
+.po-pf-board--courtside .po-pf-courtside-table th:nth-child(3),
+.po-pf-board--courtside .po-pf-courtside-table td:nth-child(3) {
+  width:94px;
+  text-align:left;
+}
+.po-pf-board--courtside .po-pf-courtside-table tbody tr {
+  cursor:pointer;
+}
+.po-pf-board--courtside .po-pf-courtside-table tbody tr:focus-visible {
+  outline:2px solid var(--cs-lime);
+  outline-offset:-2px;
+}
+.po-pf-board--courtside .po-pf-courtside-table tbody tr.is-selected td:nth-child(2) {
+  color:var(--cs-lime);
+}
+.po-pf-board--courtside .po-pf-inspector__stats {
+  flex:1 1 auto;
+  min-height:155px;
+  align-items:stretch;
+}
+.po-pf-board--courtside .po-pf-inspector__column {
+  justify-content:space-around;
+}
+.po-pf-board--courtside .po-pf-inspector__note {
+  flex:0 0 auto;
+  margin:8px 0 0;
+}
+.po-pf-board--courtside .po-pf-simple-form__opp {
+  font-size:12px;
+}
+.po-pf-board--courtside .po-pf-simple-form__date {
+  font-size:11px;
+}
+@container player-space (max-width:1439px) {
+  .po-pf-board--courtside .po-pf-inspector__stats {
+    flex:0 0 auto;
   }
 }
