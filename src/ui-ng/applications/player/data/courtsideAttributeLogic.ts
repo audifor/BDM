@@ -3,7 +3,7 @@ import type { RatingCategory } from './ratingCatalog'
 import type { PlayerRatingRow, RatingEvolutionModel, AttributeCategoryModel } from './playerWorkspaceModel'
 
 export type AttributeFilter = 'all' | 'strengths' | 'weaknesses' | 'tracked' | 'improved' | 'declined'
-export type AttributeBaselineScope = 'none' | 'team' | 'league' | 'position'
+export type AttributeBaselineScope = 'none' | 'team' | 'league' | 'position' | 'positionLeague'
 export const MAX_FOCUS_ATTRIBUTES = 3
 
 type EvolutionReadings = Readonly<Partial<Record<PlayerTruthRatingKey, RatingEvolutionModel>>>
@@ -44,6 +44,7 @@ export function getCategoryComparison(
     if (source === undefined) return null
     if (scope === 'league') return source.league.status === 'available' ? source.league.average : null
     if (scope === 'team') return source.team.status === 'available' ? source.team.average : null
+    if (scope === 'position') return source.worldPosition?.status === 'available' ? source.worldPosition.average : null
     return source.standing.status === 'available' && source.standing.positionSampleSize > 0
       ? source.standing.positionAverage : null
   })
