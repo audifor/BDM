@@ -9,8 +9,7 @@ const axes: readonly RadarAxis[] = RADAR_CATEGORY_ORDER.map((key, index) => ({
 }))
 
 function profile(base: number): Readonly<Record<RatingCategory, number>> {
-  return Object.fromEntries(axes.map((axis, index) => [axis.key, base + index * 3]))
-    as Readonly<Record<RatingCategory, number>>
+  return Object.fromEntries(axes.map((axis, index) => [axis.key, base + index * 3])) as Readonly<Record<RatingCategory, number>>
 }
 
 describe('AttributeRadar simultaneous references', () => {
