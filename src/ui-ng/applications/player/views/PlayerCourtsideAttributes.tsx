@@ -7,7 +7,7 @@ import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/Ba
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
   comparisonProfile, filterCourtsideRatings, getCategoryComparison,
-  MAX_FOCUS_ATTRIBUTES, toggleFocusAttribute,
+  MAX_FOCUS_ATTRIBUTES, MAX_RADAR_COMPARISONS, toggleFocusAttribute, toggleRadarComparison,
   type AttributeBaselineScope, type AttributeFilter,
 } from '@/ui-ng/applications/player/data/courtsideAttributeLogic'
 import { ordinalPercentile } from '@/ui-ng/applications/player/data/ratingCatalog'
@@ -22,6 +22,7 @@ const BASELINES: readonly { id: ComparativeScope; label: string; color: string }
   { id: 'team', label: 'Equipo', color: 'var(--cs-orange2)' },
   { id: 'league', label: 'Liga', color: 'var(--cs-negative)' },
   { id: 'position', label: 'Posición', color: 'var(--cs-positive)' },
+  { id: 'positionLeague', label: 'Posición · Liga', color: 'var(--cs-text2)' },
 ]
 
 function storageKey(playerId: string): string {
@@ -58,7 +59,8 @@ export function PlayerCourtsideAttributes() {
   const playerId = model?.identity.playerId ?? ''
   const [filter, setFilter] = useState<AttributeFilter>('all')
   const [search, setSearch] = useState('')
-  const [visibleBaselines, setVisibleBaselines] = useState<readonly ComparativeScope[]>(['team', 'league', 'position'])
+  const [visibleBaselines, setVisibleBaselines] = useState<readonly ComparativeScope[]>([])
+  const [compareMenuOpen, setCompareMenuOpen] = useState(false)
   const validIds = useMemo(() => new Set(model?.attributes.allRatings.map((rating) => rating.id) ?? []), [model?.attributes.allRatings])
   const [focusState, setFocusState] = useState(() => ({ playerId, ids: readFocus(playerId, validIds) }))
   useEffect(() => {
@@ -102,9 +104,11 @@ export function PlayerCourtsideAttributes() {
         ? 'Por encima de todas las referencias activas'
         : 'Posición mixta respecto a las referencias activas'
   const toggleComparison = (scope: ComparativeScope) => {
-    setVisibleBaselines((selected) => selected.includes(scope)
-      ? selected.filter((item) => item !== scope)
-      : [...selected, scope])
+    setVisibleBaselines((selected) => toggleRadarComparison(selected, scope))
+  }
+  const clearComparisons = () => {
+    setVisibleBaselines([])
+    setCompareMenuOpen(false)
   }
   const highFamily = [...model.attributes.categories].sort((a, b) => b.profileValue - a.profileValue)[0]
   const lowFamily = [...model.attributes.categories].sort((a, b) => a.profileValue - b.profileValue)[0]
@@ -178,24 +182,46 @@ export function PlayerCourtsideAttributes() {
           <header className="pac-head"><h2>ATTRIBUTE PROFILE</h2><span>8 family radar · click an axis to explore</span></header>
           <div className="pac-profile__body">
             <div className="pac-profile__chart">
-              <div className="pac-profile__legend" role="group" aria-label="Comparar perfiles en el radar">
+              <div className="pac-radar-toolbar">
                 <span className="pac-radar-key pac-radar-key--player"><i aria-hidden="true" /> Jugador</span>
-                {baselineProfiles.map(({ id, label, color, axes }) => (
-                  <button
-                    className="pac-radar-toggle"
-                    key={id}
-                    type="button"
-                    style={{ '--pac-series-color': color } as CSSProperties}
-                    aria-pressed={axes !== null && visibleBaselines.includes(id)}
-                    disabled={axes === null}
-                    title={axes === null ? 'Sin referencia completa para las ocho familias' : (visibleBaselines.includes(id) ? 'Ocultar ' : 'Mostrar ') + label.toLowerCase()}
-                    onClick={() => toggleComparison(id)}
-                  >
-                    <span className="pac-radar-toggle__mark" aria-hidden="true" />
-                    {label}
-                  </button>
-                ))}
+                <button type="button" className="pac-radar-add"
+                  aria-expanded={compareMenuOpen} aria-controls="pac-radar-compare-options"
+                  onClick={() => setCompareMenuOpen((open) => !open)}>
+                  + COMPARAR {visibleBaselines.length > 0 ? '(' + visibleBaselines.length + '/2)' : ''}
+                </button>
+                {visibleBaselines.length > 0 && <button type="button" className="pac-radar-clear"
+                  onClick={clearComparisons}>LIMPIAR</button>}
               </div>
+              {compareMenuOpen && (
+                <div className="pac-radar-options" id="pac-radar-compare-options" role="group" aria-label="Referencias de comparación">
+                  <p>Activa hasta {MAX_RADAR_COMPARISONS} referencias. El jugador permanece visible.</p>
+                  <div className="pac-radar-options__choices">
+                    {baselineProfiles.map(({ id, label, color, axes }) => {
+                      const selected = visibleBaselines.includes(id)
+                      const atLimit = visibleBaselines.length >= MAX_RADAR_COMPARISONS
+                      return <button type="button" key={id} className="pac-radar-toggle"
+                        style={{ '--pac-series-color': color } as CSSProperties}
+                        aria-pressed={selected && axes !== null}
+                        disabled={axes === null || (!selected && atLimit)}
+                        title={axes === null ? 'Referencia no disponible para las ocho familias' :
+                          id === 'position' ? 'Misma posición, todos los planteles BDM: sin ajuste por nivel' :
+                          id === 'positionLeague' ? 'Misma posición entre rivales de esta competición' :
+                          (!selected && atLimit) ? 'Quita una de las dos referencias para añadir otra' :
+                          (selected ? 'Quitar ' : 'Añadir ') + label}
+                        onClick={() => toggleComparison(id)}>
+                        <span className="pac-radar-toggle__mark" aria-hidden="true" />
+                        {label}{selected ? ' ✓' : ''}
+                      </button>
+                    })}
+                  </div>
+                </div>
+              )}
+              {visibleBaselines.length > 0 && <div className="pac-radar-active" aria-label="Comparativas activas">
+                {baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null).map((item) =>
+                  <span key={item.id} style={{ '--pac-series-color': item.color } as CSSProperties}>
+                    <i aria-hidden="true" /> {item.label}
+                  </span>)}
+              </div>}
               <div className="pac-profile__radar-wrap">
                 <AttributeRadar
                   accent="var(--cs-lime)"
@@ -211,21 +237,32 @@ export function PlayerCourtsideAttributes() {
                 <p className="pac-benchmark-missing">Las comparaciones se activarán cuando exista una muestra válida.</p>
               )}
             </div>
-            <div className="pac-signals" aria-label="Current profile extremes">
-              <h3>PROFILE SIGNALS</h3>
-              {highFamily !== undefined && <div className="pac-signal pac-signal--up">
-                <span className="pac-signal__icon" aria-hidden="true">↑</span>
-                <div><strong>Strongest</strong><b>{highFamily.label}</b><span>{highFamily.profileValue} / 100</span></div>
-              </div>}
-              {lowFamily !== undefined && <div className="pac-signal pac-signal--down">
-                <span className="pac-signal__icon" aria-hidden="true">↓</span>
-                <div><strong>Lowest</strong><b>{lowFamily.label}</b><span>{lowFamily.profileValue} / 100</span></div>
-              </div>}
-              {selectedComparisons.length > 0 && <p className="pac-signal__baseline">
-                <strong>{currentCategory.label} {currentCategory.profileValue}</strong>
-                {' · '}{selectedComparisons.map((item) => item.label + ' ' + item.value).join(' · ')}
-                {comparisonReading !== null && <span className="pac-signal__reading">{comparisonReading}</span>}
-              </p>}
+            <div className="pac-profile-compare" aria-label="Comparación de la categoría seleccionada">
+              <div className="pac-profile-compare__header">
+                <strong>{currentCategory.label.toUpperCase()}</strong>
+                <span>Perfil de la familia seleccionada · 0 a 100</span>
+              </div>
+              <div className="pac-profile-compare__bars">
+                <div className="pac-profile-compare__row">
+                  <span>Jugador</span>
+                  <div className="pac-profile-compare__track"><i className="pac-profile-compare__player" style={{width:currentCategory.profileValue + '%'}} /></div>
+                  <strong>{currentCategory.profileValue}</strong>
+                </div>
+                {selectedComparisons.map((item) => <div className="pac-profile-compare__row" key={item.id}>
+                  <span>{item.label}</span>
+                  <div className="pac-profile-compare__track"><i style={{
+                    width:item.value + '%', background:item.color,
+                  }} /></div>
+                  <strong>{item.value}</strong>
+                </div>)}
+              </div>
+              {selectedComparisons.length > 0 ? (
+                <p>{comparisonReading}. {selectedComparisons.map((item) =>
+                  item.label + ' ' + (currentCategory.profileValue - item.value > 0 ? '+' : '') +
+                  (currentCategory.profileValue - item.value) ).join(' · ')}.
+                </p>
+              ) : <p>Añade referencias con + Comparar para analizar esta familia sin saturar el radar.</p>}
+              {visibleBaselines.includes('position') && <small>Posición incluye distintas competiciones y niveles, sin ajuste de calidad.</small>}
             </div>
           </div>
         </section>
