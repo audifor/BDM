@@ -1,35 +1,44 @@
 import { HOME_DASHBOARD_DEFAULT_SLOTS, HOME_DASHBOARD_MODULE_IDS, type HomeDashboardModuleId } from './homeDashboardModules'
 
-export const HOME_SIZE_IDS = ['compact','normal','large'] as const
-export type HomeCardSize = (typeof HOME_SIZE_IDS)[number]
-export type HomeCardKey = 'fixture'|'dynamics'|'upcoming'|'slot0'|'slot1'|'slot2'|'slot3'
-export const HOME_CARD_KEYS: readonly HomeCardKey[] = ['fixture','dynamics','upcoming','slot0','slot1','slot2','slot3']
+/** Content choices only. Classification stays fixed in the tall left panel. */
+export type HomeSelectableModuleId = Exclude<HomeDashboardModuleId,'standings'> | 'fixture'
+export const HOME_SELECTABLE_IDS:readonly HomeSelectableModuleId[] = ['fixture',...HOME_DASHBOARD_MODULE_IDS.filter(id=>id!=='standings')] as HomeSelectableModuleId[]
+export const HOME_DEFAULT_CONTENT = {
+  fixture:'fixture', dynamics:'dynamics', upcoming:'upcoming',
+} as const satisfies Record<string,HomeSelectableModuleId>
 export interface HomeLayoutSettings {
-  readonly modules: readonly HomeDashboardModuleId[]
-  readonly sizes: Readonly<Record<HomeCardKey,HomeCardSize>>
-}
-const DEFAULT_SIZES:Record<HomeCardKey,HomeCardSize> = {
-  fixture:'normal',dynamics:'normal',upcoming:'normal',
-  slot0:'large',slot1:'normal',slot2:'normal',slot3:'normal',
+  readonly fixture:HomeSelectableModuleId
+  readonly dynamics:HomeSelectableModuleId
+  readonly upcoming:HomeSelectableModuleId
+  readonly slots:readonly [HomeSelectableModuleId,HomeSelectableModuleId,HomeSelectableModuleId]
 }
 export const DEFAULT_HOME_LAYOUT:HomeLayoutSettings = {
-  modules:[...HOME_DASHBOARD_DEFAULT_SLOTS],sizes:{...DEFAULT_SIZES},
+  ...HOME_DEFAULT_CONTENT,
+  slots:[HOME_DASHBOARD_DEFAULT_SLOTS[1] as HomeSelectableModuleId,
+    HOME_DASHBOARD_DEFAULT_SLOTS[2] as HomeSelectableModuleId,
+    HOME_DASHBOARD_DEFAULT_SLOTS[3] as HomeSelectableModuleId],
+}
+export function isSelectable(value:unknown):value is HomeSelectableModuleId {
+  return typeof value==='string'&&HOME_SELECTABLE_IDS.includes(value as HomeSelectableModuleId)
 }
 export function readHomeLayout(teamId?:string):HomeLayoutSettings {
   try{
-    const raw=window.localStorage.getItem('bdm-courtside-home-layout-v1-'+(teamId??'no-team'))
+    const raw=window.localStorage.getItem('bdm-courtside-home-layout-v2-'+(teamId??'no-team'))
     if(!raw)return DEFAULT_HOME_LAYOUT
-    const candidate:unknown=JSON.parse(raw)
-    if(!candidate||typeof candidate!=='object')return DEFAULT_HOME_LAYOUT
-    const data=candidate as {modules?:unknown;sizes?:unknown}
-    const modules=Array.isArray(data.modules)&&data.modules.length===4&&data.modules.every(m=>HOME_DASHBOARD_MODULE_IDS.includes(m as HomeDashboardModuleId))
-      ? data.modules as HomeDashboardModuleId[]:[...HOME_DASHBOARD_DEFAULT_SLOTS]
-    const sizes=data.sizes&&typeof data.sizes==='object'?data.sizes as Record<string,unknown>:{}
-    return {modules,sizes:Object.fromEntries(HOME_CARD_KEYS.map(key=>[key,
-      HOME_SIZE_IDS.includes(sizes[key] as HomeCardSize)?sizes[key]:DEFAULT_SIZES[key]])) as Record<HomeCardKey,HomeCardSize>}
+    const obj:unknown=JSON.parse(raw)
+    if(!obj||typeof obj!=='object')return DEFAULT_HOME_LAYOUT
+    const value=obj as Record<string,unknown>
+    return {
+      fixture:isSelectable(value.fixture)?value.fixture:'fixture',
+      dynamics:isSelectable(value.dynamics)?value.dynamics:'dynamics',
+      upcoming:isSelectable(value.upcoming)?value.upcoming:'upcoming',
+      slots:Array.isArray(value.slots)&&value.slots.length===3
+        ? [0,1,2].map(i=>isSelectable(value.slots[i])?value.slots[i]:DEFAULT_HOME_LAYOUT.slots[i]!) as unknown as HomeLayoutSettings['slots']
+        : DEFAULT_HOME_LAYOUT.slots,
+    }
   }catch{return DEFAULT_HOME_LAYOUT}
 }
 export function saveHomeLayout(teamId:string|undefined,settings:HomeLayoutSettings) {
-  try{window.localStorage.setItem('bdm-courtside-home-layout-v1-'+(teamId??'no-team'),JSON.stringify(settings))}
-  catch{ /* still works when storage is disabled */ }
+  try{window.localStorage.setItem('bdm-courtside-home-layout-v2-'+(teamId??'no-team'),JSON.stringify(settings))}
+  catch{ /* in-session editing still works if local storage is blocked */ }
 }
