@@ -116,6 +116,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
     playerLines: result.playerStats.map((stats) => {
       const isHome = world.teams[game.homeTeamId]!.rosterPlayerIds.includes(stats.playerId)
       const teamId = isHome ? game.homeTeamId : game.awayTeamId
+      const shotZones = observedShotZonesForBox(zoneEvidence.get(stats.playerId), stats)
       return {
         playerId: stats.playerId,
         teamId,
@@ -123,8 +124,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
         isHome,
         started: result.finalState.players.some((player) => player.playerId === stats.playerId && player.started === true),
         stats: { ...stats },
-        ...(observedShotZonesForBox(zoneEvidence.get(stats.playerId), stats) === undefined
-          ? {} : { shotZones: observedShotZonesForBox(zoneEvidence.get(stats.playerId), stats)! }),
+        ...(shotZones === undefined ? {} : { shotZones }),
       }
     }),
     ...(resolution === undefined ? {} : { resolution }),
