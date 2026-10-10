@@ -592,3 +592,229 @@
   .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {grid-template-columns:1fr 1fr;grid-column:auto;}
   .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-center {grid-column:1/-1;grid-row:1;}
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   V1.2: authenticated Courtside light palette, from b.css line 17 onward.
+   The theme switcher is in the existing NG SystemBar.
+   ───────────────────────────────────────────────────────────────────── */
+.bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar__theme-toggle {
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:40px;
+  height:40px;
+  border:1px solid var(--cs-line2);
+  border-radius:50%;
+  background:var(--cs-s1);
+  color:var(--cs-text2);
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar__theme-toggle:hover,
+.bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar__theme-toggle:focus-visible {
+  color:var(--cs-orange);
+  border-color:var(--cs-orange);
+  outline-offset:2px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] {
+  /* Exact canonical light tokens; no synthetic white or neon-green skin. */
+  --cs-bg:#f3eee4;
+  --cs-bg2:#ece6da;
+  --cs-s1:#fffcf6;
+  --cs-s2:#f6f0e4;
+  --cs-s3:#ebe3d3;
+  --cs-line:rgba(30,20,10,.09);
+  --cs-line2:rgba(30,20,10,.2);
+  --cs-text:#15111c;
+  --cs-text2:#463f52;
+  --cs-text3:#7a7186;
+  --cs-orange:#ff5a1f;
+  --cs-orange2:#e8480a;
+  --cs-lime:#16a05a;
+  --cs-positive:#12804a;
+  --cs-negative:#d9254a;
+  --ng-amber-bright:#d9440c;
+  --ng-cyan:#12804a;
+  --ng-cyan-bright:#12804a;
+  --ng-positive:#12804a;
+  --ng-negative:#d9254a;
+  --bdm-surface-1:#fffcf6;
+  --bdm-surface-2:#f6f0e4;
+  --bdm-surface-3:#ebe3d3;
+  --bdm-border-default:rgba(30,20,10,.2);
+  --bdm-panel-fill:var(--cs-s1);
+  --bdm-panel-shadow:none;
+  background:
+    radial-gradient(900px 600px at 100% -10%,rgba(255,90,31,.16),transparent 60%),
+    radial-gradient(800px 600px at 0% 100%,rgba(46,127,214,.08),transparent 60%),
+    var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-system-bar__right > .ng-btn--primary {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-system-bar__right > .ng-btn--primary:hover:not(:disabled) {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-taskbar__start {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-taskbar__start.is-open {
+  background:var(--cs-orange);
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-taskbar__app.is-active:not(.ng-taskbar__start) {
+  background:var(--cs-orange);
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-taskbar__app.is-active.is-running::after {
+  background:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] .ng-system-bar__club-crest {
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-holo-panel {
+  box-shadow:none !important;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture.ng-holo-panel {
+  background:
+    radial-gradient(circle at 15% 65%,rgba(255,90,31,.12),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+  background-image:
+    radial-gradient(circle at 15% 65%,rgba(255,90,31,.12),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot__menu {
+  border-color:var(--cs-line2);
+  box-shadow:0 12px 32px rgba(25,16,30,.12);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table__head {
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {
+  background:rgba(22,160,90,.10);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   V1.2: rebalance real NG Home modules; retain all data and selectors.
+   Two data-rich adjustable slots to the left and two short slots stacked
+   on the right. Any of the 8 source modules can be selected in every slot.
+   ───────────────────────────────────────────────────────────────────── */
+@media (min-width:1280px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__top {
+    min-height:290px;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {
+    display:grid;
+    grid-template-columns:minmax(0,1.13fr) minmax(0,1.13fr) minmax(0,.94fr);
+    grid-template-rows:repeat(2,minmax(0,1fr));
+    height:348px;
+    min-height:348px;
+    flex:0 0 auto;
+    gap:16px;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot {
+    min-height:0;
+    height:100%;
+    min-width:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(1) {
+    grid-column:1;
+    grid-row:1 / span 2;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(2) {
+    grid-column:2;
+    grid-row:1 / span 2;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(3) {
+    grid-column:3;
+    grid-row:1;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(4) {
+    grid-column:3;
+    grid-row:2;
+  }
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+  padding:26px 22px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+  width:96px;
+  height:96px;
+  font-size:34px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  font-size:29px;
+  line-height:1.05;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  font-size:68px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dynamics__label {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dynamics__value {
+  font-size:27px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__main .ng-canon__link {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-upcoming__meta {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot__title {
+  font-size:22px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot__body {
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot-table__head {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot-table li {
+  font-size:13px;
+  min-height:28px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot-list strong {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot-list__badge {
+  width:26px;
+  height:26px;
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note {
+  font-size:13px;
+}
+@media (max-width:1279px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar__theme-toggle {
+    width:36px;
+    height:36px;
+  }
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] .ng-system-bar__theme-toggle {
+    width:32px;
+    height:32px;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+    width:72px;
+    height:72px;
+    font-size:27px;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+    font-size:56px;
+  }
+}
