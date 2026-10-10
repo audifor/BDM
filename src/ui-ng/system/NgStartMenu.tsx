@@ -76,7 +76,7 @@ export function NgStartMenu({ onClose }: { readonly onClose: () => void }) {
         {groups.map(group=>{
           const apps=group.appIds.filter(id=>visibleApps.includes(id))
           if(apps.length===0)return null
-          return <section key={group.id} className="ng-start-menu__category">
+          return <section key={group.id} className="ng-start-menu__category" data-category={group.id}>
             <div className="ng-start-menu__category-title">
               <h3>{group.label}</h3><p>{group.description}</p>
             </div>
