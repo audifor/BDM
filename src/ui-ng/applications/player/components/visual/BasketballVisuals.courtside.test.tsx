@@ -42,6 +42,35 @@ describe('AttributeRadar simultaneous references', () => {
     expect(markup).toContain('aria-label="Liga comparison"')
   })
 
+  it('uses thin visual weights only in the Courtside frame while retaining legacy sizes', () => {
+    const comparison = [{ key: 'league', label: 'Liga', color: 'var(--cs-negative)', axes: profile(43) }]
+    const courtside = renderToStaticMarkup(<AttributeRadar
+      axes={axes}
+      selectedCategory={axes[0]?.key}
+      courtsideFraming
+      comparisonSeries={comparison}
+    />)
+    const legacy = renderToStaticMarkup(<AttributeRadar
+      axes={axes}
+      selectedCategory={axes[0]?.key}
+      comparisonSeries={comparison}
+    />)
+
+    expect(courtside).toMatch(/aria-label="Liga comparison"[^>]*stroke-width="1\.15"/)
+    expect(courtside).toContain('fill-opacity="0.075"')
+    expect(courtside).toContain('stroke-width="1.5"')
+    expect(courtside).toContain('stroke-width="0.65"')
+    expect(courtside).toContain('stroke-width="0.8"')
+    expect(courtside).toContain('r="2.2"')
+    expect(courtside).toContain('r="2.7"')
+
+    expect(legacy).toMatch(/aria-label="Liga comparison"[^>]*stroke-width="2\.2"/)
+    expect(legacy).toContain('fill-opacity="0.13"')
+    expect(legacy).toContain('stroke-width="1"')
+    expect(legacy).toContain('r="3"')
+    expect(legacy).toContain('r="3.5"')
+  })
+
   it('keeps legacy viewBox for existing NG placements', () => {
     const markup = renderToStaticMarkup(<AttributeRadar axes={axes} />)
     expect(markup).toContain('viewBox="-36 -36 192 192"')
