@@ -50,12 +50,19 @@ describe('PLAYER DEVELOPMENT Courtside navigation and Fog of War', () => {
     expect(screen.getByText('DEVELOPMENT DASHBOARD')).toBeInTheDocument()
     expect(screen.getByText('Career development curve')).toBeInTheDocument()
     expect(screen.getByText('Training plan')).toBeInTheDocument()
-    expect(screen.getByText('SECRET_INTERNAL_DEVELOPMENT')).toBeInTheDocument()
+    expect(screen.getByText('SECRET_INTERNAL_STAGE')).toBeInTheDocument()
+    expect(screen.getByText('SCOUTED POTENTIAL')).toBeInTheDocument()
+    expect(screen.getByText('AGE-BASED TREND')).toBeInTheDocument()
+    // Long, authored/audit explanatory prose no longer dominates the visual dashboard.
+    expect(screen.queryByText('SECRET_INTERNAL_DEVELOPMENT')).not.toBeInTheDocument()
     const category = development.categoryDevelopment[0]
     expect(category).toBeDefined()
-    const row = screen.getByRole('button', { name: new RegExp(category!.categoryLabel, 'i') })
+    const familyPanel = document.querySelector('[data-ng-region="development-categories"]') as HTMLElement
+    const row = within(familyPanel).getByRole('button', { name: new RegExp(category!.categoryLabel, 'i') })
+    expect(within(familyPanel).getAllByRole('button')).toHaveLength(8)
     fireEvent.click(row)
     expect(selected).toHaveBeenCalledWith(category!.id)
+    expect(screen.getByRole('button', { name: /open training/i })).toBeInTheDocument()
   })
 
   it('moves between dashboard and complete recorded evidence without fake rating curves', () => {
