@@ -28,12 +28,13 @@ export function readHomeLayout(teamId?:string):HomeLayoutSettings {
     const obj:unknown=JSON.parse(raw)
     if(!obj||typeof obj!=='object')return DEFAULT_HOME_LAYOUT
     const value=obj as Record<string,unknown>
+    const rawSlots=value.slots
     return {
       fixture:isSelectable(value.fixture)?value.fixture:'fixture',
       dynamics:isSelectable(value.dynamics)?value.dynamics:'dynamics',
       upcoming:isSelectable(value.upcoming)?value.upcoming:'upcoming',
-      slots:Array.isArray(value.slots)&&value.slots.length===3
-        ? [0,1,2].map(i=>isSelectable(value.slots[i])?value.slots[i]:DEFAULT_HOME_LAYOUT.slots[i]!) as unknown as HomeLayoutSettings['slots']
+      slots:Array.isArray(rawSlots)&&rawSlots.length===3
+        ? [0,1,2].map(i=>isSelectable(rawSlots[i])?rawSlots[i]:DEFAULT_HOME_LAYOUT.slots[i]!) as unknown as HomeLayoutSettings['slots']
         : DEFAULT_HOME_LAYOUT.slots,
     }
   }catch{return DEFAULT_HOME_LAYOUT}
