@@ -1218,3 +1218,103 @@
     height:100%;
   }
 }
+
+
+/*
+ * ATTRIBUTES V3.2 · reduce unnecessary scrolling without sacrificing text size.
+ * On a 1920×1080 reference workspace the 8 families and 3 watched attributes
+ * have dedicated, non-scrolling rows. The attribute list receives most of the
+ * right column; recorded evolution may still scroll when real history is long.
+ */
+.pac-column--left[data-focus-count="3"] {
+  grid-template-rows:minmax(325px,1fr) 192px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus {
+  overflow:visible;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__items {
+  display:grid;
+  grid-template-rows:repeat(3,minmax(0,1fr));
+  flex:1 1 auto;
+  overflow:visible;
+  padding:0 10px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__item {
+  min-height:35px;
+  max-height:39px;
+  padding:2px 1px;
+  gap:4px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__go strong {
+  font-size:12px;
+  line-height:1.18;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__go small {
+  font-size:11px;
+  line-height:1.18;
+}
+.pac-column--right {
+  grid-template-rows:minmax(310px,1.77fr) minmax(184px,.93fr);
+}
+.pac-column--right .pac-attributes__scroll {
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+}
+.pac-column--right .pac-attributes .pac-head {
+  min-height:38px;
+  padding-top:7px;
+  padding-bottom:7px;
+}
+.pac-column--right .pac-attributes .pac-filters {
+  padding-block:5px;
+}
+.pac-column--right .pac-attributes .pac-attr-table__head {
+  min-height:25px;
+  padding-top:2px;
+  padding-bottom:2px;
+}
+.pac-column--right .pac-detail--pending {
+  overflow-y:auto;
+}
+.pac-column--right .pac-detail .pac-head {
+  min-height:38px;
+  padding-top:7px;
+  padding-bottom:7px;
+}
+.pac-column--right .pac-detail__kpis {
+  padding:6px 5px 4px;
+}
+.pac-column--right .pac-detail__kpis > div {
+  gap:3px;
+  padding-block:2px;
+}
+.pac-column--right .pac-detail__description {
+  margin-inline:11px;
+  padding-bottom:5px;
+  font-size:12px;
+  line-height:1.3;
+}
+.pac-column--right .pac-detail--pending .pac-detail__evolution {
+  min-height:0;
+  margin:2px 10px 7px;
+  padding:9px 12px;
+}
+.pac-column--right .pac-detail--pending .pac-detail__evolution > p {
+  margin-top:5px;
+  font-size:12px;
+  line-height:1.3;
+}
+@container player-space (max-width:1439px) {
+  .pac-column--right {
+    grid-template-rows:minmax(340px,auto) minmax(260px,auto);
+  }
+}
+@container player-space (max-width:860px) {
+  .pac-column--left[data-focus-count="3"] {
+    grid-template-rows:minmax(350px,auto) 192px;
+  }
+  .pac-column--right {
+    grid-template-rows:minmax(340px,auto) minmax(260px,auto);
+  }
+}
