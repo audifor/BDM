@@ -8,7 +8,6 @@ type Development = PlayerDevelopmentModel
 
 export function DevelopmentHeroVisual({ data }: { readonly data: Development }) {
   const { overview, lifecycle } = data
-  const transitions = Math.max(0, (data.categoryCurve[0]?.points.length ?? 1) - 1)
   return <div className="po-dev-v2__hero" data-ng-region="development-hero">
     <section className="po-dev-v2__hero-tile is-stage">
       <span className="po-dev-v2__eyebrow">CAREER PHASE</span>
@@ -16,27 +15,24 @@ export function DevelopmentHeroVisual({ data }: { readonly data: Development }) 
       <ol className="po-dev-v2__stages" aria-label="Career stages">{lifecycle.stages.map(stage =>
         <li key={stage.id} className={stage.isCurrent ? 'is-current' : ''}><i /><span>{stage.label}</span></li>
       )}</ol>
-      <small>{overview.ageLabel} years old · lifecycle classification</small>
+
     </section>
     <section className={'po-dev-v2__hero-tile is-trend is-' + overview.trendTone}>
       <span className="po-dev-v2__eyebrow">AGE-BASED TREND</span>
       <div className="po-dev-v2__trend-reading"><b aria-hidden="true">{overview.trendTone === 'negative' ? '↘' : overview.trendTone === 'positive' ? '↗' : '→'}</b>
         <strong className="po-dev-v2__hero-value">{overview.trendLabel}</strong><span>/ transition</span></div>
-      <div className="po-dev-v2__direction-lines" aria-hidden="true"><i /><i /><i /><i /><i /></div>
-      <small>Not recorded rating growth · {transitions} checkpoints</small>
+
     </section>
     <section className="po-dev-v2__hero-tile is-checkpoint">
       <span className="po-dev-v2__eyebrow">NEXT CHECKPOINT</span>
       <strong className="po-dev-v2__hero-value">{overview.nextEvaluationLabel}</strong>
       <span className="po-dev-v2__checkpoint-count">▦ &nbsp; {overview.nextEvaluationNote}</span>
-      <div className="po-dev-v2__checkpoint-line" aria-hidden="true"><i /></div>
-      <small>Development runs at season end</small>
+
     </section>
     <section className="po-dev-v2__hero-tile is-potential">
       <span className="po-dev-v2__eyebrow">SCOUTED POTENTIAL</span>
       <strong className="po-dev-v2__hero-value">{lifecycle.potentialStatus === 'available' ? lifecycle.potentialLabel : 'Unknown'}</strong>
-      <div className="po-dev-v2__potential-dots" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <i key={i} />)}</div>
-      <small>{lifecycle.potentialStatus === 'available' ? 'Estimated scouting range, not hidden ceiling' : 'No authorized evaluation'}</small>
+
     </section>
   </div>
 }
@@ -46,7 +42,7 @@ export function DevelopmentFamilyVisual({ data, selected, onSelect }: {
 }) {
   const recorded = data.categoryCurve.some(entry => entry.points.length > 1)
   return <section className="po-dev-v2__panel po-dev-v2__families" data-ng-region="development-categories">
-    <header className="po-dev-v2__panel-head"><div><small>SKILL MATRIX</small><h3>Category development</h3></div><span>8 FAMILIES</span></header>
+    <header className="po-dev-v2__panel-head"><h3>Category development</h3><span>8 FAMILIES</span></header>
     <div className="po-dev-v2__family-list">{data.categoryDevelopment.map(row =>
       <button type="button" key={row.id} aria-pressed={selected === row.id} onClick={() => onSelect(row.id)}
         className={'po-dev-v2__family is-' + CATEGORY_TONE[row.id] + (selected === row.id ? ' is-selected' : '')}>
@@ -56,7 +52,7 @@ export function DevelopmentFamilyVisual({ data, selected, onSelect }: {
         <span className={'po-dev-v2__family-delta' + (row.trend < 0 ? ' is-down' : '')}>{recorded ? (row.trend > 0 ? '↑ +' : row.trend < 0 ? '↓ ' : '→ ') + row.trend : '—'}</span>
       </button>
     )}</div>
-    <footer className="po-dev-v2__footnote">SELECT A FAMILY TO EXPLORE ITS DEVELOPMENT</footer>
+
   </section>
 }
 
@@ -68,8 +64,8 @@ export function DevelopmentCurveVisual({ data, selected, onSelect }: {
   const x = (index: number, total: number) => 6 + (total < 2 ? 0 : index / (total - 1) * 88)
   const y = (value: number) => 91 - Math.max(0, Math.min(100, value)) * .8
   return <section className="po-dev-v2__panel po-dev-v2__curve" data-ng-region="development-curve">
-    <header className="po-dev-v2__panel-head"><div><small>RECORDED HISTORY</small><h3>Career development curve</h3></div><span>{recorded ? 'RECORDED' : 'AWAITING CHECKPOINT'}</span></header>
-    <div className="po-dev-v2__curve-reading"><span>{focus?.label ?? 'Selected family'}</span><strong>{focus?.points.at(-1) ?? '—'}</strong><small>{recorded ? ((focus?.delta ?? 0) > 0 ? '+' : '') + (focus?.delta ?? 0) + ' recorded' : 'No history yet'}</small></div>
+    <header className="po-dev-v2__panel-head"><h3>Career development curve</h3><span>{recorded ? 'RECORDED' : 'AWAITING CHECKPOINT'}</span></header>
+    <div className="po-dev-v2__curve-reading"><span>{focus?.label ?? 'Selected family'}</span><strong>{focus?.points.at(-1) ?? '—'}</strong>{recorded && <small>{((focus?.delta ?? 0) > 0 ? '+' : '') + (focus?.delta ?? 0) + ' recorded'}</small>}</div>
     {recorded ? <div className="po-dev-v2__chart-area">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={'Recorded category trajectory: ' + (focus?.label ?? '')}>
         {[10,30,50,70,90].map(n => <line key={n} x1={6} x2={94} y1={n} y2={n} className="po-dev-v2__chart-grid" vectorEffect="non-scaling-stroke" />)}
@@ -80,7 +76,7 @@ export function DevelopmentCurveVisual({ data, selected, onSelect }: {
         {focus?.points.map((p,i) => <circle key={i} className="po-dev-v2__chart-dot" cx={x(i,focus.points.length)} cy={y(p)} r={i === focus.points.length-1 ? 1.7 : 1} vectorEffect="non-scaling-stroke" />)}
       </svg>
       <div className="po-dev-v2__chart-axis"><span>FIRST RECORDED</span><span>CURRENT</span></div>
-    </div> : <div className="po-dev-v2__empty-chart"><div aria-hidden="true"><i /><i /><i /><i /><i /></div><strong>YOUR STORY STARTS HERE</strong><span>First career curve appears after a real season transition</span></div>}
+    </div> : <div className="po-dev-v2__empty-chart"><div aria-hidden="true"><i /><i /><i /><i /><i /></div><strong>NO RECORDED CURVE</strong></div>}
     <div className="po-dev-v2__curve-switcher" role="group" aria-label="Development curve family">{data.categoryCurve.map(row => <button key={row.id} type="button" aria-pressed={selected === row.id} onClick={() => onSelect(row.id)} className={'is-'+CATEGORY_TONE[row.id]}><i />{row.label}</button>)}</div>
   </section>
 }
@@ -90,8 +86,8 @@ export function DevelopmentDetailVisual({ data, selected }: { readonly data: Dev
   if (!detail) return null
   const hasHistory = data.categoryCurve.some(row => row.points.length > 1)
   return <section className={'po-dev-v2__panel po-dev-v2__detail is-' + CATEGORY_TONE[selected]} data-ng-region="development-detail">
-    <header className="po-dev-v2__panel-head"><div><small>FAMILY INTELLIGENCE</small><h3>Development detail</h3></div><span>FOCUS</span></header>
-    <div className="po-dev-v2__detail-name"><b aria-hidden="true">◎</b><strong>{detail.categoryLabel.toUpperCase()}</strong><small>DEVELOPMENT</small></div>
+    <header className="po-dev-v2__panel-head"><h3>Development detail</h3></header>
+    <div className="po-dev-v2__detail-name"><b aria-hidden="true">◎</b><strong>{detail.categoryLabel.toUpperCase()}</strong></div>
     <div className="po-dev-v2__detail-stats"><div><span>CURRENT</span><strong>{detail.current}</strong></div><div><span>RECORDED Δ</span><strong className={detail.trend < 0 ? 'is-down' : ''}>{hasHistory ? (detail.trend > 0 ? '+' : '') + detail.trend : '—'}</strong></div></div>
     <div className="po-dev-v2__detail-meter"><i style={{width:Math.max(0,Math.min(100,detail.current))+'%'}} /></div>
     <div className="po-dev-v2__detail-rate"><span>DEVELOPMENT RATE</span><strong className={'is-'+detail.rateTone}>{detail.rateLabel}</strong></div>
@@ -99,7 +95,7 @@ export function DevelopmentDetailVisual({ data, selected }: { readonly data: Dev
       <div><span>IMPROVING</span>{detail.improvements.length ? <ul>{detail.improvements.map(x=><li key={x}>↑ {x}</li>)}</ul> : <small>Not recorded yet</small>}</div>
       <div><span>AREAS TO WORK</span><ul>{detail.toImprove.map(x=><li key={x}>◇ {x}</li>)}</ul></div>
     </div>
-    <span className="po-dev-v2__footnote" title={detail.rateNote}>ⓘ {hasHistory ? 'Compared to baseline age trend' : 'History begins after first checkpoint'}</span>
+
   </section>
 }
 
@@ -108,7 +104,7 @@ export function DevelopmentTrainingVisual({ data }: { readonly data: Development
   const ctx = data.trainingContext
   const intensity = ctx.individualPlanActive ? ctx.individualIntensity : ctx.teamIntensity
   return <section className="po-dev-v2__panel po-dev-v2__training" data-ng-region="development-training-plan">
-    <header className="po-dev-v2__panel-head"><div><small>ACTIVE PROGRAM</small><h3>Training plan</h3></div><span>{ctx.individualPlanActive ? 'INDIVIDUAL' : 'TEAM'}</span></header>
+    <header className="po-dev-v2__panel-head"><h3>Training plan</h3><span>{ctx.individualPlanActive ? 'INDIVIDUAL' : 'TEAM'}</span></header>
     <div className="po-dev-v2__training-focus"><b aria-hidden="true">◎</b><div><span>CURRENT FOCUS</span><strong>{plan.focusLabel}</strong></div></div>
     <div className="po-dev-v2__training-controls"><div><span>ASSIGNED INTENSITY</span><div className="po-dev-v2__intensity">{[1,2,3].map(n=><i key={n} className={plan.loadFill !== null && plan.loadFill >= n*28 ? 'is-on' : ''} />)}</div><strong>{intensity ?? 'Not assigned'}</strong></div>
       <button type="button" onClick={() => syncWorkspaceAppQuery('training','push')}>OPEN TRAINING ↗</button></div>
@@ -119,18 +115,18 @@ export function DevelopmentStimulusVisual({ data }: { readonly data: Development
   const effect = data.trainingEffect
   const max = Math.max(0, ...effect.rows.map(row => row.impact))
   return <section className="po-dev-v2__panel po-dev-v2__stimulus" data-ng-region="development-training-effect">
-    <header className="po-dev-v2__panel-head"><div><small>REAL TRAINING SIGNAL</small><h3>Season stimulus</h3></div><span>{effect.confidenceLabel}</span></header>
+    <header className="po-dev-v2__panel-head"><h3>Season stimulus</h3><span>{effect.confidenceLabel}</span></header>
     {effect.rows.length ? <div className="po-dev-v2__stimulus-list">{effect.rows.map(row => <div key={row.id} className={'po-dev-v2__stimulus-row is-'+CATEGORY_TONE[row.id]}>
       <span>{row.label}</span><div><i style={{width:(max?row.impact/max*100:0)+'%'}} /></div><strong>{row.impact.toFixed(1)}</strong>
     </div>)}</div> : <div className="po-dev-v2__silent-state"><strong>NO CANONICAL STIMULUS YET</strong><span>Appears after recorded training activity</span></div>}
-    <footer className="po-dev-v2__footnote">Recorded stimulus, not predicted rating gains</footer>
+
   </section>
 }
 
 export function DevelopmentTimelineVisual({ data }: { readonly data: Development }) {
   const events = data.longitudinal.events.slice(0,3)
   return <section className="po-dev-v2__panel po-dev-v2__timeline" data-ng-region="development-events">
-    <header className="po-dev-v2__panel-head"><div><small>CAREER MILESTONES</small><h3>Development events</h3></div><span>{data.longitudinal.events.length} LOGGED</span></header>
+    <header className="po-dev-v2__panel-head"><h3>Development events</h3><span>{data.longitudinal.events.length} LOGGED</span></header>
     {events.length ? <ol>{events.map(row=><li key={row.id} className={'is-'+row.kind} title={row.detail}><i>{row.kind==='injury' ? '+' : '◆'}</i><span>{row.dateLabel}</span><strong>{row.label}</strong><b>{row.impact === null ? '—' : (row.impact > 0 ? '+' : '') + row.impact}</b></li>)}</ol>
       : <div className="po-dev-v2__silent-state"><strong>NO EVENTS RECORDED</strong><span>Transitions and injuries form the timeline</span></div>}
   </section>
