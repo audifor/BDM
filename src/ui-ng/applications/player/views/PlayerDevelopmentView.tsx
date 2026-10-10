@@ -1,18 +1,19 @@
 import { useMemo, useState } from 'react'
 
 import {
-  CareerCurvePanel,
-  CategoryDevelopmentPanel,
-  DevelopmentDetailPanel,
   DevelopmentDriversPanel,
-  DevelopmentEventsPanel,
-  DevelopmentOverviewPanel,
-  DevelopmentStagePanel,
   RatingMoversPanel,
   ScoutingProjectionPanel,
-  TrainingEffectPanel,
-  TrainingPlanPanel,
 } from '@/ui-ng/applications/player/components/DevelopmentBoardPanels'
+import {
+  DevelopmentHeroVisual,
+  DevelopmentFamilyVisual,
+  DevelopmentCurveVisual,
+  DevelopmentDetailVisual,
+  DevelopmentTrainingVisual,
+  DevelopmentStimulusVisual,
+  DevelopmentTimelineVisual,
+} from '@/ui-ng/applications/player/components/PlayerDevelopmentVisuals'
 import { DevelopmentDetailInspector } from '@/ui-ng/applications/player/components/DevelopmentDetailInspector'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
@@ -67,7 +68,7 @@ export function PlayerDevelopmentView() {
     <div className="po-dev-board po-dev-board--courtside" data-ng-region="player-development"
       data-knowledge="own">
       <div className="po-dev-cs__overview">
-        <DevelopmentOverviewPanel insight={development.insight} overview={development.overview} />
+        <DevelopmentHeroVisual data={development} />
       </div>
       <div className="po-dev-cs__navigation">
         <div className="po-dev-cs__heading">
@@ -84,27 +85,18 @@ export function PlayerDevelopmentView() {
         </div>
       </div>
       {activePane === 'dashboard'
-        ? <div className="po-dev-cs__main" data-ng-region="development-dashboard">
-          <div className="po-dev-cs__lane po-dev-cs__lane--category">
-            <CategoryDevelopmentPanel onSelectCategory={(id) => setSelectedItemId(id)}
-              rows={development.categoryDevelopment} selectedCategory={selectedCategory} />
-            <DevelopmentStagePanel lifecycle={development.lifecycle} />
+        ? <div className="po-dev-cs__main po-dev-cs__main--v2" data-ng-region="development-dashboard">
+          <div className="po-dev-v2__top">
+            <DevelopmentFamilyVisual data={development}
+              selected={selectedCategory ?? 'shooting'} onSelect={setSelectedItemId} />
+            <DevelopmentCurveVisual data={development}
+              selected={selectedCategory ?? 'shooting'} onSelect={setSelectedItemId} />
+            <DevelopmentDetailVisual data={development} selected={selectedCategory ?? 'shooting'} />
           </div>
-          <div className="po-dev-cs__lane po-dev-cs__lane--trajectory">
-            <CareerCurvePanel markers={development.markers}
-              seasons={seasonLabelsOf(development)} series={development.categoryCurve} />
-            <div className="po-dev-cs__training">
-              <TrainingPlanPanel plan={development.trainingPlan} />
-              <TrainingEffectPanel effect={development.trainingEffect} />
-            </div>
-          </div>
-          <div className="po-dev-cs__lane po-dev-cs__lane--details">
-            <DevelopmentDetailPanel
-              detail={development.detailByCategory[selectedCategory ?? 'shooting']}
-              onClose={() => setSelectedItemId(null)}
-              selectedCategoryLabel={selectedCategory === null ? null : CATEGORY_LABELS[selectedCategory]}
-            />
-            <DevelopmentEventsPanel events={development.longitudinal.events} />
+          <div className="po-dev-v2__bottom">
+            <DevelopmentTrainingVisual data={development} />
+            <DevelopmentStimulusVisual data={development} />
+            <DevelopmentTimelineVisual data={development} />
           </div>
         </div>
         : <div className="po-dev-cs__records" data-ng-region="development-records">
