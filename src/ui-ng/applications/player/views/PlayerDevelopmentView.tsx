@@ -125,6 +125,7 @@ export function PlayerDevelopmentView() {
 
 function PlayerHistoryPanels({ world, playerId }: { readonly world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>; readonly playerId: import('@/domain/ids').PlayerId }) {
   const [stimulusVisibleCount, setStimulusVisibleCount] = useState(40)
+  const [trainingVisibleCount, setTrainingVisibleCount] = useState(12)
   const training = Object.values(world.scheduledTrainingSessionsById)
     .flatMap((session) => {
       const result = session.execution?.participants.find((participant) => participant.playerId === playerId)
@@ -138,7 +139,7 @@ function PlayerHistoryPanels({ world, playerId }: { readonly world: NonNullable<
       <section className="po-dev-panel" data-ng-region="player-training-history">
         <header className="po-dev-panel__head"><span className="po-dev-panel__title">Training history</span><span className="po-dev-panel__meta">{training.length}</span></header>
         {training.length === 0 ? <p className="po-dev-stat__note">No completed Training history is recorded.</p> : (
-          <ul className="po-dev-gaps">{training.slice(0, 12).map(({ session, result }) => {
+          <ul className="po-dev-gaps">{training.slice(0, trainingVisibleCount).map(({ session, result }) => {
             const execution = session.execution!
             const staff = execution.executingStaffPersonIds.map((id) => {
               const person = world.staffPeopleById[id]
@@ -150,6 +151,11 @@ function PlayerHistoryPanels({ world, playerId }: { readonly world: NonNullable<
             return <li key={session.id}><span>{session.date} · {execution.moduleName} · {result.participation}</span><span className="po-dev-stat__note">Staff: {staff} · fatigue {result.careerFatigueDelta >= 0 ? '+' : ''}{result.careerFatigueDelta.toFixed(1)} · stimulus {stimulus} · injuries {injuryLabels.join(', ') || 'none'}</span></li>
           })}</ul>
         )}
+        {training.length > trainingVisibleCount &&
+          <button className="po-dev-cs__more" type="button"
+            onClick={() => setTrainingVisibleCount((count) => count + 12)}>
+            Show older training sessions ({training.length - trainingVisibleCount} remaining)
+          </button>}
         <p className="po-dev-stat__note">Training supplied stimulus to the development cycle; individual sessions do not directly change ratings.</p>
       </section>
       <section className="po-dev-panel" data-ng-region="player-rating-truth-history">
