@@ -164,6 +164,7 @@ export function PlayerCourtsideAttributes() {
                 selectedCategory={currentCategory.category}
                 onCategorySelect={selectCategory}
                 comparisonAxes={overlay}
+                courtsideFraming
                 showValues
               />
               <label className="pac-profile__control">COMPARE PROFILE
