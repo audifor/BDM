@@ -116,6 +116,37 @@ staff capacity, and offer the Scouting Centre as the discovery/workload route.
   Overview rather than hiding actions behind the dock. Recompose below the
   existing Courtside container breakpoints.
 
+## PLAYER PERFORMANCE · Courtside implementation direction (10 October 2026)
+
+- PERFORMANCE follows the approved PLAYER Courtside shell. No sidebars, no
+  duplicated legacy analysis, no fabricated box scores or scouting ratings.
+- The same recorded completed-game stats are visible for own players and
+  rivals. The rival path is **recorded competitive performance**, not Player
+  Truth ability or confidential physical/mental condition; no opponent
+  `ratings`, `status`, medical, stamina or hidden staff estimates are
+  consumed in the view. The canonical `getPlayerGameLogs` and match-stat
+  aggregation remain the sole factual sources.
+- Filtering remains actionable for real seasons, competitions, decisive or
+  regular stages and home/away/wins/losses. Empty selections do not invent a
+  season average or an artificial recent-form graph.
+- All ten canonical KPIs remain visible. Analysis keeps three accessible
+  views: efficiency, two recorded shooting zones (not fictional shot
+  coordinates), and actual splits (unsupported half-time splits stay absent
+  with their explicit reason).
+- Recent form offers one user-selected statistic at a time (PTS/REB/AST/VAL).
+  Clicking a bar selects the same `gameId` as the game log and inspector.
+- The log keeps eight readable columns (date, opponent, result, minutes,
+  points, rebounds, assists, valuation). The inspector retains the remaining
+  actual box-score detail and can navigate matches without a second table.
+- Responsive layout must **recompose**, not make texts smaller forever.
+  Desktop uses three lanes, mid-size uses two rows, narrow uses a single
+  column. Only sufficiently long logs or detailed analysis may scroll.
+- Courtside themes inherit the same canonical dark/light tokens from HOME.
+  No new synthetic visual palette. No gameplay code or Save schema changes.
+- This page's implementation needs its own visual and automated certification.
+  Static checks are not a substitute for typecheck, Vitest and Tauri dark/light
+  inspection.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
