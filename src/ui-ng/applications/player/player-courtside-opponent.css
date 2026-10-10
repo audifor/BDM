@@ -269,3 +269,56 @@
   .pac-opponent__right {grid-column:1;}
   .pac-opponent__notice {flex-wrap:wrap;}
 }
+
+
+/* FOW gameplay diagnostics: denied requests remain explicit, not inert UI. */
+.pac-opponent__actions .pac-opponent__blocker {
+  margin:0;
+  padding:7px 9px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  color:var(--cs-text);
+  background:var(--cs-s1);
+  font:500 12px/1.4 var(--cs-font);
+}
+.pac-opponent__actions .pac-opponent__secondary {
+  color:var(--cs-text)!important;
+  border-color:var(--cs-line2);
+  background:var(--cs-s1);
+}
+.pac-opponent__actions button:disabled,
+.pac-opponent__empty button:disabled,
+.pac-opponent__unknown button:disabled {
+  cursor:not-allowed;
+  opacity:.48;
+}
+.po-sc-request-guidance {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  margin:7px 0;
+  padding:11px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+}
+.po-sc-request-guidance strong {
+  font:700 16px var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.po-sc-request-guidance p {
+  margin:0;
+  font:400 13px/1.4 var(--cs-font);
+  color:var(--cs-text2);
+}
+.po-sc-request-guidance button {
+  cursor:pointer;
+  border:1px solid var(--cs-lime);
+  border-radius:8px;
+  background:transparent;
+  color:var(--cs-lime);
+  padding:8px 12px;
+  font:700 13px var(--cs-font-display);
+}
