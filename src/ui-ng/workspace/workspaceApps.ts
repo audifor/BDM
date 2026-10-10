@@ -348,9 +348,12 @@ export function navigateToTeamInNg(
 export function navigateToCompetitionInNg(
   destination: Extract<EntityDestination, { type: 'competition' }>,
   method: 'push' | 'replace' = 'push',
+  targetTab?: 'standings',
 ) {
   const url = new URL(window.location.href)
   url.searchParams.set('app', 'competition')
+  if (targetTab === 'standings') url.searchParams.set('competitionTab', 'standings')
+  else url.searchParams.delete('competitionTab')
   url.searchParams.set('competitionId', destination.competitionId)
   url.searchParams.delete('playerId')
   url.searchParams.delete('playerView')
