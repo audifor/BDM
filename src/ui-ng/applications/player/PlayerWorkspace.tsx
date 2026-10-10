@@ -24,6 +24,7 @@ import './player-courtside-opponent.css'
 import './player-courtside-typography.css'
 import './player-courtside-header-compact.css'
 import './player-courtside-identity-unified.css'
+import './player-courtside-development-v2.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -61,10 +62,7 @@ import {
   MedicalInspectorContent,
   PlayerMedicalView,
 } from '@/ui-ng/applications/player/views/PlayerMedicalView'
-import {
-  DevelopmentInspectorContent,
-  PlayerDevelopmentView,
-} from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
+import { PlayerDevelopmentView } from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
 import {
   PlayerHistoryView,
 } from '@/ui-ng/applications/player/views/PlayerHistoryView'
@@ -332,14 +330,6 @@ function PlayerWorkspaceLayout({
                 title="Medical Detail"
               >
                 <MedicalInspectorContent />
-              </InspectorPane>
-            ) : activeView === 'development' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Development Detail"
-              >
-                <DevelopmentInspectorContent />
               </InspectorPane>
             ) : undefined
           }
