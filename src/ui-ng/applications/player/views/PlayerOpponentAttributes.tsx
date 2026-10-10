@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
 import { getAddressableScoutingPlayerIds, getAvailableScoutingEvaluators } from '@/app/scouting'
@@ -28,6 +28,12 @@ export function PlayerOpponentAttributes() {
   const [requestOpen, setRequestOpen] = useState(false)
   const [selectedFamily, setSelectedFamily] = useState<RatingCategory>('shooting')
   const [selectedRating, setSelectedRating] = useState<string | null>(null)
+  // A new rival must not inherit the previous rival's open request dialog.
+  useEffect(() => {
+    setRequestOpen(false)
+    setSelectedFamily('shooting')
+    setSelectedRating(null)
+  }, [playerId])
 
   const access = model?.knowledgeAccess
   const opponentAccess = access?.kind === 'scouted' || access?.kind === 'unknown' ? access : null
@@ -62,7 +68,7 @@ export function PlayerOpponentAttributes() {
     : !addressable
       ? 'El jugador todavía no es una identidad abordable por tu club. Descúbrelo mediante cobertura territorial o contactos autorizados en Scouting.'
       : !hasAvailableEvaluator
-        ? 'No hay evaluadores autorizados con capacidad para Quick Look. Consulta las asignaciones y carga del staff en Scouting.'
+        ? 'No hay evaluadores autorizados con capacidad para solicitar una evaluación. Consulta las asignaciones y carga del staff en Scouting.'
         : null
   const requestAssessment = (mission: ScoutingMission) => {
     if (requestBlocker !== null) return
