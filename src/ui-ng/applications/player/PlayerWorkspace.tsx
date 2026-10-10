@@ -18,6 +18,7 @@ import './player-scouting-board.css'
 import './player-responsive.css'
 import './player-courtside-overview.css'
 import './player-courtside-attributes.css'
+import './player-courtside-opponent.css'
 import './player-courtside-typography.css'
 import './player-courtside-header-compact.css'
 
