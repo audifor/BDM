@@ -159,3 +159,13 @@
   .po-cs-read p {font-size:13px;}
   .po-identity__trajectory-panel {right:-20px;width:min(90vw,440px);}
 }
+
+/* The original workspace clips the identity row: allow the approved trajectory popup to escape. */
+.po-root .ng-application-workspace__identity-slot {overflow:visible;z-index:30;}
+.po-root .ng-application-workspace__tabs-slot {position:relative;z-index:1;}
+.po-cs-overview {height:100%;min-height:0;overflow:auto;scrollbar-width:thin;background:var(--cs-bg);}
+.po-identity__trajectory-panel .talent-operations-nav button {color:var(--cs-text);background:var(--cs-s2);border:1px solid var(--cs-line2);border-radius:99px;}
+.po-identity__trajectory-panel .talent-operations-nav button:hover,
+.po-identity__trajectory-panel .talent-operations-nav button:focus-visible {color:var(--cs-lime);border-color:var(--cs-lime);}
+.po-identity__trajectory-panel .talent-player-pathway-band span {font-size:12px;color:var(--cs-text2);}
+.po-identity__trajectory-panel .talent-player-pathway-band strong {font-size:13px;color:var(--cs-text);}
