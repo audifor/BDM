@@ -56,7 +56,7 @@ export function NgStartMenu({ onClose }: { readonly onClose: () => void }) {
     setSelectedGroup(id)
     setQuery('')
     setContext(null)
-    categoryPanelRef.current?.scrollTo({top:0,behavior:'instant'})
+    if(categoryPanelRef.current) categoryPanelRef.current.scrollTop=0
   }
   useEffect(()=>{
     const key=(event:KeyboardEvent)=>{
