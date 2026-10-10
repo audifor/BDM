@@ -53,10 +53,17 @@ function renderOpponentOverview(known: boolean): string {
     overview: {
       identityModule: { archetypeTitle: 'NOT SCOUTED', roleTitle: 'Guard', chips: [] },
       season: {
-        status: 'unavailable', headline: [], gamesPlayed: 0,
-        seasonLabel: '2025-26', competitionLabel: 'League',
+        status: 'available',
+        headline: [{ id: 'pts', value: '15', label: 'PTS' }],
+        gamesPlayed: 3, seasonLabel: '2025-26', competitionLabel: 'League',
       },
-      recentForm: { games: [], windowLabel: 'Last 5', averageLabel: 'No games' },
+      recentForm: {
+        games: [{
+          id: 'public-game', opponent: 'Other Club', points: 15, minutes: 40,
+          dateLabel: '18 OCT 2025', height: 90, tone: 'positive', figures: [],
+        }],
+        windowLabel: 'Last 5', averageLabel: 'No average',
+      },
     },
   }
   const context = {
@@ -81,6 +88,13 @@ describe('PLAYER Courtside Overview FOW', () => {
     expect(html).toContain('50–66')
     expect(html).toContain('ESTIMACIÓN MAYOR')
     expect(html).toContain('Forma aproximada basada en scouting')
+    expect(html).toContain('ACTIVIDAD COMPETITIVA')
+    expect(html).toContain('PARTIDOS REGISTRADOS')
+    expect(html).toContain('15 PTS')
+    expect(html).toContain('40 MIN')
+    expect(html).toContain('índice scout 85/100')
+    expect(html).toContain('Los minutos disputados no indican su disponibilidad médica.')
+    expect(html).not.toContain('ESTABILIDAD / RIESGO')
     expect(html).not.toContain('Atributos individuales no conocidos')
     expect(html).not.toContain(SECRET_MORALE)
     expect(html).not.toContain(SECRET_AVAILABILITY)
@@ -93,7 +107,10 @@ describe('PLAYER Courtside Overview FOW', () => {
     const html = renderOpponentOverview(false)
     expect(html).toContain('PERFIL POR COMPLETAR')
     expect(html).toContain('0/0 atributos estimados')
-    expect(html).toContain('No disponemos de una fuente autorizada')
+    expect(html).toContain('ACTIVIDAD COMPETITIVA')
+    expect(html).toContain('PARTIDOS REGISTRADOS')
+    expect(html).toContain('Los minutos disputados no indican su disponibilidad médica.')
+    expect(html).not.toContain('ESTABILIDAD / RIESGO')
     expect(html).not.toContain('po-cs-radar__shape')
     expect(html).not.toContain(SECRET_MORALE)
     expect(html).not.toContain(SECRET_AVAILABILITY)
