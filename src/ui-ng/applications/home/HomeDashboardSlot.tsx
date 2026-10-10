@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { getPlayerContractStatus } from '@/domain/contract'
 import { getCashAccountBalances, getFinancialHealthSnapshot } from '@/domain/finance'
@@ -9,7 +9,7 @@ import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary
 import { formatMoney } from '@/ui/formatters'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import {
-  standingsClassificationPoints,
+  standingsPct,
   type CompetitionWorkspaceModel,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
 import {
@@ -24,7 +24,7 @@ import {
   type HomeDashboardModuleId,
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
-import { homeStandingsWindow } from './homeStandingsDigest'
+import { homeStandingStreaks } from './homeStandingsMetrics'
 import { HomeRecentResults, HomeMedicalReport, HomeTrainingAgenda } from './HomeExtraModules'
 import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
 import {
@@ -95,7 +95,7 @@ export function HomeDashboardSlot({
   }, [open])
 
   return (
-    <section className={`home-slot ng-holo-panel${moduleId === 'leaders' ? ' home-slot--leaders' : ''}`} ref={rootRef}>
+    <section className={`home-slot ng-holo-panel home-slot--${moduleId}`} ref={rootRef}>
       <header className="home-slot__header">
         <button
           aria-controls={menuId}
@@ -219,16 +219,16 @@ function HomePlayerLink({
 function StandingsModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   const competition = context.competition
   const standings = competition?.standings ?? []
-  const digest = homeStandingsWindow(standings, context.teamId)
+  const streaks = useMemo(() => homeStandingStreaks(context.world, competition?.seasonId ?? context.world.currentSeasonId), [context.world, competition?.seasonId])
   if (standings.length === 0 || competition == null) {
     return <p className="ng-canon__empty">Sin clasificación disponible.</p>
   }
   return (
     <div className="home-standings competition-standings">
       <div className="home-standings__digest">
-        <span>{digest.length} de {standings.length} equipos</span>
+        <span>{competition.competitionName} · {standings.length} equipos</span>
         <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId,section:'standings'},'push','standings')}>
-          Clasificación completa ↗
+          Ver en Competición ↗
         </button>
       </div>
       <div className="home-slot-table__head">
@@ -237,18 +237,21 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
         <span title="Partidos jugados">PJ</span>
         <span title="Ganados">G</span>
         <span title="Perdidos">P</span>
-        <span title="Diferencia de anotación">Dif</span>
-        <span title="Puntos de clasificación">Pts</span>
+        <span title="Porcentaje de victorias">%</span>
+        <span title="Puntos a favor">PF</span>
+        <span title="Puntos en contra">PC</span>
+        <span title="Diferencia de puntos">DIF</span>
+        <span title="Racha de victorias o derrotas">RAC</span>
       </div>
       <ol className="home-slot-table">
-        {digest.map((row, index) => {
+        {standings.map((row) => {
           const zone = standingsZoneClassName(
             standingsZoneForPosition(row.position, competition.standingsZoneBands),
           )
           const teamName = context.world.teams[row.teamId]?.name ?? row.teamId
           return (
             <li
-              className={[row.teamId === context.teamId ? 'is-user' : undefined, zone, index>0 && row.position-digest[index-1]!.position>1?'has-gap':undefined].filter(Boolean).join(' ') || undefined}
+              className={[row.teamId === context.teamId ? 'is-user' : undefined, zone].filter(Boolean).join(' ') || undefined}
               key={row.teamId}
             >
               <span className="is-pos">{row.position}</span>
@@ -256,8 +259,11 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
               <span className="is-num">{row.played}</span>
               <span className="is-num">{row.wins}</span>
               <span className="is-num">{row.losses}</span>
+              <span className="is-num is-pct">{standingsPct(row)}</span>
+              <span className="is-num">{row.pointsFor}</span>
+              <span className="is-num">{row.pointsAgainst}</span>
               <span className="is-num">{row.pointDifference > 0 ? `+${row.pointDifference}` : row.pointDifference}</span>
-              <span className="is-num is-pts">{standingsClassificationPoints(row)}</span>
+              <span className="is-num is-streak">{streaks.get(row.teamId) ?? '—'}</span>
             </li>
           )
         })}
