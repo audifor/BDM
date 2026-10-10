@@ -25,6 +25,7 @@ import {
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { homeStandingsWindow } from './homeStandingsDigest'
+import { HomeRecentResults, HomeMedicalReport, HomeTrainingAgenda } from './HomeExtraModules'
 import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
 import {
   HOME_LEADER_CATEGORIES,
@@ -164,6 +165,12 @@ function HomeModuleBody({
       return <InboxModule context={context} />
     case 'news':
       return <NewsModule context={context} />
+    case 'results':
+      return <HomeRecentResults context={context} />
+    case 'injuries':
+      return <HomeMedicalReport context={context} />
+    case 'training-agenda':
+      return <HomeTrainingAgenda context={context} />
   }
 }
 
