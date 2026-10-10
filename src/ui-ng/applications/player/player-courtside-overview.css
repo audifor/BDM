@@ -447,3 +447,66 @@
   .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract,
   .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract {grid-column:3;grid-row:2;}
 }
+
+
+/*
+ * OVERVIEW FOW alignment. Opponent DNA, spider and Manager Read now use
+ * organization-scoped evaluations; the own-roster Courtside style is intact.
+ */
+.po-cs-dna__chips .po-cs-chip--estimate {
+  color:var(--cs-text);
+  border-color:color-mix(in srgb,var(--cs-lime) 46%,var(--cs-line2));
+  background:color-mix(in srgb,var(--cs-lime) 7%,var(--cs-s2));
+  font-weight:700;
+  font-size:12px;
+}
+.po-cs-private-unknown {
+  padding:9px 10px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+  color:var(--cs-text2)!important;
+  font:500 12px/1.4 var(--cs-font)!important;
+}
+.po-cs-radar--scouted .po-cs-radar__shape {
+  stroke-width:1.5;
+  fill:color-mix(in srgb,var(--cs-lime) 12%,transparent);
+}
+.po-cs-radar__disclaimer {
+  margin:0 13px 4px;
+  padding:4px 8px;
+  border:1px solid var(--cs-line2);
+  border-radius:7px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  text-align:center;
+  font:500 11px/1.3 var(--cs-font);
+}
+.po-cs-radar__unknown {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:240px;
+  padding:15px 19px;
+}
+.po-cs-radar__unknown > span {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+}
+.po-cs-radar__unknown strong {
+  font:700 21px/1.15 var(--cs-font-display);
+  color:var(--cs-text);
+}
+.po-cs-radar__unknown small {
+  font:500 12px/1.45 var(--cs-font);
+  color:var(--cs-text2);
+}
+.po-cs-dna__quadrant .po-cs-meter-row > strong {
+  max-width:145px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
