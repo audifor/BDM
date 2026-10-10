@@ -92,7 +92,7 @@ export function AttributeRadar({
           fill="none"
           r={radarRadius * level}
           stroke="rgba(116, 150, 168, 0.16)"
-          strokeWidth="0.6"
+          strokeWidth={courtsideFraming ? 0.4 : 0.6}
         />
       ))}
 
@@ -105,7 +105,7 @@ export function AttributeRadar({
             return `${x},${y}`
           }).join(' ')}
           stroke="rgba(116, 150, 168, 0.38)"
-          strokeWidth="1"
+          strokeWidth={courtsideFraming ? 0.65 : 1}
         />
       ))}
 
@@ -116,7 +116,7 @@ export function AttributeRadar({
           <line
             key={`spoke-${axis.key}`}
             stroke={isActive ? 'var(--ng-cyan-bright)' : 'rgba(116, 150, 168, 0.32)'}
-            strokeWidth={isActive ? 1.5 : 1}
+            strokeWidth={courtsideFraming ? (isActive ? 1.15 : 0.8) : (isActive ? 1.5 : 1)}
             x1={CENTER}
             x2={x}
             y1={CENTER}
@@ -132,7 +132,7 @@ export function AttributeRadar({
           points={comparisonPoints}
           stroke="var(--cs-orange)"
           strokeDasharray="5 3"
-          strokeWidth="1.8"
+          strokeWidth={courtsideFraming ? 1.15 : 1.8}
         />
       )}
       {comparisonSeries.filter((series) => axes.every((axis) => {
@@ -150,16 +150,16 @@ export function AttributeRadar({
           }).join(' ')}
           stroke={series.color}
           strokeDasharray={seriesIndex === 0 ? '6 3' : seriesIndex === 1 ? '2 3' : '9 2 2 2'}
-          strokeWidth="2.2"
+          strokeWidth={courtsideFraming ? 1.15 : 2.2}
           strokeLinejoin="round"
         />
       ))}
       <polygon
         fill={accent}
-        fillOpacity="0.13"
+        fillOpacity={courtsideFraming ? 0.075 : 0.13}
         points={polygonPoints}
         stroke={accent}
-        strokeWidth="2.2"
+        strokeWidth={courtsideFraming ? 1.5 : 2.2}
       />
 
       {axes.map((axis, index) => {
@@ -172,7 +172,7 @@ export function AttributeRadar({
             cx={x}
             cy={y}
             fill={isActive ? 'var(--ng-amber-bright)' : 'var(--ng-cyan)'}
-            r={isActive ? 3.5 : 3}
+            r={courtsideFraming ? (isActive ? 2.7 : 2.2) : (isActive ? 3.5 : 3)}
           />
         )
       })}
