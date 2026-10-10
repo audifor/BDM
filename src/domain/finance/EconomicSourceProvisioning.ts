@@ -210,6 +210,7 @@ function buildParticipationRevenueSource(profile: CompetitionEconomicProfile, po
     sourceAuthority: policy.sourceAuthority,
     generationPolicy: policy.generationPolicy,
     dueDatePolicy: policy.dueDatePolicy,
+    collectionPolicy: policy.collectionPolicy,
     competitionId: profile.competitionId,
     counterparty: policy.counterparty,
     paymentSchedule: policy.installments.map((installment) => ({ recognitionOn: installment.recognitionOn, dueOn: installment.dueOn, amount: installment.amount })),

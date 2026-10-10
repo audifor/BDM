@@ -60,7 +60,7 @@ import { createPlayerContract, getPlayerContractStatus, type PlayerContract } fr
 import { createContractServiceTimeBaseline, createContractServiceTimeCredit, type ContractServiceTimeBaseline, type ContractServiceTimeCredit } from '@/domain/contract/ContractServiceTime'
 import { createContractReviewDecision, type ContractReviewDecision, type ContractReviewDecisionId } from '@/domain/contract/ContractReviewDecision'
 import { createRetentionNegotiation, type ContractRetentionNegotiation } from '@/domain/contract/ContractRetentionNegotiation'
-import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement, assertOrganizationFinanceAccountShape } from '@/domain/finance'
+import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createFinancingAgreement, createFinancingDrawdown, createCapitalContribution, validateFinancingAgreementCollections, validateCapitalContributionCollections, validateCompetitionDistributionFacts, createCompetitionDistributionFact, type DebtInstrument, type FinancingAgreement, type FinancingDrawdown, type CapitalContribution, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement, assertOrganizationFinanceAccountShape } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { legacyMajorUnitsToMoney } from '@/domain/finance/FinanceCurrencyPolicy'
@@ -216,6 +216,10 @@ export interface GameWorld {
   readonly operatingCostSourcesById: Readonly<Record<string, OperatingCostSource>>
   readonly operatingCostFactsById: Readonly<Record<string, AuthorizedOperatingCostFact>>
   readonly debtInstrumentsById: Readonly<Record<string, DebtInstrument>>
+  /** BS16L financing truth: the agreements an Organization may draw on, the executed drawdown orders and the capital contributions it received. */
+  readonly financingAgreementsById: Readonly<Record<string, FinancingAgreement>>
+  readonly financingDrawdownsById: Readonly<Record<string, FinancingDrawdown>>
+  readonly capitalContributionsById: Readonly<Record<string, CapitalContribution>>
   readonly competitionDistributionFactsById: Readonly<Record<string, CompetitionDistributionFact>>
   readonly financialBudgetsById: Readonly<Record<string, FinancialBudget>>
   readonly budgetLinesById: Readonly<Record<string, BudgetLine>>
@@ -506,6 +510,9 @@ export interface CreateGameWorldInput {
   operatingCostSources?: readonly OperatingCostSource[]
   operatingCostFacts?: readonly AuthorizedOperatingCostFact[]
   debtInstruments?: readonly DebtInstrument[]
+  financingAgreements?: readonly FinancingAgreement[]
+  financingDrawdowns?: readonly FinancingDrawdown[]
+  capitalContributions?: readonly CapitalContribution[]
   competitionDistributionFacts?: readonly CompetitionDistributionFact[]
   financialBudgets?: readonly FinancialBudget[]
   budgetLines?: readonly BudgetLine[]
@@ -844,6 +851,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     operatingCostSourcesById: indexById((input.operatingCostSources ?? []).map(createOperatingCostSource), 'Operating cost source'),
     operatingCostFactsById: indexById((input.operatingCostFacts ?? []).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
     debtInstrumentsById: indexById((input.debtInstruments ?? []).map(createDebtInstrument), 'Debt instrument'),
+    financingAgreementsById: indexById((input.financingAgreements ?? []).map(createFinancingAgreement), 'Financing agreement'),
+    financingDrawdownsById: indexById((input.financingDrawdowns ?? []).map(createFinancingDrawdown), 'Financing drawdown'),
+    capitalContributionsById: indexById((input.capitalContributions ?? []).map(createCapitalContribution), 'Capital contribution'),
     competitionDistributionFactsById: indexById((input.competitionDistributionFacts ?? []).map(createCompetitionDistributionFact), 'Competition distribution fact'),
     financialBudgetsById: indexById((input.financialBudgets ?? []).map(createFinancialBudget), 'Financial budget'),
     budgetLinesById: indexById((input.budgetLines ?? []).map(createBudgetLine), 'Budget line'),
@@ -995,6 +1005,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   validateRevenueSources(Object.values(world.revenueSourcesById), world)
   validateOperatingCostCollections(Object.values(world.operatingCostSourcesById), Object.values(world.operatingCostFactsById), world)
   validateDebtInstrumentCollections(Object.values(world.debtInstrumentsById), world)
+  validateFinancingAgreementCollections(Object.values(world.financingAgreementsById), Object.values(world.financingDrawdownsById), world)
+  validateCapitalContributionCollections(Object.values(world.capitalContributionsById), world)
   validateCompetitionDistributionFacts(Object.values(world.competitionDistributionFactsById), world)
   validateFacilityFinancialBindingCollection(Object.values(world.facilityFinancialBindingsById), world)
   validateWorld(world)
@@ -1187,6 +1199,9 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     if (inputKey === 'operatingCostSources') assertOperatingCostSourcesAppendOnly(world, value as readonly OperatingCostSource[])
     if (inputKey === 'operatingCostFacts') assertOperatingCostFactsAppendOnly(world, value as readonly AuthorizedOperatingCostFact[])
     if (inputKey === 'debtInstruments') assertImmutableCollection(world.debtInstrumentsById, (value as readonly DebtInstrument[]).map(createDebtInstrument), 'Debt instrument')
+    if (inputKey === 'financingAgreements') assertImmutableCollection(world.financingAgreementsById, (value as readonly FinancingAgreement[]).map(createFinancingAgreement), 'Financing agreement')
+    if (inputKey === 'financingDrawdowns') assertImmutableCollection(world.financingDrawdownsById, (value as readonly FinancingDrawdown[]).map(createFinancingDrawdown), 'Financing drawdown')
+    if (inputKey === 'capitalContributions') assertImmutableCollection(world.capitalContributionsById, (value as readonly CapitalContribution[]).map(createCapitalContribution), 'Capital contribution')
     if (inputKey === 'competitionDistributionFacts') assertImmutableCollection(world.competitionDistributionFactsById, (value as readonly CompetitionDistributionFact[]).map(createCompetitionDistributionFact), 'Competition distribution fact')
     if (inputKey === 'financialBudgets' || inputKey === 'budgetLines' || inputKey === 'budgetRevisions' || inputKey === 'budgetAllocations' || inputKey === 'forecastAssumptions') assertPlanningCollectionsAppendOnly(world, inputKey, value as readonly { readonly id: string }[])
     if (inputKey === 'financialRegulationAssessments') assertImmutableCollection(world.financialRegulationAssessmentsById, (value as readonly FinancialRegulationAssessment[]).map(createFinancialRegulationAssessment), 'Financial assessment')
@@ -1244,6 +1259,8 @@ function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | un
   scope.run('boundary:validateRevenueSources', () => { validateRevenueSources(Object.values(updated.revenueSourcesById), updated) })
   scope.run('boundary:validateOperatingCostCollections', () => { validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated) })
   scope.run('boundary:validateDebtInstrumentCollections', () => { validateDebtInstrumentCollections(Object.values(updated.debtInstrumentsById), updated) })
+  scope.run('boundary:validateFinancingAgreementCollections', () => { validateFinancingAgreementCollections(Object.values(updated.financingAgreementsById), Object.values(updated.financingDrawdownsById), updated) })
+  scope.run('boundary:validateCapitalContributionCollections', () => { validateCapitalContributionCollections(Object.values(updated.capitalContributionsById), updated) })
   scope.run('boundary:validateCompetitionDistributionFacts', () => { validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated) })
   scope.run('boundary:validateFacilityFinancialBindingCollection', () => { validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated) })
   validateWorld(canonical, previous, scope)
@@ -1273,7 +1290,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   playerRegistrations: 'playerRegistrationsById', collegeRulesets: 'collegeRulesetsById', playerEnrollments: 'playerEnrollmentsById', collegeEligibilityAssessments: 'collegeEligibilityAssessmentsById', transferPortalRulesets: 'transferPortalRulesetsById', transferPortalEntries: 'transferPortalEntriesById', athleticsAidAgreements: 'athleticsAidAgreementsById', institutionBenefitsCaps: 'institutionBenefitsCapsById', settlementBenefitsAgreements: 'settlementBenefitsAgreementsById',
   contractReviewDecisions: 'contractReviewDecisionsById',
   retentionNegotiations: 'retentionNegotiationsById',
-  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
+  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', financingAgreements: 'financingAgreementsById', financingDrawdowns: 'financingDrawdownsById', capitalContributions: 'capitalContributionsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
@@ -1308,6 +1325,9 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   facilityFinancialBindings: (value) => indexById((value as readonly FacilityFinancialBinding[]).map(createFacilityFinancialBinding), 'Facility financial binding'),
   operatingCostFacts: (value) => indexById((value as readonly AuthorizedOperatingCostFact[]).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
   debtInstruments: (value) => indexById((value as readonly DebtInstrument[]).map(createDebtInstrument), 'Debt instrument'),
+  financingAgreements: (value) => indexById((value as readonly FinancingAgreement[]).map(createFinancingAgreement), 'Financing agreement'),
+  financingDrawdowns: (value) => indexById((value as readonly FinancingDrawdown[]).map(createFinancingDrawdown), 'Financing drawdown'),
+  capitalContributions: (value) => indexById((value as readonly CapitalContribution[]).map(createCapitalContribution), 'Capital contribution'),
   competitionDistributionFacts: (value) => indexById((value as readonly CompetitionDistributionFact[]).map(createCompetitionDistributionFact), 'Competition distribution fact'),
   governanceInstitutions: (value) => indexById((value as readonly GovernanceInstitution[]).map(createGovernanceInstitution), 'Governance institution'),
   places: (value) => indexById((value as readonly Place[]).map(createPlace), 'Place'),

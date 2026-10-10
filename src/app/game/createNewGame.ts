@@ -25,6 +25,8 @@ import { initializeBoardState } from '@/engine/board'
 import { initializeRecruitingCycle } from '@/engine/season'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
+import { prototypeOrganizationCurrencyAuthorities } from './PrototypeFinancePolicy'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -50,7 +52,11 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     ...cycle,
     institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
   })) })
-  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world))))
+  const planned = initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world)))
+  const career = ensureCanonicalFinanceFoundation(planned, {
+    explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned),
+    authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(planned),
+  })
   return processClubFinanceForDate(career, career.currentDate).world
 }
 

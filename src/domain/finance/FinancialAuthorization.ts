@@ -3,7 +3,7 @@ import { organizationIdFromString, fiscalPeriodIdFromString, type OrganizationId
 import type { GameWorld } from '@/domain/world/GameWorld'
 import { getCashBalancesByCurrency } from './CashFlowQueries'
 import { getBudgetComparison, getBudgetLifecycleStatus, type BudgetApproval, type FinancialBudget, type FinancialPlanningPeriod } from './BudgetForecasting'
-import { evaluateFinancialCommitment, sumReservedCapacity, type FinancialCommitmentDecision, type FinancialReservation } from './FinancialAuthority'
+import { evaluateFinancialCommitment, reserveFinancialCommitment, sumReservedCapacity, type EvaluateFinancialCommitmentInput, type FinancialCommitmentDecision, type FinancialReservation, type FinancialReservationResult } from './FinancialAuthority'
 import { createCurrencyCode, createMoney, type CurrencyCode, type Money } from './FinancialLedger'
 import { getOutstandingCommitments } from './RecognitionQueries'
 
@@ -194,12 +194,38 @@ export interface EvaluateOrganizationCommitmentInput {
   readonly reservations?: readonly FinancialReservation[]
 }
 
+export interface ReserveOrganizationCommitmentInput extends EvaluateOrganizationCommitmentInput {
+  /** Attribution of the binding operation. BS16M-B1 reserves contracts under `CONTRACT` + contract id. */
+  readonly sourceAuthority: string
+  readonly sourceEntityId: string
+  readonly createdOn?: GameDate | string
+}
+
 /**
  * Canonical world-bound decision path: liquidity comes from ledger postings, obligations from
  * outstanding canonical commitments, authorization from the approved budget fact and capacity
  * protection from canonical reservations. Callers no longer invent `authorizedHeadroom`.
  */
 export function evaluateOrganizationFinancialCommitment(world: GameWorld, input: EvaluateOrganizationCommitmentInput): FinancialCommitmentDecision {
+  return evaluateFinancialCommitment(organizationCommitmentInput(world, input))
+}
+
+/**
+ * BS16M-B1. Canonical world-bound evaluate → reserve path for one binding gameplay operation. It
+ * resolves exactly the same canonical inputs as `evaluateOrganizationFinancialCommitment` and then
+ * delegates, unchanged, to `reserveFinancialCommitment`, so a reservation is created only when
+ * canonical Finance reports `AFFORDABLE_NOW` and capacity is never protected by a second rule.
+ */
+export function reserveOrganizationFinancialCommitment(world: GameWorld, input: ReserveOrganizationCommitmentInput): FinancialReservationResult {
+  return reserveFinancialCommitment({
+    ...organizationCommitmentInput(world, input),
+    sourceAuthority: input.sourceAuthority,
+    sourceEntityId: input.sourceEntityId,
+    createdOn: input.createdOn ?? world.currentDate,
+  })
+}
+
+function organizationCommitmentInput(world: GameWorld, input: EvaluateOrganizationCommitmentInput): EvaluateFinancialCommitmentInput {
   const organizationId = organizationIdFromString(input.organizationId)
   const currency = createCurrencyCode(input.currency)
   const asOfDate = parseGameDate(input.asOfDate ?? world.currentDate)
@@ -208,7 +234,7 @@ export function evaluateOrganizationFinancialCommitment(world: GameWorld, input:
   const authorizationState = authorization.state === 'ACTIVE' && !scopeModelled ? 'NOT_PROVISIONED' : authorization.state
   const cashMinorUnits = getCashBalancesByCurrency(world, organizationId, asOfDate).find((row) => row.currencyCode === currency)?.totalCashMinorUnits ?? null
 
-  return evaluateFinancialCommitment({
+  return {
     organizationFinancialProfile: world.organizationFinancialProfilesById[organizationId] ?? null,
     organizationId,
     currency,
@@ -219,7 +245,7 @@ export function evaluateOrganizationFinancialCommitment(world: GameWorld, input:
     activeReservations: input.reservations ?? Object.values(world.financialReservationsById),
     authorization: { state: authorizationState, ...(authorization.budgetId === null ? {} : { budgetId: authorization.budgetId }) },
     ...(input.category === undefined ? {} : { commitmentCategory: input.category }),
-  })
+  }
 }
 
 function withinPeriod(period: { readonly startsOn: GameDate; readonly endsOn: GameDate }, date: GameDate): boolean {

@@ -1,7 +1,8 @@
 import type { MarketKnowledge } from '@/domain/market'
 import type { GameDate } from '@/domain/date'
 import { getPlayerContractStatus } from '@/domain/contract'
-import { getEcosystemForTeam, canTeamAffordAdditionalSalary, type GameWorld } from '@/domain/world'
+import { getEcosystemForTeam, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision, gameplayFinancialEvidence, type GameplayFinancialEvidence } from '@/domain/finance'
 import type { OrganizationId, PlayerId, TeamId } from '@/domain/ids'
 import type { ClubNeed } from '@/engine/clubNeeds'
 import type { MarketCandidateAssessment, MarketCandidateIntelligence } from './MarketCandidateIntelligence'
@@ -27,6 +28,8 @@ export interface MarketCandidateFeasibility {
   readonly marketAvailability?: MarketKnowledge['availability']
   readonly expectedSalary?: MarketSignalEvidence
   readonly affordability: Affordability
+  /** Canonical Finance evidence behind `affordability`; absent when affordability was not assessed. */
+  readonly canonicalFinance?: GameplayFinancialEvidence
   readonly currentContractAnnualSalary?: number
   readonly playerInterest?: MarketSignalEvidence
   readonly sellerWillingness?: MarketSignalEvidence
@@ -67,11 +70,22 @@ function assessCandidateFeasibility(
   const knowledge = clubMarketKnowledge(world.marketKnowledge, organizationId, candidate)
   const routeResult = acquisitionRoute(world, teamId, candidate)
   const expectedSalary = knownMoney(knowledge?.expectedSalary, knowledge)
+  // The product-facing AFFORDABLE/OVER_BUDGET label exists for existing contracts, but it is derived
+  // from the canonical Finance decision, and the canonical decision is preserved next to it.
+  const finance = expectedSalary === undefined || routeResult.route !== 'FREE_AGENT_SIGNING'
+    ? undefined
+    : evaluateTeamGameplayFinancialDecision(world, {
+      teamId,
+      action: 'PLAYER_SIGNING',
+      legacyAnnualAmountMajorUnits: expectedSalary.value,
+      sourceAuthority: 'MARKET_CANDIDATE_FEASIBILITY',
+      sourceEntityId: String(candidate.playerId),
+    })
   const affordability: Affordability = routeResult.route !== 'FREE_AGENT_SIGNING'
     ? 'NOT_APPLICABLE'
     : expectedSalary === undefined
       ? 'UNKNOWN'
-      : canTeamAffordAdditionalSalary(world, teamId, expectedSalary.value) ? 'AFFORDABLE' : 'OVER_BUDGET'
+      : finance!.allowed ? 'AFFORDABLE' : 'OVER_BUDGET'
   const activeContract = Object.values(world.contractsById).find((contract) => contract.playerId === candidate.playerId
     && getPlayerContractStatus(contract, world.currentDate) === 'active')
   const blockers = [
@@ -99,6 +113,7 @@ function assessCandidateFeasibility(
     ...(knowledge?.availability === undefined ? {} : { marketAvailability: knowledge.availability }),
     ...(expectedSalary === undefined ? {} : { expectedSalary }),
     affordability,
+    ...(finance === undefined ? {} : { canonicalFinance: gameplayFinancialEvidence(finance) }),
     ...(activeContract === undefined ? {} : { currentContractAnnualSalary: activeContract.compensation.annualSalary }),
     ...(knownSignal(knowledge?.playerInterest, knowledge) === undefined ? {} : { playerInterest: knownSignal(knowledge?.playerInterest, knowledge) }),
     ...(knownSignal(knowledge?.sellerWillingness, knowledge) === undefined ? {} : { sellerWillingness: knownSignal(knowledge?.sellerWillingness, knowledge) }),

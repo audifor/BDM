@@ -82,6 +82,29 @@ describe('CompetitionEconomicProfile data authority', () => {
     expect(() => createCompetitionEconomicProfile({ competitionId: COMPETITION, fiscalYearStartMonth: 9, currencyCode: EUR, label: 'x', approvedPolicyLabel: 'y', revenuePolicies: [], operatingCostPolicies: [] })).toThrow(/at least one economic policy/)
   })
 
+  it('carries the approved collection policy as data, defaulting to no collection at all', () => {
+    // Without an explicit decision a source owns its receivable: collection is never assumed.
+    const defaultPolicy = revenuePolicyOf(participationProfile(), 'COMPETITION_PARTICIPATION_DISTRIBUTION')!
+    expect(defaultPolicy.collectionPolicy).toBe('NONE')
+
+    const collecting = createCompetitionRevenuePolicy({
+      code: 'COMPETITION_PARTICIPATION_DISTRIBUTION',
+      category: 'COMPETITION',
+      currencyCode: EUR,
+      annualAmount: { currencyCode: EUR, minorUnits: 40_000_000 },
+      collectionPolicy: 'COLLECT_ON_DUE_DATE',
+      installments: [
+        { recognitionOn: '2026-10-01', dueOn: '2026-10-01', amount: { currencyCode: EUR, minorUnits: 20_000_000 } },
+        { recognitionOn: '2026-11-01', dueOn: '2026-11-01', amount: { currencyCode: EUR, minorUnits: 20_000_000 } },
+      ],
+      provenance,
+    })
+    expect(collecting.collectionPolicy).toBe('COLLECT_ON_DUE_DATE')
+    // The approved rule for a collected family: recognition and the contractual payment date are the same date.
+    expect(collecting.installments.every((installment) => installment.recognitionOn === installment.dueOn)).toBe(true)
+    expect(() => createCompetitionRevenuePolicy({ code: 'COMPETITION_PARTICIPATION_DISTRIBUTION', category: 'COMPETITION', currencyCode: EUR, annualAmount: { currencyCode: EUR, minorUnits: 20_000_000 }, collectionPolicy: 'AUTO_COLLECT_ALL' as never, installments: [{ recognitionOn: '2026-10-01', amount: { currencyCode: EUR, minorUnits: 20_000_000 } }], provenance })).toThrow(/collection policy/)
+  })
+
   it('cannot express payroll and cannot reach an unrelated cost family', () => {
     // The category list itself has no payroll concept, so no policy can duplicate BS16I contract payroll.
     expect(() => createCompetitionOperatingCostPolicy({ code: 'MATCH_OPERATIONS', category: 'PLAYER_SALARY' as never, currencyCode: EUR, perEventAmount: legacyMajorUnitsToMoney(1, EUR), provenance })).toThrow()

@@ -2,7 +2,8 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { competitionIdFromString, seasonIdFromString, type CompetitionId, type SeasonId } from '@/domain/ids'
 import { createTreasuryCounterparty, type TreasuryCounterparty } from './Treasury'
 import type { OperatingCostCategory } from './OperatingCostEngine'
-import type { RevenueCategory } from './RevenueEngine'
+import type { RevenueCategory, RevenueCollectionPolicy } from './RevenueEngine'
+import { REVENUE_COLLECTION_POLICIES } from './RevenueEngine'
 import { createFinancialSource, createMoney, type CurrencyCode, type FinancialSource, type Money } from './FinancialLedger'
 
 /**
@@ -70,6 +71,12 @@ export interface CompetitionRevenuePolicy {
   readonly recipientScope: EconomicRevenueRecipientScope
   readonly generationPolicy: 'EXPLICIT_SCHEDULE'
   readonly dueDatePolicy: 'ON_RECOGNITION'
+  /**
+   * How this policy's receivables become cash. `COLLECT_ON_DUE_DATE` means each installment's contractual payment
+   * date is also its collection date, so the same GameDate posts the receivable/revenue pair and then the cash
+   * receipt against that receivable; `NONE` leaves the claim outstanding. It is policy data, never a global rule.
+   */
+  readonly collectionPolicy: RevenueCollectionPolicy
   readonly sourceAuthority: 'COMPETITION'
   readonly installments: readonly EconomicPolicyInstallment[]
   readonly counterparty: TreasuryCounterparty | null
@@ -122,11 +129,14 @@ export function createCompetitionRevenuePolicy(input: {
   readonly currencyCode: string
   readonly annualAmount: Money | { readonly currencyCode: string; readonly minorUnits: number }
   readonly recipientScope?: EconomicRevenueRecipientScope
+  readonly collectionPolicy?: RevenueCollectionPolicy
   readonly installments: readonly { readonly recognitionOn: GameDate | string; readonly dueOn?: GameDate | string | null; readonly amount: Money | { readonly currencyCode: string; readonly minorUnits: number } }[]
   readonly counterparty?: TreasuryCounterparty | null
   readonly provenance: FinancialSource
 }): CompetitionRevenuePolicy {
   if (!ECONOMIC_REVENUE_POLICY_CODES.includes(input.code)) throw new TypeError(`Unsupported economic revenue policy code: ${String(input.code)}`)
+  const collectionPolicy = input.collectionPolicy ?? 'NONE'
+  if (!REVENUE_COLLECTION_POLICIES.includes(collectionPolicy)) throw new TypeError(`Unsupported economic revenue collection policy: ${String(collectionPolicy)}`)
   const currencyCode = createCurrencyCodeOf(input.currencyCode)
   const annualAmount = positivePolicyMoney(input.annualAmount, 'Economic revenue policy annual amount', currencyCode)
   if (input.installments.length === 0) throw new TypeError('Economic revenue policy requires at least one installment')
@@ -150,6 +160,7 @@ export function createCompetitionRevenuePolicy(input: {
     recipientScope: input.recipientScope ?? 'PARTICIPATING_ORGANIZATIONS',
     generationPolicy: 'EXPLICIT_SCHEDULE' as const,
     dueDatePolicy: 'ON_RECOGNITION' as const,
+    collectionPolicy,
     sourceAuthority: 'COMPETITION' as const,
     installments,
     counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty),

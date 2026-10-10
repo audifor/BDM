@@ -1,10 +1,10 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
-import { createFinancialCommitment, legacyMajorUnitsToMoney } from '@/domain/finance'
+import { bindTeamContractCapacity, contractOwnsCapacityAuthority, createFinancialCommitment, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, deriveGovernanceDecisionStatus, resolveGovernanceDecisionEventAuthorityGrantIds, resolveGovernanceDecisionRights, validateGovernanceDecisionLifecycle } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
-import { getPlayerRosterTeamId, isPlayerFreeAgent, canTeamAffordAdditionalSalary, updateGameWorld, type GameWorld } from '@/domain/world'
+import { getPlayerRosterTeamId, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import { resolveSigningExecutionAuthority } from '@/engine/market'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 
@@ -62,8 +62,20 @@ export function completeAcceptedFreeAgentSigning(
     || (negotiation.agentFee !== undefined && (!Number.isSafeInteger(negotiation.agentFee) || negotiation.agentFee < 0))) {
     return result('BLOCKED', world, negotiation, 'ACCEPTED_TERMS_INVALID')
   }
-  if (!canTeamAffordAdditionalSalary(world, team.id, negotiation.salary, world.currentDate)) {
-    return result('FINANCIAL_BLOCK', world, negotiation, 'CURRENT_PAYROLL_CANNOT_AFFORD_ACCEPTED_SALARY')
+  const contractId = contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
+  // Binding recheck: the accepted terms were negotiated against an earlier world, so canonical Finance
+  // is re-evaluated against the current world immediately before the signing becomes a fact. The
+  // reservation is an atomic bridge: it is published CONSUMED together with the contract, because the
+  // contractual schedule owns the signing's capacity from the moment the contract exists.
+  const capacity = bindTeamContractCapacity(world, {
+    teamId: team.id,
+    action: 'PLAYER_SIGNING',
+    legacyAnnualAmountMajorUnits: negotiation.salary,
+    contractId: String(contractId),
+    effectiveDate: world.currentDate,
+  })
+  if (!capacity.allowed) {
+    return result('FINANCIAL_BLOCK', world, negotiation, gameplayFinancialBlockReason(capacity.decision))
   }
 
   const owner = resolveSigningExecutionAuthority(world, team.id)
@@ -73,7 +85,6 @@ export function completeAcceptedFreeAgentSigning(
   const governance = resolvePlayerContractSigningGovernance(world, team.id, negotiation.id)
   if (governance.status !== 'AUTHORIZED') return result(governance.status, world, negotiation, governance.reason)
 
-  const contractId = contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
   const transactionId = playerTransactionIdFromString(`transaction:signed-free-agent:${negotiation.id}`)
   const existingContract = world.contractsById[contractId]
   const existingTransaction = world.playerTransactionsById[transactionId]
@@ -162,8 +173,14 @@ export function completeAcceptedFreeAgentSigning(
     negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== negotiation.id), signed],
     ...(rolePromise === undefined ? {} : { rolePromises: [...Object.values(world.rolePromisesById), rolePromise] }),
     ...(feeCommitment === undefined ? {} : { financialCommitments: [...Object.values(world.financialCommitmentsById), feeCommitment] }),
+    financialReservations: [...capacity.reservations],
     governanceDecisionEvents: [...Object.values(world.governanceDecisionEventsById), executed],
   })
+  // Capacity authority proof: the published world must already derive this contract's obligation, or the
+  // contract would exist without any authority owning the capacity its bridge released.
+  if (!contractOwnsCapacityAuthority(changed, { contractId: String(contractId), organizationId: team.organizationId })) {
+    return result('FINANCIAL_BLOCK', world, negotiation, 'CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE')
+  }
   const planned = reviewClubManagementPlanning(changed, team.id, 'MATERIAL_ROSTER_CHANGE').world
   return { status: 'SIGNED', world: planned, negotiation: signed, contractId: contract.id }
 }

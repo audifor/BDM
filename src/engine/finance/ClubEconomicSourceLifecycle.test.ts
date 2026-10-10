@@ -12,6 +12,7 @@ import {
   getEligibleDuePayablesForDate,
   getOpenPayables,
   getTrialBalanceAsOfDate,
+  getUncollectedRecognizedRevenue,
   getUngroundedEconomicSources,
   legacyMajorUnitsToMoney,
   materializeOrganizationOpeningEconomicState,
@@ -27,9 +28,11 @@ import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSa
 /**
  * BS16K-C certification: the provisioned demo economic sources flow through the existing canonical engines on the
  * real daily lifecycle. Participation revenue materializes exactly on its declared installment dates as revenue
- * recognition plus a receivable (never cash), match operations materialize one expense and payable per real home
- * game for the home Organization only, payroll is never duplicated, Treasury consumes the resulting payables
- * through its unchanged all-or-none policy, and 180 days of ledger stay balanced and fully explainable.
+ * recognition plus a receivable, and — because the approved policy declares its payment dates collectible — the
+ * same GameDate collects that receivable into canonical cash through the Treasury primitive (never a global
+ * auto-collect rule). Match operations materialize one expense and payable per real home game for the home
+ * Organization only, payroll is never duplicated, Treasury consumes the resulting payables through its unchanged
+ * all-or-none policy, and 180 days of ledger stay balanced, reconciled and fully explainable.
  */
 const ORGANIZATION = 'acb-team-rmb'
 const EUR = 'EUR'
@@ -67,7 +70,7 @@ function openingCapital(organizationId: string, cashMinorUnits: number, effectiv
 }
 
 describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
-  it('materializes one participation installment of EUR 200,000 on its own fiscal-month date, and no earlier', () => {
+  it('recognizes one participation installment of EUR 200,000 on its fiscal-month date and collects it into cash the same day', () => {
     const world = advanceTo(createAcbTestGame(), createGameDate(2026, 9, 30))
     expect(revenueRecognitionsOf(world)).toHaveLength(0)
 
@@ -77,16 +80,25 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
     expect(recognized[0]!.amount.minorUnits).toBe(INSTALLMENT_MINOR_UNITS)
     expect(String(recognized[0]!.category)).toBe('COMPETITION')
     expect(String(recognized[0]!.recognizedOn)).toBe('2026-10-01')
-    // Revenue is recognized as a receivable: the canonical engine never turns it into cash.
-    expect(Object.values(onInstallment.receivablesById).filter((item) => String(item.organizationId) === ORGANIZATION)).toHaveLength(1)
-    expect(cashOf(onInstallment, ORGANIZATION, '2026-10-01')).toBe(0)
+    // Revenue is recognized as a receivable first, then collected on its own contractual payment date, because
+    // the approved policy declares `COLLECT_ON_DUE_DATE`: DR receivable / CR revenue, then DR cash / CR receivable.
+    const receivables = Object.values(onInstallment.receivablesById).filter((item) => String(item.organizationId) === ORGANIZATION)
+    expect(receivables).toHaveLength(1)
+    expect(String(receivables[0]!.dueOn)).toBe('2026-10-01')
+    expect(cashOf(onInstallment, ORGANIZATION, '2026-10-01')).toBe(INSTALLMENT_MINOR_UNITS)
+    const collections = Object.values(onInstallment.treasuryApplicationsById).filter((item) => String(item.obligationId) === String(receivables[0]!.id))
+    expect(collections).toHaveLength(1)
+    expect(collections[0]!.obligationKind).toBe('RECEIVABLE')
+    expect(collections[0]!.amount.minorUnits).toBe(INSTALLMENT_MINOR_UNITS)
 
     // The next day adds nothing, and the next installment arrives on the next fiscal-month first date.
     const quiet = advanceTo(onInstallment, createGameDate(2026, 10, 31))
     expect(revenueRecognitionsOf(quiet)).toHaveLength(1)
+    expect(cashOf(quiet, ORGANIZATION, '2026-10-31')).toBe(INSTALLMENT_MINOR_UNITS)
     const next = advanceTo(quiet, createGameDate(2026, 11, 1))
     expect(revenueRecognitionsOf(next)).toHaveLength(2)
     expect(revenueRecognitionsOf(next).map((item) => item.amount.minorUnits)).toEqual([INSTALLMENT_MINOR_UNITS, INSTALLMENT_MINOR_UNITS])
+    expect(cashOf(next, ORGANIZATION, '2026-11-01')).toBe(2 * INSTALLMENT_MINOR_UNITS)
   })
 
   it('replays a processed installment date as a no-op across save/load', () => {
@@ -151,10 +163,13 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
       .reduce((sum, entry) => sum + entry.amount.minorUnits, 0)
     expect(nonOperations.reduce((sum, item) => sum + item.amount.minorUnits, 0)).toBe(scheduleTotal)
     expect(operations.reduce((sum, item) => sum + item.amount.minorUnits, 0)).toBe(MATCH_OPERATIONS_MINOR_UNITS)
-    // Documented pre-existing property of the ACB demo fixture (not introduced here): unlike the prototype career
-    // it does not process its own creation date, so a contract boundary dated exactly on D is never materialized.
-    // The BS16K-C report records this as a remaining lifecycle gap; the reachable payroll cluster is 2026-09-26.
-    expect(onEvent.expenseRecognitionsById === undefined || Object.values(onEvent.expenseRecognitionsById).every((item) => String(item.recognizedOn) !== start)).toBe(true)
+    // The ACB demo staff payroll financial schedule starts on the canonical Season start (2026-09-26) while its
+    // staff stay employed and usable from the fixture clock (2026-09-19), so no guaranteed occurrence is ever due
+    // on the fixture's own creation date and nothing can be lost by creation not processing it.
+    const fixtureClock: GameDate = createAcbTestGame().currentDate
+    expect(getContractFinancialSchedule(onEvent, { organizationId: ORGANIZATION, currencyCode: EUR, includeConditional: true })
+      .filter((entry) => entry.compensationStatus === 'GUARANTEED' && compareGameDates(entry.effectiveOn, fixtureClock) === 0)).toEqual([])
+    expect(Object.values(onEvent.expenseRecognitionsById ?? {}).every((item) => String(item.recognizedOn) !== fixtureClock)).toBe(true)
   })
 
   it('leaves the resulting payables to the unchanged Treasury policy: unfunded batches settle nothing', () => {
@@ -168,9 +183,12 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
     expect(String(operationsPayable!.amount.currencyCode)).toBe(EUR)
     const due = getEligibleDuePayablesForDate(onEvent, { organizationId: ORGANIZATION, currencyCode: EUR, date: onEvent.currentDate })
     expect(due.some((entry) => String(entry.payable.id) === String(operationsPayable!.id))).toBe(true)
-    // Zero cash means the whole batch is unpayable, so the unchanged all-or-none policy settles nothing.
-    expect(Object.keys(onEvent.treasuryApplicationsById)).toEqual([])
-    expect(cashOf(onEvent)).toBe(0)
+    // The club's only cash is the participation installments it collected, which cannot cover the payroll batch,
+    // so the unchanged all-or-none policy settles nothing.
+    const collected = Object.values(onEvent.treasuryApplicationsById).filter((item) => item.obligationKind === 'RECEIVABLE' && String(item.organizationId) === ORGANIZATION)
+    expect(collected.length).toBeGreaterThan(0)
+    expect(cashOf(onEvent)).toBe(collected.reduce((sum, item) => sum + item.amount.minorUnits, 0))
+    expect(Object.values(onEvent.treasuryApplicationsById).some((item) => item.obligationKind === 'PAYABLE')).toBe(false)
     expect(getOpenPayables(onEvent, ORGANIZATION, onEvent.currentDate).length).toBeGreaterThan(0)
   })
 
@@ -182,7 +200,8 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
 
     const firstEvent = getOperatingCostSchedule(early, { organizationId: ORGANIZATION })[0]!
     const onEvent = advanceTo(funded.world, firstEvent.recognitionOn)
-    const settled = Object.values(onEvent.treasuryApplicationsById)
+    const settled = Object.values(onEvent.treasuryApplicationsById).filter((application) => application.obligationKind === 'PAYABLE' && String(application.organizationId) === ORGANIZATION)
+    const collected = Object.values(onEvent.treasuryApplicationsById).filter((application) => application.obligationKind === 'RECEIVABLE' && String(application.organizationId) === ORGANIZATION)
 
     // The same unchanged batch policy settled both the payroll payables created on 2026-09-26 and the new
     // match-operations payable, because the funded club's cash covered the complete due batch.
@@ -191,17 +210,19 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
     expect(payablesOf(onEvent).some((payable) => payable.amount.minorUnits === MATCH_OPERATIONS_MINOR_UNITS)).toBe(true)
     expect(getOpenPayables(onEvent, ORGANIZATION, onEvent.currentDate)).toHaveLength(0)
     const settledTotal = settled.reduce((sum, settlement) => sum + settlement.amount.minorUnits, 0)
-    expect(cashOf(onEvent)).toBe(30_000_000_000 - settledTotal)
+    const collectedTotal = collected.reduce((sum, application) => sum + application.amount.minorUnits, 0)
+    expect(cashOf(onEvent)).toBe(30_000_000_000 + collectedTotal - settledTotal)
     expect(expensesOf(onEvent).some((item) => String(item.category) === 'MATCH_OPERATIONS')).toBe(true)
   })
 
-  it('keeps 180 demo days balanced, duplicate-free and fully explainable from the ledger', () => {
+  it('keeps 180 demo days balanced, reconciled, duplicate-free and fully explainable from the ledger', () => {
     const start = createAcbTestGame()
     const openingCash = cashOf(start)
     const startDate: GameDate = start.currentDate
     const endDate = createGameDate(2027, 3, 17)
     const world = advanceTo(start, endDate)
     expect(String(world.currentDate)).toBe(String(endDate))
+    expect(openingCash).toBe(0)
 
     const installments = acbDemoParticipationInstallments().filter((installment) => compareGameDates(installment.recognitionOn, startDate) >= 0 && compareGameDates(installment.recognitionOn, endDate) <= 0)
     const homeGames = getOperatingCostSchedule(start, { organizationId: ORGANIZATION }).filter((entry) => compareGameDates(entry.recognitionOn, startDate) >= 0 && compareGameDates(entry.recognitionOn, endDate) <= 0)
@@ -214,21 +235,32 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
     expect(expensesOf(world).filter((item) => String(item.category) === 'MATCH_OPERATIONS')).toHaveLength(homeGames.length)
     expect(getUngroundedEconomicSources(world)).toEqual([])
 
-    // Cash identity holds exactly: opening cash + receipts - payments = ending cash (all zero on an unfunded career).
+    // Cash identity holds exactly: opening cash + receipts - payments = ending cash, where the receipts are the
+    // declared collectible installments and no payment happened because the payroll batch is never fully fundable.
     const totals = getCashFlowTotalsBetween(world, ORGANIZATION, startDate, endDate)
     const receipts = totals.reduce((sum, row) => sum + row.inflowMinorUnits, 0)
     const payments = totals.reduce((sum, row) => sum + row.outflowMinorUnits, 0)
     expect(openingCash + receipts - payments).toBe(cashOf(world))
-    expect(cashOf(world)).toBe(0)
-    // Revenue is a receivable, so it is reported as one and never as cash.
-    const receivables = Object.values(world.receivablesById).filter((item) => String(item.organizationId) === ORGANIZATION)
-    expect(receivables.reduce((sum, item) => sum + item.amount.minorUnits, 0)).toBeGreaterThan(0)
+    expect(payments).toBe(0)
+    expect(receipts).toBe(installments.length * INSTALLMENT_MINOR_UNITS)
+    expect(cashOf(world)).toBe(installments.length * INSTALLMENT_MINOR_UNITS)
 
-    // The ledger is balanced and obligations stay outstanding because no cash exists.
+    // Every declared revenue occurrence became canonical cash through the receivable-collection authority, and no
+    // receivable is left outstanding, so revenue and liquidity reconcile exactly.
+    const receivables = Object.values(world.receivablesById).filter((item) => String(item.organizationId) === ORGANIZATION)
+    expect(receivables).toHaveLength(installments.length)
+    expect(receivables.reduce((sum, item) => sum + item.amount.minorUnits, 0)).toBe(receipts)
+    const receivableCollections = Object.values(world.treasuryApplicationsById).filter((item) => item.obligationKind === 'RECEIVABLE' && String(item.organizationId) === ORGANIZATION)
+    expect(receivableCollections).toHaveLength(installments.length)
+    expect(receivableCollections.reduce((sum, item) => sum + item.amount.minorUnits, 0)).toBe(receipts)
+    expect(getUncollectedRecognizedRevenue(world, ORGANIZATION, endDate)).toHaveLength(0)
+
+    // The ledger is balanced and obligations stay outstanding: no payable was settled, because the payroll and
+    // match-operations batch is never fully covered by the club's collected cash.
     const trial = getTrialBalanceAsOfDate(world, endDate)
     expect(trial.reduce((sum, row) => sum + row.debitMinorUnits, 0)).toBe(trial.reduce((sum, row) => sum + row.creditMinorUnits, 0))
     expect(getDuePayables(world, ORGANIZATION, endDate).length).toBeGreaterThan(0)
-    expect(Object.keys(world.treasuryApplicationsById)).toEqual([])
+    expect(Object.values(world.treasuryApplicationsById).every((item) => item.obligationKind === 'RECEIVABLE')).toBe(true)
   })
 
   it('keeps the ordinary day cheap and the occurrence day bounded', () => {
@@ -239,15 +271,32 @@ describe('BS16K-C economic source lifecycle', { timeout: 300_000 }, () => {
     })
     const busy = measure(42, () => { advanceTo(world, createGameDate(2026, 10, 31)) })
 
-    // Measured on this 18-club demo career: an ordinary (no-occurrence) day is ~0.1 s and a day carrying ~9
-    // economic occurrences is ~0.3 s. The extra work is the canonical per-occurrence world update the existing
-    // engines already perform (BS16I payroll does the same on its cluster date); the source lookup itself is
-    // bounded by the source count and never scans matches, so no world-wide rescan was introduced.
+    // Measured on this 18-club demo career: an ordinary (no-occurrence) day is ~0.1 s, and the 42-day window
+    // that contains the canonical Season-start payroll cluster (241 player + 576 staff occurrences after the
+    // approved staff financial-schedule change) averages under 1 s per day. The extra work is the canonical
+    // per-occurrence world update the existing engines already perform; the source lookup itself is bounded by the
+    // source count and never scans matches, so no world-wide rescan was introduced, and production payroll
+    // semantics were not changed to make this artificial 18-club burst cheaper.
     expect(quiet.averagePerDayMs).toBeLessThan(250)
-    expect(busy.averagePerDayMs).toBeLessThan(700)
+    expect(busy.averagePerDayMs).toBeLessThan(1000)
     expect(getRevenueSchedule(world, { organizationId: ORGANIZATION })).toHaveLength(12)
     expect(Object.keys(world.revenueSourcesById)).toHaveLength(18)
     expect(Object.keys(world.operatingCostSourcesById)).toHaveLength(18)
+  })
+
+  it('provisions the approved collection policy onto the canonical revenue source', () => {
+    const world = createAcbTestGame()
+    const source = world.revenueSourcesById[economicRevenueSourceId(createAcbDemoEconomicProfileV1(), ORGANIZATION) as never]!
+
+    // The demo policy declares its installments collectible on their contractual payment dates, and that decision
+    // travels with the source, so the daily lifecycle collects exactly this family and nothing else.
+    expect(source.collectionPolicy).toBe('COLLECT_ON_DUE_DATE')
+    expect(source.paymentSchedule.every((term) => term.dueOn !== null && term.dueOn === term.recognitionOn)).toBe(true)
+    // The operating-cost family owns no receivable, so it carries no collection decision.
+    expect(Object.values(world.operatingCostSourcesById).every((item) => item.category === 'MATCH_OPERATIONS')).toBe(true)
+    // Every provisioned source keeps authored amounts and provenance: no amount is derived from a budget.
+    expect(source.provenance.kind).toBe('COMPETITION_ECONOMIC_PROFILE')
+    expect(source.sourceAuthority).toBe('COMPETITION')
   })
 
   it('keeps the demo profile identity and its occurrence count deterministic across worlds', () => {

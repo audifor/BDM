@@ -19,6 +19,17 @@ export interface StaffContract {
   readonly kind: StaffContractKind
   readonly term: StaffContractTerm
   readonly compensation: StaffContractCompensation
+  /**
+   * The date the guaranteed staff payroll **financial schedule** is anchored on, when it differs from the
+   * employment term start. Employment and its financial schedule are two different meanings: a Staff member can
+   * be under contract (available, assigned, selectable) from `term.startsOn` while the salary schedule starts
+   * later — for example when a career begins mid-preseason and the canonical Season starts afterwards.
+   *
+   * Absent, the schedule is anchored on `term.startsOn`, which is the production payroll semantics and stays
+   * unchanged. Present, it must fall inside the term, and every consumer of the financial schedule (payroll
+   * occurrences, committed payroll, forecasting, financial health) anchors on it instead.
+   */
+  readonly financialScheduleStartsOn?: GameDate
   readonly termination?: StaffContractTermination
 }
 
@@ -27,6 +38,10 @@ export function createStaffContract(input: StaffContract): StaffContract {
   const term = { startsOn: parseGameDate(input.term.startsOn), expiresOn: parseGameDate(input.term.expiresOn) }
   if (compareGameDates(term.startsOn, term.expiresOn) >= 0) throw new RangeError('Staff contract term must start before it expires')
   if (!Number.isFinite(input.compensation.annualSalary) || input.compensation.annualSalary <= 0) throw new RangeError('Staff contract annual salary must be a positive finite number')
+  const financialScheduleStartsOn = input.financialScheduleStartsOn === undefined ? undefined : parseGameDate(input.financialScheduleStartsOn)
+  if (financialScheduleStartsOn !== undefined && (compareGameDates(financialScheduleStartsOn, term.startsOn) < 0 || compareGameDates(financialScheduleStartsOn, term.expiresOn) >= 0)) {
+    throw new RangeError('Staff contract financial schedule must start inside the employment term')
+  }
   const termination = input.termination === undefined ? undefined : { effectiveOn: parseGameDate(input.termination.effectiveOn), reason: input.termination.reason }
   return {
     id: staffContractIdFromString(input.id),
@@ -35,8 +50,14 @@ export function createStaffContract(input: StaffContract): StaffContract {
     kind: 'standard',
     term,
     compensation: { annualSalary: input.compensation.annualSalary },
+    ...(financialScheduleStartsOn === undefined ? {} : { financialScheduleStartsOn }),
     ...(termination === undefined ? {} : { termination }),
   }
+}
+
+/** The single canonical anchor of a Staff contract's guaranteed payroll schedule: its own financial start, or the term start. */
+export function staffFinancialScheduleStartsOn(contract: StaffContract): GameDate {
+  return contract.financialScheduleStartsOn ?? contract.term.startsOn
 }
 
 /**

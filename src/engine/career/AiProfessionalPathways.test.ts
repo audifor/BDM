@@ -101,7 +101,9 @@ it('defers an individually affordable rookie contract that would leave the minim
   const { createDraftForCompletedSeason, openDraft, getCurrentDraftPick, makeDraftSelection } = await import('@/engine/draft')
   const { applyMatchResult } = await import('@/engine/match')
   const { finalizeSeason } = await import('@/engine/season')
-  const { getFreeAgents, getTeamFinancialSnapshot } = await import('@/domain/world')
+  const { getFreeAgents } = await import('@/domain/world')
+  const { getOrganizationFinancialAuthorization } = await import('@/domain/finance')
+  const { authorizeTeamSalaryForTest, financingDrawdownForTest } = await import('@/domain/finance/financeTestFixture')
   const { getPlayerMarketTerms } = await import('@/engine/market/PlayerMarketTerms')
   const { releasePlayer } = await import('@/app/market/MarketService')
   let world = createNewGame()
@@ -124,12 +126,18 @@ it('defers an individually affordable rookie contract that would leave the minim
   const completion = getFreeAgents(world).filter(item => item.gender === team.gender).map(item => getPlayerMarketTerms(world, item.id).annualSalary).sort((a,b) => a-b).slice(0,3).reduce((sum,salary) => sum+salary,0)
   expect(completion).toBeGreaterThan(0)
   const salary = world.salaryRulesBySeasonId[season.id]!.rookieScale!.entries.find(item => item.pickOrder === pick.order)!.cashSalary
-  const payroll = getTeamFinancialSnapshot(world, team.id).currentPlayerPayroll
-  const quoteWorld = updateGameWorld(world, { teamFinances: Object.values(world.teamFinancesByTeamId).map(item => item.teamId === team.id ? { ...item, playerSalaryBudget: payroll + salary + completion - 1 } : item) })
+  const currencyCode = String(world.organizationFinancialProfilesById[team.organizationId]!.baseCurrencyCode)
+  world = financingDrawdownForTest(world, team.id, 100_000_000_000, 'pathway:completion')
+  const authorization = getOrganizationFinancialAuthorization(world, { organizationId: team.organizationId, currencyCode })
+  const committed = authorization.lines.filter(line => line.category === 'PLAYER_SALARY').reduce((sum, line) => sum + line.committedMinorUnits, 0)
+  const limit = committed + (salary + completion) * 100
+  const quoteWorld = authorizeTeamSalaryForTest(world, team.id, { currencyCode, playerSalaryMinorUnits: limit - 1, staffSalaryMinorUnits: 100_000_000_000 })
   const input = { playerId, teamId: team.id, draftId: draft.id, rightsId: rights.id }
   expect(evaluateProfessionalAcquisition(quoteWorld, input).blocker).toBe('AI_MINIMUM_ROSTER_UNFUNDED')
-  const funded = updateGameWorld(quoteWorld, { teamFinances: Object.values(quoteWorld.teamFinancesByTeamId).map(item => item.teamId === team.id ? { ...item, playerSalaryBudget: item.playerSalaryBudget + 1 } : item) })
+  const funded = authorizeTeamSalaryForTest(quoteWorld, team.id, { currencyCode, playerSalaryMinorUnits: limit, staffSalaryMinorUnits: 100_000_000_000 })
   expect(evaluateProfessionalAcquisition(funded, input).blocker).not.toBe('AI_MINIMUM_ROSTER_UNFUNDED')
+  const legacyChanged = updateGameWorld(quoteWorld, { teamFinances: Object.values(quoteWorld.teamFinancesByTeamId).map(item => ({ ...item, playerSalaryBudget: 100_000_000_000 })) })
+  expect(evaluateProfessionalAcquisition(legacyChanged, input)).toEqual(evaluateProfessionalAcquisition(quoteWorld, input))
   expect(quoteWorld.playerRightsById[rights.id]).toEqual(world.playerRightsById[rights.id])
   expect(quoteWorld.salaryRulesBySeasonId).toBe(world.salaryRulesBySeasonId)
 })

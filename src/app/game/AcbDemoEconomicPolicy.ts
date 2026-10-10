@@ -75,6 +75,9 @@ export function createAcbDemoEconomicProfileV1(): CompetitionEconomicProfile {
         currencyCode: DEMO_ECONOMIC_CURRENCY,
         annualAmount: legacyMajorUnitsToMoney(BDM_DEMO_PARTICIPATION_DISTRIBUTION_ANNUAL_MAJOR_UNITS, DEMO_ECONOMIC_CURRENCY),
         installments: acbDemoParticipationInstallments(),
+        // Approved: each installment's contractual payment date is also its collection date, so the money the
+        // competition owes becomes canonical cash on that date through the Treasury receivable-collection primitive.
+        collectionPolicy: 'COLLECT_ON_DUE_DATE',
         counterparty: competition,
         provenance,
       }),

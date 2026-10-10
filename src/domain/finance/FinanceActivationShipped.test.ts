@@ -3,7 +3,7 @@ import { PROTOTYPE_GAME_CONFIGURATION, createAcbTestGame, createNewGame } from '
 import { createCompetition } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
-import { createFiscalPeriod, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, provisionOrganizationFinanceFoundation } from '@/domain/finance'
+import { createFiscalPeriod, authorizationRenewalBudgetIdFor, createOrganizationFinancialProfile, createTeamFinances, ensureCanonicalFinanceFoundation, evaluateFinancialCommitment, evaluateOrganizationFinancialCommitment, financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceActivationReport, getFinanceFiscalYearFor, getOrganizationFinanceAccounts, getOrganizationFinancialAuthorization, legacyTeamFinanceAmountToMoney, provisionOrganizationFinanceFoundation } from '@/domain/finance'
 import { getCashBalancesByCurrency } from '@/domain/finance/CashFlowQueries'
 import { competitionIdFromString, countryIdFromString, organizationIdFromString, organizationSectionIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import { createOrganization, createOrganizationSection } from '@/domain/organization'
@@ -22,24 +22,28 @@ function provisionedOrganizationIds(world: GameWorld): readonly string[] {
 }
 
 describe('BS16F shipped finance activation', () => {
-  it('provisions exactly the policy-resolvable organizations of the prototype career and leaves the rest alone', () => {
+  it('provisions every finance-bearing organization of the prototype career and preserves the currencies it already resolved', () => {
     const career = createNewGame()
     const report = getFinanceActivationReport(career)
     const provisioned = provisionedOrganizationIds(career)
-    const unavailable = report.organizations.filter((entry) => entry.status === 'FINANCE_CURRENCY_UNAVAILABLE')
+    const organizations = organizationIdsOf(career)
 
-    // The prototype is a fictional Virelia universe: only its shipped NBA-like and WNBA-like ecosystems are
-    // approved as USD, so the FIBA-like and NCAA-like clubs must stay unprovisioned.
-    expect(provisioned.length).toBeGreaterThan(0)
-    expect(provisioned.length).toBeLessThan(organizationIdsOf(career).length)
-    expect(unavailable.length).toBeGreaterThan(0)
-    expect(unavailable.every((entry) => entry.currencyCode === null && entry.currencyUnavailableReason !== null)).toBe(true)
+    // BS16M-B2: the prototype career is a fictional Virelia universe whose clubs had no canonical currency at
+    // all. The prototype's own finance policy provisions the unresolved clubs in EUR while the shipped
+    // NBA-like/WNBA-like ecosystems keep the USD they already resolved, so the career is two-currency and no
+    // club is left unable to record a Finance fact.
+    expect(organizations).toHaveLength(48)
+    expect(provisioned).toEqual([...organizations].sort())
+    expect(report.organizations.filter((entry) => entry.status === 'FINANCE_CURRENCY_UNAVAILABLE')).toEqual([])
+    expect([...new Set(report.organizations.map((entry) => String(entry.currencyCode)))].sort()).toEqual(['EUR', 'USD'])
+    expect(report.organizations.filter((entry) => String(entry.currencyCode) === 'USD')).toHaveLength(8)
+    expect(report.organizations.filter((entry) => String(entry.currencyCode) === 'EUR')).toHaveLength(40)
+    expect(report.organizations.filter((entry) => entry.status === 'CURRENCY_POLICY_CONFLICT')).toEqual([])
     for (const organizationId of provisioned) {
       const profile = career.organizationFinancialProfilesById[organizationId as never]!
-      expect(String(profile.baseCurrencyCode)).toBe('USD')
       expect(Object.values(career.fiscalPeriodsById).filter((period) => String(period.organizationId) === organizationId)).toHaveLength(1)
       expect(Object.values(career.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
-      const authorization = getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: 'USD', asOfDate: career.currentDate })
+      const authorization = getOrganizationFinancialAuthorization(career, { organizationId, currencyCode: String(profile.baseCurrencyCode), asOfDate: career.currentDate })
       expect(authorization.state).toBe('ACTIVE')
       expect(authorization.authorizedMinorUnits).toBeGreaterThan(0)
     }
@@ -181,17 +185,22 @@ describe('BS16F shipped finance activation', () => {
     // The preseason career date is inside its fiscal period, and no second period exists anywhere.
     expect(Object.values(career.fiscalPeriodsById).filter((period) => period.startsOn <= career.currentDate && period.endsOn >= career.currentDate)).toHaveLength(organizationIdsOf(career).length)
 
-    // Renewal stays unmodelled: the next fiscal year gains period truth, never a copied authorization.
+    // Renewal is the explicitly assigned policy (BS16N-R): the next fiscal year gains period truth and exactly
+    // one renewed authorization that repeats the previous fiscal year's approved limits.
     const organizationId = organizationIdsOf(career)[0]!
     const later = updateGameWorld(career, { currentDate: createGameDate(2028, 1, 10) })
     const next = getFinanceActivationReport(later).organizations.find((entry) => entry.organizationId === organizationId)!
-    expect(next.status).toBe('RENEWAL_NOT_MODELLED')
+    expect(next.status).toBe('ACTIVATED')
     const advanced = ensureCanonicalFinanceFoundation(later)
     expect(financeFiscalPeriodsOf(advanced, organizationId).map((period) => String(period.id))).toEqual([
       String(financeFiscalPeriodIdFor(organizationId, '2026-09-01')),
       String(financeFiscalPeriodIdFor(organizationId, '2027-09-01')),
     ])
-    expect(Object.values(advanced.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)).toHaveLength(1)
+    const organizationBudgets = Object.values(advanced.financialBudgetsById).filter((budget) => budget.organizationId === organizationId)
+    expect(organizationBudgets).toHaveLength(2)
+    const renewedId = authorizationRenewalBudgetIdFor(organizationId, financeFiscalPeriodIdFor(organizationId, '2027-09-01'))
+    expect(organizationBudgets.map((budget) => budget.id)).toContain(renewedId)
+    expect(organizationBudgets.find((budget) => budget.id === renewedId)!.fiscalPeriodId).toBe(String(financeFiscalPeriodIdFor(organizationId, '2027-09-01')))
     expect(ensureCanonicalFinanceFoundation(advanced)).toBe(advanced)
   })
 
@@ -225,7 +234,7 @@ describe('BS16F shipped finance activation', () => {
 describe('BS16F provisionOrganizationFinanceFoundation remains the foundation authority', () => {
   it('provisions a single organization idempotently with an explicit currency', () => {
     const career = createNewGame()
-    const organizationId = provisionedOrganizationIds(career)[0]!
+    const organizationId = Object.entries(career.organizationFinancialProfilesById).find(([, profile]) => String(profile.baseCurrencyCode) === 'USD')![0]
     const reprovisioned = provisionOrganizationFinanceFoundation(career, organizationId, { currencyCode: 'USD' })
 
     expect(reprovisioned).toBe(career)
@@ -235,5 +244,14 @@ describe('BS16F provisionOrganizationFinanceFoundation remains the foundation au
       amount: { currencyCode: 'USD', minorUnits: 1_000 },
       currentCash: null,
     }).status).toBe('REQUIRES_FINANCING')
+  })
+
+  it('refuses to overwrite an organization currency, whichever authority provisioned it', () => {
+    const career = createNewGame()
+    const euroOrganizationId = Object.entries(career.organizationFinancialProfilesById).find(([, profile]) => String(profile.baseCurrencyCode) === 'EUR')![0]
+
+    // The prototype euro is as authoritative as the shipped USD: a later provisioning call never rewrites it.
+    expect(() => provisionOrganizationFinanceFoundation(career, euroOrganizationId, { currencyCode: 'USD' })).toThrow(/refusing to overwrite/)
+    expect(String(career.organizationFinancialProfilesById[euroOrganizationId as never]!.baseCurrencyCode)).toBe('EUR')
   })
 })

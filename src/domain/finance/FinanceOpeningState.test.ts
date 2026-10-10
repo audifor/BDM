@@ -30,6 +30,13 @@ import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSa
 const SAVED_AT = '2026-09-20T00:00:00.000Z'
 const eur = (minorUnits: number) => ({ currencyCode: 'EUR', minorUnits })
 
+/** The shipped worlds this suite audits, built once: its subject is the opening position, not world creation. */
+const SHIPPED_WORLDS = Object.freeze([
+  createNewGame(),
+  createAcbTestGame(),
+  generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true }),
+])
+
 function clubWorld(): GameWorld {
   return createAcbTestGame()
 }
@@ -68,7 +75,7 @@ describe('BS16H shipped opening economic sources', () => {
   })
 
   it('never converts a salary budget or an approval into cash', () => {
-    for (const world of [createNewGame(), clubWorld(), generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true })]) {
+    for (const world of SHIPPED_WORLDS) {
       const activated = ensureCanonicalFinanceFoundation(world)
       const report = getFinanceActivationReport(activated)
       const authorized = report.organizations.filter((entry) => entry.budgetId !== null)

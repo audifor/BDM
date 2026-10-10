@@ -293,9 +293,13 @@ describe('BS16I contract payroll lifecycle on a shipped ACB career', { timeout: 
     const organizationId = organizationIdsOf(world)[0]!
     const totalPayrollPayables = Object.values(world.payablesById).filter((payable) => String(payable.organizationId) === organizationId && isPayrollPayable(world, payable)).reduce((sum, payable) => sum + payable.amount.minorUnits, 0)
     expect(totalPayrollPayables).toBe(guaranteedDueOn(career, organizationId, '2026-09-26').reduce((sum, entry) => sum + entry.amount.minorUnits, 0))
-    // Cash stays exactly what the ledger says: zero, and no funding was invented to pay the obligations.
-    expect(getCashBalancesByCurrency(world, organizationId, world.currentDate).every((row) => row.totalCashMinorUnits === 0)).toBe(true)
-    expect(Object.keys(world.treasuryApplicationsById)).toEqual([])
+    // Cash stays exactly what the ledger says: the participation installments that fell inside the window and
+    // were collected on their own contractual dates, nothing more, and no funding was invented to pay obligations.
+    const collected = Object.values(world.treasuryApplicationsById).filter((application) => String(application.organizationId) === organizationId && application.obligationKind === 'RECEIVABLE')
+    expect(collected.length).toBeGreaterThan(0)
+    const collectedTotal = collected.reduce((sum, application) => sum + application.amount.minorUnits, 0)
+    expect(getCashBalancesByCurrency(world, organizationId, world.currentDate).reduce((sum, row) => sum + row.totalCashMinorUnits, 0)).toBe(collectedTotal)
+    expect(Object.values(world.treasuryApplicationsById).some((application) => application.obligationKind === 'PAYABLE')).toBe(false)
     expect(ensureCanonicalFinanceFoundation(world)).toBe(world)
   })
 })

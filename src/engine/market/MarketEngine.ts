@@ -1,10 +1,27 @@
 import { agentCounter, consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type FormalOfferPlayerResponse, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole, type NegotiationRoundHistory, type NegotiationTermSet } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
-import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import type { GameDate } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
 import { resolveNegotiationContactAuthority } from '@/engine/marketIntelligence/NegotiationContactAuthority'
 import { isAuthorizedOfferActor } from './NegotiationOfferAuthority'
+
+/**
+ * Canonical Finance is the only affordability authority for club offers. The legacy payroll-budget
+ * test is gone: a blocked decision reports the canonical status and reasons instead of a budget
+ * verdict, and the check re-runs against the current world at the moment the offer is recorded.
+ */
+function requireCanonicalOfferFinance(world: GameWorld, teamId: TeamId, salary: number, negotiationId: string, message: string): void {
+  const decision = evaluateTeamGameplayFinancialDecision(world, {
+    teamId,
+    action: 'MARKET_OFFER',
+    legacyAnnualAmountMajorUnits: salary,
+    sourceAuthority: 'MARKET_OFFER',
+    sourceEntityId: negotiationId,
+  })
+  if (!decision.allowed) throw new RangeError(`${message} (${decision.status}:${decision.reasons.join('|')})`)
+}
 
 export interface CreateNegotiationContactInput {
   readonly organizationId: OrganizationId
@@ -325,7 +342,7 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
         && item.playerId === input.playerId
         && (item.teamId === input.teamId || (item.teamId === undefined && item.organizationId === input.organizationId)))
       if (conflictingActive) throw new RangeError('Another active negotiation already exists for this team and player')
-      if (!canTeamAffordAdditionalSalary(world, input.teamId, input.salary)) throw new RangeError('Team cannot afford the formal offer salary')
+      requireCanonicalOfferFinance(world, input.teamId, input.salary, String(id), 'Team cannot afford the formal offer salary')
       const offer: ContractNegotiation = {
         ...existingForKey,
         ...(input.agentId === undefined ? {} : { agentId: input.agentId }),
@@ -410,13 +427,11 @@ export function respondToNegotiationCounter(world: GameWorld, input: RespondToNe
     ...(input.action.kind === 'REVISE_OFFER' ? { revisedTerms: input.action.terms } : {}),
   }
 
-  if (input.action.kind === 'ACCEPT_COUNTER' && !canTeamAffordAdditionalSalary(world, input.teamId, negotiation.salary)) {
-    throw new RangeError('Team cannot afford the counter salary')
-  }
+  if (input.action.kind === 'ACCEPT_COUNTER') requireCanonicalOfferFinance(world, input.teamId, negotiation.salary, negotiation.id, 'Team cannot afford the counter salary')
   if (input.action.kind === 'ACCEPT_COUNTER') validateFormalTerms(termSet(negotiation))
   if (input.action.kind === 'REVISE_OFFER') {
     validateFormalTerms(input.action.terms)
-    if (!canTeamAffordAdditionalSalary(world, input.teamId, input.action.terms.salary)) throw new RangeError('Team cannot afford the revised offer salary')
+    requireCanonicalOfferFinance(world, input.teamId, input.action.terms.salary, negotiation.id, 'Team cannot afford the revised offer salary')
   }
 
   const history = [...(negotiation.roundHistory ?? [])]

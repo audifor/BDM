@@ -1,6 +1,7 @@
+import { evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason } from '@/domain/finance'
 import { getPlayerContractStatus } from '@/domain/contract'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getTeamFinancialSnapshot, type GameWorld } from '@/domain/world'
+import { getFreeAgents, type GameWorld } from '@/domain/world'
 import { pendingBindingRosterPlayerIds } from '@/engine/recruiting/RecruitingRosterCommitments'
 import { getPlayerMarketTerms } from '@/engine/market/PlayerMarketTerms'
 import { evaluateAiDraftProspect } from '@/engine/draft/DraftEngine'
@@ -55,7 +56,9 @@ export function evaluateProfessionalAcquisition(world: GameWorld, input: { reado
     terms = getPlayerMarketTerms(world, player.id)
   }
   const quoted = { ...evaluated, ...terms }
-  if (!canTeamAffordAdditionalSalary(world, team.id, terms.annualSalary)) return { ...quoted, blocker: 'SALARY_UNAFFORDABLE' }
+  const financeDecision = (annualSalary: number) => evaluateTeamGameplayFinancialDecision(world, { teamId: team.id, action: 'PLAYER_SIGNING', legacyAnnualAmountMajorUnits: annualSalary, sourceAuthority: 'AI_PROFESSIONAL_PATHWAY', sourceEntityId: input.rightsId ?? `${draft.id}:${player.id}` })
+  const financial = financeDecision(terms.annualSalary)
+  if (!financial.allowed) return { ...quoted, blocker: gameplayFinancialBlockReason(financial) }
   // A individually affordable acquisition must leave a fundable playable roster.
   // Use the existing legal Market supply and quotes; neither salary rules nor
   // rights are changed when the club must defer this signing.
@@ -65,7 +68,7 @@ export function evaluateProfessionalAcquisition(world: GameWorld, input: { reado
     const completion = getFreeAgents(world).filter(candidate => candidate.gender === team.gender && candidate.id !== player.id && !reserved.has(candidate.id))
       .map(candidate => getPlayerMarketTerms(world, candidate.id).annualSalary).sort((a, b) => a - b).slice(0, remainingSlots)
     const completionSalary = completion.reduce((sum, salary) => sum + salary, 0)
-    if (completion.length < remainingSlots || terms.annualSalary + completionSalary > getTeamFinancialSnapshot(world, team.id).remainingPlayerSalaryBudget) return { ...quoted, blocker: 'AI_MINIMUM_ROSTER_UNFUNDED' }
+    if (completion.length < remainingSlots || !financeDecision(terms.annualSalary + completionSalary).allowed) return { ...quoted, blocker: 'AI_MINIMUM_ROSTER_UNFUNDED' }
   }
   if (valuation.positionalNeed === 0) return { ...quoted, blocker: 'AI_POSITION_ALREADY_COVERED' }
   if (ecosystem.kind === 'ncaaLike') {

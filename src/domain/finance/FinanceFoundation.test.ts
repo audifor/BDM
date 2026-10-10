@@ -56,6 +56,7 @@ const ROLE_ACCOUNT_TYPES: Readonly<Record<OrganizationFinanceAccountRole, string
   REVENUE_OPERATING: 'REVENUE',
   EXPENSE_OPERATING: 'EXPENSE',
   DEBT_LIABILITY: 'LIABILITY',
+  LOAN_ASSET: 'ASSET',
 }
 
 describe('BS16B finance foundation provisioning', () => {
