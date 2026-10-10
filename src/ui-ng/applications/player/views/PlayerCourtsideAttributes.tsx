@@ -90,9 +90,11 @@ export function PlayerCourtsideAttributes() {
   }))
   const radarOverlays = baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null)
     .map((item) => ({ key: item.id, label: item.label, color: item.color, axes: item.axes! }))
-  const selectedComparisons = baselineProfiles.filter((item) => visibleBaselines.includes(item.id) && item.axes !== null)
-    .map((item) => ({ ...item, value: getCategoryComparison(currentCategory, model.attributes.evolutionByRating, item.id) }))
-    .filter((item): item is typeof item & { value: number } => item.value !== null)
+  const selectedComparisons = baselineProfiles.flatMap((item) => {
+    if (!visibleBaselines.includes(item.id) || item.axes === null) return []
+    const value = getCategoryComparison(currentCategory, model.attributes.evolutionByRating, item.id)
+    return value === null ? [] : [{ ...item, value }]
+  })
   const comparisonReading = selectedComparisons.length === 0 ? null
     : selectedComparisons.every((item) => currentCategory.profileValue < item.value)
       ? 'Por debajo de todas las referencias activas'
