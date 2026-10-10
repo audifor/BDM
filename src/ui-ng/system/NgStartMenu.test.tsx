@@ -111,6 +111,34 @@ describe('NG start menu', () => {
     expect(screen.queryByRole('button', { name: 'Trades' })).not.toBeInTheDocument()
   })
 
+  it('keeps each category title and application tiles inside its own category card', () => {
+    mountTaskbar()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
+    const dialog = screen.getByRole('dialog', { name: 'BDM Inicio' })
+    const categories = dialog.querySelector('.ng-start-menu__categories')
+    expect(categories).not.toBeNull()
+    const cards = categories!.querySelectorAll(':scope > .ng-start-menu__category')
+    expect(cards.length).toBeGreaterThan(3)
+    for (const card of cards) {
+      expect(card).toHaveAttribute('data-category')
+      expect(card.querySelector(':scope > .ng-start-menu__category-title h3')).not.toBeNull()
+      const grid = card.querySelector(':scope > .ng-start-menu__category-apps')
+      expect(grid).not.toBeNull()
+      expect(grid!.querySelectorAll(':scope > .ng-start-menu__tile-wrap > button.ng-start-menu__tile').length)
+        .toBeGreaterThan(0)
+    }
+    const team = dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')
+    expect(team?.querySelector('.ng-start-menu__category-title h3')).toHaveTextContent('Equipo')
+    expect(team?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile-wrap')).toHaveLength(8)
+    expect(team?.querySelectorAll('.ng-start-menu__category-apps > .ng-start-menu__category')).toHaveLength(0)
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Buscar en BDM' }), { target: { value: 'staff' } })
+    const searched = dialog.querySelectorAll('.ng-start-menu__category')
+    expect(searched).toHaveLength(1)
+    expect(searched[0]?.getAttribute('data-category')).toBe('equipo')
+    expect(searched[0]?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(1)
+  })
+
   it('closes the start menu on Escape', () => {
     mountTaskbar()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
