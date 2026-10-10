@@ -27,6 +27,13 @@ export interface RadarAxis {
   readonly value: number
 }
 
+export interface RadarComparisonSeries {
+  readonly key: string
+  readonly label: string
+  readonly axes: Readonly<Partial<Record<RatingCategory, number>>>
+  readonly color: string
+}
+
 export interface AttributeRadarProps {
   readonly axes: readonly RadarAxis[]
   readonly selectedCategory?: RatingCategory | null
@@ -36,6 +43,8 @@ export interface AttributeRadarProps {
   readonly showValues?: boolean
   /** Optional canonical aggregate per family; no polygon is drawn when a family is unknown. */
   readonly comparisonAxes?: Readonly<Partial<Record<RatingCategory, number>>> | null
+  /** Multiple independently enabled, fully known comparative profiles. */
+  readonly comparisonSeries?: readonly RadarComparisonSeries[]
   /** Courtside framing enlarges the active radar without affecting legacy placements. */
   readonly courtsideFraming?: boolean
 }
@@ -47,6 +56,7 @@ export function AttributeRadar({
   accent = 'var(--ng-cyan)',
   showValues = false,
   comparisonAxes = null,
+  comparisonSeries = [],
   courtsideFraming = false,
 }: AttributeRadarProps) {
   const total = axes.length
@@ -123,12 +133,31 @@ export function AttributeRadar({
           strokeWidth="1.8"
         />
       )}
+      {comparisonSeries.filter((series) => axes.every((axis) => {
+        const value = series.axes[axis.key]
+        return typeof value === 'number' && Number.isFinite(value)
+      })).map((series, seriesIndex) => (
+        <polygon
+          key={series.key}
+          aria-label={series.label + ' comparison'}
+          fill="none"
+          points={axes.map((axis, index) => {
+            const radius = ((series.axes[axis.key] ?? 0) / 100) * MAX_RADIUS
+            const [x, y] = polarPoint(index, total, radius)
+            return x + ',' + y
+          }).join(' ')}
+          stroke={series.color}
+          strokeDasharray={seriesIndex === 0 ? '6 3' : seriesIndex === 1 ? '2 3' : '9 2 2 2'}
+          strokeWidth="2.2"
+          strokeLinejoin="round"
+        />
+      ))}
       <polygon
         fill={accent}
-        fillOpacity="0.24"
+        fillOpacity="0.13"
         points={polygonPoints}
         stroke={accent}
-        strokeWidth="1.5"
+        strokeWidth="2.2"
       />
 
       {axes.map((axis, index) => {
