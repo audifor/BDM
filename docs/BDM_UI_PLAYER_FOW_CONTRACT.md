@@ -147,6 +147,36 @@ staff capacity, and offer the Scouting Centre as the discovery/workload route.
   Static checks are not a substitute for typecheck, Vitest and Tauri dark/light
   inspection.
 
+## PLAYER · shared identity and PERFORMANCE shooting V2 (10 October 2026)
+
+- The eight PLAYER subsections share exactly one `EntityIdentityBand`. The
+  last-loaded `player-courtside-identity-unified.css` is the canonical color,
+  surname glow and tabs contract, overriding the former overview-only
+  header look. Dark and light use HOME `--cs-*` tokens. First name is the
+  same primary text color on every view; surname is always lime with subtle
+  consistent glow (weaker on the light theme).
+- The three PERFORMANCE analysis tabs (Efficiency, Shooting, Splits) are the
+  only titles. Their repeated inner headings are suppressed only inside the
+  Courtside performance analysis panel. The details and the canonical data
+  source remain intact.
+- Shooting keeps the actual schematic basketball **half court**, not a
+  replacement abstract chart. It shows one honest marker each for 2PT and
+  3PT (not fabricated shot locations or a heat map). At wide viewports the
+  half court remains the dominant left part, with two zone breakdown cards
+  alongside, then one factual analysis line.
+- Each zone shows actual FGM/FGA, percent (or unknown when no attempts),
+  percentage of all field-goal attempts, raw points derived from recorded
+  2PT and 3PT makes, share of total field-goal points, and a separate visual
+  comparison of volume vs efficiency. No fake court subdivisions or coords.
+- The reading only states an evidence-supported comparison and calls out
+  small attempt totals. When no shots were made, it cannot pretend either
+  zone contributed an identifiable share of points.
+- At narrow container widths the shooting layout becomes a large court
+  followed by two side-by-side reading cards and an interpretation. No
+  permanent additional scroll surface, sidebar or new backend authority.
+- Implementation is pending typecheck, focused Vitest and actual dark/light
+  visual certification before full PERFORMANCE PASS.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
