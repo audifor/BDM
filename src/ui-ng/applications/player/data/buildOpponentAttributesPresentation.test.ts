@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import type { PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 import {
-  buildOpponentFamilyKnowledge, opponentKnowledgeSummary, scoutingConfidenceLabel,
+  buildOpponentFamilyKnowledge, buildScoutedFamilyProfiles, hasScoutedRadarProfile,
+  opponentKnowledgeSummary, scoutingConfidenceLabel,
 } from './buildOpponentAttributesPresentation'
 
 type OpponentAccess = Extract<PlayerKnowledgeAccess, { kind: 'scouted' | 'unknown' }>
@@ -56,6 +57,42 @@ describe('Opponent Attributes FOW projection', () => {
       knownRatings: 0, totalRatings: 0, knownDimensions: 0, complete: false,
     })
     expect(buildOpponentFamilyKnowledge(unknown).every((entry) => entry.evaluated === 0)).toBe(true)
+  })
+
+  it('derives estimated eight-family radar only from complete authorized per-rating scouting reports', () => {
+    const full: OpponentAccess = {
+      ...accessWithEvaluations(),
+      ratingEvaluations: [
+        ...(['shooting', 'finishing', 'ballHandling', 'playmaking', 'offBall', 'defense', 'physical', 'mental'] as const)
+          .map((family, index) => ({
+            id: 'rating:FREE_THROW' as const, key: 'FREE_THROW' as const, label: family,
+            family, displayLabel: '57-73', coveragePercent: 79,
+            evaluation: {
+              mode: 'RANGE' as const, estimate: 65 + index, uncertainty: 8,
+              confidence: 86, freshness: 0.8, disagreement: 'MODERATE' as const,
+            },
+          })),
+      ],
+    }
+    const families = buildScoutedFamilyProfiles(full)
+    expect(families.map((row) => row.estimate)).toEqual([65, 66, 67, 68, 69, 70, 71, 72])
+    expect(families[0]).toMatchObject({
+      observed: 1, total: 1, estimate: 65, low: 57, high: 73,
+      coverage: 79, confidence: 86, isComplete: true,
+    })
+    expect(hasScoutedRadarProfile(families)).toBe(true)
+    const withoutMental = { ...full, ratingEvaluations: full.ratingEvaluations.slice(0, -1) }
+    expect(hasScoutedRadarProfile(buildScoutedFamilyProfiles(withoutMental))).toBe(false)
+  })
+
+  it('never plots unknown prior estimates or averages undisclosed ability', () => {
+    const partial = accessWithEvaluations()
+    const family = buildScoutedFamilyProfiles(partial).find((row) => row.id === 'shooting')!
+    expect(family).toMatchObject({
+      observed: 1, total: 2, estimate: 37, low: 30, high: 44,
+      coverage: 65, confidence: 68, isComplete: false,
+    })
+    expect(hasScoutedRadarProfile(buildScoutedFamilyProfiles(partial))).toBe(false)
   })
 
   it('keeps real confidence percentages and never makes 68% into 100%', () => {
