@@ -714,7 +714,7 @@ export function buildPerformanceViewSnapshot(
     splitsNote: SPLITS_NOTE,
     recentForm,
     gameLogs,
-    gaps: buildPerformanceGaps(),
+    gaps: buildPerformanceGaps(buildShotProfile(aggregate, filteredLogs)),
   }
 }
 
@@ -728,14 +728,16 @@ const SPLITS_NOTE =
  * Reference elements this page cannot produce yet, each with the reason. The two halves are listed
  * as rows in the splits table as well, so the reason lives here once.
  */
-function buildPerformanceGaps(): readonly OverviewGapModel[] {
+function buildPerformanceGaps(profile?: PerformanceShotProfileModel): readonly OverviewGapModel[] {
+  const locationGap: OverviewGapModel[] = profile?.detailedProvenance === 'OBSERVED' ? [] : [{
+    id: 'shot-zones',
+    label: 'Shot profile by location',
+    reason: profile?.detailedZones !== undefined
+      ? 'The nine-zone breakdown includes provisional background-model subdivisions, not observed shot locations.'
+      : 'One or more selected matches lack zone-level records; only exact 2PT/3PT totals can be shown for this selection.',
+  }]
   return [
-    {
-      id: 'shot-zones',
-      label: 'Shot profile by location',
-      reason:
-        'Shots are stored as two-point and three-point attempts only: the engine records no shot coordinates, so no finer zone can be drawn.',
-    },
+    ...locationGap,
     {
       id: 'halves',
       label: 'First half / second half',
