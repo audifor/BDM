@@ -87,8 +87,6 @@ export function PlayerCourtsideAttributes() {
   const lowFamily = [...model.attributes.categories].sort((a, b) => a.profileValue - b.profileValue)[0]
   const activeFamily = activeRating === undefined
     ? currentCategory : model.attributes.categories.find((entry) => entry.category === activeRating.category) ?? currentCategory
-  const baselineDifference = activeRating !== undefined && evolution?.league.average !== null && evolution?.league.average !== undefined
-    ? Math.round((activeRating.value - evolution.league.average) * 10) / 10 : null
 
   const selectCategory = (category: typeof attributesCategory) => {
     const next = model.attributes.categories.find((entry) => entry.category === category)
@@ -175,23 +173,21 @@ export function PlayerCourtsideAttributes() {
               </label>
               {scope !== 'none' && overlay === null && <p className="pac-benchmark-missing">No complete {scope} baseline available for these eight families.</p>}
             </div>
-            <div className="pac-signals">
+            <div className="pac-signals" aria-label="Current profile extremes">
               <h3>PROFILE SIGNALS</h3>
               {highFamily !== undefined && <div className="pac-signal pac-signal--up">
-                <span className="pac-signal__icon">↑</span><div><strong>Strongest family</strong><b>{highFamily.label}</b>
-                <p>Current family rating {highFamily.profileValue} / 100</p></div>
+                <span className="pac-signal__icon" aria-hidden="true">↑</span>
+                <div><strong>Strongest</strong><b>{highFamily.label}</b><span>{highFamily.profileValue} / 100</span></div>
               </div>}
               {lowFamily !== undefined && <div className="pac-signal pac-signal--down">
-                <span className="pac-signal__icon">↓</span><div><strong>Lowest family</strong><b>{lowFamily.label}</b>
-                <p>Current family rating {lowFamily.profileValue} / 100</p></div>
+                <span className="pac-signal__icon" aria-hidden="true">↓</span>
+                <div><strong>Lowest</strong><b>{lowFamily.label}</b><span>{lowFamily.profileValue} / 100</span></div>
               </div>}
-              {highFamily !== undefined && lowFamily !== undefined && <div className="pac-signal">
-                <span className="pac-signal__icon">◈</span><div><strong>Profile contrast</strong>
-                <b>{highFamily.label} vs {lowFamily.label}</b>
-                <p>{highFamily.profileValue - lowFamily.profileValue}-point difference across families</p></div>
-              </div>}
-              {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope) !== null && (
-                <p className="pac-signal__baseline">Selected family reference: {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope)} / 100</p>
+              {scope !== 'none' && overlay !== null && (
+                <p className="pac-signal__baseline">
+                  {currentCategory.label}: {getCategoryComparison(currentCategory, model.attributes.evolutionByRating, scope)} / 100
+                  <span> reference</span>
+                </p>
               )}
             </div>
           </div>
@@ -263,31 +259,32 @@ export function PlayerCourtsideAttributes() {
               </div>}
             </div>
           </section>
-          <section className="pac-card pac-why">
-            <header className="pac-head"><h2>WHY IT MATTERS</h2></header>
-            <p>{baselineDifference === null
-              ? 'A competition baseline is not available yet. This rating can be inspected, but no league-relative judgement is warranted.'
-              : baselineDifference === 0
-                ? 'This rating matches the league average in the available comparison sample.'
-                : 'This rating is ' + Math.abs(baselineDifference).toFixed(1) + ' points ' +
-                  (baselineDifference > 0 ? 'above' : 'below') + ' the current league sample average. This is a comparison, not a projection of improvement.'}</p>
+          <section className="pac-card pac-related" aria-label="Other attributes in the same category">
+            <header className="pac-head">
+              <h2>SAME FAMILY</h2>
+              <span>{Math.max(0, activeFamily.all.length - 1)} other attributes · {activeFamily.label}</span>
+            </header>
+            <div className="pac-related__list">
+              {activeFamily.all
+                .filter((rating) => rating.id !== activeRating.id)
+                .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+                .map((rating) =>
+                  <button type="button" key={rating.id} onClick={() => selectRating(rating.id)}
+                    aria-label={rating.label + ', rating ' + rating.value + ', inspect attribute'}>
+                    <span>{rating.label}</span>
+                    <span className="pac-related__metric">
+                      <b>{rating.value}</b>
+                      <span className="pac-meter" aria-hidden="true"><i style={{ width: rating.value + '%' }} /></span>
+                    </span>
+                  </button>)}
+            </div>
+            <div className="pac-related__training">
+              <strong>TRAINING</strong>
+              <span>{evolution.assignment.status === 'available' && evolution.trainings.length > 0
+                ? evolution.trainings.length + ' available modules. Schedule through the full attribute analysis.'
+                : evolution.assignment.reason ?? 'Direct training assignment is not available for this attribute.'}</span>
+            </div>
           </section>
-          <div className="pac-right__bottom">
-            <section className="pac-card pac-related">
-              <header className="pac-head"><h2>SAME FAMILY</h2></header>
-              {activeFamily.all.filter((rating) => rating.id !== activeRating.id).slice(0, 4).map((rating) =>
-                <button type="button" key={rating.id} onClick={() => selectRating(rating.id)}>
-                  <span>{rating.label}</span><b>{rating.value}</b>
-                </button>)}
-            </section>
-            <section className="pac-card pac-training">
-              <header className="pac-head"><h2>TRAINING</h2></header>
-              {evolution.assignment.status === 'available' && evolution.trainings.length > 0 ? (
-                <p>Training options available: {evolution.trainings.length}. Open the full analysis for scheduling.</p>
-              ) : <p>{evolution.assignment.reason ?? 'No canonical training option can be assigned to this attribute.'}</p>}
-              <span className="pac-training__status">CANONICAL DATA ONLY</span>
-            </section>
-          </div>
         </>}
       </div>
     </div>
