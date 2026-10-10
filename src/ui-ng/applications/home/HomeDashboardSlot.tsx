@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import { getPlayerContractStatus } from '@/domain/contract'
 import { getCashAccountBalances, getFinancialHealthSnapshot } from '@/domain/finance'
@@ -224,7 +224,7 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
     return <p className="ng-canon__empty">Sin clasificación disponible.</p>
   }
   return (
-    <div className="home-standings competition-standings">
+    <div className="home-standings competition-standings" style={{ '--home-standings-rows': standings.length } as CSSProperties}>
       <div className="home-standings__digest">
         <span>{competition.competitionName} · {standings.length} equipos</span>
         <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId,section:'standings'},'push','standings')}>
