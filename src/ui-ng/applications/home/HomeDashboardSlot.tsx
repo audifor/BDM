@@ -5,6 +5,7 @@ import { getCashAccountBalances, getFinancialHealthSnapshot } from '@/domain/fin
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getTeamRoster } from '@/domain/world'
+import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary'
 import { formatMoney } from '@/ui/formatters'
 import { EntityLink } from '@/ui/navigation/EntityLink'
@@ -19,13 +20,12 @@ import {
 import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
 import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import {
-  HOME_DASHBOARD_MODULE_IDS,
   homeDashboardModuleLabel,
   type HomeDashboardModuleId,
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { homeStandingStreaks } from './homeStandingsMetrics'
-import { HOME_SIZE_IDS, type HomeCardSize } from './homeLayoutSettings'
+import { HOME_SELECTABLE_IDS, type HomeSelectableModuleId } from './homeLayoutSettings'
 import { HomeRecentResults, HomeMedicalReport, HomeTrainingAgenda } from './HomeExtraModules'
 import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
 import {
@@ -68,15 +68,13 @@ export function HomeDashboardSlot({
   moduleId,
   context,
   onSelectModule,
-  cardSize = 'normal',
-  onCardSizeChange,
+  className,
   slotIndex,
 }: {
-  readonly moduleId: HomeDashboardModuleId
+  readonly moduleId: HomeSelectableModuleId | 'standings'
   readonly context: HomeDashboardSlotContext
-  readonly onSelectModule: (id: HomeDashboardModuleId) => void
-  readonly cardSize?: HomeCardSize
-  readonly onCardSizeChange?: (size:HomeCardSize) => void
+  readonly onSelectModule?: (id: HomeSelectableModuleId) => void
+  readonly className?: string
   readonly slotIndex?: number
 }) {
   const [open, setOpen] = useState(false)
@@ -102,39 +100,26 @@ export function HomeDashboardSlot({
   }, [open])
 
   return (
-    <section className={`home-slot ng-holo-panel home-slot--${moduleId}${open?' is-choosing-module':''}`} data-home-card-size={moduleId==='standings'?'large':cardSize} data-home-slot-index={slotIndex} ref={rootRef}>
+    <section className={`home-slot ng-holo-panel home-slot--${moduleId}${className?' '+className:''}${open?' is-choosing-module':''}`} data-home-slot-index={slotIndex} ref={rootRef}>
       <header className="home-slot__header">
-        <button
-          aria-controls={menuId}
-          aria-expanded={open}
-          aria-haspopup="menu"
-          className="home-slot__trigger"
-          onClick={() => setOpen((value) => !value)}
-          type="button"
-        >
-          <span className="home-slot__title">{homeDashboardModuleLabel(moduleId)}</span>
-          <span aria-hidden className="home-slot__chevron">
-            ▾
-          </span>
-        </button>
-        {moduleId!=='standings'&&onCardSizeChange ? (
-          <select aria-label={`Tamaño del módulo ${homeDashboardModuleLabel(moduleId)}`}
-            className="home-slot__size-picker"
-            value={cardSize} onChange={event=>onCardSizeChange(event.target.value as HomeCardSize)}>
-            {HOME_SIZE_IDS.map(size=><option key={size} value={size}>
-              {size==='compact'?'Compacto':size==='normal'?'Normal':'Grande'}
-            </option>)}
-          </select>
-        ) : null}
+        {moduleId === 'standings' ? (
+          <span className="home-slot__title">Clasificación de la liga</span>
+        ) : (
+          <button aria-controls={menuId} aria-expanded={open} aria-haspopup="menu"
+            className="home-slot__trigger" onClick={() => setOpen(value=>!value)} type="button">
+            <span className="home-slot__title">{moduleId==='fixture'?'Próximo partido':homeDashboardModuleLabel(moduleId)}</span>
+            <span aria-hidden className="home-slot__chevron">▾</span>
+          </button>
+        )}
         {open ? (
           <ul className="home-slot__menu ng-holo-float" id={menuId} role="menu">
-            {HOME_DASHBOARD_MODULE_IDS.map((id) => (
+            {HOME_SELECTABLE_IDS.map((id) => (
               <li key={id} role="none">
                 <button
                   aria-checked={id === moduleId}
                   className={id === moduleId ? 'is-active' : undefined}
                   onClick={() => {
-                    onSelectModule(id)
+                    onSelectModule?.(id)
                     setOpen(false)
                   }}
                   role="menuitemradio"
@@ -143,7 +128,7 @@ export function HomeDashboardSlot({
                   <span aria-hidden className="home-slot__check">
                     {id === moduleId ? '✓' : ''}
                   </span>
-                  {homeDashboardModuleLabel(id)}
+                  {id==='fixture'?'Próximo partido':homeDashboardModuleLabel(id)}
                 </button>
               </li>
             ))}
@@ -161,10 +146,12 @@ function HomeModuleBody({
   moduleId,
   context,
 }: {
-  readonly moduleId: HomeDashboardModuleId
+  readonly moduleId: HomeSelectableModuleId | 'standings'
   readonly context: HomeDashboardSlotContext
 }) {
   switch (moduleId) {
+    case 'fixture':
+      return <FixtureSummaryModule context={context} />
     case 'standings':
       return <StandingsModule context={context} />
     case 'leaders':
@@ -188,6 +175,19 @@ function HomeModuleBody({
     case 'training-agenda':
       return <HomeTrainingAgenda context={context} />
   }
+}
+
+function FixtureSummaryModule({context}:{readonly context:HomeDashboardSlotContext}) {
+  const {openEntity}=useNgWorkspaceNavigation()
+  const team=getUserTeam(context.world)
+  const game=getNextUserGame(context.world)
+  if(team===undefined||game===undefined)return <p className="ng-canon__empty">Sin próximo partido programado.</p>
+  const opponentId=game.homeTeamId===team.id?game.awayTeamId:game.homeTeamId
+  return <div className="home-fixture-summary">
+    <strong>{team.name} <span>VS</span> {context.world.teams[opponentId]?.name??'Rival'}</strong>
+    <p>{formatGameDateLabel(game.date)} · {context.competition?.competitionName??'Liga'}</p>
+    <button type="button" className="ng-canon__action" onClick={()=>openEntity({type:'team',teamId:opponentId,section:'overview'})}>Ver rival</button>
+  </div>
 }
 
 function HomeTeamLink({
