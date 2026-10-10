@@ -1752,3 +1752,166 @@
     grid-template-columns:repeat(auto-fill,minmax(102px,1fr));
   }
 }
+
+/*
+ * COURTSIDE START V2.5 · category launcher.
+ * The former pinned-app shelf now selects a canonical category, while
+ * exactly one category's apps are rendered in the lower pane.
+ * Colors, type and iconography reuse Courtside design tokens/artwork.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-picker {
+  display:flex;
+  flex-direction:column;
+  flex:0 0 auto;
+  gap:11px;
+  min-width:0;
+  padding:16px 3px 13px;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading h2 {
+  margin:0;
+  color:var(--cs-orange);
+  font:700 16px/1.1 var(--cs-font-display);
+  letter-spacing:.13em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading small {
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-list {
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(108px,1fr);
+  gap:8px;
+  min-width:0;
+  width:100%;
+  padding:1px 1px 6px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-inline:contain;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  min-height:112px;
+  min-width:0;
+  padding:10px 7px;
+  border:1px solid var(--cs-line2);
+  border-radius:19px;
+  background:var(--cs-s1);
+  color:var(--cs-text);
+  text-align:center;
+  cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:43px;
+  height:43px;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--cs-orange) 19%,transparent);
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-label {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  max-width:100%;
+  font:700 13px/1.15 var(--cs-font-display);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button.is-selected {
+  background:var(--cs-orange);
+  color:#10140a;
+  border-color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button.is-selected .ng-start-menu__group-icon {
+  background:rgba(0,0,0,.13);
+  color:#10140a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected):hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected):focus-visible {
+  border-color:var(--cs-orange);
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:focus-visible {
+  outline:2px solid var(--cs-lime);
+  outline-offset:2px;
+}
+/* Override V2.4's multi-category two-column container. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories {
+  display:block;
+  flex:1 1 auto;
+  height:auto;
+  min-height:0;
+  min-width:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:14px 3px 16px;
+  margin:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > .ng-start-menu__category {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:18px 20px 22px;
+  border-radius:24px;
+  background:var(--cs-s1);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-title {
+  margin-bottom:16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(122px,1fr));
+  grid-auto-flow:row;
+  grid-auto-rows:112px;
+  align-content:start;
+  gap:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile-wrap,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile {
+  height:112px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile {
+  font-size:16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-start-menu .ng-start-menu__group-button {
+  border-color:var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected) {
+  color:#15111c;
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-list {
+    grid-auto-columns:110px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button {
+    min-height:104px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+    grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > .ng-start-menu__category {
+    padding:14px;
+  }
+}
