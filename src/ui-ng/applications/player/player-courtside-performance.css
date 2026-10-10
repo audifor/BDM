@@ -1620,17 +1620,29 @@
 }
 .po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list {
   display:grid;
+  grid-template-columns:minmax(0,1fr);
   grid-template-rows:minmax(29px,auto) repeat(9,minmax(40px,1fr));
   flex:1 1 auto;
-  overflow:auto;
+  min-width:0;
+  overflow-x:hidden;
+  overflow-y:auto;
 }
 .po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list-head {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  grid-template-columns:minmax(0,1fr) 64px 54px;
+  gap:8px;
   align-items:center;
   padding:8px 9px;
   font-size:11px;
 }
 .po-pf-board--courtside .po-pf-nine.is-expanded .po-pf-nine__list button {
   box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  grid-template-columns:minmax(0,1fr) 64px 54px;
   min-height:40px;
   height:100%;
   gap:8px;
