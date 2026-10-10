@@ -9,6 +9,7 @@ import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
 import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
 import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
 import { ensureUserClubBoardState } from '@/engine/board'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
 export const SPAIN_ACB_COMPETITION_ID = 'competition:ESP:liga-endesa'
@@ -89,7 +90,10 @@ export async function createWorldDbSpainGame(
     // MX0.6 closure: the canonical World DB bootstrap attaches the user coach to the selected club
     // but never created Board truth for it, so the Board surface showed its initialization
     // placeholder in an already-running career. Same canonical initializer the other universes use.
-    return ensureCanonicalFinanceFoundation(ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID))))
+    // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the shipped
+    // Spain universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
+    const prepared = ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
+    return ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared) })
   } finally {
     session.close()
   }

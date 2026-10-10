@@ -32,6 +32,7 @@ import {
   type OrganizationId,
 } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import type { FinancialAuthorizationRenewalPolicy } from './AuthorizationRenewalPolicy'
 import type { DebtLedgerMapping } from './DebtEngine'
 import {
   createCurrencyCode,
@@ -119,6 +120,38 @@ export function financeFiscalPeriodsOf(world: GameWorld, organizationId: Organiz
     .sort((left, right) => compareGameDates(left.startsOn, right.startsOn) || String(left.id).localeCompare(String(right.id))))
 }
 
+/**
+ * BS16N-R structural fiscal rollover. Materializes the Organization's canonical fiscal period for the fiscal
+ * year containing `asOfDate` exactly once — the first processed GameDate inside that fiscal year creates it, and
+ * every later date in the same fiscal year is an exact no-op. The period is the fiscal year derived from the
+ * profile's `fiscalYearStartMonth` and the GameDate, never a Season, and materializing it creates no cash,
+ * revenue, expense, authorization, debt or capital: period truth is not permission and not money.
+ *
+ * An Organization without a canonical profile has no fiscal configuration yet, so it gains no period; an
+ * existing period that already spans this fiscal year — including a pre-BS16G season-shaped one — stays the
+ * single period authority for it, so a second, overlapping period can never appear.
+ */
+export function ensureFinanceFiscalPeriodForDate(world: GameWorld, organizationIdInput: OrganizationId | string, asOfDate: GameDate | string): GameWorld {
+  const organizationId = organizationIdFromString(organizationIdInput)
+  const profile = world.organizationFinancialProfilesById[organizationId]
+  if (profile === undefined) return world
+  const date = parseGameDate(asOfDate)
+  const fiscalYear = getFinanceFiscalYearFor(profile, date)
+  const expected = {
+    id: financeFiscalPeriodIdFor(organizationId, fiscalYear.startsOn),
+    startsOn: fiscalYear.startsOn,
+    endsOn: fiscalYear.endsOn,
+  }
+  const periods = financeFiscalPeriodsOf(world, organizationId)
+  const alreadyAuthoritative = periods.some((period) =>
+    String(period.id) === String(expected.id)
+    || fiscalPeriodsOverlap(period, expected)
+    || (compareGameDates(date, period.startsOn) >= 0 && compareGameDates(date, period.endsOn) <= 0))
+  if (alreadyAuthoritative) return world
+  const period = createFiscalPeriod({ id: expected.id, organizationId, label: fiscalYear.label, startsOn: fiscalYear.startsOn, endsOn: fiscalYear.endsOn, status: 'OPEN' })
+  return updateGameWorld(world, { fiscalPeriods: [...Object.values(world.fiscalPeriodsById), period] })
+}
+
 function fiscalPeriodsOverlap(left: FiscalPeriod, right: Pick<FiscalPeriod, 'startsOn' | 'endsOn'>): boolean {
   return compareGameDates(left.startsOn, right.endsOn) <= 0 && compareGameDates(right.startsOn, left.endsOn) <= 0
 }
@@ -171,6 +204,11 @@ export interface OrganizationFinanceProvisioningContext {
   readonly asOfDate?: GameDate | string
   /** Defaults to the starting month of the current Season, which is context only and never a period date. */
   readonly fiscalYearStartMonth?: number
+  /**
+   * BS16N-R: the explicitly assigned renewal policy for this Organization. Absent means no automatic renewal.
+   * It is only applied when the profile is created, so an existing profile's own policy always wins.
+   */
+  readonly authorizationRenewalPolicy?: FinancialAuthorizationRenewalPolicy | null
 }
 
 /**
@@ -187,7 +225,7 @@ export function provisionOrganizationFinanceFoundation(world: GameWorld, organiz
   const asOfDate = parseGameDate(context.asOfDate ?? world.currentDate)
   const season = world.seasons[world.currentSeasonId]
   const fiscalYearStartMonth = context.fiscalYearStartMonth ?? Number(season?.startDate.slice(5, 7) ?? asOfDate.slice(5, 7))
-  const profile = createOrganizationFinancialProfile({ organizationId, baseCurrencyCode: currencyCode, fiscalYearStartMonth })
+  const profile = createOrganizationFinancialProfile({ organizationId, baseCurrencyCode: currencyCode, fiscalYearStartMonth, authorizationRenewalPolicy: context.authorizationRenewalPolicy ?? null })
   const existingProfile = world.organizationFinancialProfilesById[organizationId]
   if (existingProfile !== undefined) {
     if (existingProfile.baseCurrencyCode !== currencyCode) throw new RangeError(`Organization ${organizationId} already has a financial profile in ${existingProfile.baseCurrencyCode}; refusing to overwrite it with ${currencyCode}`)

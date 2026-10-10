@@ -16,6 +16,7 @@ import {
   type OrganizationSectionId,
   type TeamId,
 } from '@/domain/ids'
+import { createFinancialAuthorizationRenewalPolicy, type FinancialAuthorizationRenewalPolicy } from './AuthorizationRenewalPolicy'
 
 export type CurrencyCode = string & { readonly __currencyCode: unique symbol }
 
@@ -106,6 +107,12 @@ export interface OrganizationFinancialProfile {
   readonly organizationId: OrganizationId
   readonly baseCurrencyCode: CurrencyCode
   readonly fiscalYearStartMonth: number
+  /**
+   * BS16N-R: this Organization's fiscal authorization renewal policy, assigned explicitly by the universe that
+   * created it. `null` means no automatic renewal — the next fiscal period is period truth with no
+   * authorization, and Finance keeps reporting `RENEWAL_NOT_MODELLED`. There is no global carry-forward default.
+   */
+  readonly authorizationRenewalPolicy: FinancialAuthorizationRenewalPolicy | null
 }
 
 export function createCurrencyCode(value: string): CurrencyCode {
@@ -242,10 +249,14 @@ export function createOrganizationFinancialProfile(input: {
   readonly organizationId: OrganizationId | string
   readonly baseCurrencyCode: string
   readonly fiscalYearStartMonth?: number
+  readonly authorizationRenewalPolicy?: FinancialAuthorizationRenewalPolicy | null
 }): OrganizationFinancialProfile {
   const fiscalYearStartMonth = input.fiscalYearStartMonth ?? 1
   if (!Number.isInteger(fiscalYearStartMonth) || fiscalYearStartMonth < 1 || fiscalYearStartMonth > 12) throw new RangeError('Fiscal year start month must be an integer from 1 to 12')
-  return Object.freeze({ organizationId: organizationIdFromString(input.organizationId), baseCurrencyCode: createCurrencyCode(input.baseCurrencyCode), fiscalYearStartMonth })
+  const authorizationRenewalPolicy = input.authorizationRenewalPolicy === undefined || input.authorizationRenewalPolicy === null
+    ? null
+    : createFinancialAuthorizationRenewalPolicy(input.authorizationRenewalPolicy)
+  return Object.freeze({ organizationId: organizationIdFromString(input.organizationId), baseCurrencyCode: createCurrencyCode(input.baseCurrencyCode), fiscalYearStartMonth, authorizationRenewalPolicy })
 }
 
 function totalPostings(postings: readonly FinancialPosting[], direction: FinancialPostingDirection): number {

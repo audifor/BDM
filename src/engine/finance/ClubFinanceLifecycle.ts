@@ -18,7 +18,9 @@ import {
   type FinancingExecutionResult,
   type ReceivableCollectionResult,
 } from '@/domain/finance'
-import { financeFiscalPeriodsOf } from '@/domain/finance/FinanceFoundation'
+import { financeFiscalPeriodsOf, ensureFinanceFiscalPeriodForDate } from '@/domain/finance/FinanceFoundation'
+import { renewOrganizationAuthorizationForPeriod } from '@/domain/finance/AuthorizationRenewal'
+import { isCarryForwardAuthorizationRenewalPolicy } from '@/domain/finance/AuthorizationRenewalPolicy'
 import type { FiscalPeriodId, OrganizationId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
@@ -151,6 +153,10 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
   for (const contribution of Object.values(world.capitalContributionsById)) if (contribution.effectiveOn === date) financingDueOrganizations.add(String(contribution.recipientOrganizationId))
   const inWorldLenderBorrowers = new Set<string>()
   for (const agreement of Object.values(world.financingAgreementsById)) if (agreement.status === 'ACTIVE' && agreement.fundingParty.kind === 'ORGANIZATION') inWorldLenderBorrowers.add(String(agreement.borrowerOrganizationId))
+  // BS16N-R: which fiscal periods already carry an authorization. Built once per processed date so the annual
+  // rollover check below never rescans every budget for every Organization.
+  const authorizedFiscalPeriods = new Set<string>()
+  for (const budget of Object.values(world.financialBudgetsById)) authorizedFiscalPeriods.add(`${budget.organizationId}|${budget.fiscalPeriodId ?? ''}`)
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
     const profile = current.organizationFinancialProfilesById[organizationId]
@@ -158,8 +164,36 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
       organizations.push(result(organizationId, null, null, 'FINANCE_PROFILE_UNAVAILABLE', zeroOccurrences(), 0, 'Organization has no canonical finance profile, so no Finance fact can be recorded for it.'))
       continue
     }
+    // BS16N-R fiscal rollover, before any economic stage reads the period: the first processed GameDate inside a
+    // new fiscal year materializes the Organization's canonical fiscal period exactly once, and materializing a
+    // period creates no cash, revenue, expense, authorization, debt or capital. Authorization for the new period
+    // is granted only by that Organization's own renewal policy.
+    const withFiscalPeriod = ensureFinanceFiscalPeriodForDate(current, organizationId, date)
+    if (withFiscalPeriod !== current) current = withFiscalPeriod
     const currencyCode = String(profile.baseCurrencyCode)
-    const fiscalPeriodId = fiscalPeriodIdForDate(current, organizationId, date)
+    const coveringPeriodId = fiscalPeriodIdForDate(current, organizationId, date)
+    if (coveringPeriodId !== null && !authorizedFiscalPeriods.has(`${organizationId}|${coveringPeriodId}`)) {
+      const renewalPolicy = current.organizationFinancialProfilesById[organizationId]?.authorizationRenewalPolicy ?? null
+      if (isCarryForwardAuthorizationRenewalPolicy(renewalPolicy)) {
+        const period = current.fiscalPeriodsById[coveringPeriodId]
+        const renewal = renewOrganizationAuthorizationForPeriod(current, {
+          organizationId,
+          currencyCode,
+          fiscalPeriodId: coveringPeriodId,
+          period: period === undefined
+            ? { startsOn: date, endsOn: date }
+            : { startsOn: period.startsOn, endsOn: period.endsOn, label: period.label },
+          asOfDate: date,
+          policy: renewalPolicy,
+        })
+        if (renewal.plan.status === 'RENEWED') {
+          current = renewal.world
+          authorizedFiscalPeriods.add(`${organizationId}|${coveringPeriodId}`)
+          diagnostics.push({ code: 'AUTHORIZATION_RENEWED', message: `Fiscal period ${coveringPeriodId} was authorized by carrying forward ${renewal.plan.previousBudgetId ?? 'the previous approved limits'}.`, sourceId: String(organizationId) })
+        }
+      }
+    }
+    const fiscalPeriodId = coveringPeriodId
     const accounts = tryOrganizationFinanceAccounts(current, organizationId, currencyCode)
     if (accounts === null) {
       organizations.push(result(organizationId, currencyCode, fiscalPeriodId, 'FINANCE_ACCOUNTS_UNAVAILABLE', zeroOccurrences(), 0, 'Canonical account catalog is incomplete for this organization.'))

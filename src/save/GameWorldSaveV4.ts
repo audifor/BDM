@@ -70,7 +70,7 @@ import {
   type FacilityUsageRight,
   type Place,
 } from '@/domain/facilities'
-import { createAuthorizedOperatingCostFact, createBudgetAllocation, createBudgetLine, createBudgetRevision, createDebtInstrument, createFinancingAgreement, createFinancingDrawdown, createCapitalContribution, createCompetitionDistributionFact, createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createForecastAssumption, createOperatingCostSource, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createRevenueSource, createTreasurySettlement, type AuthorizedOperatingCostFact, type BudgetAllocation, type BudgetLine, type BudgetRevision, type CapitalContribution, type CompetitionDistributionFact, type DebtInstrument, type FinancingAgreement, type FinancingDrawdown, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OperatingCostSource, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
+import { createAuthorizedOperatingCostFact, createBudgetAllocation, createBudgetLine, createBudgetRevision, createDebtInstrument, createFinancingAgreement, createFinancingDrawdown, createCapitalContribution, createCompetitionDistributionFact, createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createForecastAssumption, createOperatingCostSource, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createRevenueSource, createTreasurySettlement, createFinancialAuthorizationRenewalPolicy, type AuthorizedOperatingCostFact, type BudgetAllocation, type BudgetLine, type BudgetRevision, type CapitalContribution, type CompetitionDistributionFact, type DebtInstrument, type FinancingAgreement, type FinancingDrawdown, type ExpenseRecognition, type FinancialAccount, type FinancialAuthorizationRenewalPolicy, type FinancialBudget, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OperatingCostSource, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
 import { createFacilityFinancialBinding, type FacilityFinancialBinding, type FacilityFinancialBindingSourceKind, type FacilityFinancialFactKind } from '@/domain/facilities'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
@@ -1473,9 +1473,35 @@ function parseOrganizationFinancialProfiles(value: unknown): readonly Organizati
   if (!Array.isArray(value)) throw new TypeError('Save V4 organizationFinancialProfiles must be an array')
   return Object.freeze(value.map((entry) => {
     const profile = record(entry, 'Save V4 OrganizationFinancialProfile')
-    exactKeys(profile, ['organizationId', 'baseCurrencyCode', 'fiscalYearStartMonth'], 'Save V4 OrganizationFinancialProfile')
-    return createOrganizationFinancialProfile({ organizationId: organizationIdFromString(nonEmptyText(profile.organizationId, 'Save V4 OrganizationFinancialProfile organizationId')), baseCurrencyCode: nonEmptyText(profile.baseCurrencyCode, 'Save V4 OrganizationFinancialProfile baseCurrencyCode'), fiscalYearStartMonth: integer(profile.fiscalYearStartMonth, 'Save V4 OrganizationFinancialProfile fiscalYearStartMonth') })
+    // BS16N-R: `authorizationRenewalPolicy` is optional — a save written before renewal existed carries none,
+    // and its organizations keep the truthful "no automatic renewal" behavior.
+    const hasRenewalPolicy = Object.prototype.hasOwnProperty.call(profile, 'authorizationRenewalPolicy')
+    if (hasRenewalPolicy) exactKeys(profile, ['organizationId', 'baseCurrencyCode', 'fiscalYearStartMonth', 'authorizationRenewalPolicy'], 'Save V4 OrganizationFinancialProfile')
+    else exactKeys(profile, ['organizationId', 'baseCurrencyCode', 'fiscalYearStartMonth'], 'Save V4 OrganizationFinancialProfile')
+    return createOrganizationFinancialProfile({
+      organizationId: organizationIdFromString(nonEmptyText(profile.organizationId, 'Save V4 OrganizationFinancialProfile organizationId')),
+      baseCurrencyCode: nonEmptyText(profile.baseCurrencyCode, 'Save V4 OrganizationFinancialProfile baseCurrencyCode'),
+      fiscalYearStartMonth: integer(profile.fiscalYearStartMonth, 'Save V4 OrganizationFinancialProfile fiscalYearStartMonth'),
+      authorizationRenewalPolicy: hasRenewalPolicy && profile.authorizationRenewalPolicy !== null ? parseAuthorizationRenewalPolicy(profile.authorizationRenewalPolicy) : null,
+    })
   }))
+}
+
+function parseAuthorizationRenewalPolicy(value: unknown): FinancialAuthorizationRenewalPolicy {
+  const policy = record(value, 'Save V4 authorizationRenewalPolicy')
+  exactKeys(policy, ['mode', 'provenance'], 'Save V4 authorizationRenewalPolicy')
+  const provenance = record(policy.provenance, 'Save V4 authorizationRenewalPolicy provenance')
+  const hasId = provenance.id !== undefined
+  const hasDescription = provenance.description !== undefined
+  exactKeys(provenance, ['kind', ...(hasId ? ['id'] : []), ...(hasDescription ? ['description'] : [])], 'Save V4 authorizationRenewalPolicy provenance')
+  return createFinancialAuthorizationRenewalPolicy({
+    mode: nonEmptyText(policy.mode, 'Save V4 authorizationRenewalPolicy mode'),
+    provenance: {
+      kind: nonEmptyText(provenance.kind, 'Save V4 authorizationRenewalPolicy provenance kind'),
+      ...(hasId ? { id: nonEmptyText(provenance.id, 'Save V4 authorizationRenewalPolicy provenance id') } : {}),
+      ...(hasDescription ? { description: nonEmptyText(provenance.description, 'Save V4 authorizationRenewalPolicy provenance description') } : {}),
+    },
+  })
 }
 
 function parseTreasuryCounterparty(value: unknown): TreasuryCounterparty {

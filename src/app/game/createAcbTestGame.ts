@@ -32,6 +32,7 @@ import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY } from '@/data/acb2026'
 import { ensureCanonicalFinanceFoundation, provisionEconomicSources } from '@/domain/finance'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 import { createAcbDemoEconomicProfileV1 } from './AcbDemoEconomicPolicy'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 const ACB_SEED = 20_260_827
 const SPAIN_ID = countryIdFromString('acb-country-spain')
@@ -190,7 +191,10 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensureTestGameOrganizationKnowledge(world)
-  const career = ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id)))
+  const prepared = initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
+  // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the ACB Demo
+  // universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
+  const career = ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared) })
   // BDM DEMO ECONOMIC POLICY V1 (see AcbDemoEconomicPolicy.ts): the demo competition's approved economic profile
   // is provisioned into canonical Finance sources. The engines contain no league branch, so this is data only.
   return provisionEconomicSources(career, { profiles: [createAcbDemoEconomicProfileV1()] }).world

@@ -1,6 +1,8 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { fiscalPeriodIdFromString, organizationIdFromString, type FiscalPeriodId, type OrganizationId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { planAuthorizationRenewal } from './AuthorizationRenewal'
+import type { FinancialAuthorizationRenewalPolicy } from './AuthorizationRenewalPolicy'
 import { createBudgetLine, createFinancialBudget, type BudgetLine, type FinancialBudget } from './BudgetForecasting'
 import { financeFiscalPeriodIdFor, financeFiscalPeriodsOf, getFinanceFiscalYearFor, provisionOrganizationFinanceFoundation } from './FinanceFoundation'
 import { getOrganizationOpeningEconomicStateStatus, materializeOrganizationOpeningEconomicState, type OpeningEconomicStateSource, type OpeningEconomicStateStatus } from './FinanceOpeningState'
@@ -56,10 +58,16 @@ export interface FinanceActivationReport {
 export interface EnsureCanonicalFinanceFoundationOptions {
   readonly asOfDate?: GameDate | string
   /**
-   * Renewal is NOT modelled: a later fiscal period stays unauthorized until a real authority exists, so
-   * materializing a new period's authorization is opt-in only (BS16G+).
+   * Legacy re-seeding into a later fiscal period stays opt-in: renewal is policy-driven (BS16N-R), so a new
+   * period's authorization comes from that Organization's assigned renewal policy, never from the legacy pools.
    */
   readonly allowNewPeriodMaterialization?: boolean
+  /**
+   * BS16N-R explicit, per-Organization renewal policy assignments. A policy is applied when the Organization's
+   * financial profile is created, so it becomes canonical, persisted configuration; an Organization nobody
+   * assigns a policy to keeps the truthful `RENEWAL_NOT_MODELLED` answer. There is no global default.
+   */
+  readonly authorizationRenewalPolicies?: readonly OrganizationAuthorizationRenewalAssignment[]
   /**
    * BS16H explicit opening economic sources. No shipped ecosystem declares one, so careers pass nothing and
    * keep truthful zero cash; a future legitimate authority (World DB financial data, an explicit owner capital
@@ -72,6 +80,12 @@ export interface EnsureCanonicalFinanceFoundationOptions {
    * caller that supplies nothing keeps the unchanged "no currency" behavior.
    */
   readonly explicitOrganizationCurrencies?: readonly ExplicitOrganizationCurrencyAuthority[]
+}
+
+/** BS16N-R: one explicit renewal-policy assignment for one Organization. */
+export interface OrganizationAuthorizationRenewalAssignment {
+  readonly organizationId: OrganizationId | string
+  readonly policy: FinancialAuthorizationRenewalPolicy
 }
 
 export const LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE = Object.freeze({
@@ -91,10 +105,11 @@ export function getFinanceActivationReport(world: GameWorld, options: EnsureCano
   const asOfDate = parseGameDate(options.asOfDate ?? world.currentDate)
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
   const explicitOrganizationCurrencies = options.explicitOrganizationCurrencies ?? []
+  const renewalPolicies = renewalPoliciesByOrganization(options.authorizationRenewalPolicies)
   return Object.freeze({
     asOfDate,
     organizations: Object.freeze(financeBearingOrganizationIds(world).map((organizationId) => Object.freeze({
-      ...plan(world, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies).activation,
+      ...plan(world, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies, renewalPolicies).activation,
       openingEconomicState: getOrganizationOpeningEconomicStateStatus(world, organizationId),
     }))),
   })
@@ -102,13 +117,16 @@ export function getFinanceActivationReport(world: GameWorld, options: EnsureCano
 
 /**
  * Single shared activation authority: resolve currency, provision the canonical foundation, materialize the
- * legacy payroll authorization. Deterministic, idempotent and migration safe — calling it again on a world
- * that needs nothing returns the identical world instance, and existing canonical facts always win.
+ * legacy payroll authorization for the opening period and renew authorization for a later fiscal period when
+ * that Organization's own renewal policy allows it. Deterministic, idempotent and migration safe — calling it
+ * again on a world that needs nothing returns the identical world instance, and existing canonical facts always
+ * win.
  */
 export function ensureCanonicalFinanceFoundation(world: GameWorld, options: EnsureCanonicalFinanceFoundationOptions = {}): GameWorld {
   const asOfDate = parseGameDate(options.asOfDate ?? world.currentDate)
   const allowNewPeriodMaterialization = options.allowNewPeriodMaterialization ?? false
   const explicitOrganizationCurrencies = options.explicitOrganizationCurrencies ?? []
+  const renewalPolicies = renewalPoliciesByOrganization(options.authorizationRenewalPolicies)
   let current = world
   let changedAny = false
   const budgetAdds: FinancialBudget[] = []
@@ -121,12 +139,13 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
   }
 
   for (const organizationId of financeBearingOrganizationIds(world)) {
-    const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies)
+    const planned = plan(current, organizationId, asOfDate, allowNewPeriodMaterialization, explicitOrganizationCurrencies, renewalPolicies)
     if (planned.provision !== null) {
       const provisioned = provisionOrganizationFinanceFoundation(current, organizationId, {
         currencyCode: planned.provision.currencyCode,
         fiscalYearStartMonth: planned.provision.fiscalYearStartMonth,
         asOfDate,
+        authorizationRenewalPolicy: renewalPolicies.get(String(organizationId)) ?? null,
       })
       if (provisioned !== current) changedAny = true
       current = provisioned
@@ -139,14 +158,20 @@ export function ensureCanonicalFinanceFoundation(world: GameWorld, options: Ensu
         changedAny = true
       }
     }
-    if (!planned.materializeAuthorization || planned.fiscalPeriodId === null || planned.currencyCode === null) continue
+    const plannedAuthorization = planned.authorization
+    if (plannedAuthorization === null) continue
     const profile = current.organizationFinancialProfilesById[organizationId]!
-    const fiscalPeriodId = resolveCanonicalFiscalPeriod(current, organizationId, asOfDate, profile.fiscalYearStartMonth)?.id ?? planned.fiscalPeriodId
+    const fiscalPeriodId = resolveCanonicalFiscalPeriod(current, organizationId, asOfDate, profile.fiscalYearStartMonth)?.id ?? plannedAuthorization.fiscalPeriodId
     if (current.fiscalPeriodsById[fiscalPeriodId] === undefined) {
       const fiscalYear = getFinanceFiscalYearFor(profile, asOfDate)
       periodAdds.push(createFiscalPeriod({ id: fiscalPeriodId, organizationId, label: fiscalYear.label, startsOn: fiscalYear.startsOn, endsOn: fiscalYear.endsOn }))
     }
-    const materialized = materializeLegacyTeamFinancesAuthorization(current, { organizationId, fiscalPeriodId, asOfDate, currencyCode: planned.currencyCode })
+    if (plannedAuthorization.kind === 'CARRY_FORWARD_RENEWAL') {
+      budgetAdds.push(plannedAuthorization.budget)
+      lineAdds.push(...plannedAuthorization.lines)
+      continue
+    }
+    const materialized = materializeLegacyTeamFinancesAuthorization(current, { organizationId, fiscalPeriodId, asOfDate, currencyCode: plannedAuthorization.currencyCode })
     budgetAdds.push(materialized.budget)
     lineAdds.push(...materialized.lines)
   }
@@ -223,11 +248,20 @@ interface OrganizationActivationPlan {
    * authorization stays unmodelled.
    */
   readonly provision: OrganizationFinanceProvisioning | null
-  /** True only for `ACTIVATED`: the legacy payroll authorization is (or already is) materialized. */
-  readonly materializeAuthorization: boolean
-  readonly currencyCode: string | null
-  readonly fiscalPeriodId: FiscalPeriodId | null
+  /** Non-null only for `ACTIVATED`: the authorization this activation materializes (or already materialized). */
+  readonly authorization: PlannedOrganizationAuthorization | null
 }
+
+/**
+ * The authorization an activation plan materializes. `LEGACY_SEED` is the one-way transitional materialization
+ * from the legacy `TeamFinances` pools for an organization that has no canonical authorization yet;
+ * `CARRY_FORWARD_RENEWAL` is the BS16N-R annual continuity of an already-authorized organization's approved
+ * limits into its next fiscal period. They are distinct kinds because they must never be confused: renewal is
+ * never a legacy re-seed, and a legacy re-seed into a later period stays opt-in.
+ */
+type PlannedOrganizationAuthorization =
+  | { readonly kind: 'LEGACY_SEED'; readonly currencyCode: string; readonly fiscalPeriodId: FiscalPeriodId }
+  | { readonly kind: 'CARRY_FORWARD_RENEWAL'; readonly currencyCode: string; readonly fiscalPeriodId: FiscalPeriodId; readonly budget: FinancialBudget; readonly lines: readonly BudgetLine[] }
 
 interface OrganizationFinanceProvisioning {
   readonly currencyCode: string
@@ -251,10 +285,17 @@ function activationOf(organizationId: OrganizationId, status: FinanceActivationS
 }
 
 function noMaterialization(activation: OrganizationFinanceActivation, provision: OrganizationFinanceProvisioning | null = null): OrganizationActivationPlan {
-  return Object.freeze({ activation, provision, materializeAuthorization: false, currencyCode: null, fiscalPeriodId: null })
+  return Object.freeze({ activation, provision, authorization: null })
 }
 
-function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, allowNewPeriodMaterialization: boolean, explicitOrganizationCurrencies: readonly ExplicitOrganizationCurrencyAuthority[]): OrganizationActivationPlan {
+/** BS16N-R: the explicit per-Organization renewal assignments, indexed by Organization id. */
+function renewalPoliciesByOrganization(assignments: readonly OrganizationAuthorizationRenewalAssignment[] | undefined): Map<string, FinancialAuthorizationRenewalPolicy> {
+  const byOrganization = new Map<string, FinancialAuthorizationRenewalPolicy>()
+  for (const assignment of assignments ?? []) byOrganization.set(String(organizationIdFromString(assignment.organizationId)), assignment.policy)
+  return byOrganization
+}
+
+function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDate, allowNewPeriodMaterialization: boolean, explicitOrganizationCurrencies: readonly ExplicitOrganizationCurrencyAuthority[], renewalPolicies: ReadonlyMap<string, FinancialAuthorizationRenewalPolicy>): OrganizationActivationPlan {
   const profile = world.organizationFinancialProfilesById[organizationId]
   const resolution = resolveOrganizationCurrency(world, organizationId, explicitOrganizationCurrencies)
 
@@ -268,7 +309,7 @@ function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDa
         policyCurrencyCode: String(resolution.currencyCode),
       }))
     }
-    return planAuthorization(world, organizationId, profile.baseCurrencyCode, 'CANONICAL_PROFILE', asOfDate, allowNewPeriodMaterialization, { currencyCode: String(profile.baseCurrencyCode), fiscalYearStartMonth: profile.fiscalYearStartMonth })
+    return planAuthorization(world, organizationId, profile.baseCurrencyCode, 'CANONICAL_PROFILE', asOfDate, allowNewPeriodMaterialization, { currencyCode: String(profile.baseCurrencyCode), fiscalYearStartMonth: profile.fiscalYearStartMonth }, renewalPolicies)
   }
 
   if (resolution.status !== 'RESOLVED') {
@@ -279,7 +320,7 @@ function plan(world: GameWorld, organizationId: OrganizationId, asOfDate: GameDa
   return planAuthorization(world, organizationId, resolution.currencyCode, resolution.source, asOfDate, allowNewPeriodMaterialization, {
     currencyCode: String(resolution.currencyCode),
     fiscalYearStartMonth: defaultFiscalYearStartMonth(world, asOfDate),
-  })
+  }, renewalPolicies)
 }
 
 function defaultFiscalYearStartMonth(world: GameWorld, asOfDate: GameDate): number {
@@ -295,6 +336,7 @@ function planAuthorization(
   asOfDate: GameDate,
   allowNewPeriodMaterialization: boolean,
   provision: OrganizationFinanceProvisioning,
+  renewalPolicies: ReadonlyMap<string, FinancialAuthorizationRenewalPolicy>,
 ): OrganizationActivationPlan {
   const fiscalYearStartMonth = provision.fiscalYearStartMonth
   const fiscalYear = getFinanceFiscalYearFor({ fiscalYearStartMonth }, asOfDate)
@@ -309,8 +351,31 @@ function planAuthorization(
   }
   const hasAnyCanonicalAuthorization = Object.values(world.financialBudgetsById).some((budget) => budget.organizationId === String(organizationId))
   if (hasAnyCanonicalAuthorization && !allowNewPeriodMaterialization) {
-    // No silent carry-forward: the new fiscal period may exist as period truth, but its authorization is never
-    // copied from the previous one.
+    // BS16N-R: the new fiscal period already exists as period truth. Whether it also gains authorization is
+    // decided by this Organization's own explicit renewal policy — never by the previous period's authorization
+    // silently leaking forward, and never by the legacy pools.
+    const renewalPolicy = world.organizationFinancialProfilesById[organizationId]?.authorizationRenewalPolicy ?? renewalPolicies.get(String(organizationId)) ?? null
+    const renewal = planAuthorizationRenewal(world, {
+      organizationId,
+      currencyCode,
+      fiscalPeriodId,
+      period: existingPeriod === undefined
+        ? { startsOn: fiscalYear.startsOn, endsOn: fiscalYear.endsOn, label: fiscalYear.label }
+        : { startsOn: existingPeriod.startsOn, endsOn: existingPeriod.endsOn, label: existingPeriod.label },
+      asOfDate,
+      policy: renewalPolicy,
+    })
+    if (renewal.status === 'RENEWED' && renewal.budget !== null) {
+      return Object.freeze({
+        activation: activationOf(organizationId, 'ACTIVATED', {
+          ...base,
+          budgetId: renewal.budget.id,
+          authorizedMinorUnits: renewal.lines.reduce((sum, line) => sum + (line.direction === 'EXPENSE' ? line.amount.minorUnits : 0), 0),
+        }),
+        provision,
+        authorization: Object.freeze({ kind: 'CARRY_FORWARD_RENEWAL' as const, currencyCode, fiscalPeriodId, budget: renewal.budget, lines: renewal.lines }),
+      })
+    }
     return noMaterialization(activationOf(organizationId, 'RENEWAL_NOT_MODELLED', { currencyCode, currencySource }), provision)
   }
   if (!hasLegacyBudgetSource(world, organizationId)) {
@@ -324,9 +389,7 @@ function planAuthorization(
       authorizedMinorUnits: materialized.lines.reduce((sum, line) => sum + line.amount.minorUnits, 0),
     }),
     provision,
-    materializeAuthorization: true,
-    currencyCode,
-    fiscalPeriodId,
+    authorization: Object.freeze({ kind: 'LEGACY_SEED' as const, currencyCode, fiscalPeriodId }),
   })
 }
 

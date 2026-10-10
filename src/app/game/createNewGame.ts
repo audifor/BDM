@@ -23,6 +23,7 @@ import { initializeBoardState } from '@/engine/board'
 import { initializeRecruitingCycle } from '@/engine/season'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 import { prototypeOrganizationCurrencyAuthorities } from './PrototypeFinancePolicy'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -41,7 +42,11 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
   for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
   const planned = initializeAiClubManagementPlanning(world)
   // BDM Prototype Finance Policy V1: the prototype supplies the currency its fictional jurisdiction cannot.
-  const career = ensureCanonicalFinanceFoundation(planned, { explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned) })
+  // BDM Annual Authorization Continuity Policy V1: the approved prototype renewal policy, assigned explicitly.
+  const career = ensureCanonicalFinanceFoundation(planned, {
+    explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned),
+    authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(planned),
+  })
   return processClubFinanceForDate(career, career.currentDate).world
 }
 
