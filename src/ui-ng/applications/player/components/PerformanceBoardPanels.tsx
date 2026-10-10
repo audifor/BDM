@@ -6,16 +6,11 @@ import type {
   PerformanceKpiModel,
   PerformanceRecentGame,
   PerformanceShotProfileModel,
+  PerformanceShotZoneModel,
   PerformanceSplitRowModel,
   PlayerGameLogRow,
 } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
-
-/** Colour of each shot-zone block, keyed by the zone the model reports. */
-const ZONE_TONE: Record<string, string> = {
-  'inside-arc': 'yellow',
-  'outside-arc': 'cyan',
-}
 
 /** Legend colours of the form chart. */
 const FORM_SERIES = [
