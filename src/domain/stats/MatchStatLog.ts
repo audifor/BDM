@@ -1,6 +1,26 @@
 import type { GameDate } from '@/domain/date'
 import type { CompetitionId, GameId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 
+/**
+ * The nine mutually exclusive families are defined by MatchEngine Next's
+ * ShotEcology. Persist counts, not hypothetical coordinates.
+ */
+export const MATCH_SHOT_ZONE_IDS = [
+  'RESTRICTED', 'RIM', 'SHORT_PAINT', 'FLOATER_RANGE', 'MIDRANGE',
+  'LONG_MIDRANGE', 'CORNER_THREE', 'ABOVE_BREAK_THREE', 'DEEP',
+] as const
+export type MatchShotZoneId = (typeof MATCH_SHOT_ZONE_IDS)[number]
+export interface MatchShotZoneCounts { readonly made: number; readonly attempted: number }
+export interface MatchShotZoneBreakdown {
+  /** OBSERVED: exact Match Next release events; MODELLED: background
+   * conditional-zone allocation derived from already realised 3-zone shots. */
+  readonly provenance: 'OBSERVED' | 'MODELLED'
+  readonly modelVersion?: string
+  readonly counts: Readonly<Partial<Record<MatchShotZoneId, MatchShotZoneCounts>>>
+}
+export const isThreePointZone = (zone: MatchShotZoneId): boolean =>
+  zone === 'CORNER_THREE' || zone === 'ABOVE_BREAK_THREE' || zone === 'DEEP'
+
 export interface PlayerGameStatsSnapshot {
   readonly playerId: PlayerId
   readonly secondsPlayed: number
@@ -31,6 +51,8 @@ export interface PlayerGameStatLine {
   readonly isHome: boolean
   readonly started: boolean
   readonly stats: PlayerGameStatsSnapshot
+  /** Optional for legacy imports and already-completed pre-zone games. */
+  readonly shotZones?: MatchShotZoneBreakdown
 }
 
 /**
