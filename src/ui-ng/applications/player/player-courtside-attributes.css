@@ -926,3 +926,182 @@
   .pac-column--center .pac-profile__radar-wrap .po-radar__value {font-size:9.2px;}
   .pac-column--right .pac-detail--recorded .pac-detail__evolution {min-height:145px;}
 }
+
+
+/*
+ * ATTRIBUTES RADAR V3 · voluntary, limited comparison.
+ * Always a clean player-first radar on load, with at most two thin overlays.
+ * + COMPARAR and LIMPIAR replace the permanently active reference chips.
+ */
+.pac-column--center .pac-profile__chart {position:relative;}
+.pac-radar-toolbar {
+  display:flex;
+  flex:0 0 auto;
+  min-height:36px;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  padding:2px 6px 5px;
+}
+.pac-radar-toolbar .pac-radar-key {
+  min-height:29px;
+  padding:6px 10px;
+  font:600 12px/1.2 var(--cs-font);
+}
+.pac-radar-add,
+.pac-radar-clear {
+  flex:0 0 auto;
+  min-height:29px;
+  padding:6px 12px;
+  background:var(--cs-s2);
+  color:var(--cs-text)!important;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  font:700 13px/1.2 var(--cs-font-display)!important;
+  letter-spacing:.02em;
+}
+.pac-radar-add {
+  color:var(--cs-lime)!important;
+  border-color:var(--cs-lime);
+}
+.pac-radar-clear {color:var(--cs-orange2)!important;}
+.pac-radar-add[aria-expanded="true"] {background:var(--cs-s3);}
+.pac-radar-toolbar button:hover {background:var(--cs-s3);}
+.pac-radar-options {
+  position:absolute;
+  z-index:6;
+  top:42px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(390px,calc(100% - 16px));
+  max-width:100%;
+  padding:12px;
+  border:1px solid var(--cs-line2);
+  border-radius:12px;
+  background:var(--cs-s1);
+  box-shadow:0 9px 25px rgba(0,0,0,.28);
+}
+.pac-radar-options p {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+  margin:0 0 10px;
+}
+.pac-radar-options__choices {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.pac-radar-options .pac-radar-toggle {
+  min-height:35px;
+  justify-content:center;
+  margin:0;
+  font-size:12px;
+  padding:8px 6px;
+}
+.pac-radar-options .pac-radar-toggle:disabled {
+  cursor:not-allowed;
+  opacity:.45;
+}
+.pac-radar-options .pac-radar-toggle[aria-pressed="true"] {
+  opacity:1;
+}
+.pac-radar-active {
+  display:flex;
+  flex:0 0 auto;
+  min-height:27px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:2px 8px 3px;
+}
+.pac-radar-active span {
+  display:inline-flex;
+  gap:7px;
+  align-items:center;
+  white-space:nowrap;
+  font:600 12px/1.25 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pac-radar-active i {
+  display:inline-block;
+  width:16px;
+  border-top:2px dashed var(--pac-series-color);
+}
+.pac-column--center .pac-profile__radar-wrap {
+  min-height:0;
+  flex:1 1 auto;
+}
+.pac-profile-compare {
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  width:100%;
+  padding:11px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:12px;
+  background:var(--cs-s2);
+}
+.pac-profile-compare__header {
+  display:flex;
+  gap:7px 12px;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.pac-profile-compare__header strong {
+  color:var(--cs-lime);
+  font:700 19px/1 var(--cs-font-display);
+}
+.pac-profile-compare__header span {
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+.pac-profile-compare__bars {display:flex;flex-direction:column;gap:6px;}
+.pac-profile-compare__row {
+  display:grid;
+  grid-template-columns:minmax(85px,1fr) minmax(100px,2fr) 32px;
+  align-items:center;
+  gap:10px;
+  min-height:19px;
+}
+.pac-profile-compare__row > span {
+  color:var(--cs-text);
+  font:600 12px/1.2 var(--cs-font);
+}
+.pac-profile-compare__row > strong {
+  color:var(--cs-text);
+  text-align:right;
+  font:700 16px/1.1 var(--cs-font-display);
+}
+.pac-profile-compare__track {
+  height:8px;
+  border-radius:8px;
+  overflow:hidden;
+  background:var(--cs-s3);
+}
+.pac-profile-compare__track > i {
+  display:block;
+  height:100%;
+  border-radius:8px;
+}
+.pac-profile-compare__player {background:var(--cs-lime);}
+.pac-profile-compare p {
+  margin:2px 0 0;
+  color:var(--cs-text2);
+  font:500 12px/1.35 var(--cs-font);
+}
+.pac-profile-compare small {
+  font:400 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+@container player-space (max-width:860px) {
+  .pac-radar-options {top:40px;}
+  .pac-profile-compare {padding:10px;}
+}
+@container player-space (max-width:520px) {
+  .pac-radar-toolbar {flex-wrap:wrap;}
+  .pac-radar-options {width:calc(100% - 12px);}
+  .pac-profile-compare__row {grid-template-columns:minmax(76px,1fr) minmax(70px,2fr) 28px;}
+}
