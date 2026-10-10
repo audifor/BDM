@@ -227,7 +227,7 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
     <div className="home-standings competition-standings">
       <div className="home-standings__digest">
         <span>{digest.length} de {standings.length} equipos</span>
-        <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId},'push','standings')}>
+        <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId,section:'standings'},'push','standings')}>
           Clasificación completa ↗
         </button>
       </div>
