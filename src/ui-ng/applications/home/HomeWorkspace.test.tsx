@@ -52,6 +52,31 @@ describe('HomeWorkspace', () => {
     expect(screen.queryByRole('button', { name: /^Objetivos/i })).not.toBeInTheDocument()
   })
 
+  it('renders all upcoming matches in one line with rival, date and venue', () => {
+    useGameStore.getState().replaceWorld(createNewGame())
+    render(<NgWorkspaceNavigationProvider><HomeWorkspace /></NgWorkspaceNavigationProvider>)
+
+    const rows = document.querySelectorAll('.home-dashboard__upcoming .home-upcoming__row')
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.length).toBeLessThanOrEqual(5)
+    for (const row of rows) {
+      expect(row.querySelector('.home-upcoming__opponent')).not.toBeNull()
+      expect(row.querySelector('time.home-upcoming__date')).not.toBeNull()
+      expect(row.querySelector('.home-upcoming__venue')).not.toBeNull()
+      expect(row.querySelector('.home-upcoming__meta')).toBeNull()
+      expect(row.querySelector('.home-upcoming__main')).toBeNull()
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: /^Objetivos/i }))
+    fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitemradio', { name: 'Próximos partidos' }))
+    const selectableRows = document.querySelectorAll('.home-slot .home-upcoming__row')
+    expect(selectableRows).toHaveLength(rows.length)
+    for (const row of selectableRows) {
+      expect(row.querySelector('time.home-upcoming__date')).not.toBeNull()
+      expect(row.querySelector('.home-upcoming__venue')).not.toBeNull()
+    }
+  })
+
   it('renders every standings row with NBA-style metrics and canonical zones', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
