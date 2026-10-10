@@ -1105,3 +1105,116 @@
   .pac-radar-options {width:calc(100% - 12px);}
   .pac-profile-compare__row {grid-template-columns:minmax(76px,1fr) minmax(70px,2fr) 28px;}
 }
+
+
+/*
+ * ATTRIBUTES RADAR V3.1 · invariant radar footprint.
+ *
+ * Previously the comparison summary grew from one to three bars and the
+ * active-reference legend was conditionally mounted. Both stole height from
+ * the flexible SVG and made the spider jump in size whenever the user
+ * switched comparisons.
+ *
+ * Reserve a stable footer independent of its contents. The chart occupies
+ * the remaining space; only the footer may scroll when extra notes do not
+ * fit at a particular window size.
+ */
+.pac-column--center .pac-profile__body {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) 157px;
+  gap:8px;
+  min-height:0;
+  height:100%;
+  padding:8px 13px 10px;
+}
+.pac-column--center .pac-profile__chart {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow:visible;
+}
+.pac-column--center .pac-radar-toolbar {
+  flex:0 0 35px;
+  width:100%;
+  height:35px;
+  min-height:35px;
+  max-height:35px;
+  flex-wrap:nowrap;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:1px 4px 4px;
+  scrollbar-width:none;
+}
+.pac-column--center .pac-radar-toolbar::-webkit-scrollbar {display:none;}
+.pac-column--center .pac-profile__radar-wrap {
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  height:auto;
+  overflow:hidden;
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar {
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  max-width:570px;
+  max-height:560px;
+}
+.pac-column--center .pac-profile-compare {
+  display:flex;
+  flex-direction:column;
+  grid-row:2;
+  flex:none;
+  width:100%;
+  height:157px;
+  min-height:157px;
+  max-height:157px;
+  gap:4px;
+  padding:8px 11px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+.pac-column--center .pac-profile-compare__header {
+  flex:0 0 auto;
+  gap:5px 10px;
+}
+.pac-column--center .pac-profile-compare__header strong {font-size:17px;}
+.pac-column--center .pac-profile-compare__bars {
+  flex:0 0 auto;
+  gap:4px;
+}
+.pac-column--center .pac-profile-compare__row {min-height:18px;}
+.pac-column--center .pac-profile-compare p {
+  margin:1px 0 0;
+  flex:0 0 auto;
+  line-height:1.25;
+}
+.pac-column--center .pac-profile-compare small {flex:0 0 auto;}
+/* Recompose the columns at narrow widths, but never resize this chart
+ * as a consequence of clicking a reference, opening the menu, or clearing it. */
+@container player-space (max-width:860px) {
+  .pac-column--center .pac-profile__body {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) 157px;
+  }
+}
+@container player-space (max-width:520px) {
+  .pac-column--center .pac-radar-toolbar {flex-wrap:nowrap;}
+  .pac-column--center .pac-profile__radar-wrap {
+    min-height:0;
+    height:auto;
+  }
+  .pac-column--center .pac-profile__radar-wrap .po-radar {
+    min-height:0;
+    height:100%;
+  }
+}
