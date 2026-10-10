@@ -24,6 +24,7 @@ import { getPayableSettledAmount } from '@/domain/finance'
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { resolveClubFacilityAuthority } from '@/app/facilities/ClubFacilitiesReadModel'
+import { offersForOperation, requestFacilityOffers } from './FacilityMaintenanceOffers'
 import {
   FACILITY_MAINTENANCE_REASON_TEXT,
   cancelFacilityMaintenanceOperation,
@@ -40,6 +41,7 @@ import {
 
 export type FacilityMaintenanceActionId =
   | 'OPEN_PROPOSAL'
+  | 'REQUEST_OFFERS'
   | 'SELECT_OFFER'
   | 'REQUEST_APPROVAL'
   | 'APPROVE'
@@ -66,6 +68,24 @@ export type FacilityMaintenanceFundingState = 'NOT_RESERVED' | 'FUNDING_BLOCKED'
 export type FacilityMaintenanceExecutionState = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 export type FacilityMaintenanceEconomicState = 'NONE' | 'COST_AUTHORIZED' | 'ECONOMICALLY_RECOGNIZED' | 'PAYABLE' | 'PARTIALLY_SETTLED' | 'SETTLED'
 
+export interface FacilityMaintenanceOfferView {
+  readonly offerId: string
+  readonly providerName: string
+  readonly providerIdentity: 'DOCUMENTED_ENTITY' | 'SYNTHETIC_SIMULATED'
+  readonly sourceKind: FacilityMaintenanceOffer['sourceKind']
+  readonly classification: FacilityMaintenanceOffer['classification']
+  readonly amountMinorUnits: number
+  readonly currencyCode: string
+  readonly validUntil: GameDate
+  readonly expired: boolean
+  readonly executionDays: number | null
+  readonly paymentDueDays: number | null
+  readonly resultingCondition: number | null
+  readonly selected: boolean
+  /** Null when the offer can be selected now; otherwise the exact reason. */
+  readonly blockedReason: FacilityMaintenanceReason | null
+}
+
 export interface FacilityMaintenanceOperationView {
   readonly operationId: string
   readonly needId: string
@@ -85,6 +105,7 @@ export interface FacilityMaintenanceOperationView {
     /** Quoted evidence only. It is not money committed, reserved or owed. */
     readonly isEvidenceNotCommitment: true
   }
+  readonly offers: readonly FacilityMaintenanceOfferView[]
   readonly governance: {
     readonly state: FacilityMaintenanceGovernanceState
     readonly decisionId: string | null
@@ -178,6 +199,16 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
     if (economics.state === 'PAYABLE' || economics.state === 'PARTIALLY_SETTLED') alerts.push('PAYMENT_PENDING')
   }
 
+  const offerViews: FacilityMaintenanceOfferView[] = offersForOperation(world, operationId).map((item) => {
+    const itemProvider = world.facilityEconomyRecordsById[item.providerId]
+    const attempt = selectFacilityMaintenanceOffer(world, { teamId, operationId, offerId: item.id })
+    return Object.freeze({
+      offerId: item.id, providerName: itemProvider?.recordKind === 'PROVIDER' ? itemProvider.displayName : item.providerId, providerIdentity: itemProvider?.recordKind === 'PROVIDER' ? itemProvider.identityKind : 'DOCUMENTED_ENTITY' as const,
+      sourceKind: item.sourceKind, classification: item.classification, amountMinorUnits: item.amount.minorUnits, currencyCode: item.amount.currencyCode, validUntil: item.validUntil, expired: !isFacilityOfferValidOn(item, world.currentDate),
+      executionDays: item.terms.executionDays, paymentDueDays: item.terms.paymentDueDays, resultingCondition: item.terms.resultingCondition, selected: item.id === lifecycle.selectedOfferId,
+      blockedReason: attempt.status === 'APPLIED' || item.id === lifecycle.selectedOfferId ? null : (attempt.reasons[0] ?? 'INVALID_INPUT'),
+    })
+  })
   // Dry-run every action against the real command: enabled only when the command would apply.
   const actions: FacilityMaintenanceActionAvailability[] = []
   const actionFor = (id: FacilityMaintenanceActionId, run: () => { readonly status: string; readonly reasons: readonly FacilityMaintenanceReason[] }, extra: Partial<FacilityMaintenanceActionAvailability> = {}) => {
@@ -187,10 +218,10 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
     else actions.push(availability(id, outcome.status === 'BLOCKED' ? (outcome.reasons[0] ?? 'INVALID_INPUT') : outcome.status === 'NO_CHANGE' ? 'OPERATION_STAGE_INVALID' : null, extra))
   }
   if (!lifecycle.cancelled) {
-    const offers = facilityEconomyRecordsOfKind(world, 'OFFER').filter((item) => item.needId === lifecycle.needId && item.organizationId === lifecycle.organizationId).sort((a, b) => a.id.localeCompare(b.id))
-    const selectable = offers.find((item) => item.id !== lifecycle.selectedOfferId && selectFacilityMaintenanceOffer(world, { teamId, operationId, offerId: item.id }).status === 'APPLIED')
-    if (selectable !== undefined) actionFor('SELECT_OFFER', () => selectFacilityMaintenanceOffer(world, { teamId, operationId, offerId: selectable.id }), { offerId: selectable.id })
-    else actions.push(availability('SELECT_OFFER', offers.length === 0 ? 'COST_UNKNOWN' : 'OFFER_EXPIRED'))
+    actionFor('REQUEST_OFFERS', () => requestFacilityOffers(world, { teamId, operationId }))
+    const selectable = offerViews.find((item) => !item.selected && item.blockedReason === null)
+    if (selectable !== undefined) actionFor('SELECT_OFFER', () => selectFacilityMaintenanceOffer(world, { teamId, operationId, offerId: selectable.offerId }), { offerId: selectable.offerId })
+    else actions.push(availability('SELECT_OFFER', offerViews.length === 0 ? 'COST_UNKNOWN' : (offerViews.find((item) => !item.selected)?.blockedReason ?? 'OPERATION_STAGE_INVALID')))
     actionFor('REQUEST_APPROVAL', () => requestFacilityMaintenanceDecision(world, { teamId, operationId }))
     if (decisionState !== null && decision !== undefined) {
       const mine = userAppointedBodies(world, decision.institutionId)
@@ -200,9 +231,13 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
     } else actions.push(availability('APPROVE', 'DECISION_NOT_FOUND'))
     actionFor('RESERVE_AND_CONTRACT', () => reserveAndContractFacilityMaintenance(world, { teamId, operationId }))
     actionFor('START_WORK', () => startFacilityMaintenanceWork(world, { teamId, operationId }))
-    const inspection = Object.values(world.facilityInspectionsById).filter((item) => item.facilityId === lifecycle.facilityId).sort((a, b) => b.inspectedAt.localeCompare(a.inspectedAt) || a.id.localeCompare(b.id))[0]
-    if (inspection !== undefined) actionFor('COMPLETE_WORK', () => completeFacilityMaintenanceWork(world, { teamId, operationId, inspectionId: inspection.id }), { inspectionId: inspection.id })
-    else actions.push(availability('COMPLETE_WORK', 'COMPLETION_INSPECTION_REQUIRED'))
+    const acceptance = completeFacilityMaintenanceWork(world, { teamId, operationId })
+    if (acceptance.status !== 'BLOCKED') actionFor('COMPLETE_WORK', () => acceptance)
+    else {
+      const inspection = Object.values(world.facilityInspectionsById).filter((item) => item.facilityId === lifecycle.facilityId).sort((a, b) => b.inspectedAt.localeCompare(a.inspectedAt) || a.id.localeCompare(b.id))[0]
+      if (inspection !== undefined && acceptance.reasons[0] === 'COMPLETION_INSPECTION_REQUIRED') actionFor('COMPLETE_WORK', () => completeFacilityMaintenanceWork(world, { teamId, operationId, inspectionId: inspection.id }), { inspectionId: inspection.id })
+      else actions.push(availability('COMPLETE_WORK', acceptance.reasons[0] ?? 'COMPLETION_INSPECTION_REQUIRED'))
+    }
     actionFor('REQUEST_CANCELLATION', () => requestFacilityMaintenanceDecision(world, { teamId, operationId, purpose: 'CANCELLATION' }))
     actionFor('CANCEL', () => cancelFacilityMaintenanceOperation(world, { teamId, operationId }))
   }
@@ -225,6 +260,7 @@ export function buildFacilityMaintenanceOperationView(world: GameWorld, teamId: 
       expired: offerExpired,
       isEvidenceNotCommitment: true as const,
     }),
+    offers: Object.freeze(offerViews),
     governance: Object.freeze({ state: governanceState, decisionId: lifecycle.decisionId, requiredBodyIds: decisionState?.requiredBodyIds ?? [], approvedBodyIds: decisionState?.approvedBodyIds ?? [] }),
     funding: Object.freeze({ state: fundingState, reservationId: lifecycle.reservationId, blockerCode: fundingState === 'FUNDING_BLOCKED' ? lastFunding?.reasonCode ?? null : null, note: lastFunding?.kind === 'FUNDS_RESERVED' ? lastFunding.reasonCode : null }),
     execution: Object.freeze({ state: executionState, actionId: lifecycle.actionId, startedOn: action?.startedAt ?? null, completedOn: action?.completedAt ?? null, outcome: action?.outcome ?? null }),

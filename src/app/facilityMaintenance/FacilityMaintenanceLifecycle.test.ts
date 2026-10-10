@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { createFacilityInspection } from '@/domain/facilities'
+import { componentPhysicalAvailabilityAt } from '@/engine/facilities/FacilityPhysicalOperations'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import {
   cancelFacilityMaintenanceOperation, openFacilityMaintenanceProposal, recordFacilityMaintenanceDecisionEvent, requestFacilityMaintenanceDecision, selectFacilityMaintenanceOffer,
@@ -86,7 +87,10 @@ describe('BS17E-A cancellation matrix', () => {
     const decided = must(recordFacilityMaintenanceDecisionEvent(asked.world, { teamId: s.teamId, decisionId: asked.decisionId!, kind: 'APPROVED', bodyId: FM_BOARD }))
     const cancelled = must(cancelFacilityMaintenanceOperation(decided, { teamId: s.teamId, operationId: flow.operationId }))
     expect(cancelled.facilityMaintenanceNeedsById[s.needId as never]!.status).toBe('OPEN')
-    expect(cancelled.facilityMaintenanceActionsById[`facility-maintenance-action:${flow.operationId}` as never]).toBeDefined()
+    const stopped = cancelled.facilityMaintenanceActionsById[`facility-maintenance-action:${flow.operationId}` as never]!
+    expect(stopped).toMatchObject({ outcome: 'UNSUCCESSFUL', completedAt: cancelled.currentDate, resultingCondition: null })
+    expect(componentPhysicalAvailabilityAt(flow.world, s.base.physioComponentId as never, flow.world.currentDate).status).toBe('OUT_OF_SERVICE')
+    expect(componentPhysicalAvailabilityAt(cancelled, s.base.physioComponentId as never, cancelled.currentDate).status).not.toBe('OUT_OF_SERVICE')
     expect(facilityReservations(cancelled)[0]!.status).toBe('RELEASED')
     expect(Object.values(advance(cancelled, 3).expenseRecognitionsById).filter((e) => e.category === 'FACILITY')).toHaveLength(0)
   })

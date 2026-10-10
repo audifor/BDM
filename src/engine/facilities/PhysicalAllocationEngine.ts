@@ -37,10 +37,10 @@ export function evaluatePhysicalAllocation(world: GameWorld, session: ScheduledT
   const physical = componentPhysicalAvailabilityAt(world, componentId, session.date, session.teamId)
   const endPhysical = componentPhysicalAvailabilityAt(world, componentId, endDate, session.teamId)
   if (!physical.access || !endPhysical.access) return result('BLOCKED', 'NO_ACCESS_DURING_INTERVAL')
-  if (physical.status === 'OUT_OF_SERVICE' || endPhysical.status === 'OUT_OF_SERVICE') return result('BLOCKED', physical.affectedProjectIds.length > 0 || endPhysical.affectedProjectIds.length > 0 ? 'PHYSICAL_WORK' : 'OUT_OF_SERVICE', 0)
+  if (physical.status === 'OUT_OF_SERVICE' || endPhysical.status === 'OUT_OF_SERVICE') return result('BLOCKED', physical.affectedProjectIds.length > 0 || endPhysical.affectedProjectIds.length > 0 || physical.affectedMaintenanceActionIds.length > 0 || endPhysical.affectedMaintenanceActionIds.length > 0 ? 'PHYSICAL_WORK' : 'OUT_OF_SERVICE', 0)
   // A booking of a component overlaps its ancestors/descendants physically, including scoped work.
   const related = Object.values(world.facilityComponentsById).filter(item => item.id !== componentId && componentsPhysicallyOverlap(world, item.id, componentId))
-  if (related.some(item => [session.date, endDate].some(date => componentPhysicalAvailabilityAt(world, item.id, date).affectedProjectIds.length > 0))) return result('BLOCKED', 'PHYSICAL_WORK', 0)
+  if (related.some(item => [session.date, endDate].some(date => (componentPhysicalAvailabilityAt(world, item.id, date).affectedProjectIds.length > 0 || componentPhysicalAvailabilityAt(world, item.id, date).affectedMaintenanceActionIds.length > 0)))) return result('BLOCKED', 'PHYSICAL_WORK', 0)
   const sporting = resolveSportingOperation(world, { teamId: session.teamId, date: session.date, operationId: session.definitionId, requirements, componentId })
   if (sporting.status === 'VERIFIED_UNAVAILABLE') return result('BLOCKED', sporting.resources[0]?.reason ?? 'INCOMPATIBLE_RESOURCE')
   const knownOccupation = evaluatePhysicalOccupation(world, { ...session, ownerKey: `TRAINING:${session.id}` }, componentId, includePending)
@@ -160,5 +160,5 @@ export function evaluatePhysicalOccupation(world: GameWorld, interval: { date: i
 }
 
 export function physicalComponentAffectedByWorks(world: GameWorld, componentId: FacilityComponentId, date: import('@/domain/date').GameDate): boolean {
-  return Object.values(world.facilityComponentsById).some(item => componentsPhysicallyOverlap(world, item.id, componentId) && componentPhysicalAvailabilityAt(world, item.id, date).affectedProjectIds.length > 0)
+  return Object.values(world.facilityComponentsById).some(item => componentsPhysicallyOverlap(world, item.id, componentId) && (componentPhysicalAvailabilityAt(world, item.id, date).affectedProjectIds.length > 0 || componentPhysicalAvailabilityAt(world, item.id, date).affectedMaintenanceActionIds.length > 0))
 }

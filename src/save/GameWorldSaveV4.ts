@@ -1559,7 +1559,10 @@ function parseFacilityEconomyRecords(value: unknown): readonly FacilityEconomyRe
       exactKeys(item, ['recordKind', 'id', 'version', 'organizationId', 'facilityId', 'needId', 'componentId', 'interventionType', 'classification', 'providerId', 'sourceKind', 'evidence', 'amount', 'market', 'issuedOn', 'validFrom', 'validUntil', 'terms'], 'Save V4 FacilityMaintenanceOffer')
       exactKeys(record(item.evidence, 'Save V4 FacilityMaintenanceOffer evidence'), ['sourceId', 'catalogEntryId', 'modelVersion'], 'Save V4 FacilityMaintenanceOffer evidence')
       exactKeys(record(item.amount, 'Save V4 FacilityMaintenanceOffer amount'), ['currencyCode', 'minorUnits'], 'Save V4 FacilityMaintenanceOffer amount')
-      exactKeys(record(item.terms, 'Save V4 FacilityMaintenanceOffer terms'), ['paymentDueDays', 'executionDays'], 'Save V4 FacilityMaintenanceOffer terms')
+      // `resultingCondition` was added after the first BS17E-A saves: absent means the source stated none.
+      const terms = record(item.terms, 'Save V4 FacilityMaintenanceOffer terms')
+      if (!Object.prototype.hasOwnProperty.call(terms, 'resultingCondition')) terms.resultingCondition = null
+      exactKeys(terms, ['paymentDueDays', 'executionDays', 'resultingCondition'], 'Save V4 FacilityMaintenanceOffer terms')
       return createFacilityEconomyRecord(item as unknown as FacilityEconomyRecord)
     }
     if (kind === 'OPERATION_EVENT') {

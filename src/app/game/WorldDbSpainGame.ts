@@ -7,7 +7,9 @@ import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { worldDbDatabasePath, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
 import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
 import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
-import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { ensureCanonicalFinanceFoundation, resolveOrganizationCurrency } from '@/domain/finance'
+import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { ensureUserClubBoardState } from '@/engine/board'
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
@@ -67,6 +69,7 @@ export async function discoverWorldDbSpainSelection(
 export async function createWorldDbSpainGame(
   teamId: string,
   access: WorldDbSpainGameAccess = defaultWorldDbSpainAccess(),
+  gameBalance?: BdmGameBalancePreset,
 ): Promise<GameWorld> {
   if (typeof teamId !== 'string' || teamId.trim().length === 0) throw new Error('Select a Spain ACB team before starting the career.')
   const session = new WorldDbSessionV1({
@@ -93,7 +96,15 @@ export async function createWorldDbSpainGame(
     // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the shipped
     // Spain universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
     const prepared = ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
-    return ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared) })
+    // BDM_GAME_BALANCE_V1: World DB carries no opening balance (audited in FinanceOpeningState), so the preset supplies a
+    // labeled-simulated opening treasury at activation and the generic simulated facility/governance bootstrap afterwards. It
+    // never overwrites a documented fact: organizations with documented facilities or institutions are left untouched.
+    const openingEconomicStates = gameBalance === undefined ? [] : gameBalanceOpeningEconomicStates(prepared, (organizationId) => {
+      const resolution = resolveOrganizationCurrency(prepared, organizationId)
+      return resolution.status === 'RESOLVED' ? String(resolution.currencyCode) : null
+    })
+    const financed = ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared), ...(openingEconomicStates.length === 0 ? {} : { openingEconomicStates }) })
+    return gameBalance === undefined ? financed : applyGameBalanceBootstrap(financed)
   } finally {
     session.close()
   }

@@ -9,11 +9,12 @@ import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { createSeason } from '@/domain/season'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createNewGame } from './createNewGame'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { ensureTransferPortalRuleset } from '@/engine/eligibility'
 
 /** Creates a clearly simulated NCAA-like career for validating college-only game systems. */
-export function createNcaaSimulatedGame(): GameWorld {
-  let world = createNewGame()
+export function createNcaaSimulatedGame(options: { readonly gameBalance?: BdmGameBalancePreset } = {}): GameWorld {
+  let world = createNewGame(options.gameBalance === undefined ? {} : { gameBalance: options.gameBalance })
   const season = Object.values(world.seasons).find((candidate) => {
     const competition = world.competitions[candidate.competitionId]
     return competition !== undefined

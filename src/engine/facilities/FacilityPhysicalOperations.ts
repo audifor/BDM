@@ -1,4 +1,4 @@
-import type { GameDate } from '@/domain/date'
+import { compareGameDates, type GameDate } from '@/domain/date'
 import { componentConditionAt, resolveFacilityStatusAt, usableComponentsForTeamAt, type FacilityDevelopmentProject } from '@/domain/facilities'
 import type { GameWorld } from '@/domain/world'
 import type { FacilityComponentId, TeamId } from '@/domain/ids'
@@ -48,15 +48,18 @@ export function componentPhysicalAvailabilityAt(world: GameWorld, componentId: F
   const facility = world.facilitiesById[component.facilityId]!
   const condition = componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), componentId, onDate)
   const work = componentWorkProjectsAt(world, componentId, onDate)
+  // BS17 maintenance/repair works in progress occupy the component exactly like development works: a started, not yet
+  // completed action makes it unavailable, and completing or stopping it releases it.
+  const maintenance = Object.values(world.facilityMaintenanceActionsById).filter((action) => action.componentId === componentId && compareGameDates(action.startedAt, onDate) <= 0 && (action.completedAt === null || compareGameDates(action.completedAt, onDate) > 0))
   const facilityStatus = resolveFacilityStatusAt(Object.values(world.facilityStatusRecordsById), facility.id, onDate, facility.status)
   const access = teamId === undefined ? null : usableComponentsForTeamAt(Object.values(world.facilityUsageRightsById), Object.values(world.facilityComponentsById), teamId, onDate).includes(componentId)
   const closed = component.status === 'PLANNED' || component.openedAt !== null && component.openedAt > onDate || component.closedAt !== null && component.closedAt <= onDate || ['TEMPORARILY_CLOSED', 'DECOMMISSIONED', 'DEMOLISHED', 'UNDER_CONSTRUCTION', 'PLANNED'].includes(facilityStatus)
-  const status = closed || work.length > 0 || condition?.serviceability === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : condition !== undefined && condition.serviceability !== 'FULL' ? 'LIMITED' : condition === undefined || condition.physicalCondition === null || facilityStatus === 'UNKNOWN' ? 'UNKNOWN' : 'AVAILABLE'
+  const status = closed || work.length > 0 || maintenance.length > 0 || condition?.serviceability === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : condition !== undefined && condition.serviceability !== 'FULL' ? 'LIMITED' : condition === undefined || condition.physicalCondition === null || facilityStatus === 'UNKNOWN' ? 'UNKNOWN' : 'AVAILABLE'
   const specification = component.specification
   const nominalCapacity = specification?.kind === 'CAPACITY' ? specification.amount : component.capacity
   const capacityUnit = specification?.kind === 'CAPACITY' ? specification.unit : null
   return {
-    status, access, affectedProjectIds: work.map((p) => p.id), nominalCapacity, capacityUnit,
+    status, access, affectedProjectIds: work.map((p) => p.id), affectedMaintenanceActionIds: maintenance.map((action) => String(action.id)), nominalCapacity, capacityUnit,
     // No measured operating capacity or occupancy authority exists in the source model.
     operationalCapacity: null,
   } as const

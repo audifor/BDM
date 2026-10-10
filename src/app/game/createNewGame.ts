@@ -4,7 +4,9 @@ import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/compe
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
-import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { ensureCanonicalFinanceFoundation, resolveOrganizationCurrency } from '@/domain/finance'
+import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
@@ -35,7 +37,7 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 } as const
 
 /** Creates the fixed, deterministic career used by the first playable prototype. */
-export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number } = {}): GameWorld {
+export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number; readonly gameBalance?: BdmGameBalancePreset } = {}): GameWorld {
   const men = createSingleNewGame(options, 'male')
   const women = namespaceWorld(createSingleNewGame(options.seed === undefined ? {} : { seed: options.seed }, 'female'), 'women-')
   let world = progressAnnualTalentSupply(mergeIndependentWorlds(men, women))
@@ -53,13 +55,22 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
   })) })
   const planned = initializeAiClubManagementPlanning(ensureInstitutionBenefitsCaps(world))
+  const explicitCurrencies = prototypeOrganizationCurrencyAuthorities(planned)
+  // BDM_GAME_BALANCE_V1 (opt-in): no source in the shipped data carries an opening balance, so the preset supplies a
+  // labeled-simulated opening treasury through Finance's own opening-state authority, at activation time.
+  const openingEconomicStates = options.gameBalance === undefined ? [] : gameBalanceOpeningEconomicStates(planned, (organizationId) => {
+    const resolution = resolveOrganizationCurrency(planned, organizationId, explicitCurrencies)
+    return resolution.status === 'RESOLVED' ? String(resolution.currencyCode) : null
+  })
   const career = ensureCanonicalFinanceFoundation(planned, {
-    explicitOrganizationCurrencies: prototypeOrganizationCurrencyAuthorities(planned),
+    explicitOrganizationCurrencies: explicitCurrencies,
     authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(planned),
+    ...(openingEconomicStates.length === 0 ? {} : { openingEconomicStates }),
   })
   // Seed current-period Finance authorization before adding the independent completed-year
   // college sport budgets: those historical facts must not suppress the initial salary authority.
-  return processClubFinanceForDate(ensureNcaaSportBudgets(career), career.currentDate).world
+  const financed = processClubFinanceForDate(ensureNcaaSportBudgets(career), career.currentDate).world
+  return options.gameBalance === undefined ? financed : applyGameBalanceBootstrap(financed)
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number }, gender: 'male' | 'female'): GameWorld {

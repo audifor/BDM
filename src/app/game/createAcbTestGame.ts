@@ -29,7 +29,9 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY } from '@/data/acb2026'
-import { ensureCanonicalFinanceFoundation, provisionEconomicSources } from '@/domain/finance'
+import { ensureCanonicalFinanceFoundation, provisionEconomicSources, resolveOrganizationCurrency } from '@/domain/finance'
+import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 import { createAcbDemoEconomicProfileV1 } from './AcbDemoEconomicPolicy'
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
@@ -47,6 +49,7 @@ const USER_COACH_ID = coachIdFromString('acb-user-coach')
 export interface CreateAcbTestGameOptions {
   readonly userTeamKey?: string
   readonly coachRpgPreset?: CoachRpgPreset
+  readonly gameBalance?: BdmGameBalancePreset
 }
 
 /**
@@ -194,10 +197,16 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   const prepared = initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
   // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the ACB Demo
   // universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
-  const career = ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared) })
+  // BDM_GAME_BALANCE_V1: the ACB test universe carries no opening balance either; the labeled-simulated opening treasury enters at activation.
+  const openingEconomicStates = options.gameBalance === undefined ? [] : gameBalanceOpeningEconomicStates(prepared, (organizationId) => {
+    const resolution = resolveOrganizationCurrency(prepared, organizationId)
+    return resolution.status === 'RESOLVED' ? String(resolution.currencyCode) : null
+  })
+  const career = ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared), ...(openingEconomicStates.length === 0 ? {} : { openingEconomicStates }) })
   // BDM DEMO ECONOMIC POLICY V1 (see AcbDemoEconomicPolicy.ts): the demo competition's approved economic profile
   // is provisioned into canonical Finance sources. The engines contain no league branch, so this is data only.
-  return provisionEconomicSources(career, { profiles: [createAcbDemoEconomicProfileV1()] }).world
+  const economic = provisionEconomicSources(career, { profiles: [createAcbDemoEconomicProfileV1()] }).world
+  return options.gameBalance === undefined ? economic : applyGameBalanceBootstrap(economic)
 }
 
 function createCanonicalCoach(input: Omit<Parameters<typeof createCoach>[0], 'personId' | 'staffProfileId'>) {

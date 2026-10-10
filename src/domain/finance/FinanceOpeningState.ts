@@ -24,7 +24,12 @@ import { createCurrencyCode, createFinancialTransaction, type FinancialTransacti
  */
 export type OpeningEconomicCounterpartKind = 'OWNER_CAPITAL' | 'RETAINED_NET_ASSETS' | 'LIABILITY'
 
-export type OpeningEconomicStateSourceAuthority = 'WORLD_DB' | 'OWNERSHIP' | 'GOVERNANCE' | 'LEGACY_SAVE'
+/**
+ * `GAME_BALANCE_PRESET` is a versioned video-game parameter set (BDM_GAME_BALANCE_V1), used only when no documented or
+ * canonical source of an opening balance exists. It is labeled as such in the posting's provenance; it is never a
+ * claim about a real balance sheet and never replaces a `WORLD_DB`/`OWNERSHIP` source.
+ */
+export type OpeningEconomicStateSourceAuthority = 'WORLD_DB' | 'OWNERSHIP' | 'GOVERNANCE' | 'LEGACY_SAVE' | 'GAME_BALANCE_PRESET'
 
 export interface OpeningEconomicStateSource {
   readonly sourceAuthority: OpeningEconomicStateSourceAuthority

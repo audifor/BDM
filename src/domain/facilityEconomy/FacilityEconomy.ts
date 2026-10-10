@@ -96,6 +96,8 @@ export interface FacilityOfferTerms {
   readonly paymentDueDays: number | null
   /** Source-provided execution window. Null means unknown; Facilities never invents a duration. */
   readonly executionDays: number | null
+  /** The physical result the contract promises, as an absolute component condition (0-100). Null when the source states none. */
+  readonly resultingCondition: number | null
 }
 
 export interface FacilityMaintenanceOffer {
@@ -256,7 +258,7 @@ export interface CreateFacilityMaintenanceOfferInput {
   readonly issuedOn: GameDate | string
   readonly validFrom: GameDate | string
   readonly validUntil: GameDate | string
-  readonly terms?: { readonly paymentDueDays?: number | null; readonly executionDays?: number | null }
+  readonly terms?: { readonly paymentDueDays?: number | null; readonly executionDays?: number | null; readonly resultingCondition?: number | null }
 }
 
 export function createFacilityMaintenanceOffer(input: CreateFacilityMaintenanceOfferInput): FacilityMaintenanceOffer {
@@ -276,6 +278,8 @@ export function createFacilityMaintenanceOffer(input: CreateFacilityMaintenanceO
   if (compareGameDates(validUntil, validFrom) < 0) throw new RangeError('Facility offer validUntil cannot precede validFrom')
   const version = input.version === undefined ? 1 : positiveInt(input.version, 'Facility offer version')
   const executionDays = nullableNonNegativeInt(input.terms?.executionDays, 'Facility offer executionDays')
+  const resultingCondition = nullableNonNegativeInt(input.terms?.resultingCondition, 'Facility offer resultingCondition')
+  if (resultingCondition !== null && resultingCondition > 100) throw new RangeError('Facility offer resultingCondition must be between 0 and 100')
   return Object.freeze({
     recordKind: 'OFFER' as const,
     id: text(input.id, 'Facility offer id'),
@@ -294,7 +298,7 @@ export function createFacilityMaintenanceOffer(input: CreateFacilityMaintenanceO
     issuedOn,
     validFrom,
     validUntil,
-    terms: Object.freeze({ paymentDueDays: nullableNonNegativeInt(input.terms?.paymentDueDays, 'Facility offer paymentDueDays'), executionDays }),
+    terms: Object.freeze({ paymentDueDays: nullableNonNegativeInt(input.terms?.paymentDueDays, 'Facility offer paymentDueDays'), executionDays, resultingCondition }),
   })
 }
 

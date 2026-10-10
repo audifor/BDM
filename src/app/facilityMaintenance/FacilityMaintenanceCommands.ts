@@ -22,6 +22,7 @@
 
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
 import {
+  createFacilityInspection,
   createFacilityMaintenanceAction,
   createFacilityMaintenanceNeed,
   createFacilityFinancialBinding,
@@ -539,14 +540,22 @@ export function startFacilityMaintenanceWork(world: GameWorld, input: StartFacil
   return result('APPLIED', next, input.operationId)
 }
 
-export interface CompleteFacilityMaintenanceWorkInput { readonly teamId: TeamId; readonly operationId: string; readonly inspectionId: string }
+export interface CompleteFacilityMaintenanceWorkInput {
+  readonly teamId: TeamId
+  readonly operationId: string
+  /** A real inspection of the facility. When absent, the contract's own promised result is accepted (acceptance milestone). */
+  readonly inspectionId?: string
+  /** The accepting actor. Acceptance is a contractual act: it needs an active appointment holding EXECUTE. */
+  readonly actor?: GovernanceActor
+}
 
 /**
- * Completes the physical work from a real inspection of the facility: its finding gives the action outcome
- * (NO_ISSUE -> SUCCESSFUL, a new need -> PARTIAL, a serviceability restriction -> UNSUCCESSFUL) and its
- * observed condition/serviceability give the resulting state. Nothing is invented. If the offer states an
- * execution window it must have elapsed. Completion authorizes the cost fact for the NEXT Calendar
- * processing date, because Finance's single processor handles the current date before commands run.
+ * Accepts the physical work, which is the contractual milestone that lets Finance recognize the cost. Either a real
+ * inspection of the facility supplies the result (its finding gives the action outcome: NO_ISSUE -> SUCCESSFUL, a new
+ * need -> PARTIAL, a serviceability restriction -> UNSUCCESSFUL), or, for a contract that states its own promised
+ * result (`terms.resultingCondition`), the accepted contract result is recorded as the acceptance inspection. Nothing
+ * is invented. If the offer states an execution window it must have elapsed. Acceptance authorizes the cost fact for
+ * the NEXT Calendar processing date, because Finance's single processor handles the current date before commands run.
  */
 export function completeFacilityMaintenanceWork(world: GameWorld, input: CompleteFacilityMaintenanceWorkInput): FacilityMaintenanceCommandResult {
   const resolved = clubOperation(world, input.teamId, input.operationId)
@@ -559,13 +568,23 @@ export function completeFacilityMaintenanceWork(world: GameWorld, input: Complet
   if (action === undefined || offer === undefined || offer.recordKind !== 'OFFER' || offer.terms.paymentDueDays === null) return blocked(world, input.operationId, 'PAYMENT_TERMS_UNKNOWN')
   const completedOn = world.currentDate
   if (offer.terms.executionDays !== null && compareGameDates(completedOn, addDays(action.startedAt, offer.terms.executionDays)) < 0) return blocked(world, input.operationId, 'WORK_NOT_YET_COMPLETABLE')
-  const inspection = world.facilityInspectionsById[input.inspectionId as never]
+  const acceptor = input.actor ?? (world.teams[input.teamId]?.coachId === world.userCoachId ? userActor(world) : undefined)
+  const authorityDecision = lifecycle.decisionId === null ? undefined : world.governanceDecisionsById[lifecycle.decisionId]
+  const acceptingBodies = acceptor === undefined || authorityDecision === undefined ? [] : activeBodiesOf(world, acceptor, authorityDecision.institutionId, rightsAt(world, authorityDecision.institutionId, world.currentDate).executorBodyIds)
+  if (acceptingBodies.length === 0) return blocked(world, input.operationId, 'EXECUTE_RIGHT_UNVERIFIED')
+  let inspection = input.inspectionId === undefined ? undefined : world.facilityInspectionsById[input.inspectionId as never]
+  let baseWorld = world
+  if (input.inspectionId === undefined) {
+    if (offer.terms.resultingCondition === null) return blocked(world, input.operationId, 'COMPLETION_INSPECTION_REQUIRED')
+    inspection = createFacilityInspection({ id: `facility-inspection:acceptance:${input.operationId}`, facilityId: action.facilityId, componentId: action.componentId, inspectedAt: completedOn, finding: 'NO_ISSUE', observedCondition: offer.terms.resultingCondition, observedServiceability: 'FULL' })
+    baseWorld = updateGameWorld(world, { facilityInspections: [...Object.values(world.facilityInspectionsById), inspection] })
+  }
   if (inspection === undefined || inspection.facilityId !== action.facilityId || compareGameDates(inspection.inspectedAt, action.startedAt) < 0 || compareGameDates(inspection.inspectedAt, completedOn) > 0) return blocked(world, input.operationId, 'COMPLETION_INSPECTION_REQUIRED')
   const outcome = inspection.finding === 'NO_ISSUE' ? 'SUCCESSFUL' : inspection.finding === 'MAINTENANCE_NEED_IDENTIFIED' ? 'PARTIAL' : 'UNSUCCESSFUL'
   const completed: FacilityMaintenanceAction = createFacilityMaintenanceAction({
     ...action, completedAt: completedOn, outcome, resultingCondition: inspection.observedCondition, resultingServiceability: inspection.observedServiceability,
   })
-  const withAction = updateGameWorld(world, { facilityMaintenanceActions: Object.values(world.facilityMaintenanceActionsById).map((item) => item.id === action.id ? completed : item) })
+  const withAction = updateGameWorld(baseWorld, { facilityMaintenanceActions: Object.values(world.facilityMaintenanceActionsById).map((item) => item.id === action.id ? completed : item) })
   const appliedAction = applyFacilityMaintenanceAction(withAction, action.id)
   // The engine closes the need only on a SUCCESSFUL outcome. If the work finished without resolving it, the need is not
   // left IN_PROGRESS forever: it returns to OPEN so a new, separately authorized operation can address it.
@@ -648,6 +667,11 @@ export function cancelFacilityMaintenanceOperation(world: GameWorld, input: Canc
     }
   }
   if (lifecycle.actionId !== null) {
+    // Stopped work is a physical fact: the action is closed UNSUCCESSFUL with no restoration, so the component is released.
+    const started = world.facilityMaintenanceActionsById[lifecycle.actionId as never]
+    if (started !== undefined && started.completedAt === null) {
+      patch = { ...patch, facilityMaintenanceActions: Object.values(world.facilityMaintenanceActionsById).map((item) => item.id === started.id ? createFacilityMaintenanceAction({ ...started, completedAt: world.currentDate, outcome: 'UNSUCCESSFUL' }) : item) }
+    }
     const need = world.facilityMaintenanceNeedsById[lifecycle.needId as never]
     if (need !== undefined && need.status === 'IN_PROGRESS') patch = { ...patch, facilityMaintenanceNeeds: Object.values(world.facilityMaintenanceNeedsById).map((item) => item.id === need.id ? createFacilityMaintenanceNeed({ ...item, status: 'OPEN' }) : item) }
   }

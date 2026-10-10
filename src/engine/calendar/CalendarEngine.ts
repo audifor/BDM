@@ -32,6 +32,7 @@ import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohe
 import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
 import { progressStaffPoliticalCases } from '@/engine/staff/StaffPoliticalCaseEngine'
 import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
+import { processFacilityManagement } from '@/app/facilityMaintenance/FacilityManagement'
 import { advanceFacilitiesConditionFromHistory } from '@/engine/facilities'
 import { expireStaleRetentionNegotiations } from '@/engine/contractRetention/ContractRetentionEngine'
 import { progressAiRetentionNegotiationsWithEvidence, type AiRetentionDecisionEvidence } from '@/engine/contractRetention/AiRetentionEngine'
@@ -45,7 +46,7 @@ export const DAILY_LIFECYCLE_PHASE_IDS = [
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
   'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT', 'PROFESSIONAL_PATHWAYS',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
-  'STAFF_CAREER_AUTONOMY', 'FACILITY_CONDITION', 'CLUB_FINANCE_V2', 'GOVERNANCE', 'EVENT_COLLECTION',
+  'STAFF_CAREER_AUTONOMY', 'FACILITY_CONDITION', 'FACILITY_MANAGEMENT', 'CLUB_FINANCE_V2', 'GOVERNANCE', 'EVENT_COLLECTION',
 ] as const
 export type DailyLifecyclePhaseId = (typeof DAILY_LIFECYCLE_PHASE_IDS)[number]
 
@@ -207,6 +208,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       ]
       return application.world
     }, 'Facility deterioration is evaluated on the first day of each month using elapsed time from each component condition record.', () => facilityDiagnostics)
+    run('FACILITY_MANAGEMENT', current.currentDate, true, (input) => processFacilityManagement(input), 'The Board decides pending Facilities requests it was asked to review, and AI clubs manage their own facilities through the same Governance and Finance commands a manager uses.')
     let clubFinanceDiagnostics: readonly DailyLifecycleDiagnostic[] = []
     run('CLUB_FINANCE_V2', current.currentDate, true, (input) => {
       const application = processClubFinanceForDate(input, input.currentDate)

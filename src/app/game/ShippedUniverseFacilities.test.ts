@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame, createConfiguredGame } from '@/app/game'
 import { ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
+import { createAcbTestGame } from './createAcbTestGame'
 import { getUserTeam } from '@/engine/calendar'
 import { buildClubFacilitiesWorkspaceModel, resolveClubFacilityAuthority } from '@/app/facilities'
 
@@ -40,11 +41,31 @@ describe('MX0.6 closure — shipped universes contain no canonical Facility (aud
     assertShippedUniverseHasNoFacilities('createNewGame', createNewGame())
   })
 
-  it('leaves the configured prototype career with only Talent origin Places and no Facilities', () => {
-    assertShippedUniverseHasNoFacilities('createConfiguredGame(prototype)', createConfiguredGame({ universeId: 'prototype' }))
+  /**
+   * BS17 GLOBAL: the production new-game entry applies BDM_GAME_BALANCE_V1. Everything it adds is labeled simulated and
+   * carries the preset id prefix; no documented Facility exists, so the audited truth about the SOURCES is unchanged
+   * (the creators without the preset, asserted above and below, remain empty).
+   */
+  function assertOnlyPresetSimulatedFacilities(label: string, world: ReturnType<typeof createNewGame>) {
+    const prefix = 'bdm-balance-v1:'
+    const facilities = Object.values(world.facilitiesById)
+    expect(facilities.length, `${label}: simulated facilities exist`).toBeGreaterThan(0)
+    expect(facilities.every((facility) => String(facility.id).startsWith(prefix) && facility.canonicalName.endsWith('(simulated)')), `${label}: every facility is preset-labeled simulated`).toBe(true)
+    expect(Object.values(world.facilityComponentsById).every((component) => String(component.id).startsWith(prefix) && (component.name ?? '').endsWith('(simulated)')), `${label}: every component is simulated`).toBe(true)
+    expect(Object.values(world.placesById).filter((place) => !String(place.id).startsWith(prefix)).map((place) => String(place.id)).sort(), `${label}: non-preset Places are only Talent origins`).toEqual([...new Set(Object.values(world.talentCohortsById).map((cohort) => String(cohort.placeId)))].sort())
+    expect(Object.values(world.governanceInstitutionsById).every((institution) => institution.id.startsWith(prefix) && institution.name.endsWith('(simulated)')), `${label}: every institution is simulated`).toBe(true)
+    expect(Object.values(world.facilityUsageRightsById).every((right) => String(right.id).startsWith(prefix)), `${label}: every usage right is preset`).toBe(true)
+    expect(Object.keys(world.facilityDevelopmentProjectsById), `${label}: development projects`).toEqual([])
+    const userTeam = getUserTeam(world)!
+    expect(resolveClubFacilityAuthority(world, userTeam.id).facilityIds.length, `${label}: the user club owns one simulated facility`).toBe(1)
+  }
+
+  it('gives the configured prototype career only preset-labeled simulated Facilities', () => {
+    assertOnlyPresetSimulatedFacilities('createConfiguredGame(prototype)', createConfiguredGame({ universeId: 'prototype' }))
   })
 
-  it('leaves the ACB test career with only Talent origin Places and no Facilities', () => {
-    assertShippedUniverseHasNoFacilities('createConfiguredGame(acb2026)', createConfiguredGame({ universeId: ACB_TEST_UNIVERSE_ID }))
+  it('gives the ACB test career only preset-labeled simulated Facilities, while its own creator stays empty without the preset', () => {
+    assertOnlyPresetSimulatedFacilities('createConfiguredGame(acb2026)', createConfiguredGame({ universeId: ACB_TEST_UNIVERSE_ID }))
+    assertShippedUniverseHasNoFacilities('createAcbTestGame()', createAcbTestGame())
   })
 })

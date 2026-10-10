@@ -39,13 +39,14 @@ function mount(options: Parameters<typeof createFacilityMaintenanceScenario>[0] 
 const panel = () => screen.getByText('Maintenance & repair operations').closest('[data-ng-region="facilities-maintenance-operations"]') as HTMLElement
 const need = () => panel().querySelector('[data-need-id="need:mx06-physio-critical"]') as HTMLElement
 const click = (name: RegExp | string) => fireEvent.click(within(need()).getByRole('button', { name }))
+const selectFirstOffer = () => fireEvent.click(within(need().querySelector('[data-offer-id]') as HTMLElement).getByRole('button', { name: /^Select offer / }))
 
 describe('BS17E-A maintenance operations in the Facilities workspace', () => {
   it('shows an unknown cost honestly and offers only the action that can apply', () => {
     mount({ registerEvidence: false })
     expect(within(need()).getByText('No sourced offer exists for this need: its cost is unknown.')).toBeInTheDocument()
-    expect(within(need()).getByRole('button', { name: 'Request quote / open proposal' })).toBeEnabled()
-    click('Request quote / open proposal')
+    expect(within(need()).getByRole('button', { name: 'Open maintenance proposal' })).toBeEnabled()
+    click('Open maintenance proposal')
     const card = need().querySelector('[data-stage="COST_UNKNOWN"]') as HTMLElement
     expect(within(card).getByText(/Cost: Unknown/)).toBeInTheDocument()
     expect(within(card).getByText(/Cost unknown: no sourced offer is selected/)).toBeInTheDocument()
@@ -56,10 +57,10 @@ describe('BS17E-A maintenance operations in the Facilities workspace', () => {
 
   it('drives request -> select -> approve -> reserve -> start through real commands, showing quote as evidence, not money', () => {
     const scenario = mount()
-    click('Request quote / open proposal')
-    click('Select sourced offer')
+    click('Open maintenance proposal')
+    selectFirstOffer()
     const card = () => need().querySelector('[data-operation-id]') as HTMLElement
-    expect(within(card()).getByText(/1\.?200\.?000|12[ ,.]?000/, { exact: false })).toBeInTheDocument()
+    expect(within(card()).getAllByText(/1\.?200\.?000|12[ ,.]?000/, { exact: false }).length).toBeGreaterThan(0)
     expect(within(card()).getByText(/evidence, not committed/)).toBeInTheDocument()
     expect(within(card()).getByText(/Funding: Not reserved/)).toBeInTheDocument()
     click('Request institutional approval')
@@ -81,8 +82,8 @@ describe('BS17E-A maintenance operations in the Facilities workspace', () => {
 
   it('reports why funding is blocked and keeps the proposal, instead of confirming anything', () => {
     mount({ registerEvidence: true, facilityBudgetMinorUnits: 1_000 })
-    click('Request quote / open proposal')
-    click('Select sourced offer')
+    click('Open maintenance proposal')
+    selectFirstOffer()
     click('Request institutional approval')
     click('Approve as my governing body')
     expect(within(need()).getByText(/Finance currently refuses this: Finance refused the reservation/)).toBeInTheDocument()
@@ -97,8 +98,8 @@ describe('BS17E-A maintenance operations in the Facilities workspace', () => {
 
   it('shows institutional authority as unverified when the club has no Governance institution, and no approval action', () => {
     mount({ registerEvidence: true, withGovernance: false })
-    click('Request quote / open proposal')
-    click('Select sourced offer')
+    click('Open maintenance proposal')
+    selectFirstOffer()
     const card = need().querySelector('[data-operation-id]') as HTMLElement
     expect(within(card).getByText(/Institutional authority is unverified for this club\./)).toBeInTheDocument()
     expect(within(card).getByRole('button', { name: 'Request institutional approval' })).toBeDisabled()
@@ -108,9 +109,9 @@ describe('BS17E-A maintenance operations in the Facilities workspace', () => {
 
   it('cancels an unapproved proposal, keeps its history and lets the manager open a new one', () => {
     mount()
-    click('Request quote / open proposal')
+    click('Open maintenance proposal')
     click('Cancel operation')
     expect(within(need()).getByText(/Earlier operation .*: Cancelled\./)).toBeInTheDocument()
-    expect(within(need()).getByRole('button', { name: 'Request quote / open proposal' })).toBeEnabled()
+    expect(within(need()).getByRole('button', { name: 'Open maintenance proposal' })).toBeEnabled()
   })
 })
