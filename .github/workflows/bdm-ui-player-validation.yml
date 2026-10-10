@@ -1,0 +1,55 @@
+name: BDM UI Player isolated validation
+
+on:
+  push:
+    branches:
+      - feat/bdm-ui-player-redesign
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bdm-ui-player-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-and-build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Frontend build
+        run: npm run build
+  performance-and-development:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Isolated PLAYER and simulation regressions
+        run: |
+          npx vitest run \
+            src/app/matchNext/ShotZoneEvidence.test.ts \
+            src/app/worldSim/worldSim.test.ts \
+            src/ui-ng/applications/player/components/PerformanceNineZoneCourt.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerPerformanceModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerPerformanceCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerDevelopmentModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerDevelopmentCourtside.test.tsx
