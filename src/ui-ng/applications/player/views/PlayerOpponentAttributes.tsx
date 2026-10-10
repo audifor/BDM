@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react'
 
+import { getUserTeam } from '@/engine/calendar'
+import { getAddressableScoutingPlayerIds, getAvailableScoutingEvaluators } from '@/app/scouting'
+import { useGameStore } from '@/stores/gameStore'
+import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
+import type { ScoutingMission } from '@/domain/scouting'
+
 import type { AuthorizedScoutedRating } from '@/app/player/PlayerKnowledgeAccess'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
@@ -13,7 +20,12 @@ import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCata
  * raw ratings here, even in an advanced scouting state.
  */
 export function PlayerOpponentAttributes() {
-  const { model, session } = usePlayerWorkspace()
+  const { model, session, playerId } = usePlayerWorkspace()
+  const world = useGameStore((state) => state.world)
+  const submitScouting = useGameStore((state) => state.requestScoutingAssignment)
+  const { setActiveApp } = useNgWorkspaceNavigation()
+  const [requestMission, setRequestMission] = useState<ScoutingMission>('QUICK_LOOK')
+  const [requestOpen, setRequestOpen] = useState(false)
   const [selectedFamily, setSelectedFamily] = useState<RatingCategory>('shooting')
   const [selectedRating, setSelectedRating] = useState<string | null>(null)
 
@@ -34,6 +46,28 @@ export function PlayerOpponentAttributes() {
     : totals.complete ? 'COBERTURA INDIVIDUAL COMPLETA · ESTIMACIONES'
     : totals.knownRatings === 0 ? 'CONOCIMIENTO GENERAL' : 'EVALUACIÓN PARCIAL'
   const openScouting = () => session.setActiveView('scouting')
+  const team = world === null ? undefined : getUserTeam(world)
+  const pending = world === null || team === undefined || playerId === null ? undefined
+    : Object.values(world.scoutingAssignmentsById).find((item) =>
+      item.organizationId === team.organizationId && item.subjectPlayerId === playerId &&
+      (item.status === 'QUEUED' || item.status === 'ACTIVE'))
+  const addressable = world !== null && team !== undefined && playerId !== null &&
+    getAddressableScoutingPlayerIds(world, team.id).includes(playerId)
+  const eligibleScouts = world === null || team === undefined ? [] :
+    getAvailableScoutingEvaluators(world, team.id, 'QUICK_LOOK')
+  const requestBlocker = pending !== undefined
+    ? 'Ya hay una evaluación ' + (pending.status === 'ACTIVE' ? 'en curso' : 'en cola') +
+      '. Avanza días para completarla o gestiona la asignación desde Scouting Report.'
+    : !addressable
+      ? 'El jugador todavía no es una identidad abordable por tu club. Descúbrelo mediante cobertura territorial o contactos autorizados en Scouting.'
+      : eligibleScouts.length === 0
+        ? 'No hay evaluadores autorizados con capacidad para Quick Look. Consulta las asignaciones y carga del staff en Scouting.'
+        : null
+  const requestAssessment = (mission: ScoutingMission) => {
+    if (requestBlocker !== null) return
+    setRequestMission(mission)
+    setRequestOpen(true)
+  }
   const selectFamily = (family: RatingCategory) => {
     setSelectedFamily(family)
     setSelectedRating(null)
@@ -72,7 +106,7 @@ export function PlayerOpponentAttributes() {
           <span className="pac-opponent__unknown-icon" aria-hidden="true">?</span>
           <h3>PERFIL SIN EVALUAR</h3>
           <p>No existe una evaluación deportiva contrastada. El radar permanecerá vacío hasta disponer de información verificable.</p>
-          <button className="pac-outline-action" type="button" onClick={openScouting}>INICIAR EVALUACIÓN ›</button>
+          <button className="pac-outline-action" type="button" onClick={() => requestAssessment('QUICK_LOOK')} disabled={requestBlocker !== null}>INICIAR EVALUACIÓN ›</button>
         </div> : <div className="pac-opponent__known">
           <h3>INFORMACIÓN DISPONIBLE</h3>
           <p>Los informes proporcionan observaciones estimadas, no los valores internos del jugador.</p>
@@ -94,7 +128,7 @@ export function PlayerOpponentAttributes() {
           {knownRatings.length === 0 ? <div className="pac-opponent__empty">
             <strong>SIN ATRIBUTOS EVALUADOS</strong>
             <p>Esta familia todavía no tiene valoraciones individuales conocidas. No se muestran filas repetidas de «Not scouted».</p>
-            <button type="button" onClick={openScouting}>SOLICITAR OBSERVACIÓN ›</button>
+            <button type="button" onClick={() => requestAssessment('SKILL_EVALUATION')} disabled={requestBlocker !== null}>SOLICITAR EVALUACIÓN DE HABILIDADES ›</button>
           </div> : <div className="pac-opponent__rating-list">
             {knownRatings.map((entry) => <button type="button" key={entry.id}
               className={'pac-opponent__rating' + (activeRating?.id === entry.id ? ' is-active' : '')}
@@ -113,12 +147,23 @@ export function PlayerOpponentAttributes() {
               </div>
             : <ScoutedRatingDetail rating={activeRating} />}
           <div className="pac-opponent__actions">
-            <button type="button" onClick={openScouting}>ASIGNAR SCOUT / SOLICITAR INFORME ›</button>
-            <small>La asignación, el coste y las restricciones se gestionan en Scouting Report.</small>
+            <button type="button" onClick={() => requestAssessment(totals.knownRatings > 0 ? 'FULL_REPORT' : 'QUICK_LOOK')} disabled={requestBlocker !== null}>
+              {pending === undefined ? 'ASIGNAR SCOUT / SOLICITAR INFORME ›' : 'EVALUACIÓN EN CURSO'}
+            </button>
+            {requestBlocker !== null && <p className="pac-opponent__blocker" role="status">{requestBlocker}</p>}
+            {!addressable && <button className="pac-opponent__secondary" type="button" onClick={() => setActiveApp('scouting')}>IR A SCOUTING CENTRE / COBERTURA ›</button>}
+            {pending !== undefined && <button className="pac-opponent__secondary" type="button" onClick={openScouting}>VER ASIGNACIÓN ›</button>}
+            <small>La misión utiliza el servicio canónico de scouting. Sus resultados aparecen después de avanzar el tiempo de juego.</small>
           </div>
         </section>
       </div>
     </div>
+    {world !== null && team !== undefined && playerId !== null && requestOpen && requestBlocker === null && (
+      <RequestScoutingModal
+        world={world} teamId={team.id} playerId={playerId} initialMission={requestMission}
+        onClose={() => setRequestOpen(false)} onSubmit={submitScouting}
+      />
+    )}
   </div>
 }
 
