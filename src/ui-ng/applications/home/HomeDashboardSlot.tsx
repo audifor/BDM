@@ -24,6 +24,8 @@ import {
   type HomeDashboardModuleId,
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
+import { homeStandingsWindow } from './homeStandingsDigest'
+import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
 import {
   HOME_LEADER_CATEGORIES,
   rankHomeLeaders,
@@ -210,11 +212,18 @@ function HomePlayerLink({
 function StandingsModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   const competition = context.competition
   const standings = competition?.standings ?? []
+  const digest = homeStandingsWindow(standings, context.teamId)
   if (standings.length === 0 || competition == null) {
     return <p className="ng-canon__empty">Sin clasificación disponible.</p>
   }
   return (
     <div className="home-standings competition-standings">
+      <div className="home-standings__digest">
+        <span>{digest.length} de {standings.length} equipos</span>
+        <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId},'push','standings')}>
+          Clasificación completa ↗
+        </button>
+      </div>
       <div className="home-slot-table__head">
         <span>Pos</span>
         <span>Equipo</span>
@@ -225,14 +234,14 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
         <span title="Puntos de clasificación">Pts</span>
       </div>
       <ol className="home-slot-table">
-        {standings.map((row) => {
+        {digest.map((row, index) => {
           const zone = standingsZoneClassName(
             standingsZoneForPosition(row.position, competition.standingsZoneBands),
           )
           const teamName = context.world.teams[row.teamId]?.name ?? row.teamId
           return (
             <li
-              className={[row.teamId === context.teamId ? 'is-user' : undefined, zone].filter(Boolean).join(' ') || undefined}
+              className={[row.teamId === context.teamId ? 'is-user' : undefined, zone, index>0 && row.position-digest[index-1]!.position>1?'has-gap':undefined].filter(Boolean).join(' ') || undefined}
               key={row.teamId}
             >
               <span className="is-pos">{row.position}</span>
