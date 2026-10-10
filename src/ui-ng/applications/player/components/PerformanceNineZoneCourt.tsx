@@ -41,7 +41,7 @@ export function PerformanceNineZoneCourt({ profile }: { readonly profile: Perfor
       <svg className="po-pf-nine__court" viewBox="0 0 200 174"
         aria-label="Interactive nine-zone basketball half-court schematic. No shot coordinates are stored.">
         <rect className="po-pf-nine__boundary" x={6} y={3} width={188} height={168} rx={3} />
-        {zones.map(renderRegion)}
+        {[...zones].reverse().map(renderRegion)}
         <path className="po-pf-nine__court-lines" d="M 67 3 L 67 87 L 133 87 L 133 3 M 7 80 Q 100 174 193 80 M 93 16 L 107 16"/>
         <circle className="po-pf-nine__rim" cx={100} cy={22} r={6} />
       </svg>
