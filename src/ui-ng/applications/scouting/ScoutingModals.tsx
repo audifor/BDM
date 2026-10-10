@@ -35,11 +35,12 @@ export function ScoutingModalFrame({ title, onClose, children, footer }: { reado
   )
 }
 
-export function RequestScoutingModal({ world, teamId, playerId, initialMission, initialGameId, onClose, onSubmit }: {
+export function RequestScoutingModal({ world, teamId, playerId, initialMission, initialSkillFamily, initialGameId, onClose, onSubmit }: {
   readonly world: GameWorld
   readonly teamId: TeamId
   readonly playerId: PlayerId
   readonly initialMission?: ScoutingMission
+  readonly initialSkillFamily?: keyof typeof PLAYER_RATING_FAMILY_KEYS
   readonly initialGameId?: string
   readonly onClose: () => void
   readonly onSubmit: (input: RequestScoutingInput) => string | null
@@ -53,7 +54,7 @@ export function RequestScoutingModal({ world, teamId, playerId, initialMission, 
   const [mission, setMission] = useState<ScoutingMission>(suggestedMission)
   const [selectedScout, setSelectedScout] = useState<string>('AUTO')
   const [priority, setPriority] = useState<ScoutingPriority>('NORMAL')
-  const [skillFamily, setSkillFamily] = useState<keyof typeof PLAYER_RATING_FAMILY_KEYS>('shooting')
+  const [skillFamily, setSkillFamily] = useState<keyof typeof PLAYER_RATING_FAMILY_KEYS>(initialSkillFamily ?? 'shooting')
   const playerTeam = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(playerId))
   const games = useMemo(() => playerTeam === undefined ? [] : Object.values(world.games).filter((game) => game.status === 'scheduled' && game.date > world.currentDate && (game.homeTeamId === playerTeam.id || game.awayTeamId === playerTeam.id)).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)), [playerId, playerTeam?.id, world])
   const suggestedGameId = initialGameId !== undefined && games.some((game) => game.id === initialGameId) ? initialGameId : games[0]?.id
