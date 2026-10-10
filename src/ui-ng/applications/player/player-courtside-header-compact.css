@@ -1,0 +1,179 @@
+/*
+ * Shared PLAYER Courtside identity compact pass.
+ * The contract/salary block is retired from the header, not from the
+ * canonical Contract view. Talent Pathway remains available via Trayectoria.
+ * The remaining four real data groups use the released space.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .ng-application-workspace {
+  --po-identity-height: 122px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity {
+  display:grid;
+  grid-template-columns:minmax(295px,1.52fr) minmax(140px,.56fr) minmax(315px,1.22fr) minmax(235px,.97fr);
+  grid-template-rows:minmax(0,1fr);
+  height:var(--po-identity-height);
+  min-height:0;
+  align-items:stretch;
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity > * {
+  grid-row:auto;
+  grid-column:auto;
+  min-width:0;
+  padding:7px 13px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__person {
+  grid-template-columns:82px minmax(0,1fr);
+  gap:11px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-portrait {
+  width:82px;
+  height:109px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__name {
+  font-size:clamp(27px,2.25cqi,39px);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__who {
+  gap:5px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__positions {
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__pos-row {
+  gap:clamp(8px,1vw,22px);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measures {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0;
+  justify-content:stretch;
+  align-items:center;
+  padding-inline:7px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure {
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  text-align:center;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure + .po-identity__measure {
+  border-left:1px solid var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-reading {
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:4px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-value {
+  font:700 clamp(24px,1.9cqi,32px)/1 var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-label {
+  font-size:11px;
+  letter-spacing:.07em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-unit {
+  font:700 12px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__condition {
+  justify-content:center;
+  gap:7px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__condition-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:nowrap;
+  gap:7px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__trajectory {
+  flex:0 0 auto;
+  margin-left:auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__trajectory > summary {
+  padding:5px 7px;
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__status-list {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:4px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-status {
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr);
+  align-items:center;
+  gap:7px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-status__label {
+  font-size:11px;
+  letter-spacing:.055em;
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-status__value {
+  font-size:13px;
+}
+@container player-space (max-width:1120px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .ng-application-workspace {
+    --po-identity-height:190px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity {
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-rows:104px 86px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__person {
+    grid-column:1/5;grid-row:1;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__positions {
+    grid-column:5/-1;grid-row:1;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measures {
+    grid-column:1/4;grid-row:2;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__condition {
+    grid-column:4/-1;grid-row:2;gap:3px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-portrait {
+    width:68px;height:95px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__person {
+    grid-template-columns:68px minmax(0,1fr);
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-value {
+    font-size:25px;
+  }
+}
+@container player-space (max-width:730px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .ng-application-workspace {
+    --po-identity-height:258px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:100px 74px 84px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__person {
+    grid-column:1/-1;grid-row:1;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measures {
+    grid-column:1/-1;grid-row:2;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__positions {
+    grid-column:1;grid-row:3;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__condition {
+    grid-column:2;grid-row:3;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure-value {
+    font-size:23px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__measure {
+    gap:1px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-root .po-identity__trajectory > summary {
+    padding:3px 5px;
+  }
+}
