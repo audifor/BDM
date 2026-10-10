@@ -34,6 +34,7 @@ interface UpcomingFixtureRow {
   readonly date: string
   readonly opponentTeamId: TeamId
   readonly opponentName: string
+  readonly competitionName: string | null
   readonly venue: 'Casa' | 'Fuera'
   readonly status: string
 }
@@ -79,16 +80,19 @@ function buildTeamDynamics(world: GameWorld, teamId: TeamId): TeamDynamicsSnapsh
   }
 }
 
-function upcomingUserGames(world: GameWorld, teamId: TeamId, limit = 7): readonly UpcomingFixtureRow[] {
+function upcomingUserGames(world: GameWorld, teamId: TeamId): readonly UpcomingFixtureRow[] {
+  // Collect every scheduled fixture in the active season window, including
+  // other competitions when they share that window; never cap the list.
+  const seasonEnd = world.seasons[world.currentSeasonId]?.endDate
   return Object.values(world.games)
     .filter(
       (game) =>
         game.status === 'scheduled' &&
         compareGameDates(game.date, world.currentDate) >= 0 &&
+        (seasonEnd === undefined || compareGameDates(game.date, seasonEnd) <= 0) &&
         (game.homeTeamId === teamId || game.awayTeamId === teamId),
     )
     .sort((a, b) => compareGameDates(a.date, b.date) || a.id.localeCompare(b.id))
-    .slice(0, limit)
     .map((game) => {
       const atHome = game.homeTeamId === teamId
       const opponentId = atHome ? game.awayTeamId : game.homeTeamId
@@ -97,6 +101,7 @@ function upcomingUserGames(world: GameWorld, teamId: TeamId, limit = 7): readonl
         date: game.date,
         opponentTeamId: opponentId,
         opponentName: world.teams[opponentId]?.name ?? opponentId,
+        competitionName: world.competitions[game.competitionId]?.name ?? null,
         venue: atHome ? 'Casa' : 'Fuera',
         status: game.status,
       }
@@ -338,25 +343,25 @@ export function HomeWorkspace() {
             {model.upcoming.length === 0 ? (
               <p className="ng-canon__empty">Sin partidos programados.</p>
             ) : (
-              <ul className="home-upcoming">
-                {model.upcoming.map((game) => (
-                  <li
-                    className="home-upcoming__row"
-                    key={game.id}
-                    title={`${game.opponentName} · ${formatGameDateLabel(game.date)} · ${game.venue} · Programado`}
-                  >
-                    <button
-                      className="ng-canon__link home-upcoming__opponent"
-                      onClick={() => openEntity({ type: 'team', teamId: game.opponentTeamId, section: 'overview' })}
-                      type="button"
-                    >
-                      {game.opponentName}
-                    </button>
-                    <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
-                    <span className="home-upcoming__venue">{game.venue}</span>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <p className="home-upcoming__summary">{model.upcoming.length} partidos pendientes · temporada actual</p>
+                <ul className="home-upcoming" aria-label="Todos los próximos partidos de la temporada" tabIndex={0}>
+                  {model.upcoming.map((game) => (
+                    <li className="home-upcoming__row" key={game.id}
+                      title={`${game.opponentName} · ${game.competitionName ?? 'Competición no disponible'} · ${formatGameDateLabel(game.date)} · ${game.venue}`}>
+                      <button className="ng-canon__link home-upcoming__opponent"
+                        onClick={() => openEntity({ type: 'team', teamId: game.opponentTeamId, section: 'overview' })} type="button">
+                        {game.opponentName}
+                      </button>
+                      <span className="home-upcoming__competition" title={game.competitionName ?? 'Competición no disponible'}>
+                        {game.competitionName ?? '—'}
+                      </span>
+                      <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
+                      <span className="home-upcoming__venue">{game.venue}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </section>:<HomeDashboardSlot className="home-dashboard__module home-dashboard__upcoming home-dashboard__alternative" context={slotContext}
             moduleId={layout.upcoming} onSelectModule={value=>selectModule('upcoming',value)}/>}
