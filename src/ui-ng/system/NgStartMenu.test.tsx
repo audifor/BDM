@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
@@ -104,39 +104,59 @@ describe('NG start menu', () => {
   it('hides college and draft entries when they do not apply', () => {
     mountTaskbar()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
-    expect(screen.getByText('Equipo')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Categorías de aplicaciones' })).toBeInTheDocument()
     expect(screen.queryByText('College Performance Center')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Recruiting' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Draft' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Trades' })).not.toBeInTheDocument()
   })
 
-  it('keeps each category title and application tiles inside its own category card', () => {
+  it('uses category icons as selectors and only renders the chosen category apps below', () => {
     mountTaskbar()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
     const dialog = screen.getByRole('dialog', { name: 'BDM Inicio' })
-    const categories = dialog.querySelector('.ng-start-menu__categories')
-    expect(categories).not.toBeNull()
-    const cards = categories!.querySelectorAll(':scope > .ng-start-menu__category')
-    expect(cards.length).toBeGreaterThan(3)
-    for (const card of cards) {
-      expect(card).toHaveAttribute('data-category')
-      expect(card.querySelector(':scope > .ng-start-menu__category-title h3')).not.toBeNull()
-      const grid = card.querySelector(':scope > .ng-start-menu__category-apps')
-      expect(grid).not.toBeNull()
-      expect(grid!.querySelectorAll(':scope > .ng-start-menu__tile-wrap > button.ng-start-menu__tile').length)
-        .toBeGreaterThan(0)
-    }
-    const team = dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')
-    expect(team?.querySelector('.ng-start-menu__category-title h3')).toHaveTextContent('Equipo')
-    expect(team?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile-wrap')).toHaveLength(8)
-    expect(team?.querySelectorAll('.ng-start-menu__category-apps > .ng-start-menu__category')).toHaveLength(0)
+    const nav = within(dialog).getByRole('navigation', { name: 'Categorías de aplicaciones' })
+    const picker = within(nav).getAllByRole('button')
+    expect(picker.length).toBeGreaterThanOrEqual(6)
+    expect(within(nav).getByRole('button', { name: 'Equipo' })).toHaveAttribute('aria-pressed','true')
+    expect(within(nav).getByRole('button', { name: 'Talent Operations' })).toHaveAttribute('aria-pressed','false')
+    expect(dialog.querySelectorAll('.ng-start-menu__categories > .ng-start-menu__category')).toHaveLength(1)
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Buscar en BDM' }), { target: { value: 'staff' } })
-    const searched = dialog.querySelectorAll('.ng-start-menu__category')
-    expect(searched).toHaveLength(1)
-    expect(searched[0]?.getAttribute('data-category')).toBe('equipo')
-    expect(searched[0]?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(1)
+    const teamPanel = dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')
+    expect(teamPanel).not.toBeNull()
+    expect(teamPanel?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(8)
+    expect(within(dialog).getByRole('button', { name: 'Roster' })).toBeInTheDocument()
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Talent Operations' }))
+    expect(within(nav).getByRole('button', { name: 'Talent Operations' })).toHaveAttribute('aria-pressed','true')
+    const talent = dialog.querySelector('.ng-start-menu__category[data-category="talent"]')
+    expect(talent).not.toBeNull()
+    expect(talent?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(2)
+    expect(within(dialog).queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Scouting' })).toBeInTheDocument()
+    expect(dialog.querySelectorAll('.ng-start-menu__categories > .ng-start-menu__category')).toHaveLength(1)
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Partidos y competición' }))
+    expect(dialog.querySelector('.ng-start-menu__category[data-category="partidos"]')).not.toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Match' })).toBeInTheDocument()
+  })
+
+  it('searches globally irrespective of selected category, and category selection clears search', () => {
+    mountTaskbar()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
+    const dialog = screen.getByRole('dialog', { name: 'BDM Inicio' })
+    const nav = within(dialog).getByRole('navigation', { name: 'Categorías de aplicaciones' })
+    expect(within(dialog).queryByRole('button', { name: 'Finances' })).not.toBeInTheDocument()
+
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Buscar en BDM' }),
+      {target:{value:'finances'}})
+    expect(dialog.querySelector('.ng-start-menu__category[data-category="search"]')).not.toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Finances' })).toBeInTheDocument()
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Equipo' }))
+    expect(within(dialog).getByRole('textbox', { name: 'Buscar en BDM' })).toHaveValue('')
+    expect(dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')).not.toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Finances' })).not.toBeInTheDocument()
   })
 
   it('closes the start menu on Escape', () => {
