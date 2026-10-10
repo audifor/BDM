@@ -31,6 +31,57 @@ export function buildOpponentFamilyKnowledge(access: OpponentAccess): readonly O
   })
 }
 
+/** Organization-estimated ability by family. Values come exclusively from authorized scouting estimates. */
+export interface ScoutedFamilyProfile {
+  readonly id: RatingCategory
+  readonly label: string
+  readonly observed: number
+  readonly total: number
+  readonly estimate: number | null
+  readonly low: number | null
+  readonly high: number | null
+  /** Mean underlying scouting evidence coverage, not % of attributes estimated. */
+  readonly coverage: number | null
+  /** Mean reported confidence in percentage points (0-100). */
+  readonly confidence: number | null
+  readonly isComplete: boolean
+}
+
+export function buildScoutedFamilyProfiles(access: OpponentAccess): readonly ScoutedFamilyProfile[] {
+  return buildOpponentFamilyKnowledge(access).map((family) => {
+    // Descriptors may have a provisional estimate, but a visible numerical
+    // radar needs actual numerical evaluated findings in every drawn family.
+    const observations = family.ratings.flatMap((rating) => {
+      const evaluation = rating.evaluation
+      return evaluation !== null && evaluation.mode !== 'UNKNOWN'
+        && evaluation.estimate !== undefined && Number.isFinite(evaluation.estimate)
+        ? [{ evaluation, coverage: rating.coveragePercent }]
+        : []
+    })
+    const n = observations.length
+    const average = (values: readonly number[]): number =>
+      Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+    const estimate = n > 0 ? average(observations.map((row) => row.evaluation.estimate!)) : null
+    const low = n > 0 ? average(observations.map((row) =>
+      Math.max(0, row.evaluation.estimate! - (row.evaluation.uncertainty ?? 0)))) : null
+    const high = n > 0 ? average(observations.map((row) =>
+      Math.min(100, row.evaluation.estimate! + (row.evaluation.uncertainty ?? 0)))) : null
+    return {
+      id: family.id, label: family.label,
+      observed: n, total: family.total, estimate, low, high,
+      coverage: n > 0 ? average(observations.map((row) => row.coverage)) : null,
+      confidence: n > 0 ? average(observations.map((row) => row.evaluation.confidence)) : null,
+      isComplete: family.total > 0 && n === family.total,
+    }
+  })
+}
+
+/** Never close the spider polygon by inventing values for unknown families. */
+export function hasScoutedRadarProfile(families: readonly ScoutedFamilyProfile[]): boolean {
+  return families.length === RADAR_CATEGORY_ORDER.length
+    && families.every((family) => family.isComplete && family.estimate !== null)
+}
+
 export function opponentKnowledgeSummary(access: OpponentAccess): {
   readonly knownRatings: number
   readonly totalRatings: number
