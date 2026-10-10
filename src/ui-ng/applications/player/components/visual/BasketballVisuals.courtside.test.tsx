@@ -71,6 +71,27 @@ describe('AttributeRadar simultaneous references', () => {
     expect(legacy).toContain('r="3.5"')
   })
 
+  it('starts with just the player and layers optional references above the Courtside base', () => {
+    const noRefs = renderToStaticMarkup(<AttributeRadar
+      axes={axes}
+      courtsideFraming
+      accent="var(--cs-lime)"
+    />)
+    expect(noRefs).not.toContain('aria-label="Liga comparison"')
+    expect(noRefs).toContain('fill-opacity="0.075"')
+
+    const compared = renderToStaticMarkup(<AttributeRadar
+      axes={axes}
+      courtsideFraming
+      accent="var(--cs-lime)"
+      comparisonSeries={[{ key: 'league', label: 'Liga', color: 'var(--cs-negative)', axes: profile(43) }]}
+    />)
+    expect(compared).toContain('aria-label="Liga comparison"')
+    expect(compared.indexOf('fill="var(--cs-lime)"')).toBeLessThan(
+      compared.indexOf('aria-label="Liga comparison"'),
+    )
+  })
+
   it('keeps legacy viewBox for existing NG placements', () => {
     const markup = renderToStaticMarkup(<AttributeRadar axes={axes} />)
     expect(markup).toContain('viewBox="-36 -36 192 192"')
