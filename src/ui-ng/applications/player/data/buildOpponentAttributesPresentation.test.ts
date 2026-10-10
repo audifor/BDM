@@ -99,10 +99,10 @@ describe('Opponent Attributes FOW projection', () => {
     expect(hasScoutedRadarProfile(buildScoutedFamilyProfiles(partial))).toBe(false)
   })
 
-  it('keeps real confidence percentages and never makes 68% into 100%', () => {
-    expect(scoutingConfidenceLabel(68)).toBe('68% de confianza')
-    expect(scoutingConfidenceLabel(0)).toBe('0% de confianza')
-    expect(scoutingConfidenceLabel(100)).toBe('100% de confianza')
+  it('shows scouting confidence on its actual 0-100 index without implying 100 percent certainty', () => {
+    expect(scoutingConfidenceLabel(68)).toBe('68/100')
+    expect(scoutingConfidenceLabel(0)).toBe('0/100')
+    expect(scoutingConfidenceLabel(100)).toBe('100/100')
     expect(scoutingConfidenceLabel(undefined)).toBe('Sin confianza registrada')
   })
 })
