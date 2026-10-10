@@ -9,7 +9,7 @@ import type { GameId } from '@/domain/ids'
 import type { PlayerWorkspaceContextValue } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { PlayerWorkspaceProvider } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { buildPlayerPerformanceModel } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
-import { PerformanceCourtsideForm, PlayerPerformanceView } from './PlayerPerformanceView'
+import { PerformanceCourtsideForm, PerformanceCourtsideGameLog, PlayerPerformanceView } from './PlayerPerformanceView'
 
 afterEach(() => {
   cleanup()
@@ -33,6 +33,27 @@ describe('PLAYER Courtside performance form', () => {
     expect(selected).toHaveBeenCalledWith(a)
     expect(screen.getByRole('button', { name: /2025-10-12 vs RMA.*rebounds/i }))
       .toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('keeps all match statistics reachable via selection without crowding the game log', () => {
+    const selected = vi.fn<(id: GameId) => void>()
+    const id = 'game-logged' as GameId
+    const row = {
+      gameId:id, competitionId:'league',date:'2025-10-10',dateLabel:'10 OCT',opponent:'RMA',
+      opponentName:'Real Madrid',competition:'League',homeAway:'H',result:'W 88-80',
+      outcome:'W',started:true,minutes:31,points:19,rebounds:6,assists:4,steals:2,
+      blocks:1,turnovers:3,fouls:2,fg:'7/11',threePt:'2/5',ft:'3/4',
+      fgPercentage:'63.6',threePointPercentage:'40.0',ftPercentage:'75.0',
+      plusMinus:8,valuation:22,summary:'Actual recorded game statistics.',
+    } as const
+    render(<PerformanceCourtsideGameLog rows={[row] as unknown as
+      Parameters<typeof PerformanceCourtsideGameLog>[0]['rows']}
+      selectedGameId={id} onSelectGame={selected} />)
+    expect(screen.getAllByRole('columnheader')).toHaveLength(8)
+    expect(screen.getByRole('button', { name: 'RMA' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'RMA' }))
+    expect(selected).toHaveBeenCalledWith(id)
+    expect(screen.queryByRole('columnheader', { name: 'FG' })).not.toBeInTheDocument()
   })
 
   it('does not fabricate form values without recorded games', () => {
