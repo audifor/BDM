@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 
 import type { PlayerTruthRatingKey } from '@/domain/player'
 import { AttributeCategoryProfiles } from '@/ui-ng/applications/player/components/AttributeCategoryProfiles'
@@ -181,7 +181,7 @@ export function PlayerCourtsideAttributes() {
                     title={axes === null ? 'Sin referencia completa para las ocho familias' : (visibleBaselines.includes(id) ? 'Ocultar ' : 'Mostrar ') + label.toLowerCase()}
                     onClick={() => toggleComparison(id)}
                   >
-                    <span className="pac-radar-toggle__mark" style={{ '--pac-series-color': color } as React.CSSProperties} aria-hidden="true" />
+                    <span className="pac-radar-toggle__mark" style={{ '--pac-series-color': color } as CSSProperties} aria-hidden="true" />
                     {label}
                   </button>
                 ))}
