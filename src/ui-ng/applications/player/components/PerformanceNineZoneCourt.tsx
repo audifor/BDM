@@ -1,65 +1,119 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MatchShotZoneId } from '@/domain/stats/MatchStatLog'
 import type { DetailedPerformanceShotZone, PerformanceShotProfileModel } from '../data/buildPlayerPerformanceModel'
 
-const SHAPES: Readonly<Record<MatchShotZoneId, readonly string[]>> = {
-  DEEP: ['M 32 155 Q 100 177 168 155 L 155 144 Q 100 160 45 144 Z'],
-  ABOVE_BREAK_THREE: ['M 37 132 Q 100 162 163 132 L 151 113 Q 100 142 49 113 Z'],
-  CORNER_THREE: ['M 7 78 L 30 78 L 30 128 L 7 128 Z', 'M 170 78 L 193 78 L 193 128 L 170 128 Z'],
-  LONG_MIDRANGE: ['M 37 92 Q 100 144 163 92 L 147 77 Q 100 119 53 77 Z'],
-  MIDRANGE: ['M 48 73 Q 100 121 152 73 L 133 58 Q 100 100 67 58 Z'],
-  FLOATER_RANGE: ['M 65 52 Q 100 100 135 52 L 119 43 Q 100 79 81 43 Z'],
-  SHORT_PAINT: ['M 76 31 L 124 31 L 124 53 Q 100 72 76 53 Z'],
-  RIM: ['M 83 22 A 17 17 0 1 0 117 22 A 17 17 0 1 0 83 22 Z'],
-  RESTRICTED: ['M 90 22 A 10 10 0 1 0 110 22 A 10 10 0 1 0 90 22 Z'],
+/**
+ * Court-facing schematic districts, not real launch coordinates. The bounds
+ * describe nine already-authorized shot families, not nine measured points.
+ * Key, wings, three-point corners and long-range floor deliberately replace
+ * the old concentric-dartboard drawing.
+ */
+export const COURT_ZONE_PATHS: Readonly<Record<MatchShotZoneId, readonly string[]>> = {
+  DEEP: ['M6 172 H194 V224 H6 Z'],
+  ABOVE_BREAK_THREE: ['M24 111 Q100 189 176 111 L194 111 V172 H6 V111 Z'],
+  CORNER_THREE: [
+    'M6 6 H24 V111 H6 Z',
+    'M176 6 H194 V111 H176 Z',
+  ],
+  LONG_MIDRANGE: ['M24 111 L57 116 Q100 148 143 116 L176 111 Q100 189 24 111 Z'],
+  MIDRANGE: [
+    'M24 6 H68 V99 L57 116 L24 111 Z',
+    'M132 6 H176 V111 L143 116 L132 99 Z',
+  ],
+  FLOATER_RANGE: ['M68 99 H132 L143 116 Q100 148 57 116 Z'],
+  SHORT_PAINT: ['M68 6 H132 V99 H68 Z'],
+  RIM: ['M70 31 Q100 91 130 31 H112 Q100 55 88 31 Z'],
+  RESTRICTED: ['M88 31 Q100 55 112 31 Z'],
 }
 
-/** A schematic of recognized shot families, NOT raw shot coordinates. */
+export function courtZoneTemperature(zone: DetailedPerformanceShotZone):
+  'unobserved' | 'low' | 'moderate' | 'good' | 'strong' {
+  if (zone.attempted === 0 || zone.percentage === null) return 'unobserved'
+  const accuracy = (zone.made / zone.attempted) * 100
+  if (accuracy < 30) return 'low'
+  if (accuracy < 50) return 'moderate'
+  if (accuracy < 70) return 'good'
+  return 'strong'
+}
+
 export function PerformanceNineZoneCourt({ profile }: { readonly profile: PerformanceShotProfileModel }) {
   const zones = profile.detailedZones ?? []
   const [selectedId, setSelectedId] = useState<MatchShotZoneId>('RESTRICTED')
+  const [expanded, setExpanded] = useState(false)
   const selected = zones.find((zone) => zone.id === selectedId) ?? zones[0]
   const totalPoints = zones.reduce((total, zone) => total + zone.points, 0)
   const provenance = profile.detailedProvenance === 'OBSERVED'
     ? 'RECORDED ZONES' : profile.detailedProvenance === 'MODELLED'
       ? 'MODELLED ZONES' : 'MIXED EVIDENCE'
   const select = (id: MatchShotZoneId) => setSelectedId(id)
+
+  useEffect(() => {
+    if (!expanded) return
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false)
+    }
+    window.addEventListener('keydown', escape)
+    return () => window.removeEventListener('keydown', escape)
+  }, [expanded])
+
   const renderRegion = (zone: DetailedPerformanceShotZone) =>
-    <g className={'po-pf-nine__region' + (selected?.id === zone.id ? ' is-selected' : '')}
+    <g className={'po-pf-nine__region is-' + courtZoneTemperature(zone) +
+      (selected?.id === zone.id ? ' is-selected' : '')}
       key={zone.id} role="button" tabIndex={0} aria-pressed={selected?.id === zone.id}
       aria-label={zone.label + ': ' + zone.made + ' made of ' + zone.attempted + ' attempted'}
       onClick={() => select(zone.id)}
       onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(zone.id) } }}>
       <title>{zone.label + ' · ' + zone.made + '/' + zone.attempted + ' · ' + (zone.percentage ?? '—') + '%'}</title>
-      {SHAPES[zone.id].map((shape, index) => <path key={index} d={shape} />)}
+      {COURT_ZONE_PATHS[zone.id].map((shape, index) => <path key={index} d={shape} />)}
     </g>
 
-  return <section className="po-pf-panel po-pf-shot po-pf-nine" data-ng-region="performance-shot-profile" aria-label="9 recorded or modelled shot zones">
+  return <section className={'po-pf-panel po-pf-shot po-pf-nine' + (expanded ? ' is-expanded' : '')}
+    data-ng-region="performance-shot-profile" aria-label="Nine-zone basketball shooting map"
+    role={expanded ? 'dialog' : undefined} aria-modal={expanded || undefined}>
     <div className="po-pf-nine__stage">
-      <div className="po-pf-nine__source"><span>{provenance}</span>
-        <small>{profile.detailedProvenance === 'OBSERVED' ? 'MatchEngine shot events' : 'Statistical subdivision · provisional'}</small></div>
-      <svg className="po-pf-nine__court" viewBox="0 0 200 174"
-        aria-label="Interactive nine-zone basketball half-court schematic. No shot coordinates are stored.">
-        <rect className="po-pf-nine__boundary" x={6} y={3} width={188} height={168} rx={3} />
-        {[...zones].reverse().map(renderRegion)}
-        <path className="po-pf-nine__court-lines" d="M 67 3 L 67 87 L 133 87 L 133 3 M 7 80 Q 100 174 193 80 M 93 16 L 107 16"/>
-        <circle className="po-pf-nine__rim" cx={100} cy={22} r={6} />
+      <div className="po-pf-nine__source">
+        <div><span>{provenance}</span>
+          <small>{profile.detailedProvenance === 'OBSERVED' ? 'MatchEngine shot events' : 'Statistical subdivision · provisional'}</small></div>
+        <button type="button" className="po-pf-nine__expand"
+          aria-label={expanded ? 'Close enlarged shot map' : 'Enlarge shot map'}
+          aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+          {expanded ? 'CLOSE ×' : 'EXPAND ↗'}
+        </button>
+      </div>
+      <svg className="po-pf-nine__court" viewBox="0 0 200 230" role="group"
+        aria-label="Selectable schematic basketball half-court zones. No shot coordinates are stored.">
+        <rect className="po-pf-nine__floor" x={6} y={6} width={188} height={218} rx={3} />
+        {/* Outside first, key last: small close-to-basket regions remain clickable. */}
+        {zones.slice().reverse().map(renderRegion)}
+        <g className="po-pf-nine__markings" aria-hidden="true">
+          <rect className="po-pf-nine__boundary" x={6} y={6} width={188} height={218} rx={3} />
+          <path className="po-pf-nine__court-lines" d="M24 6 V111 Q100 189 176 111 V6 M68 6 V99 H132 V6 M68 75 H132 M80 75 A20 20 0 0 0 120 75 M68 99 Q100 137 132 99 M88 31 Q100 55 112 31 M85 12 H115" />
+          <circle className="po-pf-nine__rim" cx={100} cy={31} r={6} />
+        </g>
       </svg>
-      <p className="po-pf-nine__caption">Schematic zones · select an area to inspect</p>
+      <div className="po-pf-nine__legend" aria-label="Shot efficiency by region, FG percentage">
+        <span><i className="is-unobserved" />No attempts</span>
+        <span><i className="is-low" />0–29%</span>
+        <span><i className="is-moderate" />30–49%</span>
+        <span><i className="is-good" />50–69%</span>
+        <span><i className="is-strong" />70%+</span>
+      </div>
+      <p className="po-pf-nine__caption">Regions indicate shot families, not exact release coordinates.</p>
     </div>
     <div className="po-pf-nine__details">
       <div className="po-pf-nine__selected" aria-live="polite">
         <span>SELECTED ZONE</span>
         <strong>{selected?.label ?? 'No zone'}</strong>
         <div><b>{selected?.percentage === null || selected === undefined ? '—' : selected.percentage + '%'}</b>
-          <span>{selected?.made ?? 0} / {selected?.attempted ?? 0} FG</span></div>
+          <span>{selected?.made ?? 0}/{selected?.attempted ?? 0} FG</span></div>
         <small>{selected?.share ?? 0}% of attempts · {selected?.points ?? 0} field points
           {totalPoints > 0 ? ' · ' + Math.round((selected?.points ?? 0) / totalPoints * 100) + '% of scoring' : ''}</small>
       </div>
       <div className="po-pf-nine__list" role="group" aria-label="Select a shooting zone">
+        <div className="po-pf-nine__list-head"><span>SHOT ZONE</span><span>FGM/FGA</span><span>FG%</span></div>
         {zones.map((zone) => <button key={zone.id} type="button"
           aria-pressed={zone.id === selected?.id} onClick={() => select(zone.id)}>
-          <span>{zone.label}</span>
+          <span className="po-pf-nine__zone-name"><i className={'is-' + courtZoneTemperature(zone)} />{zone.label}</span>
           <b>{zone.made}/{zone.attempted}</b>
           <em>{zone.percentage === null ? '—' : zone.percentage + '%'}</em>
         </button>)}
