@@ -4,6 +4,7 @@ import type { PlayerTruthRatingKey } from '@/domain/player'
 import type { AttributeCategoryModel, PlayerRatingRow, RatingEvolutionModel } from './playerWorkspaceModel'
 import {
   comparisonProfile, filterCourtsideRatings, getCategoryComparison, toggleFocusAttribute,
+  toggleRadarComparison, MAX_RADAR_COMPARISONS,
 } from './courtsideAttributeLogic'
 
 const shooting = [
@@ -22,6 +23,7 @@ function observation(team: number | null, league: number | null, position: numbe
     team: { status: team === null ? 'unavailable' : 'available', average: team },
     league: { status: league === null ? 'unavailable' : 'available', average: league },
     standing: { status: 'available', positionAverage: position, positionSampleSize: position === null ? 0 : 6 },
+    worldPosition: { status: 'available', average: position === null ? null : position + 7, sampleSize: 160 },
     hasRecordedHistory: history,
     changeSinceFirst: delta,
   } as unknown as RatingEvolutionModel
@@ -55,13 +57,30 @@ describe('Courtside Attributes canonical selectors', () => {
   it('does not draw an invented baseline when any family rating is unknown', () => {
     expect(getCategoryComparison(categories[0]!, history, 'team')).toBe(55)
     expect(getCategoryComparison(categories[0]!, history, 'league')).toBe(56)
-    expect(getCategoryComparison(categories[0]!, history, 'position')).toBe(56)
+    expect(getCategoryComparison(categories[0]!, history, 'position')).toBe(63)
+    expect(getCategoryComparison(categories[0]!, history, 'positionLeague')).toBe(56)
+    expect(getCategoryComparison(categories[0]!, history, 'position')).not.toBe(
+      getCategoryComparison(categories[0]!, history, 'positionLeague'),
+    )
     expect(getCategoryComparison(categories[0]!, history, 'none')).toBeNull()
     expect(comparisonProfile(categories, history, 'team')).toEqual({ shooting: 55 })
     const missing = {
       ...history, THREE_POINT_STATIC: observation(null, 48, 49, -2),
     } as Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
     expect(comparisonProfile(categories, missing, 'team')).toBeNull()
+  })
+
+  it('starts with no overlays and caps optional references at two without silent replacement', () => {
+    expect(MAX_RADAR_COMPARISONS).toBe(2)
+    const initial: readonly ('team' | 'league' | 'position' | 'positionLeague')[] = []
+    const one = toggleRadarComparison(initial, 'team')
+    const two = toggleRadarComparison(one, 'positionLeague')
+    const rejected = toggleRadarComparison(two, 'league')
+    expect(initial).toEqual([])
+    expect(two).toEqual(['team', 'positionLeague'])
+    expect(rejected).toBe(two)
+    expect(toggleRadarComparison(two, 'team')).toEqual(['positionLeague'])
+    expect(toggleRadarComparison(toggleRadarComparison(two, 'team'), 'position')).toEqual(['positionLeague', 'position'])
   })
 
   it('caps watched attributes at three, supports removal and does not mutate the original', () => {
