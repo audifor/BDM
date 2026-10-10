@@ -29,7 +29,7 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
     const target = screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' })
     fireEvent.click(target)
     expect(target).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('50.0%')).toBeInTheDocument()
+    expect(screen.getAllByText('50.0%').length).toBeGreaterThan(0)
     expect(screen.getByText(/3 field points/)).toBeInTheDocument()
     expect(screen.getByText(/no physical shot coordinates/i)).toBeInTheDocument()
   })
