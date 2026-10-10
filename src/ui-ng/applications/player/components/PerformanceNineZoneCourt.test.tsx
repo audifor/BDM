@@ -45,7 +45,7 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
     expect(screen.getByText('70%+')).toBeInTheDocument()
     const corner = screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' })
     expect(corner).toHaveClass('is-good')
-    const noAttempts = screen.getByRole('button', { name: 'Restricted: 0 made of 0 attempted' })
+    const noAttempts = screen.getByRole('button', { name: /restricted: 0 made of 0 attempted/i })
     expect(noAttempts).toHaveClass('is-unobserved')
   })
 
