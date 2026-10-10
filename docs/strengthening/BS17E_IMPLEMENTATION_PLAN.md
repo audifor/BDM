@@ -3,7 +3,7 @@
 **Status:** plan remains proposed; only E-P01/E-P02/E-P04 principles are ratified. No implementation is authorized by this plan.
 **Current gate:** `BS17E EXECUTION: BLOCKED_BY_BS16_COMPLETE`.
 
-This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. E-P01, E-P02, and E-P04 principles are approved, but their detailed contracts (including E-P02-SIM and E-P04-GOV-BOOTSTRAP) and E-P03/E-P05–E-P10 remain unresolved. Do not begin implementation until required details and organization grants are approved.
+This is the smallest reasonable sequence that delivers end-to-end economic gameplay without repeating Finance. Each phase is a functional vertical slice; do not ship a cosmetic screen or an isolated schema as a milestone. See [E-P02-SIM](BS17E_P2_SIMULATED_COST_CONTRACT_PROPOSAL.md) and [E-P04-GOV-BOOTSTRAP](BS17E_P2_GOVERNANCE_BOOTSTRAP_CONTRACT_PROPOSAL.md): both are proposals, not approvals. E-P02 simulated offers cannot be LIVE until its source/calibration/lifecycle contract is approved; Governance grants cannot be bootstrapped until their organization-specific policy is approved.
 
 ## Preconditions for any implementation
 
@@ -23,7 +23,7 @@ Deliver one full manager-to-Finance vertical slice for routine maintenance and r
 
 **PASS:** one approved OPEX operation reaches a reconciled canonical Finance ledger and persisted physical result through production commands; each lifecycle phase is attributable and idempotent; physical, recognized, payable, and settled states remain distinct; denial/failure leaves valid prior facts intact. If no legitimate cost source exists, report the supported scope as blocked/unknown rather than fabricating one.
 
-**Risk/blocker:** CFI7 maintenance expenditure is post-completion at the audited baseline. A pre-work reservation/commitment adapter is required. Never work around it with direct collection writes.
+**Risk/blocker:** CFI7 maintenance expenditure is post-completion at the audited baseline. A pre-work reservation/commitment adapter is required. E-A also needs an approved cost source and a valid institution-specific grant; absent data remains unknown/unverified. Never work around these gates with direct collection writes.
 
 ## E-B · Capital projects, replacement classification, and cancellation
 
@@ -35,7 +35,7 @@ Extend the same boundaries for explicitly approved capital projects: source-back
 
 **PASS:** a source-backed CAPEX project is traceable from approved decision to physical history and canonical Finance ledger/settlement; cancellation retains incurred facts and changes only authorized unincurred amounts; no depreciation or valuation is introduced without a separate approved Finance contract.
 
-**Risk/blocker:** Finance may need a narrowly scoped typed provenance adapter, but remains sole owner of financial collections and rules.
+**Risk/blocker:** Finance may need a narrowly scoped typed provenance adapter, but remains sole owner of financial collections and rules. No capital offer is usable until E-P02-SIM supports its accredited project scope; no project authority may be bootstrapped from ownership alone.
 
 ## E-C · Explicit recurring services and lifecycle closure
 
