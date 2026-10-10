@@ -116,7 +116,7 @@ function HomePanelPicker({title,onSelect}:{readonly title:string;readonly onSele
   return <div className="home-native-picker" ref={ref}>
     <button type="button" className="home-native-picker__trigger"
       aria-haspopup="menu" aria-expanded={open} aria-label={`Cambiar módulo: ${title}`}
-      onClick={()=>setOpen(value=>!value)}>{title} <span aria-hidden="true">▾</span></button>
+      onClick={()=>setOpen(value=>!value)}><span>{title}</span> <span aria-hidden="true">▾</span></button>
     {open?<div className="home-native-picker__menu" role="menu" aria-label={`Elegir módulo para ${title}`}>
       {HOME_SELECTABLE_IDS.map(id=><button key={id} type="button" role="menuitem"
         onClick={()=>{onSelect(id);setOpen(false)}}>{id==='fixture'?'Próximo partido':homeDashboardModuleLabel(id)}</button>)}
