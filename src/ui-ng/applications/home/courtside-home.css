@@ -980,3 +980,205 @@
   font-size:12px;
   font-weight:500;
 }
+
+/* HOME V1.5
+ * Compact editorial layout, 1920/1680 desktop first.
+ * Cards, colors, rounding remain the original Courtside tokens.
+ * For compact windows, restore natural document scrolling rather than
+ * shrinking functional text below its readability floor.
+ */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+  padding:12px 20px 16px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard {
+  gap:12px;
+  min-height:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+  padding:14px 18px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+  width:76px;
+  height:76px;
+  font-size:29px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  font-size:24px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  font-size:54px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot__header {
+  padding:12px 16px 0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot__body {
+  padding:8px 16px 14px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__module {
+  padding:12px 14px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot__title,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .ng-canon__eyebrow {
+  font-size:20px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note {
+  font-size:14px;
+  line-height:1.4;
+}
+/* Full, season-sourced league table. Fixed columns permit NBA-size leagues
+   without artificial caps, deletions or hidden columns at desktop width. */
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--standings .home-slot__body {
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  height:100%;
+  min-height:0;
+  gap:5px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__digest {
+  min-height:24px;
+  gap:10px;
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table__head,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {
+  display:grid;
+  grid-template-columns:24px minmax(110px,1fr) 24px 24px 24px 36px 35px 35px 34px 34px;
+  gap:4px;
+  align-items:center;
+  padding:0 4px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table__head {
+  min-height:22px;
+  flex:none;
+  font-size:11px;
+  letter-spacing:0;
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table {
+  display:grid;
+  grid-template-rows:repeat(var(--home-standings-rows),minmax(0,1fr));
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {
+  min-height:0;
+  font-size:12px;
+  line-height:1.15;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-num {
+  color:var(--cs-text2);
+  font-variant-numeric:tabular-nums;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-pct,
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-streak {
+  color:var(--cs-text);
+  font-weight:700;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
+  flex:none;
+  min-height:15px;
+  font-size:10px;
+  margin-top:1px;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-num {
+  color:#312b38;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-team {
+  color:#15111c !important;
+  font-weight:600;
+}
+/* Real contrast in light mode; use existing Courtside palette and fonts. */
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__module {
+  --ng-text-primary:#15111c;
+  --ng-text-secondary:#312b38;
+  --ng-text-muted:#463f52;
+  --ng-text-faint:#463f52;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot__title,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__eyebrow {
+  color:#15111c !important;
+  font-weight:700;
+}
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dynamics__label,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__meta {
+  color:#463f52 !important;
+  font-weight:600;
+}
+@media (min-width:1400px) and (min-height:840px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+    overflow:hidden;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard {
+    display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.80fr) minmax(0,.82fr);
+    grid-template-rows:minmax(0,1fr) minmax(0,1.02fr) minmax(0,.78fr) minmax(0,1.12fr);
+    gap:12px;
+    height:100%;
+    min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__top,
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {
+    display:contents !important;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+    grid-column:2/4;grid-row:1;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__dynamics {
+    grid-column:2;grid-row:2;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming {
+    grid-column:3;grid-row:2;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(1) {
+    grid-column:1;grid-row:1/5;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(2) {
+    grid-column:2/4;grid-row:4;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(3) {
+    grid-column:2;grid-row:3;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(4) {
+    grid-column:3;grid-row:3;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders__list {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));grid-auto-flow:column;
+    gap:0 14px;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders__row {
+    min-height:0;padding:2px 0;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming li:nth-child(n+5) {
+    display:none;
+  }
+}
+/* Tablet, narrow desktop and very short windows: preserve readable type and
+   all rows by scrolling the page only, never hiding standings entries. */
+@media (max-width:1399px), (max-height:839px) {
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+    overflow:auto;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-dashboard {
+    height:auto;min-height:100%;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-slot--standings .home-slot__body {
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table {
+    display:grid;grid-template-rows:none;grid-auto-rows:minmax(24px,auto);overflow:visible;
+  }
+}
