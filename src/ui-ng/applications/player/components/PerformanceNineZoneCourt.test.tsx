@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { MATCH_SHOT_ZONE_IDS } from '@/domain/stats/MatchStatLog'
 import type { PerformanceShotProfileModel } from '../data/buildPlayerPerformanceModel'
-import { COURT_ZONE_PATHS, courtZoneTemperature, PerformanceNineZoneCourt } from './PerformanceNineZoneCourt'
+import { COURT_ZONE_PATHS, courtZoneTemperature, hasLimitedShotSample, PerformanceNineZoneCourt } from './PerformanceNineZoneCourt'
 
 const fixture = (kind: 'OBSERVED' | 'MODELLED' = 'OBSERVED'): PerformanceShotProfileModel => ({
   zones: [], totalAttempts: 3, note: kind === 'OBSERVED'
@@ -72,6 +72,34 @@ describe('PLAYER PERFORMANCE nine-zone court', () => {
     expect(courtZoneTemperature({ id:'MIDRANGE',label:'Midrange',made:1,attempted:3,percentage:'33.3',share:10,points:2 })).toBe('moderate')
     expect(courtZoneTemperature({ id:'RIM',label:'At the rim',made:1,attempted:2,percentage:'50.0',share:10,points:2 })).toBe('good')
     expect(courtZoneTemperature({ id:'RESTRICTED',label:'Restricted',made:2,attempted:2,percentage:'100.0',share:10,points:4 })).toBe('strong')
+  })
+
+  it('warns about fewer than five attempts without changing the observed FG percentage', () => {
+    const sample = fixture().detailedZones!.find((zone) => zone.id === 'CORNER_THREE')!
+    expect(hasLimitedShotSample(sample)).toBe(true)
+    expect(hasLimitedShotSample({ ...sample, attempted: 4 })).toBe(true)
+    expect(hasLimitedShotSample({ ...sample, attempted: 5 })).toBe(false)
+    expect(hasLimitedShotSample({ ...sample, attempted: 0 })).toBe(false)
+    render(<PerformanceNineZoneCourt profile={fixture()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' }))
+    expect(screen.getByText('SMALL SAMPLE · 2 ATTEMPTS')).toBeInTheDocument()
+    expect(screen.getAllByText('50.0%').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Fewer than five attempts: interpret FG% cautiously/)).toBeInTheDocument()
+    expect(screen.getByTitle(/Small sample: 2 attempts/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Corner 3: 1 made of 2 attempted' })).toHaveClass('is-limited-sample')
+  })
+
+  it('does not mislabel zero attempts or five-or-more attempts as small samples', () => {
+    const profile = fixture()
+    const all = profile.detailedZones!.map((zone) => zone.id === 'RESTRICTED'
+      ? { ...zone, attempted: 0, percentage: null }
+      : zone.id === 'CORNER_THREE'
+        ? { ...zone, attempted: 5, made: 2, percentage: '40.0' }
+        : zone)
+    render(<PerformanceNineZoneCourt profile={{ ...profile, detailedZones: all }} />)
+    expect(screen.getByRole('button', { name: /restricted: 0 made of 0 attempted/i })).not.toHaveClass('is-limited-sample')
+    expect(screen.getByRole('button', { name: 'Corner 3: 2 made of 5 attempted' })).not.toHaveClass('is-limited-sample')
+    expect(screen.queryByText(/SMALL SAMPLE · 0 ATTEMPTS/)).not.toBeInTheDocument()
   })
 
   it('always labels modeled data as provisional instead of observed', () => {
