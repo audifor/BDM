@@ -969,3 +969,14 @@
 .bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {color:#15111c;font-weight:700}
 .bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-micro-module__result.is-win {color:#12804a}
 @media (max-width:1279px) {.bdm-os-ng[data-bdm-courtside-home='true'] [data-ng-region='home-workspace'] .home-standings__digest {flex-wrap:wrap}}
+
+/* Small-print readability on Courtside light, without changing the brand tokens. */
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon-header__meta,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__meta,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dynamics__label,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta,
+.bdm-os-ng[data-bdm-courtside-home='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
+  color:#463f52 !important;
+  font-size:max(12px,1em);
+  font-weight:500;
+}
