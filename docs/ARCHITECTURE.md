@@ -1499,6 +1499,48 @@ BS16M-A left capacity *evaluated* rather than *consumed*, so several sequential 
 
 **Payroll owns accounting, not the capacity replacement.** `processContractEconomicEvent` still consumes a matching `OPEN` reservation in the same pure transition that creates or resolves the canonical `FinancialCommitment`, but that is now only a compatibility/recovery path for worlds carrying the superseded BS16M-B1 shape (a contract plus a lingering `OPEN` reservation, for example a B1 save), so such a world cannot stay double-counted forever. It is no longer the primary lifecycle boundary, a rejected event still leaves the reservation untouched, an already `CONSUMED` reservation stays a deterministic no-op, and a commitment that never had a reservation stays that way: no retroactive reservation is synthesized and a reservation is never released there. Reservation states persist through Save V4 unchanged, so a terminal bridge survives save/load and replay can neither duplicate a reservation nor double-consume one. Releasing a bound contract before its first payroll occurrence therefore leaves nothing to leak — no reservation-specific release logic exists or is needed — and released contractual salary follows the existing contract lifecycle alone. No binding action touches `TeamFinances`: the legacy pools stay byte-identical.
 
+## Prototype finance policy v1 (BS16M-B2)
+
+BS16M-A left 40 of the prototype career's 48 finance-bearing Organizations unable to resolve a canonical currency at all: the career plays in a fictional jurisdiction whose canonical policy deliberately has no currency, so those clubs could not record a single Finance fact and every gameplay decision about them answered `FINANCE_PROFILE_UNAVAILABLE`. `BDM_PROTOTYPE_FINANCE_POLICY_V1` (`src/app/game/PrototypeFinancePolicy.ts`) closes that gap as **prototype data**, not as a Finance default: it names the euro for the prototype's unresolved Organizations and hands that list to canonical provisioning as an explicit Organization currency authority.
+
+Three properties keep the policy honest.
+
+**Canonical Finance stays generic.** `resolveOrganizationCurrency` gained the explicit-Organization-currency rung its own precedence already documented, and `ensureCanonicalFinanceFoundation` accepts the authority as an option, so the engine resolves a currency an Organization was explicitly given without ever knowing what a "prototype" is. A caller that supplies nothing keeps the unchanged behavior: an Organization with no profile, no resolvable jurisdiction and no explicit authority still has no currency, and `FINANCE_CURRENCY_UNAVAILABLE` is still the answer. An explicit authority that names a currency canonical Finance cannot express is a `RangeError`, never a silent fallback.
+
+**Nothing already resolved is rewritten.** The policy names only Organizations that have no canonical profile *and* whose currency resolves to nothing, so the eight clubs of the shipped NBA-like/WNBA-like ecosystems keep the USD they already had, no `CURRENCY_POLICY_CONFLICT` is ever reported, and the prototype career stays a genuine two-currency world (8 USD + 40 EUR). The policy is idempotent data: applied again to a provisioned career it names nothing.
+
+**Nothing else inherits it.** Only the prototype entry point passes the authority. World DB Spain keeps resolving through its own jurisdiction, the ACB keeps resolving its clubs in EUR through the country policy, and the framework guard in `PrototypeFinancePolicy.test.ts` proves that no file under `src/domain` or `src/engine` mentions the policy at all.
+
+Provisioning the 40 clubs has consequences that are recorded rather than hidden: those clubs now carry the canonical foundation (profile, account catalog, fiscal period, authorization seeded from the legacy pools) and the daily finance lifecycle materializes their contractual payroll facts, exactly as it already did for the eight provisioned clubs. Liquidity is still truthfully zero — nothing is invented — so a prototype action can still legitimately answer `INSUFFICIENT_LIQUIDITY` or `REQUIRES_FINANCING`, which are canonical economic outcomes rather than missing Finance.
+
+## Canonical authority matrix v1 (BS16M-B2)
+
+BS16M PASS. Canonical Finance is the production gameplay financial authority; the matrix below is the certified one (each row is asserted by the BS16M-B2 convergence certification, not only stated here):
+
+| System | Authority |
+|---|---|
+| Cash | canonical ledger (`financialAccounts` / `financialTransactions`) |
+| Budget authorization | `FinancialBudget` / canonical authorization |
+| Reserved capacity | `FinancialReservation`, a transient binding bridge only |
+| Committed salary | `ContractFinancialSchedule` / `knownCommitments` |
+| Payroll expense | the canonical payroll economic event |
+| Payables | canonical ledger / payable authority |
+| Treasury | BS16J |
+| Revenue | BS16K |
+| Receivable collection | BS16K |
+| Debt | BS16L |
+| Capital | BS16L (cash and equity only, never authorization) |
+| Gameplay affordability | `GameplayFinancialDecision` |
+| AI affordability | the same canonical gateway, translated to the AI vocabulary without altering economic truth |
+| Legacy `TeamFinances` | NON-AUTHORITATIVE |
+
+Two transitional inputs are accepted, and they are the only ones:
+
+- **Legacy amount heuristic** — a coach/staff offer *amount* may still be derived from a legacy pool (`offerSalary`). It is a number, never a verdict.
+- **Legacy authorization seed** — activation materializes canonical `PLAYER_SALARY` / `STAFF_SALARY` authorization from the legacy pools, one way.
+
+Both are `NON_AUTHORITATIVE`: neither allows nor blocks an action, neither receives canonical back-sync, financing cash or capital cash, and no binding, payroll or Treasury operation writes a legacy pool. The legacy affordability helpers (`canTeamAffordAdditionalSalary`, `canTeamAffordAdditionalStaffSalary`) have no production caller at all, and display surfaces label the legacy numbers for what they are (a salary budget and a planning amount, never cash or true affordability).
+
 ## Economic source authority v1 (BS16K)
 
 Canonical Finance can already account for recurring revenue and non-payroll operating cost: `RevenueSource`/`materializeRevenueForDate`, `OperatingCostSource`/`materializeOperatingCostsForDate` and `CompetitionDistributionFact`/`materializeCompetitionEconomyForDate` all flow through the CF4 adapter, and the daily `CLUB_FINANCE_V2` phase already runs them strictly when the world declares a source. What was missing was the source itself, so BS16K audited every shipped data surface before writing any code. The result is recorded as testable data in `src/domain/finance/EconomicSourceAuthority.ts` (`SHIPPED_ECONOMIC_SOURCE_CLASSIFICATION`, `MISSING_ECONOMIC_SOURCE_AUTHORITY_REGISTER`):
