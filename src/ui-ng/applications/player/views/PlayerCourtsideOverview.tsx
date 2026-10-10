@@ -128,6 +128,12 @@ function buildManagerRead(model: PlayerWorkspaceModel): ManagerAssessment {
 function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
   const { session } = usePlayerWorkspace()
   const own = model.knowledgeAccess.kind === 'own-roster'
+  const opponentFamilies = evaluatedOpponentFamilies(model)
+  const evaluatedFamilies = supportedScoutedFamilies(opponentFamilies)
+  const totalScoutedRatings = own ? null : opponentKnowledgeSummary(model.knowledgeAccess)
+  const estimatedHighlights = [...evaluatedFamilies]
+    .sort((a, b) => b.estimate! - a.estimate!)
+    .slice(0, 4)
   const chips = own
     ? [...model.ratings]
       .sort((a, b) => b.value - a.value)
@@ -135,7 +141,8 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
         all.findIndex((candidate) => candidate.category === entry.category) === index)
       .slice(0, 4)
     : []
-  const title = model.overview.identityModule.archetypeTitle
+  const title = own ? model.overview.identityModule.archetypeTitle
+    : (totalScoutedRatings?.knownRatings ?? 0) > 0 ? 'SCOUTING PROFILE' : 'NOT SCOUTED'
   const role = model.overview.identityModule.roleTitle
 
   return (
@@ -149,7 +156,8 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
         <span className="po-cs-dna__star" aria-hidden="true">✦</span>
         <div>
           <h3>{title}</h3>
-          <p>{role}{own ? ' · Perfil derivado de ratings reales' : ' · Conocimiento deportivo parcial'}</p>
+          <p>{role}{own ? ' · Perfil derivado de ratings reales'
+            : ` · ${totalScoutedRatings?.knownRatings ?? 0}/${totalScoutedRatings?.totalRatings ?? 0} atributos estimados por tu club`}</p>
         </div>
       </div>
       <div className="po-cs-dna__quadrants">
@@ -157,8 +165,13 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
           <div className="po-cs-dna__quadrant-head"><span>01</span><h4>BALONCESTO</h4></div>
           <p>Fortalezas representativas por familia</p>
           <div className="po-cs-dna__chips">
-            {chips.length ? chips.map((chip) => <span className="po-cs-chip" key={chip.id}>{chip.label} {chip.value}</span>)
-              : <span className="po-cs-unknown">Atributos individuales no conocidos</span>}
+            {own ? chips.map((chip) => <span className="po-cs-chip" key={chip.id}>{chip.label} {chip.value}</span>)
+              : estimatedHighlights.length > 0
+                ? estimatedHighlights.map((family) => <span className="po-cs-chip po-cs-chip--estimate" key={family.id}
+                    title={`Estimación de tu club: ${family.low}–${family.high}; confianza ${family.confidence}% y cobertura ${family.coverage}%`}>
+                    {family.label} ≈{family.estimate}
+                  </span>)
+                : <span className="po-cs-unknown">Atributos individuales sin información suficiente</span>}
           </div>
           <button className="po-cs-text-link" onClick={() => session.setActiveView('attributes')} type="button">Ver atributos ›</button>
         </section>
@@ -166,10 +179,23 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
           <div className="po-cs-dna__quadrant-head"><span>02</span><h4>MENTALIDAD</h4></div>
           {MINDSET.map(({ key, label }) => {
             const value = own ? model.ratings.find((rating) => rating.id === key)?.value : undefined
+            const known = own ? undefined : model.knowledgeAccess.ratingEvaluations
+              .find((entry) => entry.key === key && entry.evaluation !== null)
+            const estimated = known?.evaluation?.estimate
+            const knownValue = typeof estimated === 'number' && Number.isFinite(estimated)
+              ? estimated : undefined
+            const visible = own ? value : knownValue
             return <div className="po-cs-meter-row" key={key}>
               <span>{label}</span>
-              <span className="po-cs-meter-track"><i style={{ width: value === undefined ? '0%' : `${value}%` }} /></span>
-              <strong>{value === undefined ? 'Sin datos' : ratingBand(value)}</strong>
+              <span className={`po-cs-meter-track${visible === undefined ? ' is-unknown' : ''}`}>
+                {visible !== undefined && <i style={{ width: `${Math.max(0,Math.min(100,visible))}%` }} />}
+              </span>
+              <strong title={!own && known !== undefined
+                ? `Estimación de scouting: ${known.displayLabel}; confianza ${known.evaluation?.confidence ?? 0}%`
+                : undefined}>
+                {own ? value === undefined ? 'Sin datos' : ratingBand(value)
+                  : known === undefined ? 'Sin datos' : known.displayLabel}
+              </strong>
             </div>
           })}
           <button className="po-cs-text-link" onClick={() => { session.setAttributesCategory('mental'); session.setActiveView('attributes') }} type="button">Ver mental ›</button>
@@ -184,10 +210,19 @@ function PlayerDna({ model }: { readonly model: PlayerWorkspaceModel }) {
         </section>
         <section className="po-cs-dna__quadrant">
           <div className="po-cs-dna__quadrant-head"><span>04</span><h4>ESTABILIDAD / RIESGO</h4></div>
-          <div className="po-cs-meter-row"><span>Moral</span><span /><strong>{fieldLabel(model.status.morale)}</strong></div>
-          <div className="po-cs-meter-row"><span>Disponibilidad</span><span /><strong>{fieldLabel(model.status.availability)}</strong></div>
-          <div className="po-cs-meter-row"><span>Riesgo físico</span><span /><strong>{fieldLabel(model.status.risk)}</strong></div>
-                    <button className="po-cs-text-link" onClick={() => session.setActiveView('medical')} type="button">Ver estado médico ›</button>
+          {own ? (
+            <>
+              <div className="po-cs-meter-row"><span>Moral</span><span /><strong>{fieldLabel(model.status.morale)}</strong></div>
+              <div className="po-cs-meter-row"><span>Disponibilidad</span><span /><strong>{fieldLabel(model.status.availability)}</strong></div>
+              <div className="po-cs-meter-row"><span>Riesgo físico</span><span /><strong>{fieldLabel(model.status.risk)}</strong></div>
+              <button className="po-cs-text-link" onClick={() => session.setActiveView('medical')} type="button">Ver estado médico ›</button>
+            </>
+          ) : (
+            <>
+              <p className="po-cs-private-unknown">No disponemos de una fuente autorizada para conocer su moral, su disponibilidad privada o su riesgo físico.</p>
+              <button className="po-cs-text-link" onClick={() => session.setActiveView('scouting')} type="button">Consultar scouting ›</button>
+            </>
+          )}
         </section>
       </div>
     </section>
