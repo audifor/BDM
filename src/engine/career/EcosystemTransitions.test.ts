@@ -141,7 +141,8 @@ describe('EcosystemTransitions', () => {
     }
     expect(world.draftsById[draft.id]!.entries?.find((entry) => entry.playerId === prospects[4])?.status).toBe('undrafted')
     const target = teamIn(world, 'nbaLike')
-    const moved = signUndraftedPlayerToNba(fundedProfessionalSigning(world, target.id), { id: 'transition:undrafted-nba', playerId: prospects[4]!, draftId: draft.id, toTeamId: target.id })
+    world = fundedProfessionalSigning(world, target.id)
+    const moved = signUndraftedPlayerToNba(world, { id: 'transition:undrafted-nba', playerId: prospects[4]!, draftId: draft.id, toTeamId: target.id })
     expect(moved.players[prospects[4]!]!.personId).toBe(personId)
     expect(moved.teams[source.id]!.rosterPlayerIds).not.toContain(prospects[4])
     expect(moved.teams[target.id]!.rosterPlayerIds).toContain(prospects[4])
