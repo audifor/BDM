@@ -217,6 +217,31 @@ regression tests, real Save V4 reload, statistical validation of the
 conditional BG split, benchmark/performance and UI visual inspection.
 Do not mark the nine-zone program or PERFORMANCE full PASS until complete.
 
+## PERFORMANCE V3.1 · nine-zone court visual redesign (10 October 2026)
+
+- The previous nine concentric bands were a misleading dartboard.
+  The Court now has recognizable painted key, restricted/rim areas, two
+  midrange wings, floater corridor, long-midrange perimeter, separate corner
+  threes, above-break outside the arc and deep threes.
+- Geometry is explicitly schematic. No new event coordinates or zone-level
+  precision have been invented; the nine regions refer to existing MatchEngine
+  shot families and read only `detailedZones`.
+- Efficiency is encoded by existing Courtside theme color tokens at
+  0-29%, 30-49%, 50-69%, 70%+, with neutral fill for no attempts.
+  Never confuse **efficiency** fill with attempt **volume**; counts/FG% remain
+  visible in the synchronized list. A selected region retains its own
+  orange outline without overriding the efficiency fill.
+- The half court and legend take priority over tiny numerical labels
+  inside nine overlapping shapes. Selection by keyboard or pointer updates
+  the same detailed side panel.
+- EXPAND opens a larger view portaled to the Courtside application shell
+  rather than being clipped by the main Performance grid. Escape or CLOSE
+  returns to the unchanged underlying panel with selection intact.
+- Light and dark modes inherit canonical `--cs-*` theme colors. No
+  changes to persisted model, statistical authority or FOW.
+- Requires actual viewport/dark-light inspection, Vitest and typecheck before
+  visual certification.
+
 ## Remaining subsections: mandatory review checklist
 
 | Section | Own roster | Opponent/FOW |
