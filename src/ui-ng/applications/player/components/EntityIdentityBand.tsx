@@ -49,6 +49,7 @@ export function EntityIdentityBand() {
   if (model === null) return null
 
   const { identity, status } = model
+  const canViewPrivateCondition = model.knowledgeAccess.kind === 'own-roster'
   const teamLabel = presentationValue(identity.teamName)
   const teamDestination =
     identity.teamId.status === 'available'
@@ -128,37 +129,44 @@ export function EntityIdentityBand() {
 
       <div className="po-identity__condition">
         <div className="po-identity__condition-top">
-          <span className={`po-identity__availability po-identity__availability--${availabilityTone}`}>
+          <span className={`po-identity__availability po-identity__availability--${canViewPrivateCondition ? availabilityTone : 'warning'}`}>
             <span className="po-identity__availability-dot" aria-hidden />
-            {availability}
+            {canViewPrivateCondition ? availability : 'CONDICIÓN NO EVALUADA'}
           </span>
           <details className="po-identity__trajectory">
             <summary aria-label="Mostrar navegación y trayectoria del jugador">TRAYECTORIA ▾</summary>
             <div className="po-identity__trajectory-panel">
               <h3>TRAYECTORIA DEL JUGADOR</h3>
               <TalentOperationsNav current="player" />
-              <TalentPlayerPathwayBand playerId={identity.playerId} />
+              {canViewPrivateCondition ? <TalentPlayerPathwayBand playerId={identity.playerId} /> : <p className="po-identity__fow-pathway">Información de trayectoria sujeta al conocimiento de tu organización.</p>}
             </div>
           </details>
         </div>
-        <div className="po-identity__status-list">
-          {status.morale.status === 'available' && (
-            <StatusInstrument label="Morale" tone="positive" value={presentationValue(status.morale)} />
-          )}
-          {status.fatigue.status === 'available' && (
-            <StatusInstrument
-              label="Fatigue"
-              meter={typeof status.fatigue.value === 'number' ? status.fatigue.value : undefined}
-              tone="neutral"
-              value={presentationValue(status.fatigue, (value) => `${value}%`)}
-            />
-          )}
-          {status.risk.status === 'available' ? (
-            <StatusInstrument label="Injury Risk" tone={status.riskTone ?? 'neutral'} value={presentationValue(status.risk)} />
-          ) : (
-            <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
-          )}
-        </div>
+        {canViewPrivateCondition ? (
+          <div className="po-identity__status-list">
+            {status.morale.status === 'available' && (
+              <StatusInstrument label="Morale" tone="positive" value={presentationValue(status.morale)} />
+            )}
+            {status.fatigue.status === 'available' && (
+              <StatusInstrument
+                label="Fatigue"
+                meter={typeof status.fatigue.value === 'number' ? status.fatigue.value : undefined}
+                tone="neutral"
+                value={presentationValue(status.fatigue, (value) => `${value}%`)}
+              />
+            )}
+            {status.risk.status === 'available' ? (
+              <StatusInstrument label="Injury Risk" tone={status.riskTone ?? 'neutral'} value={presentationValue(status.risk)} />
+            ) : (
+              <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
+            )}
+          </div>
+        ) : (
+          <div className="po-identity__fow-condition" aria-label="Estado interno no evaluado">
+            <strong>ESTADO INTERNO NO CONOCIDO</strong>
+            <span>Moral, fatiga y riesgo físico no están disponibles sin una fuente autorizada.</span>
+          </div>
+        )}
       </div>
     </section>
   )
