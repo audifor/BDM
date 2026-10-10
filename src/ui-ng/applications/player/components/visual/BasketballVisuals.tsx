@@ -34,6 +34,8 @@ export interface AttributeRadarProps {
   readonly accent?: string
   /** Draws each axis value under its label, as the attributes board's reference does. */
   readonly showValues?: boolean
+  /** Optional canonical aggregate per family; no polygon is drawn when a family is unknown. */
+  readonly comparisonAxes?: Readonly<Partial<Record<RatingCategory, number>>> | null
 }
 
 export function AttributeRadar({
@@ -42,9 +44,19 @@ export function AttributeRadar({
   onCategorySelect,
   accent = 'var(--ng-cyan)',
   showValues = false,
+  comparisonAxes = null,
 }: AttributeRadarProps) {
   const total = axes.length
   const gridLevels = [0.25, 0.5, 0.75, 1]
+
+  const comparisonPoints = comparisonAxes !== null && axes.every((axis) => {
+    const value = comparisonAxes[axis.key]
+    return typeof value === 'number' && Number.isFinite(value)
+  }) ? axes.map((axis, index) => {
+    const value = comparisonAxes[axis.key] ?? 0
+    const [x, y] = polarPoint(index, total, (value / 100) * MAX_RADIUS)
+    return x + ',' + y
+  }).join(' ') : null
 
   const polygonPoints = axes
     .map((axis, index) => {
@@ -98,6 +110,16 @@ export function AttributeRadar({
         )
       })}
 
+      {comparisonPoints !== null && (
+        <polygon
+          className="po-radar__comparison"
+          fill="none"
+          points={comparisonPoints}
+          stroke="var(--cs-orange)"
+          strokeDasharray="5 3"
+          strokeWidth="1.8"
+        />
+      )}
       <polygon
         fill={accent}
         fillOpacity="0.24"
