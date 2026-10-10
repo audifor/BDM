@@ -11,6 +11,7 @@ import type {
   PlayerGameLogRow,
 } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { PerformanceNineZoneCourt } from './PerformanceNineZoneCourt'
 
 /** Legend colours of the form chart. */
 const FORM_SERIES = [
@@ -129,6 +130,7 @@ export function PerformanceShotProfilePanel({
 }: {
   readonly profile: PerformanceShotProfileModel
 }) {
+  if (profile.detailedZones !== undefined) return <PerformanceNineZoneCourt profile={profile} />
   const inside = profile.zones.find((zone) => zone.id === 'inside-arc')
   const outside = profile.zones.find((zone) => zone.id === 'outside-arc')
   const zones = [inside, outside].filter((zone): zone is PerformanceShotZoneModel => zone !== undefined)
