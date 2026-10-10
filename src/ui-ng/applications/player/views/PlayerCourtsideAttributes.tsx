@@ -110,8 +110,6 @@ export function PlayerCourtsideAttributes() {
     setVisibleBaselines([])
     setCompareMenuOpen(false)
   }
-  const highFamily = [...model.attributes.categories].sort((a, b) => b.profileValue - a.profileValue)[0]
-  const lowFamily = [...model.attributes.categories].sort((a, b) => a.profileValue - b.profileValue)[0]
   const activeFamily = activeRating === undefined
     ? currentCategory : model.attributes.categories.find((entry) => entry.category === activeRating.category) ?? currentCategory
 
