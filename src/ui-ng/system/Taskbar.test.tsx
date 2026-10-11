@@ -24,6 +24,16 @@ function mountTaskbar() {
   )
 }
 
+function mountCourtsideTaskbar(theme: 'dark' | 'light') {
+  return render(
+    <NgWorkspaceNavigationProvider>
+      <div className="bdm-os-ng" data-bdm-courtside-shell="true" data-bdm-courtside-theme={theme}>
+        <Taskbar />
+      </div>
+    </NgWorkspaceNavigationProvider>,
+  )
+}
+
 /*
  * MX0.4 shell truth: the taskbar status is a canonical signal. It used to be the static caption
  * "Simulation idle", which claimed the simulation was idle even while a background day advance was running.
@@ -126,6 +136,28 @@ describe('Grouped entity instances in the taskbar', () => {
     expect(list).toBeInTheDocument()
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByRole('menu', { name: 'Instancias de Player' })).not.toBeInTheDocument()
+  })
+
+  it.each(['dark', 'light'] as const)('uses the Courtside %s shell and shows only entity rows', (theme) => {
+    const { container } = mountCourtsideTaskbar(theme)
+    act(() => {
+      navigateToPlayer('player:alpha' as PlayerId)
+      navigateToPlayer('player:beta' as PlayerId)
+    })
+    fireEvent.pointerEnter(screen.getByRole('button', { name: /^Player$/ }))
+    const list = screen.getByRole('menu', { name: 'Instancias de Player' })
+    const shell = container.querySelector('.bdm-os-ng')
+    expect(shell).not.toBeNull()
+    expect(list.closest('.bdm-os-ng')).toBe(shell)
+    expect(shell).toHaveAttribute('data-bdm-courtside-theme', theme)
+    expect(list.querySelector('header')).toBeNull()
+    expect(within(list).queryByText('Player')).toBeNull()
+    expect(within(list).queryByText(/abiertas/i)).toBeNull()
+    expect(within(list).getAllByRole('menuitem')).toHaveLength(2)
+    shell!.setAttribute('data-bdm-courtside-theme', theme === 'dark' ? 'light' : 'dark')
+    expect(list.closest('.bdm-os-ng')).toHaveAttribute(
+      'data-bdm-courtside-theme', theme === 'dark' ? 'light' : 'dark',
+    )
   })
 
 })
