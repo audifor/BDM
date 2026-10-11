@@ -293,3 +293,20 @@
   .po-scv3__primary,.po-scv3__intelligence {min-height:0;}
   .po-scv3__compare {min-height:265px;}
 }
+
+/* Comparison retains full 80-rating depth without rendering hidden or unscouted values. */
+.po-scv3__compare-column-head {
+  display:grid;
+  grid-template-columns:minmax(92px,1.22fr) minmax(70px,1fr) minmax(51px,.6fr) minmax(26px,.37fr) minmax(50px,.55fr);
+  gap:8px;align-items:center;
+  padding:5px 2px;border-bottom:1px solid var(--cs-line2);
+  color:var(--cs-text2);font:700 9px/1.15 var(--cs-font);
+}
+.po-scv3__compare-column-head span:nth-child(n+3) {text-align:right;}
+.po-scv3__compare-more {
+  width:100%;min-height:27px;flex:0 0 auto;
+  border:1px solid var(--cs-line2);border-radius:4px;
+  padding:6px;background:var(--cs-s2);color:var(--cs-lime);
+  cursor:pointer;font:700 11px/1.1 var(--cs-font-display);
+}
+.po-scv3__compare-more:hover {border-color:var(--cs-lime);}
