@@ -192,7 +192,7 @@ function certaintyNote(evaluation: RatingEvaluation): string {
   if (evaluation.mode === 'UNKNOWN') return 'Not scouted'
   if (evaluation.mode === 'EXACT') return 'Reported as a single value'
   if (evaluation.mode === 'RANGE') return 'Scouting range'
-  if (evaluation.mode === 'MIXED') return 'Mixed reports'
+  if (evaluation.mode === 'MIXED') return 'High uncertainty'
   return 'Qualitative descriptor'
 }
 
@@ -455,7 +455,7 @@ export function buildPlayerScoutingModel(
       }
     })
 
-  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'unknown').sort(
+  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'low').sort(
     (left, right) => (right.estimate ?? 0) - (left.estimate ?? 0) || left.label.localeCompare(right.label),
   )
   const toHighlight = (row: ScoutingAttributeRowModel): ScoutingHighlightModel => ({
