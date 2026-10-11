@@ -3564,7 +3564,7 @@ function validateFinancialState(world: GameWorld): void {
     requireEntity(world.organizationsById, period.organizationId, `Fiscal period ${period.id} organization`)
   }
   for (const transaction of Object.values(world.financialTransactionsById)) {
-    createFinancialTransaction(transaction)
+    if (!isCanonicalRecord('financialTransactions', transaction)) createFinancialTransaction(transaction)
     requireEntity(world.organizationsById, transaction.organizationId, `Financial transaction ${transaction.id} organization`)
     if (transaction.provenance.kind === 'FINANCIAL_TRANSACTION' && transaction.provenance.id === transaction.id) throw new GameWorldValidationError(`Financial transaction ${transaction.id} cannot cite itself as provenance`)
     for (const posting of transaction.postings) {
@@ -3588,29 +3588,29 @@ function validateFinancialState(world: GameWorld): void {
 
 function validateTreasuryState(world: GameWorld): void {
   for (const receivable of Object.values(world.receivablesById)) {
-    createReceivable(receivable)
+    if (!isCanonicalRecord('receivables', receivable)) createReceivable(receivable)
     requireEntity(world.organizationsById, receivable.organizationId, `Receivable ${receivable.id} organization`)
     validateTreasuryDimensions(world, receivable.organizationId, receivable.dimensions, `Receivable ${receivable.id}`)
     validateTreasuryCounterparty(world, receivable.counterparty, `Receivable ${receivable.id}`)
     if (receivable.provenance.kind === 'REVENUE_RECOGNITION') {
-      const recognition = Object.values(world.revenueRecognitionsById).find((item) => String(item.id) === receivable.provenance.id)
+      const recognition = world.revenueRecognitionsById[receivable.provenance.id as RevenueRecognitionId]
       if (recognition === undefined || recognition.receivableId !== receivable.id) throw new GameWorldValidationError(`Receivable ${receivable.id} has no matching revenue recognition link`)
     }
   }
   for (const payable of Object.values(world.payablesById)) {
-    createPayable(payable)
+    if (!isCanonicalRecord('payables', payable)) createPayable(payable)
     requireEntity(world.organizationsById, payable.organizationId, `Payable ${payable.id} organization`)
     validateTreasuryDimensions(world, payable.organizationId, payable.dimensions, `Payable ${payable.id}`)
     validateTreasuryCounterparty(world, payable.counterparty, `Payable ${payable.id}`)
     if (payable.provenance.kind === 'EXPENSE_RECOGNITION') {
-      const recognition = Object.values(world.expenseRecognitionsById).find((item) => String(item.id) === payable.provenance.id)
+      const recognition = world.expenseRecognitionsById[payable.provenance.id as ExpenseRecognitionId]
       if (recognition === undefined || recognition.payableId !== payable.id) throw new GameWorldValidationError(`Payable ${payable.id} has no matching expense recognition link`)
     }
   }
   const settledByObligation = new Map<string, number>()
   const seenTransactions = new Set<string>()
   for (const settlement of Object.values(world.treasuryApplicationsById)) {
-    createTreasurySettlement(settlement)
+    if (!isCanonicalRecord('treasuryApplications', settlement)) createTreasurySettlement(settlement)
     requireEntity(world.organizationsById, settlement.organizationId, `Treasury settlement ${settlement.id} organization`)
     const transaction = requireEntity(world.financialTransactionsById, settlement.transactionId, `Treasury settlement ${settlement.id} transaction`)
     if (seenTransactions.has(String(transaction.id))) throw new GameWorldValidationError(`Treasury settlement transaction ${transaction.id} is referenced more than once`)
@@ -3666,7 +3666,7 @@ function validateRecognitionState(world: GameWorld): void {
   const seenEntitlementSources = new Set<string>()
 
   for (const recognition of Object.values(world.revenueRecognitionsById)) {
-    createRevenueRecognition(recognition)
+    if (!isCanonicalRecord('revenueRecognitions', recognition)) createRevenueRecognition(recognition)
     requireEntity(world.organizationsById, recognition.organizationId, `Revenue recognition ${recognition.id} organization`)
     validateTreasuryDimensions(world, recognition.organizationId, recognition.dimensions, `Revenue recognition ${recognition.id}`)
     if (recognition.counterparty !== null) validateTreasuryCounterparty(world, recognition.counterparty, `Revenue recognition ${recognition.id}`)
@@ -3687,7 +3687,7 @@ function validateRecognitionState(world: GameWorld): void {
   }
 
   for (const recognition of Object.values(world.expenseRecognitionsById)) {
-    createExpenseRecognition(recognition)
+    if (!isCanonicalRecord('expenseRecognitions', recognition)) createExpenseRecognition(recognition)
     requireEntity(world.organizationsById, recognition.organizationId, `Expense recognition ${recognition.id} organization`)
     validateTreasuryDimensions(world, recognition.organizationId, recognition.dimensions, `Expense recognition ${recognition.id}`)
     if (recognition.counterparty !== null) validateTreasuryCounterparty(world, recognition.counterparty, `Expense recognition ${recognition.id}`)
@@ -3747,6 +3747,8 @@ function assertUniqueRecognitionSource(seen: Set<string>, provenance: import('@/
  * the whole ledger (quadratic cost on contract start days).
  */
 const canonicalRecordSets = new Map<string, WeakSet<object>>()
+/** True when the record is its collection creator's own frozen output, which that creator has already validated. */
+function isCanonicalRecord(collection: string, item: object): boolean { return canonicalRecordSets.get(collection)?.has(item) === true }
 function canonicalRecords<T extends object>(collection: string, items: readonly T[], create: (item: T) => T): T[] {
   let canonical = canonicalRecordSets.get(collection)
   if (canonical === undefined) { canonical = new WeakSet(); canonicalRecordSets.set(collection, canonical) }
