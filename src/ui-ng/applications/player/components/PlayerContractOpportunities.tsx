@@ -84,7 +84,7 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
       </button>
     </header>
 
-    <div className="pc-rpg__intelligence" aria-label="Authorized market intelligence">
+    <div className="pc-rpg__intelligence" role="region" aria-label="Authorized market intelligence">
       <div><span>SOURCE</span><strong>{knowledge === undefined ? 'NOT RECORDED' : SIGNAL_SOURCE[knowledge.source] ?? knowledge.source}</strong></div>
       <div><span>PLAYER INTEREST</span><strong>{interest}</strong></div>
       <div><span>ASSESSED</span><strong>{knowledge?.assessedAt ?? 'UNKNOWN'}</strong></div>
