@@ -55,8 +55,9 @@ describe('Shared Courtside Family Radar', () => {
   })
 
   it('retains genuine optional comparison overlays without changing the player shape', () => {
-    const playerPolygon=render(<CourtsideFamilyRadar axes={axes} ariaLabel="Player"/>)
-      .container.querySelector('.po-cs-radar__shape')!.getAttribute('points')
+    const baseline=render(<CourtsideFamilyRadar axes={axes} ariaLabel="Player"/>)
+    const playerPolygon=baseline.container.querySelector('.po-cs-radar__shape')!.getAttribute('points')
+    baseline.unmount()
     const profiles=[
       {key:'team',label:'Equipo',color:'var(--cs-orange2)',axes:Object.fromEntries(axes.map(a=>[a.key,60]))},
       {key:'league',label:'Liga',color:'var(--cs-negative)',axes:Object.fromEntries(axes.map(a=>[a.key,55]))},
