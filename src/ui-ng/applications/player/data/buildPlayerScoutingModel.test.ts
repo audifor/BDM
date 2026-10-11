@@ -148,7 +148,7 @@ describe('buildPlayerScoutingModel', () => {
     expect(JSON.stringify(model)).not.toContain('8000%')
   })
 
-  it('identifies mixed reports as conflict, not as a low-confidence verdict', () => {
+  it('identifies wide uncertainty without falsely claiming multiple reports', () => {
     const base = createNewGame()
     const team = getUserTeam(base)!
     const rival = Object.values(base.players).find(player => !team.rosterPlayerIds.includes(player.id))!.id
@@ -156,7 +156,7 @@ describe('buildPlayerScoutingModel', () => {
       shooting: {estimate: 61, uncertainty: 13},
     }), rival)
     const reading = model.attributes.find(row => row.id === 'shooting')!
-    expect(reading.certaintyNote).toBe('Mixed reports')
+    expect(reading.certaintyNote).toBe('High uncertainty')
     expect(reading.confidence).toBeCloseTo(.9)
   })
 
