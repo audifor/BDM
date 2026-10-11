@@ -4,7 +4,7 @@ import type { GameWorld } from '@/domain/world'
 import type { PlayerWorkspaceModel } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
 import type { PlayerScoutingModel } from '@/ui-ng/applications/player/data/buildPlayerScoutingModel'
 import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/buildScoutingRosterComparison'
-import { buildPlayerScoutingDecision, defaultScoutingRosterComparisonId } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
+import { buildPlayerScoutingDecision, scoutingRosterBenchmarks, type ScoutingBenchmarkMode } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { ratingCategory, CATEGORY_LABELS, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { getUserTeam } from '@/engine/calendar'
 
@@ -35,11 +35,15 @@ const knowledgeText = (value: string, certaintyNote: string) =>
   value === 'known' ? 'VERIFIED' : value === 'estimated' ? 'ESTIMATED' :
   value === 'low' ? 'LOW CONFIDENCE' : 'NOT SCOUTED'
 
-export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onChange }: {
+export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onChange, benchmarkMode, onBenchmarkMode, family, onFamilyChange }: {
   readonly world: GameWorld
   readonly inspectedId: PlayerId
   readonly comparisonId: PlayerId | null
   readonly onChange: (id: PlayerId) => void
+  readonly benchmarkMode: ScoutingBenchmarkMode
+  readonly onBenchmarkMode: (mode: ScoutingBenchmarkMode) => void
+  readonly family: RatingCategory
+  readonly onFamilyChange: (family: RatingCategory) => void
 }) {
   const team = getUserTeam(world)
   const eligible = useMemo(() => {
@@ -53,7 +57,6 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
         Number(a.player.basketball.primaryPosition === subject?.basketball.primaryPosition) ||
         a.player.lastName.localeCompare(b.player.lastName))
   }, [world, team, inspectedId])
-  const [family, setFamily] = useState<RatingCategory>('shooting')
   const [showAll, setShowAll] = useState(false)
   const selectedId = eligible.some(row => row.id === comparisonId) ? comparisonId : eligible[0]?.id ?? null
   const rows = useMemo(() => selectedId === null ? [] :
@@ -66,10 +69,18 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
   const subjectName = world.players[inspectedId]
   return <section className="po-scv3__card po-scv3__compare" data-ng-region="scouting-roster-compare">
     <div className="po-scv3__card-head"><strong>HEAD-TO-HEAD · OUR ROSTER</strong><span>80 ATTRIBUTES · SAME KEY · NO HIDDEN RATINGS</span></div>
+    <div className="po-scv3__benchmark-modes" role="group" aria-label="Roster benchmark">
+      <button type="button" aria-pressed={benchmarkMode==='role-peer'}
+        onClick={()=>onBenchmarkMode('role-peer')}>ROLE PEER</button>
+      <button type="button" aria-pressed={benchmarkMode==='rating-leader'}
+        onClick={()=>onBenchmarkMode('rating-leader')}>POSITION RATING LEADER</button>
+      <button type="button" aria-pressed={benchmarkMode==='manual'}
+        onClick={()=>onBenchmarkMode('manual')}>CHOOSE PLAYER</button>
+    </div>
     <div className="po-scv3__compare-tools">
       <label>OUR PLAYER
         <select aria-label="Compare against my player"
-          value={selectedId ?? ''} onChange={event => onChange(event.target.value as PlayerId)}>
+          value={selectedId ?? ''} onChange={event => {onBenchmarkMode('manual');onChange(event.target.value as PlayerId)}}>
           {eligible.length === 0 && <option value="">No teammates available</option>}
           {eligible.map(({id,player}) => <option key={id} value={id}>
             {player.firstName} {player.lastName} · {player.basketball.primaryPosition}
@@ -78,13 +89,14 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
       </label>
       <label>ATTRIBUTE FAMILY
         <select aria-label="Comparison attribute family" value={family}
-          onChange={event => {setFamily(event.target.value as RatingCategory);setShowAll(false)}}>
+          onChange={event => {onFamilyChange(event.target.value as RatingCategory);setShowAll(false)}}>
           {COMPARE_FAMILIES.map(key => <option key={key} value={key}>{CATEGORY_LABELS[key]}</option>)}
         </select>
       </label>
     </div>
     <div className="po-scv3__compare-key" aria-label="Comparison legend">
-      <span className="po-scv3__key-subject">PLAYER: {subjectName?.lastName ?? '—'} · LIME</span><span>OUR BENCHMARK: {ownName?.lastName ?? '—'} · MUTED</span>
+      <span className="po-scv3__key-subject">SUBJECT: {subjectName?.lastName ?? '—'} · LIME</span>
+      <span>BENCHMARK: {ownName?.lastName ?? '—'} · {benchmarkMode==='rating-leader' ? 'HIGHEST 80-RATING MEAN' : benchmarkMode==='role-peer' ? 'POSITION PEER' : 'MANUAL'} · MUTED</span>
     </div>
     {selectedId === null ? <p className="po-scv3__empty">No other own-roster player is available for comparison.</p> :
       verified.length === 0
@@ -132,11 +144,18 @@ export function ScoutingCourtsideBoard({
   const [intelligenceFocus, setIntelligenceFocus] = useState('shooting')
   const [bottomTab, setBottomTab] = useState<'reports' | 'games'>('reports')
   const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
+  const [benchmarkMode, setBenchmarkMode] = useState<ScoutingBenchmarkMode>('rating-leader')
+  const [family, setFamily] = useState<RatingCategory>('shooting')
+  const [evidenceScope, setEvidenceScope] = useState<'overall' | 'family'>('overall')
   const own = model.knowledgeAccess.kind === 'own-roster'
   const team = getUserTeam(world)
-  const defaultCompareId = defaultScoutingRosterComparisonId(world, model.identity.playerId)
-  const eligibleComparisonId = comparisonId !== null && team?.rosterPlayerIds.includes(comparisonId) && comparisonId !== model.identity.playerId
-    ? comparisonId : defaultCompareId
+  const rosterBenchmarks = useMemo(() => scoutingRosterBenchmarks(world, model.identity.playerId),
+    [world, model.identity.playerId])
+  const manualId = comparisonId !== null && team?.rosterPlayerIds.includes(comparisonId) && comparisonId !== model.identity.playerId
+    ? comparisonId : null
+  const eligibleComparisonId = benchmarkMode === 'rating-leader' ? rosterBenchmarks.ratingLeader
+    : benchmarkMode === 'role-peer' ? rosterBenchmarks.rolePeer
+    : manualId ?? rosterBenchmarks.rolePeer
   const comparator = eligibleComparisonId === null ? null : world.players[eligibleComparisonId]
   const comparable = useMemo(() => eligibleComparisonId === null ? [] :
     buildScoutingRosterComparison(world, model.identity.playerId, eligibleComparisonId),
@@ -205,7 +224,9 @@ export function ScoutingCourtsideBoard({
     <div className="po-scv3__workspace">
       <div className="po-scv3__primary">
         <ScoutingRosterComparison world={world} inspectedId={model.identity.playerId}
-          comparisonId={eligibleComparisonId} onChange={setComparisonId} />
+          comparisonId={eligibleComparisonId} onChange={setComparisonId}
+          benchmarkMode={benchmarkMode} onBenchmarkMode={setBenchmarkMode}
+          family={family} onFamilyChange={setFamily} />
         {!own && known.length > 0 && <section className="po-scv3__card po-scv3__snapshot">
           <div className="po-scv3__card-head"><strong>SCOUT'S PLAYER PROFILE</strong><span>REPORTED · NOT PLAYER TRUTH</span></div>
           <div className="po-scv3__snapshot-title">
