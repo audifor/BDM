@@ -83,7 +83,7 @@ describe('Grouped entity instances in the taskbar', () => {
       let group = screen.getByRole('menu', { name: 'Instancias de Player' })
       expect(within(group).getAllByRole('menuitem')).toHaveLength(2)
       expect(within(group).queryByRole('button', { name: /Cerrar todas/i })).not.toBeInTheDocument()
-      fireEvent.auxClick(playerIcon, { button: 1 })
+      fireEvent(playerIcon, new MouseEvent('auxclick', { bubbles: true, button: 1 }))
       expect(screen.queryByRole('menu', { name: 'Instancias de Player' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /^Player$/ })).not.toBeInTheDocument()
       const staffIcon = screen.getByRole('button', { name: /^Staff$/ })
@@ -91,7 +91,7 @@ describe('Grouped entity instances in the taskbar', () => {
       fireEvent.pointerEnter(staffIcon)
       group = screen.getByRole('menu', { name: 'Instancias de Staff' })
       expect(within(group).getAllByRole('menuitem')).toHaveLength(1)
-      fireEvent.auxClick(staffIcon, { button: 1 })
+      fireEvent(staffIcon, new MouseEvent('auxclick', { bubbles: true, button: 1 }))
       expect(screen.queryByRole('menu', { name: 'Instancias de Staff' })).not.toBeInTheDocument()
       expect(screen.getByRole('dialog', { name: 'Player action' })).toBeInTheDocument()
     } finally {
