@@ -28,3 +28,10 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - La vista General usa 11 columnas útiles. El resto se añade mediante vista, gestor de columnas o vistas propias, con preferencias aisladas del grid antiguo (`courtside-roster-v5-*`).
 - Toda la personalización (orden, ancho, ordenación, visibilidad, selección) se hace sin tocar la información de `GameWorld`.
 - Las vistas legacy, sus preferencias antiguas y los componentes de dominio compartidos continúan disponibles; no se borra funcionalidad por la migración visual.
+
+## ROSTER · Familias Player Truth y acciones Courtside (2026-10-11)
+- Una vista **ESTADÍSTICAS** separada y ocho vistas de las familias de `PLAYER_RATING_FAMILY_KEYS` (80 atributos exactos), sin depender de la antigua proyección de 35. Se muestran solo evaluaciones permitidas por el conocimiento organizacional; el desconocido no se revela.
+- Selector de **presencia**: jugadores de la plantilla actual o jugadores con **contrato activo con el equipo pero fuera de esa plantilla**. No se introducen agentes libres ni se interpreta la ausencia de contrato registrado como libertad contractual.
+- Se sustituye el selector nativo de rol de la tabla Courtside por el menú de rotación propio de BDM, conectado a las acciones canónicas. Fuera de la plantilla, o sin control del equipo, la edición está deshabilitada.
+- Editor de columnas superpuesto y fuera del flujo de la tabla para no desplazar filas; preferencias visuales aisladas por versión `courtside-roster-v6-*`.
+- Las ocho vistas ofrecen cada atributo real con etiqueta propia en castellano y columnas configurables; las vistas anteriores y las personalizadas se conservan como posibilidad independiente.

@@ -18,6 +18,7 @@ import { buildRosterDepthChart } from '@/ui-ng/applications/roster/buildRosterDe
 import { buildRosterWorkspaceContext, rosterTeamForWorld } from '@/ui-ng/applications/roster/buildRosterWorkspaceContext'
 import { useRosterWorkspaceSession, type RosterNgSessionBridge } from '@/ui-ng/applications/roster/rosterWorkspaceSession'
 import { matchesRosterV4Filters, rosterContractStatus } from '@/ui-ng/applications/roster/rosterV4Filters'
+import { getClubRosterCandidates } from '@/ui-ng/applications/roster/rosterClubPresence'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -58,6 +59,7 @@ export function RosterWorkspace() {
   const userTeam = world===null?undefined:getUserTeam(world)
   const canEditLineup = team!==undefined&&userTeam?.id===team.id
   const roster = useMemo(()=>world===null||team===undefined?[]:getTeamRoster(world,team.id),[world,team])
+  const rosterCandidates = useMemo(()=>world===null||team===undefined?[]:getClubRosterCandidates(world,team.id),[world,team])
   const injuries = useMemo(()=>world===null?0:roster.filter(player=>getCurrentPlayerInjury(world,player.id)!==undefined).length,[roster,world])
   const expiring = useMemo(()=>world===null?0:roster.filter(player=>rosterContractStatus(world,player)==='expiring').length,[roster,world])
   const hasContractData = useMemo(()=>world!==null&&roster.some(player=>getCurrentPlayerContract(world,player.id)!==undefined),[roster,world])
@@ -74,7 +76,7 @@ export function RosterWorkspace() {
     return id===undefined?undefined:world.players[id as PlayerId]
   },[world,selectedRowIds])
   const rowPredicate = useCallback((player: typeof roster[number])=>
-    world!==null&&matchesRosterV4Filters(world,player,v4Filters),[world,v4Filters])
+    world!==null&&matchesRosterV4Filters(world,player,v4Filters,team?.id),[world,v4Filters,team?.id])
   const sessionBridge = useMemo<RosterNgSessionBridge>(()=>({
     activePreset,onActivePresetChange:setActivePreset,
     searchQuery,onSearchQueryChange:setSearchQuery,
@@ -142,7 +144,7 @@ export function RosterWorkspace() {
           <div className="roster-v4__table-pane">
             <ScrollRegion className="roster-workspace__scroll" onScroll={persistScroll} ref={scrollRef}>
               <CanonicalRoster
-                embedInspector={false} v4Mode rowPredicate={rowPredicate}
+                embedInspector={false} v4Mode rowPredicate={rowPredicate} rosterCandidates={rosterCandidates}
                 onLineupSlotChange={canEditLineup?(slot:LineupSlot,playerId)=>setLineupSlot(slot,playerId):undefined}
                 onLineupSlotClear={canEditLineup?(slot:LineupSlot)=>clearLineupSlot(slot):undefined}
                 onOpenEntity={openPlayer} sessionBridge={sessionBridge} team={team} variant="ng" world={world}

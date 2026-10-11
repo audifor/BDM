@@ -50,7 +50,7 @@ const defaultState: RosterWorkspaceSessionState = {
   scrollTop: 0,
   scrollLeft: 0,
   tab: 'plantilla',
-  favoritePresets: ['general','performance','offense','defense','contracts','development'],
+  favoritePresets: ['general','performance','shooting','finishing','defense','physical'],
   customViews: [],
   v4Filters: EMPTY_ROSTER_V4_FILTERS,
 }
@@ -58,7 +58,7 @@ const defaultState: RosterWorkspaceSessionState = {
 export const useRosterWorkspaceSession = create<RosterWorkspaceSessionState & RosterWorkspaceSessionActions>(
   (set) => ({
     ...defaultState,
-    favoritePresets: readSaved('favorites', defaultState.favoritePresets),
+    favoritePresets: readSaved<string[]>('favorites', [...defaultState.favoritePresets]).map(id=>id==='offense'?'finishing':id).filter((id,i,list)=>list.indexOf(id)===i).slice(0,6),
     customViews: readSaved('customViews', defaultState.customViews),
     v4Filters: readSaved('filters', defaultState.v4Filters),
     setActivePreset: (activePreset) => set({ activePreset }),

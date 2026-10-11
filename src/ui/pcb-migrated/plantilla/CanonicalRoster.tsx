@@ -2,6 +2,11 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
 import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
+import { PLAYER_TRUTH_RATING_KEYS, ratingKnowledgeDimensionFor } from '@/domain/player/PlayerTruthCatalog'
+import { courtsideFamilyColumnIds, COURTSIDE_ATTRIBUTE_FAMILIES, courtsideAttributeLabel } from '@/ui-ng/applications/roster/rosterCourtsideCategories'
+import { RosterUnknownMark } from '@/ui-ng/applications/roster/components/RosterUnknownMark'
+import { rosterRatingDisplay, rosterRatingExportValue, rosterRatingSortValue } from '@/ui-ng/applications/roster/rosterRatingPresentation'
+import { CourtsideRosterRolePicker } from '@/ui-ng/applications/roster/components/CourtsideRosterRolePicker'
 import { getPlayerContractStatus } from "@/domain/contract";
 import { formatInjuryKind } from "@/domain/injury";
 import {
@@ -199,6 +204,7 @@ export function CanonicalRoster({
   sessionBridge,
   v4Mode = false,
   rowPredicate,
+  rosterCandidates,
   team,
   variant = "legacy",
   world,
@@ -213,6 +219,7 @@ export function CanonicalRoster({
   readonly sessionBridge?: RosterNgSessionBridge;
   readonly v4Mode?: boolean;
   readonly rowPredicate?: (player: Player) => boolean;
+  readonly rosterCandidates?: readonly Player[];
   readonly team: { readonly id: TeamId; readonly name: string };
   readonly variant?: CanonicalRosterVariant;
   readonly world: GameWorld;
@@ -232,7 +239,7 @@ export function CanonicalRoster({
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const viewMenuId = useId();
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
-  const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
+  const roster = useMemo(() => rosterCandidates ?? getTeamRoster(world, team.id), [world, team.id, rosterCandidates]);
   const rows = useMemo(() => {
     const filteredBySection = isNg
       ? roster
@@ -258,7 +265,7 @@ export function CanonicalRoster({
   const seasonStatistics = useMemo(() => new Map(roster.map(player =>
     [player.id, buildRosterInspectorSeasonStats(world, player.id)])), [roster, world]);
   const performanceColumns = useMemo<readonly DataGridColumn<Player>[]>(() =>
-    ['MIN','PTS','REB','AST','VAL'].map(label => ({
+    ['MIN','PTS','REB','AST','VAL','+/-'].map(label => ({
       id: 'season-' + label,
       label,
       defaultWidth: 72,
@@ -353,15 +360,32 @@ export function CanonicalRoster({
           </span>
         ),
       },
+      ...(v4Mode ? [{
+        id:'club-presence',
+        label:'CLUB',
+        defaultWidth:125,minWidth:88,sortable:true,
+        value: player=>world.teams[team.id]?.rosterPlayerIds.includes(player.id) ? 'En plantilla' : 'Fuera con contrato',
+        render:player=><span className="courtside-roster__membership">
+          {world.teams[team.id]?.rosterPlayerIds.includes(player.id)?'En plantilla':'Fuera con contrato'}
+        </span>,
+      } as DataGridColumn<Player>] : []),
       {
         id: "rotation",
         label: "ROL",
-        defaultWidth: 88,
-        minWidth: 72,
+        defaultWidth: v4Mode ? 155 : 88,
+        minWidth: v4Mode ? 130 : 72,
         sortable: true,
         value: (player) => getLineupSlotForPlayer(lineup, player.id) ?? "",
         render: (player) => {
           const currentSlot = getLineupSlotForPlayer(lineup, player.id);
+          if (v4Mode) {
+            return <CourtsideRosterRolePicker
+              name={player.firstName+' '+player.lastName} slot={currentSlot}
+              disabled={onLineupSlotChange===undefined || !world.teams[team.id]?.rosterPlayerIds.includes(player.id)}
+              onAssign={slot=>onLineupSlotChange?.(slot,player.id)}
+              onClear={()=>{if(currentSlot!==undefined)onLineupSlotClear?.(currentSlot)}}
+            />;
+          }
           return (
             <select
               aria-label={`Rotación ${player.firstName} ${player.lastName}`}
@@ -482,6 +506,17 @@ export function CanonicalRoster({
       ...ratingColumns(DEFENSE_RATING_KEYS),
       ...ratingColumns(PHYSICAL_RATING_KEYS),
       ...ratingColumns(BALL_HANDLING_RATING_KEYS),
+      ...(v4Mode && ratingEvaluationLookup !== undefined ? PLAYER_TRUTH_RATING_KEYS.map((key):DataGridColumn<Player>=>({
+        id:'truth-'+key, label: courtsideAttributeLabel(key),
+        defaultWidth:125,minWidth:85,numeric:true,sortable:true,
+        sortValue: player=>rosterRatingSortValue(ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))),
+        exportValue: player=>rosterRatingExportValue(ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))),
+        render: player=>{
+          const evaluation=ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))
+          return evaluation.mode==='UNKNOWN' ? <RosterUnknownMark label={courtsideAttributeLabel(key)}/> :
+            <span className="courtside-roster__rating" title={courtsideAttributeLabel(key)}>{rosterRatingDisplay(evaluation)}</span>
+        },
+      })) : []),
       ...PERSONALITY_DIMENSIONS.map(
         (dimension): DataGridColumn<Player> => ({
           id: `personality-${dimension}`,
@@ -500,6 +535,7 @@ export function CanonicalRoster({
       isNg,
       performanceColumns,
       lineup,
+      v4Mode,
       onLineupSlotChange,
       onLineupSlotClear,
       playerMenu,
@@ -528,8 +564,8 @@ export function CanonicalRoster({
     },
     ...(v4Mode ? [{
       id: 'performance',
-      name: 'RENDIMIENTO',
-      columnIds: [...baseColumnIds, 'season-MIN','season-PTS','season-REB','season-AST','season-VAL', 'fatigue'],
+      name: 'ESTADÍSTICAS',
+      columnIds: [...baseColumnIds, 'season-MIN','season-PTS','season-REB','season-AST','season-VAL','season-+/-', 'fatigue'],
     }] : []),
     {
       id: "offense",
@@ -561,6 +597,9 @@ export function CanonicalRoster({
       name: "PSICO",
       columnIds: [...baseColumnIds, ...personalityColumnIds],
     },
+    ...(v4Mode ? COURTSIDE_ATTRIBUTE_FAMILIES.map(({id,name,family})=>({
+      id,name,columnIds:[...baseColumnIds, ...courtsideFamilyColumnIds(family)],
+    })) : []),
     ...(v4Mode ? [{
       id: 'contracts',
       name: 'CONTRATOS',
@@ -578,7 +617,7 @@ export function CanonicalRoster({
     },
   ];
   const selectedView =
-    [...views, ...(sessionBridge?.customViews ?? [])].find((view) => view.id === ratingView) ?? views[0]!;
+    [...views, ...(sessionBridge?.customViews ?? [])].filter((view) => view.id === ratingView).at(-1) ?? views[0]!;
 
   useEffect(() => {
     if (!viewMenuOpen) return

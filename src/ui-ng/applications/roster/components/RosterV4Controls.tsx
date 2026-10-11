@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { loadGridPreferences } from '@/ui/dataGrid/persistence'
 import { COURTSIDE_ROSTER_GRID_PREFIX } from './CourtsideRosterTable'
+import { COURTSIDE_ROSTER_VIEWS } from '../rosterCourtsideCategories'
 import type { DataGridView } from '@/ui/dataGrid/types'
 import { ROSTER_POSITION_FILTERS } from '@/ui-ng/applications/roster/rosterPositionFilter'
 import { useRosterWorkspaceSession } from '@/ui-ng/applications/roster/rosterWorkspaceSession'
@@ -9,14 +10,7 @@ import {
   type RosterV4Filters, type RosterFilterCondition, type RosterFilterGroup, type RosterFilterField,
 } from '@/ui-ng/applications/roster/rosterV4Filters'
 
-const OPTIONS = [
-  {id:'general',name:'GENERAL'}, {id:'performance',name:'RENDIMIENTO'},
-  {id:'offense',name:'ATAQUE'}, {id:'defense',name:'DEFENSA'},
-  {id:'brain',name:'MENTAL'}, {id:'physical',name:'FÍSICO'},
-  {id:'ballHandling',name:'MANEJO'}, {id:'psico',name:'PSICOLOGÍA'},
-  {id:'contracts',name:'CONTRATOS'}, {id:'development',name:'DESARROLLO'},
-  {id:'custom',name:'PERSONALIZADA'},
-] as const
+const OPTIONS = COURTSIDE_ROSTER_VIEWS
 
 interface NamedFilter { readonly name: string; readonly filters: RosterV4Filters }
 const savedFilters = (): readonly NamedFilter[] => {
@@ -144,6 +138,11 @@ export function RosterV4Controls({ selectedCount, onOpenInspector }: {
         <option value="all">Sin límite</option><option value="21">Hasta 21</option>
         <option value="23">Hasta 23</option><option value="25">Hasta 25</option>
         <option value="30">Hasta 30</option></select></label>
+      <label>PRESENCIA<select aria-label="Filtro presencia en el club" value={filters.club ?? 'all'}
+        onChange={event=>setFilters({...filters,club:event.target.value as NonNullable<RosterV4Filters['club']>})}>
+        <option value="all">Todos vinculados</option>
+        <option value="in">En plantilla</option>
+        <option value="out">Fuera (con vínculo)</option></select></label>
       <label>CONTRATO<select aria-label="Filtro contrato" value={filters.contract}
         onChange={event=>setFilters({...filters,contract:event.target.value as RosterV4Filters['contract']})}>
         <option value="all">Todos</option><option value="expiring">Vence esta temporada</option>

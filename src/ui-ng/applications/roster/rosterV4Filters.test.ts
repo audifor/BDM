@@ -1,11 +1,49 @@
 import { describe,expect,it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getPlayerAge } from '@/domain/player'
-import { getTeamRoster } from '@/domain/world'
+import { getTeamRoster, type GameWorld } from '@/domain/world'
+import type { ContractId } from '@/domain/ids'
+import { getClubRosterCandidates } from './rosterClubPresence'
+import { PLAYER_TRUTH_RATING_KEYS, PLAYER_RATING_FAMILY_KEYS } from '@/domain/player/PlayerTruthCatalog'
+import { courtsideFamilyColumnIds } from './rosterCourtsideCategories'
 import { getUserTeam } from '@/engine/calendar'
 import { EMPTY_ROSTER_V4_FILTERS, matchesRosterV4Filters, rosterContractStatus } from './rosterV4Filters'
 
 describe('Courtside Roster V4 filters',()=>{
+  it('covers each of the 80 true ratings exactly once in its eight family views',()=>{
+    const keys=Object.keys(PLAYER_RATING_FAMILY_KEYS) as (keyof typeof PLAYER_RATING_FAMILY_KEYS)[]
+    const all=keys.flatMap(key=>courtsideFamilyColumnIds(key))
+    expect(keys).toHaveLength(8)
+    expect(PLAYER_TRUTH_RATING_KEYS).toHaveLength(80)
+    expect(all).toHaveLength(80)
+    expect(new Set(all).size).toBe(80)
+    expect(all).toEqual(PLAYER_TRUTH_RATING_KEYS.map(key=>'truth-'+key))
+  })
+
+  it('distinguishes players in club roster from those linked by an active club contract',()=>{
+    const world=createNewGame()
+    const team=getUserTeam(world)!
+    const onRoster=getTeamRoster(world,team.id)[0]!
+    const outside=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!
+    expect(outside).toBeDefined()
+    const contractId='contract:courtside-test-linked' as ContractId
+    const withLink={...world,contractsById:{
+      ...world.contractsById,
+      [contractId]:{
+        id:contractId,playerId:outside.id,teamId:team.id,kind:'standard' as const,
+        term:{startsOn:'2025-07-01' as const,expiresOn:'2027-06-30' as const},
+        compensation:{annualSalary:100000},
+      },
+    }} as GameWorld
+    const candidates=getClubRosterCandidates(withLink,team.id)
+    expect(candidates.some(player=>player.id===onRoster.id)).toBe(true)
+    expect(candidates.some(player=>player.id===outside.id)).toBe(true)
+    expect(matchesRosterV4Filters(withLink,onRoster,{...EMPTY_ROSTER_V4_FILTERS,club:'in'},team.id)).toBe(true)
+    expect(matchesRosterV4Filters(withLink,outside,{...EMPTY_ROSTER_V4_FILTERS,club:'out'},team.id)).toBe(true)
+    expect(matchesRosterV4Filters(withLink,onRoster,{...EMPTY_ROSTER_V4_FILTERS,club:'out'},team.id)).toBe(false)
+    expect(matchesRosterV4Filters(withLink,outside,{...EMPTY_ROSTER_V4_FILTERS,club:'in'},team.id)).toBe(false)
+  })
+
   it('does not filter out players in the default state',()=>{
     const world=createNewGame()
     const team=getUserTeam(world)!

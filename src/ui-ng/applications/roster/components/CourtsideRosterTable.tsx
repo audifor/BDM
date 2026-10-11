@@ -10,7 +10,7 @@ import { emptySelection, moveFocus, selectRow } from '@/ui/dataGrid/selection'
 import { useEntityContextMenu } from '@/ui/entityContextMenu/EntityContextMenuProvider'
 
 /** Independent Courtside presentation. CanonicalRoster prepares real values; no legacy grid styles are reused. */
-export const COURTSIDE_ROSTER_GRID_PREFIX = 'courtside-roster-v5-'
+export const COURTSIDE_ROSTER_GRID_PREFIX = 'courtside-roster-v6-'
 
 export function CourtsideRosterTable({ columns, rows, view, searchQuery, selectedIds, onSelectionChange, onOpenPlayer }: {
   readonly columns: readonly DataGridColumn<Player>[]

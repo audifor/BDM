@@ -157,6 +157,41 @@ describe('CanonicalRoster NG variant', () => {
     expect(grid.querySelectorAll('thead th')).toHaveLength(10)
   })
 
+  it('offers all eight canonical rating families and a separate statistics view',()=>{
+    mountRosterWorkspace()
+    const chooser=screen.getByLabelText('Todas las vistas de plantilla')
+    for(const id of ['shooting','finishing','ballHandling','playmaking','offBall','defense','physical','brain','performance']) {
+      expect(chooser.querySelector('option[value="'+id+'"]')).not.toBeNull()
+    }
+    fireEvent.change(chooser,{target:{value:'shooting'}})
+    expect(screen.getByRole('columnheader',{name:/TIRO LIBRE/})).toBeInTheDocument()
+    expect(screen.getByRole('columnheader',{name:/TRIPLE ESTÁTICO/})).toBeInTheDocument()
+    fireEvent.change(chooser,{target:{value:'performance'}})
+    expect(screen.getByRole('columnheader',{name:/PTS/})).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:/TRIPLE ESTÁTICO/})).not.toBeInTheDocument()
+  })
+
+  it('uses an accessible Courtside role picker and updates the canonical lineup',()=>{
+    const {team}=mountRosterWorkspace()
+    const world=useGameStore.getState().world!
+    const player=getTeamRoster(world,team.id)[0]!
+    const trigger=screen.getByRole('button',{name:`Rotación ${player.firstName} ${player.lastName}`})
+    expect(trigger).toHaveAttribute('aria-expanded','false')
+    fireEvent.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded','true')
+    expect(screen.getByRole('menu',{name:`Asignación de ${player.firstName} ${player.lastName}`})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
+    expect(getLineupSlotForPlayer(getTeamLineup(useGameStore.getState().world!,team.id)!,player.id)).toBe('PG')
+  })
+
+  it('keeps the column editor over the table without hiding the first rows',()=>{
+    mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/COLUMNAS/}))
+    expect(screen.getByRole('complementary',{name:'Editor de columnas'})).toBeInTheDocument()
+    expect(document.querySelector('.courtside-roster-table thead')).toBeInTheDocument()
+    expect(document.querySelector('.courtside-roster-table tbody tr')).toBeInTheDocument()
+  })
+
   it('keeps the table full-width and opens an optional popup only on request', () => {
     const {world,team}=mountRosterWorkspace()
     expect(screen.getByRole('navigation',{name:'Secciones de plantilla'})).toBeInTheDocument()

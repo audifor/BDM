@@ -1,4 +1,6 @@
 import { getPlayerAge, type Player } from '@/domain/player'
+import type { TeamId } from '@/domain/ids'
+import { isPlayerInClubRoster } from './rosterClubPresence'
 import { getCareerFatigueForPlayer, getCurrentPlayerContract, getCurrentPlayerInjury, type GameWorld } from '@/domain/world'
 
 /** Courtside Roster filters are display-only; canonical Player/Contract/Injury data remains the authority. */
@@ -17,6 +19,7 @@ export interface RosterFilterGroup {
 }
 export interface RosterV4Filters {
   readonly availability: 'all' | 'without-injury' | 'injured'
+  readonly club?: 'all' | 'in' | 'out'
   readonly ageMax: number | null
   readonly contract: 'all' | 'expiring' | 'active' | 'none'
   readonly groups: readonly RosterFilterGroup[]
@@ -24,7 +27,7 @@ export interface RosterV4Filters {
 }
 
 export const EMPTY_ROSTER_V4_FILTERS: RosterV4Filters = {
-  availability: 'all', ageMax: null, contract: 'all', groups: [], groupOperator: 'AND',
+  availability: 'all', club:'all', ageMax: null, contract: 'all', groups: [], groupOperator: 'AND',
 }
 export const ROSTER_FILTER_FIELDS: readonly { id: RosterFilterField; label: string; numeric: boolean }[] = [
   {id: 'position', label: 'Posición principal', numeric: false},
@@ -63,7 +66,12 @@ function matchesCondition(world: GameWorld, player: Player, condition: RosterFil
   return condition.operator === 'gte' ? current >= target : current <= target
 }
 
-export function matchesRosterV4Filters(world: GameWorld, player: Player, filters: RosterV4Filters): boolean {
+export function matchesRosterV4Filters(world: GameWorld, player: Player, filters: RosterV4Filters, teamId?:TeamId): boolean {
+  if (filters.club !== undefined && filters.club !== 'all' && teamId !== undefined) {
+    const present=isPlayerInClubRoster(world,teamId,player)
+    if(filters.club==='in' && !present) return false
+    if(filters.club==='out' && present) return false
+  }
   const injured = getCurrentPlayerInjury(world, player.id) !== undefined
   if (filters.availability === 'without-injury' && injured) return false
   if (filters.availability === 'injured' && !injured) return false
