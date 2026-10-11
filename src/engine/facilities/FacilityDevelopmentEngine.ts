@@ -2,10 +2,12 @@ import { compareGameDates, type GameDate } from '@/domain/date'
 import {
   componentBlueprintToCreateInput,
   componentConditionAt,
+  worstServiceabilityImpliedByCondition,
   createFacility,
   createFacilityComponent,
   createFacilityComponentConditionRecord,
   createFacilityDevelopmentProject,
+  createFacilityDevelopmentProjectPhase,
   createFacilityMaintenanceNeed,
   createFacilityStatusRecord,
   isFacilityMaintenanceNeedOpenStatus,
@@ -31,6 +33,7 @@ import {
   type FacilityId,
 } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { projectPhysicalBlocker } from './FacilityPhysicalOperations'
 
 /**
  * The explicit set of world-truth facts one project command can change, returned as plain data —
@@ -82,6 +85,11 @@ function transition(world: GameWorld, project: FacilityDevelopmentProject, to: F
   const existing = Object.values(world.facilityDevelopmentProjectsById)
   return updateGameWorld(world, {
     facilityDevelopmentProjects: existing.map((candidate) => (candidate.id === project.id ? updated : candidate)),
+    facilityDevelopmentProjectPhases: Object.values(world.facilityDevelopmentProjectPhasesById).map((phase) => {
+      if (phase.projectId !== project.id || phase.status === 'COMPLETED' || phase.status === 'CANCELLED') return phase
+      const status = to === 'PAUSED' && phase.status === 'IN_PROGRESS' ? 'PAUSED' : to === 'IN_PROGRESS' && phase.status === 'PAUSED' ? 'IN_PROGRESS' : to === 'CANCELLED' ? 'CANCELLED' : phase.status
+      return status === phase.status ? phase : createFacilityDevelopmentProjectPhase({ ...phase, status })
+    }),
   })
 }
 
@@ -109,6 +117,9 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
     throw new RangeError(`Facility development project ${projectId} cannot be started from status ${project.status}`)
   }
 
+  const blocker = projectPhysicalBlocker(world, project, 'START', startedAt)
+  if (blocker !== null) throw new RangeError(blocker)
+
   let createdFacilityIds: readonly FacilityId[] = Object.freeze([])
   let world2 = world
   let facilityId = project.facilityId
@@ -120,14 +131,15 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
       id: newFacilityId,
       placeId: project.scope.placeId,
       type: project.scope.facilityType,
-      purposes: ['TRAINING'],
+      purposes: project.scope.purposes ?? ['OTHER'],
       status: 'UNDER_CONSTRUCTION',
       canonicalName: project.scope.canonicalName,
     })
     const statusRecord = createFacilityStatusRecord({
-      id: facilityStatusRecordIdFromString(`facility-status:${newFacilityId}:${startedAt}`),
+      id: facilityStatusRecordIdFromString(`facility-status:${newFacilityId}:${startedAt}:${project.id}:start`),
       facilityId: newFacilityId,
       status: 'UNDER_CONSTRUCTION',
+      sequence: nextStatusSequence(world2, facilityId ?? newFacilityIdForProject(project), startedAt),
       effectiveFrom: startedAt,
     })
     world2 = updateGameWorld(world2, {
@@ -138,18 +150,19 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
     facilityId = newFacilityId
   } else if ((project.scope.kind === 'RECONFIGURE_FACILITY' || project.scope.kind === 'DEMOLISH_FACILITY') && facilityId !== null) {
     const target = world2.facilitiesById[facilityId]
-    if (target !== undefined && target.status !== 'UNDER_RENOVATION' && !isTerminalFacilityStatus(target.status)) {
+    if (target !== undefined && !isTerminalFacilityStatus(target.status)) {
       const statusRecord = createFacilityStatusRecord({
-        id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${startedAt}`),
+        id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${startedAt}:${project.id}:start`),
         facilityId,
         status: 'UNDER_RENOVATION',
+        sequence: nextStatusSequence(world2, facilityId, startedAt),
         effectiveFrom: startedAt,
       })
       world2 = updateGameWorld(world2, {
         facilities: Object.values(world2.facilitiesById).map((candidate) => (candidate.id === facilityId ? { ...candidate, status: 'UNDER_RENOVATION' } : candidate)),
         facilityStatusRecords: [...Object.values(world2.facilityStatusRecordsById), statusRecord],
       })
-      facilityLifecyclePriorStatus = target.status
+      facilityLifecyclePriorStatus = target.status === 'UNDER_RENOVATION' ? Object.values(world.facilityDevelopmentProjectsById).find((p) => p.facilityId === facilityId && p.facilityLifecyclePriorStatus !== null && (p.status === 'IN_PROGRESS' || p.status === 'PAUSED'))?.facilityLifecyclePriorStatus ?? target.status : target.status
     }
   }
 
@@ -204,14 +217,16 @@ export function cancelFacilityDevelopmentProject(world: GameWorld, projectId: Fa
  */
 function restoreFacilityLifecycleIfNeeded(world: GameWorld, project: FacilityDevelopmentProject, effectiveFrom: GameDate): GameWorld {
   if (project.facilityLifecyclePriorStatus === null || project.facilityId === null) return world
+  if (Object.values(world.facilityDevelopmentProjectsById).some((p) => p.id !== project.id && p.facilityId === project.facilityId && (p.status === 'IN_PROGRESS' || p.status === 'PAUSED') && p.facilityLifecyclePriorStatus !== null)) return world
   const facilityId = project.facilityId
   const target = world.facilitiesById[facilityId]
   if (target === undefined || isTerminalFacilityStatus(target.status)) return world
   const priorStatus = project.facilityLifecyclePriorStatus
   const statusRecord = createFacilityStatusRecord({
-    id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${effectiveFrom}`),
+    id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${effectiveFrom}:${project.id}:restore`),
     facilityId,
     status: priorStatus,
+    sequence: nextStatusSequence(world, facilityId, effectiveFrom),
     effectiveFrom,
   })
   return updateGameWorld(world, {
@@ -235,6 +250,9 @@ export function completeFacilityDevelopmentProject(world: GameWorld, projectId: 
   const project = requireProject(world, projectId)
   if (project.status !== 'IN_PROGRESS') throw new RangeError(`Facility development project ${projectId} cannot be completed from status ${project.status}`)
 
+  if (completedAt < project.actualStartDate!) throw new RangeError('Physical completion cannot precede actual start')
+  const blocker = projectPhysicalBlocker(world, project, 'COMPLETE', completedAt)
+  if (blocker !== null) throw new RangeError(blocker)
   const application = applyFacilityDevelopmentScope(world, project, completedAt)
   const restoredWorld = restoreFacilityLifecycleIfNeeded(application.world, project, completedAt)
   const worldAfterTransition = transition(restoredWorld, project, 'COMPLETED', { actualCompletionDate: completedAt })
@@ -267,7 +285,7 @@ function applyFacilityDevelopmentScope(world: GameWorld, project: FacilityDevelo
         facilities: Object.values(worldWithComponents.facilitiesById).map((candidate) => (candidate.id === facilityId ? { ...candidate, status: 'ACTIVE' } : candidate)),
         facilityStatusRecords: [
           ...Object.values(worldWithComponents.facilityStatusRecordsById),
-          createFacilityStatusRecord({ id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${completedAt}`), facilityId, status: 'ACTIVE', effectiveFrom: completedAt }),
+          createFacilityStatusRecord({ id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${completedAt}:${project.id}:complete`), facilityId, status: 'ACTIVE', sequence: nextStatusSequence(worldWithComponents, facilityId, completedAt), effectiveFrom: completedAt }),
         ],
       })
       return {
@@ -347,7 +365,7 @@ function applyFacilityDevelopmentScope(world: GameWorld, project: FacilityDevelo
         facilityComponents: Object.values(world.facilityComponentsById).map((candidate) => closedComponents.find((closed) => closed.id === candidate.id) ?? candidate),
         facilityStatusRecords: [
           ...Object.values(world.facilityStatusRecordsById),
-          createFacilityStatusRecord({ id: facilityStatusRecordIdFromString(`facility-status:${targetFacilityId}:${completedAt}`), facilityId: targetFacilityId, status: 'DEMOLISHED', effectiveFrom: completedAt }),
+          createFacilityStatusRecord({ id: facilityStatusRecordIdFromString(`facility-status:${targetFacilityId}:${completedAt}:${project.id}:demolish`), facilityId: targetFacilityId, status: 'DEMOLISHED', sequence: nextStatusSequence(world, targetFacilityId, completedAt), effectiveFrom: completedAt }),
         ],
       })
       return {
@@ -389,16 +407,17 @@ function applyRenovation(world: GameWorld, project: FacilityDevelopmentProject, 
 
   const conditionRecords = Object.values(world.facilityComponentConditionRecordsById)
   const activeRecord = componentConditionAt(conditionRecords, componentId, completedAt)
-  const newRecordId = `facility-component-condition:${componentId}:${completedAt}`
+  const newRecordId = `facility-component-condition:${componentId}:${completedAt}:project:${project.id}`
   const newRecord = createFacilityComponentConditionRecord({
     id: facilityComponentConditionRecordIdFromString(newRecordId),
     componentId,
+    sequence: 1 + Math.max(0, ...conditionRecords.filter((r) => r.componentId === componentId && r.effectiveFrom === completedAt).map((r) => r.sequence ?? 0)),
     effectiveFrom: completedAt,
     physicalCondition: patch.resultingCondition,
-    serviceability: 'FULL',
+    serviceability: worstServiceabilityImpliedByCondition(patch.resultingCondition),
     technicalStandard: (patch.updatedTechnicalStandard as FacilityComponentConditionRecord['technicalStandard'] | undefined) ?? activeRecord?.technicalStandard ?? null,
   })
-  const carried = conditionRecords.map((record) => (activeRecord !== undefined && record.id === activeRecord.id && record.effectiveTo === null ? { ...record, effectiveTo: previousDay(completedAt) } : record))
+  const carried = conditionRecords.map((record) => (record.componentId === componentId && (record.effectiveTo === null || record.effectiveTo >= completedAt) && record.effectiveFrom < completedAt ? { ...record, effectiveTo: previousDay(completedAt) } : record))
 
   const closure = closeRelatedMaintenanceNeeds(world, componentId, completedAt)
 
@@ -421,7 +440,7 @@ function applyReplacement(world: GameWorld, facilityId: FacilityId, projectId: F
   if (retiring === undefined) throw new RangeError(`Facility development project ${projectId} replacement references missing component ${retiredComponentId}`)
 
   const retiredComponent = createFacilityComponent({ ...retiring, status: 'CLOSED', closedAt: completedAt })
-  const newComponentId = facilityComponentIdFromString(`facility-component:${projectId}:replacement`)
+  const newComponentId = facilityComponentIdFromString(`facility-component:${projectId}:replacement:${retiredComponentId}`)
   const newComponent = createFacilityComponent(componentBlueprintToCreateInput(replacement, newComponentId, facilityId, completedAt))
 
   const conditionRecordId = `facility-component-condition:${newComponentId}:${completedAt}`
@@ -430,7 +449,7 @@ function applyReplacement(world: GameWorld, facilityId: FacilityId, projectId: F
     componentId: newComponentId,
     effectiveFrom: completedAt,
     physicalCondition: resultingCondition,
-    serviceability: 'FULL',
+    serviceability: worstServiceabilityImpliedByCondition(resultingCondition),
   })
 
   const closure = closeRelatedMaintenanceNeeds(world, retiredComponentId, completedAt)
@@ -508,3 +527,8 @@ export function projectsEligibleToStartAt(projects: readonly FacilityDevelopment
 }
 
 export type { FacilityServiceability }
+
+function nextStatusSequence(world: GameWorld, facilityId: FacilityId, date: GameDate): number {
+  return 1 + Math.max(0, ...Object.values(world.facilityStatusRecordsById).filter((r) => r.facilityId === facilityId && r.effectiveFrom === date).map((r) => r.sequence ?? 0))
+}
+function newFacilityIdForProject(project: FacilityDevelopmentProject): FacilityId { return facilityIdFromString(`facility:${project.id}`) }

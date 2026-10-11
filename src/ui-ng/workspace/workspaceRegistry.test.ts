@@ -7,6 +7,8 @@
  * wired to its canonical workspace. They deliberately assert component identity instead of scanning file names.
  */
 import { describe, expect, it } from 'vitest'
+import { TalentOperationsWorkspace } from '@/ui-ng/applications/talent/TalentOperationsWorkspace'
+import { TransferPortalWorkspace } from '@/ui-ng/applications/talent/TransferPortalWorkspace'
 
 import { BoardWorkspace } from '@/ui-ng/applications/board/BoardWorkspace'
 import { BoostersWorkspace } from '@/ui-ng/applications/boosters/BoostersWorkspace'
@@ -71,6 +73,8 @@ const CANONICAL_WORKSPACE: Readonly<Record<WorkspaceAppId, unknown>> = {
   narratives: NarrativesWorkspace,
   media: MediaWorkspace,
   recruiting: RecruitingWorkspace,
+  talent: TalentOperationsWorkspace,
+  portal: TransferPortalWorkspace,
   nil: NilWorkspace,
   boosters: BoostersWorkspace,
 }

@@ -1,0 +1,227 @@
+{
+  "milestone": "BS17D-C",
+  "status": "BLOCKED_BY_PRODUCT_DECISION",
+  "implementedFallback": "PARTIAL · BS17D-C",
+  "base": "eb12f9670b2c99a6cf3c8ddef0ae2d73fd5e78c9",
+  "branch": "bdm-stage2-bs17d-capacity",
+  "worktree": "C:/BDM-BS17D-CAPACITY",
+  "finalShaReference": "Commit containing this evidence file (git log -1 --format=%H -- docs/strengthening/BS17D_C_OPERATIONAL_CAPACITY_EVIDENCE.json)",
+  "ancestry": {
+    "BS15": {
+      "sha": "94c077092224a9f75c861a853d9d52fceae526fe",
+      "inAncestry": true
+    },
+    "BS16_K_C": {
+      "sha": "97c58b98b9192a569f30bdfd8b63565f0b02a744",
+      "inAncestry": true
+    },
+    "BS17D_M": {
+      "sha": "6945cb90604bd349edd9d2333aa7d1861e9a311a",
+      "inAncestry": true
+    },
+    "V2": {
+      "sha": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+      "inAncestry": true
+    },
+    "BS17D_T": {
+      "sha": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+      "inAncestry": true
+    },
+    "BS17D_T1": {
+      "sha": "582f517e178ae8a7159237fd3d75e2db4c9d8f87",
+      "inAncestry": true
+    },
+    "consolidatedBase": {
+      "sha": "eb12f9670b2c99a6cf3c8ddef0ae2d73fd5e78c9",
+      "inAncestry": true
+    }
+  },
+  "liveConsumers": {
+    "factualCapacityTimetable": "READ_ONLY",
+    "quantitativeAllocation": "NOT_IMPLEMENTED",
+    "TrainingP0": "PRESERVED",
+    "TalentT": "PRESERVED",
+    "RecruitingT1": "PRESERVED",
+    "MedicalSpecialized": "NOT_IMPLEMENTED"
+  },
+  "tests": {
+    "passed": 281,
+    "failed": 0,
+    "files": [
+      {
+        "path": "src/save/GameWorldSaveV4.Facilities.test.ts",
+        "status": "passed",
+        "count": 30
+      },
+      {
+        "path": "src/save/GameWorldSaveV4.FacilityOperations.test.ts",
+        "status": "passed",
+        "count": 9
+      },
+      {
+        "path": "src/app/facilities/FacilityCapacityReadModel.test.ts",
+        "status": "passed",
+        "count": 16
+      },
+      {
+        "path": "src/app/game/BS15BS16BS17Convergence.test.ts",
+        "status": "passed",
+        "count": 5
+      },
+      {
+        "path": "src/app/game/BS17DTalentConsolidation.test.ts",
+        "status": "passed",
+        "count": 3
+      },
+      {
+        "path": "src/app/youth/YouthFacilitiesIntegration.test.ts",
+        "status": "passed",
+        "count": 10
+      },
+      {
+        "path": "src/engine/calendar/CalendarEngine.test.ts",
+        "status": "passed",
+        "count": 25
+      },
+      {
+        "path": "src/engine/injury/MedicalPhysicalCompatibility.test.ts",
+        "status": "passed",
+        "count": 8
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingEngine.test.ts",
+        "status": "passed",
+        "count": 8
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingFacilityDemonstration.test.ts",
+        "status": "passed",
+        "count": 14
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingLifecycle.test.ts",
+        "status": "passed",
+        "count": 5
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingPermission.test.ts",
+        "status": "passed",
+        "count": 16
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingRpg.test.ts",
+        "status": "passed",
+        "count": 20
+      },
+      {
+        "path": "src/engine/world/TalentSupply.test.ts",
+        "status": "passed",
+        "count": 8
+      },
+      {
+        "path": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+        "status": "passed",
+        "count": 17
+      },
+      {
+        "path": "src/engine/youth/YouthPathwayEngine.test.ts",
+        "status": "passed",
+        "count": 5
+      },
+      {
+        "path": "src/integration/facilitiesSporting/SportingFacilityContext.test.ts",
+        "status": "passed",
+        "count": 42
+      },
+      {
+        "path": "src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx",
+        "status": "passed",
+        "count": 9
+      },
+      {
+        "path": "src/ui-ng/applications/facilities/FacilityCapacityContext.test.tsx",
+        "status": "passed",
+        "count": 1
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx",
+        "status": "passed",
+        "count": 4
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingWorkspace.test.tsx",
+        "status": "passed",
+        "count": 6
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentFacilitiesContext.test.tsx",
+        "status": "passed",
+        "count": 3
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentOperationsWorkspace.test.tsx",
+        "status": "passed",
+        "count": 1
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentProjections.test.ts",
+        "status": "passed",
+        "count": 7
+      },
+      {
+        "path": "src/ui-ng/applications/training/TrainingWorkspace.test.tsx",
+        "status": "passed",
+        "count": 9
+      }
+    ],
+    "runs": [
+      {
+        "label": "initial-focal-run",
+        "passed": 280,
+        "failed": 1,
+        "reportSha256": "06fc522f93df497ef8ddc5f148f8a05720734cef2d90d0106d60c6958458137f"
+      },
+      {
+        "label": "Facilities assertion recheck",
+        "passed": 9,
+        "failed": 0,
+        "reportSha256": "4c1232203114587f4d2780d4f09d55340db1c7a54ad180496ed19164a2d3d880"
+      },
+      {
+        "label": "final projection/name recheck",
+        "passed": 17,
+        "failed": 0,
+        "reportSha256": "0cf5e7864ea8dd1891d8c0d82d09383ad792e6030b196d6b3b720409675c9a81"
+      }
+    ],
+    "initialFailure": "FacilitiesWorkspace existing getByText matched duplicated legitimate project ID after new panel. Changed query to getAllByText while retaining project presence assertion; complete affected file rechecked 9/9 PASS. Original raw failure report retained in ignored local cache."
+  },
+  "checks": {
+    "typecheck": "PASS (explicit final run)",
+    "build": "PASS (tsc -b and vite build; existing chunk-size warning)",
+    "diffCheck": "PASS",
+    "MathRandomInSrc": 0,
+    "frameworkImportsInProductionDomainEngine": 0,
+    "noEngineDomainSaveCalendarFinanceChanges": true
+  },
+  "diagnosticArtifacts": "node_modules/.cache/bs17d-capacity (ignored logs, original failure and rechecks; no GameWorld fields)",
+  "protectedRefs": {
+    "main": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+    "originMain": "94c077092224a9f75c861a853d9d52fceae526fe",
+    "FinanceCanonical": "6773331775a8f37c831ec3f2ceb2831b0e0fd6bc",
+    "consolidatedSource": "eb12f9670b2c99a6cf3c8ddef0ae2d73fd5e78c9",
+    "FinanceCanonicalInitiallyObserved": "e0e91185a0a7a49531f0317c2b8604f1559af0bb"
+  },
+  "externalWork": "Finance acquired independent active modifications and advanced HEAD during this execution. Only Git status/HEAD were inspected; no changes or commits imported, modified, reset, merged or committed by this task.",
+  "BS17DGlobal": "PARTIAL",
+  "BS17EF": "DEFERRED",
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE",
+  "capacityCausalCertificate": false,
+  "productDecisions": [
+    "Operational capacity authority and measurement",
+    "Actual simultaneous demand/unit producer per effective operation",
+    "Component assignment and alternatives",
+    "Approved conflict priority and ties",
+    "Assignment/reservation lifecycle with canonical agenda, reload and exactly-once"
+  ]
+}

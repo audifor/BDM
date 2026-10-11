@@ -29,7 +29,12 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY } from '@/data/acb2026'
+import { ensureCanonicalFinanceFoundation, provisionEconomicSources, resolveOrganizationCurrency } from '@/domain/finance'
+import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
+import { createAcbDemoEconomicProfileV1 } from './AcbDemoEconomicPolicy'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 const ACB_SEED = 20_260_827
 const SPAIN_ID = countryIdFromString('acb-country-spain')
@@ -44,6 +49,7 @@ const USER_COACH_ID = coachIdFromString('acb-user-coach')
 export interface CreateAcbTestGameOptions {
   readonly userTeamKey?: string
   readonly coachRpgPreset?: CoachRpgPreset
+  readonly gameBalance?: BdmGameBalancePreset
 }
 
 /**
@@ -134,7 +140,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const staffContracts = staffSandbox.assignments.map((assignment) => {
     const staff = staffSandbox.people.find((person) => person.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
   })
   const financedTeams = teamFinances.map((finance) => {
     const staffPayroll = staffContracts.filter((contract) => contract.teamId === finance.teamId).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0)
@@ -157,7 +163,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const coachStaffContracts = coachAssignments.map((assignment) => {
     const staff = coachStaffProfiles.find((item) => item.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
   })
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
@@ -188,7 +194,19 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensureTestGameOrganizationKnowledge(world)
-  return initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
+  const prepared = initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
+  // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the ACB Demo
+  // universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
+  // BDM_GAME_BALANCE_V1: the ACB test universe carries no opening balance either; the labeled-simulated opening treasury enters at activation.
+  const openingEconomicStates = options.gameBalance === undefined ? [] : gameBalanceOpeningEconomicStates(prepared, (organizationId) => {
+    const resolution = resolveOrganizationCurrency(prepared, organizationId)
+    return resolution.status === 'RESOLVED' ? String(resolution.currencyCode) : null
+  })
+  const career = ensureCanonicalFinanceFoundation(prepared, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(prepared), ...(openingEconomicStates.length === 0 ? {} : { openingEconomicStates }) })
+  // BDM DEMO ECONOMIC POLICY V1 (see AcbDemoEconomicPolicy.ts): the demo competition's approved economic profile
+  // is provisioned into canonical Finance sources. The engines contain no league branch, so this is data only.
+  const economic = provisionEconomicSources(career, { profiles: [createAcbDemoEconomicProfileV1()] }).world
+  return options.gameBalance === undefined ? economic : applyGameBalanceBootstrap(economic)
 }
 
 function createCanonicalCoach(input: Omit<Parameters<typeof createCoach>[0], 'personId' | 'staffProfileId'>) {

@@ -7,6 +7,7 @@ import { getCompetitionPostseasonChampion, getCompetitionPostseasonState } from 
 import { applySeasonChampionCoachReputation } from '@/engine/coach'
 import { resolvePromotionRelegation } from '@/engine/competition'
 import { resolveEligibilitySeason } from '@/engine/eligibility'
+import { assessCollegeContinuation, recordCollegeContinuationAssessment } from '@/engine/eligibility/CollegeContinuationAssessment'
 import { recordChampionMemories } from '@/engine/memory'
 import { applyBoardTierMovement, evaluateBoardSeason } from '@/engine/board'
 import { processCoachSeason, recordCoachAchievement, recordTierLegacy } from '@/engine/legacy'
@@ -46,7 +47,7 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
   const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId, ...(postseasonChampion === undefined ? {} : { championSource: 'postseason' as const }), finalStandings: standings.map((line) => ({ ...line })) }
-  const finalized=creditContractServiceTimeForCompletedSeason(resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId), seasonId)
+  const finalized=recordSeasonPromiseConsequences(creditContractServiceTimeForCompletedSeason(resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId), seasonId), seasonId)
   const team=finalized.teams[championTeamId]!, competition=finalized.competitions[season.competitionId]!
   const remembered = recordChampionMemories(finalized, { seasonId, competitionId: competition.id, teamId: team.id, coachId: team.coachId, occurredOn: completedOn })
   let withLegacy = Object.values(remembered.teams).reduce((current, candidate) => candidate.coachId === undefined ? current : processCoachSeason(current, { coachId: candidate.coachId, teamId: candidate.id, seasonId: String(seasonId) }), remembered)
@@ -71,6 +72,18 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
     resolved = recordTierLegacy(resolved, { coachId: coached.coachId, teamId, seasonId: relatedSeason, resolutionId: movement.id, movement: promoted ? 'promotion' : 'relegation', unexpected })
   }
   return processSeasonContentLifecycle(resolved, seasonId)
+}
+
+function recordSeasonPromiseConsequences(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {
+  const season = world.seasons[seasonId]
+  const competition = season === undefined ? undefined : world.competitions[season.competitionId]
+  if (competition === undefined || world.ecosystems[competition.ecosystemId]?.kind !== 'ncaaLike') return world
+  let next = world
+  for (const teamId of competition.participantTeamIds) for (const playerId of next.teams[teamId]?.rosterPlayerIds ?? []) {
+    const assessment = assessCollegeContinuation(next, playerId, teamId, seasonId)
+    if (assessment !== undefined) next = recordCollegeContinuationAssessment(next, assessment)
+  }
+  return next
 }
 
 function releaseCompletedWorldDbCompetitionSeason(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {

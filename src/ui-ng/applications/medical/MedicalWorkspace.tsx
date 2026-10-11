@@ -1,3 +1,4 @@
+import { EquippedMedicalPanel } from './EquippedMedicalPanel'
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import type { InjuryId, PlayerId, StaffPersonId } from '@/domain/ids'
@@ -463,7 +464,7 @@ export function MedicalWorkspace() {
   const reviewReturnToPlay = useGameStore((state) => state.reviewReturnToPlay)
   const setRehabilitationPlan = useGameStore((state) => state.setRehabilitationPlan)
   const conductFitnessTest = useGameStore((state) => state.conductFitnessTest)
-  const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>('overview')
+  const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>(new URL(window.location.href).searchParams.has('requestId') ? 'injured' : 'overview')
   const [selectedInjuryId, setSelectedInjuryId] = useState<InjuryId | undefined>(undefined)
   const [selectedRiskPlayerId, setSelectedRiskPlayerId] = useState<PlayerId | undefined>(undefined)
 
@@ -544,6 +545,7 @@ export function MedicalWorkspace() {
               selectedInjuryId={selectedInjuryId}
             />
           ) : null}
+          {activeTab === 'injured' && team ? <EquippedMedicalPanel world={world} teamId={team.id} /> : null}
           {activeTab === 'history' ? <HistoryBoard onOpenPlayer={navigateToPlayerMedical} rows={model.history} /> : null}
           {activeTab === 'risk' ? (
             <RiskBoard

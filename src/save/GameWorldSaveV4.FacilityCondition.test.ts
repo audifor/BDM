@@ -22,7 +22,7 @@ describe('GameWorldSaveV4 — Condition, Standard & Serviceability (CFI4) persis
     const facility = createFacility({ id: 'facility:condition-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Condition Center 1' })
     const court = createFacilityComponent({ id: 'component:condition-1', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:save-1', componentId: court.id, effectiveFrom: '2020-01-01', physicalCondition: 74, serviceability: 'FULL', technicalStandard: 'ADVANCED', notes: 'Resurfaced in 2020' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentConditionRecordsById).toEqual(world.facilityComponentConditionRecordsById)
@@ -36,7 +36,7 @@ describe('GameWorldSaveV4 — Condition, Standard & Serviceability (CFI4) persis
     const facility = createFacility({ id: 'facility:condition-2', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Condition Center 2' })
     const court = createFacilityComponent({ id: 'component:condition-2', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:save-2', componentId: court.id, effectiveFrom: '2020-01-01', serviceability: 'FULL' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityComponentConditionRecordsById[record.id]!.physicalCondition).toBeNull()
@@ -53,7 +53,7 @@ describe('GameWorldSaveV4 — Condition, Standard & Serviceability (CFI4) persis
       createFacilityComponentConditionRecord({ id: 'condition:save-3-a', componentId: court.id, effectiveFrom: '2027-01-01', effectiveTo: '2028-12-31', physicalCondition: 90, serviceability: 'FULL' }),
       createFacilityComponentConditionRecord({ id: 'condition:save-3-b', componentId: court.id, effectiveFrom: '2029-01-01', physicalCondition: 61, serviceability: 'LIMITED' }),
     ]
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: records })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: records })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     for (const onDate of [parseGameDate('2027-06-01'), parseGameDate('2030-01-01')]) {
@@ -71,7 +71,7 @@ describe('GameWorldSaveV4 — Condition, Standard & Serviceability (CFI4) persis
     const place = createPlace({ id: 'place:condition-4', kind: 'CITY', name: 'Condition City 4' })
     const facility = createFacility({ id: 'facility:condition-4', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Condition Arena 4' })
     const record = createFacilityConditionRecord({ id: 'facilitycondition:save-4', facilityId: facility.id, dimension: 'BUILDING_ENVELOPE', effectiveFrom: '2015-01-01', physicalCondition: 55, serviceability: 'LIMITED', notes: 'Roof leak under repair' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityConditionRecords: [record] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityConditionRecords: [record] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityConditionRecordsById).toEqual(world.facilityConditionRecordsById)
@@ -82,7 +82,7 @@ describe('GameWorldSaveV4 — Condition, Standard & Serviceability (CFI4) persis
     const base = createNewGame()
     const place = createPlace({ id: 'place:condition-5', kind: 'CITY', name: 'Condition City 5' })
     const facility = createFacility({ id: 'facility:condition-5', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Condition Arena 5' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility] })
     const saved = serializeGameWorldV4(world, savedAt)
 
     // Simulate a genuinely pre-CFI4 payload: strip the two new collections entirely.

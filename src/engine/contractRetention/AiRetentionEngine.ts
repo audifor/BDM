@@ -2,7 +2,8 @@ import { addDays } from '@/domain/date'
 import { getContractYearCompensation } from '@/domain/contract'
 import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
 import type { ContractId, TeamId } from '@/domain/ids'
-import { canTeamAffordAdditionalSalary, updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import { assessClubNeeds } from '@/engine/clubNeeds/ClubNeedsEngine'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds/ContractReviewEngine'
 import {
@@ -207,7 +208,16 @@ function canAffordRetentionSalary(world: GameWorld, teamId: TeamId, contractId: 
   const currentSalary = getContractYearCompensation(contract, world.currentDate).cashSalary || contract.compensation.annualSalary
   const increase = Math.max(0, proposedSalary - currentSalary)
   try {
-    return canTeamAffordAdditionalSalary(world, teamId, increase, world.currentDate)
+    // The AI consumes the same canonical gateway as the user-facing flows; there is no AI-specific
+    // Finance engine and no separate retention rule.
+    return evaluateTeamGameplayFinancialDecision(world, {
+      teamId,
+      action: 'PLAYER_RETENTION',
+      legacyAnnualAmountMajorUnits: increase,
+      effectiveDate: world.currentDate,
+      sourceAuthority: 'AI_RETENTION',
+      sourceEntityId: contract.id,
+    }).allowed
   } catch {
     return false
   }

@@ -38,6 +38,20 @@ function mountWorkspace(world: GameWorld) {
 }
 
 describe('MX0.6 Facilities workspace', () => {
+  it('BS17C shows scoped physical work, honest capacity and source history in the canonical inspector', () => {
+    const scenario = createFacilityClubScenario()
+    mountWorkspace(scenario.world)
+    fireEvent.click(screen.getByRole('button', { name: 'Facilities' }))
+    fireEvent.doubleClick(screen.getByText('MX0.6 Training Center'))
+    expect(screen.getByText('Physical history')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Capacity and shared Training timetable' })).toBeInTheDocument()
+    expect(screen.getByText(/Legacy sessions without explicit participants/)).toBeInTheDocument()
+    expect(screen.getByText('Recorded usage rights')).toBeInTheDocument()
+    expect(screen.getByText(/Court counts do not establish simultaneous player capacity/)).toBeInTheDocument()
+    expect(screen.getAllByText('Not demonstrated').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/project:mx06-delayed-replacement/).length).toBeGreaterThan(0)
+  })
+
   it('says honestly that the shipped universe has no recorded facility', () => {
     mountWorkspace(createNewGame())
 
@@ -55,14 +69,15 @@ describe('MX0.6 Facilities workspace', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Condition & maintenance' }))
     expect(screen.getByText('Physiotherapy Room')).toBeInTheDocument()
-    expect(screen.getByText(/Recording an intervention is not yet a club action/)).toBeInTheDocument()
+    expect(screen.getByText('Maintenance & repair operations')).toBeInTheDocument()
+    expect(screen.getAllByText('No sourced offer exists for this need: its cost is unknown.').length).toBeGreaterThan(0)
   })
 
   it('shows the canonical sporting effect of the club facilities', () => {
     const scenario = createFacilityClubScenario()
     mountWorkspace(scenario.world)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sporting effects' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Physical capabilities' }))
     expect(screen.getAllByText('Basketball').length).toBeGreaterThan(0)
     expect(screen.getByText('Practice Court 1')).toBeInTheDocument()
     expect(screen.getByText(/usable practice court/)).toBeInTheDocument()
@@ -80,7 +95,8 @@ describe('MX0.6 Facilities workspace', () => {
     // A project already in progress never offers START, and a delayed one is reported as delayed.
     const renovateRow = screen.getByText('Renovate component component:mx06-strength · resulting condition 88').closest('article')!
     expect(within(renovateRow).queryByRole('button', { name: 'Start project (no capital)' })).toBeNull()
-    expect(within(renovateRow).getByRole('button', { name: 'Complete project' })).toBeInTheDocument()
+    expect(within(renovateRow).queryByRole('button', { name: 'Complete project' })).toBeNull()
+    expect(within(renovateRow).getByText('Recorded physical phases are incomplete.')).toBeInTheDocument()
 
     fireEvent.click(within(scheduledRow).getByRole('button', { name: 'Start project (no capital)' }))
     const after = useGameStore.getState().world!
@@ -106,7 +122,7 @@ describe('MX0.6 Facilities workspace', () => {
     expect(commitment.amount).toMatchObject({ currencyCode: 'EUR', minorUnits: 2_500_000 })
     expect(screen.getByText(/Project started with a capital commitment of/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Costs & funding' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Recorded costs' }))
     expect(screen.getAllByText(/EUR 25,000\.00/).length).toBeGreaterThan(0)
   })
 
@@ -147,7 +163,7 @@ describe('MX0.6 Facilities workspace', () => {
 
     expect(screen.getByText('Enter a positive capital amount in major units.')).toBeInTheDocument()
     expect(useGameStore.getState().world!.facilityDevelopmentProjectsById[scenario.scheduledProjectId]!.status).toBe('SCHEDULED')
-    expect(useGameStore.getState().world!.financialCommitmentsById).toEqual({})
+    expect(useGameStore.getState().world!.financialCommitmentsById).toEqual(scenario.world.financialCommitmentsById)
   })
 
   it('keeps the club identity and club-scoped facilities of the user club only', () => {

@@ -1,0 +1,254 @@
+{
+  "milestone": "BS17D TALENT CONSOLIDATION",
+  "status": "PASS · BS17D TALENT CONSOLIDATION",
+  "base": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+  "branch": "integration/bs17d-talent-consolidated",
+  "worktree": "C:/BDM-INTEGRATION-BS17D",
+  "merge": {
+    "sha": "065e8e3ec7590679832fbc685ad84f1085b61605",
+    "parents": [
+      "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+      "582f517e178ae8a7159237fd3d75e2db4c9d8f87"
+    ],
+    "strategy": "explicit local --no-ff merge of T1 only",
+    "conflicts": false,
+    "trackedTreeEqualsT1": true
+  },
+  "sources": {
+    "V2": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+    "BS17D_T": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+    "BS17D_T1": "582f517e178ae8a7159237fd3d75e2db4c9d8f87"
+  },
+  "ancestry": {
+    "BS15": {
+      "sha": "94c077092224a9f75c861a853d9d52fceae526fe",
+      "inAncestry": true
+    },
+    "BS16_K_C": {
+      "sha": "97c58b98b9192a569f30bdfd8b63565f0b02a744",
+      "inAncestry": true
+    },
+    "BS17D_M": {
+      "sha": "6945cb90604bd349edd9d2333aa7d1861e9a311a",
+      "inAncestry": true
+    },
+    "V2": {
+      "sha": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+      "inAncestry": true
+    },
+    "BS17D_T": {
+      "sha": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+      "inAncestry": true
+    },
+    "BS17D_T1": {
+      "sha": "582f517e178ae8a7159237fd3d75e2db4c9d8f87",
+      "inAncestry": true
+    }
+  },
+  "operations": {
+    "talentContext": "LIVE, read-only",
+    "scheduledYouthTraining": "LIVE, existing Training P0 owner",
+    "recruitingDemonstration": "LIVE, optional subordinate BS15 visit activity",
+    "MedicalSpecialized": "NOT_IMPLEMENTED",
+    "BS17DGlobal": "PARTIAL",
+    "quantitativeAllocation": "Pending its own authority/product policy"
+  },
+  "tests": {
+    "passed": 246,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      {
+        "path": "src/save/GameWorldSaveV4.Facilities.test.ts",
+        "count": 30,
+        "status": "passed"
+      },
+      {
+        "path": "src/save/GameWorldSaveV4.FacilityOperations.test.ts",
+        "count": 9,
+        "status": "passed"
+      },
+      {
+        "path": "src/app/game/BS15BS16BS17Convergence.test.ts",
+        "count": 5,
+        "status": "passed"
+      },
+      {
+        "path": "src/app/game/BS17DTalentConsolidation.test.ts",
+        "count": 3,
+        "status": "passed"
+      },
+      {
+        "path": "src/app/youth/YouthFacilitiesIntegration.test.ts",
+        "count": 10,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/calendar/CalendarEngine.test.ts",
+        "count": 25,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/injury/MedicalPhysicalCompatibility.test.ts",
+        "count": 8,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingEngine.test.ts",
+        "count": 8,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingFacilityDemonstration.test.ts",
+        "count": 14,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingLifecycle.test.ts",
+        "count": 5,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingPermission.test.ts",
+        "count": 16,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingRpg.test.ts",
+        "count": 20,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+        "count": 17,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/world/TalentSupply.test.ts",
+        "count": 8,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/youth/YouthPathwayEngine.test.ts",
+        "count": 5,
+        "status": "passed"
+      },
+      {
+        "path": "src/integration/facilitiesSporting/SportingFacilityContext.test.ts",
+        "count": 42,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx",
+        "count": 4,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingWorkspace.test.tsx",
+        "count": 6,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentFacilitiesContext.test.tsx",
+        "count": 3,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentOperationsWorkspace.test.tsx",
+        "count": 1,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentProjections.test.ts",
+        "count": 7,
+        "status": "passed"
+      }
+    ]
+  },
+  "jointTests": [
+    "BS17D consolidated Talent in one canonical GameWorld keeps youth Training/context and a recruiting demonstration jointly accessible with FULL service, reload and exactly-once behavior",
+    "BS17D consolidated Talent in one canonical GameWorld keeps youth Training/context and a recruiting demonstration jointly accessible with OUT_OF_SERVICE service, reload and exactly-once behavior",
+    "BS17D consolidated Talent in one canonical GameWorld a single physical condition changes both real operations without changing supply, identity, RPG, Finance, Governance or Medical/match source facts"
+  ],
+  "fixture": {
+    "seed": 151617,
+    "initialDate": "2032-10-01",
+    "candidateKeys": [
+      "t:cohort:candidate:000001",
+      "t:cohort:candidate:000002"
+    ],
+    "source": "src/app/game/BS17DTalentConsolidation.test.ts",
+    "sha256": "810446af7191c3b505b2684a508c53d916b738fecb4f74c932b5aca1ad4b9d3a",
+    "description": "Existing canonical recruiting materialization and youth intake, followed by existing NCAA Save compatibility normalization before paired physical execution",
+    "physicalPair": "Only component serviceability FULL vs OUT_OF_SERVICE differs"
+  },
+  "validation": {
+    "typecheck": "PASS exit 0",
+    "build": "PASS exit 0; Vite chunk-size advisory retained",
+    "diffCheck": "PASS",
+    "productionChanges": "NONE relative to certified T1; consolidation adds test/evidence/documentation only",
+    "playerSupplyIdentityRng": "PRESERVED",
+    "recruitingEffects": "No extra probability/psychological/economic bonus relative to canonical general visit",
+    "financeGovernance": "PRESERVED; frozen K-C authorities unchanged",
+    "MedicalRecoveryMatch": "No implementation changes; joint source-fact comparison, original T1 all-business-state comparison and Medical compatibility regressions PASS",
+    "saveCalendar": "PASS: same-world full Save equality, replay idempotence, phase exactly-once, no automatic demonstration reexecution",
+    "randomnessAndImports": "PASS: no Math.random in src or improper production framework imports in Domain/Engine",
+    "rust": "Untouched; no new Rust/full-suite rerun under focal contract"
+  },
+  "protectedHeads": {
+    "main": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+    "originMain": "94c077092224a9f75c861a853d9d52fceae526fe",
+    "V2": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+    "BS17D_T": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+    "BS17D_T1": "582f517e178ae8a7159237fd3d75e2db4c9d8f87"
+  },
+  "originalSourceWorktrees": "Clean and preserved at original SHAs before and after validation",
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE; original V2 scope/evidence/classifications preserved",
+  "noNewBS16Imports": true,
+  "noMergeToMain": true,
+  "noPush": true,
+  "artifacts": {
+    "joint-first.json": {
+      "path": "node_modules/.cache/bs17d-consolidation/joint-first.json",
+      "sha256": "7e54be8aefd4d328023cbdf1eca4efbbdf171ae4b94ecbe91b66af61ef10dea2"
+    },
+    "joint-first.log": {
+      "path": "node_modules/.cache/bs17d-consolidation/joint-first.log",
+      "sha256": "9edd3598deb89227e9e326b1a47543cd4aceebac881cf5db84703509206af3b4"
+    },
+    "joint.json": {
+      "path": "node_modules/.cache/bs17d-consolidation/joint.json",
+      "sha256": "71164b7b905c39687fe8b6b1a183e2f8d45e1aa4ec133953c11846e97e139b01"
+    },
+    "joint.log": {
+      "path": "node_modules/.cache/bs17d-consolidation/joint.log",
+      "sha256": "e5002adb6d90a9133210d16764baa9953aef3b773e3f063c5d4bcd2811d85169"
+    },
+    "focused.json": {
+      "path": "node_modules/.cache/bs17d-consolidation/focused.json",
+      "sha256": "aaede81eacb10f3592ffaaf77b9feea4fd35c853a636d2b759baf35c767648fc"
+    },
+    "focused.log": {
+      "path": "node_modules/.cache/bs17d-consolidation/focused.log",
+      "sha256": "dd41810361c83e4d89b037a1d58e58c03d6c87ce4e5cab2865f4c641773cc2d8"
+    },
+    "typecheck.log": {
+      "path": "node_modules/.cache/bs17d-consolidation/typecheck.log",
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec"
+    },
+    "build.log": {
+      "path": "node_modules/.cache/bs17d-consolidation/build.log",
+      "sha256": "e24fa662b40c07bd8244326e76a9c0accbb853d2c1fc274f2f7088a46b7ca396"
+    }
+  },
+  "scopeExclusions": [
+    "BS15 Y1-Y30",
+    "Historical World DB 2029",
+    "BS16 global completion",
+    "BS17D global completion",
+    "Specialized Medical",
+    "Quantitative Facilities allocation",
+    "Facilities AI",
+    "BS17E/F"
+  ]
+}

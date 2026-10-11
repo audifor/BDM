@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { updateGameWorld } from '@/domain/world'
 import { completeMatch, createNewGame, prepareUserMatch } from '@/app/game'
 import { createMatchStatLog } from '@/engine/match'
 
@@ -17,6 +18,24 @@ describe('persistent match statistics projections', () => {
     expect(updated.games[simulation.gameId]!.status).toBe('completed')
     expect(updated.matchStatLogsByGameId[simulation.gameId]!.finalScore).toEqual(simulation.finalScore)
     expect(() => completeMatch(updated, simulation)).toThrow('already')
+  })
+
+  it('invalidates the derived index on canonical log replacement and keeps returned arrays independent', () => {
+    const initial = createNewGame()
+    const simulation = prepareUserMatch(initial)
+    const playerId = simulation.squads.home[0]!
+    expect(getPlayerGameLogs(initial, playerId)).toEqual([])
+    const completed = completeMatch(initial, simulation)
+    const original = getPlayerGameLogs(completed, playerId)
+    const copy = getPlayerGameLogs(completed, playerId)
+    copy.pop()
+    expect(getPlayerGameLogs(completed, playerId)).toEqual(original)
+    expect(getPlayerGameLogs(initial, playerId)).toEqual([])
+    const log = completed.matchStatLogsByGameId[simulation.gameId]!
+    const changed = { ...log, playerLines: log.playerLines.map(line => line.playerId === playerId ? { ...line, stats: { ...line.stats, assists: line.stats.assists + 1 } } : line) }
+    const updated = updateGameWorld(completed, { matchStatLogs: [changed] })
+    expect(getPlayerGameLogs(updated, playerId)[0]!.stats.assists).toBe(original[0]!.stats.assists + 1)
+    expect(getPlayerGameLogs(completed, playerId)).toEqual(original)
   })
 
   it('derives season and career totals from game logs without mutable counters', () => {

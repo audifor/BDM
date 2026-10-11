@@ -1,0 +1,1354 @@
+﻿{
+    "date":  "2033-11-10",
+    "failure":  {
+                    "kind":  "INVARIANT_VIOLATION",
+                    "phaseId":  "PRE_MATCH_SELF_HEALING",
+                    "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                },
+    "repairReports":  [
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0001",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0001:generated-team-0001:2032-10-01@generated-team-0001",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0002",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0002:generated-team-0001:2032-10-01@generated-team-0001",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0007",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0007:generated-team-0001:2032-10-01@generated-team-0001",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0013",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0013:generated-team-0002:2032-10-01@generated-team-0002",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0015",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0015:generated-team-0002:2032-10-01@generated-team-0002",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0028",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0028:generated-team-0003:2032-10-01@generated-team-0003",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0031",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0031:generated-team-0003:2032-10-01@generated-team-0003",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0035",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0035:generated-team-0003:2032-10-01@generated-team-0003",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0036",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0036:generated-team-0003:2032-10-01@generated-team-0003",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0049",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0049:generated-team-0005:2032-10-01@generated-team-0005",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0050",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0050:generated-team-0005:2032-10-01@generated-team-0005",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0055",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0055:generated-team-0005:2032-10-01@generated-team-0005",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0056",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0056:generated-team-0005:2032-10-01@generated-team-0005",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0061",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0061:generated-team-0006:2032-10-01@generated-team-0006",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0063",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0063:generated-team-0006:2032-10-01@generated-team-0006",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0073",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0073:generated-team-0007:2032-10-01@generated-team-0007",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0078",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0078:generated-team-0007:2032-10-01@generated-team-0007",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0083",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0083:generated-team-0007:2032-10-01@generated-team-0007",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0085",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0085:generated-team-0008:2032-10-01@generated-team-0008",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0087",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0087:generated-team-0008:2032-10-01@generated-team-0008",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0091",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0091:generated-team-0008:2032-10-01@generated-team-0008",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          },
+                          {
+                              "repairKind":  "ROSTER_CONTRACT_INTEGRITY",
+                              "sourceDomain":  "MARKET_ROSTER_CONTRACT",
+                              "targetEntity":  "generated-player-0093",
+                              "classification":  "UNRECOVERABLE",
+                              "previousStateSummary":  "roster=none; activeContract=contract:generated-player-0093:generated-team-0008:2032-10-01@generated-team-0008",
+                              "actionApplied":  "No roster membership was fabricated.",
+                              "resultingStateSummary":  "State unchanged.",
+                              "diagnostics":  [
+                                                  {
+                                                      "code":  "ACTIVE_CONTRACT_WITHOUT_ROSTER_EVIDENCE",
+                                                      "message":  "The active contract has no matching canonical signing transaction to prove roster restoration."
+                                                  }
+                                              ],
+                              "worldChanged":  false,
+                              "userActionRequired":  false
+                          }
+                      ],
+    "players":  [
+                    {
+                        "playerId":  "generated-player-0001",
+                        "personId":  "person:player:generated-player-0001",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0001:generated-team-0001:2032-10-01",
+                                              "playerId":  "generated-player-0001",
+                                              "teamId":  "generated-team-0001",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  270000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0001:generated-team-0001:2032-10-01",
+                                                       "playerId":  "generated-player-0001",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0001",
+                                                       "contractId":  "contract:generated-player-0001:generated-team-0001:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0002",
+                        "personId":  "person:player:generated-player-0002",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0002:generated-team-0001:2032-10-01",
+                                              "playerId":  "generated-player-0002",
+                                              "teamId":  "generated-team-0001",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  880000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0002:generated-team-0001:2032-10-01",
+                                                       "playerId":  "generated-player-0002",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0001",
+                                                       "contractId":  "contract:generated-player-0002:generated-team-0001:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0007",
+                        "personId":  "person:player:generated-player-0007",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0007:generated-team-0001:2032-10-01",
+                                              "playerId":  "generated-player-0007",
+                                              "teamId":  "generated-team-0001",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  110000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0007:generated-team-0001:2032-10-01",
+                                                       "playerId":  "generated-player-0007",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0001",
+                                                       "contractId":  "contract:generated-player-0007:generated-team-0001:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0013",
+                        "personId":  "person:player:generated-player-0013",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0013:generated-team-0002:2032-10-01",
+                                              "playerId":  "generated-player-0013",
+                                              "teamId":  "generated-team-0002",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  540000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0013:generated-team-0002:2032-10-01",
+                                                       "playerId":  "generated-player-0013",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0002",
+                                                       "contractId":  "contract:generated-player-0013:generated-team-0002:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0015",
+                        "personId":  "person:player:generated-player-0015",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0015:generated-team-0002:2032-10-01",
+                                              "playerId":  "generated-player-0015",
+                                              "teamId":  "generated-team-0002",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  300000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0015:generated-team-0002:2032-10-01",
+                                                       "playerId":  "generated-player-0015",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0002",
+                                                       "contractId":  "contract:generated-player-0015:generated-team-0002:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0028",
+                        "personId":  "person:player:generated-player-0028",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0028:generated-team-0003:2032-10-01",
+                                              "playerId":  "generated-player-0028",
+                                              "teamId":  "generated-team-0003",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  380000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0028:generated-team-0003:2032-10-01",
+                                                       "playerId":  "generated-player-0028",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0003",
+                                                       "contractId":  "contract:generated-player-0028:generated-team-0003:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0031",
+                        "personId":  "person:player:generated-player-0031",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0031:generated-team-0003:2032-10-01",
+                                              "playerId":  "generated-player-0031",
+                                              "teamId":  "generated-team-0003",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  320000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0031:generated-team-0003:2032-10-01",
+                                                       "playerId":  "generated-player-0031",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0003",
+                                                       "contractId":  "contract:generated-player-0031:generated-team-0003:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0035",
+                        "personId":  "person:player:generated-player-0035",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0035:generated-team-0003:2032-10-01",
+                                              "playerId":  "generated-player-0035",
+                                              "teamId":  "generated-team-0003",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  390000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0035:generated-team-0003:2032-10-01",
+                                                       "playerId":  "generated-player-0035",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0003",
+                                                       "contractId":  "contract:generated-player-0035:generated-team-0003:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0036",
+                        "personId":  "person:player:generated-player-0036",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0036:generated-team-0003:2032-10-01",
+                                              "playerId":  "generated-player-0036",
+                                              "teamId":  "generated-team-0003",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  110000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0036:generated-team-0003:2032-10-01",
+                                                       "playerId":  "generated-player-0036",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0003",
+                                                       "contractId":  "contract:generated-player-0036:generated-team-0003:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0049",
+                        "personId":  "person:player:generated-player-0049",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0049:generated-team-0005:2032-10-01",
+                                              "playerId":  "generated-player-0049",
+                                              "teamId":  "generated-team-0005",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  610000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0049:generated-team-0005:2032-10-01",
+                                                       "playerId":  "generated-player-0049",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0005",
+                                                       "contractId":  "contract:generated-player-0049:generated-team-0005:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0050",
+                        "personId":  "person:player:generated-player-0050",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0050:generated-team-0005:2032-10-01",
+                                              "playerId":  "generated-player-0050",
+                                              "teamId":  "generated-team-0005",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  840000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0050:generated-team-0005:2032-10-01",
+                                                       "playerId":  "generated-player-0050",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0005",
+                                                       "contractId":  "contract:generated-player-0050:generated-team-0005:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0055",
+                        "personId":  "person:player:generated-player-0055",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0055:generated-team-0005:2032-10-01",
+                                              "playerId":  "generated-player-0055",
+                                              "teamId":  "generated-team-0005",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  90000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0055:generated-team-0005:2032-10-01",
+                                                       "playerId":  "generated-player-0055",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0005",
+                                                       "contractId":  "contract:generated-player-0055:generated-team-0005:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0056",
+                        "personId":  "person:player:generated-player-0056",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0056:generated-team-0005:2032-10-01",
+                                              "playerId":  "generated-player-0056",
+                                              "teamId":  "generated-team-0005",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  1140000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0056:generated-team-0005:2032-10-01",
+                                                       "playerId":  "generated-player-0056",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0005",
+                                                       "contractId":  "contract:generated-player-0056:generated-team-0005:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0061",
+                        "personId":  "person:player:generated-player-0061",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0061:generated-team-0006:2032-10-01",
+                                              "playerId":  "generated-player-0061",
+                                              "teamId":  "generated-team-0006",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  860000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0061:generated-team-0006:2032-10-01",
+                                                       "playerId":  "generated-player-0061",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0006",
+                                                       "contractId":  "contract:generated-player-0061:generated-team-0006:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0063",
+                        "personId":  "person:player:generated-player-0063",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0063:generated-team-0006:2032-10-01",
+                                              "playerId":  "generated-player-0063",
+                                              "teamId":  "generated-team-0006",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  100000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0063:generated-team-0006:2032-10-01",
+                                                       "playerId":  "generated-player-0063",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0006",
+                                                       "contractId":  "contract:generated-player-0063:generated-team-0006:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0073",
+                        "personId":  "person:player:generated-player-0073",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0073:generated-team-0007:2032-10-01",
+                                              "playerId":  "generated-player-0073",
+                                              "teamId":  "generated-team-0007",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  2020000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0073:generated-team-0007:2032-10-01",
+                                                       "playerId":  "generated-player-0073",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0007",
+                                                       "contractId":  "contract:generated-player-0073:generated-team-0007:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0078",
+                        "personId":  "person:player:generated-player-0078",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0078:generated-team-0007:2032-10-01",
+                                              "playerId":  "generated-player-0078",
+                                              "teamId":  "generated-team-0007",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  240000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0078:generated-team-0007:2032-10-01",
+                                                       "playerId":  "generated-player-0078",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0007",
+                                                       "contractId":  "contract:generated-player-0078:generated-team-0007:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0083",
+                        "personId":  "person:player:generated-player-0083",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0083:generated-team-0007:2032-10-01",
+                                              "playerId":  "generated-player-0083",
+                                              "teamId":  "generated-team-0007",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  130000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0083:generated-team-0007:2032-10-01",
+                                                       "playerId":  "generated-player-0083",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0007",
+                                                       "contractId":  "contract:generated-player-0083:generated-team-0007:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0085",
+                        "personId":  "person:player:generated-player-0085",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0085:generated-team-0008:2032-10-01",
+                                              "playerId":  "generated-player-0085",
+                                              "teamId":  "generated-team-0008",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  1170000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0085:generated-team-0008:2032-10-01",
+                                                       "playerId":  "generated-player-0085",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0008",
+                                                       "contractId":  "contract:generated-player-0085:generated-team-0008:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0087",
+                        "personId":  "person:player:generated-player-0087",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0087:generated-team-0008:2032-10-01",
+                                              "playerId":  "generated-player-0087",
+                                              "teamId":  "generated-team-0008",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  1580000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0087:generated-team-0008:2032-10-01",
+                                                       "playerId":  "generated-player-0087",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0008",
+                                                       "contractId":  "contract:generated-player-0087:generated-team-0008:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0091",
+                        "personId":  "person:player:generated-player-0091",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0091:generated-team-0008:2032-10-01",
+                                              "playerId":  "generated-player-0091",
+                                              "teamId":  "generated-team-0008",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  100000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0091:generated-team-0008:2032-10-01",
+                                                       "playerId":  "generated-player-0091",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0008",
+                                                       "contractId":  "contract:generated-player-0091:generated-team-0008:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    },
+                    {
+                        "playerId":  "generated-player-0093",
+                        "personId":  "person:player:generated-player-0093",
+                        "rosters":  [
+
+                                    ],
+                        "contracts":  [
+                                          {
+                                              "id":  "contract:generated-player-0093:generated-team-0008:2032-10-01",
+                                              "playerId":  "generated-player-0093",
+                                              "teamId":  "generated-team-0008",
+                                              "kind":  "standard",
+                                              "term":  {
+                                                           "startsOn":  "2032-10-01",
+                                                           "expiresOn":  "2034-10-01"
+                                                       },
+                                              "compensation":  {
+                                                                   "annualSalary":  580000
+                                                               }
+                                          }
+                                      ],
+                        "playerTransactions":  [
+                                                   {
+                                                       "id":  "transaction:contractExpired:contract:generated-player-0093:generated-team-0008:2032-10-01",
+                                                       "playerId":  "generated-player-0093",
+                                                       "kind":  "contractExpired",
+                                                       "occurredOn":  "2034-10-01",
+                                                       "fromTeamId":  "generated-team-0008",
+                                                       "contractId":  "contract:generated-player-0093:generated-team-0008:2032-10-01"
+                                                   }
+                                               ],
+                        "draftRecords":  [
+
+                                         ],
+                        "rights":  [
+
+                                   ],
+                        "ecosystemTransitions":  [
+
+                                                 ],
+                        "marketNegotiations":  [
+
+                                               ]
+                    }
+                ]
+}

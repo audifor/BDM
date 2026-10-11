@@ -1,3 +1,4 @@
+import { createRehabilitationEquipmentEvidence, type RehabilitationEquipmentEvidence } from './RehabilitationEquipmentEvidence'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { facilityComponentIdFromString, facilityIdFromString, type FacilityComponentId, type FacilityId } from '@/domain/ids'
 import { requireNonEmptyString } from '@/domain/validation'
@@ -193,6 +194,9 @@ export interface FacilityComponent {
   readonly closedAt: GameDate | null
   readonly parentComponentId: FacilityComponentId | null
   readonly specification: FacilityComponentSpecification | null
+  /** Explicit physical sharing semantics; absence does not authorize concurrent groups. */
+  readonly occupancySharing?: 'EXCLUSIVE' | 'SHARED_CAPACITY'
+  readonly rehabilitationEquipmentEvidence?: RehabilitationEquipmentEvidence
   readonly equipmentTags: readonly string[]
 }
 
@@ -208,10 +212,13 @@ export interface CreateFacilityComponentInput {
   readonly closedAt?: GameDate | string | null
   readonly parentComponentId?: FacilityComponentId | string | null
   readonly specification?: CreateFacilityComponentSpecificationInput | FacilityComponentSpecification | null
+  readonly occupancySharing?: 'EXCLUSIVE' | 'SHARED_CAPACITY'
+  readonly rehabilitationEquipmentEvidence?: RehabilitationEquipmentEvidence
   readonly equipmentTags?: readonly string[]
 }
 
 export function createFacilityComponent(input: CreateFacilityComponentInput): FacilityComponent {
+  if (input.occupancySharing !== undefined && !['EXCLUSIVE', 'SHARED_CAPACITY'].includes(input.occupancySharing)) throw new RangeError('Invalid component occupancy sharing')
   const id = facilityComponentIdFromString(input.id)
   if (!isFacilityComponentType(input.type)) throw new TypeError(`Facility component type is invalid: ${String(input.type)}`)
   if (!FACILITY_COMPONENT_STATUSES.includes(input.status)) throw new TypeError(`Facility component status is invalid: ${String(input.status)}`)
@@ -242,7 +249,9 @@ export function createFacilityComponent(input: CreateFacilityComponentInput): Fa
     closedAt,
     parentComponentId,
     specification,
+    ...(input.occupancySharing === undefined ? {} : { occupancySharing: input.occupancySharing }),
     equipmentTags: Object.freeze([...equipmentTags]),
+    ...(input.rehabilitationEquipmentEvidence === undefined ? {} : { rehabilitationEquipmentEvidence: createRehabilitationEquipmentEvidence(input.rehabilitationEquipmentEvidence) }),
   })
 }
 
@@ -264,7 +273,7 @@ export function activeFacilityComponentsAt(components: readonly FacilityComponen
     .filter((component) => {
       if (component.openedAt !== null && component.openedAt > onDate) return false
       if (component.closedAt !== null && component.closedAt <= onDate) return false
-      return component.status !== 'CLOSED'
+      return component.status === 'ACTIVE' || component.status === 'CLOSED' && component.closedAt !== null && onDate < component.closedAt
     })
     .sort((a, b) => a.id.localeCompare(b.id))
 }

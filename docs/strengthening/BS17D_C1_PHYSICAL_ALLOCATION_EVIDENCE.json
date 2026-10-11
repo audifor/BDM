@@ -1,0 +1,1881 @@
+{
+  "milestone": "BS17D-C1 V1",
+  "base": "a5576a9b70552c896ef589438f21380e3234a6f2",
+  "branch": "bdm-stage2-bs17d-c1-physical-allocations",
+  "certificationCommit": "commit containing this evidence file; exact final SHA supplied in delivery",
+  "validationStatus": "PASS",
+  "testFiles": 31,
+  "tests": 374,
+  "suites": [
+    {
+      "file": "app/facilities/FacilityCapacityReadModel.test.ts",
+      "report": "recheck-isolated.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy does not impose a nominal SIMULTANEOUS_PLAYERS limit on the real Training owner",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy does not impose a nominal SEATS limit on the real Training owner",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy preserves nominal SIMULTANEOUS_PLAYERS without treating roster size as comparable operational demand",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy preserves nominal SEATS without treating roster size as comparable operational demand",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy keeps missing capacity unknown and uses the approved explicit individual assignment as one participant",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy shows timetable evidence at 10:30 without allocating a winner",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy shows timetable evidence at 11:00 without allocating a winner",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy shows timetable evidence at 14:00 without allocating a winner",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy observes a real interval crossing midnight without changing either date",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy removes shared-use evidence when Team rights expire, retaining the own-team agenda and no Organization inheritance",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy does not equate disjoint component rights with access to the same resource",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy projects FULL from canonical physical evidence without changing Training",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy projects LIMITED from canonical physical evidence without changing Training",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy projects OUT_OF_SERVICE from canonical physical evidence without changing Training",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy shows scoped work and restoration without spreading closure to another component",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C factual capacity context without an allocation policy is reconstructed after Save/reload and repeated reads never mutate any world authority",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "app/game/BS15BS16BS17Convergence.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Controlled BS15/BS16/BS17 production convergence rejects malformed physical attempt facts through batched full publication without mutating input",
+          "status": "passed"
+        },
+        {
+          "name": "Controlled BS15/BS16/BS17 production convergence rejects malformed physical attempt facts through batched incremental publication without mutating input",
+          "status": "passed"
+        },
+        {
+          "name": "Controlled BS15/BS16/BS17 production convergence runs Talent supply, Finance and scoped Training on the same day; restoration retries only unexecuted work",
+          "status": "passed"
+        },
+        {
+          "name": "Controlled BS15/BS16/BS17 production convergence round-trips the combined V4 twice with historical Talent, NCAA, Finance and physical attempts",
+          "status": "passed"
+        },
+        {
+          "name": "Controlled BS15/BS16/BS17 production convergence publishes an identical immutable world through sync and async commands with the physical gate",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "app/game/BS17DTalentConsolidation.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D consolidated Talent in one canonical GameWorld keeps youth Training/context and a recruiting demonstration jointly accessible with FULL service, reload and exactly-once behavior",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D consolidated Talent in one canonical GameWorld keeps youth Training/context and a recruiting demonstration jointly accessible with OUT_OF_SERVICE service, reload and exactly-once behavior",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D consolidated Talent in one canonical GameWorld a single physical condition changes both real operations without changing supply, identity, RPG, Finance, Governance or Medical/match source facts",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "app/youth/YouthFacilitiesIntegration.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-T canonical youth and Facilities integration keeps male intake, candidate identity, materialization and registration independent of physical service/access",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration keeps female intake, candidate identity, materialization and registration independent of physical service/access",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration a real registered male youth Player trains through the existing P0 owner; outage blocks only its court module",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration a real registered female youth Player trains through the existing P0 owner; outage blocks only its court module",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration handles UNKNOWN without inventing youth capacity or changing the supply authority",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration handles LIMITED without inventing youth capacity or changing the supply authority",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration handles DENIED without inventing youth capacity or changing the supply authority",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration handles EXPIRED without inventing youth capacity or changing the supply authority",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration shared Team rights do not invent slots, exclusivity or additional Players",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T canonical youth and Facilities integration Calendar executes youth Training once, preserves supply/Finance and reloads a pending physical attempt",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "domain/training/TrainingSchedule.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "TrainingSchedule creates a valid team session",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule rejects invalid times, durations and scope/player mismatches",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule computes time-to-minutes",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule rejects overlapping team sessions for the same team",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule accepts non-overlapping team sessions for the same team",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule rejects overlapping individual sessions for the same player",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule allows overlapping individual sessions for different players",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingSchedule does not collide across different dates",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/calendar/CalendarEngine.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CalendarEngine advances one day immutably without auto-applying the legacy training plan pipeline",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine returns a deterministic ordered phase trace and keeps unsupported systems explicit",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine processes a due formal offer after date advance, contract reconciliation, and contact responses",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine plans AI Training after fatigue recovery and before the scheduled executor",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine advances correctly over date boundaries",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine advances correctly over date boundaries",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine advances correctly over date boundaries",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants advances exactly one day regardless of games, competitions, or season state",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants advances exactly N days over N calls with no future games remaining",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants does not block on a completed CompetitionSeason with no active competition",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants crosses 30 June without stopping or altering the daily step",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants crosses 31 December to 1 January",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants handles a leap year 28 February to 29 February",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants produces a valid empty day with no games, transfers, or events",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants never jumps more than one day per advanceDay call, with or without a game tomorrow",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine RWS-BUG-002 world clock invariants advances 365 consecutive days to exactly one calendar year later",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine preserves completed games while advancing the date",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine finds scheduled games on the first and fifth days but none in between",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine derives the user team and its next scheduled game",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine returns no user team or next game when the user coach is unemployed",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine skips completed and past user games when finding the next one",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine returns no next user game after all of the user team games are completed",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine reports current date status for days with and without games",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine keeps a completed user game visible in current date status while removing it from scheduled games",
+          "status": "passed"
+        },
+        {
+          "name": "CalendarEngine integrates current-date inspection, simulation, result application, standings, and progression",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/facilities/PhysicalAllocationEngine.test.ts",
+      "report": "engine-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences does not create a physical requirement for an independent Training module",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps an unknown interval unverified rather than fabricating a slot",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences distinguishes a missing selected component from a completely unknown legacy infrastructure",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences retains executed physical occupancy across midnight for a later overlapping request",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences uses peak overlapping occupancy rather than adding groups that occupy different intervals",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences rejects malformed and overbooked Save evidence without inventing reservations for an old payload",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps request/release commands and their history idempotent",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences confirms eight explicit male youth participants against ten and executes/reloads exactly once",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences confirms eight explicit female youth participants against ten and executes/reloads exactly once",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences changes only nominal capacity: twelve cannot reserve ten; twelve can reserve twelve",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps unknown-capacity unverified, without a fictional reservation or sporting penalty",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps unknown-demand unverified, without a fictional reservation or sporting penalty",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps incompatible-unit unverified, without a fictional reservation or sporting penalty",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps LIMITED unverified, without a fictional reservation or sporting penalty",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps confirmed prior allocation at 10:00; consecutive intervals remain compatible",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps confirmed prior allocation at 10:30; consecutive intervals remain compatible",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps confirmed prior allocation at 11:00; consecutive intervals remain compatible",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences does not choose a winner between simultaneous pending requests",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences requires explicit shareability rather than treating two small groups as automatically compatible",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences offers a real alternate component and requires manager selection before moving",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences blocks parent/child double booking, even when the parent explicitly supports shared capacity",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences respects expired rights without ownership inheritance",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences respects Organization-only rights without ownership inheritance",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences respects midnight-expiry rights without ownership inheritance",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences revalidates a breakdown after confirmation, blocks stimuli and permits explicit restoration/rescheduling exactly once",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences preserves the original booking atomically when the new interval is occupied",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences reevaluates a changed explicit participant selection before effects",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences cancels/releases idempotently without removing legitimate source/history or executing a cancelled session",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-C1 canonical physical reservations and real Training consequences keeps partial works scoped and retains continuity for a legacy session without a physical request",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/injury/MedicalPhysicalCompatibility.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-M physical context is not a clinical procedure changes CFI8 imaging to LIMITED without changing clinical commands/results",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure changes CFI8 imaging to OUT_OF_SERVICE without changing clinical commands/results",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure denies known equipment access without denying unrelated clinical operations",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure preserves clinical continuity when physical information is absent",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure restores physical availability without inventing a clinical recovery effect",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure recognizes an entitled alternative as context, not as execution of a treatment",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure round-trips physical and clinical facts and preserves productive Medical behavior after reload",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-M physical context is not a clinical procedure clears an eligible clinical review with no specialist equipment and does not change fatigue",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/recruiting/RecruitingEngine.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "RecruitingEngine canonical operations keeps the legacy synthetic generator behind its explicit fixture path",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations keeps the explicit legacy fixture pool deterministic for compatibility tests",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations keeps deterministic player IDs globally unique across recruiting cycles",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations consumes capacity, records actions and commits only after competition",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations assigns a new identity when a withdrawn offer is made again",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations keeps AI target ordering invariant when only hidden prospect truth changes",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations uses only the recruiting organization knowledge for its target ordering",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingEngine canonical operations moves an authorized transfer through BS15E Recruiting without changing Player identity",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/recruiting/RecruitingFacilityDemonstration.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity records FULL execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity records LIMITED execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity records OUT_OF_SERVICE execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity causally changes only the demonstration when the same court goes out of service",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity does not turn Organization ownership or DENIED Team rights into usable access",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity does not turn Organization ownership or EXPIRED Team rights into usable access",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity LIMITED full-court demonstration rejects a known half-court specification without blocking the visit",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity known incompatible capability is blocked, not misclassified as missing context",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity unknown service evidence cannot certify a demonstration and actual BS17C component work prevents it",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity offers a legitimate alternative through a retry of one activity, then never completes it twice",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity UNKNOWN keeps the visit result and records no verified demonstration; not selected keeps the old payload",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity restoration and reload replay no visit or activity; Calendar cannot automatically complete a blocked demonstration",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity preserves official NCAA permission and count rules, including a dead-period rejection with no partial activity",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-T1 subordinate recruiting facility activity preserves unofficial NCAA permission and count rules, including a dead-period rejection with no partial activity",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/recruiting/RecruitingLifecycle.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Recruiting lifecycle contracts keeps boards unique and supports priority replacement/removal",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting lifecycle contracts consumes action capacity and rejects without mutation when exhausted",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting lifecycle contracts allows competing offers but creates one commitment and no automatic signing",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting lifecycle contracts enforces signing window and keeps canonical player unrostered until idempotent arrival",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting lifecycle contracts round-trips a committed and signed incoming class without regeneration",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/recruiting/RecruitingPermission.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets requires Portal authorization at the shared transfer gate and permits transfer recruiting outside initial-player periods when authorized",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets keeps the MBB dead period distinct from legal remote communication",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets matches exact MBB period exceptions and requires an approved evaluation context",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets blocks WBB recruiting shutdown while preserving the different dead-period semantics",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets uses prospect-specific September/ March WBB rules and restricts July visits",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets applies communication thresholds, signed-prospect protection, and explicit off-campus stages",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets fails closed on NCAA visits when class progression is missing",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets blocks WBB July direct and indirect communication with only the Academy exception",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets blocks the eighth countable prospect recruiting opportunity",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets shares four-recruiter and MBB/WBB person-day boundaries through one permission decision",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets derives distant seasons from the fixed-date template and marks them simulated",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets fails closed for a production NCAA cycle with no configured calendar",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets persists live evaluations as countable opportunities and blocks the eighth",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets records canonical official visit details and enforces count and lodging limits",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets uses versioned signing formulas and requires the configured class and opening time",
+          "status": "passed"
+        },
+        {
+          "name": "2026-27 NCAA basketball recruiting rulesets resolves the championship anchor from the completed season FINAL games",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/recruiting/RecruitingRpg.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Recruiting RPG authority keeps preferences separate from basketball truth and starts with no program intel",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority keeps the choice projection invariant when only hidden basketball ratings change",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority learns a program-specific signal and keeps head-coach and recruiter relationships distinct",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority records concerns, resolves a promise without losing it, and makes pressure affect the relationship",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority keeps AI negotiation selection invariant to hidden preference changes until its own intel changes",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority selects AI responses from its own context and ignores rival private recruiting state",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority resolves negative recruiting deterministically with short-term benefit and relationship cost",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority routes legal, misleading, and detected rule-violating gray actions through canonical Enforcement",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority records role promises, flags same-position contradiction in history, and preserves RPG state in Save V4",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority honors configured per-cycle shutdown windows",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority materializes an international TalentCohort prospect as one canonical Player",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority discovers at most one NCAA TalentCohort prospect through the user-facing intake route",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority keeps canonical off-campus recruiter designation stable and records person-days through contact",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority limits a cycle to six off-campus recruiters and replaces only after canonical Staff attrition",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority applies the shared off-campus recruiter and person-day authority to all modeled Staff actions",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority enrolls one signed NCAA Player and performs one idempotent roster arrival",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority holds a signed NCAA arrival when the Player already has another active roster owner",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority preserves formal signing while rolling back an ineligible BS15D arrival",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority keeps an unsigned verbal commitment vulnerable to a stronger later relationship",
+          "status": "passed"
+        },
+        {
+          "name": "Recruiting RPG authority keeps terminal negotiation history and creates a fresh attempt after verbal decommitment",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/training/DelegatedTrainingExecution.test.ts",
+      "report": "gameplay-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Delegated Training execution userControlled path is regression-identical to pre-Wave-2 behavior: session executes using its own scheduled definition/intensity",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution delegated team Training produces a deterministic, staff-influenced DelegationOutcome and does not rewrite the persisted session",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution delegated individual development produces a deterministic, staff-influenced DelegationOutcome",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution delegated intensity uses canonical determineIntensity and produces its own DelegationOutcome",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution non-delegated intensity remains the manually scheduled intensity",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution DelegationOutcome is persisted exactly once: re-executing an already-completed session does not create a duplicate outcome",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution outcome attribution is correct when plan and intensity responsibilities have different holders",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution team processing order does not affect either team's delegated result",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution existing invariants remain intact under delegation: fatigue clamping, position eligibility, cohesion bounds",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution a team that never delegates any Training responsibility sees zero behavior change from Wave 1",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution advanceDay executes delegated sessions exactly like manual execution",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution cancelling a scheduled session prevents any DelegationOutcome from being created",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution userControlled produces exactly the same stimulus as before the stimulus-multiplier fix (no multiplier applied)",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution same world + same session + same holder + same seed produces the same stimulus deterministically",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution repeated execution of the identical scenario is byte-for-byte identical (full world equality)",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution the stimulus multiplier is always within the documented range: development stimulus never exceeds a bounded band around the unscaled base value",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution two Staff members with different attributes can produce different stimulus deterministically for otherwise identical sessions",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution intensity delegated without plan delegated does NOT activate the plan stimulus-quality multiplier: stimulus matches the plain trainingLoad(intensity) calculation",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution plan delegated (without intensity delegated) DOES activate the stimulus-quality multiplier: stimulus can differ from the plain unscaled base",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution the stimulus multiplier does not change fatigue relative to the effective intensity/definition",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution the stimulus multiplier does not affect morale/cohesion beyond the chosen TrainingDefinition's own effects",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution a position-ineligible player still receives zero stimulus even when the plan is delegated and a multiplier would otherwise apply",
+          "status": "passed"
+        },
+        {
+          "name": "Delegated Training execution re-executing an already-completed delegated session does not re-apply stimulus or create an extra outcome",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/training/ScheduledTrainingEngine.test.ts",
+      "report": "recheck-isolated.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "ScheduledTrainingEngine persists eligible executing staff, rejects invalid/overlapping use, and applies bounded deterministic quality",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine keeps no-staff scheduled sessions exactly on the legacy execution path",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine schedules a session and rejects a colliding one",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine accepts a non-overlapping session",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine publishes a scheduled-session batch once while validating collisions against earlier additions",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine keeps repeated identical batch additions as one indexed session and executes once",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine cancels a scheduled session",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine rejects scheduling a new session dated today or in the past",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine accepts a session dated the next eligible date",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine executes a due individual session exactly once, applying development stimulus and fatigue, and never re-executes on repeat calls",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine respects a user FULL override over a REST recommendation and scales REDUCED effects",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine skips load and injury exposure for an unavailable player and for a cancelled session",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine records the InjuryRecord ID created by a completed Training session",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine executes deterministically: advancing the same seeded world identically produces the same training result",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine applies team cohesion effects for tactical sessions",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine applies morale effects for morale-bearing definitions",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine documented scaling contract: development/fatigue scale with intensity, morale/cohesion are fixed per-session deltas regardless of intensity",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine recovery definitions reduce fatigue instead of increasing it",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine computes daily scheduled load and classifies OK/HIGH/VERY_HIGH",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine advanceDay executes eligible scheduled sessions for the new date",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine keeps one completed session in its original week through +1, +7, +30 days and Save V3 round trips",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine does not allow completed history to be cancelled or rescheduled through the application engine",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine team position-restricted training applies fatigue to every participating player but development stimulus only to eligible players",
+          "status": "passed"
+        },
+        {
+          "name": "ScheduledTrainingEngine one planned/scheduled training day applies exactly one canonical training workload, not a second legacy workload on top",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/training/TrainingPhysicalConsequences.test.tsx",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS17D-P0 production Training causality executes team training with rights, blocks OOS without any sporting effects",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality executes individual training with rights, blocks OOS without any sporting effects",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality does not infer Team rights from an Organization-only entitlement",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality honors temporary rights and their component scope",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality blocks actual work on the required component without closing unrelated resources",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality keeps compatible LIMITED execution unchanged and blocks a concretely incompatible court",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality keeps legacy execution when infrastructure or its condition is unknown",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality retains known incompatible MAIN_COURT geometry rather than treating it as missing data",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality retains known incompatible SECONDARY_COURT geometry rather than treating it as missing data",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality restores same-day execution and supports canonical rescheduling after a missed date",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality uses legitimate alternatives before blocking and does not assume a shared reservation",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality does not turn nominal comparable capacity into an operational allocator",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality round-trips FULL attempts and replays equivalently without double application",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality round-trips OUT_OF_SERVICE attempts and replays equivalently without double application",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality explains persisted cause, result, capacity unknown and continuity to the manager",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality rejects forged physical evidence while accepting pre-P0 sessions without the extension",
+          "status": "passed"
+        },
+        {
+          "name": "BS17D-P0 production Training causality preserves rest, Medical fitness/RTP, setbacks and daily recovery with no direct Facilities modifiers",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/training/TrainingStaffExecution.test.ts",
+      "report": "gameplay-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Training Staff V2 execution assignments enforces active-team employment and real Staff scheduling conflicts at the engine boundary",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments uses canonical role capabilities for technical, physical, and recovery execution",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments uses role speciality and bounded diminishing returns instead of raw headcount stacking",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments makes specialist quality affect development but not ordinary positive fatigue",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments makes qualified recovery staff increase the magnitude of fatigue recovery",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments makes tactical execution quality improve the real cohesion effect",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments detaches pending work on firing and keeps firing safe after completed execution",
+          "status": "passed"
+        },
+        {
+          "name": "Training Staff V2 execution assignments round-trips pending execution assignments through the canonical V3 save path",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/world/TalentSupply.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS15B global talent supply and materialization generates context-backed pre-college provenance deterministically before recruiting",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization creates cheap, deterministic, finite cohorts with place-specific supply inputs",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization materializes one canonical Player once, preserves origin through save/load, and never assigns a Team",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization supports women through the same cohort and materialization architecture",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization does not generate a candidate after finite supply is exhausted",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization keeps hidden Player Truth out of organization visibility and scouting selection",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization produces a deterministic rare tail and sensible five-position mix without materializing audit samples",
+          "status": "passed"
+        },
+        {
+          "name": "BS15B global talent supply and materialization reports much lower save cost for latent supply than for materialized candidates and records operation timings",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "engine/youth/YouthPathwayEngine.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "BS15C club youth pathway intakes one canonical male Player, promotes and saves registration history",
+          "status": "passed"
+        },
+        {
+          "name": "BS15C club youth pathway intakes one canonical female Player, promotes and saves registration history",
+          "status": "passed"
+        },
+        {
+          "name": "BS15C club youth pathway schedules youth Teams through the ordinary competition fixture generator",
+          "status": "passed"
+        },
+        {
+          "name": "BS15C club youth pathway rejects over-age competition entry without a partial roster change",
+          "status": "passed"
+        },
+        {
+          "name": "BS15C club youth pathway surfaces age-out for a decision without moving the Player automatically",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "integration/facilitiesSporting/SportingFacilityContext.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 1. a Team with no Facility rights gets no sporting context capabilities",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 2. a Team with training rights gets eligible practice components",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 3. Organization ownership alone does not grant sporting benefit",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 4. an OUT_OF_SERVICE component provides no usable capability",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 5. a LIMITED component remains represented as limited rather than disappearing",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 6. a FULL component is usable",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 7. unknown condition does not become perfect condition (no record means FULL by explicit CFI4 default, not an invented 100 score — physicalCondition itself stays null upstream)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 8. multiple practice courts are counted correctly",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 9. a closed component is not counted after closedAt",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 10. a future component is not counted before openedAt",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 11. a strength room appears in the training/performance context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 12. a performance lab appears in the performance context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 13. a medical clinic appears in the medical context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 14. imaging capability appears when a valid component exists",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 15. imaging disappears when its component is unavailable",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 16. hydrotherapy appears in the rehab/recovery context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 17. recovery capability disappears when access is lost",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 18. technical standard is preserved in the sporting context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 19. component capacity is preserved on the court status",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 20. a shared Facility produces different contexts based on Team rights",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 21. men's and women's (or any two) teams may have different access",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 22. a component-specific usage right is respected",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 23. a facility-wide usage right is respected",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 24. an academy context query is available even absent a dedicated academy sporting system (no crash, just no capabilities)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 25. the training context does not mutate Player ratings (it returns no player reference at all)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 26. the medical context does not mutate injury state (it returns no injury reference at all)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 27. the recovery context does not mutate fatigue (it returns no fatigue reference at all)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 28. the sporting context is deterministic for the same world/team/date",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 29. capability ordering is stable",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 30. context before and after Facility repair changes correctly",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 31. context before and after component renovation (technical standard upgrade) changes correctly",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 32. context before and after a project adds a component changes correctly",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 33. CFI5 deterioration causing OUT_OF_SERVICE changes the sporting context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 34. restored serviceability restores capability",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 35. no Facility OVERALL is introduced anywhere in the context",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 36. no persisted sporting facility score is introduced (the context is never part of GameWorld)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 37. no direct MatchEngine stat modifier is introduced (module exports contain no match/shot/defense field)",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 38. the context explanation identifies the source component",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 39. the context explanation identifies NO_ACCESS",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration 40. the context explanation identifies OUT_OF_SERVICE",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration constraint facts are plain data, never a complaint/morale/news object",
+          "status": "passed"
+        },
+        {
+          "name": "CFI8 — Facilities <-> Sporting systems integration end-to-end rich scenario: Organization with two Teams and a shared Training Center",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "save/GameWorldSaveV4.Facilities.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) round-trips a rich Facilities world through Save V4 with full semantic equivalence",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) preserves query equivalence across the full resolver surface, before and after save/load",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) preserves query equivalence at a historical date spanning operator change, status closure, and temporary relocation",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) does not serialize derived conflicts: facilityRightsConflictsAt is recomputed identically from persisted rights, never stored",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) reloading the same save repeatedly is deterministic",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips Place: nested parent/child places survive, including null geography fields",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips Facility: physical profile (including all-null profile) and lifecycle survive",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityComponent: independent identity, capacity/quantity, and open/closed dates survive",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityNameRecord: canonical + multiple commercial-name periods survive and resolve identically",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityOwnershipInterest: 100%, 60/40, and unknown share all survive with the correct actor kind",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityOwnershipInterest with a PERSON owner actor survives",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityControlRight: survives and controllersOfFacilityAt returns exactly the same result after reload",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityOperatorAssignment: owner==operator, owner!=operator, and historical operator change all survive",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityUsageRight: exclusivity, priority, component scope, and agreementReferenceId all survive without type collapse",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityUsageRight: whole-facility scope (componentIds: null) survives distinctly from a component-scoped right",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityOrganizationRelationship and FacilityTeamRelationship: kinds and historical periods survive",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityCompetitionApproval: approved/not-approved and temporal window survive",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) per-collection round-trips FacilityStatusRecord: multi-period lifecycle history round-trips and facilityStatusAt matches at each period",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) migration V1/V2/V3 -> latest (V4) migrates a genuinely pre-Facilities V1 save to V4 with valid, empty Facilities collections",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) migration V1/V2/V3 -> latest (V4) migrates a V2 save (no Facilities) to V4 with valid, empty Facilities collections",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) migration V1/V2/V3 -> latest (V4) migrates a V3 save (no Facilities) to V4 with valid, empty Facilities collections",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) migration V1/V2/V3 -> latest (V4) a real V3 save already carrying Facilities-independent state migrates cleanly and old saves need no fictitious Facilities data",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects a bad ownership percentage",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects an unknown enum value for Facility status",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects a malformed temporal interval (validTo before validFrom)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects an invalid FacilityUsageRight shape (missing both team and organization beneficiary)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects an invalid component scope (empty array)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects an unknown property on a Facility record (exactKeys)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects a malformed discriminated union (unknown ownership actor kind)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (CFI2S) malformed Facilities save payloads rejects a missing component reference in a component-scoped usage right at the domain-validation boundary",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "save/GameWorldSaveV4.FacilityOperations.test.ts",
+      "report": "compatibility-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityMaintenanceNeed, including its optional componentId and resolvedAt",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a facility-level FacilityMaintenanceNeed with a null componentId",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityMaintenanceAction with a resultingCondition/resultingServiceability effect",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityMaintenanceAction still in progress (null completedAt/outcome/resultingCondition)",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityInspection that identified a maintenance need, preserving the cross-reference",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityInspection with NO_ISSUE and no cross-reference",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence round-trips a FacilityOperationalIncident affecting a component and its serviceability effect",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence a pre-CFI5 V4 payload (missing all four new collections entirely) still loads with empty, valid defaults",
+          "status": "passed"
+        },
+        {
+          "name": "GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) persistence a reloaded world reproduces identical deterioration progression to the pre-save world for the same period",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx",
+      "report": "gameplay-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "MX0.6 Facilities workspace BS17C shows scoped physical work, honest capacity and source history in the canonical inspector",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace says honestly that the shipped universe has no recorded facility",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace shows the club inventory, derived condition and the critical maintenance need",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace shows the canonical sporting effect of the club facilities",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace exposes only canonical project actions and applies a start through the store bridge",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace applies a funded start with the manager-entered capital commitment and shows the canonical money facts",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace reports a canonical blocker reason instead of hiding a refused command",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace blocks an unusable commitment in the UI without touching the world",
+          "status": "passed"
+        },
+        {
+          "name": "MX0.6 Facilities workspace keeps the club identity and club-scoped facilities of the user club only",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/facilities/FacilityCapacityContext.test.tsx",
+      "report": "recheck-isolated.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "shows canonical intervals and honest unknown demand without offering an allocation command",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "manager selection and confirmation produce a real BS15 visit, persisted demonstration and visible executed result",
+          "status": "passed"
+        },
+        {
+          "name": "canceling a selected but unconfirmed visit writes no event; Facilities navigation writes no simulation state",
+          "status": "passed"
+        },
+        {
+          "name": "outage affects only the demonstration; an explicit manager restoration retry completes the same visit activity",
+          "status": "passed"
+        },
+        {
+          "name": "visit without demonstration is optional and unknown context never creates a verified completion",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/recruiting/RecruitingWorkspace.test.tsx",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "RecruitingWorkspace does not invent a college board for a non-NCAA career",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingWorkspace shows the unavailable workspace screen when a FIBA career opens recruiting",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingWorkspace shows the discovered prospect, separate coach relationships, known priorities, and an active concern response",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingWorkspace closes actions for prospects whose RecruitingCycle has rolled over",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingWorkspace shows only the signing action during the signing phase for its own verbal commitment",
+          "status": "passed"
+        },
+        {
+          "name": "RecruitingWorkspace shows permission and Staff capacity reasons and hides actions after formal signing",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/talent/TalentFacilitiesContext.test.tsx",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "shows configured youth infrastructure and scoped rights in Talent, then navigates without writing world state",
+          "status": "passed"
+        },
+        {
+          "name": "shows missing associated physical data as unknown, not a failed intake or zero academy quota",
+          "status": "passed"
+        },
+        {
+          "name": "shows an actual blocked youth Training attempt after reload, without claiming a Talent supply consequence",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/talent/TalentOperationsWorkspace.test.tsx",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "TalentOperationsWorkspace shows actionable pathway queues and navigates into the existing Scouting workspace",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/talent/TalentProjections.test.ts",
+      "report": "tests.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Talent application projections projects Portal production, Unknown eligibility and separate own-player compensation contexts",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections derives attention from canonical Portal state and resolves when that source changes",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections does not project a rival’s private continuation or compensation context",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections routes canonical Player history events to stable owning workspaces and preserves Player identity",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections translates blocked reasons explicitly and humanizes unknown codes",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections certifies readable blocked outcomes across Scouting, Recruiting, Portal, compensation, Draft and eligibility without mutation",
+          "status": "passed"
+        },
+        {
+          "name": "Talent application projections measures representative Portal, Talent overview, deadline and pathway projections",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/training/TrainingPhysicalAllocationControl.test.tsx",
+      "report": "gameplay-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "uses the reachable Training manager flow to select, confirm, reload, reprogram, release and cancel without financial writes",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "ui-ng/applications/training/TrainingWorkspace.test.tsx",
+      "report": "gameplay-final.json",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "TrainingWorkspace shows a real physical block and reschedules through canonical Training while retaining its cause",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace shows an empty state when no world is loaded",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace clones the five canonical training surfaces under NG chrome",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace keeps intensity writes on the cloned Equipo surface",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace opens the cloned Módulos catalog",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace filters the module pills by category and scope",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace fills the visible week from Entrenamientos automáticos and skips match days",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace opens a player dossier from an Individual training name",
+          "status": "passed"
+        },
+        {
+          "name": "TrainingWorkspace shows completed Training history with planned/effective context and participation",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "rawArtifacts": [
+    {
+      "path": "node_modules/.cache/bs17d-c1/build-final.log",
+      "bytes": 8534,
+      "sha256": "7e038c4c2f5c2bebbeb6f861c8e666e103c43823de6c526f3719485fad7f3e60"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/build.log",
+      "bytes": 1570,
+      "sha256": "12494f7d3a03ac15c312ea8f3bf3058f83ceac1e047ae691add1053937ce814e"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/compatibility-final.json",
+      "bytes": 72407,
+      "sha256": "c3105744e5cb08791e45c3c74a72b91454bf2033d04746e7f4dee0dfdc7d5ffa"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/compatibility-final.log",
+      "bytes": 1034,
+      "sha256": "66eb8f9dcf1a953c56b5d1426a090799f877b69d455b5b6220f866df10c73739"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/engine-final.json",
+      "bytes": 13564,
+      "sha256": "7e942e486c7c852f2805f29e8acedc4c8f24db57411bce8efca78c4219eeb356"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/engine-final.log",
+      "bytes": 708,
+      "sha256": "a0000c785009ab78e05c63dd4ec7ee6e8fe39deacfe499cc2f5b7877d47607d0"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/final-recheck.json",
+      "bytes": 16581,
+      "sha256": "6ba540a5a9670510b7e82c3796dc7489da6cafdd46b87bad1494494ff4ee6757"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/final-recheck.log",
+      "bytes": 738,
+      "sha256": "04c9a63bd43658a3b11646866140dfa57a57a539cde59e5cdb2dfc5fabb36c4f"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/focal.log",
+      "bytes": 3464,
+      "sha256": "5cacacfa44804e82fefea072cdeed6d1094d79a8fb71932bbb6257fdf281b80e"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/gameplay-final.json",
+      "bytes": 19900,
+      "sha256": "9246cef77de234ba318113a01b351ab14fca530d8e1c12e78d68d053e43b927f"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/gameplay-final.log",
+      "bytes": 766,
+      "sha256": "26368fbaab98e5ed273f3c738feec74b5f1e4ecc648f625056b52f514fe96fab"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/recheck-isolated.json",
+      "bytes": 43998,
+      "sha256": "ce105366e5e4d96adbc8e5daadf67a66ea7b951a1ee15cae286e5d6c077c2eb5"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/recheck-isolated.log",
+      "bytes": 20050,
+      "sha256": "b5926fd477eed8a0a31c90ac47a0fc14c486a35a2a4c7b25190613a38e7de385"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/recheck.json",
+      "bytes": 47307,
+      "sha256": "0e4df89ec02868cc24bc90ec8120f3dc274a533433b0e2198a84274b52455da6"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/recheck.log",
+      "bytes": 24148,
+      "sha256": "27a3116973298f9ebdf4d8ea681ea014765f41e7a7ebcffc772916f9ddb44c93"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/tests.json",
+      "bytes": 159107,
+      "sha256": "96b09dd656a10184b7a5722418cf8fa00e18eaa1417f39d80af9be51ab2415bd"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/tests.log",
+      "bytes": 14984,
+      "sha256": "c00baa71297ef4910dcca7061007fc585edb9b8cf8c78b612d7506ba1bc50963"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/typecheck-final.log",
+      "bytes": 106,
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/typecheck.log",
+      "bytes": 1580,
+      "sha256": "da9fa4e918ed56c2ee49f4b2478947ca1263621817a71e8e98c2412a7abe9a94"
+    },
+    {
+      "path": "node_modules/.cache/bs17d-c1/ui-focal.log",
+      "bytes": 458,
+      "sha256": "1f9e8ac877c14fc1bb0d5e79815dfd3f77c982f738437ee711301b5b25a0a77a"
+    }
+  ],
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE",
+  "globalBS17D": "PARTIAL",
+  "gates": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "advisory": "Existing Vite bundle size warning; build successful"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "mathRandomInSrc": {
+      "command": "rg -n -F Math.random( src",
+      "matches": 0
+    },
+    "productionFrameworkImportsInDomainEngine": {
+      "matches": 0
+    },
+    "rust": "UNCHANGED; no new Rust gate required by the focal C1 mandate"
+  },
+  "ancestry": {
+    "a5576a9b70552c896ef589438f21380e3234a6f2": true,
+    "fbe788ce01f1dd34fc40b360b4661ebaad63457c": true,
+    "64abd26a50e93fd827f27dccabaa486e0e73dd04": true,
+    "582f517e178ae8a7159237fd3d75e2db4c9d8f87": true,
+    "eb12f9670b2c99a6cf3c8ddef0ae2d73fd5e78c9": true
+  },
+  "protectedRefs": {
+    "main": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+    "origin/main": "94c077092224a9f75c861a853d9d52fceae526fe",
+    "C:/BDM-BS17D-CAPACITY": "a5576a9b70552c896ef589438f21380e3234a6f2",
+    "sourceWorkingTree": "CLEAN"
+  },
+  "validationMethod": "Latest passing focal suite reports after repairs; 31 unique files, 374 unique assertions. Raw initial failures retained, not counted as final PASS until rerun.",
+  "closedDefects": [
+    "Midnight date import",
+    "Legacy referential shape",
+    "Immutable-history diagnostics",
+    "Completed Save hydration",
+    "Actual Player UI names",
+    "Independent physical module gate",
+    "Pending conflict on rescheduling"
+  ],
+  "historicalFullSuite": {
+    "total": 4916,
+    "passed": 4819,
+    "failed": 38,
+    "pending": 59,
+    "recertified": false
+  }
+}

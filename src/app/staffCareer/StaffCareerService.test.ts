@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld, getResponsibilitiesHeldByStaff, getTeamStaffPayroll, type GameWorld } from '@/domain/world'
@@ -23,6 +24,24 @@ import {
 type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
 const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as StaffAttributes
 
+/**
+ * Canonical Finance — not a legacy payroll pool — decides whether a hiring may happen, so the fixture
+ * gives the club real liquidity from an explicit financing drawdown and a real APPROVED salary
+ * authorization. `createStaffJobOffer`'s offer amount is still generated from the legacy Staff payroll
+ * pool (recorded as a remaining coupling), which is why tests may still tighten that pool.
+ */
+function baseCareer(): GameWorld {
+  let world = createNewGame()
+  for (const team of Object.values(world.teams).slice(0, 4)) {
+    world = authorizeTeamSalaryForTest(
+      financingDrawdownForTest(world, team.id, 10_000_000_000, `staff-career:${team.id}`),
+      team.id,
+      { currencyCode: String(world.organizationFinancialProfilesById[team.organizationId]!.baseCurrencyCode), playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+    )
+  }
+  return world
+}
+
 function withFreeAgentStaff(world: GameWorld, suffix: string, attrs: Partial<StaffAttributes> = {}) {
   const staffId = staffPersonIdFromString(`fa-${suffix}`)
   const withPerson = updateGameWorld(world, { staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Free', lastName: 'Agent' }, professional: { attributes: { ...flatAttributes, ...attrs } } }] })
@@ -44,7 +63,7 @@ function findOffer(world: GameWorld, offerId: string) {
 
 describe('Hiring transaction: opening -> candidacy -> interview -> offer -> accept -> employed', () => {
   it('employer autopilot progresses the canonically selected staffApplied candidacy rather than orphaning it', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'staff-applied', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -55,7 +74,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
   })
 
   it('rejects a weak staffApplied candidacy when a stronger canonical candidate fills the opening', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: weakWorld, staffId: weakId } = withFreeAgentStaff(base, 'weak-applied', { talentEvaluation: 1, potentialEvaluation: 1, tacticalKnowledge: 1, analysis: 1, communication: 1 })
     const { world: strongWorld, staffId: strongId } = withFreeAgentStaff(weakWorld, 'strong-ranked', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
@@ -68,7 +87,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
     expect(Object.values(hired.staffJobCandidaciesById).some((item) => item.jobOpeningId === opening.id && ['identified', 'interviewing', 'offered'].includes(item.status))).toBe(false)
   })
   it('runs the full lifecycle producing employment, assignment, and one active contract', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'lifecycle')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -87,7 +106,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
   })
 
   it('a Staff person already employed elsewhere leaves the old team cleanly: old assignment removed, old contract terminated, old responsibilities vacated', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const [teamA, teamB] = Object.values(base.teams)
     const { world, staffId } = withFreeAgentStaff(base, 'switcher')
     const { world: withOpeningA, opening: openingA } = createStaffJobOpeningForTeam(world, { teamId: teamA!.id, roleId: 'advanceScout' })
@@ -107,7 +126,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
   })
 
   it('exactly-once behavior under repeated invalid acceptance attempts: an already-accepted offer cannot be re-accepted', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'exactly-once')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -119,7 +138,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
   })
 
   it('competing candidacies are rejected and competing pending offers are withdrawn for the same opening', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withA, staffId: staffA } = withFreeAgentStaff(base, 'winner', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
     const { world: withBoth, staffId: staffB } = withFreeAgentStaff(withA, 'loser', { talentEvaluation: 1, potentialEvaluation: 1, tacticalKnowledge: 1, analysis: 1, communication: 1 })
@@ -140,7 +159,7 @@ describe('Hiring transaction: opening -> candidacy -> interview -> offer -> acce
 
 describe('Firing', () => {
   it('employment unemployed, assignment removed, contract terminated, responsibilities vacated, career history correct, replacement opening created deterministically', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'fireme')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -164,7 +183,7 @@ describe('Firing', () => {
   })
 
   it('vacates responsibilities held by the fired Staff on that team', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'fire-with-resp')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -178,7 +197,7 @@ describe('Firing', () => {
   })
 
   it('does not touch unrelated teams/Staff', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const [teamA, teamB] = Object.values(base.teams)
     const { world, staffId } = withFreeAgentStaff(base, 'isolated')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId: teamA!.id, roleId: 'advanceScout' })
@@ -193,7 +212,7 @@ describe('Firing', () => {
 
 describe('Promote/reassign transaction', () => {
   it('promotes within the same team: role changes, assignment changes, career history gains an appointment with reason promoted', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'promote')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -208,7 +227,7 @@ describe('Promote/reassign transaction', () => {
   })
 
   it('preserves StaffEmployment.startedOn (the original hire date) across a promotion on a later date (Issue #19 review "startedOn" fix)', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'startedon')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -225,7 +244,7 @@ describe('Promote/reassign transaction', () => {
   })
 
   it('preserves the existing contract unchanged when salary is unchanged (frozen rule)', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'same-salary')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -239,7 +258,7 @@ describe('Promote/reassign transaction', () => {
   })
 
   it('creates a replacement contract when salary changes, never leaving two active contracts (frozen rule)', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'new-salary')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -252,7 +271,7 @@ describe('Promote/reassign transaction', () => {
   })
 
   it('reassign (a same-team role change with the reassigned reason) also works end-to-end', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'reassign')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -263,7 +282,7 @@ describe('Promote/reassign transaction', () => {
   })
 
   it('rejects promoting a Staff person who is not employed', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const { world, staffId } = withFreeAgentStaff(base, 'unemployed-promote')
     expect(() => promoteStaffWithinTeam(world, { staffId, newRoleId: 'headScout', reason: 'promoted' })).toThrow()
   })
@@ -271,7 +290,7 @@ describe('Promote/reassign transaction', () => {
 
 describe('Offer decline/withdraw', () => {
   it('declining an offer rejects the candidacy', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'decline')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -284,7 +303,7 @@ describe('Offer decline/withdraw', () => {
   })
 
   it('withdrawing an offer rejects the candidacy', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'withdraw')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -298,7 +317,7 @@ describe('Offer decline/withdraw', () => {
 
 describe('Contracts / finance', () => {
   it('derived payroll equals the sum of active Staff annual salaries', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'payroll')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -309,22 +328,24 @@ describe('Contracts / finance', () => {
   })
 
   it('payroll is not persisted anywhere (derived-only): the world has no staffPayroll* collection', () => {
-    const world = createNewGame()
+    const world = baseCareer()
     expect('staffPayrollByTeamId' in world).toBe(false)
     expect('teamStaffPayrollById' in world).toBe(false)
   })
 
   it('budget remaining calculation reflects active payroll subtracted from budget', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const payroll = getTeamStaffPayroll(base, teamId)
     expect(payroll.remainingBudget).toBe(payroll.budget - payroll.activeAnnualSalary)
   })
 
-  it('an over-budget offer is rejected through the canonical application boundary', () => {
-    const base = createNewGame()
+  it('an unaffordable offer is rejected through the canonical application boundary', () => {
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
-    const drainedFinances = updateGameWorld(base, { teamFinances: Object.values(base.teamFinancesByTeamId).map((finance) => finance.teamId === teamId ? { ...finance, staffSalaryBudget: 1 } : finance) })
+    // Canonical Finance — not a legacy payroll pool — is what refuses the offer: the club's liquidity is
+    // already committed through a real canonical obligation.
+    const drainedFinances = commitTeamLiquidityForTest(base, teamId, 10_000_000_000)
     const { world, staffId } = withFreeAgentStaff(drainedFinances, 'over-budget')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
     const candidate = identifyStaffCandidate(withOpening, { openingId: opening.id, staffId })
@@ -332,14 +353,10 @@ describe('Contracts / finance', () => {
     expect(() => createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId })).toThrow()
   })
 
-  it('re-validates the Staff budget at ACCEPT time (Issue #19 review Blocker 2): two individually-valid pending offers cannot both be accepted if doing so would jointly exceed the team Staff budget', () => {
-    const base = createNewGame()
+  it('re-validates canonical Finance at ACCEPT time (Issue #19 review Blocker 2): an offer that no longer fits the club liquidity is refused and the transaction never partially commits', () => {
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
-    // Cap the Staff budget just above the team's EXISTING baseline payroll plus room for exactly
-    // ONE more standard-seniority hire (~65k), but not two — the race this test targets.
-    const baselinePayroll = getTeamStaffPayroll(base, teamId).activeAnnualSalary
-    const budgeted = updateGameWorld(base, { teamFinances: Object.values(base.teamFinancesByTeamId).map((finance) => finance.teamId === teamId ? { ...finance, staffSalaryBudget: baselinePayroll + 70_000 } : finance) })
-    const { world: withA, staffId: staffA } = withFreeAgentStaff(budgeted, 'race-a')
+    const { world: withA, staffId: staffA } = withFreeAgentStaff(base, 'race-a')
     const { world: withBoth, staffId: staffB } = withFreeAgentStaff(withA, 'race-b')
 
     const { world: withOpeningA, opening: openingA } = createStaffJobOpeningForTeam(withBoth, { teamId, roleId: 'advanceScout' })
@@ -352,7 +369,7 @@ describe('Contracts / finance', () => {
     const interviewedB = completeStaffInterview(startStaffInterview(candidateB.world, candidateB.candidacyId), candidateB.candidacyId)
     const offeredB = createStaffJobOffer(interviewedB, { candidacyId: candidateB.candidacyId })
 
-    // Both offers were individually valid against the SAME remaining budget at creation time.
+    // Both offers were individually valid against canonical Finance when they were created.
     const offerA = Object.values(offeredB.world.staffJobOffersById).find((o) => o.id === offeredA.offerId)!
     const offerB = Object.values(offeredB.world.staffJobOffersById).find((o) => o.id === offeredB.offerId)!
     expect(offerA.status).toBe('pending')
@@ -361,8 +378,10 @@ describe('Contracts / finance', () => {
     const afterFirstAccept = acceptStaffJobOffer(offeredB.world, offeredA.offerId)
     expect(afterFirstAccept.staffEmploymentByStaffId[staffA]!.status).toBe('employed')
 
-    const beforeSecondAttempt = afterFirstAccept
-    expect(() => acceptStaffJobOffer(beforeSecondAttempt, offeredB.offerId)).toThrow()
+    // The accepted hire is followed by a canonical obligation that consumes the club's liquidity, so the
+    // second offer — valid at creation time — is refused by the final recheck against the CURRENT world.
+    const beforeSecondAttempt = commitTeamLiquidityForTest(afterFirstAccept, teamId, 10_000_000_000)
+    expect(() => acceptStaffJobOffer(beforeSecondAttempt, offeredB.offerId)).toThrow(/canonical Finance/)
 
     // The second Staff must remain completely unhired: no employment, no assignment, no contract —
     // and the offer/candidacy state must be untouched (the transaction never partially committed).
@@ -375,7 +394,7 @@ describe('Contracts / finance', () => {
 
 describe('Reputation / job market', () => {
   it('candidate ranking uses BOTH role proficiency and reputation, not reputation alone', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withLowRepHighProficiency, staffId: highProficiencyStaff } = withFreeAgentStaff(base, 'high-proficiency', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
     const worldWithLowRep = updateGameWorld(withLowRepHighProficiency, { staffReputationProfilesByStaffId: { ...withLowRepHighProficiency.staffReputationProfilesByStaffId, [highProficiencyStaff]: createStaffReputationProfile({ values: { competence: 0, reliability: 0, publicStanding: 0 } }) } })
@@ -394,14 +413,14 @@ describe('Reputation / job market', () => {
   })
 
   it('excludes ecosystem-ineligible roles/candidates: creating an opening for an NCAA-only role on a non-NCAA team is rejected at the canonical boundary, not merely filtered out of ranking', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const nonNcaaTeamId = Object.values(base.teams).find((team) => !base.conferenceMemberships.some((membership) => membership.teamId === team.id))?.id as TeamId | undefined
     if (nonNcaaTeamId === undefined) return
     expect(() => createStaffJobOpeningForTeam(base, { teamId: nonNcaaTeamId, roleId: 'recruitingCoordinator' })).toThrow()
   })
 
   it('deterministic stable tie-break: identical candidate pools rank in the same order across calls', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId: staffA } = withFreeAgentStaff(base, 'tie-a')
     const { world: withBoth, staffId: staffB } = withFreeAgentStaff(world, 'tie-b')
@@ -416,7 +435,7 @@ describe('Reputation / job market', () => {
 
 describe('Ecosystem role eligibility cannot be bypassed (Issue #19 review Blocker 3)', () => {
   it('a non-NCAA team can never end up with a hired recruitingCoordinator through the canonical boundary — no opening, no candidacy, no employment, no assignment, no contract', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const nonNcaaTeamId = Object.values(base.teams).find((team) => !base.conferenceMemberships.some((membership) => membership.teamId === team.id))?.id as TeamId | undefined
     if (nonNcaaTeamId === undefined) return
     const { world, staffId } = withFreeAgentStaff(base, 'ecosystem-bypass')
@@ -440,7 +459,7 @@ describe('Ecosystem role eligibility cannot be bypassed (Issue #19 review Blocke
   })
 
   it('promoting a Staff person into an ecosystem-ineligible role on their own team is also rejected', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const nonNcaaTeamId = Object.values(base.teams).find((team) => !base.conferenceMemberships.some((membership) => membership.teamId === team.id))?.id as TeamId | undefined
     if (nonNcaaTeamId === undefined) return
     const { world, staffId } = withFreeAgentStaff(base, 'ecosystem-promote')
@@ -452,7 +471,7 @@ describe('Ecosystem role eligibility cannot be bypassed (Issue #19 review Blocke
 
 describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + reputation + budget context', () => {
   it('a higher-proficiency/higher-reputation candidate can receive a higher offer than a lower one for the identical opening', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withStrong, staffId: strongStaff } = withFreeAgentStaff(base, 'salary-strong', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
     const withStrongRep = updateGameWorld(withStrong, { staffReputationProfilesByStaffId: { ...withStrong.staffReputationProfilesByStaffId, [strongStaff]: createStaffReputationProfile({ values: { competence: 1000, reliability: 1000, publicStanding: 1000 } }) } })
@@ -478,7 +497,7 @@ describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + 
   })
 
   it('seniority still influences the base salary: a director-level role commands more than a standard-level role for otherwise-identical candidates', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withA, staffId: staffA } = withFreeAgentStaff(base, 'seniority-a')
     const { world: withB, staffId: staffB } = withFreeAgentStaff(withA, 'seniority-b')
@@ -502,7 +521,7 @@ describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + 
   })
 
   it('the offer never exceeds the team\'s remaining Staff budget at creation time', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withStaff, staffId } = withFreeAgentStaff(base, 'salary-budget-capped', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
     const withReputation = updateGameWorld(withStaff, { staffReputationProfilesByStaffId: { ...withStaff.staffReputationProfilesByStaffId, [staffId]: createStaffReputationProfile({ values: { competence: 1000, reliability: 1000, publicStanding: 1000 } }) } })
@@ -516,7 +535,7 @@ describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + 
   })
 
   it('is always positive', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withStaff, staffId } = withFreeAgentStaff(base, 'salary-positive', { talentEvaluation: 1, potentialEvaluation: 1, tacticalKnowledge: 1, analysis: 1, communication: 1 })
     const withReputation = updateGameWorld(withStaff, { staffReputationProfilesByStaffId: { ...withStaff.staffReputationProfilesByStaffId, [staffId]: createStaffReputationProfile({ values: { competence: 0, reliability: 0, publicStanding: 0 } }) } })
@@ -528,7 +547,7 @@ describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + 
   })
 
   it('is deterministic: same world + same opening + same staff => same salary', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'salary-deterministic')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -546,7 +565,7 @@ describe('Salary policy (Issue #19 review Blocker 4): seniority + proficiency + 
 
 describe('AI autopilot', () => {
   it('same world + same opening => same hire', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world: withA } = withFreeAgentStaff(base, 'ai-det-a')
     const { world: withBoth } = withFreeAgentStaff(withA, 'ai-det-b')
@@ -559,7 +578,7 @@ describe('AI autopilot', () => {
   })
 
   it('uses the canonical candidacy/interview/offer lifecycle (not a mutation shortcut)', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     const { world, staffId } = withFreeAgentStaff(base, 'ai-lifecycle')
     const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
@@ -572,7 +591,7 @@ describe('AI autopilot', () => {
   })
 
   it('no open candidate => safe no-op', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const teamId = Object.values(base.teams)[0]!.id
     // Strip every Staff reputation profile so rankStaffCandidates finds nobody eligible (identifyStaffCandidate/ranking both require one).
     const noCandidates = updateGameWorld(base, { staffReputationProfilesByStaffId: {} })
@@ -582,7 +601,7 @@ describe('AI autopilot', () => {
   })
 
   it('does not alter unrelated team state', () => {
-    const base = createNewGame()
+    const base = baseCareer()
     const [teamA, teamB] = Object.values(base.teams)
     const { world, staffId } = withFreeAgentStaff(base, 'ai-isolated')
     void staffId

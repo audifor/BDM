@@ -16,6 +16,23 @@ export type IntelligenceFilter =
   | { readonly kind:'KNOWN_STATE'; readonly modes:readonly Exclude<IntelligenceDisplayMode,'UNKNOWN'>[] }
 export interface OrganizationPlayerValuation { readonly currentValue:number; readonly futureValue:number; readonly risk:number; readonly certainty:number; readonly priorityScore:number }
 
+const knowledgeByOrganizationAndPlayer = new WeakMap<readonly OrganizationKnowledge[], Map<OrganizationId, Map<PlayerId, OrganizationKnowledge>>>()
+
+function findKnowledge(knowledge: readonly OrganizationKnowledge[], organizationId: OrganizationId, playerId: PlayerId): OrganizationKnowledge | undefined {
+  let organizations = knowledgeByOrganizationAndPlayer.get(knowledge)
+  if (organizations === undefined) {
+    organizations = new Map()
+    for (const entry of knowledge) {
+      let players = organizations.get(entry.organizationId)
+      if (players === undefined) organizations.set(entry.organizationId, players = new Map())
+      // Preserve Array.find's first-entry authority for duplicate keys.
+      if (!players.has(entry.subjectPlayerId)) players.set(entry.subjectPlayerId, entry)
+    }
+    knowledgeByOrganizationAndPlayer.set(knowledge, organizations)
+  }
+  return organizations.get(organizationId)?.get(playerId)
+}
+
 /** A deterministic institutional identity until organizations become first-class records. */
 export function deriveOrganizationEvaluationPolicy(organizationId:OrganizationId):OrganizationEvaluationPolicy { const n=hash(String(organizationId)); return {riskTolerance:35+n%46,certaintyPreference:35+(n>>>5)%46,upsidePreference:35+(n>>>11)%46,currentAbilityPreference:35+(n>>>17)%46,scoutingReliance:35+(n>>>23)%46} }
 export function getOrganizationRatingEvaluation(input:{readonly organizationId:OrganizationId;readonly playerId:PlayerId;readonly dimension:string;readonly knowledge:readonly OrganizationKnowledge[];readonly currentDate:GameDate;readonly publicPosition?:string}):RatingEvaluation {
@@ -23,7 +40,7 @@ export function getOrganizationRatingEvaluation(input:{readonly organizationId:O
     const derived = deriveAggregateEvaluationFromRatingKnowledge(input, input.dimension)
     if (derived !== undefined) return derived.evaluation
   }
-  const finding=input.knowledge.find(k=>k.organizationId===input.organizationId&&k.subjectPlayerId===input.playerId)?.dimensions[input.dimension]
+  const finding=findKnowledge(input.knowledge,input.organizationId,input.playerId)?.dimensions[input.dimension]
   if(!finding||finding.estimate===undefined)return unknownPrior(input)
   return evaluationFromFinding(finding,input.currentDate,input.dimension.startsWith('potential:'))
 }
@@ -32,7 +49,7 @@ export function deriveAggregateEvaluationFromRatingKnowledge(
   input: { readonly organizationId: OrganizationId; readonly playerId: PlayerId; readonly knowledge: readonly OrganizationKnowledge[]; readonly currentDate: GameDate; readonly publicPosition?: string },
   dimension: PlayerAggregateScoutingDimension,
 ): { readonly evaluation: RatingEvaluation; readonly coverage: number } | undefined {
-  const knowledge = input.knowledge.find((entry) => entry.organizationId === input.organizationId && entry.subjectPlayerId === input.playerId)
+  const knowledge = findKnowledge(input.knowledge, input.organizationId, input.playerId)
   const keys = PLAYER_AGGREGATE_SCOUTING_KEYS[dimension]
   const known = keys.flatMap((key) => {
     const stored = knowledge?.dimensions[ratingKnowledgeDimensionFor(key)]

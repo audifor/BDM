@@ -1,0 +1,715 @@
+[
+  {
+    "window": 1,
+    "cpuMs": 13609,
+    "date": "2032-10-31",
+    "wallMs": 12269.852300000002,
+    "gamesResolved": 66,
+    "before": {
+      "players": 456,
+      "activePlayers": 456,
+      "historicalPlayers": 0,
+      "completedGames": 0,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 0,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 0,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 0,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 0,
+      "completedTrainingSessions": 0,
+      "developmentEvents": 0,
+      "memory": {
+        "rss": 258494464,
+        "heapTotal": 199299072,
+        "heapUsed": 104402368,
+        "external": 2333804,
+        "arrayBuffers": 27730
+      }
+    },
+    "after": {
+      "players": 456,
+      "activePlayers": 456,
+      "historicalPlayers": 0,
+      "completedGames": 66,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 20,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 20,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 888,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 553,
+      "completedTrainingSessions": 529,
+      "developmentEvents": 4657,
+      "memory": {
+        "rss": 309325824,
+        "heapTotal": 242569216,
+        "heapUsed": 136865352,
+        "external": 2325360,
+        "arrayBuffers": 19246
+      }
+    },
+    "phases": {
+      "SEASON_LIFECYCLE": {
+        "ms": 6.539200000003802,
+        "calls": 30,
+        "meanMs": 0.21797333333346008
+      },
+      "PRE_ADVANCE_VALIDATION": {
+        "ms": 0.04,
+        "calls": 30,
+        "meanMs": 0.0013333333333333333
+      },
+      "PRE_MATCH_SELF_HEALING": {
+        "ms": 13.37,
+        "calls": 15,
+        "meanMs": 0.8913333333333333
+      },
+      "MATCH_RESOLUTION": {
+        "ms": 6752.48,
+        "calls": 15,
+        "meanMs": 450.1653333333333
+      },
+      "DATE_ADVANCE": {
+        "ms": 216.70000000000005,
+        "calls": 30,
+        "meanMs": 7.2233333333333345
+      },
+      "CAREER_FATIGUE_RECOVERY": {
+        "ms": 220.92,
+        "calls": 30,
+        "meanMs": 7.364
+      },
+      "EXPIRED_CONTRACT_RECONCILIATION": {
+        "ms": 57.69999999999999,
+        "calls": 30,
+        "meanMs": 1.923333333333333
+      },
+      "RETENTION_NEGOTIATION_INVALIDATION": {
+        "ms": 0.17,
+        "calls": 30,
+        "meanMs": 0.005666666666666667
+      },
+      "AI_RETENTION_NEGOTIATIONS": {
+        "ms": 2.4799999999999995,
+        "calls": 30,
+        "meanMs": 0.08266666666666665
+      },
+      "MARKET_CONTACT_RESPONSES": {
+        "ms": 0.12,
+        "calls": 30,
+        "meanMs": 0.004
+      },
+      "MARKET_FORMAL_OFFER_RESPONSES": {
+        "ms": 0.14,
+        "calls": 30,
+        "meanMs": 0.004666666666666667
+      },
+      "TRAINING": {
+        "ms": 501.7000000000001,
+        "calls": 30,
+        "meanMs": 16.723333333333336
+      },
+      "RECRUITING": {
+        "ms": 0.8000000000000003,
+        "calls": 30,
+        "meanMs": 0.026666666666666675
+      },
+      "NIL_LIFECYCLE": {
+        "ms": 0.04,
+        "calls": 30,
+        "meanMs": 0.0013333333333333333
+      },
+      "ENFORCEMENT": {
+        "ms": 4.069999999999999,
+        "calls": 30,
+        "meanMs": 0.13566666666666666
+      },
+      "SCOUTING_INTAKE": {
+        "ms": 1568.4599999999998,
+        "calls": 30,
+        "meanMs": 52.282
+      },
+      "MEDICAL_AND_ROSTER_ADVISORIES": {
+        "ms": 917.6500000000001,
+        "calls": 30,
+        "meanMs": 30.588333333333335
+      },
+      "AI_MEDICAL_DECISIONS": {
+        "ms": 308.99,
+        "calls": 30,
+        "meanMs": 10.299666666666667
+      },
+      "SCOUTING_ASSIGNMENTS": {
+        "ms": 0.33000000000000007,
+        "calls": 30,
+        "meanMs": 0.011000000000000003
+      },
+      "DRAFT": {
+        "ms": 0.06,
+        "calls": 30,
+        "meanMs": 0.002
+      },
+      "STAFF_HUMAN_STATE": {
+        "ms": 666.6,
+        "calls": 30,
+        "meanMs": 22.220000000000002
+      },
+      "STAFF_CONFLICTS": {
+        "ms": 0.37000000000000016,
+        "calls": 30,
+        "meanMs": 0.012333333333333339
+      },
+      "STAFF_CULTURE_COHESION": {
+        "ms": 376.99,
+        "calls": 30,
+        "meanMs": 12.566333333333334
+      },
+      "STAFF_POLITICAL_CASES": {
+        "ms": 12.339999999999995,
+        "calls": 30,
+        "meanMs": 0.41133333333333316
+      },
+      "STAFF_APPRAISAL": {
+        "ms": 38.38,
+        "calls": 30,
+        "meanMs": 1.2793333333333334
+      },
+      "STAFF_CAREER_AUTONOMY": {
+        "ms": 7.12,
+        "calls": 30,
+        "meanMs": 0.23733333333333334
+      },
+      "SCHEDULE_INTEGRITY": {
+        "ms": 2.9400000000000013,
+        "calls": 30,
+        "meanMs": 0.09800000000000005
+      },
+      "BREAKPOINT_EVALUATION": {
+        "ms": 4,
+        "calls": 30,
+        "meanMs": 0.13333333333333333
+      },
+      "AI_TRAINING_PLANNING": {
+        "ms": 350.92999999999995,
+        "calls": 4,
+        "meanMs": 87.73249999999999
+      }
+    },
+    "worldUpdates": {
+      "updateMs": 4750.395199999951,
+      "updates": 594,
+      "batchedUpdates": 1579,
+      "portalMs": 0,
+      "portalCalls": 0
+    }
+  },
+  {
+    "window": 2,
+    "cpuMs": 20453,
+    "date": "2032-11-30",
+    "wallMs": 19691.958499999997,
+    "gamesResolved": 70,
+    "before": {
+      "players": 456,
+      "activePlayers": 456,
+      "historicalPlayers": 0,
+      "completedGames": 66,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 20,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 20,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 888,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 553,
+      "completedTrainingSessions": 529,
+      "developmentEvents": 4657,
+      "memory": {
+        "rss": 309329920,
+        "heapTotal": 242569216,
+        "heapUsed": 137095288,
+        "external": 2325554,
+        "arrayBuffers": 19246
+      }
+    },
+    "after": {
+      "players": 456,
+      "activePlayers": 456,
+      "historicalPlayers": 0,
+      "completedGames": 136,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 20,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 20,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 1392,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 1274,
+      "completedTrainingSessions": 1146,
+      "developmentEvents": 9754,
+      "memory": {
+        "rss": 349540352,
+        "heapTotal": 277991424,
+        "heapUsed": 160949440,
+        "external": 2325431,
+        "arrayBuffers": 19123
+      }
+    },
+    "phases": {
+      "SEASON_LIFECYCLE": {
+        "ms": 420.2667000000074,
+        "calls": 33,
+        "meanMs": 12.73535454545477
+      },
+      "PRE_ADVANCE_VALIDATION": {
+        "ms": 0.08,
+        "calls": 30,
+        "meanMs": 0.0026666666666666666
+      },
+      "DATE_ADVANCE": {
+        "ms": 267.62,
+        "calls": 30,
+        "meanMs": 8.920666666666667
+      },
+      "CAREER_FATIGUE_RECOVERY": {
+        "ms": 267.53999999999996,
+        "calls": 30,
+        "meanMs": 8.918
+      },
+      "EXPIRED_CONTRACT_RECONCILIATION": {
+        "ms": 57.80000000000002,
+        "calls": 30,
+        "meanMs": 1.9266666666666672
+      },
+      "RETENTION_NEGOTIATION_INVALIDATION": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "AI_RETENTION_NEGOTIATIONS": {
+        "ms": 2.1000000000000005,
+        "calls": 30,
+        "meanMs": 0.07000000000000002
+      },
+      "MARKET_CONTACT_RESPONSES": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "MARKET_FORMAL_OFFER_RESPONSES": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "AI_TRAINING_PLANNING": {
+        "ms": 849.76,
+        "calls": 5,
+        "meanMs": 169.952
+      },
+      "TRAINING": {
+        "ms": 1022.7899999999998,
+        "calls": 30,
+        "meanMs": 34.092999999999996
+      },
+      "RECRUITING": {
+        "ms": 0.4400000000000001,
+        "calls": 30,
+        "meanMs": 0.01466666666666667
+      },
+      "NIL_LIFECYCLE": {
+        "ms": 11.690000000000001,
+        "calls": 30,
+        "meanMs": 0.3896666666666667
+      },
+      "MONTHLY_NIL_AUTONOMY": {
+        "ms": 2405.14,
+        "calls": 1,
+        "meanMs": 2405.14
+      },
+      "MONTHLY_BOOSTER_AUTONOMY": {
+        "ms": 342.84,
+        "calls": 1,
+        "meanMs": 342.84
+      },
+      "COACH_FINANCE": {
+        "ms": 996.46,
+        "calls": 1,
+        "meanMs": 996.46
+      },
+      "MEMORY_DECAY": {
+        "ms": 6.66,
+        "calls": 1,
+        "meanMs": 6.66
+      },
+      "ENFORCEMENT": {
+        "ms": 3.930000000000001,
+        "calls": 30,
+        "meanMs": 0.13100000000000003
+      },
+      "SCOUTING_INTAKE": {
+        "ms": 1690.4899999999998,
+        "calls": 30,
+        "meanMs": 56.34966666666666
+      },
+      "MEDICAL_AND_ROSTER_ADVISORIES": {
+        "ms": 943.1500000000001,
+        "calls": 30,
+        "meanMs": 31.438333333333336
+      },
+      "AI_MEDICAL_DECISIONS": {
+        "ms": 404.07000000000005,
+        "calls": 30,
+        "meanMs": 13.469000000000001
+      },
+      "SCOUTING_ASSIGNMENTS": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "DRAFT": {
+        "ms": 0.7400000000000003,
+        "calls": 30,
+        "meanMs": 0.024666666666666677
+      },
+      "STAFF_HUMAN_STATE": {
+        "ms": 701.4399999999998,
+        "calls": 30,
+        "meanMs": 23.381333333333327
+      },
+      "STAFF_CONFLICTS": {
+        "ms": 0.27,
+        "calls": 30,
+        "meanMs": 0.009000000000000001
+      },
+      "STAFF_CULTURE_COHESION": {
+        "ms": 389.38,
+        "calls": 30,
+        "meanMs": 12.979333333333333
+      },
+      "STAFF_POLITICAL_CASES": {
+        "ms": 11.099999999999996,
+        "calls": 30,
+        "meanMs": 0.3699999999999999
+      },
+      "STAFF_APPRAISAL": {
+        "ms": 55.05,
+        "calls": 30,
+        "meanMs": 1.835
+      },
+      "STAFF_CAREER_AUTONOMY": {
+        "ms": 6.65,
+        "calls": 30,
+        "meanMs": 0.22166666666666668
+      },
+      "FACILITY_CONDITION": {
+        "ms": 0.34,
+        "calls": 1,
+        "meanMs": 0.34
+      },
+      "SCHEDULE_INTEGRITY": {
+        "ms": 4.020000000000001,
+        "calls": 30,
+        "meanMs": 0.13400000000000004
+      },
+      "BREAKPOINT_EVALUATION": {
+        "ms": 5.640000000000001,
+        "calls": 30,
+        "meanMs": 0.18800000000000003
+      },
+      "PRE_MATCH_SELF_HEALING": {
+        "ms": 13.669999999999998,
+        "calls": 18,
+        "meanMs": 0.7594444444444444
+      },
+      "MATCH_RESOLUTION": {
+        "ms": 8788.74,
+        "calls": 18,
+        "meanMs": 488.2633333333333
+      }
+    },
+    "worldUpdates": {
+      "updateMs": 10899.108200000086,
+      "updates": 1174,
+      "batchedUpdates": 1959,
+      "portalMs": 0,
+      "portalCalls": 0
+    }
+  },
+  {
+    "window": 3,
+    "cpuMs": 17063,
+    "date": "2032-12-30",
+    "wallMs": 16932.5685,
+    "gamesResolved": 24,
+    "before": {
+      "players": 456,
+      "activePlayers": 456,
+      "historicalPlayers": 0,
+      "completedGames": 136,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 20,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 20,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 1392,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 1274,
+      "completedTrainingSessions": 1146,
+      "developmentEvents": 9754,
+      "memory": {
+        "rss": 349609984,
+        "heapTotal": 277991424,
+        "heapUsed": 161485560,
+        "external": 2333713,
+        "arrayBuffers": 27405
+      }
+    },
+    "after": {
+      "players": 528,
+      "activePlayers": 528,
+      "historicalPlayers": 0,
+      "completedGames": 160,
+      "scoutingAssignments": 0,
+      "scoutingReports": 0,
+      "territoryAssignments": 20,
+      "scoutingCollections": {
+        "organizationKnowledge": 0,
+        "scoutingAssignmentsById": 0,
+        "evaluatorReportsById": 0,
+        "scoutingTerritoryAssignmentsById": 20,
+        "scoutingRecruitmentFocusesById": 0,
+        "organizationPlayerAwarenessById": 1392,
+        "oppositionScoutingReportsById": 0
+      },
+      "trainingPlans": 48,
+      "individualPlans": 0,
+      "trainingSessions": 1966,
+      "completedTrainingSessions": 1874,
+      "developmentEvents": 14625,
+      "memory": {
+        "rss": 385589248,
+        "heapTotal": 312664064,
+        "heapUsed": 220040336,
+        "external": 2333668,
+        "arrayBuffers": 27360
+      }
+    },
+    "phases": {
+      "SEASON_LIFECYCLE": {
+        "ms": 384.2157000000079,
+        "calls": 33,
+        "meanMs": 11.64290000000024
+      },
+      "PRE_ADVANCE_VALIDATION": {
+        "ms": 0.01,
+        "calls": 30,
+        "meanMs": 0.0003333333333333333
+      },
+      "PRE_MATCH_SELF_HEALING": {
+        "ms": 4.85,
+        "calls": 12,
+        "meanMs": 0.4041666666666666
+      },
+      "MATCH_RESOLUTION": {
+        "ms": 3235.5699999999997,
+        "calls": 12,
+        "meanMs": 269.6308333333333
+      },
+      "DATE_ADVANCE": {
+        "ms": 310.05,
+        "calls": 30,
+        "meanMs": 10.335
+      },
+      "CAREER_FATIGUE_RECOVERY": {
+        "ms": 303.11999999999995,
+        "calls": 30,
+        "meanMs": 10.103999999999997
+      },
+      "EXPIRED_CONTRACT_RECONCILIATION": {
+        "ms": 60.330000000000005,
+        "calls": 30,
+        "meanMs": 2.011
+      },
+      "RETENTION_NEGOTIATION_INVALIDATION": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "AI_RETENTION_NEGOTIATIONS": {
+        "ms": 2.3200000000000007,
+        "calls": 30,
+        "meanMs": 0.07733333333333335
+      },
+      "MARKET_CONTACT_RESPONSES": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "MARKET_FORMAL_OFFER_RESPONSES": {
+        "ms": 0,
+        "calls": 30,
+        "meanMs": 0
+      },
+      "TRAINING": {
+        "ms": 1510.0300000000004,
+        "calls": 30,
+        "meanMs": 50.33433333333335
+      },
+      "RECRUITING": {
+        "ms": 1534.27,
+        "calls": 30,
+        "meanMs": 51.14233333333333
+      },
+      "NIL_LIFECYCLE": {
+        "ms": 24.259999999999998,
+        "calls": 30,
+        "meanMs": 0.8086666666666666
+      },
+      "MONTHLY_NIL_AUTONOMY": {
+        "ms": 2412.45,
+        "calls": 1,
+        "meanMs": 2412.45
+      },
+      "MONTHLY_BOOSTER_AUTONOMY": {
+        "ms": 427.68,
+        "calls": 1,
+        "meanMs": 427.68
+      },
+      "COACH_FINANCE": {
+        "ms": 1250.37,
+        "calls": 1,
+        "meanMs": 1250.37
+      },
+      "MEMORY_DECAY": {
+        "ms": 8.53,
+        "calls": 1,
+        "meanMs": 8.53
+      },
+      "ENFORCEMENT": {
+        "ms": 3.2300000000000004,
+        "calls": 30,
+        "meanMs": 0.10766666666666667
+      },
+      "SCOUTING_INTAKE": {
+        "ms": 1536.7799999999997,
+        "calls": 30,
+        "meanMs": 51.22599999999999
+      },
+      "MEDICAL_AND_ROSTER_ADVISORIES": {
+        "ms": 954.9999999999999,
+        "calls": 30,
+        "meanMs": 31.83333333333333
+      },
+      "AI_MEDICAL_DECISIONS": {
+        "ms": 490.49000000000007,
+        "calls": 30,
+        "meanMs": 16.349666666666668
+      },
+      "SCOUTING_ASSIGNMENTS": {
+        "ms": 0.01,
+        "calls": 30,
+        "meanMs": 0.0003333333333333333
+      },
+      "DRAFT": {
+        "ms": 0.4900000000000002,
+        "calls": 30,
+        "meanMs": 0.016333333333333342
+      },
+      "STAFF_HUMAN_STATE": {
+        "ms": 638.8599999999999,
+        "calls": 30,
+        "meanMs": 21.29533333333333
+      },
+      "STAFF_CONFLICTS": {
+        "ms": 0.19000000000000003,
+        "calls": 30,
+        "meanMs": 0.006333333333333334
+      },
+      "STAFF_CULTURE_COHESION": {
+        "ms": 321.47999999999996,
+        "calls": 30,
+        "meanMs": 10.716
+      },
+      "STAFF_POLITICAL_CASES": {
+        "ms": 8.619999999999996,
+        "calls": 30,
+        "meanMs": 0.28733333333333316
+      },
+      "STAFF_APPRAISAL": {
+        "ms": 51.74999999999999,
+        "calls": 30,
+        "meanMs": 1.7249999999999999
+      },
+      "STAFF_CAREER_AUTONOMY": {
+        "ms": 6.000000000000001,
+        "calls": 30,
+        "meanMs": 0.20000000000000004
+      },
+      "FACILITY_CONDITION": {
+        "ms": 0.04,
+        "calls": 1,
+        "meanMs": 0.04
+      },
+      "SCHEDULE_INTEGRITY": {
+        "ms": 5.450000000000003,
+        "calls": 30,
+        "meanMs": 0.18166666666666675
+      },
+      "BREAKPOINT_EVALUATION": {
+        "ms": 6.620000000000002,
+        "calls": 30,
+        "meanMs": 0.22066666666666673
+      },
+      "AI_TRAINING_PLANNING": {
+        "ms": 1412.0600000000002,
+        "calls": 4,
+        "meanMs": 353.01500000000004
+      }
+    },
+    "worldUpdates": {
+      "updateMs": 9998.472099999795,
+      "updates": 934,
+      "batchedUpdates": 2039,
+      "portalMs": 0.5058999999964726,
+      "portalCalls": 1
+    }
+  }
+]

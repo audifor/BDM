@@ -52,8 +52,8 @@ describe('MX0.6 club facilities read boundary', () => {
     expect(facility.knownConditionComponentCount).toBe(3)
     expect(facility.averageKnownCondition).toBeCloseTo(170 / 3, 4)
     expect(facility.worstKnownCondition).toBe(38)
-    expect([...facility.limitedServiceComponentIds]).toEqual([scenario.physioComponentId, scenario.strengthComponentId])
-    expect([...facility.outOfServiceComponentIds]).toEqual([])
+    expect([...facility.limitedServiceComponentIds]).toEqual([scenario.physioComponentId])
+    expect([...facility.outOfServiceComponentIds]).toEqual([scenario.courtComponentId, scenario.strengthComponentId])
 
     const unassessed = model.components.find((component) => component.componentId === 'component:mx06-office')!
     expect(unassessed.physicalCondition).toBeNull()
@@ -91,7 +91,8 @@ describe('MX0.6 club facilities read boundary', () => {
 
     const inProgress = byId.get(scenario.inProgressProjectId)!
     expect(inProgress.eligibleToStart).toBe(false)
-    expect([...inProgress.actions]).toEqual(['PAUSE', 'COMPLETE', 'CANCEL'])
+    expect([...inProgress.actions]).toEqual(['PAUSE', 'CANCEL'])
+    expect(inProgress.physicalBlockers).toEqual(['PHYSICAL_PHASES_INCOMPLETE'])
     expect(inProgress.delayed).toBe(false)
     expect(inProgress.currentPhase?.name).toBe('Fit out')
     expect(inProgress.phases).toHaveLength(2)
@@ -123,9 +124,11 @@ describe('MX0.6 club facilities read boundary', () => {
 
     expect(model.sporting.teamId).toBe(scenario.teamId)
     const basketballTraining = model.sporting.basketball.capabilities.find((capability) => capability.capability === 'BASKETBALL_TRAINING')
-    expect(basketballTraining?.status).toBe('AVAILABLE')
+    expect(basketballTraining?.status).toBe('UNAVAILABLE')
+    expect(basketballTraining?.reason).toBe('PHYSICAL_WORK')
     const strengthTraining = model.sporting.strengthAndConditioning.capabilities.find((capability) => capability.capability === 'STRENGTH_TRAINING')
-    expect(strengthTraining?.status).toBe('LIMITED')
+    expect(strengthTraining?.status).toBe('UNAVAILABLE')
+    expect(strengthTraining?.reason).toBe('PHYSICAL_WORK')
   })
 
   it('is a pure projection: two builds of the same world are deep-equal', () => {

@@ -6,7 +6,7 @@ import { defaultRecruitingRules } from '@/domain/recruiting'
 import { createGameDate } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { generateRecruitingPool, addRecruitingBoardEntry, rankAiRecruitingTargets } from './RecruitingEngine'
+import { generateLegacyFixtureRecruitingPool as generateRecruitingPool, addRecruitingBoardEntry, rankAiRecruitingTargets } from './RecruitingEngine'
 import { progressRecruitingAdvisories, acceptRecruitingRecommendation } from './RecruitingAdvisory'
 
 type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
@@ -16,7 +16,7 @@ function ncaaWorld(poolSize = 6) {
   const input = createValidGameWorldInput()
   const ncaaInput = { ...input, competitions: input.competitions.map((competition) => ({ ...competition, ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID })) }
   return updateGameWorld(createGameWorld(ncaaInput), {
-    recruitingCycles: [{ id: 'cycle-1', ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, sourceSeasonId: 'season-a' as never, targetSeasonId: 'season-a' as never, opensOn: createGameDate(2032, 10, 1), signingOn: createGameDate(2032, 11, 1), closesOn: createGameDate(2032, 12, 1), status: 'open', rules: { ...defaultRecruitingRules, poolSize, commitmentThreshold: 1 } }],
+    recruitingCycles: [{ id: 'cycle-1', ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, sourceSeasonId: 'season-a' as never, targetSeasonId: 'season-a' as never, opensOn: createGameDate(2032, 10, 1), signingOn: createGameDate(2032, 11, 1), closesOn: createGameDate(2032, 12, 1), status: 'open', rules: { ...defaultRecruitingRules, poolSize, commitmentThreshold: 1 }, calendar: { version: 'test:recruiting-open', source: 'Explicit Recruiting fixture; not NCAA data.', authority: 'testFixture', provenance: 'TEST_FIXTURE', windows: [{ startsOn: createGameDate(2032, 10, 1), endsOn: createGameDate(2032, 12, 1), period: 'recruiting' }] } }],
   })
 }
 

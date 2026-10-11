@@ -1,0 +1,1677 @@
+{
+  "status": "PASS",
+  "certifiedScope": "BS17D-M1 specialized equipped rehabilitation operation",
+  "base": "a5c04bcf64cf74bc06e8fd2d5874313c0edb028f",
+  "finalSha": "Commit containing this evidence; delivered after atomic local commit",
+  "worktree": "C:/BDM-BS17D-M1-IMPLEMENTATION",
+  "branch": "bdm-stage2-bs17d-m1-equipped-rehabilitation",
+  "ancestry": {
+    "a5c04bcf64cf74bc06e8fd2d5874313c0edb028f": true,
+    "43db0beb7da0336892ec1bda84952b6ca9a441c8": true,
+    "fbe788ce01f1dd34fc40b360b4661ebaad63457c": true,
+    "64abd26a50e93fd827f27dccabaa486e0e73dd04": true,
+    "582f517e178ae8a7159237fd3d75e2db4c9d8f87": true,
+    "ece086779ad500833880bc47aad125f60dbc5a66": true,
+    "94c077092224a9f75c861a853d9d52fceae526fe": true,
+    "97c58b98b9192a569f30bdfd8b63565f0b02a744": true,
+    "6945cb90604bd349edd9d2333aa7d1861e9a311a": true
+  },
+  "reports": {
+    "final-focal": {
+      "sourceReport": ".tmp\\bs17dm1p0\\final-focal.json",
+      "sha256": "6e3a4e8dfbe8dc75d488906b674219759d3e068484982a4bcf2835ad739b42b6",
+      "total": 253,
+      "passed": 253,
+      "failed": 0,
+      "files": [
+        {
+          "file": "src/save/GameWorldSaveV4.Facilities.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "round-trips a rich Facilities world through Save V4 with full semantic equivalence",
+              "status": "passed",
+              "durationMs": 3549.0768
+            },
+            {
+              "title": "preserves query equivalence across the full resolver surface, before and after save/load",
+              "status": "passed",
+              "durationMs": 2995.6643999999997
+            },
+            {
+              "title": "preserves query equivalence at a historical date spanning operator change, status closure, and temporary relocation",
+              "status": "passed",
+              "durationMs": 3082.4318000000003
+            },
+            {
+              "title": "does not serialize derived conflicts: facilityRightsConflictsAt is recomputed identically from persisted rights, never stored",
+              "status": "passed",
+              "durationMs": 3044.2924000000003
+            },
+            {
+              "title": "reloading the same save repeatedly is deterministic",
+              "status": "passed",
+              "durationMs": 3334.099699999999
+            },
+            {
+              "title": "Place: nested parent/child places survive, including null geography fields",
+              "status": "passed",
+              "durationMs": 2572.3696999999993
+            },
+            {
+              "title": "Facility: physical profile (including all-null profile) and lifecycle survive",
+              "status": "passed",
+              "durationMs": 2539.322900000003
+            },
+            {
+              "title": "FacilityComponent: independent identity, capacity/quantity, and open/closed dates survive",
+              "status": "passed",
+              "durationMs": 2618.5913999999975
+            },
+            {
+              "title": "FacilityNameRecord: canonical + multiple commercial-name periods survive and resolve identically",
+              "status": "passed",
+              "durationMs": 2422.231200000002
+            },
+            {
+              "title": "FacilityOwnershipInterest: 100%, 60/40, and unknown share all survive with the correct actor kind",
+              "status": "passed",
+              "durationMs": 2487.4026999999987
+            },
+            {
+              "title": "FacilityOwnershipInterest with a PERSON owner actor survives",
+              "status": "passed",
+              "durationMs": 2696.2752
+            },
+            {
+              "title": "FacilityControlRight: survives and controllersOfFacilityAt returns exactly the same result after reload",
+              "status": "passed",
+              "durationMs": 2936.8269999999975
+            },
+            {
+              "title": "FacilityOperatorAssignment: owner==operator, owner!=operator, and historical operator change all survive",
+              "status": "passed",
+              "durationMs": 2906.3974000000017
+            },
+            {
+              "title": "FacilityUsageRight: exclusivity, priority, component scope, and agreementReferenceId all survive without type collapse",
+              "status": "passed",
+              "durationMs": 2791.265800000001
+            },
+            {
+              "title": "FacilityUsageRight: whole-facility scope (componentIds: null) survives distinctly from a component-scoped right",
+              "status": "passed",
+              "durationMs": 3426.837400000004
+            },
+            {
+              "title": "FacilityOrganizationRelationship and FacilityTeamRelationship: kinds and historical periods survive",
+              "status": "passed",
+              "durationMs": 3005.303500000002
+            },
+            {
+              "title": "FacilityCompetitionApproval: approved/not-approved and temporal window survive",
+              "status": "passed",
+              "durationMs": 2863.5072
+            },
+            {
+              "title": "FacilityStatusRecord: multi-period lifecycle history round-trips and facilityStatusAt matches at each period",
+              "status": "passed",
+              "durationMs": 2767.4161999999997
+            },
+            {
+              "title": "migrates a genuinely pre-Facilities V1 save to V4 with valid, empty Facilities collections",
+              "status": "passed",
+              "durationMs": 3205.333400000003
+            },
+            {
+              "title": "migrates a V2 save (no Facilities) to V4 with valid, empty Facilities collections",
+              "status": "passed",
+              "durationMs": 3263.095000000001
+            },
+            {
+              "title": "migrates a V3 save (no Facilities) to V4 with valid, empty Facilities collections",
+              "status": "passed",
+              "durationMs": 2510.311800000003
+            },
+            {
+              "title": "a real V3 save already carrying Facilities-independent state migrates cleanly and old saves need no fictitious Facilities data",
+              "status": "passed",
+              "durationMs": 2163.5067000000054
+            },
+            {
+              "title": "rejects a bad ownership percentage",
+              "status": "passed",
+              "durationMs": 4588.6826
+            },
+            {
+              "title": "rejects an unknown enum value for Facility status",
+              "status": "passed",
+              "durationMs": 2675.2842999999993
+            },
+            {
+              "title": "rejects a malformed temporal interval (validTo before validFrom)",
+              "status": "passed",
+              "durationMs": 3134.2978999999905
+            },
+            {
+              "title": "rejects an invalid FacilityUsageRight shape (missing both team and organization beneficiary)",
+              "status": "passed",
+              "durationMs": 3173.644199999995
+            },
+            {
+              "title": "rejects an invalid component scope (empty array)",
+              "status": "passed",
+              "durationMs": 6792.443599999999
+            },
+            {
+              "title": "rejects an unknown property on a Facility record (exactKeys)",
+              "status": "passed",
+              "durationMs": 2872.1419999999925
+            },
+            {
+              "title": "rejects a malformed discriminated union (unknown ownership actor kind)",
+              "status": "passed",
+              "durationMs": 3180.7318000000087
+            },
+            {
+              "title": "rejects a missing component reference in a component-scoped usage right at the domain-validation boundary",
+              "status": "passed",
+              "durationMs": 3269.9406000000017
+            }
+          ]
+        },
+        {
+          "file": "src/save/GameWorldSaveV4.FacilityOperations.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "round-trips a FacilityMaintenanceNeed, including its optional componentId and resolvedAt",
+              "status": "passed",
+              "durationMs": 4994.5786
+            },
+            {
+              "title": "round-trips a facility-level FacilityMaintenanceNeed with a null componentId",
+              "status": "passed",
+              "durationMs": 4559.4354
+            },
+            {
+              "title": "round-trips a FacilityMaintenanceAction with a resultingCondition/resultingServiceability effect",
+              "status": "passed",
+              "durationMs": 4387.7443
+            },
+            {
+              "title": "round-trips a FacilityMaintenanceAction still in progress (null completedAt/outcome/resultingCondition)",
+              "status": "passed",
+              "durationMs": 4183.889800000001
+            },
+            {
+              "title": "round-trips a FacilityInspection that identified a maintenance need, preserving the cross-reference",
+              "status": "passed",
+              "durationMs": 4475.242900000001
+            },
+            {
+              "title": "round-trips a FacilityInspection with NO_ISSUE and no cross-reference",
+              "status": "passed",
+              "durationMs": 3906.1896000000015
+            },
+            {
+              "title": "round-trips a FacilityOperationalIncident affecting a component and its serviceability effect",
+              "status": "passed",
+              "durationMs": 4288.926300000003
+            },
+            {
+              "title": "a pre-CFI5 V4 payload (missing all four new collections entirely) still loads with empty, valid defaults",
+              "status": "passed",
+              "durationMs": 3889.808499999999
+            },
+            {
+              "title": "a reloaded world reproduces identical deterioration progression to the pre-save world for the same period",
+              "status": "passed",
+              "durationMs": 3273.761200000001
+            }
+          ]
+        },
+        {
+          "file": "src/app/game/BS15BS16BS17Convergence.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "rejects malformed physical attempt facts through batched full publication without mutating input",
+              "status": "passed",
+              "durationMs": 149.76339999999982
+            },
+            {
+              "title": "rejects malformed physical attempt facts through batched incremental publication without mutating input",
+              "status": "passed",
+              "durationMs": 151.52469999999994
+            },
+            {
+              "title": "runs Talent supply, Finance and scoped Training on the same day; restoration retries only unexecuted work",
+              "status": "passed",
+              "durationMs": 1436.6678999999995
+            },
+            {
+              "title": "round-trips the combined V4 twice with historical Talent, NCAA, Finance and physical attempts",
+              "status": "passed",
+              "durationMs": 2821.6800999999996
+            },
+            {
+              "title": "publishes an identical immutable world through sync and async commands with the physical gate",
+              "status": "passed",
+              "durationMs": 1780.5794000000005
+            }
+          ]
+        },
+        {
+          "file": "src/app/youth/YouthFacilitiesIntegration.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "keeps male intake, candidate identity, materialization and registration independent of physical service/access",
+              "status": "passed",
+              "durationMs": 258.15599999999995
+            },
+            {
+              "title": "keeps female intake, candidate identity, materialization and registration independent of physical service/access",
+              "status": "passed",
+              "durationMs": 162.27209999999968
+            },
+            {
+              "title": "a real registered male youth Player trains through the existing P0 owner; outage blocks only its court module",
+              "status": "passed",
+              "durationMs": 68.71900000000005
+            },
+            {
+              "title": "a real registered female youth Player trains through the existing P0 owner; outage blocks only its court module",
+              "status": "passed",
+              "durationMs": 44.36400000000003
+            },
+            {
+              "title": "handles UNKNOWN without inventing youth capacity or changing the supply authority",
+              "status": "passed",
+              "durationMs": 53.24969999999985
+            },
+            {
+              "title": "handles LIMITED without inventing youth capacity or changing the supply authority",
+              "status": "passed",
+              "durationMs": 43.37400000000025
+            },
+            {
+              "title": "handles DENIED without inventing youth capacity or changing the supply authority",
+              "status": "passed",
+              "durationMs": 40.0630000000001
+            },
+            {
+              "title": "handles EXPIRED without inventing youth capacity or changing the supply authority",
+              "status": "passed",
+              "durationMs": 39.08299999999963
+            },
+            {
+              "title": "shared Team rights do not invent slots, exclusivity or additional Players",
+              "status": "passed",
+              "durationMs": 41.3429000000001
+            },
+            {
+              "title": "Calendar executes youth Training once, preserves supply/Finance and reloads a pending physical attempt",
+              "status": "passed",
+              "durationMs": 181.58590000000004
+            }
+          ]
+        },
+        {
+          "file": "src/engine/calendar/CalendarEngine.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "advances one day immutably without auto-applying the legacy training plan pipeline",
+              "status": "passed",
+              "durationMs": 212.83050000000003
+            },
+            {
+              "title": "returns a deterministic ordered phase trace and keeps unsupported systems explicit",
+              "status": "passed",
+              "durationMs": 90.7161000000001
+            },
+            {
+              "title": "processes a due formal offer after date advance, contract reconciliation, and contact responses",
+              "status": "passed",
+              "durationMs": 4074.8298999999997
+            },
+            {
+              "title": "plans AI Training after fatigue recovery and before the scheduled executor",
+              "status": "passed",
+              "durationMs": 48.225500000000466
+            },
+            {
+              "title": "advances correctly over date boundaries",
+              "status": "passed",
+              "durationMs": 87.26729999999952
+            },
+            {
+              "title": "advances correctly over date boundaries",
+              "status": "passed",
+              "durationMs": 71.27410000000054
+            },
+            {
+              "title": "advances correctly over date boundaries",
+              "status": "passed",
+              "durationMs": 38.22440000000006
+            },
+            {
+              "title": "advances exactly one day regardless of games, competitions, or season state",
+              "status": "passed",
+              "durationMs": 44.11039999999957
+            },
+            {
+              "title": "advances exactly N days over N calls with no future games remaining",
+              "status": "passed",
+              "durationMs": 569.5371000000005
+            },
+            {
+              "title": "does not block on a completed CompetitionSeason with no active competition",
+              "status": "passed",
+              "durationMs": 905.7439999999997
+            },
+            {
+              "title": "crosses 30 June without stopping or altering the daily step",
+              "status": "passed",
+              "durationMs": 235.07980000000134
+            },
+            {
+              "title": "crosses 31 December to 1 January",
+              "status": "passed",
+              "durationMs": 51.65480000000025
+            },
+            {
+              "title": "handles a leap year 28 February to 29 February",
+              "status": "passed",
+              "durationMs": 40.75350000000071
+            },
+            {
+              "title": "produces a valid empty day with no games, transfers, or events",
+              "status": "passed",
+              "durationMs": 332.91849999999977
+            },
+            {
+              "title": "never jumps more than one day per advanceDay call, with or without a game tomorrow",
+              "status": "passed",
+              "durationMs": 47.369699999999284
+            },
+            {
+              "title": "advances 365 consecutive days to exactly one calendar year later",
+              "status": "passed",
+              "durationMs": 6486.2286
+            },
+            {
+              "title": "preserves completed games while advancing the date",
+              "status": "passed",
+              "durationMs": 46.28989999999976
+            },
+            {
+              "title": "finds scheduled games on the first and fifth days but none in between",
+              "status": "passed",
+              "durationMs": 79.65300000000025
+            },
+            {
+              "title": "derives the user team and its next scheduled game",
+              "status": "passed",
+              "durationMs": 35.45219999999972
+            },
+            {
+              "title": "returns no user team or next game when the user coach is unemployed",
+              "status": "passed",
+              "durationMs": 48.8145999999997
+            },
+            {
+              "title": "skips completed and past user games when finding the next one",
+              "status": "passed",
+              "durationMs": 58.16160000000127
+            },
+            {
+              "title": "returns no next user game after all of the user team games are completed",
+              "status": "passed",
+              "durationMs": 115.14500000000044
+            },
+            {
+              "title": "reports current date status for days with and without games",
+              "status": "passed",
+              "durationMs": 37.075300000000425
+            },
+            {
+              "title": "keeps a completed user game visible in current date status while removing it from scheduled games",
+              "status": "passed",
+              "durationMs": 34.89649999999892
+            },
+            {
+              "title": "integrates current-date inspection, simulation, result application, standings, and progression",
+              "status": "passed",
+              "durationMs": 128.34140000000116
+            }
+          ]
+        },
+        {
+          "file": "src/engine/facilities/PhysicalAllocationEngine.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "does not create a physical requirement for an independent Training module",
+              "status": "passed",
+              "durationMs": 196.54730000000018
+            },
+            {
+              "title": "keeps an unknown interval unverified rather than fabricating a slot",
+              "status": "passed",
+              "durationMs": 82.42140000000018
+            },
+            {
+              "title": "distinguishes a missing selected component from a completely unknown legacy infrastructure",
+              "status": "passed",
+              "durationMs": 80.22469999999976
+            },
+            {
+              "title": "retains executed physical occupancy across midnight for a later overlapping request",
+              "status": "passed",
+              "durationMs": 117.16330000000016
+            },
+            {
+              "title": "uses peak overlapping occupancy rather than adding groups that occupy different intervals",
+              "status": "passed",
+              "durationMs": 91.54599999999982
+            },
+            {
+              "title": "rejects malformed and overbooked Save evidence without inventing reservations for an old payload",
+              "status": "passed",
+              "durationMs": 181.1295
+            },
+            {
+              "title": "keeps request/release commands and their history idempotent",
+              "status": "passed",
+              "durationMs": 79.84469999999965
+            },
+            {
+              "title": "confirms eight explicit male youth participants against ten and executes/reloads exactly once",
+              "status": "passed",
+              "durationMs": 201.1196
+            },
+            {
+              "title": "confirms eight explicit female youth participants against ten and executes/reloads exactly once",
+              "status": "passed",
+              "durationMs": 141.7138
+            },
+            {
+              "title": "changes only nominal capacity: twelve cannot reserve ten; twelve can reserve twelve",
+              "status": "passed",
+              "durationMs": 62.97890000000007
+            },
+            {
+              "title": "keeps unknown-capacity unverified, without a fictional reservation or sporting penalty",
+              "status": "passed",
+              "durationMs": 63.48689999999988
+            },
+            {
+              "title": "keeps unknown-demand unverified, without a fictional reservation or sporting penalty",
+              "status": "passed",
+              "durationMs": 55.721300000000156
+            },
+            {
+              "title": "keeps incompatible-unit unverified, without a fictional reservation or sporting penalty",
+              "status": "passed",
+              "durationMs": 57.4064000000003
+            },
+            {
+              "title": "keeps LIMITED unverified, without a fictional reservation or sporting penalty",
+              "status": "passed",
+              "durationMs": 55.590200000000095
+            },
+            {
+              "title": "keeps confirmed prior allocation at 10:00; consecutive intervals remain compatible",
+              "status": "passed",
+              "durationMs": 63.04559999999992
+            },
+            {
+              "title": "keeps confirmed prior allocation at 10:30; consecutive intervals remain compatible",
+              "status": "passed",
+              "durationMs": 56.97890000000007
+            },
+            {
+              "title": "keeps confirmed prior allocation at 11:00; consecutive intervals remain compatible",
+              "status": "passed",
+              "durationMs": 53.337299999999686
+            },
+            {
+              "title": "does not choose a winner between simultaneous pending requests",
+              "status": "passed",
+              "durationMs": 62.95310000000018
+            },
+            {
+              "title": "requires explicit shareability rather than treating two small groups as automatically compatible",
+              "status": "passed",
+              "durationMs": 96.12810000000036
+            },
+            {
+              "title": "offers a real alternate component and requires manager selection before moving",
+              "status": "passed",
+              "durationMs": 60.12039999999979
+            },
+            {
+              "title": "blocks parent/child double booking, even when the parent explicitly supports shared capacity",
+              "status": "passed",
+              "durationMs": 50.93100000000004
+            },
+            {
+              "title": "respects expired rights without ownership inheritance",
+              "status": "passed",
+              "durationMs": 52.53490000000056
+            },
+            {
+              "title": "respects Organization-only rights without ownership inheritance",
+              "status": "passed",
+              "durationMs": 55.86779999999999
+            },
+            {
+              "title": "respects midnight-expiry rights without ownership inheritance",
+              "status": "passed",
+              "durationMs": 51.99409999999989
+            },
+            {
+              "title": "revalidates a breakdown after confirmation, blocks stimuli and permits explicit restoration/rescheduling exactly once",
+              "status": "passed",
+              "durationMs": 116.54169999999976
+            },
+            {
+              "title": "preserves the original booking atomically when the new interval is occupied",
+              "status": "passed",
+              "durationMs": 69.07010000000082
+            },
+            {
+              "title": "reevaluates a changed explicit participant selection before effects",
+              "status": "passed",
+              "durationMs": 55.29190000000017
+            },
+            {
+              "title": "cancels/releases idempotently without removing legitimate source/history or executing a cancelled session",
+              "status": "passed",
+              "durationMs": 84.57150000000001
+            },
+            {
+              "title": "keeps partial works scoped and retains continuity for a legacy session without a physical request",
+              "status": "passed",
+              "durationMs": 59.14210000000003
+            },
+            {
+              "title": "F1-A prevents an unallocated individual from consuming another Team exclusive reservation",
+              "status": "passed",
+              "durationMs": 49.56420000000071
+            },
+            {
+              "title": "F1-B release does not permit consumption of a later confirmed reservation",
+              "status": "passed",
+              "durationMs": 52.08680000000004
+            },
+            {
+              "title": "F1-C Save/reload preserves the confirmed authority and blocks released consumption",
+              "status": "passed",
+              "durationMs": 81.28110000000015
+            },
+            {
+              "title": "keeps two known unreserved exclusive consumers unresolved regardless of iteration order",
+              "status": "passed",
+              "durationMs": 54.561899999999696
+            },
+            {
+              "title": "preserves unreserved available continuity without an implicit reservation",
+              "status": "passed",
+              "durationMs": 57.7457000000004
+            },
+            {
+              "title": "preserves unreserved unknown continuity without an implicit reservation",
+              "status": "passed",
+              "durationMs": 49.97740000000067
+            },
+            {
+              "title": "preserves unreserved independent continuity without an implicit reservation",
+              "status": "passed",
+              "durationMs": 45.36119999999937
+            },
+            {
+              "title": "allows consecutive unreserved sessions without confusing same-day use with overlap",
+              "status": "passed",
+              "durationMs": 50.5649999999996
+            },
+            {
+              "title": "shares only explicitly divisible capacity 10 without iteration priority",
+              "status": "passed",
+              "durationMs": 50.755699999999706
+            },
+            {
+              "title": "shares only explicitly divisible capacity 8 without iteration priority",
+              "status": "passed",
+              "durationMs": 54.48559999999998
+            },
+            {
+              "title": "retains a released explicit resource and offers an alternative without moving automatically",
+              "status": "passed",
+              "durationMs": 80.61300000000028
+            },
+            {
+              "title": "does not revive cancelled work when its old resource is confirmed by another Team",
+              "status": "passed",
+              "durationMs": 56.15769999999975
+            },
+            {
+              "title": "checks the unreserved expired physical context",
+              "status": "passed",
+              "durationMs": 48.11999999999989
+            },
+            {
+              "title": "checks the unreserved insufficient physical context",
+              "status": "passed",
+              "durationMs": 55.69220000000041
+            },
+            {
+              "title": "checks the unreserved incompatible-unit physical context",
+              "status": "passed",
+              "durationMs": 60.38519999999971
+            },
+            {
+              "title": "checks the unreserved unknown-demand physical context",
+              "status": "passed",
+              "durationMs": 48.972900000000664
+            },
+            {
+              "title": "invalidates physical consumption queries after confirm, release and rescheduling",
+              "status": "passed",
+              "durationMs": 79.02480000000014
+            },
+            {
+              "title": "respects overlapping explicit released component scopes without iteration priority",
+              "status": "passed",
+              "durationMs": 68.6269000000002
+            },
+            {
+              "title": "respects separate explicit released component scopes without iteration priority",
+              "status": "passed",
+              "durationMs": 63.78449999999975
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/EquippedRehabilitation.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "requires explicit clinical authorization rather than assignment or advisory quality",
+              "status": "passed",
+              "durationMs": 23.061900000000605
+            },
+            {
+              "title": "does not indicate for an ineligible injury and never derives acts from plan mode",
+              "status": "passed",
+              "durationMs": 29.411700000000565
+            },
+            {
+              "title": "preserves identity, indication and confirmation idempotency without recording reservation as execution",
+              "status": "passed",
+              "durationMs": 3.7827999999972235
+            },
+            {
+              "title": "executes through Calendar, persists fulfillment and cannot execute twice",
+              "status": "passed",
+              "durationMs": 621.4714999999997
+            },
+            {
+              "title": "cancelled indications and sessions cannot execute or revive through scheduling",
+              "status": "passed",
+              "durationMs": 1155.7018000000025
+            },
+            {
+              "title": "revalidates OUT_OF_SERVICE physical state without healing, fatigue, fitness or RTP effects",
+              "status": "passed",
+              "durationMs": 262.6830000000009
+            },
+            {
+              "title": "revalidates LIMITED physical state without healing, fatigue, fitness or RTP effects",
+              "status": "passed",
+              "durationMs": 210.0119999999988
+            },
+            {
+              "title": "allows specifically verified LIMITED function; capability alone and UNKNOWN never fabricate completion",
+              "status": "passed",
+              "durationMs": 447.0077999999994
+            },
+            {
+              "title": "revalidates expired rights, explicit incompatible equipment and professional grants",
+              "status": "passed",
+              "durationMs": 332.52200000000084
+            },
+            {
+              "title": "Medical confirmed occupancy prevents unreserved Training, including after reload",
+              "status": "passed",
+              "durationMs": 602.5225000000028
+            },
+            {
+              "title": "Training confirmed occupancy prevents Medical without its own reservation",
+              "status": "passed",
+              "durationMs": 745.2543000000005
+            },
+            {
+              "title": "unreserved overlapping consumers receive no incidental iteration priority",
+              "status": "passed",
+              "durationMs": 147.06080000000293
+            },
+            {
+              "title": "consecutive intervals coexist, and failed rescheduling preserves the original booking",
+              "status": "passed",
+              "durationMs": 154.060300000001
+            },
+            {
+              "title": "released/cancelled claims stop reserving resources and restoration can retry unexecuted acts",
+              "status": "passed",
+              "durationMs": 146.26420000000144
+            },
+            {
+              "title": "keeps old saves free of retroactive acts and protects fulfillment source invariants",
+              "status": "passed",
+              "durationMs": 451.21389999999883
+            },
+            {
+              "title": "separates permission to indicate from permission to perform and rejects a wrong assignment",
+              "status": "passed",
+              "durationMs": 95.06010000000242
+            },
+            {
+              "title": "checks medical-purpose rights and their validity over a midnight-crossing interval",
+              "status": "passed",
+              "durationMs": 292.98049999999785
+            },
+            {
+              "title": "can select a real compatible independent alternative without duplicating the act",
+              "status": "passed",
+              "durationMs": 724.4251000000004
+            },
+            {
+              "title": "does not equate patients to stations or manufacture a confirmed shared-capacity booking",
+              "status": "passed",
+              "durationMs": 138.54300000000148
+            },
+            {
+              "title": "rejects same-day requests that the next-day Calendar cannot execute",
+              "status": "passed",
+              "durationMs": 0.7691999999988184
+            },
+            {
+              "title": "rejects missing or perform-only prescribing evidence on Save reload",
+              "status": "passed",
+              "durationMs": 684.5803000000014
+            },
+            {
+              "title": "replays accepted commands after completion or revocation without new acts or claims",
+              "status": "passed",
+              "durationMs": 1202.2696000000033
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/MedicalAdvisory.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "active injury + genuine advisory holder produces a returnToPlayRecommendation and treatmentRecommendation DelegationOutcome, applied: false",
+              "status": "passed",
+              "durationMs": 2946.0837000000006
+            },
+            {
+              "title": "userControlled produces no Staff-authored medical outcome",
+              "status": "passed",
+              "durationMs": 2545.0184
+            },
+            {
+              "title": "organizational produces no Staff-authored medical outcome",
+              "status": "passed",
+              "durationMs": 3568.4848
+            },
+            {
+              "title": "vacant (no responsibility row at all) produces no Staff-authored medical outcome",
+              "status": "passed",
+              "durationMs": 2902.527899999999
+            },
+            {
+              "title": "exactly-once: repeated processing of the same injury/kind does not spam duplicate outcomes",
+              "status": "passed",
+              "durationMs": 2129.8229999999985
+            },
+            {
+              "title": "recommendedExtraDays is always inside the frozen [-2, +5] bounds",
+              "status": "passed",
+              "durationMs": 2245.334499999997
+            },
+            {
+              "title": "conservative (low temperament) vs aggressive (high temperament) personality produce discriminating recommendations on average",
+              "status": "passed",
+              "durationMs": 3839.107
+            },
+            {
+              "title": "medicalQuality materially affects the downstream recommendation: high quality clusters tightly, low quality disperses, with neutral temperament",
+              "status": "passed",
+              "durationMs": 3523.8064000000013
+            },
+            {
+              "title": "overload degradation of medicalQuality reaches the downstream recommendation: an overloaded holder disperses more than a non-overloaded one with identical attributes/temperament",
+              "status": "passed",
+              "durationMs": 3286.4542
+            },
+            {
+              "title": "recommendedExtraDays remains deterministic: same world produces the same result across repeated progression",
+              "status": "passed",
+              "durationMs": 2737.9274000000005
+            },
+            {
+              "title": "accepts a valid recommendation: updates only the referenced InjuryRecord, marks the outcome applied:true",
+              "status": "passed",
+              "durationMs": 3885.6534999999967
+            },
+            {
+              "title": "a late second medical recommendation freezes the ORIGINAL baseline, not the already-adjusted date: no compounding",
+              "status": "passed",
+              "durationMs": 2977.6471999999994
+            },
+            {
+              "title": "baseline resolution is deterministic when prior outcomes already exist for the injury, regardless of outcome iteration order",
+              "status": "passed",
+              "durationMs": 2798.4429999999993
+            },
+            {
+              "title": "exactly-once holds across repeated progression even after a baseline has been frozen by acceptance",
+              "status": "passed",
+              "durationMs": 2889.7410999999993
+            },
+            {
+              "title": "never produces a return date <= injuredOn",
+              "status": "passed",
+              "durationMs": 2671.155200000001
+            },
+            {
+              "title": "rejects an already-applied outcome atomically (no mutation)",
+              "status": "passed",
+              "durationMs": 2342.4716000000044
+            },
+            {
+              "title": "rejects a nonexistent outcome id atomically",
+              "status": "passed",
+              "durationMs": 2686.6542000000045
+            },
+            {
+              "title": "rejects a malformed payload atomically without mutating anything",
+              "status": "passed",
+              "durationMs": 2411.4855000000025
+            },
+            {
+              "title": "rejects a stale outcome referencing a since-removed injury atomically",
+              "status": "passed",
+              "durationMs": 2410.3242000000027
+            },
+            {
+              "title": "rejects an out-of-bounds recommendedExtraDays atomically",
+              "status": "passed",
+              "durationMs": 2686.7638000000006
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/MedicalChronology.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "refuses a rehabilitation plan for an injury that has not happened yet",
+              "status": "passed",
+              "durationMs": 2461.6671
+            },
+            {
+              "title": "runs a whole rehabilitation lifecycle, across a save/load, into the Return-to-Play review",
+              "status": "passed",
+              "durationMs": 2270.9885000000004
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/MedicalPhysicalCompatibility.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "changes CFI8 imaging to LIMITED without changing clinical commands/results",
+              "status": "passed",
+              "durationMs": 207.36470000000008
+            },
+            {
+              "title": "changes CFI8 imaging to OUT_OF_SERVICE without changing clinical commands/results",
+              "status": "passed",
+              "durationMs": 192.3114999999998
+            },
+            {
+              "title": "denies known equipment access without denying unrelated clinical operations",
+              "status": "passed",
+              "durationMs": 164.1867999999995
+            },
+            {
+              "title": "preserves clinical continuity when physical information is absent",
+              "status": "passed",
+              "durationMs": 157.29770000000008
+            },
+            {
+              "title": "restores physical availability without inventing a clinical recovery effect",
+              "status": "passed",
+              "durationMs": 173.8238999999994
+            },
+            {
+              "title": "recognizes an entitled alternative as context, not as execution of a treatment",
+              "status": "passed",
+              "durationMs": 178.8690000000006
+            },
+            {
+              "title": "round-trips physical and clinical facts and preserves productive Medical behavior after reload",
+              "status": "passed",
+              "durationMs": 1542.4096999999992
+            },
+            {
+              "title": "clears an eligible clinical review with no specialist equipment and does not change fatigue",
+              "status": "passed",
+              "durationMs": 63.6328999999987
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/RehabilitationFitnessTest.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "does not start rehabilitation before a future-dated injury",
+              "status": "passed",
+              "durationMs": 3946.0328
+            },
+            {
+              "title": "lets the user change an active rehab plan and applies small elapsed recovery projections without changing fatigue",
+              "status": "passed",
+              "durationMs": 3986.4168
+            },
+            {
+              "title": "selects AI rehab through the same plan authority and recommendation-aware deterministic policy",
+              "status": "passed",
+              "durationMs": 2854.8938
+            },
+            {
+              "title": "keeps setback risk ordered and deterministic, records at most one setback per recovery week, and adds no injury",
+              "status": "passed",
+              "durationMs": 3808.691499999999
+            },
+            {
+              "title": "requires a test for serious or related moderate injuries and shares the PASS gate with RTP",
+              "status": "passed",
+              "durationMs": 3641.4665000000023
+            },
+            {
+              "title": "records a failed test once, schedules another review, and keeps the player unavailable without creating an injury",
+              "status": "passed",
+              "durationMs": 3435.6373999999996
+            },
+            {
+              "title": "lets AI run the required fitness test through the same service before its RTP decision",
+              "status": "passed",
+              "durationMs": 3237.790000000001
+            }
+          ]
+        },
+        {
+          "file": "src/engine/injury/ReturnToPlayEngine.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "creates new injuries in recovery and keeps them unavailable through review due",
+              "status": "passed",
+              "durationMs": 3232.4135
+            },
+            {
+              "title": "requires a user-team action at RTP review and CLEAR records evidence without changing fatigue",
+              "status": "passed",
+              "durationMs": 3286.564699999999
+            },
+            {
+              "title": "CONTINUE RECOVERY records the review, keeps the player unavailable, and schedules a next-day review",
+              "status": "passed",
+              "durationMs": 3764.7412000000004
+            },
+            {
+              "title": "prevents duplicate decisions and rejects a user action against an AI club",
+              "status": "passed",
+              "durationMs": 3562.5815000000002
+            },
+            {
+              "title": "AI clears its due injury through the shared decision service without a user breakpoint",
+              "status": "passed",
+              "durationMs": 3450.5780000000013
+            },
+            {
+              "title": "Calendar creates the user review breakpoint after date advance and resolves AI reviews after advisory processing",
+              "status": "passed",
+              "durationMs": 3701.0843000000023
+            },
+            {
+              "title": "AI accepts pending medical Staff advice through the canonical recommendation acceptance seam",
+              "status": "passed",
+              "durationMs": 3508.3665999999976
+            }
+          ]
+        },
+        {
+          "file": "src/engine/recruiting/RecruitingFacilityDemonstration.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "records FULL execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+              "status": "passed",
+              "durationMs": 190.54510000000005
+            },
+            {
+              "title": "records LIMITED execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+              "status": "passed",
+              "durationMs": 98.24409999999989
+            },
+            {
+              "title": "records OUT_OF_SERVICE execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+              "status": "passed",
+              "durationMs": 78.82230000000027
+            },
+            {
+              "title": "causally changes only the demonstration when the same court goes out of service",
+              "status": "passed",
+              "durationMs": 53.98309999999992
+            },
+            {
+              "title": "does not turn Organization ownership or DENIED Team rights into usable access",
+              "status": "passed",
+              "durationMs": 57.29200000000037
+            },
+            {
+              "title": "does not turn Organization ownership or EXPIRED Team rights into usable access",
+              "status": "passed",
+              "durationMs": 55.76969999999983
+            },
+            {
+              "title": "LIMITED full-court demonstration rejects a known half-court specification without blocking the visit",
+              "status": "passed",
+              "durationMs": 63.72280000000001
+            },
+            {
+              "title": "known incompatible capability is blocked, not misclassified as missing context",
+              "status": "passed",
+              "durationMs": 59.23649999999998
+            },
+            {
+              "title": "unknown service evidence cannot certify a demonstration and actual BS17C component work prevents it",
+              "status": "passed",
+              "durationMs": 69.3121000000001
+            },
+            {
+              "title": "offers a legitimate alternative through a retry of one activity, then never completes it twice",
+              "status": "passed",
+              "durationMs": 61.3443000000002
+            },
+            {
+              "title": "UNKNOWN keeps the visit result and records no verified demonstration; not selected keeps the old payload",
+              "status": "passed",
+              "durationMs": 48.457400000000234
+            },
+            {
+              "title": "restoration and reload replay no visit or activity; Calendar cannot automatically complete a blocked demonstration",
+              "status": "passed",
+              "durationMs": 115.60590000000002
+            },
+            {
+              "title": "preserves official NCAA permission and count rules, including a dead-period rejection with no partial activity",
+              "status": "passed",
+              "durationMs": 45.38729999999987
+            },
+            {
+              "title": "preserves unofficial NCAA permission and count rules, including a dead-period rejection with no partial activity",
+              "status": "passed",
+              "durationMs": 46.385299999999916
+            }
+          ]
+        },
+        {
+          "file": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "executes team training with rights, blocks OOS without any sporting effects",
+              "status": "passed",
+              "durationMs": 3870.6758999999997
+            },
+            {
+              "title": "executes individual training with rights, blocks OOS without any sporting effects",
+              "status": "passed",
+              "durationMs": 3202.500400000001
+            },
+            {
+              "title": "does not infer Team rights from an Organization-only entitlement",
+              "status": "passed",
+              "durationMs": 2812.1944999999996
+            },
+            {
+              "title": "honors temporary rights and their component scope",
+              "status": "passed",
+              "durationMs": 2957.1903999999995
+            },
+            {
+              "title": "blocks actual work on the required component without closing unrelated resources",
+              "status": "passed",
+              "durationMs": 3165.0204000000012
+            },
+            {
+              "title": "keeps compatible LIMITED execution unchanged and blocks a concretely incompatible court",
+              "status": "passed",
+              "durationMs": 3055.824199999999
+            },
+            {
+              "title": "keeps legacy execution when infrastructure or its condition is unknown",
+              "status": "passed",
+              "durationMs": 3184.4421
+            },
+            {
+              "title": "retains known incompatible MAIN_COURT geometry rather than treating it as missing data",
+              "status": "passed",
+              "durationMs": 3478.8485
+            },
+            {
+              "title": "retains known incompatible SECONDARY_COURT geometry rather than treating it as missing data",
+              "status": "passed",
+              "durationMs": 3019.064299999998
+            },
+            {
+              "title": "restores same-day execution and supports canonical rescheduling after a missed date",
+              "status": "passed",
+              "durationMs": 3221.559500000003
+            },
+            {
+              "title": "uses legitimate alternatives before blocking and does not assume a shared reservation",
+              "status": "passed",
+              "durationMs": 2882.1155
+            },
+            {
+              "title": "does not turn nominal comparable capacity into an operational allocator",
+              "status": "passed",
+              "durationMs": 3141.4689
+            },
+            {
+              "title": "round-trips FULL attempts and replays equivalently without double application",
+              "status": "passed",
+              "durationMs": 4554.851500000004
+            },
+            {
+              "title": "round-trips OUT_OF_SERVICE attempts and replays equivalently without double application",
+              "status": "passed",
+              "durationMs": 5301.446100000001
+            },
+            {
+              "title": "explains persisted cause, result, capacity unknown and continuity to the manager",
+              "status": "passed",
+              "durationMs": 3695.511400000003
+            },
+            {
+              "title": "rejects forged physical evidence while accepting pre-P0 sessions without the extension",
+              "status": "passed",
+              "durationMs": 4285.091800000002
+            },
+            {
+              "title": "preserves rest, Medical fitness/RTP, setbacks and daily recovery with no direct Facilities modifiers",
+              "status": "passed",
+              "durationMs": 3925.6857999999993
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "BS17C shows scoped physical work, honest capacity and source history in the canonical inspector",
+              "status": "passed",
+              "durationMs": 3450.6435999999994
+            },
+            {
+              "title": "says honestly that the shipped universe has no recorded facility",
+              "status": "passed",
+              "durationMs": 2636.2574999999997
+            },
+            {
+              "title": "shows the club inventory, derived condition and the critical maintenance need",
+              "status": "passed",
+              "durationMs": 3397.3034000000007
+            },
+            {
+              "title": "shows the canonical sporting effect of the club facilities",
+              "status": "passed",
+              "durationMs": 3319.971099999999
+            },
+            {
+              "title": "exposes only canonical project actions and applies a start through the store bridge",
+              "status": "passed",
+              "durationMs": 2910.9798999999985
+            },
+            {
+              "title": "applies a funded start with the manager-entered capital commitment and shows the canonical money facts",
+              "status": "passed",
+              "durationMs": 3322.5831000000035
+            },
+            {
+              "title": "reports a canonical blocker reason instead of hiding a refused command",
+              "status": "passed",
+              "durationMs": 3524.2672999999995
+            },
+            {
+              "title": "blocks an unusable commitment in the UI without touching the world",
+              "status": "passed",
+              "durationMs": 2992.630600000004
+            },
+            {
+              "title": "keeps the club identity and club-scoped facilities of the user club only",
+              "status": "passed",
+              "durationMs": 2466.3657999999996
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/facilities/FacilityCapacityContext.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "shows canonical intervals and honest unknown demand without offering an allocation command",
+              "status": "passed",
+              "durationMs": 215.5019000000002
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/medical/buildMedicalWorkspaceModel.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "projects a healthy roster from canonical availability, risk and medical staff",
+              "status": "passed",
+              "durationMs": 2709.6051
+            },
+            {
+              "title": "lists an active injury without inventing facilities or treatment plans",
+              "status": "passed",
+              "durationMs": 2251.0877
+            },
+            {
+              "title": "keeps recovered injuries in history only",
+              "status": "passed",
+              "durationMs": 2237.4930000000004
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/medical/EquippedMedicalPanel.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "indicates through an accredited clinician, schedules, executes through Calendar and shows reload truth",
+              "status": "passed",
+              "durationMs": 1400.6850999999988
+            },
+            {
+              "title": "offers no clinical indication to advisory-only staff and never grants credentials",
+              "status": "passed",
+              "durationMs": 55.66660000000047
+            },
+            {
+              "title": "cancellation has a real domain consequence and Facilities navigation identifies the act",
+              "status": "passed",
+              "durationMs": 162.45520000000033
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/medical/MedicalWorkspace.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "shows an empty state when no world is loaded",
+              "status": "passed",
+              "durationMs": 247.29600000000028
+            },
+            {
+              "title": "renders canonical availability and medical staff without facilities fiction",
+              "status": "passed",
+              "durationMs": 3585.3026
+            },
+            {
+              "title": "opens the injured tab with a canonical injury and navigates to the player medical dossier",
+              "status": "passed",
+              "durationMs": 3239.5820000000003
+            },
+            {
+              "title": "lets the user change rehab mode from the InjuryRecord dossier",
+              "status": "passed",
+              "durationMs": 2881.1500000000015
+            },
+            {
+              "title": "requires and records a fitness test before a serious injury can be cleared",
+              "status": "passed",
+              "durationMs": 2631.460899999998
+            },
+            {
+              "title": "lets the user clear or defer a due RTP review from Medical",
+              "status": "passed",
+              "durationMs": 2944.311600000001
+            },
+            {
+              "title": "uses the existing Staff recommendation accept action without clearing the injury",
+              "status": "passed",
+              "durationMs": 2724.4277
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "manager selection and confirmation produce a real BS15 visit, persisted demonstration and visible executed result",
+              "status": "passed",
+              "durationMs": 649.9434999999994
+            },
+            {
+              "title": "canceling a selected but unconfirmed visit writes no event; Facilities navigation writes no simulation state",
+              "status": "passed",
+              "durationMs": 348.1364000000003
+            },
+            {
+              "title": "outage affects only the demonstration; an explicit manager restoration retry completes the same visit activity",
+              "status": "passed",
+              "durationMs": 286.1037000000006
+            },
+            {
+              "title": "visit without demonstration is optional and unknown context never creates a verified completion",
+              "status": "passed",
+              "durationMs": 165.36549999999988
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/training/TrainingPhysicalAllocationControl.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "uses the reachable Training manager flow to select, confirm, reload, reprogram, release and cancel without financial writes",
+              "status": "passed",
+              "durationMs": 4230.3661
+            },
+            {
+              "title": "shows occupied unreserved Training as blocked after reload and allows legitimate manager rescheduling",
+              "status": "passed",
+              "durationMs": 2700.9668999999994
+            }
+          ]
+        }
+      ]
+    },
+    "accepted-medical-ui": {
+      "sourceReport": ".tmp\\bs17dm1p0\\accepted-medical-ui.json",
+      "sha256": "8a98f9e399afbe34b413f59f4aad0a249c51eb9581c64d8456c470014529cbd6",
+      "total": 28,
+      "passed": 28,
+      "failed": 0,
+      "files": [
+        {
+          "file": "src/engine/injury/EquippedRehabilitation.test.ts",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "requires explicit clinical authorization rather than assignment or advisory quality",
+              "status": "passed",
+              "durationMs": 25.547099999999773
+            },
+            {
+              "title": "does not indicate for an ineligible injury and never derives acts from plan mode",
+              "status": "passed",
+              "durationMs": 32.60239999999976
+            },
+            {
+              "title": "preserves identity, indication and confirmation idempotency without recording reservation as execution",
+              "status": "passed",
+              "durationMs": 1.5928000000003522
+            },
+            {
+              "title": "executes through Calendar, persists fulfillment and cannot execute twice",
+              "status": "passed",
+              "durationMs": 811.8241999999991
+            },
+            {
+              "title": "cancelled indications and sessions cannot execute or revive through scheduling",
+              "status": "passed",
+              "durationMs": 1127.3307999999997
+            },
+            {
+              "title": "revalidates OUT_OF_SERVICE physical state without healing, fatigue, fitness or RTP effects",
+              "status": "passed",
+              "durationMs": 216.86599999999999
+            },
+            {
+              "title": "revalidates LIMITED physical state without healing, fatigue, fitness or RTP effects",
+              "status": "passed",
+              "durationMs": 259.56920000000173
+            },
+            {
+              "title": "allows specifically verified LIMITED function; capability alone and UNKNOWN never fabricate completion",
+              "status": "passed",
+              "durationMs": 433.795900000001
+            },
+            {
+              "title": "revalidates expired rights, explicit incompatible equipment and professional grants",
+              "status": "passed",
+              "durationMs": 307.8705000000009
+            },
+            {
+              "title": "Medical confirmed occupancy prevents unreserved Training, including after reload",
+              "status": "passed",
+              "durationMs": 857.165100000002
+            },
+            {
+              "title": "Training confirmed occupancy prevents Medical without its own reservation",
+              "status": "passed",
+              "durationMs": 585.7139999999999
+            },
+            {
+              "title": "unreserved overlapping consumers receive no incidental iteration priority",
+              "status": "passed",
+              "durationMs": 184.88160000000062
+            },
+            {
+              "title": "consecutive intervals coexist, and failed rescheduling preserves the original booking",
+              "status": "passed",
+              "durationMs": 239.07120000000214
+            },
+            {
+              "title": "released/cancelled claims stop reserving resources and restoration can retry unexecuted acts",
+              "status": "passed",
+              "durationMs": 144.73689999999988
+            },
+            {
+              "title": "keeps old saves free of retroactive acts and protects fulfillment source invariants",
+              "status": "passed",
+              "durationMs": 447.4796000000024
+            },
+            {
+              "title": "separates permission to indicate from permission to perform and rejects a wrong assignment",
+              "status": "passed",
+              "durationMs": 99.79720000000088
+            },
+            {
+              "title": "checks medical-purpose rights and their validity over a midnight-crossing interval",
+              "status": "passed",
+              "durationMs": 297.67169999999896
+            },
+            {
+              "title": "can select a real compatible independent alternative without duplicating the act",
+              "status": "passed",
+              "durationMs": 567.3781000000017
+            },
+            {
+              "title": "does not equate patients to stations or manufacture a confirmed shared-capacity booking",
+              "status": "passed",
+              "durationMs": 93.35549999999785
+            },
+            {
+              "title": "rejects same-day requests that the next-day Calendar cannot execute",
+              "status": "passed",
+              "durationMs": 2.3652000000001863
+            },
+            {
+              "title": "rejects missing or perform-only prescribing evidence on Save reload",
+              "status": "passed",
+              "durationMs": 678.7734000000019
+            },
+            {
+              "title": "replays accepted commands after completion or revocation without new acts or claims",
+              "status": "passed",
+              "durationMs": 2195.760399999999
+            },
+            {
+              "title": "preserves accepted indication after actual Staff departure and revalidates execution permission",
+              "status": "passed",
+              "durationMs": 545.7240999999995
+            },
+            {
+              "title": "blocks scoped physical work and permits canonical reprogramming after restoration",
+              "status": "passed",
+              "durationMs": 606.6113000000005
+            },
+            {
+              "title": "honors explicit unemployment facts without inventing eligibility",
+              "status": "passed",
+              "durationMs": 14.386199999997189
+            }
+          ]
+        },
+        {
+          "file": "src/ui-ng/applications/medical/EquippedMedicalPanel.test.tsx",
+          "status": "passed",
+          "cases": [
+            {
+              "title": "indicates through an accredited clinician, schedules, executes through Calendar and shows reload truth",
+              "status": "passed",
+              "durationMs": 1555.9469000000026
+            },
+            {
+              "title": "offers no clinical indication to advisory-only staff and never grants credentials",
+              "status": "passed",
+              "durationMs": 80.58759999999893
+            },
+            {
+              "title": "cancellation has a real domain consequence and Facilities navigation identifies the act",
+              "status": "passed",
+              "durationMs": 180.15950000000157
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "uniqueCases": 256,
+  "uniqueFiles": 21,
+  "commands": [
+    "npm test -- --maxWorkers=1 --testTimeout=30000 --reporter=json --outputFile=.tmp/bs17dm1p0/final-focal.json <21 focal files recorded below>",
+    "npm test -- --maxWorkers=1 --reporter=json --outputFile=.tmp/bs17dm1p0/accepted-medical-ui.json src/engine/injury/EquippedRehabilitation.test.ts src/ui-ng/applications/medical/EquippedMedicalPanel.test.tsx",
+    "npm test -- --maxWorkers=1 -t 'allows specifically' src/engine/injury/EquippedRehabilitation.test.ts",
+    "npm test -- --maxWorkers=1 -t revalidates src/engine/injury/EquippedRehabilitation.test.ts",
+    "npm run typecheck",
+    "npm run build",
+    "git diff --check"
+  ],
+  "logs": {
+    "typecheck-accepted": {
+      "source": ".tmp\\bs17dm1p0\\typecheck-accepted.log",
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_TYPECHECK_ACCEPTED.txt"
+    },
+    "build-accepted": {
+      "source": ".tmp\\bs17dm1p0\\build-accepted.log",
+      "sha256": "aac0f7b658d0047614e8cced61c48c8d70c7e9504c622f2af23142584e65dd07",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_BUILD_ACCEPTED.txt"
+    },
+    "unknown-context-final": {
+      "source": ".tmp\\bs17dm1p0\\unknown-context-final.log",
+      "sha256": "7c04cbeda427cb8b16a6f4a616b059bfea83ed421dca9fe29346edbd5feca7bb",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_UNKNOWN_CONTEXT_FINAL.txt"
+    },
+    "negative-projections": {
+      "source": ".tmp\\bs17dm1p0\\negative-projections.log",
+      "sha256": "38c85cd8b816ee83af1927afde1dcb365b3ba02c6bbdcb62567def25b283bf7f",
+      "preservedPath": "docs\\strengthening\\evidence\\BS17D_M1_P0_NEGATIVE_PROJECTIONS.txt"
+    },
+    "closure-medical-ui": {
+      "source": ".tmp\\bs17dm1p0\\closure-medical-ui.log",
+      "sha256": "774c6cd4b725ea4333fc9f03b528275068ba671b38ca4cc35edfb534f0ecd214"
+    },
+    "adversarial-regressions-green": {
+      "source": ".tmp\\bs17dm1p0\\adversarial-regressions-green.log",
+      "sha256": "c150cff4fccc093f9d97da278345aee5053819f77176415233c811b60b7fc15a"
+    },
+    "medical-initial": {
+      "source": ".tmp\\bs17dm1p0\\medical-initial.log",
+      "sha256": "598ae93a25b6c06875b1e4e292f168de8ecdfc70a06b2645e1f7cf7c2e970ebf"
+    },
+    "medical-second": {
+      "source": ".tmp\\bs17dm1p0\\medical-second.log",
+      "sha256": "2a62085572fee3db60232dda335a3d00409184bd042bd7dd69646404f6a5bff5"
+    },
+    "medical-third": {
+      "source": ".tmp\\bs17dm1p0\\medical-third.log",
+      "sha256": "f305c94a4264b2e4cc947ecc259cb0d9f159bbe63b3f5c0e3ab65a0eb06b143a"
+    },
+    "expanded-medical-ui": {
+      "source": ".tmp\\bs17dm1p0\\expanded-medical-ui.log",
+      "sha256": "ff9efea0d8d253cbba970eac8b69f6263f950f8d911663e6c725eec59a26938f"
+    }
+  },
+  "review": "Independent /root/m1p0_adversarial final PASS after reproduced repairs; tiny limited-evidence and alias changes separately reviewed PASS.",
+  "historicalFindings": "BS17D_M1_P0_HISTORICAL_EVIDENCE.json",
+  "performance": {
+    "broadTimeoutMs": 30000,
+    "newMedicalUiIndividualTimeoutMs": 5000,
+    "fixtureBeforeAllTimeoutMs": 30000,
+    "broadCasesAbove5Seconds": [
+      {
+        "file": "src/save/GameWorldSaveV4.Facilities.test.ts",
+        "title": "rejects an invalid component scope (empty array)",
+        "durationMs": 6792.443599999999
+      },
+      {
+        "file": "src/engine/calendar/CalendarEngine.test.ts",
+        "title": "advances 365 consecutive days to exactly one calendar year later",
+        "durationMs": 6486.2286
+      },
+      {
+        "file": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+        "title": "round-trips OUT_OF_SERVICE attempts and replays equivalently without double application",
+        "durationMs": 5301.446100000001
+      }
+    ],
+    "normalPerformanceCertification": false,
+    "longHorizonRerun": false
+  },
+  "architectureChecks": {
+    "mathRandomMatches": 0,
+    "forbiddenFrameworkImports": 0,
+    "diffCheck": "PASS",
+    "rustChanged": false,
+    "newProductionDependencies": false
+  },
+  "dataCoverage": "Only explicit enriched test source establishes qualified clinician/material facts; production data absence remains UNKNOWN, no automatic acts or qualifications.",
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE",
+  "bs17dGlobal": "PARTIAL",
+  "mainHead": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+  "mainWorkingTree": "Independent active changes observed and preserved; never modified here."
+}

@@ -4,16 +4,21 @@ import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/compe
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
-import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { ensureCanonicalFinanceFoundation, resolveOrganizationCurrency } from '@/domain/finance'
+import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
+import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { materializeTradeWindows } from '@/engine/competition'
 import { generateWorld } from '@/engine/world'
-import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaEligibility, ensureTransferPortalRuleset } from '@/engine/eligibility'
+import { ensureInstitutionBenefitsCaps } from '@/engine/eligibility/CollegeCompensationEngine'
 import { ensureNcaaAcademics } from '@/engine/academic'
 import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
+import { ensureNcaaSportBudgets } from '@/engine/enforcement/EnforcementRemedies'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
@@ -21,6 +26,9 @@ import { createCoachJobOpeningForTeam } from '@/app/coachCareer'
 import { initializeBoardState } from '@/engine/board'
 import { initializeRecruitingCycle } from '@/engine/season'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
+import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
+import { prototypeOrganizationCurrencyAuthorities } from './PrototypeFinancePolicy'
+import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -29,19 +37,44 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 } as const
 
 /** Creates the fixed, deterministic career used by the first playable prototype. */
-export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset } = {}): GameWorld {
+export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number; readonly gameBalance?: BdmGameBalancePreset } = {}): GameWorld {
   const men = createSingleNewGame(options, 'male')
-  const women = namespaceWorld(createSingleNewGame({}, 'female'), 'women-')
-  let world = mergeIndependentWorlds(men, women)
+  const women = namespaceWorld(createSingleNewGame(options.seed === undefined ? {} : { seed: options.seed }, 'female'), 'women-')
+  let world = progressAnnualTalentSupply(mergeIndependentWorlds(men, women))
   for (const team of Object.values(world.teams).filter((team) => team.coachId === undefined)) world = createCoachJobOpeningForTeam(world, { teamId: team.id }).world
   const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)
   if (userTeam !== undefined) world = initializeBoardState(world, userTeam.id)
-  for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
-  return ensureCanonicalFinanceFoundation(initializeAiClubManagementPlanning(world))
+  for (const season of Object.values(world.seasons)) {
+    world = initializeRecruitingCycle(world, season.id)
+    world = ensureTransferPortalRuleset(world, season.id)
+  }
+  // The generated prototype owns its institutional aid deadline. Imported worlds continue
+  // to require their supplied policies; NCAA signing permission never invents a deadline.
+  world = updateGameWorld(world, { recruitingCycles: Object.values(world.recruitingCyclesById).map(cycle => ({
+    ...cycle,
+    institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
+  })) })
+  const planned = initializeAiClubManagementPlanning(ensureInstitutionBenefitsCaps(world))
+  const explicitCurrencies = prototypeOrganizationCurrencyAuthorities(planned)
+  // BDM_GAME_BALANCE_V1 (opt-in): no source in the shipped data carries an opening balance, so the preset supplies a
+  // labeled-simulated opening treasury through Finance's own opening-state authority, at activation time.
+  const openingEconomicStates = options.gameBalance === undefined ? [] : gameBalanceOpeningEconomicStates(planned, (organizationId) => {
+    const resolution = resolveOrganizationCurrency(planned, organizationId, explicitCurrencies)
+    return resolution.status === 'RESOLVED' ? String(resolution.currencyCode) : null
+  })
+  const career = ensureCanonicalFinanceFoundation(planned, {
+    explicitOrganizationCurrencies: explicitCurrencies,
+    authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(planned),
+    ...(openingEconomicStates.length === 0 ? {} : { openingEconomicStates }),
+  })
+  // Seed current-period Finance authorization before adding the independent completed-year
+  // college sport budgets: those historical facts must not suppress the initial salary authority.
+  const financed = processClubFinanceForDate(ensureNcaaSportBudgets(career), career.currentDate).world
+  return options.gameBalance === undefined ? financed : applyGameBalanceBootstrap(financed)
 }
 
-function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {
-  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, gender, startDate: gender === 'male' ? PROTOTYPE_GAME_CONFIGURATION.startDate : addDays(PROTOTYPE_GAME_CONFIGURATION.startDate, 7), userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true, starterVacancyTeamIndexes: [1, 9] })
+function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number }, gender: 'male' | 'female'): GameWorld {
+  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, ...(options.seed === undefined ? {} : { seed: options.seed }), gender, startDate: gender === 'male' ? PROTOTYPE_GAME_CONFIGURATION.startDate : addDays(PROTOTYPE_GAME_CONFIGURATION.startDate, 7), userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true, starterVacancyTeamIndexes: [1, 9] })
   const season = generatedWorld.seasons[generatedWorld.currentSeasonId]
 
   if (season === undefined) {

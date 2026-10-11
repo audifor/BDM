@@ -1,3 +1,4 @@
+import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import type { GameWorld } from '@/domain/world'
@@ -11,12 +12,12 @@ import { MATCH_ACTION_STIMULUS, STIMULUS_STAMINA_PER_FULL_GAME, type MatchNextPl
  * contract, the same fatigue and development boundary, the same eligibility, season and post-match injury authorities. What BACKGROUND
  * cannot know in detail (individual actions) enters as expected counts from its calibrated model, never as invented events.
  */
-export function completeBackgroundMatch(world: GameWorld, result: BackgroundMatchResult): GameWorld {
+export function completeBackgroundMatch(world: GameWorld, result: BackgroundMatchResult, pendingEvidence?: DevelopmentStimulusEvent[]): GameWorld {
   return completeResolvedMatch(world, {
     gameId: result.gameId, homeTeamId: result.homeTeamId, awayTeamId: result.awayTeamId, score: result.score, resolution: 'BACKGROUND',
     statLog: (current) => createMatchStatLogFromBackground(current, result),
     consequences: (current) => deriveBackgroundDynamicConsequences(current, result),
-  })
+  }, pendingEvidence)
 }
 
 export function createMatchStatLogFromBackground(world: GameWorld, result: BackgroundMatchResult): MatchStatLog {

@@ -15,7 +15,7 @@ import type { WorldRepairReport } from '@/domain/repair'
 import { getCurrentSeason } from './selectors'
 import { areTierMovementDependenciesResolved, buildNextCompetitionParticipants } from '@/engine/competition'
 import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
-import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaEligibility, ensureTransferPortalRuleset } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
 import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
@@ -158,7 +158,10 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
     ? generateNcaaLikeSchedule(staged, nextPrimary.id)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
-  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)
+  // Rollover creates a future season without moving the world clock. Contract expiry is a
+  // daily lifecycle event, so evaluating it at the successor start date would release players
+  // whose contracts expire between today and that future date before the clock reaches expiry.
+  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), staged.currentDate)
   const repair = repairWorldAtLifecycleBoundary(reconciled)
   let next = repair.world
   const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
@@ -166,8 +169,9 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   if (ecosystem.kind === 'ncaaLike') {
     next = bindRecruitingCycleTargetToSeason(next, primary.id, nextPrimary.id)
     next = initializeRecruitingCycle(next, nextPrimary.id)
+    next = ensureTransferPortalRuleset(next, nextPrimary.id)
     next = ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(next)))))
-    annualHooksExecuted.push('recruitingCycle', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
+    annualHooksExecuted.push('recruitingCycle', 'transferRuleset', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
   }
   const beforeBoards = next
   next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)

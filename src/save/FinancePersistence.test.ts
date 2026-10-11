@@ -1,21 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { PROTOTYPE_GAME_CONFIGURATION } from '@/app/game/createNewGame'
+import { generateWorld } from '@/engine/world/WorldGenerator'
 import { updateGameWorld } from '@/domain/world'
 import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile } from '@/domain/finance'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from './GameWorldSaveV4'
+
+// CF1 fixtures precede career payroll and genuinely contain no later ledger-linked facts.
+const createFinanceFixtureWorld = () => generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, includeNbaLike: true, includeNcaaLike: true })
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 
 describe('CF1 finance persistence', () => {
   it('round-trips the complete finance surface through Save V4', () => {
-    const base = createNewGame()
+    const base = createFinanceFixtureWorld()
     const organizationId = Object.values(base.organizationsById)[0]!.id
     const accounts = [
       createFinancialAccount({ id: 'finance:cash', organizationId, accountType: 'CASH', currencyCode: 'EUR' }),
       createFinancialAccount({ id: 'finance:equity', organizationId, accountType: 'EQUITY', currencyCode: 'EUR' }),
     ]
     const financeTransaction = createFinancialTransaction({ id: 'finance:opening', organizationId, effectiveOn: base.currentDate, transactionType: 'OPENING_BALANCE', amount: { currencyCode: 'EUR', minorUnits: 10000 }, postings: [{ accountId: accounts[0]!.id, direction: 'DEBIT', amount: { currencyCode: 'EUR', minorUnits: 10000 } }, { accountId: accounts[1]!.id, direction: 'CREDIT', amount: { currencyCode: 'EUR', minorUnits: 10000 } }], provenance: { kind: 'MIGRATION', id: 'cf1-test' } })
-    const world = updateGameWorld(base, { financialAccounts: accounts, financialTransactions: [financeTransaction], fiscalPeriods: [createFiscalPeriod({ id: 'finance:period:2032', organizationId, label: '2032', startsOn: '2032-01-01', endsOn: '2032-12-31' })], organizationFinancialProfiles: [createOrganizationFinancialProfile({ organizationId, baseCurrencyCode: 'EUR' })] })
+    const world = updateGameWorld(base, {
+      financialAccounts: [...Object.values(base.financialAccountsById), ...accounts],
+      financialTransactions: [...Object.values(base.financialTransactionsById), financeTransaction],
+      fiscalPeriods: [...Object.values(base.fiscalPeriodsById), createFiscalPeriod({ id: 'finance:period:2032', organizationId, label: '2032', startsOn: '2032-01-01', endsOn: '2032-12-31' })],
+      organizationFinancialProfiles: [createOrganizationFinancialProfile({ organizationId, baseCurrencyCode: 'EUR' })],
+    })
     const restored = deserializeGameWorldV4(serializeGameWorldV4(world, savedAt))
     expect(restored.financialAccountsById).toEqual(world.financialAccountsById)
     expect(restored.financialTransactionsById).toEqual(world.financialTransactionsById)
@@ -24,12 +33,22 @@ describe('CF1 finance persistence', () => {
   })
 
   it('loads a pre-CF1 Save V4 payload with empty finance collections', () => {
-    const current = serializeGameWorldV4(createNewGame(), savedAt)
-    const { financialAccounts: _accounts, financialTransactions: _transactions, fiscalPeriods: _periods, organizationFinancialProfiles: _profiles, ...legacyPayload } = current.payload
+    // A pre-CF1 save carries no canonical finance surface at all: no profile, no account, no period, no
+    // authorization and none of the facts that depend on them.
+    const current = serializeGameWorldV4(createFinanceFixtureWorld(), savedAt)
+    const {
+      financialAccounts: _accounts, financialTransactions: _transactions, fiscalPeriods: _periods, organizationFinancialProfiles: _profiles,
+      financialCommitments: _commitments, financialEntitlements: _entitlements, expenseRecognitions: _expenses, revenueRecognitions: _revenue,
+      payables: _payables, receivables: _receivables, treasuryApplications: _treasury, financialReservations: _reservations,
+      financialBudgets: _budgets, budgetLines: _lines, budgetRevisions: _revisions, budgetAllocations: _allocations,
+      ...legacyPayload
+    } = current.payload
     const restored = deserializeGameWorldV4({ ...current, payload: legacyPayload })
     expect(restored.financialAccountsById).toEqual({})
     expect(restored.financialTransactionsById).toEqual({})
     expect(restored.fiscalPeriodsById).toEqual({})
     expect(restored.organizationFinancialProfilesById).toEqual({})
+    expect(restored.financialCommitmentsById).toEqual({})
+    expect(restored.payablesById).toEqual({})
   })
 })

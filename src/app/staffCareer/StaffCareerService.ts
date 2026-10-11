@@ -25,7 +25,8 @@ import {
 import { createStaffContract, isStaffContractActiveOn, staffContractIdFromString, terminateStaffContract } from '@/domain/staffContract'
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { staffReputationScore } from '@/domain/staffReputation'
-import { addInboxItem, addNewsItem, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
+import { addInboxItem, addNewsItem, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
+import { bindTeamContractCapacity, contractOwnsCapacityAuthority, evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason, type FinancialReservation } from '@/domain/finance'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
 import { detachStaffFromFutureTrainingSessions } from '@/engine/training'
 
@@ -120,7 +121,7 @@ export function createStaffJobOffer(world: GameWorld, input: { readonly candidac
   const existing = Object.values(world.staffJobOffersById).find((offer) => offer.jobOpeningId === opening.id && offer.staffId === candidacy.staffId && offer.status === 'pending')
   if (existing !== undefined) return { world, offerId: existing.id }
   const annualSalary = calculateStaffOfferSalary(world, opening, candidacy.staffId)
-  if (!canTeamAffordAdditionalStaffSalary(world, opening.teamId, annualSalary)) throw new Error('Team cannot afford this Staff job offer under its Staff salary budget')
+  requireCanonicalStaffHiringFinance(world, opening.teamId, annualSalary, `staff-offer:${opening.id}:${candidacy.staffId}`)
   const transitioned = transitionStaffJobCandidacy(candidacy, 'offered')
   if (!transitioned.ok) throw new Error('Staff candidacy cannot receive an offer')
   const id = staffJobOfferIdFromString(input.id ?? nextId(world, `staff-offer:${opening.id}:${candidacy.staffId}:`))
@@ -145,13 +146,25 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   if (offer.status !== 'pending' || opening.status !== 'open') throw new Error('Staff job offer cannot be accepted')
   const currentAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === offer.staffId)
   if (currentAssignment !== undefined && currentAssignment.teamId === opening.teamId) throw new Error('Staff job offer cannot be accepted')
-  // Re-check the Staff budget against the CURRENT world immediately before committing (Issue #19
-  // review Blocker 2): the offer's salary was only valid against the budget at CREATE time — one or
-  // more sibling offers created against the same remaining budget may have since been accepted, so
-  // the same canonical check createStaffJobOffer used must run again here, or two individually-valid
-  // offers could both be accepted and jointly exceed the team's Staff budget.
+  // Re-check canonical Finance against the CURRENT world immediately before committing (Issue #19
+  // review Blocker 2): the offer's salary was only valid against the world at CREATE time — other
+  // canonical commitments (including sibling offers) may have consumed liquidity or authorization
+  // since, so the exact check `createStaffJobOffer` ran must run again here, or two individually
+  // valid offers could both be accepted and jointly exceed what canonical Finance permits.
   const annualSalary = offer.annualSalary ?? calculateStaffOfferSalary(world, opening, offer.staffId)
-  if (!canTeamAffordAdditionalStaffSalary(world, opening.teamId, annualSalary)) throw new Error('Team cannot afford this Staff job offer under its current Staff salary budget')
+  // The bridge reservation belongs to the exact contract this transition creates, so the canonical staff
+  // contract id is derived from the input world first and canonical Finance is rechecked against that
+  // same world; the bridge is published CONSUMED with the contract because the staff contract schedule
+  // owns the hiring's capacity from the moment the contract exists.
+  const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
+  const capacity = bindTeamContractCapacity(world, {
+    teamId: opening.teamId,
+    action: 'STAFF_HIRING',
+    legacyAnnualAmountMajorUnits: annualSalary,
+    contractId: String(newContractId),
+    effectiveDate: world.currentDate,
+  })
+  if (!capacity.allowed) throw new Error(`Team cannot afford this Staff job offer under canonical Finance (${gameplayFinancialBlockReason(capacity.decision)})`)
 
   const accepted = decideStaffJobOffer(offer, 'accepted')
   const hired = transitionStaffJobCandidacy(candidacy, 'hired')
@@ -184,7 +197,6 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   if (!appointed.ok) throw new Error('Staff cannot be appointed')
   const newAssignmentId = `staff-assignment:${offer.staffId}:${opening.teamId}:${opening.roleId}:${world.currentDate}`
   assignments = [...assignments, { id: newAssignmentId as never, staffPersonId: offer.staffId, teamId: opening.teamId, role: opening.roleId, assignedOn: world.currentDate }]
-  const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
   contracts[newContractId] = createStaffContract({ id: newContractId, staffId: offer.staffId, teamId: opening.teamId, kind: 'standard', term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, 2) }, compensation: { annualSalary } })
 
   openings[opening.id] = { ...opening, status: 'filled' }
@@ -193,7 +205,11 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   for (const candidate of Object.values(candidacies) as (typeof candidacy)[]) if (candidate.jobOpeningId === opening.id && candidate.id !== candidacy.id && ['identified', 'interviewing', 'offered'].includes(candidate.status)) { const rejected = transitionStaffJobCandidacy(candidate, 'rejected'); if (rejected.ok) candidacies[candidate.id] = rejected.candidacy }
   for (const other of Object.values(offers) as (typeof offer)[]) if (other.jobOpeningId === opening.id && other.id !== offer.id && other.status === 'pending') offers[other.id] = { ...other, status: 'withdrawn' }
 
-  const next = rebuild(world, { assignments, openings, candidacies: candidacies as never, offers: offers as never, contracts, employment: { ...world.staffEmploymentByStaffId, [offer.staffId]: appointed.employment }, history: { ...world.staffCareerHistoryByStaffId, [offer.staffId]: appointed.history }, responsibilities })
+  const next = rebuild(world, { assignments, openings, candidacies: candidacies as never, offers: offers as never, contracts, employment: { ...world.staffEmploymentByStaffId, [offer.staffId]: appointed.employment }, history: { ...world.staffCareerHistoryByStaffId, [offer.staffId]: appointed.history }, responsibilities, financialReservations: capacity.reservations })
+  // Capacity authority proof: the hired StaffContract must already own the capacity its bridge released.
+  if (!contractOwnsCapacityAuthority(next, { contractId: String(newContractId), organizationId: world.teams[opening.teamId]!.organizationId })) {
+    throw new Error('Team cannot afford this Staff job offer under canonical Finance (CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE)')
+  }
 
   const staff = world.staffPeopleById[offer.staffId]!
   const team = world.teams[opening.teamId]!
@@ -365,6 +381,21 @@ const PROFICIENCY_REPUTATION_SWING_DOWN = 0.2
  * higher-reputation candidate for the identical opening never earns LESS than a lower one; the
  * offer never exceeds the team's currently remaining Staff budget, and is always positive.
  */
+/**
+ * Canonical Finance is the only Staff hiring affordability authority: the legacy Staff payroll pool no
+ * longer decides whether a hiring may happen, and a blocked hiring reports canonical status/reasons.
+ */
+function requireCanonicalStaffHiringFinance(world: GameWorld, teamId: TeamId, annualSalary: number, sourceEntityId: string): void {
+  const decision = evaluateTeamGameplayFinancialDecision(world, {
+    teamId,
+    action: 'STAFF_HIRING',
+    legacyAnnualAmountMajorUnits: annualSalary,
+    sourceAuthority: 'STAFF_HIRING',
+    sourceEntityId,
+  })
+  if (!decision.allowed) throw new Error(`Team cannot afford this Staff job offer under canonical Finance (${gameplayFinancialBlockReason(decision)})`)
+}
+
 function calculateStaffOfferSalary(world: GameWorld, opening: StaffJobOpening, staffId: StaffPersonId): number {
   const staff = world.staffPeopleById[staffId]
   const reputation = world.staffReputationProfilesByStaffId[staffId]
@@ -441,6 +472,7 @@ function rebuild(world: GameWorld, changes: Partial<{
   employment: typeof world.staffEmploymentByStaffId
   history: typeof world.staffCareerHistoryByStaffId
   responsibilities: readonly (typeof world.responsibilitiesById)[keyof typeof world.responsibilitiesById][]
+  financialReservations: readonly FinancialReservation[]
 }>): GameWorld {
   return updateGameWorld(world, {
     ...(changes.assignments === undefined ? {} : { teamStaffAssignments: changes.assignments }),
@@ -452,5 +484,6 @@ function rebuild(world: GameWorld, changes: Partial<{
     staffEmploymentByStaffId: changes.employment ?? world.staffEmploymentByStaffId,
     staffCareerHistoryByStaffId: changes.history ?? world.staffCareerHistoryByStaffId,
     ...(changes.responsibilities === undefined ? {} : { responsibilities: changes.responsibilities }),
+    ...(changes.financialReservations === undefined ? {} : { financialReservations: changes.financialReservations }),
   } as never)
 }

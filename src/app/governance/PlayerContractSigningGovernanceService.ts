@@ -14,7 +14,8 @@ import {
 } from '@/domain/governance'
 import { negotiationOfferActor, type ContractNegotiation, type NegotiationRole } from '@/domain/market'
 import type { TeamId } from '@/domain/ids'
-import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision, gameplayFinancialBlockReason } from '@/domain/finance'
 import type { Team } from '@/domain/team'
 import { completeAcceptedFreeAgentSigning, type FreeAgentSigningResult } from '@/app/marketIntelligence/FreeAgentSigningService'
 import { resolveSigningExecutionAuthority } from '@/engine/market'
@@ -340,7 +341,19 @@ export function assessPlayerContractSigningReadiness(world: GameWorld, teamId: T
   const executorRights = currentRights?.executorBodyIds ?? []
   const execution = team === undefined ? undefined : resolveSigningExecutionOwner(world, team.id)
   const available = player !== undefined && isPlayerFreeAgent(world, player.id, world.currentDate)
-  const affordable = negotiation !== undefined && 'salary' in negotiation && negotiation.salary !== undefined && team !== undefined && canTeamAffordAdditionalSalary(world, team.id, negotiation.salary, world.currentDate)
+  // Finance authority and Governance authority stay independent: this is the canonical Finance preview
+  // that feeds the decision context, and it never substitutes for the Governance workflow below.
+  const finance = negotiation === undefined || !('salary' in negotiation) || negotiation.salary === undefined || team === undefined
+    ? undefined
+    : evaluateTeamGameplayFinancialDecision(world, {
+      teamId: team.id,
+      action: 'PLAYER_SIGNING',
+      legacyAnnualAmountMajorUnits: negotiation.salary,
+      effectiveDate: world.currentDate,
+      sourceAuthority: 'PLAYER_CONTRACT_SIGNING_GOVERNANCE',
+      sourceEntityId: negotiationId,
+    })
+  const affordable = finance?.allowed ?? false
   const decisionStatus = decision === undefined ? undefined : deriveGovernanceDecisionStatus(events, required)
   const workflowStatus = workflowStatusForDecision(decisionStatus)
   let status: PlayerContractSigningWorkflowStatus = !accepted ? negotiation?.status === 'SIGNED' ? 'ALREADY_SIGNED' : 'NOT_ACCEPTED' : 'REQUIRES_APPROVAL'
@@ -350,7 +363,7 @@ export function assessPlayerContractSigningReadiness(world: GameWorld, teamId: T
   else if (accepted && currentRights !== undefined && (currentRights.proposerBodyIds.length === 0 || currentRights.approverBodyIds.length === 0)) { status = 'UNKNOWN'; blocker = 'SIGNING_PROPOSER_OR_APPROVER_AUTHORITY_UNMAPPED' }
   else if (decisionStatus === 'REJECTED' || decisionStatus === 'VETOED' || decisionStatus === 'WITHDRAWN') { status = workflowStatus; blocker = `SIGNING_DECISION_${decisionStatus}` }
   else if (accepted && !available) { status = 'PLAYER_UNAVAILABLE'; blocker = 'PLAYER_NOT_FREE_AGENT' }
-  else if (accepted && !affordable) { status = 'FINANCIAL_BLOCK'; blocker = 'CURRENT_PAYROLL_CANNOT_AFFORD_ACCEPTED_SALARY' }
+  else if (accepted && !affordable) { status = 'FINANCIAL_BLOCK'; blocker = finance === undefined ? 'CANONICAL_FINANCE_UNAVAILABLE' : gameplayFinancialBlockReason(finance) }
   else if (accepted && (execution === 'NO_EXECUTION_OWNER' || execution === 'BLOCKED')) { status = execution === 'NO_EXECUTION_OWNER' ? 'NO_AUTHORITY' : 'BLOCKED'; blocker = 'NO_SIGNING_EXECUTION_OWNER' }
   else if (accepted && decision === undefined) { status = 'REQUIRES_APPROVAL'; blocker = 'SIGNING_DECISION_NOT_PROPOSED' }
   else if (decision !== undefined && approvalsComplete(events, required) && executorRights.length === 0) { status = 'BLOCKED'; blocker = 'SIGNING_GOVERNANCE_EXECUTOR_UNAVAILABLE' }
@@ -389,7 +402,17 @@ function validateAcceptedNegotiation(world: GameWorld, input: Pick<EnsurePlayerC
   if (!world.players[negotiation.playerId] || !isPlayerFreeAgent(world, negotiation.playerId, world.currentDate)) {
     return { failure: workflow('PLAYER_UNAVAILABLE', world, undefined, 'PLAYER_NOT_FREE_AGENT') }
   }
-  if (!canTeamAffordAdditionalSalary(world, team.id, negotiation.salary, world.currentDate)) return { failure: workflow('FINANCIAL_BLOCK', world, undefined, 'CURRENT_PAYROLL_CANNOT_AFFORD_ACCEPTED_SALARY') }
+  // Binding recheck: a previously affordable agreement is re-evaluated against the current world
+  // immediately before execution, so stale preview state can never execute a blocked signing.
+  const finance = evaluateTeamGameplayFinancialDecision(world, {
+    teamId: team.id,
+    action: 'PLAYER_SIGNING',
+    legacyAnnualAmountMajorUnits: negotiation.salary,
+    effectiveDate: world.currentDate,
+    sourceAuthority: 'PLAYER_CONTRACT_SIGNING_EXECUTION',
+    sourceEntityId: negotiation.id,
+  })
+  if (!finance.allowed) return { failure: workflow('FINANCIAL_BLOCK', world, undefined, gameplayFinancialBlockReason(finance)) }
   const institutions = Object.values(world.governanceInstitutionsById).filter((item) => item.teamIds.includes(team.id))
   if (institutions.length !== 1 || !institutions[0]!.teamIds.includes(team.id)) {
     return { failure: workflow('UNKNOWN', world, undefined, institutions.length === 0 ? 'GOVERNANCE_INSTITUTION_UNAVAILABLE' : 'GOVERNANCE_INSTITUTION_AMBIGUOUS') }

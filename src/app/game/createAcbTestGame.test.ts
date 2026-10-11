@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffAssignments, getTeamStaffPayroll } from '@/domain/world'
 import { isStaffContractActiveOn } from '@/domain/staffContract'
+import { getContractFinancialSchedule } from '@/domain/finance'
 import { ASSIGNABLE_STAFF_ROLE_IDS, isStaffRoleApplicableToEcosystem } from '@/domain/staff'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
@@ -184,7 +185,9 @@ describe('createAcbTestGame', () => {
 
     const items = getStaffRecommendationsForTeam(world, team.id)
     expect(items.some((item) => item.kind === 'oppositionScouting')).toBe(true)
-  })
+    // This flow asserts gameplay, not speed: the ACB demo career now carries its approved economic sources, so a
+    // 30-day advance covers the Season-start payroll cluster (241 player + 576 staff occurrences) as well.
+  }, 60_000)
 
   it('reproduces the manual QA flow exactly: several single-day advances, THEN continueGame, checking Advisory after every step', () => {
     let world = createAcbTestGame({ userTeamKey: 'caz' })
@@ -209,7 +212,7 @@ describe('createAcbTestGame', () => {
 
     // The pre-existing outcome from the single-day advances must still be present (never silently dropped/overwritten).
     for (const item of afterSingleDays) expect(afterContinue.some((later) => later.outcomeId === item.outcomeId)).toBe(true)
-  })
+  }, 60_000)
 
   it('keeps the prototype staff assignment fixture while materializing head-coach Staff profiles', () => {
     const prototype = createNewGame()
@@ -217,5 +220,28 @@ describe('createAcbTestGame', () => {
     const assignedStaffIds = new Set(Object.values(prototype.teamStaffAssignmentsById).map((assignment) => assignment.staffPersonId))
     expect(Object.values(prototype.staffPeopleById).every((staff) => assignedStaffIds.has(staff.id) || staff.marketRole === 'headCoach')).toBe(true)
     expect(Object.values(prototype.staffPeopleById).filter((staff) => staff.marketRole === 'headCoach')).toHaveLength(Object.keys(prototype.coaches).length)
+  })
+
+  it('starts the ACB staff payroll financial schedule at the canonical Season start, never at the fixture clock', () => {
+    const world = createAcbTestGame()
+    const staffContracts = Object.values(world.staffContractsById)
+    const season = world.seasons[world.currentSeasonId]!
+
+    expect(staffContracts.length).toBeGreaterThan(0)
+    // Staff stay employed and usable from the fixture's own clock...
+    expect(staffContracts.every((contract) => String(contract.term.startsOn) === String(world.currentDate))).toBe(true)
+    expect(staffContracts.every((contract) => isStaffContractActiveOn(contract, world.currentDate))).toBe(true)
+    // ...while their guaranteed payroll schedule is anchored on the canonical Season start.
+    expect(staffContracts.every((contract) => String(contract.financialScheduleStartsOn) === String(season.startDate))).toBe(true)
+    expect(String(season.startDate)).toBe('2026-09-26')
+
+    // Therefore no guaranteed payroll occurrence is economically due on the fixture's current date, and the
+    // career's first reachable payroll cluster is the Season start itself.
+    const organizations = [...new Set(Object.values(world.teams).map((team) => String(team.organizationId)))]
+    const onFixtureDate = organizations.flatMap((organizationId) => getContractFinancialSchedule(world, { organizationId, currencyCode: 'EUR', includeConditional: true }).filter((entry) => entry.effectiveOn === world.currentDate && entry.compensationStatus === 'GUARANTEED'))
+    expect(onFixtureDate).toEqual([])
+    const onSeasonStart = organizations.flatMap((organizationId) => getContractFinancialSchedule(world, { organizationId, currencyCode: 'EUR', includeConditional: true }).filter((entry) => entry.effectiveOn === season.startDate && entry.compensationStatus === 'GUARANTEED'))
+    expect(onSeasonStart.filter((entry) => entry.category === 'STAFF_SALARY')).toHaveLength(staffContracts.length)
+    expect(onSeasonStart.some((entry) => entry.category === 'PLAYER_SALARY')).toBe(true)
   })
 })

@@ -10,7 +10,11 @@ import type { GameWorld } from '@/domain/world'
 import type { StaffPersonId } from '@/domain/ids'
 import type { StaffRoleId } from '@/domain/staff'
 import { getUserTeam } from '@/engine/calendar'
+import { getCashBalancesByCurrency } from '@/domain/finance'
+import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import { ClubPcbPage } from './ClubPcbPage'
+import { createFacilityClubScenario } from '@/app/facilities/testFixtures'
+import { useGameStore } from '@/stores/gameStore'
 
 afterEach(cleanup)
 
@@ -37,10 +41,12 @@ function StaffSandbox() {
 
 describe('ClubPcbPage staff sandbox', () => {
   it('does not present fixture cash or an invented financial health class on the club dashboard', () => {
-    render(createElement(ClubPcbPage, { world: createAcbTestGame({ userTeamKey: 'caz' }) }))
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    render(createElement(ClubPcbPage, { world }))
     expect(screen.getByText('Sin clasificación')).toBeInTheDocument()
     expect(screen.getByText('Sin política financiera aprobada')).toBeInTheDocument()
-    expect(screen.getByText('Sin hechos de caja')).toBeInTheDocument()
+    const cash = getCashBalancesByCurrency(world, getUserTeam(world)!.organizationId, world.currentDate).map(item => financeMoney(item.totalCashMinorUnits, item.currencyCode)).join(' ? ')
+    expect(screen.getByText(cash.replace(/\s+/g, ' ') || 'Sin hechos de caja')).toBeInTheDocument()
   })
 
   it('renders canonical ACB staff rather than fixture staff', () => {
@@ -91,5 +97,23 @@ describe('ClubPcbPage staff sandbox', () => {
 
     expect(screen.getByText(candidateName)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Iniciar candidatura' })).toHaveLength(5)
+  })
+})
+
+
+describe('BS17B one Facilities authority', () => {
+  it('renders the same canonical Facilities workspace in PCB, with unknowns and no local upgrades', () => {
+    const scenario = createFacilityClubScenario()
+    useGameStore.getState().replaceWorld(scenario.world)
+    const before = useGameStore.getState().world
+    render(createElement(ClubPcbPage, { initialTab: 'facilities', world: scenario.world }))
+    expect(screen.getByText(/Known assets may have unknown properties/)).toBeInTheDocument()
+    expect(screen.queryByText('Bonificaciones actuales:')).toBeNull()
+    expect(screen.queryByText(/Mejorar \(/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Facilities' }))
+    expect(screen.getByText('MX0.6 Training Center')).toBeInTheDocument()
+    expect(screen.queryByText('MX0.6 Rival Arena')).toBeNull()
+    expect(useGameStore.getState().world).toBe(before)
+    useGameStore.getState().resetGame()
   })
 })

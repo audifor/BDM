@@ -35,7 +35,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 1' })
     const court = createFacilityComponent({ id: 'component:1', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:1', componentId: court.id, effectiveFrom: '2020-01-01', physicalCondition: 74, serviceability: 'FULL' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
     const onDate = parseGameDate('2030-01-01')
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, onDate)?.physicalCondition).toBe(74)
   })
@@ -45,13 +45,13 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const place = createPlace({ id: 'place:2', kind: 'CITY', name: 'City 2' })
     const facility = createFacility({ id: 'facility:2', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 2' })
     const court = createFacilityComponent({ id: 'component:2', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court] })
     const onDate = parseGameDate('2030-01-01')
     // No record exists at all: componentConditionAt returns undefined, never a falsified 100.
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, onDate)).toBeUndefined()
     // A record can also explicitly record an unknown physicalCondition while still stating serviceability.
     const record = createFacilityConditionRecordForComponent(court.id)
-    const worldWithRecord = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const worldWithRecord = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
     expect(componentConditionAt(Object.values(worldWithRecord.facilityComponentConditionRecordsById), court.id, onDate)?.physicalCondition).toBeNull()
   })
 
@@ -66,7 +66,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
       createFacilityComponentConditionRecord({ id: 'condition:3-c', componentId: court.id, effectiveFrom: '2030-02-01', effectiveTo: '2030-03-31', physicalCondition: 61, serviceability: 'LIMITED' }),
       createFacilityComponentConditionRecord({ id: 'condition:3-d', componentId: court.id, effectiveFrom: '2030-04-01', physicalCondition: 78, serviceability: 'FULL' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: records })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: records })
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2027-06-01'))?.physicalCondition).toBe(90)
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2029-06-01'))?.physicalCondition).toBe(74)
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2030-02-15'))?.serviceability).toBe('LIMITED')
@@ -79,7 +79,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:4', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 4' })
     const court = createFacilityComponent({ id: 'component:4', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:4', componentId: court.id, effectiveFrom: '2020-01-01', physicalCondition: 85, serviceability: 'FULL' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
     expect(componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2099-01-01'))?.physicalCondition).toBe(85)
   })
 
@@ -101,7 +101,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:8', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 8' })
     const court = createFacilityComponent({ id: 'component:8', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [court],
       facilityComponentConditionRecords: [
@@ -117,7 +117,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:9', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 9' })
     const court = createFacilityComponent({ id: 'component:9', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:9', componentId: court.id, effectiveFrom: '2020-01-01', physicalCondition: 62, serviceability: 'FULL' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
     // A relatively low condition can still be FULL serviceability -- condition != serviceability.
     expect(componentServiceabilityAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2030-01-01'))).toBe('FULL')
   })
@@ -128,7 +128,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:10', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 10' })
     const court = createFacilityComponent({ id: 'component:10', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:10', componentId: court.id, effectiveFrom: '2020-01-01', physicalCondition: 80, serviceability: 'LIMITED' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court], facilityComponentConditionRecords: [record] })
     // A relatively high condition can still be LIMITED serviceability.
     expect(componentServiceabilityAt(Object.values(world.facilityComponentConditionRecordsById), court.id, parseGameDate('2030-01-01'))).toBe('LIMITED')
     expect(componentsWithLimitedServiceAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), parseGameDate('2030-01-01'))).toEqual([court.id])
@@ -140,7 +140,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:11', placeId: place.id, type: 'PERFORMANCE_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 11' })
     const pool = createFacilityComponent({ id: 'component:11', facilityId: facility.id, type: 'HYDROTHERAPY_POOL', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:11', componentId: pool.id, effectiveFrom: '2030-01-01', serviceability: 'OUT_OF_SERVICE', notes: 'Pump failure' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: [record] })
     const onDate = parseGameDate('2030-06-01')
     expect(componentsOutOfServiceAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), onDate)).toEqual([pool.id])
   })
@@ -152,7 +152,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const court = createFacilityComponent({ id: 'component:12-court', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const pool = createFacilityComponent({ id: 'component:12-pool', facilityId: facility.id, type: 'HYDROTHERAPY_POOL', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:12', componentId: pool.id, effectiveFrom: '2030-01-01', serviceability: 'OUT_OF_SERVICE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [court, pool], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [court, pool], facilityComponentConditionRecords: [record] })
     expect(world.facilitiesById[facility.id]!.status).toBe('ACTIVE')
     expect(componentsOutOfServiceAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), parseGameDate('2030-06-01'))).toEqual([pool.id])
   })
@@ -163,7 +163,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:13', placeId: place.id, type: 'PERFORMANCE_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 13' })
     const pool = createFacilityComponent({ id: 'component:13', facilityId: facility.id, type: 'HYDROTHERAPY_POOL', status: 'ACTIVE' })
     const record = createFacilityComponentConditionRecord({ id: 'condition:13', componentId: pool.id, effectiveFrom: '2030-01-01', serviceability: 'OUT_OF_SERVICE' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: [record] })
     const onDate = parseGameDate('2030-06-01')
     // CFI3's physical-presence query still reports the capability exists.
     expect(componentsOutOfServiceAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), onDate)).toEqual([pool.id])
@@ -179,7 +179,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
       createFacilityComponentConditionRecord({ id: 'condition:14-a', componentId: pool.id, effectiveFrom: '2030-01-01', effectiveTo: '2030-03-31', serviceability: 'OUT_OF_SERVICE' }),
       createFacilityComponentConditionRecord({ id: 'condition:14-b', componentId: pool.id, effectiveFrom: '2030-04-01', physicalCondition: 88, serviceability: 'FULL' }),
     ]
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: records })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityComponents: [pool], facilityComponentConditionRecords: records })
     expect(facilityHasUsableCapabilityAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), facility.id, 'HYDROTHERAPY', parseGameDate('2030-02-01'))).toBe(false)
     expect(facilityHasUsableCapabilityAt(Object.values(world.facilityComponentsById), Object.values(world.facilityComponentConditionRecordsById), facility.id, 'HYDROTHERAPY', parseGameDate('2030-06-01'))).toBe(true)
   })
@@ -190,7 +190,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:15', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 15' })
     const court = createFacilityComponent({ id: 'component:15', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [court],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:15', facilityId: facility.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
@@ -208,7 +208,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const facility = createFacility({ id: 'facility:16', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Center 16' })
     const court = createFacilityComponent({ id: 'component:16', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [court],
       facilityUsageRights: [createFacilityUsageRight({ id: 'usage:16', facilityId: facility.id, teamId: f.teamA.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
@@ -227,7 +227,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const medical = createFacilityComponent({ id: 'component:17-medical', facilityId: facility.id, type: 'MEDICAL_ROOM', status: 'ACTIVE' })
     const pool = createFacilityComponent({ id: 'component:17-pool', facilityId: facility.id, type: 'HYDROTHERAPY_POOL', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [courtA, courtB, medical, pool],
       facilityComponentConditionRecords: [
@@ -252,7 +252,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const courtA = createFacilityComponent({ id: 'component:18-a', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const courtB = createFacilityComponent({ id: 'component:18-b', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [courtA, courtB],
       facilityComponentConditionRecords: [
@@ -271,7 +271,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const basicGym = createFacilityComponent({ id: 'component:19-gym', facilityId: facility.id, type: 'GYM', status: 'ACTIVE' })
     const eliteLab = createFacilityComponent({ id: 'component:19-lab', facilityId: facility.id, type: 'PERFORMANCE_LAB', status: 'ACTIVE' })
     const world = updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityComponents: [basicGym, eliteLab],
       facilityComponentConditionRecords: [
@@ -294,7 +294,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const f = fixture()
     const place = createPlace({ id: 'place:missing', kind: 'CITY', name: 'City Missing' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilityComponentConditionRecords: [createFacilityComponentConditionRecord({ id: 'condition:missing', componentId: 'component:does-not-exist', effectiveFrom: '2020-01-01', serviceability: 'FULL' })],
     })).toThrow(GameWorldValidationError)
   })
@@ -311,7 +311,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const place = createPlace({ id: 'place:facility-level', kind: 'CITY', name: 'City Facility Level' })
     const facility = createFacility({ id: 'facility:facility-level', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Arena Facility Level' })
     const record = createFacilityConditionRecord({ id: 'facilitycondition:1', facilityId: facility.id, dimension: 'STRUCTURAL_INTEGRITY', effectiveFrom: '2020-01-01', physicalCondition: 88, serviceability: 'FULL' })
-    const world = updateGameWorld(f.world, { places: [place], facilities: [facility], facilityConditionRecords: [record] })
+    const world = updateGameWorld(f.world, { places: [...Object.values(f.world.placesById), place], facilities: [facility], facilityConditionRecords: [record] })
     const records = Object.values(world.facilityConditionRecordsById)
     expect(records).toHaveLength(1)
     expect(records[0]!.dimension).toBe('STRUCTURAL_INTEGRITY')
@@ -322,7 +322,7 @@ describe('Club Facilities & Infrastructure V2 — Condition, Standard & Servicea
     const place = createPlace({ id: 'place:facility-dup', kind: 'CITY', name: 'City Facility Dup' })
     const facility = createFacility({ id: 'facility:facility-dup', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Arena Facility Dup' })
     expect(() => updateGameWorld(f.world, {
-      places: [place],
+      places: [...Object.values(f.world.placesById), place],
       facilities: [facility],
       facilityConditionRecords: [
         createFacilityConditionRecord({ id: 'facilitycondition:dup-a', facilityId: facility.id, dimension: 'UTILITIES', effectiveFrom: '2020-01-01', serviceability: 'FULL' }),

@@ -68,6 +68,8 @@ import { resolveBdmPlayerHeightMode } from '@/ui-ng/system/responsive/breakpoint
 import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 
 import { syncPlayerViewQueryFromApps } from '@/ui-ng/workspace/workspaceApps'
+import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
+import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlayerPathwayBand'
 
 function PlayerWorkspaceShell({
   data,
@@ -336,6 +338,8 @@ function PlayerWorkspaceLayout({
           }
           main={
             <div className="po-workspace-content" data-ng-region="player-workspace-content">
+              <TalentOperationsNav current="player" />
+              <TalentPlayerPathwayBand playerId={model!.identity.playerId} />
               {activeView === 'overview' && <PlayerOverviewView />}
               {activeView === 'attributes' && <PlayerAttributesView />}
               {activeView === 'performance' && <PlayerPerformanceView />}

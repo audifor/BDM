@@ -2,7 +2,7 @@ import type { GameDate } from '@/domain/date'
 import type { EcosystemId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 
 export type EligibilityStatus = 'eligible' | 'ineligible' | 'exhausted'
-export type EligibilityReason = 'ELIGIBILITY_EXHAUSTED' | 'ACTIVE_ELIGIBILITY_RESTRICTION' | 'NOT_IN_NCAA_PROGRAM' | 'INVALID_SEASON_CONTEXT'
+export type EligibilityReason = 'ELIGIBILITY_EXHAUSTED' | 'ACTIVE_ELIGIBILITY_RESTRICTION' | 'NOT_IN_NCAA_PROGRAM' | 'ACADEMIC_REQUIREMENT_NOT_MET' | 'INVALID_SEASON_CONTEXT' | 'TRANSITION_POLICY_UNDETERMINED' | 'MIDYEAR_TRANSFER_DELAY'
 export interface EligibilityRules { readonly ecosystemId: EcosystemId; readonly maximumEligibilitySeasons: number; readonly participationThreshold: number; readonly redshirtPolicy: 'automatic'; readonly temporaryIneligibilitySupport: boolean }
 export interface EligibilitySeasonRecord { readonly seasonId: SeasonId; readonly gamesParticipated: number; readonly gameIds: readonly string[]; readonly eligibilityConsumed: boolean; readonly resolved: boolean }
 export interface EligibilityProfile { readonly id: string; readonly playerId: PlayerId; readonly ecosystemId: EcosystemId; readonly programTeamId: TeamId; readonly seasonsUsed: number; readonly seasonRecordsBySeasonId: Readonly<Record<SeasonId, EligibilitySeasonRecord>> }

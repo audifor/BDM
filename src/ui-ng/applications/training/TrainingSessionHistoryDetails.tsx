@@ -2,6 +2,7 @@ import type { GameWorld } from '@/domain/world'
 import type { ScheduledTrainingSession } from '@/domain/training'
 import type { StaffPersonId } from '@/domain/ids'
 import { STAFF_ROLE_LABELS, staffQualityBand, trainingContributionBand } from '@/ui/staffPresentation'
+import { TrainingPhysicalExplanation } from './TrainingPhysicalExplanation'
 
 export function TrainingSessionHistoryDetails({ world, session }: { readonly world: GameWorld; readonly session: ScheduledTrainingSession }) {
   const execution = session.execution
@@ -17,6 +18,7 @@ export function TrainingSessionHistoryDetails({ world, session }: { readonly wor
   const stimulatedPlayers = execution.participants.filter((participant) => participant.developmentStimulusEventId !== undefined).length
   return (
     <div className="training-history-impact">
+      {session.physicalAttempt !== undefined && <TrainingPhysicalExplanation world={world} attempt={session.physicalAttempt} />}
       <p><strong>Planned</strong> {execution.plannedModuleName}{' \u00B7 '}{session.intensity} intensity</p>
       <p><strong>Effective</strong> {execution.moduleName}{' \u00B7 '}{execution.effectiveIntensity} intensity{moduleChanged || intensityChanged ? ' \u00B7 changed from plan' : ' \u00B7 as planned'}</p>
       {planOutcome !== undefined && <p><strong>Plan Staff</strong> {staffName(world, planOutcome.staffId)}{' \u00B7 '}{planOutcome.staffRoleIdAtDecision ? STAFF_ROLE_LABELS[planOutcome.staffRoleIdAtDecision] : 'role not recorded'}{' \u00B7 '}{staffQualityBand(planOutcome.qualityScore)}{planOutcome.staffWasOverloadedAtDecision ? ' \u00B7 high workload' : ''}</p>}

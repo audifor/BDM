@@ -5,7 +5,8 @@ import { createPlayerContract } from '@/domain/contract/PlayerContract'
 import { createClubStrategicState } from '@/domain/clubStrategy'
 import { addDays } from '@/domain/date'
 import { agentIdFromString, contractIdFromString } from '@/domain/ids'
-import { calculateTeamPlayerPayroll, updateGameWorld } from '@/domain/world'
+import { updateGameWorld } from '@/domain/world'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds/ContractReviewEngine'
 import { advanceDayWithTrace } from '@/engine/calendar/CalendarEngine'
 import { openAiRetentionNegotiation, submitAiRetentionOffer } from './ContractRetentionEngine'
@@ -33,7 +34,11 @@ function fixture() {
     lineupsByTeamId: { ...base.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
     salaryRulesBySeasonId: { ...base.salaryRulesBySeasonId, [base.currentSeasonId]: { ...templateRules, seasonId: base.currentSeasonId } },
   })
-  const finance = withContract.teamFinancesByTeamId[team.id]!
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(withContract, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    team.id,
+    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+  )
   const strategicState = createClubStrategicState({
     teamId: team.id,
     mode: 'CONTEND',
@@ -49,9 +54,8 @@ function fixture() {
     transitionReason: 'INITIAL_ASSESSMENT',
   })
   const world = {
-    ...withContract,
-    teamFinancesByTeamId: { ...withContract.teamFinancesByTeamId, [team.id]: { ...finance, playerSalaryBudget: 1_000_000_000 } },
-    clubStrategicStatesByTeamId: { ...withContract.clubStrategicStatesByTeamId, [team.id]: strategicState },
+    ...financed,
+    clubStrategicStatesByTeamId: { ...financed.clubStrategicStatesByTeamId, [team.id]: strategicState },
   }
   return { world, team, playerId, contract }
 }
@@ -149,8 +153,8 @@ describe('BS11C6 AI retention ownership', () => {
       agents: [...Object.values(world.agentsById), { id: agentId, name: 'Agent', reputation: 50, abilities: { negotiation: 90, marketKnowledge: 50, network: 50, clientManagement: 50, mediaInfluence: 50 }, personality: { aggressiveness: 90, loyalty: 50, opportunism: 90, patience: 50, discretion: 50 } }],
       playerRepresentations: [...world.playerRepresentations, { playerId: contract.playerId, agentId, trust: 50, startedOn: world.currentDate }],
     })
-    const finance = withAgent.teamFinancesByTeamId[team.id]!
-    const limited = updateGameWorld(withAgent, { teamFinances: Object.values(withAgent.teamFinancesByTeamId).map((item) => item.teamId === team.id ? { ...finance, playerSalaryBudget: calculateTeamPlayerPayroll(withAgent, team.id) } : item) })
+    // The club's canonical liquidity is already committed, so the retention increase is unaffordable.
+    const limited = commitTeamLiquidityForTest(withAgent, team.id, 10_000_000_000)
     const opening = openAiRetentionNegotiation(limited, { teamId: team.id, contractId: contract.id, actionId: 'ai-unaffordable-open' })
     if (!opening.ok) throw new Error(opening.reason)
     const submitted = submitAiRetentionOffer(opening.world, { teamId: team.id, negotiationId: opening.negotiation.id, expectedRound: 0, actionId: 'ai-unaffordable-low-offer', terms: { salary: Math.floor(contract.compensation.annualSalary * 0.9), years: 1 } })

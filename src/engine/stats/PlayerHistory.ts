@@ -1,4 +1,4 @@
-import type { PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
+import type { MatchStatLog, PlayerGameStatLine, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import type { PlayerId, SeasonId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
@@ -6,9 +6,26 @@ export interface PlayerAggregateStats extends Omit<PlayerGameStatsSnapshot, 'pla
 export interface PlayerSeasonStats extends PlayerAggregateStats { readonly playerId: PlayerId; readonly seasonId: SeasonId }
 export interface PlayerCareerStats extends PlayerAggregateStats { readonly playerId: PlayerId }
 export interface PlayerStatAverages { readonly mpg: number; readonly ppg: number; readonly rpg: number; readonly apg: number; readonly spg: number; readonly bpg: number; readonly turnoversPerGame: number; readonly foulsPerGame: number; readonly plusMinusPerGame: number; readonly fieldGoalPercentage: number; readonly twoPointPercentage: number; readonly threePointPercentage: number; readonly freeThrowPercentage: number }
-type GameLine = ReturnType<typeof getPlayerGameLogs>[number]
+type GameLine = PlayerGameStatLine & Pick<MatchStatLog, 'gameId' | 'gameDate' | 'competitionId' | 'seasonId' | 'finalScore'>
+const gameLogsByPlayer = new WeakMap<GameWorld['matchStatLogsByGameId'], ReadonlyMap<PlayerId, readonly GameLine[]>>()
 
-export function getPlayerGameLogs(world: GameWorld, playerId: PlayerId) { return Object.values(world.matchStatLogsByGameId).flatMap((log) => log.playerLines.filter((line) => line.playerId === playerId).map((line) => ({ ...line, gameId: log.gameId, gameDate: log.gameDate, competitionId: log.competitionId, seasonId: log.seasonId, finalScore: log.finalScore }))).sort((a, b) => b.gameDate.localeCompare(a.gameDate) || b.gameId.localeCompare(a.gameId)) }
+/** Index immutable canonical logs once, retaining their stable date/ID order. */
+export function getPlayerGameLogs(world: GameWorld, playerId: PlayerId): GameLine[] {
+  let index = gameLogsByPlayer.get(world.matchStatLogsByGameId)
+  if (index === undefined) {
+    const building = new Map<PlayerId, GameLine[]>()
+    for (const log of Object.values(world.matchStatLogsByGameId)) for (const line of log.playerLines) {
+      const lines = building.get(line.playerId) ?? []
+      lines.push({ ...line, gameId: log.gameId, gameDate: log.gameDate, competitionId: log.competitionId, seasonId: log.seasonId, finalScore: log.finalScore })
+      building.set(line.playerId, lines)
+    }
+    for (const lines of building.values()) lines.sort((a, b) => b.gameDate.localeCompare(a.gameDate) || b.gameId.localeCompare(a.gameId))
+    index = building
+    gameLogsByPlayer.set(world.matchStatLogsByGameId, index)
+  }
+  // Preserve callers' ownership of the array and projected line objects.
+  return (index.get(playerId) ?? []).map(line => ({ ...line }))
+}
 export function getPlayerSeasonStats(world: GameWorld, playerId: PlayerId, seasonId: SeasonId): PlayerSeasonStats { return { ...aggregate(playerId, getPlayerGameLogs(world, playerId).filter((line) => line.seasonId === seasonId)), seasonId } }
 export function getPlayerCareerStats(world: GameWorld, playerId: PlayerId): PlayerCareerStats { return aggregate(playerId, getPlayerGameLogs(world, playerId)) }
 export function getPlayerSeasonStatLines(world: GameWorld, playerId: PlayerId): readonly PlayerSeasonStats[] { return [...new Set(getPlayerGameLogs(world, playerId).map((line) => line.seasonId))].sort((a, b) => b.localeCompare(a)).map((seasonId) => getPlayerSeasonStats(world, playerId, seasonId)) }

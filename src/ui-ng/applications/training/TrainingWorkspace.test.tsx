@@ -6,6 +6,7 @@ import '@testing-library/jest-dom/vitest'
 import { createNewGame } from '@/app/game'
 import { updateGameWorld } from '@/domain/world'
 import { createScheduledTrainingSession } from '@/domain/training'
+import { createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityUsageRight, createPlace } from '@/domain/facilities'
 import { getUserTeam } from '@/engine/calendar'
 import { executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession } from '@/engine/training'
 import { selectUserTrainingPlan, useGameStore } from '@/stores/gameStore'
@@ -31,6 +32,26 @@ function mountTrainingWorkspace(world = createNewGame()) {
 }
 
 describe('TrainingWorkspace', () => {
+  it('shows a real physical block and reschedules through canonical Training while retaining its cause', () => {
+    const world = createNewGame(), team = getUserTeam(world)!
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const place = createPlace({ id: 'ui:p0-place', kind: 'CAMPUS', name: 'Campus' })
+    const facility = createFacility({ id: 'ui:p0-facility', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Closed practice center' })
+    const component = createFacilityComponent({ id: 'ui:p0-court', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
+    const physical = updateGameWorld(world, { places: [...Object.values(world.placesById), place], facilities: [facility], facilityComponents: [component], facilityUsageRights: [createFacilityUsageRight({ id: 'ui:p0-right', facilityId: facility.id, teamId: team.id, purpose: 'PRACTICE', validFrom: world.currentDate })], facilityComponentConditionRecords: [createFacilityComponentConditionRecord({ id: 'ui:p0-condition', componentId: component.id, effectiveFrom: world.currentDate, serviceability: 'OUT_OF_SERVICE' })] })
+    const session = createScheduledTrainingSession({ id: 'ui:p0-session', teamId: team.id, date, startTime: '14:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' })
+    const blocked = executeScheduledTrainingSessions(updateGameWorld(scheduleTrainingSession(physical, session), { currentDate: date }))
+    mountTrainingWorkspace(blocked)
+    expect(screen.getByRole('region', { name: 'Capacity and shared Training timetable' })).toBeInTheDocument()
+    expect(screen.getByText(/Session not executed/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Closed practice center/).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Reschedule for tomorrow' }))
+    const rescheduled = useGameStore.getState().world!.scheduledTrainingSessionsById[session.id]!
+    expect(rescheduled.date).toBe(nextEligibleTrainingDate(date))
+    expect(rescheduled.status).toBe('scheduled')
+    expect(rescheduled.physicalAttempt).toEqual(blocked.scheduledTrainingSessionsById[session.id]!.physicalAttempt)
+    expect(screen.getByRole('button', { name: 'Open Facilities' })).toBeInTheDocument()
+  })
   it('shows an empty state when no world is loaded', () => {
     render(
       <NgWorkspaceNavigationProvider>

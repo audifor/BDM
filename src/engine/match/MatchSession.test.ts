@@ -1071,7 +1071,18 @@ describe('MatchSession', () => {
     const ncaaMenWorld = createGameWorld({ ...worldInputFor(world), competitions: Object.values(world.competitions).map((competition) => ({ ...competition, rules: { ...competition.rules, gameFormat: NCAA_MEN_GAME_FORMAT } })) })
     const session = createMatchSession(createOptions(ncaaMenWorld, game.id, 1, 2))
 
-    expect(session.state.clockRules).toEqual({ periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300 })
+    expect(session.state.clockRules).toEqual({
+      periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300,
+      shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20,
+      madeBasketClockStopUnderSecondsInFinalPeriod: 60,
+      madeBasketClockStopUnderSecondsInOtherPeriods: null,
+      madeBasketSubstitutionUnderSecondsInFinalPeriod: 60,
+      madeBasketSubstitutionUnderSecondsInOtherPeriods: null,
+      madeBasketSubstitutionEligibleTeam: 'both',
+      clockStopReasons: ['outOfBounds', 'other', 'shotClockViolation'],
+      substitutionOpportunityReasons: ['outOfBounds', 'other', 'shotClockViolation'],
+      clockRestartOnInbound: 'receive',
+    })
     expect(session.state.clockSecondsRemaining).toBe(1200)
     expect(session.state.events[0]).toMatchObject({ clockSecondsRemaining: 1200 })
   })

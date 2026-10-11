@@ -181,7 +181,7 @@ function parseOrganizationPlayerAwarenessV2(value: unknown): OrganizationPlayerA
     organizationId: organizationIdFromString(text(item.organizationId, 'Organization player awareness organization')),
     playerId: playerIdFromString(text(item.playerId, 'Organization player awareness Player')),
     discoveredAt: parseGameDate(text(item.discoveredAt, 'Organization player awareness date')),
-    source: enumValue(item.source, ['TERRITORY_DISCOVERY'], 'Organization player awareness source') as OrganizationPlayerAwareness['source'],
+    source: enumValue(item.source, ['TERRITORY_DISCOVERY', 'RECRUITING_DISCOVERY'], 'Organization player awareness source') as OrganizationPlayerAwareness['source'],
     discoveredByStaffId: staffPersonIdFromString(text(item.discoveredByStaffId, 'Organization player awareness Scout')),
     territory: parseScoutingTerritoryV2(item.territory),
   })

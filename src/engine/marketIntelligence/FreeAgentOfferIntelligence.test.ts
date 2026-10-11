@@ -8,7 +8,8 @@ import { createGMPlanState } from '@/domain/gmPlanning'
 import { assessRoutedFormalOfferPreparations } from '@/app/marketIntelligence/FormalOfferPreparationService'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
-import { canTeamAffordAdditionalSalary, getEcosystemForTeam, getTeamFinancialSnapshot, updateGameWorld } from '@/domain/world'
+import { getEcosystemForTeam, updateGameWorld } from '@/domain/world'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { ClubNeed } from '@/engine/clubNeeds'
 import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
@@ -32,8 +33,14 @@ beforeAll(() => {
   teamId = team.id
   playerId = source.rosterPlayerIds[0]!
   const organizationId = released.teams[teamId]!.organizationId
-  base = updateGameWorld(released, {
-    teamFinances: Object.values(released.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: Math.max(item.playerSalaryBudget, 100_000_000) } : item),
+  // Canonical Finance decides affordability, so the fixture gives the club real liquidity and a real
+  // APPROVED salary authorization instead of raising the legacy payroll pool.
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(released, teamId, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    teamId,
+    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+  )
+  base = updateGameWorld(financed, {
     marketKnowledge: source.rosterPlayerIds.slice(0, 3).map((candidateId) => ({
       organizationId,
       playerId: candidateId,
@@ -211,18 +218,17 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(result.blockers).toContain('TRANSACTION_RESPONSIBILITY_UNKNOWN')
   })
 
-  it('keeps a currently affordable BS10B estimate separate from current payroll and Finance V2 context', () => {
-    const currentPayroll = getTeamFinancialSnapshot(base, teamId).currentPlayerPayroll
-    const tightened = updateGameWorld(base, {
-      teamFinances: Object.values(base.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: currentPayroll + 100_000 } : item),
-    })
+  it('keeps a currently affordable BS10B estimate separate from canonical Finance and Finance V2 context', () => {
+    // Canonical liquidity is what makes the same offer unaffordable now; the BS10B estimate was taken
+    // against the earlier world and must not be rewritten.
+    const tightened = commitTeamLiquidityForTest(base, teamId, 10_000_000_000)
     const stressedProposal = { ...proposal, preferredCandidate: { ...proposal.preferredCandidate!, feasibility: { ...proposal.preferredCandidate!.feasibility, financeV2Context: 'STRESSED' as const } } }
     const result = assessFreeAgentOfferIntelligence(tightened, stressedProposal)
     expect(proposal.preferredCandidate?.feasibility.affordability).toBe('AFFORDABLE')
     expect(result.payrollAffordability).toBe('OVER_BUDGET')
     expect(result.readiness).toBe('FINANCIAL_BLOCK')
     expect(result.financeV2Context).toBe('STRESSED')
-    expect(canTeamAffordAdditionalSalary(base, teamId, 650_000)).toBe(true)
+    expect(assessFreeAgentOfferIntelligence(base, proposal).payrollAffordability).toBe('AFFORDABLE')
   })
 
   it('requires the exact current positive contact and prepares only club-known salary and term values', () => {
@@ -329,8 +335,7 @@ describe('FreeAgentOfferIntelligence', () => {
 
   it('rechecks salary affordability and ignores hidden external ratings and MarketReality', () => {
     const setup = withPositiveContact()
-    const payroll = getTeamFinancialSnapshot(setup.world, teamId).currentPlayerPayroll
-    const tightened = updateGameWorld(setup.world, { teamFinances: Object.values(setup.world.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: payroll + 100_000 } : item) })
+    const tightened = commitTeamLiquidityForTest(setup.world, teamId, 10_000_000_000)
     expect(assessFormalOfferPreparation(tightened, setup.offer).payrollAffordability).toBe('OVER_BUDGET')
     expect(assessFormalOfferPreparation(tightened, setup.offer).readiness).toBe('FINANCIAL_BLOCK')
     const changedTruth = updateGameWorld(setup.world, {

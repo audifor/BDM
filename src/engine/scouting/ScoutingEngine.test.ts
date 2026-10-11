@@ -4,7 +4,7 @@ import { addDays } from '@/domain/date'
 import { organizationIdForTeam } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { deserializeGameWorldV2, serializeGameWorldV2 } from '@/save/GameWorldSaveV2'
-import { deriveScoutingNeeds, durationDays, evaluatorProfile, generateEvaluatorReport, getPlayerKnowledgeSummary, progressScoutingAssignments, recordEvidence, requestScouting } from './ScoutingEngine'
+import { activeWorkload, cancelScoutingAssignment, deriveScoutingNeeds, durationDays, evaluatorProfile, generateEvaluatorReport, getPlayerKnowledgeSummary, progressScoutingAssignments, recordEvidence, requestScouting } from './ScoutingEngine'
 import { EVIDENCE_SOURCES, SCOUTING_MISSIONS } from '@/domain/scouting'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_RATING_FAMILY_KEYS } from '@/domain/player'
 
@@ -41,4 +41,15 @@ describe('Wave 2 acceptance contracts',()=>{
   it('18 own-player baseline is not omniscient',()=>{const c=context(),own=c.team.rosterPlayerIds[0]!;expect(getPlayerKnowledgeSummary(c.world,c.organizationId,own).overallCoverage).toBeGreaterThan(getPlayerKnowledgeSummary(c.world,c.organizationId,c.player.id).overallCoverage);expect(getPlayerKnowledgeSummary(c.world,c.organizationId,own).overallCoverage).toBeLessThan(1)})
   it('19 reports retain evidence provenance',()=>{const c=context(),w=complete(requestScouting(c.world,{organizationId:c.organizationId,playerId:c.player.id,missionType:'QUICK_LOOK',evaluatorStaffId:c.scout.staffPersonId}));expect(Object.values(w.evaluatorReportsById)[0]!.evidenceIds).toHaveLength(1)})
   it('20 consumer contracts expose no truth fields',()=>{const c=context(),w=complete(requestScouting(c.world,{organizationId:c.organizationId,playerId:c.player.id,missionType:'QUICK_LOOK',evaluatorStaffId:c.scout.staffPersonId}));expect(JSON.stringify([Object.values(w.evidenceById),Object.values(w.evaluatorReportsById),w.organizationKnowledge,getPlayerKnowledgeSummary(w,c.organizationId,c.player.id)])).not.toMatch(/actualRating|truthValue|canonicalPlayer|actualPotential/)})
+})
+
+it('refreshes derived workload after assignment activation and cancellation', () => {
+  const c = context()
+  const requested = requestScouting(c.world, { organizationId: c.organizationId, playerId: c.player.id, missionType: 'QUICK_LOOK', evaluatorStaffId: c.scout.staffPersonId })
+  expect(activeWorkload(requested, c.scout.staffPersonId)).toBe(0)
+  const active = progressScoutingAssignments(requested)
+  expect(activeWorkload(active, c.scout.staffPersonId)).toBe(1)
+  const cancelled = cancelScoutingAssignment(active, Object.keys(active.scoutingAssignmentsById)[0]!)
+  expect(activeWorkload(cancelled, c.scout.staffPersonId)).toBe(0)
+  expect(activeWorkload(active, c.scout.staffPersonId)).toBe(1)
 })

@@ -2,10 +2,21 @@ import { createNewGame } from '@/app/game/createNewGame'
 import { describe, expect, it } from 'vitest'
 import { organizationIdForTeam } from '@/domain/ids'
 import { ratingKnowledgeDimensionFor, PLAYER_RATING_FAMILY_KEYS } from '@/domain/player'
+import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
 import { deriveOrganizationPlayerValuation, formatRatingEvaluation, getOrganizationRatingEvaluation, intelligenceSortValue, matchesIntelligenceFilter } from './OrganizationPlayerEvaluation'
 
 describe('OrganizationPlayerEvaluation',()=>{
+  it('keeps first-entry authority, rebuilds for replacement knowledge and reevaluates freshness by date', () => {
+    const f = fixture()
+    const entry = { organizationId: f.organizationId, subjectPlayerId: f.player.id, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: f.world.currentDate, provenance: 'scoutReport' as const, estimate: 90, uncertainty: 1 } } }
+    const replacement = { ...entry, dimensions: { shooting: { ...entry.dimensions.shooting, estimate: 20 } } }
+    const knowledge = [entry, replacement]
+    const input = { organizationId: f.organizationId, playerId: f.player.id, dimension: 'shooting', knowledge, currentDate: f.world.currentDate }
+    expect(getOrganizationRatingEvaluation(input).estimate).toBe(90)
+    expect(getOrganizationRatingEvaluation({ ...input, knowledge: [replacement] }).estimate).toBe(20)
+    expect(getOrganizationRatingEvaluation({ ...input, currentDate: addDays(f.world.currentDate, 365) }).freshness).toBeLessThan(getOrganizationRatingEvaluation(input).freshness)
+  })
   function fixture(){const world=createNewGame(),team=Object.values(world.teams).find(t=>t.coachId===world.userCoachId)!,player=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!;return{world,team,player,organizationId:organizationIdForTeam(team.id)}}
   it('never falls back to hidden truth when knowledge is absent',()=>{const f=fixture(),one=getOrganizationRatingEvaluation({organizationId:f.organizationId,playerId:f.player.id,dimension:'shooting',knowledge:[],currentDate:f.world.currentDate,publicPosition:f.player.basketball.primaryPosition});const altered=updateGameWorld(f.world,{players:Object.values(f.world.players).map(p=>p.id===f.player.id?{...p,basketball:{...p.basketball,ratings:{...p.basketball.ratings,threePointShooting:100}}}:p)});const two=getOrganizationRatingEvaluation({organizationId:f.organizationId,playerId:f.player.id,dimension:'shooting',knowledge:altered.organizationKnowledge,currentDate:altered.currentDate,publicPosition:f.player.basketball.primaryPosition});expect(one).toEqual(two);expect(formatRatingEvaluation(one)).toBe('?')})
   it('uses organization-specific knowledge and changes with a report-like finding',()=>{const f=fixture(),base=deriveOrganizationPlayerValuation({organizationId:f.organizationId,playerId:f.player.id,knowledge:[],currentDate:f.world.currentDate,context:'DRAFT'}),known=deriveOrganizationPlayerValuation({organizationId:f.organizationId,playerId:f.player.id,knowledge:[{organizationId:f.organizationId,subjectPlayerId:f.player.id,dimensions:{shooting:{coverage:.8,confidence:.9,assessedAt:f.world.currentDate,provenance:'scoutReport',estimate:90,uncertainty:4}}}],currentDate:f.world.currentDate,context:'DRAFT'});expect(known.priorityScore).not.toBe(base.priorityScore)})

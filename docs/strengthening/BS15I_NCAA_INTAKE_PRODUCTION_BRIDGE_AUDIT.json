@@ -1,0 +1,2064 @@
+{
+  "fixtureSize": {
+    "ncaaEcosystems": [
+      {
+        "id": "generated-ecosystem-0003",
+        "category": "men"
+      },
+      {
+        "id": "women-ecosystem-0003",
+        "category": "women"
+      }
+    ],
+    "competitions": [
+      {
+        "id": "generated-competition-0004",
+        "ecosystemId": "generated-ecosystem-0003",
+        "participantTeams": 12
+      },
+      {
+        "id": "women-competition-0004",
+        "ecosystemId": "women-ecosystem-0003",
+        "participantTeams": 12
+      }
+    ],
+    "activeCompetitionCount": 2,
+    "uniqueTeams": 24,
+    "menTeams": 12,
+    "womenTeams": 12
+  },
+  "periodStart": "2032-10-01",
+  "checkpoints": {
+    "2033-12-31": {
+      "date": "2033-12-31",
+      "elapsedMs": 369744.4823,
+      "playerCount": 556,
+      "activePlayerCount": 556,
+      "retiredPlayerCount": 0,
+      "cohortCount": 8,
+      "latentCapacity": 3200,
+      "materializedCount": 100,
+      "completedGameCount": 338,
+      "rssBytes": 952881152,
+      "saveBytes": 70160949,
+      "saveMs": 715.6097999999765,
+      "loadMs": 1756.9393000000273,
+      "cycles": [
+        "recruiting:generated-ecosystem-0003:generated-season-0005"
+      ],
+      "teams": [
+        {
+          "teamId": "generated-team-0013",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0014",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0015",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0015",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000007",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000007",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000007",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+              "qualityMean": 41.8375,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0016",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0016",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000003",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000003",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000003",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+              "qualityMean": 67.35,
+              "position": "SG",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0017",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0018",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 2,
+          "effectiveArrivals": 2,
+          "portalArrivals": 0,
+          "endingRoster": 9,
+          "eligibleRoster": 9,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0018",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000019",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000019",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000019",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+              "qualityMean": 46.5125,
+              "position": "SF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            },
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0018",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000021",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000021",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000021",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+              "qualityMean": 71.7,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0019",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0020",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0020",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000024",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000024",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000024",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+              "qualityMean": 54.3875,
+              "position": "SF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0021",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0021",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000005",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000005",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000005",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+              "qualityMean": 45.8,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0022",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0022",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000010",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000010",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000010",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+              "qualityMean": 44.425,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0023",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2033-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0023",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000002",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000002",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000002",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+              "qualityMean": 53.4375,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0024",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0013",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 2,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0014",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0015",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0016",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0017",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0018",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0019",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0020",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0021",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0022",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0023",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0024",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        }
+      ],
+      "sourceMix": {
+        "HS": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "JUCO": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "INTERNATIONAL": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "ACADEMY_YOUTH": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "TALENT_COHORT_OTHER": {
+          "available": 3200,
+          "materialized": 100,
+          "signed": 12,
+          "arrived": 8,
+          "percentArrivals": 100,
+          "candidates": 36
+        },
+        "PORTAL": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "LEGACY_SYNTHETIC": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "UNKNOWN_PROVENANCE": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        }
+      },
+      "arrivalsByGender": {
+        "men": 8,
+        "women": 0
+      },
+      "viability": {
+        "min": 7,
+        "median": 7,
+        "max": 9,
+        "belowPlayableMinimum": 0
+      },
+      "events": [
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0015",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000007",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000007",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000007",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000007",
+          "qualityMean": 41.8375,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0016",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000003",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000003",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000003",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000003",
+          "qualityMean": 67.35,
+          "position": "SG",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0018",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000019",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000019",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000019",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000019",
+          "qualityMean": 46.5125,
+          "position": "SF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0018",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000021",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000021",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000021",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000021",
+          "qualityMean": 71.7,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0021",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000005",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000005",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000005",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000005",
+          "qualityMean": 45.8,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0022",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000010",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000010",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000010",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000010",
+          "qualityMean": 44.425,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0023",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000002",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000002",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000002",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000002",
+          "qualityMean": 53.4375,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2033-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0020",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000024",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000024",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000024",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0005:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0005:annual-talent:2032:generated-country-0001:male:candidate:000024",
+          "qualityMean": 54.3875,
+          "position": "SF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        }
+      ],
+      "talentCohort": {
+        "latentCandidateCapacity": 3200,
+        "materializedInPeriod": 100,
+        "recruitedInPeriod": 36,
+        "arrivedInPeriod": 8,
+        "sample": [
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000001",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000001",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000001",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000002",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000002",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000002",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000003",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000003",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000003",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000004",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000004",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000004",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000005",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000005",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000005",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000006",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000006",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000006",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000007",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000007",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000007",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000008",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000008",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000008",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000009",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000009",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000009",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000010",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000010",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000010",
+            "cause": "RECRUITING_POOL"
+          }
+        ]
+      },
+      "portal": {
+        "entries": 0,
+        "authorized": 0,
+        "recruited": 0,
+        "committed": 0,
+        "completed": 0
+      },
+      "legacySynthetic": {
+        "created": 0,
+        "signed": 0,
+        "arrived": 0
+      },
+      "academic": {
+        "signed": 12,
+        "arrived": 8,
+        "academicallyEligible": 8,
+        "academicallyIneligible": 0,
+        "rejectionReasons": []
+      },
+      "distributions": {
+        "qualityMean": {
+          "n": 8,
+          "p10": 41.8375,
+          "p50": 46.5125,
+          "p90": 67.35
+        },
+        "age": {
+          "n": 8,
+          "p10": 19,
+          "p50": 19,
+          "p90": 19
+        },
+        "positions": {
+          "PG": 0,
+          "SG": 1,
+          "SF": 2,
+          "PF": 5,
+          "C": 0
+        },
+        "countries": {
+          "generated-country-0001": 8
+        }
+      },
+      "netPopulationChange": {
+        "startingPlayers": 168,
+        "primaryArrivals": 8,
+        "portalArrivals": 0,
+        "departures": 0,
+        "endingPlayers": 176
+      },
+      "saveReload": "PASS",
+      "materializationPlayerIdsUnique": true
+    },
+    "2034-12-31": {
+      "date": "2034-12-31",
+      "elapsedMs": 1241697.8673,
+      "playerCount": 660,
+      "activePlayerCount": 660,
+      "retiredPlayerCount": 0,
+      "cohortCount": 12,
+      "latentCapacity": 4800,
+      "materializedCount": 204,
+      "completedGameCount": 516,
+      "rssBytes": 2801922048,
+      "saveBytes": 127123070,
+      "saveMs": 1328.3022999998648,
+      "loadMs": 3389.1171000001486,
+      "cycles": [
+        "recruiting:women-ecosystem-0003:women-season-0005",
+        "recruiting:generated-ecosystem-0003:generated-season-0011"
+      ],
+      "teams": [
+        {
+          "teamId": "generated-team-0013",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0013",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000064",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000064",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000064",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+              "qualityMean": 63.7,
+              "position": "SF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0014",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0014",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000056",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000056",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000056",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+              "qualityMean": 54.7125,
+              "position": "SF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0015",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0016",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0017",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0017",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000047",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000047",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000047",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+              "qualityMean": 34.95,
+              "position": "PF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0018",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 9,
+          "eligibleRoster": 9,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0019",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0020",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "generated-team-0021",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 9,
+          "eligibleRoster": 9,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0021",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000053",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000053",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000053",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+              "qualityMean": 52.0875,
+              "position": "SG",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0022",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 9,
+          "eligibleRoster": 9,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0022",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000038",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000038",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000038",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+              "qualityMean": 50.525,
+              "position": "SF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0023",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 2,
+          "effectiveArrivals": 2,
+          "portalArrivals": 0,
+          "endingRoster": 10,
+          "eligibleRoster": 10,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0023",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000043",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000043",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000043",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+              "qualityMean": 72.2125,
+              "position": "SF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            },
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0023",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000046",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000046",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000046",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+              "qualityMean": 64.6375,
+              "position": "SG",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "generated-team-0024",
+          "gender": "male",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-12-30",
+              "gender": "male",
+              "teamId": "generated-team-0024",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000058",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000058",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000058",
+              "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+              "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+              "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+              "qualityMean": 53.2875,
+              "position": "SF",
+              "age": 20,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "women-team-0013",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 2,
+          "portalArrivals": 0,
+          "endingRoster": 9,
+          "eligibleRoster": 9,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-01-06",
+              "gender": "female",
+              "teamId": "women-team-0013",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000010",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000010",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000010",
+              "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+              "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+              "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+              "qualityMean": 45.1,
+              "position": "SF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            },
+            {
+              "date": "2034-01-06",
+              "gender": "female",
+              "teamId": "women-team-0013",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000017",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000017",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000017",
+              "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+              "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+              "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+              "qualityMean": 62.3125,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "women-team-0014",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0015",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 1,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0016",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-01-06",
+              "gender": "female",
+              "teamId": "women-team-0016",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000030",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000030",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000030",
+              "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+              "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+              "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+              "qualityMean": 43.4,
+              "position": "SG",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "women-team-0017",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0018",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 2,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0019",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0020",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 1,
+          "portalArrivals": 0,
+          "endingRoster": 8,
+          "eligibleRoster": 8,
+          "unmetNeed": 0,
+          "arrivals": [
+            {
+              "date": "2034-01-06",
+              "gender": "female",
+              "teamId": "women-team-0020",
+              "source": "TALENT_COHORT_OTHER",
+              "materializationSource": "RECRUITING_POOL",
+              "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000006",
+              "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000006",
+              "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000006",
+              "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+              "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+              "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+              "qualityMean": 48.7875,
+              "position": "PF",
+              "age": 19,
+              "countryId": "generated-country-0001",
+              "eligibility": true,
+              "ineligibleReasons": []
+            }
+          ]
+        },
+        {
+          "teamId": "women-team-0021",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0022",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 2,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0023",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        },
+        {
+          "teamId": "women-team-0024",
+          "gender": "female",
+          "startingRoster": 7,
+          "expectedDepartures": {
+            "portal": 0,
+            "professional": 0,
+            "enrollmentEnded": 0
+          },
+          "signedRecruits": 0,
+          "effectiveArrivals": 0,
+          "portalArrivals": 0,
+          "endingRoster": 7,
+          "eligibleRoster": 7,
+          "unmetNeed": 0,
+          "arrivals": []
+        }
+      ],
+      "sourceMix": {
+        "HS": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "JUCO": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "INTERNATIONAL": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "ACADEMY_YOUTH": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "TALENT_COHORT_OTHER": {
+          "available": 4800,
+          "materialized": 104,
+          "signed": 13,
+          "arrived": 12,
+          "percentArrivals": 100,
+          "candidates": 64
+        },
+        "PORTAL": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "LEGACY_SYNTHETIC": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        },
+        "UNKNOWN_PROVENANCE": {
+          "available": 0,
+          "materialized": 0,
+          "signed": 0,
+          "arrived": 0,
+          "percentArrivals": 0,
+          "candidates": 0
+        }
+      },
+      "arrivalsByGender": {
+        "men": 8,
+        "women": 4
+      },
+      "viability": {
+        "min": 7,
+        "median": 8,
+        "max": 10,
+        "belowPlayableMinimum": 0
+      },
+      "events": [
+        {
+          "date": "2034-01-06",
+          "gender": "female",
+          "teamId": "women-team-0013",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000010",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000010",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000010",
+          "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+          "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+          "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000010",
+          "qualityMean": 45.1,
+          "position": "SF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-01-06",
+          "gender": "female",
+          "teamId": "women-team-0013",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000017",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000017",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000017",
+          "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+          "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+          "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000017",
+          "qualityMean": 62.3125,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-01-06",
+          "gender": "female",
+          "teamId": "women-team-0016",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000030",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000030",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000030",
+          "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+          "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+          "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000030",
+          "qualityMean": 43.4,
+          "position": "SG",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-01-06",
+          "gender": "female",
+          "teamId": "women-team-0020",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000006",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000006",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000006",
+          "profileId": "recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+          "enrollmentId": "recruit-signing:signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+          "signingId": "signing:recruiting:women-ecosystem-0003:women-season-0005:recruit-profile:recruiting:women-ecosystem-0003:women-season-0005:annual-talent:2032:generated-country-0001:female:candidate:000006",
+          "qualityMean": 48.7875,
+          "position": "PF",
+          "age": 19,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0013",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000064",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000064",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000064",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000064",
+          "qualityMean": 63.7,
+          "position": "SF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0014",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000056",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000056",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000056",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000056",
+          "qualityMean": 54.7125,
+          "position": "SF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0017",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000047",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000047",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000047",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000047",
+          "qualityMean": 34.95,
+          "position": "PF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0021",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000053",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000053",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000053",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000053",
+          "qualityMean": 52.0875,
+          "position": "SG",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0022",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000038",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000038",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000038",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000038",
+          "qualityMean": 50.525,
+          "position": "SF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0023",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000043",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000043",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000043",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000043",
+          "qualityMean": 72.2125,
+          "position": "SF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0023",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000046",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000046",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000046",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000046",
+          "qualityMean": 64.6375,
+          "position": "SG",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        },
+        {
+          "date": "2034-12-30",
+          "gender": "male",
+          "teamId": "generated-team-0024",
+          "source": "TALENT_COHORT_OTHER",
+          "materializationSource": "RECRUITING_POOL",
+          "materializationCandidateKey": "annual-talent:2032:generated-country-0001:male:candidate:000058",
+          "playerId": "player:talent:annual-talent:2032:generated-country-0001:male:000058",
+          "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:male:000058",
+          "profileId": "recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+          "enrollmentId": "recruit-signing:signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+          "signingId": "signing:recruiting:generated-ecosystem-0003:generated-season-0011:recruit-profile:recruiting:generated-ecosystem-0003:generated-season-0011:annual-talent:2032:generated-country-0001:male:candidate:000058",
+          "qualityMean": 53.2875,
+          "position": "SF",
+          "age": 20,
+          "countryId": "generated-country-0001",
+          "eligibility": true,
+          "ineligibleReasons": []
+        }
+      ],
+      "talentCohort": {
+        "latentCandidateCapacity": 4800,
+        "materializedInPeriod": 104,
+        "recruitedInPeriod": 64,
+        "arrivedInPeriod": 12,
+        "sample": [
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000037",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000037",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000037",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000038",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000038",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000038",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000039",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000039",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000039",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000040",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000040",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000040",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000041",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000041",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000041",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000042",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000042",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000042",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000043",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000043",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000043",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000044",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000044",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000044",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000045",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000045",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000045",
+            "cause": "RECRUITING_POOL"
+          },
+          {
+            "candidateKey": "annual-talent:2032:generated-country-0001:female:candidate:000046",
+            "playerId": "player:talent:annual-talent:2032:generated-country-0001:female:000046",
+            "personId": "person:player:player:talent:annual-talent:2032:generated-country-0001:female:000046",
+            "cause": "RECRUITING_POOL"
+          }
+        ]
+      },
+      "portal": {
+        "entries": 0,
+        "authorized": 0,
+        "recruited": 0,
+        "committed": 0,
+        "completed": 0
+      },
+      "legacySynthetic": {
+        "created": 0,
+        "signed": 0,
+        "arrived": 0
+      },
+      "academic": {
+        "signed": 13,
+        "arrived": 12,
+        "academicallyEligible": 12,
+        "academicallyIneligible": 0,
+        "rejectionReasons": []
+      },
+      "distributions": {
+        "qualityMean": {
+          "n": 12,
+          "p10": 43.4,
+          "p50": 52.0875,
+          "p90": 63.7
+        },
+        "age": {
+          "n": 12,
+          "p10": 19,
+          "p50": 20,
+          "p90": 20
+        },
+        "positions": {
+          "PG": 0,
+          "SG": 3,
+          "SF": 6,
+          "PF": 3,
+          "C": 0
+        },
+        "countries": {
+          "generated-country-0001": 12
+        }
+      },
+      "netPopulationChange": {
+        "startingPlayers": 168,
+        "primaryArrivals": 12,
+        "portalArrivals": 0,
+        "departures": 0,
+        "endingPlayers": 188
+      },
+      "saveReload": "PASS",
+      "materializationPlayerIdsUnique": true
+    }
+  },
+  "totalRuntimeMs": 1245826.3466
+}

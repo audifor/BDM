@@ -2,7 +2,7 @@ import { compareGameDates, type GameDate } from '@/domain/date'
 import type { ContractId, PlayerId, TeamId } from '@/domain/ids'
 
 export type PlayerContractKind = 'standard'
-export type ContractTerminationReason = 'released'
+export type ContractTerminationReason = 'released' | 'retired'
 export type ContractCapTreatment =
   | { readonly policy: 'NOT_APPLICABLE' }
   | { readonly policy: 'BASE_SALARY' | 'EXPLICIT_SCHEDULE'; readonly capHit: number }
@@ -32,7 +32,7 @@ export function createPlayerContract(input: PlayerContract): PlayerContract {
   if (input.kind !== 'standard') throw new TypeError('Contract kind is invalid')
   if (compareGameDates(input.term.expiresOn, input.term.startsOn) <= 0) throw new RangeError('Contract expiry must be after start')
   if (input.predecessorContractId === input.id) throw new TypeError('Contract cannot succeed itself')
-  if (input.termination && (input.termination.reason !== 'released' || compareGameDates(input.termination.terminatedOn, input.term.expiresOn) >= 0)) throw new RangeError('Contract termination is invalid')
+  if (input.termination && (!['released', 'retired'].includes(input.termination.reason) || compareGameDates(input.termination.terminatedOn, input.term.expiresOn) >= 0)) throw new RangeError('Contract termination is invalid')
   if (!Number.isInteger(input.compensation.annualSalary) || input.compensation.annualSalary < 1 || input.compensation.annualSalary > 100_000_000) throw new RangeError('Contract annual salary must be an integer from 1 to 100000000')
   const years = input.compensation.years
   if (years !== undefined && (years.length === 0 || years.some((year) => !validMoney(year.cashSalary) || (year.capHit !== undefined && !validMoney(year.capHit)) || !validMoney(year.guaranteedAmount) || year.guaranteedAmount > year.cashSalary || !validCapTreatment(year)))) throw new RangeError('Contract year compensation is invalid')

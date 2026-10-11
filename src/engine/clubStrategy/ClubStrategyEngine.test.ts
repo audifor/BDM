@@ -60,7 +60,7 @@ describe('Club strategy', () => {
     const amount = { currencyCode: 'EUR', minorUnits: 1_000 }
     const opening = createFinancialTransaction({ id: `strategy-opening:${team.id}`, organizationId, effectiveOn: base.currentDate, transactionType: 'OPENING_BALANCE', amount, postings: [{ accountId: cash.id, direction: 'DEBIT', amount }, { accountId: equity.id, direction: 'CREDIT', amount }], provenance: { kind: 'TEST', id: 'club-strategy' } })
     const payable = createPayable({ id: `strategy-payable:${team.id}`, organizationId, amount: { currencyCode: 'EUR', minorUnits: 10_000 }, recognizedOn: base.currentDate, dueOn: addDays(base.currentDate, 10), counterparty: { kind: 'EXTERNAL', label: 'Supplier' }, provenance: { kind: 'TEST', id: 'club-strategy' } })
-    const stressed = updateGameWorld(base, { financialAccounts: [cash, equity], financialTransactions: [opening], payables: [payable] })
+    const stressed = updateGameWorld(base, { financialAccounts: [...Object.values(base.financialAccountsById), cash, equity], financialTransactions: [...Object.values(base.financialTransactionsById), opening], payables: [...Object.values(base.payablesById), payable] })
     expect(assessClubStrategy(stressed, team.id).financialPressure).toBe('HIGH')
     expect(assessClubStrategy(stressed, team.id).candidateMode).toBe('SURVIVE')
   })

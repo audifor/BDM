@@ -1,6 +1,6 @@
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus, type ContractYearCompensation } from '@/domain/contract'
-import { createFinancialCommitment, createMoney, getContractFinancialSchedule } from '@/domain/finance'
+import { bindTeamContractCapacity, contractOwnsCapacityAuthority, createFinancialCommitment, getContractFinancialSchedule, gameplayFinancialBlockReason, legacyMajorUnitsToMoney } from '@/domain/finance'
 import { contractIdFromString, financialCommitmentIdFromString, type ContractId, type TeamId } from '@/domain/ids'
 import { createGovernanceDecisionEvent, resolveGovernanceDecisionEventAuthorityGrantIds } from '@/domain/governance'
 import { assessActiveContractRosterIntegrity } from '@/engine/market/RosterContractIntegrity'
@@ -113,6 +113,19 @@ export function executeAcceptedRetentionAgreement(world: GameWorld, negotiationI
   }
   if (rolePromise !== undefined && world.rolePromisesById[rolePromise.id] !== undefined) return result('SUCCESSOR_EXISTS', world, negotiation.id, 'ROLE_PROMISE_EFFECT_ALREADY_EXISTS', predecessor.id, undefined, decision.id, 'VALID', 'ADMISSIBLE', 'EXISTS')
   if (fee !== undefined && world.financialCommitmentsById[fee.id] !== undefined) return result('FINANCE_REJECTED', world, negotiation.id, 'AGENT_FEE_COMMITMENT_ALREADY_EXISTS', predecessor.id, undefined, decision.id, 'VALID', 'REJECTED')
+  // Binding recheck and atomic capacity bridge: the successor salary is re-evaluated against the current
+  // world immediately before it binds, and the bridge is published CONSUMED in the same transition that
+  // creates the successor, because the successor contract schedule then owns the obligation's capacity
+  // (a successor that starts next season is excluded from the current authorization period by canonical
+  // Finance itself, and that period semantics is preserved). The club agent fee stays independent.
+  const capacity = bindTeamContractCapacity(world, {
+    teamId: team.id,
+    action: 'PLAYER_RETENTION',
+    legacyAnnualAmountMajorUnits: negotiation.acceptedTerms.salary,
+    contractId: String(successorId),
+    effectiveDate: world.currentDate,
+  })
+  if (!capacity.allowed) return result('FINANCE_REJECTED', world, negotiation.id, `CANONICAL_FINANCE_BLOCKED:${gameplayFinancialBlockReason(capacity.decision)}`, predecessor.id, undefined, decision.id, 'VALID', 'REJECTED')
   try {
     const candidate = updateGameWorld(governanceWorld, { contracts: [...Object.values(governanceWorld.contractsById), contract] })
     const profile = world.organizationFinancialProfilesById[team.organizationId]
@@ -131,7 +144,12 @@ export function executeAcceptedRetentionAgreement(world: GameWorld, negotiationI
     governanceDecisionEvents: [...Object.values(governanceWorld.governanceDecisionEventsById), execution],
     ...(rolePromise === undefined ? {} : { rolePromises: [...Object.values(governanceWorld.rolePromisesById), rolePromise] }),
     ...(fee === undefined ? {} : { financialCommitments: [...Object.values(governanceWorld.financialCommitmentsById), fee] }),
+    financialReservations: [...capacity.reservations],
   })
+  // Capacity authority proof: the successor contract must already own the capacity its bridge released.
+  if (!contractOwnsCapacityAuthority(governanceWorld, { contractId: String(successorId), organizationId: team.organizationId })) {
+    return result('FINANCE_REJECTED', world, negotiation.id, 'CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE', predecessor.id, undefined, decision.id, 'VALID', 'REJECTED')
+  }
   const next = reviewClubManagementPlanning(governanceWorld, team.id, 'MATERIAL_ROSTER_CHANGE').world
   return result('SIGNED', next, negotiation.id, undefined, predecessor.id, contract.id, decision.id, 'VALID', 'ADMISSIBLE', 'CREATED')
 }
@@ -144,7 +162,7 @@ function createRetentionAgentFeeCommitment(world: GameWorld, teamId: TeamId, pla
   const agent = representation === undefined ? undefined : world.agentsById[representation.agentId]
   try {
     return createFinancialCommitment({ id: financialCommitmentIdFromString(`financial-commitment:player-agent-fee:retention:${negotiationId}`), organizationId: team.organizationId,
-      amount: createMoney({ currencyCode: profile.baseCurrencyCode, minorUnits: amount }), startsOn: effectiveOn, dueOn: effectiveOn, category: 'PLAYER_AGENT_FEE',
+      amount: legacyMajorUnitsToMoney(amount, profile.baseCurrencyCode), startsOn: effectiveOn, dueOn: effectiveOn, category: 'PLAYER_AGENT_FEE',
       provenance: { kind: 'PLAYER_AGENT_FEE', id: `retention:${negotiationId}` }, counterparty: { kind: 'EXTERNAL', ...(agent === undefined ? {} : { id: agent.id }), label: agent?.name ?? 'Player agent' },
       dimensions: { teamId, reference: { kind: 'CONTRACT_NEGOTIATION', id: `retention:${negotiationId}` } } })
   } catch { return null }

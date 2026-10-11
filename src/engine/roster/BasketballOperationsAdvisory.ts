@@ -3,6 +3,7 @@ import { getMarketKnowledge } from '@/domain/market'
 import { type EcosystemId, type OrganizationId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
+import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import { basketballOperationsQuality, resolveAdvisoryResponsibility } from '@/engine/staff'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { TradeProposal } from '@/domain/trade'
@@ -64,11 +65,19 @@ function pickWithinEligibleWindow(eligible: readonly PlayerId[], qualityScore: n
 
 function recommendSignings(world: GameWorld, teamId: TeamId, organizationId: OrganizationId, qualityScore: number, rngSeed: string): Record<string, string | number | boolean> | undefined {
   const ranked = rankedKnownCandidates(world, teamId, organizationId, 'FREE_AGENCY')
-  const finance = getTeamFinancialSnapshot(world, teamId)
   const eligible = ranked.filter((candidate) => {
     if (!isPlayerFreeAgent(world, candidate)) return false
     const market = getMarketKnowledge(world.marketKnowledge, organizationId, candidate)
-    return market?.availability !== undefined && market.availability !== 'NOT_FOR_SALE' && market.expectedSalary !== undefined && market.expectedSalary <= finance.remainingPlayerSalaryBudget
+    if (market?.availability === undefined || market.availability === 'NOT_FOR_SALE' || market.expectedSalary === undefined) return false
+    // Canonical Finance decides which candidates may be recommended as signable now, so the advisory
+    // payload's `affordable: true` can never contradict the actual signing authority.
+    return evaluateTeamGameplayFinancialDecision(world, {
+      teamId,
+      action: 'PLAYER_SIGNING',
+      legacyAnnualAmountMajorUnits: market.expectedSalary,
+      sourceAuthority: 'BASKETBALL_OPERATIONS_ADVISORY',
+      sourceEntityId: String(candidate),
+    }).allowed
   })
   const candidate = pickWithinEligibleWindow(eligible, qualityScore, `staff-basketball-ops:recommendSignings:${rngSeed}`)
   if (candidate === undefined) return undefined

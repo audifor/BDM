@@ -19,13 +19,25 @@ const positionBias: Readonly<Record<BasketballPosition, Partial<Record<Canonical
   C: { postScoring: 12, interiorDefense: 14, rimProtection: 14, shotContest: 11, defensiveRebounding: 13, offensiveRebounding: 12, strength: 13, perimeterDefense: -10, ballHandling: -12, threePointShooting: -10, speed: -8 },
 }
 
+export type PlayerTruthDistributionPolicy = 'prototypeUniform' | 'globalTalentRareTailV1'
+
 /** New-player factory support. It never passes through the seven-signal bootstrap model. */
-export function generateCanonicalRatings(seed: number, playerId: PlayerId, position: BasketballPosition, minimum = 35, maximum = 82): PlayerRatings {
+export function generateCanonicalRatings(seed: number, playerId: PlayerId, position: BasketballPosition, minimum = 35, maximum = 82, distribution: PlayerTruthDistributionPolicy = 'prototypeUniform'): PlayerRatings {
   const random = new SeededRandomSource(hashStringToSeed(`canonical-player-truth-v2:${seed}:${playerId}`))
-  const center = random.nextInt(minimum, maximum)
+  const center = distribution === 'globalTalentRareTailV1'
+    ? sampleTalentCenter(random)
+    : random.nextInt(minimum, maximum)
   const bias = positionBias[position]
-  const legacyRatings = Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, clamp(center + (bias[key] ?? 0) + random.nextInt(-9, 9))])) as Record<CanonicalRatingKey, number>
+  const noise = distribution === 'globalTalentRareTailV1' ? 7 : 9
+  const legacyRatings = Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, clamp(center + (bias[key] ?? 0) + random.nextInt(-noise, noise))])) as Record<CanonicalRatingKey, number>
   return migrateLegacyCanonicalRatingsToTruth(legacyRatings) as PlayerRatings
+}
+
+function sampleTalentCenter(random: SeededRandomSource): number {
+  // Irwin–Hall approximation keeps ordinary talent common and makes elite ability a rare tail.
+  let centered = 0
+  for (let draw = 0; draw < 12; draw += 1) centered += random.next()
+  return clamp(Math.round(51 + (centered - 6) * 11))
 }
 
 export function generateCanonicalDevelopmentProfile(seed: number, playerId: PlayerId, ratings: PlayerRatings, age: number): PlayerDevelopmentProfile {

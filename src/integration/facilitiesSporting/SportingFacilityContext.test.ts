@@ -55,7 +55,7 @@ function richFixture() {
   const teamBRight = createFacilityUsageRight({ id: 'right:teamB', facilityId: facility.id, teamId: teamB.id, purpose: 'TRAINING', validFrom: '2029-01-01', componentIds: [court1.id, court2.id, strength.id] })
 
   const withWorld = updateGameWorld(world, {
-    places: [place],
+    places: [...Object.values(world.placesById), place],
     facilities: [facility],
     facilityComponents: components,
     facilityComponentConditionRecords: [court2OutOfService, hydroLimited],

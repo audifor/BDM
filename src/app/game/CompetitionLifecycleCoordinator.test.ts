@@ -1,14 +1,21 @@
 import { describe, expect, it } from 'vitest'
 
-import { addDays } from '@/domain/date'
+import { addDays, createGameDate } from '@/domain/date'
+import { createPlace } from '@/domain/facilities'
 import { createCompetition, parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { createSeason } from '@/domain/season'
+import { createTalentCohort } from '@/domain/talent'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateWorld } from '@/engine/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { applyMatchResult } from '@/engine/match'
 import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
+import { initializeRecruitingCycle } from '@/engine/season/SeasonContentLifecycle'
+import { canPerformRecruitingAction } from '@/engine/recruiting/RecruitingPermission'
+import { addRecruitingBoardEntry, designateOffCampusRecruiter, discoverRecruitingTalentCandidate, performRecruitingAction, progressAiRecruiting } from '@/engine/recruiting/RecruitingEngine'
+import { createTalentSupplyCohort } from '@/engine/world/TalentSupply'
+import { recruitingRulesetForSeason } from '@/domain/recruiting'
 import type { CompetitionId } from '@/domain/ids'
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 
@@ -115,11 +122,89 @@ describe('RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-compet
     expect(target.conferenceMembershipSnapshot).toEqual(ncaaSeason.conferenceMembershipSnapshot!.map((membership) => ({ ...membership, seasonId: target.id })))
     expect(Object.values(result.world.games).filter((game) => game.seasonId === target.id)).toHaveLength(result.transitions[0]!.schedule.fixtureCount)
     expect(Object.values(result.world.recruitingCyclesById).filter((cycle) => cycle.sourceSeasonId === target.id)).toHaveLength(1)
+    const successorCycle = Object.values(result.world.recruitingCyclesById).find((cycle) => cycle.sourceSeasonId === target.id)!
+    expect(successorCycle.staffDesignations ?? []).toEqual([])
+    expect(successorCycle.calendar).toMatchObject({ provenance: 'SIMULATED_CARRY_FORWARD', sourceSeason: '2026-27', derivedSeason: `${target.startDate.slice(0, 4)}-${String(Number(target.startDate.slice(0, 4)) + 1).slice(-2)}` })
+    expect(successorCycle.calendar!.windows.some((window) => window.period === 'contact' && window.startsOn === successorCycle.opensOn && window.endsOn === successorCycle.closesOn)).toBe(false)
+    const secondCompleted = completeSeason(result.world, target.id)
+    const secondTransition = advanceCompetitionLifecycles(secondCompleted)
+    const thirdSeason = Object.values(secondTransition.world.seasons).find((season) => season.competitionId === ncaaSeason.competitionId && season.id !== ncaaSeason.id && season.id !== target.id)!
+    const secondSuccessorCycle = Object.values(secondTransition.world.recruitingCyclesById).find((cycle) => cycle.sourceSeasonId === thirdSeason.id)!
+    expect(secondSuccessorCycle.staffDesignations ?? []).toEqual([])
+    expect(secondTransition.blockedOn).toBeUndefined()
+    expect(secondSuccessorCycle.calendar).toMatchObject({ provenance: 'SIMULATED_CARRY_FORWARD', basedOnRulesetId: successorCycle.calendar!.basedOnRulesetId, derivedSeason: `${thirdSeason.startDate.slice(0, 4)}-${String(Number(thirdSeason.startDate.slice(0, 4)) + 1).slice(-2)}` })
+    expect(secondSuccessorCycle.calendar!.windows.some((window) => window.period === 'contact' && window.startsOn === secondSuccessorCycle.opensOn && window.endsOn === secondSuccessorCycle.closesOn)).toBe(false)
     expect(result.world.recruitingCyclesById[sourceCycleId]!.targetSeasonId).toBe(target.id)
     expect(result.world.recruitSigningsById[signing.id]!.targetSeasonId).toBe(target.id)
     expect(result.world.seasonHistoryBySeasonId[ncaaSeason.id]).toEqual(completed.seasonHistoryBySeasonId[ncaaSeason.id])
     expect(Object.values(result.world.games).filter((game) => game.seasonId === ncaaSeason.id)).toEqual(Object.values(completed.games).filter((game) => game.seasonId === ncaaSeason.id))
     expect(advanceCompetitionLifecycles(result.world).transitions).toEqual([])
+  })
+
+  it('creates and uses a simulated 2045-46 NCAA RecruitingCycle without external calendar data', () => {
+    const world = createNewGame()
+    const ncaaSeason = Object.values(world.seasons).find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!
+    const competition = world.competitions[ncaaSeason.competitionId]!
+    const future = createSeason({ id: seasonIdFromString('season-ncaa-2045'), competitionId: competition.id, label: '2045-46', startDate: createGameDate(2045, 8, 1), endDate: createGameDate(2046, 7, 31), participantTeamIds: competition.participantTeamIds })
+    const withFuture = updateGameWorld(world, { currentDate: createGameDate(2045, 9, 15), currentSeasonId: future.id, seasons: [...Object.values(world.seasons), future] })
+    const country = Object.values(withFuture.countries)[0]!
+    const origin = createPlace({ id: 'bs15e-2045-intake-origin', kind: 'CITY', name: 'Simulated 2045 intake origin', countryId: country.id })
+    const cohort = createTalentCohort({ id: 'bs15e-2045-intake', placeId: origin.id, birthYear: 2027, generationYear: 2045, gender: 'male', seed: 204546, inputVersion: 'bs15e-2045-v1', inputs: { ageCohortPopulation: 20_000, basketballParticipationPerThousand: 60, accessOpportunityBasisPoints: 9_000 } })
+    const intake = createTalentSupplyCohort(updateGameWorld(withFuture, { places: [...Object.values(withFuture.placesById), origin] }), cohort)
+    const initialized = initializeRecruitingCycle(intake, future.id)
+    const sourceCycle = Object.values(initialized.recruitingCyclesById).find((item) => item.sourceSeasonId === future.id)!
+    const cycle = { ...sourceCycle, status: 'open' as const, rules: { ...sourceCycle.rules, poolSize: 4 } }
+    let used = updateGameWorld(initialized, { recruitingCycles: Object.values(initialized.recruitingCyclesById).map((item) => item.id === cycle.id ? cycle : item) })
+    expect(cycle.calendar).toMatchObject({ provenance: 'SIMULATED_CARRY_FORWARD', sourceSeason: '2026-27', derivedSeason: '2045-46', basedOnRulesetId: 'NCAA_DI_MBB_2026_27' })
+    expect(cycle.sourceSeasonId).toBe(future.id)
+    expect(cycle.calendar!.windows.length).toBeGreaterThan(0)
+    const permission = canPerformRecruitingAction({ date: used.currentDate, isNCAA: true, calendar: cycle.calendar, category: 'men', action: 'inboundCall' })
+    expect(permission).toMatchObject({ allowed: true, period: 'recruiting', provenance: 'SIMULATED_CARRY_FORWARD' })
+    expect(permission.rulesetId).toContain('BDM-CONTINUITY-2045-46')
+
+    const program = competition.participantTeamIds.find((teamId) => Object.values(used.teamStaffAssignmentsById).some((assignment) => assignment.teamId === teamId))!
+    const discovered = discoverRecruitingTalentCandidate(used, cycle.id, program)
+    expect(discovered.ok).toBe(true)
+    if (!discovered.ok) return
+    used = discovered.value
+    const recruit = Object.values(used.recruitProfilesById).find((profile) => profile.cycleId === cycle.id)!
+    expect(used.recruitingBoards).toContainEqual({ programTeamId: program, recruitId: recruit.id, priority: 'normal' })
+    used = addRecruitingBoardEntry(used, { programTeamId: program, recruitId: recruit.id, priority: 'high' })
+    const remote = performRecruitingAction(used, cycle.id, recruit.id, program, 'pitch')
+    expect(remote).toMatchObject({ ok: true })
+    if (!remote.ok) return
+    used = remote.value
+    expect(used.recruitingBoards).toContainEqual({ programTeamId: program, recruitId: recruit.id, priority: 'high' })
+
+    const assigned = Object.values(used.teamStaffAssignmentsById).find((item) => item.teamId === program)!
+    const illegal = performRecruitingAction(used, cycle.id, recruit.id, program, 'contact', { type: 'unofficial', startsOn: used.currentDate, endsOn: used.currentDate, lodgingNights: 0, offCampus: true, offCampusSite: 'educationalInstitution', staffPersonId: assigned.staffPersonId })
+    expect(illegal).toMatchObject({ ok: false, reason: 'STAFF_NOT_DESIGNATED_OFF_CAMPUS_RECRUITER' })
+    const blockedPermission = canPerformRecruitingAction({ date: used.currentDate, isNCAA: true, calendar: cycle.calendar, category: 'men', action: 'inPersonContact', location: 'offCampus', personDayRequired: true, designatedOffCampusRecruiter: false, maximumDesignatedOffCampusRecruiters: 6, maximumSimultaneousOffCampusRecruiters: 4, personDaysUsed: 0 })
+    expect(blockedPermission).toMatchObject({ allowed: false, reasonCode: 'STAFF_NOT_DESIGNATED_OFF_CAMPUS_RECRUITER', provenance: 'SIMULATED_CARRY_FORWARD' })
+    const designation = designateOffCampusRecruiter(used, cycle.id, program, assigned.staffPersonId)
+    expect(designation.ok).toBe(true)
+    if (!designation.ok) return
+    const offCampusAction = performRecruitingAction(designation.value, cycle.id, recruit.id, program, 'contact', { type: 'unofficial', startsOn: used.currentDate, endsOn: used.currentDate, lodgingNights: 0, offCampus: true, offCampusSite: 'educationalInstitution', staffPersonId: assigned.staffPersonId })
+    expect(offCampusAction.ok).toBe(true)
+    if (!offCampusAction.ok) return
+    used = offCampusAction.value
+    expect(Object.values(used.recruitingActionHistoryById).some((item) => item.cycleId === cycle.id && item.offCampus && item.staffPersonId === assigned.staffPersonId)).toBe(true)
+    const personDayQuery = new Set(Object.values(used.recruitingActionHistoryById).filter((item) => item.cycleId === cycle.id && item.programTeamId === program && item.offCampus).map((item) => `${item.staffPersonId}:${item.date}`))
+    expect(personDayQuery.size).toBe(1)
+
+    const beforeAi = Object.keys(used.recruitingActionHistoryById).length
+    used = progressAiRecruiting(used, cycle.id)
+    expect(Object.keys(used.recruitingActionHistoryById).length).toBeGreaterThan(beforeAi)
+    expect(Object.values(used.recruitingActionHistoryById).some((item) => item.cycleId === cycle.id && item.kind === 'negotiation'), JSON.stringify(Object.values(used.recruitingActionHistoryById).filter((item) => item.cycleId === cycle.id).map((item) => ({ program: item.programTeamId, kind: item.kind, staff: item.staffPersonId, cost: item.cost })))).toBe(true)
+    expect(Object.values(used.recruitingCyclesById).find((item) => item.id === cycle.id)!.calendar!.provenance).toBe('SIMULATED_CARRY_FORWARD')
+    used = updateGameWorld(used, { currentDate: addDays(used.currentDate, 1) })
+    const nextDayAction = performRecruitingAction(used, cycle.id, recruit.id, program, 'pitch')
+    expect(nextDayAction.ok).toBe(true)
+    if (!nextDayAction.ok) return
+    used = nextDayAction.value
+    const progressedPermission = canPerformRecruitingAction({ date: used.currentDate, isNCAA: true, calendar: used.recruitingCyclesById[cycle.id]!.calendar, category: 'men', action: 'inboundCall' })
+    expect(progressedPermission).toMatchObject({ allowed: true, provenance: 'SIMULATED_CARRY_FORWARD', rulesetId: expect.stringContaining('BDM-CONTINUITY-2045-46') })
+    expect(Object.values(used.recruitingActionHistoryById).some((item) => item.cycleId === cycle.id && item.date === used.currentDate)).toBe(true)
   })
 })
 

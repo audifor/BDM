@@ -29,6 +29,12 @@ import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategySc
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
 
 export interface DesktopAppActions {
+  readonly submitTransferNotice?: (playerId: PlayerId) => string | null
+  readonly completeTransferEducationModule?: (entryId: string) => string | null
+  readonly processTransferPortalEntry?: (entryId: string) => string | null
+  readonly withdrawTransferPortalEntry?: (entryId: string) => string | null
+  readonly addTransferRecruitToCycle?: (entryId: string) => string | null
+  readonly completeCollegeTransfer?: (recruitId: string) => string | null
   readonly decideContractReview?: (teamId: TeamId, contractId: import('@/domain/ids').ContractId, intent: ContractReviewIntent) => void
   readonly openContractRetention?: (teamId: TeamId, contractId: import('@/domain/ids').ContractId, actionId: string) => void
   readonly submitContractRetentionOffer?: (teamId: TeamId, negotiationId: string, expectedRound: number, actionId: string, terms: RetentionTermSet) => void
@@ -65,7 +71,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'narratives') return <NarrativesScreen world={world} />
   if (key === 'media') return <MediaScreen world={world} onRespond={actions.respondToMedia ?? (() => undefined)} onSkip={actions.skipMedia ?? (() => undefined)} />
   if (key === 'trades') return <TradeCenterScreen world={world} />
-  if (key === 'recruiting') return <RecruitingScreen world={world} onAddTarget={actions.addRecruitingTarget ?? (() => undefined)} onRemoveTarget={actions.removeRecruitingTarget ?? (() => undefined)} onAction={actions.performRecruitingAction ?? (() => 'NO_CONTROLLED_PROGRAM')} onOffer={actions.makeRecruitingOffer ?? (() => 'NO_CONTROLLED_PROGRAM')} />
+  if (key === 'recruiting') return <RecruitingScreen world={world} onAddTarget={actions.addRecruitingTarget ?? (() => undefined)} onRemoveTarget={actions.removeRecruitingTarget ?? (() => undefined)} onAction={actions.performRecruitingAction ?? (() => 'NO_CONTROLLED_PROGRAM')} onOffer={actions.makeRecruitingOffer ?? (() => 'NO_CONTROLLED_PROGRAM')} onSubmitTransferNotice={actions.submitTransferNotice} onCompleteTransferEducationModule={actions.completeTransferEducationModule} onProcessTransferPortalEntry={actions.processTransferPortalEntry} onWithdrawTransferPortalEntry={actions.withdrawTransferPortalEntry} onAddTransferRecruit={actions.addTransferRecruitToCycle} onCompleteCollegeTransfer={actions.completeCollegeTransfer} />
   if (key === 'nil') return <NilScreen world={world} onAccept={actions.acceptNilOpportunity ?? (() => undefined)} />
   if (key === 'boosters') return <BoostersScreen world={world} onSupport={actions.requestBoosterSupport ?? (() => undefined)} />
   if (key === 'enforcement') return <EnforcementScreen world={world} />

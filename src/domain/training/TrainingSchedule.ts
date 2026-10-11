@@ -1,10 +1,13 @@
-import type { GameDate } from '@/domain/date'
+import { parseGameDate, type GameDate } from '@/domain/date'
 import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
 import type { StaffRoleId } from '@/domain/staff'
+import { PHYSICAL_OPERATION_STATUSES, type SportingPhysicalAttempt } from '@/domain/facilities/SportingOperationPhysical'
+import { isFacilityComponentCapability } from '@/domain/facilities/FacilityComponentCapability'
+import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
 
-export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
+export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed' | 'cancelled'
 export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
 
 export interface TrainingParticipantExecutionEvidence {
@@ -30,6 +33,9 @@ export interface TrainingExecutionEvidence {
 }
 
 export interface ScheduledTrainingSession {
+  /** Explicit attendance selection; absence preserves legacy roster behavior. */
+  readonly selectedPlayerIds?: readonly PlayerId[]
+  readonly physicalAllocations?: readonly PhysicalAllocation[]
   readonly id: string
   readonly teamId: TeamId
   readonly date: GameDate
@@ -56,6 +62,7 @@ export interface ScheduledTrainingSession {
   readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>>
   /** Immutable factual evidence attached when this scheduled session completes. */
   readonly execution?: TrainingExecutionEvidence
+  readonly physicalAttempt?: SportingPhysicalAttempt
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -67,6 +74,11 @@ export function timeToMinutes(time: string): number {
 }
 
 export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSession, 'status'> & { readonly status?: ScheduledTrainingSessionStatus }): ScheduledTrainingSession {
+  if (input.status !== undefined && !['scheduled', 'completed', 'cancelled'].includes(input.status)) throw new RangeError('Invalid Training status')
+  if (input.selectedPlayerIds !== undefined && (input.selectedPlayerIds.length === 0 || new Set(input.selectedPlayerIds).size !== input.selectedPlayerIds.length)) throw new RangeError('Training selection requires unique participants')
+  if (input.scope === 'individual' && input.selectedPlayerIds !== undefined) throw new RangeError('Individual Training uses its existing PlayerId assignment')
+  const physicalAllocations = input.physicalAllocations?.map(createPhysicalAllocation)
+  if (physicalAllocations?.some(item => item.consumer !== undefined || item.sessionId !== input.id || item.teamId !== input.teamId) || physicalAllocations && new Set(physicalAllocations.map(item => item.id)).size !== physicalAllocations.length || (physicalAllocations?.filter(item => item.status === 'CONFIRMED').length ?? 0) > 1) throw new RangeError('Invalid Training allocation linkage')
   if (!input.id.trim()) throw new RangeError('Scheduled session id is required')
   if (!input.teamId) throw new RangeError('Scheduled session teamId is required')
   timeToMinutes(input.startTime)
@@ -77,6 +89,15 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (input.scope === 'team' && input.playerId !== undefined) throw new RangeError('Team sessions must not specify a playerId')
   if (input.moduleId !== undefined && input.moduleId.trim() === '') throw new RangeError('Scheduled session moduleId must not be blank')
   trainingDefinitionById(input.definitionId)
+  if (input.physicalAttempt !== undefined) {
+    const attempt = input.physicalAttempt
+    parseGameDate(attempt.attemptedOn)
+    if (attempt.policyVersion !== 'BS17D-P0-v1' || !PHYSICAL_OPERATION_STATUSES.includes(attempt.status) || attempt.attemptedOn > input.date || input.status === 'completed' && attempt.attemptedOn !== input.date || !attempt.operationId.trim()) throw new RangeError('Invalid Training physical attempt')
+    if (input.status === 'completed' && attempt.status === 'VERIFIED_UNAVAILABLE') throw new RangeError('Unavailable physical resource cannot complete Training')
+    for (const resource of attempt.resources) {
+      if (!resource.facilityId || !resource.componentId || !isFacilityComponentCapability(resource.capability) || !PHYSICAL_OPERATION_STATUSES.includes(resource.status) || !resource.reason || typeof resource.hasAccess !== 'boolean' || resource.operationalCapacity !== null || (resource.nominalCapacity !== null && (!Number.isFinite(resource.nominalCapacity) || resource.nominalCapacity < 0)) || (resource.capacityUnit !== null && typeof resource.capacityUnit !== 'string')) throw new RangeError('Invalid Training physical resource evidence')
+    }
+  }
   if (!['light', 'normal', 'high'].includes(input.intensity)) throw new RangeError('Invalid session intensity')
   const assigned = input.assignedStaffPersonIds
   if (assigned !== undefined && new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
@@ -101,7 +122,10 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
     executingStaffRoles: Object.freeze(input.execution.executingStaffRoles.map((staff) => Object.freeze({ ...staff }))),
     participants: Object.freeze(input.execution.participants.map((participant) => Object.freeze({ ...participant, injuryIds: Object.freeze([...participant.injuryIds]) }))),
   })
-  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), status: input.status ?? 'scheduled' }
+  const physicalAttempt = input.physicalAttempt === undefined ? undefined : Object.freeze({ ...input.physicalAttempt,
+    resources: Object.freeze(input.physicalAttempt.resources.map((resource) => Object.freeze({ ...resource }))),
+  })
+  return { ...input, ...(physicalAllocations === undefined ? {} : { physicalAllocations: Object.freeze(physicalAllocations) }), ...(input.selectedPlayerIds === undefined ? {} : { selectedPlayerIds: Object.freeze([...input.selectedPlayerIds]) }), ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), ...(physicalAttempt === undefined ? {} : { physicalAttempt }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */
@@ -117,6 +141,7 @@ function timeRangesOverlap(a: ScheduledTrainingSession, b: ScheduledTrainingSess
 /** Two sessions collide if they overlap in time and share a scope-relevant scheduling resource:
  * the same team (team sessions), or the same player (individual sessions for that player). */
 function sessionsCollide(a: ScheduledTrainingSession, b: ScheduledTrainingSession): boolean {
+  if (a.status === 'cancelled' || b.status === 'cancelled') return false
   if (!timeRangesOverlap(a, b)) return false
   if (a.scope === 'team' && b.scope === 'team') return a.teamId === b.teamId
   if (a.scope === 'individual' && b.scope === 'individual') return a.playerId === b.playerId

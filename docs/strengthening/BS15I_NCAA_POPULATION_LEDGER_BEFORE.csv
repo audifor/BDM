@@ -1,0 +1,6 @@
+date,rostered,enrolled,academicEligible,academicIneligible,incomingSigned,signedTotal,successfulArrivals,transfersOut,proExits,exhausted,missingAcademicProfiles,staleAcademicProfiles,activeAcademicRestrictions,recruitingPoolSize
+2032-10-01,168,84,168,0,0,0,0,0,0,0,0,0,0,0
+2033-10-01,168,168,168,0,0,0,0,0,0,0,0,0,0,144
+2034-10-01,168,168,168,0,0,0,0,0,0,0,0,0,0,296
+2035-10-01,168,168,122,46,0,0,0,0,0,0,0,0,0,448
+2036-02-03,168,168,132,36,0,0,0,0,0,0,0,0,0,597

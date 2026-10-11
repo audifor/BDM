@@ -135,7 +135,7 @@ function richFacilitiesWorld() {
   ]
 
   const world = updateGameWorld(base, {
-    places: [cityPlace, campusPlace],
+    places: [...Object.values(base.placesById), cityPlace, campusPlace],
     facilities: [ownedArena, trainingCenter, tempArena],
     facilityComponents: [mainCourt, practiceCourtA, practiceCourtB, medicalRoom, adminOffice],
     facilityNameRecords: nameRecords,
@@ -261,7 +261,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const base = createNewGame()
       const city = createPlace({ id: 'place:pc-city', kind: 'CITY', name: 'PC City', latitude: 40.4, longitude: -3.7 })
       const campus = createPlace({ id: 'place:pc-campus', kind: 'CAMPUS', name: 'PC Campus', parentPlaceId: city.id })
-      const world = updateGameWorld(base, { places: [city, campus] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), city, campus] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.placesById).toEqual(world.placesById)
       expect(restored.placesById[campus.id]!.parentPlaceId).toBe(city.id)
@@ -273,7 +273,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const place = createPlace({ id: 'place:fac-1', kind: 'CITY', name: 'Fac City' })
       const bare = createFacility({ id: 'facility:fac-bare', placeId: place.id, type: 'STORAGE', purposes: ['STORAGE'], status: 'ACTIVE', canonicalName: 'Bare Storage' })
       const rich = createFacility({ id: 'facility:fac-rich', placeId: place.id, type: 'STADIUM', purposes: ['MATCH_HOSTING', 'COMMUNITY_ENGAGEMENT'], capabilities: ['HOSTS_COMPETITIVE_MATCHES', 'HOSTS_HOSPITALITY'], status: 'DEMOLISHED', canonicalName: 'Old Stadium', physical: { openedOn: '1950-01-01', totalCapacity: 40000, seatedCapacity: 35000, standingCapacity: 5000, courtCount: 1, hasAccessibilityProvision: false }, closedOn: '2010-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [bare, rich] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [bare, rich] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilitiesById[bare.id]!.physical).toEqual(bare.physical)
       expect(restored.facilitiesById[rich.id]!).toEqual(rich)
@@ -285,7 +285,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const facility = createFacility({ id: 'facility:comp-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Comp Center' })
       const active = createFacilityComponent({ id: 'component:comp-active', facilityId: facility.id, type: 'GYM', status: 'ACTIVE', capacity: 50, quantity: 2, openedAt: '2020-01-01' })
       const closed = createFacilityComponent({ id: 'component:comp-closed', facilityId: facility.id, type: 'VIP_BOX', status: 'CLOSED', openedAt: '2018-01-01', closedAt: '2022-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [active, closed] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [active, closed] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityComponentsById).toEqual({ [active.id]: active, [closed.id]: closed })
     })
@@ -299,7 +299,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
         createFacilityNameRecord({ id: 'name:pc-old', facilityId: facility.id, name: 'Old Sponsor Arena', isCanonical: false, validFrom: '2000-01-01', validTo: '2015-12-31' }),
         createFacilityNameRecord({ id: 'name:pc-new', facilityId: facility.id, name: 'New Sponsor Arena', isCanonical: false, validFrom: '2016-01-01' }),
       ]
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityNameRecords: records })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityNameRecords: records })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityNameRecordsById).toEqual(world.facilityNameRecordsById)
       for (const onDate of [parseGameDate('2005-01-01'), parseGameDate('2020-01-01')]) {
@@ -323,7 +323,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
         createFacilityOwnershipInterest({ id: 'own:pc-40', facilityId: facilitySplit.id, owner: { kind: 'ORGANIZATION', organizationId: otherOrg }, ownershipPercentage: 40, validFrom: '2020-01-01' }),
         createFacilityOwnershipInterest({ id: 'own:pc-unknown', facilityId: facilityUnknown.id, owner: { kind: 'ORGANIZATION', organizationId: teamOrg }, ownershipPercentage: null, validFrom: '2020-01-01' }),
       ]
-      const world = updateGameWorld(base, { places: [place], facilities: [facilityFull, facilitySplit, facilityUnknown], facilityOwnershipInterests: interests })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facilityFull, facilitySplit, facilityUnknown], facilityOwnershipInterests: interests })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityOwnershipInterestsById).toEqual(world.facilityOwnershipInterestsById)
       const onDate = parseGameDate('2030-01-01')
@@ -337,7 +337,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const facility = createFacility({ id: 'facility:own-person', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Person Arena' })
       const owner = Object.values(base.personsById)[0]!
       const interest = createFacilityOwnershipInterest({ id: 'own:pc-person', facilityId: facility.id, owner: { kind: 'PERSON', personId: owner.id }, ownershipPercentage: 100, validFrom: '2020-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityOwnershipInterests: [interest] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityOwnershipInterests: [interest] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityOwnershipInterestsById[interest.id]!.owner).toEqual({ kind: 'PERSON', personId: owner.id })
     })
@@ -348,7 +348,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const facility = createFacility({ id: 'facility:ctrl-1', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Ctrl Arena' })
       const org = Object.values(base.teams)[0]!.organizationId
       const right = createFacilityControlRight({ id: 'control:pc-1', facilityId: facility.id, controller: { kind: 'ORGANIZATION', organizationId: org }, validFrom: '2015-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityControlRights: [right] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityControlRights: [right] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       const onDate = parseGameDate('2030-01-01')
       expect(controllersOfFacilityAt(Object.values(restored.facilityControlRightsById), facility.id, onDate)).toEqual(
@@ -367,7 +367,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
         createFacilityOperatorAssignment({ id: 'op:pc-old', facilityId: facility.id, operatorOrganizationId: orgB, validFrom: '2000-01-01', validTo: '2009-12-31' }),
         createFacilityOperatorAssignment({ id: 'op:pc-new', facilityId: facility.id, operatorOrganizationId: orgA, validFrom: '2010-01-01' }),
       ]
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityOwnershipInterests: [ownership], facilityOperatorAssignments: operatorHistory })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityOwnershipInterests: [ownership], facilityOperatorAssignments: operatorHistory })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(operatorsOfFacilityAt(Object.values(restored.facilityOperatorAssignmentsById), facility.id, parseGameDate('2005-01-01')).map((a) => a.operatorOrganizationId)).toEqual([orgB])
       expect(operatorsOfFacilityAt(Object.values(restored.facilityOperatorAssignmentsById), facility.id, parseGameDate('2020-01-01')).map((a) => a.operatorOrganizationId)).toEqual([orgA])
@@ -391,7 +391,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
         validTo: '2029-12-31',
         agreementReferenceId: 'agreement:pc-lease-001',
       })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityUsageRights: [right] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityUsageRights: [right] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       const restoredRight = restored.facilityUsageRightsById[right.id]!
       expect(restoredRight).toEqual(right)
@@ -408,7 +408,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const facility = createFacility({ id: 'facility:usage-2', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Usage Arena 2' })
       const team = Object.values(base.teams)[0]!
       const wholeFacilityRight = createFacilityUsageRight({ id: 'usage:pc-whole', facilityId: facility.id, teamId: team.id, purpose: 'HOME_VENUE', validFrom: '2020-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityUsageRights: [wholeFacilityRight] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityUsageRights: [wholeFacilityRight] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityUsageRightsById[wholeFacilityRight.id]!.componentIds).toBeNull()
     })
@@ -421,7 +421,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const team = Object.values(base.teams)[0]!
       const orgRelationship = createFacilityOrganizationRelationship({ id: 'rel:pc-tenant', facilityId: facility.id, organizationId: org, kind: 'TENANT', validFrom: '2010-01-01', validTo: '2019-12-31' })
       const teamRelationship = createFacilityTeamRelationship({ id: 'relteam:pc-home', facilityId: facility.id, teamId: team.id, kind: 'HOME_VENUE', validFrom: '2010-01-01' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityOrganizationRelationships: [orgRelationship], facilityTeamRelationships: [teamRelationship] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityOrganizationRelationships: [orgRelationship], facilityTeamRelationships: [teamRelationship] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityOrganizationRelationshipsById).toEqual({ [orgRelationship.id]: orgRelationship })
       expect(restored.facilityTeamRelationshipsById).toEqual({ [teamRelationship.id]: teamRelationship })
@@ -433,7 +433,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       const facility = createFacility({ id: 'facility:approval-1', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Approval Arena' })
       const competitionId = Object.values(base.competitions)[0]!.id
       const approval = createFacilityCompetitionApproval({ id: 'approval:pc-1', facilityId: facility.id, competitionId, approved: true, validFrom: '2015-01-01', validTo: '2025-12-31' })
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityCompetitionApprovals: [approval] })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityCompetitionApprovals: [approval] })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       expect(restored.facilityCompetitionApprovalsById).toEqual({ [approval.id]: approval })
     })
@@ -447,7 +447,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
         createFacilityStatusRecord({ id: 'status:pc-2', facilityId: facility.id, status: 'TEMPORARILY_CLOSED', effectiveFrom: '2020-01-01' }),
         createFacilityStatusRecord({ id: 'status:pc-3', facilityId: facility.id, status: 'ACTIVE', effectiveFrom: '2021-01-01' }),
       ]
-      const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityStatusRecords: records })
+      const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityStatusRecords: records })
       const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
       for (const onDate of [parseGameDate('2010-01-01'), parseGameDate('2020-06-01'), parseGameDate('2022-01-01')]) {
         expect(facilityStatusAt(Object.values(restored.facilityStatusRecordsById), restored.facilitiesById[facility.id]!, onDate)).toBe(
@@ -635,7 +635,7 @@ describe('GameWorldSaveV4 — Club Facilities & Infrastructure V2 persistence (C
       // catch the dangling component reference — this is schema parsing succeeding but domain
       // validation correctly refusing, exactly the separation CFI2S must preserve.
       expect(() => updateGameWorld(base, {
-        places: [place],
+        places: [...Object.values(base.placesById), place],
         facilities: [facility],
         facilityUsageRights: [createFacilityUsageRight({ id: 'usage:mal-component', facilityId: facility.id, componentIds: ['component:does-not-exist'], teamId: team.id, purpose: 'TRAINING', validFrom: '2020-01-01' })],
       })).toThrow()

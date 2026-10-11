@@ -1,0 +1,756 @@
+{
+  "date": "2036-02-03",
+  "failure": "away team has 2 available players; 5 are required",
+  "save": "C:/Temp/BS15I-2036-02-03-failed-save-v4.json",
+  "teams": [
+    {
+      "gameId": "schedule-generated-season-0027-game-0005",
+      "teamId": "generated-team-0016",
+      "roster": [
+        "generated-player-0181",
+        "generated-player-0182",
+        "generated-player-0183",
+        "generated-player-0184",
+        "generated-player-0185",
+        "generated-player-0186",
+        "generated-player-0187"
+      ],
+      "available": [
+        "generated-player-0186",
+        "generated-player-0187"
+      ],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0181",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0016:generated-player-0181",
+            "playerId": "generated-player-0181",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0016",
+            "performance": 70,
+            "progress": 97
+          }
+        },
+        {
+          "playerId": "generated-player-0182",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0016:generated-player-0182",
+            "playerId": "generated-player-0182",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0016",
+            "performance": 71,
+            "progress": 98
+          }
+        },
+        {
+          "playerId": "generated-player-0183",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0016:generated-player-0183",
+            "playerId": "generated-player-0183",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0016",
+            "performance": 72,
+            "progress": 98
+          }
+        },
+        {
+          "playerId": "generated-player-0184",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0016:generated-player-0184",
+            "playerId": "generated-player-0184",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0016",
+            "performance": 73,
+            "progress": 98
+          }
+        },
+        {
+          "playerId": "generated-player-0185",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0016:generated-player-0185",
+            "playerId": "generated-player-0185",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0016",
+            "performance": 74,
+            "progress": 98
+          }
+        }
+      ],
+      "support": [
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0181",
+          "playerId": "generated-player-0181",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0182",
+          "playerId": "generated-player-0182",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0183",
+          "playerId": "generated-player-0183",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0184",
+          "playerId": "generated-player-0184",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0185",
+          "playerId": "generated-player-0185",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0186",
+          "playerId": "generated-player-0186",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0187",
+          "playerId": "generated-player-0187",
+          "programTeamId": "generated-team-0016",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        }
+      ]
+    },
+    {
+      "gameId": "schedule-generated-season-0027-game-0007",
+      "teamId": "generated-team-0019",
+      "roster": [
+        "generated-player-0217",
+        "generated-player-0218",
+        "generated-player-0219",
+        "generated-player-0220",
+        "generated-player-0221",
+        "generated-player-0222",
+        "generated-player-0223"
+      ],
+      "available": [],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0217",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0217",
+            "playerId": "generated-player-0217",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 70,
+            "progress": 75
+          }
+        },
+        {
+          "playerId": "generated-player-0218",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0218",
+            "playerId": "generated-player-0218",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 71,
+            "progress": 76
+          }
+        },
+        {
+          "playerId": "generated-player-0219",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0219",
+            "playerId": "generated-player-0219",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 72,
+            "progress": 76
+          }
+        },
+        {
+          "playerId": "generated-player-0220",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0220",
+            "playerId": "generated-player-0220",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 69,
+            "progress": 74
+          }
+        },
+        {
+          "playerId": "generated-player-0221",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0221",
+            "playerId": "generated-player-0221",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 70,
+            "progress": 75
+          }
+        },
+        {
+          "playerId": "generated-player-0222",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0222",
+            "playerId": "generated-player-0222",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 71,
+            "progress": 76
+          }
+        },
+        {
+          "playerId": "generated-player-0223",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0019:generated-player-0223",
+            "playerId": "generated-player-0223",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0019",
+            "performance": 72,
+            "progress": 76
+          }
+        }
+      ],
+      "support": [
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0217",
+          "playerId": "generated-player-0217",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0218",
+          "playerId": "generated-player-0218",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0219",
+          "playerId": "generated-player-0219",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0220",
+          "playerId": "generated-player-0220",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0221",
+          "playerId": "generated-player-0221",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0222",
+          "playerId": "generated-player-0222",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0223",
+          "playerId": "generated-player-0223",
+          "programTeamId": "generated-team-0019",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        }
+      ]
+    },
+    {
+      "gameId": "schedule-generated-season-0027-game-0008",
+      "teamId": "generated-team-0022",
+      "roster": [
+        "generated-player-0253",
+        "generated-player-0254",
+        "generated-player-0255",
+        "generated-player-0256",
+        "generated-player-0257",
+        "generated-player-0258",
+        "generated-player-0259"
+      ],
+      "available": [
+        "generated-player-0253",
+        "generated-player-0254",
+        "generated-player-0255",
+        "generated-player-0256"
+      ],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0257",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0022:generated-player-0257",
+            "playerId": "generated-player-0257",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0022",
+            "performance": 69,
+            "progress": 75
+          }
+        },
+        {
+          "playerId": "generated-player-0258",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0022:generated-player-0258",
+            "playerId": "generated-player-0258",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0022",
+            "performance": 70,
+            "progress": 76
+          }
+        },
+        {
+          "playerId": "generated-player-0259",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0022:generated-player-0259",
+            "playerId": "generated-player-0259",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0022",
+            "performance": 71,
+            "progress": 77
+          }
+        }
+      ],
+      "support": [
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0253",
+          "playerId": "generated-player-0253",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0254",
+          "playerId": "generated-player-0254",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0255",
+          "playerId": "generated-player-0255",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0256",
+          "playerId": "generated-player-0256",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0257",
+          "playerId": "generated-player-0257",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0258",
+          "playerId": "generated-player-0258",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0259",
+          "playerId": "generated-player-0259",
+          "programTeamId": "generated-team-0022",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        }
+      ]
+    },
+    {
+      "gameId": "schedule-generated-season-0027-game-0009",
+      "teamId": "generated-team-0023",
+      "roster": [
+        "generated-player-0265",
+        "generated-player-0266",
+        "generated-player-0267",
+        "generated-player-0268",
+        "generated-player-0269",
+        "generated-player-0270",
+        "generated-player-0271"
+      ],
+      "available": [
+        "generated-player-0267",
+        "generated-player-0268",
+        "generated-player-0269",
+        "generated-player-0271"
+      ],
+      "unavailable": [
+        {
+          "playerId": "generated-player-0265",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0023:generated-player-0265",
+            "playerId": "generated-player-0265",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0023",
+            "performance": 73,
+            "progress": 77
+          }
+        },
+        {
+          "playerId": "generated-player-0266",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0023:generated-player-0266",
+            "playerId": "generated-player-0266",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0023",
+            "performance": 74,
+            "progress": 77
+          }
+        },
+        {
+          "playerId": "generated-player-0270",
+          "eligibility": {
+            "eligible": false,
+            "status": "ineligible",
+            "reasons": [
+              "ACADEMIC_REQUIREMENT_NOT_MET"
+            ],
+            "seasonsRemaining": 4
+          },
+          "academic": {
+            "id": "academic:generated-ecosystem-0003:generated-team-0023:generated-player-0270",
+            "playerId": "generated-player-0270",
+            "ecosystemId": "generated-ecosystem-0003",
+            "programTeamId": "generated-team-0023",
+            "performance": 74,
+            "progress": 77
+          }
+        }
+      ],
+      "support": [
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0265",
+          "playerId": "generated-player-0265",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0266",
+          "playerId": "generated-player-0266",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0267",
+          "playerId": "generated-player-0267",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0268",
+          "playerId": "generated-player-0268",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0269",
+          "playerId": "generated-player-0269",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0270",
+          "playerId": "generated-player-0270",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        },
+        {
+          "id": "academic-support:academic:2036:01:generated-player-0271",
+          "playerId": "generated-player-0271",
+          "programTeamId": "generated-team-0023",
+          "termId": "academic:2036:01",
+          "level": "standard",
+          "cost": 1,
+          "startsAt": "2036-01-01"
+        }
+      ]
+    }
+  ],
+  "academicRules": [
+    {
+      "ecosystemId": "generated-ecosystem-0003",
+      "minimumPerformance": 60,
+      "minimumProgress": 55,
+      "termsPerSeason": 2,
+      "supportCapacity": 8,
+      "supportEffectiveness": {
+        "standard": 3,
+        "tutoring": 7,
+        "intensive": 12
+      }
+    },
+    {
+      "ecosystemId": "women-ecosystem-0003",
+      "minimumPerformance": 60,
+      "minimumProgress": 55,
+      "termsPerSeason": 2,
+      "supportCapacity": 8,
+      "supportEffectiveness": {
+        "standard": 3,
+        "tutoring": 7,
+        "intensive": 12
+      }
+    }
+  ],
+  "collegeRulesets": [
+    {
+      "id": "college-fixture:generated-ecosystem-0003:v2",
+      "version": "V2",
+      "ecosystemId": "generated-ecosystem-0003",
+      "effectiveFrom": "2035-07-01",
+      "effectiveTo": "2036-07-31",
+      "minimumAcademicPerformance": 75,
+      "minimumAcademicProgress": 65,
+      "maximumEligibilitySeasons": 4,
+      "participationThreshold": 3,
+      "eligibilityClock": {
+        "model": "AGE_OR_ENROLLMENT_FIVE_YEAR",
+        "effectiveFrom": "2026-08-01",
+        "periodYears": 5,
+        "ageTriggerYears": 19,
+        "academicYearStartMonthDay": "09-01",
+        "source": "https://web3.ncaa.org/lsdbi/search/proposalView?id=109394",
+        "transitionSource": "https://www.ncaa.org/news/division-i-adopts-age-based-eligibility-model/"
+      },
+      "provenance": "TEST / PRODUCT FIXTURE"
+    },
+    {
+      "id": "college-fixture:women-ecosystem-0003:v2",
+      "version": "V2",
+      "ecosystemId": "women-ecosystem-0003",
+      "effectiveFrom": "2035-07-01",
+      "effectiveTo": "2036-07-31",
+      "minimumAcademicPerformance": 75,
+      "minimumAcademicProgress": 65,
+      "maximumEligibilitySeasons": 4,
+      "participationThreshold": 3,
+      "eligibilityClock": {
+        "model": "AGE_OR_ENROLLMENT_FIVE_YEAR",
+        "effectiveFrom": "2026-08-01",
+        "periodYears": 5,
+        "ageTriggerYears": 19,
+        "academicYearStartMonthDay": "09-01",
+        "source": "https://web3.ncaa.org/lsdbi/search/proposalView?id=109394",
+        "transitionSource": "https://www.ncaa.org/news/division-i-adopts-age-based-eligibility-model/"
+      },
+      "provenance": "TEST / PRODUCT FIXTURE"
+    }
+  ]
+}

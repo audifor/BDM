@@ -1,6 +1,6 @@
 import { compareGameDates, createGameDate, daysInMonth, parseGameDate, type GameDate } from '@/domain/date'
 import { getContractYearCompensation, type PlayerContract } from '@/domain/contract'
-import type { StaffContract } from '@/domain/staffContract'
+import { staffFinancialScheduleStartsOn, type StaffContract } from '@/domain/staffContract'
 import {
   contractIdFromString,
   organizationIdFromString,
@@ -15,7 +15,8 @@ import {
 } from '@/domain/ids'
 import { type GameWorld } from '@/domain/world'
 import { createAuthorizedEconomicEvent, processContractEconomicEvent, type EconomicEventAdapterResult, type EconomicEventAdapterOptions } from './EconomicEventAdapters'
-import { createCurrencyCode, createMoney, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
+import { legacyMajorUnitsToMoney } from './FinanceCurrencyPolicy'
+import { createCurrencyCode, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
 import { getExpenseRecognitionsAsOfDate, getExpenseRecognitionsBetween } from './RecognitionQueries'
 import { getPayableRemaining } from './Treasury'
 import type { ExpenseRecognition } from './Recognition'
@@ -239,7 +240,9 @@ function buildEntries(world: GameWorld, source: SourceContract, query: ContractF
   const currencyCode = resolveCurrencyCode(world, organizationId, query.currencyCode)
   return Object.freeze(amounts.map((entry) => {
     const { amountMinorUnits, ...rest } = entry
-    return Object.freeze({ ...rest, amount: createMoney({ currencyCode, minorUnits: amountMinorUnits }) })
+    // Legacy contract terms are whole major currency units; the canonical schedule is minor units, so every
+    // contract amount crosses the single conversion boundary instead of being cast 1:1 (BS16G).
+    return Object.freeze({ ...rest, amount: legacyMajorUnitsToMoney(amountMinorUnits, currencyCode) })
   }))
 }
 
@@ -250,7 +253,11 @@ function buildAmountEntries(world: GameWorld, source: SourceContract, query: Con
     ? source.contract.term.expiresOn
     : earliest(source.contract.term.expiresOn, source.contract.termination?.effectiveOn)
   const team = world.teams[source.teamId]!
-  const periods = annualPeriods(source.contract.term.startsOn, contractEnd)
+  // Employment and its financial schedule are separate meanings: Staff payroll is anchored on the contract's own
+  // financial start when it declares one (a career can begin before the Season that its salaries start with),
+  // and on the term start otherwise, which keeps production payroll semantics unchanged.
+  const scheduleStartsOn = source.sourceContractType === 'PLAYER' ? source.contract.term.startsOn : staffFinancialScheduleStartsOn(source.contract)
+  const periods = annualPeriods(scheduleStartsOn, contractEnd)
   return Object.freeze(periods.flatMap((period, yearIndex) => {
     const compensation = source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
     const guaranteed = compensation.guaranteedAmount

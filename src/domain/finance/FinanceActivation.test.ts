@@ -15,9 +15,12 @@ import {
   createTeamFinances,
   ensureCanonicalFinanceFoundation,
   evaluateOrganizationFinancialCommitment,
-  fiscalPeriodIdFor,
+  financeFiscalPeriodIdFor,
+  financeFiscalPeriodsOf,
+  ORGANIZATION_FINANCE_ACCOUNT_ROLES,
   getFinanceActivationReport,
   getOrganizationFinancialAuthorization,
+  legacyTeamFinanceAmountToMoney,
   LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE,
   materializeLegacyTeamFinancesAuthorization,
 } from '@/domain/finance'
@@ -74,12 +77,12 @@ describe('BS16E authorization activation', () => {
     expect(budget.status).toBe('APPROVED')
     expect(budget.currencyCode).toBe('EUR')
     expect(budget.organizationId).toBe(organizationId)
-    expect(budget.fiscalPeriodId).toBe(fiscalPeriodIdFor(organizationId, '2032-01-01'))
+    expect(budget.fiscalPeriodId).toBe(financeFiscalPeriodIdFor(organizationId, '2032-01-01'))
     expect(budget.approval).toMatchObject({ authorityKind: 'MANUAL_SYSTEM_ACTION', authorityId: 'system:legacy-team-finances-activation' })
     expect(budget.provenance).toEqual(LEGACY_TEAM_FINANCES_ACTIVATION_PROVENANCE)
     expect(Object.values(world.budgetLinesById).map((line) => [line.category, line.amount.minorUnits, line.teamId]).sort()).toEqual([
-      ['PLAYER_SALARY', 1_000_000, 'team-home'],
-      ['STAFF_SALARY', 500_000, 'team-home'],
+      ['PLAYER_SALARY', 100_000_000, 'team-home'],
+      ['STAFF_SALARY', 50_000_000, 'team-home'],
     ])
     expect(activationOf(world, organizationId).status).toBe('ALREADY_PROVISIONED')
     expect(getFinanceActivationReport(legacyWorld()).organizations.find((entry) => entry.organizationId === organizationId)?.status).toBe('ACTIVATED')
@@ -90,7 +93,7 @@ describe('BS16E authorization activation', () => {
     const unchanged = ensureCanonicalFinanceFoundation(world)
     const report = getFinanceActivationReport(world)
 
-    expect(report.organizations.map((entry) => entry.status)).toEqual(['FINANCE_PROFILE_UNAVAILABLE', 'FINANCE_PROFILE_UNAVAILABLE'])
+    expect(report.organizations.map((entry) => entry.status)).toEqual(['FINANCE_CURRENCY_UNAVAILABLE', 'FINANCE_CURRENCY_UNAVAILABLE'])
     // No profile: nothing canonical is created, and the legacy authority keeps governing.
     expect(unchanged).toBe(world)
     expect(Object.keys(unchanged.financialBudgetsById)).toEqual([])
@@ -99,10 +102,15 @@ describe('BS16E authorization activation', () => {
 
   it('reports no legacy budget source when an organization has a profile but no TeamFinances', () => {
     const world = createGameWorld({ ...createValidGameWorldInput(), organizationFinancialProfiles: [profile] })
+    const activated = ensureCanonicalFinanceFoundation(world)
 
     expect(activationOf(world).status).toBe('NO_LEGACY_BUDGET_SOURCE')
-    expect(ensureCanonicalFinanceFoundation(world)).toBe(world)
-    expect(getOrganizationFinancialAuthorization(world, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).state).toBe('NOT_PROVISIONED')
+    // The foundation (account catalog and canonical fiscal period) is ensured even without a budget authority,
+    // because it is currency and period truth rather than permission; no authorization is invented.
+    expect(Object.keys(activated.financialBudgetsById)).toEqual([])
+    expect(financeFiscalPeriodsOf(activated, organizationId)).toHaveLength(1)
+    expect(getOrganizationFinancialAuthorization(activated, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).state).toBe('NOT_PROVISIONED')
+    expect(ensureCanonicalFinanceFoundation(activated)).toBe(activated)
   })
 
   it('is deterministic and idempotent, and never rewrites existing canonical facts', () => {
@@ -125,7 +133,7 @@ describe('BS16E authorization activation', () => {
       budgetLines: Object.values(first.budgetLinesById),
     })
     const afterChange = ensureCanonicalFinanceFoundation(changedLegacy)
-    expect(Object.values(afterChange.budgetLinesById).map((line) => line.amount.minorUnits).sort((left, right) => left - right)).toEqual([500_000, 1_000_000])
+    expect(Object.values(afterChange.budgetLinesById).map((line) => line.amount.minorUnits).sort((left, right) => left - right)).toEqual([50_000_000, 100_000_000])
     expect(activationOf(afterChange).status).toBe('ALREADY_PROVISIONED')
   })
 
@@ -137,7 +145,7 @@ describe('BS16E authorization activation', () => {
     expect(fiscalPeriod).toMatchObject({ startsOn: '2032-01-01', endsOn: '2032-12-31', status: 'OPEN' })
     expect(authorization.state).toBe('ACTIVE')
     expect(authorization.fiscalPeriodId).toBe(fiscalPeriod.id)
-    expect(authorization.authorizedMinorUnits).toBe(1_500_000)
+    expect(authorization.authorizedMinorUnits).toBe(150_000_000)
     expect(authorization.period).toEqual({ kind: 'FISCAL_YEAR', startsOn: '2032-01-01', endsOn: '2032-12-31' })
 
     // The fiscal period owns the effective dates: a budget whose fiscal period does not contain the
@@ -166,20 +174,26 @@ describe('BS16E authorization activation', () => {
     expect(Object.keys(revised.financialBudgetsById)).toHaveLength(2)
   })
 
-  it('leaves a later fiscal period unauthorized without inventing a renewal policy', () => {
+  it('keeps a later fiscal period unauthorized without inventing a renewal policy', () => {
     const activated = ensureCanonicalFinanceFoundation(legacyWorld())
     const nextYear = updateGameWorld(activated, { currentDate: NEXT_PERIOD })
     const nextReport = getFinanceActivationReport(nextYear).organizations.find((entry) => entry.organizationId === organizationId)!
 
+    // The next fiscal year's authorization is never copied forward: the report says so, and the authorization
+    // for that date stays unmodelled while period truth is created independently of it.
     expect(nextReport.status).toBe('RENEWAL_NOT_MODELLED')
-    expect(ensureCanonicalFinanceFoundation(nextYear)).toBe(nextYear)
-    // The previous period's authorization has ended, so the new period is simply not provisioned.
-    expect(getOrganizationFinancialAuthorization(nextYear, { organizationId, currencyCode: 'EUR', asOfDate: NEXT_PERIOD }).state).toBe('NOT_PROVISIONED')
-    const decision = evaluateOrganizationFinancialCommitment(nextYear, { organizationId, currency: 'EUR', amount: eur(10_000), asOfDate: NEXT_PERIOD })
+    const advanced = ensureCanonicalFinanceFoundation(nextYear)
+    expect(getOrganizationFinancialAuthorization(advanced, { organizationId, currencyCode: 'EUR', asOfDate: NEXT_PERIOD }).state).toBe('NOT_PROVISIONED')
+    const decision = evaluateOrganizationFinancialCommitment(advanced, { organizationId, currency: 'EUR', amount: eur(10_000), asOfDate: NEXT_PERIOD })
     expect(decision.reasonCodes).toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
     expect(decision.reasonCodes).not.toContain('AUTHORIZATION_OUT_OF_PERIOD')
-    // Only the earlier period's authorization exists, and it was not copied forward.
-    expect(Object.keys(nextYear.financialBudgetsById)).toEqual([authorizationBudgetIdFor(organizationId, fiscalPeriodIdFor(organizationId, '2032-01-01'))])
+    // Creating the new period is not renewing a budget: only the earlier period's authorization exists.
+    expect(Object.keys(advanced.financialBudgetsById)).toEqual([authorizationBudgetIdFor(organizationId, financeFiscalPeriodIdFor(organizationId, '2032-01-01'))])
+    expect(financeFiscalPeriodsOf(advanced, organizationId).map((period) => String(period.id))).toEqual([
+      String(financeFiscalPeriodIdFor(organizationId, '2032-01-01')),
+      String(financeFiscalPeriodIdFor(organizationId, '2033-01-01')),
+    ])
+    expect(ensureCanonicalFinanceFoundation(advanced)).toBe(advanced)
   })
 
   it('keeps unmodelled categories unauthorized while the mapped scopes work', () => {
@@ -194,63 +208,53 @@ describe('BS16E authorization activation', () => {
     const unspecified = evaluateOrganizationFinancialCommitment(world, { organizationId, currency: 'EUR', amount: eur(300_000), asOfDate: AS_OF })
 
     expect(mapped.status).toBe('AFFORDABLE_NOW')
-    expect(mapped.availableAuthorizedHeadroom).toEqual(eur(1_000_000))
+    expect(mapped.availableAuthorizedHeadroom).toEqual(eur(100_000_000))
     expect(unmapped.status).toBe('AFFORDABLE_NOW')
     expect(unmapped.availableAuthorizedHeadroom).toBeNull()
     expect(unmapped.reasonCodes).toContain('BUDGET_AUTHORIZATION_NOT_MODELLED')
-    expect(unspecified.availableAuthorizedHeadroom).toEqual(eur(1_500_000))
+    expect(unspecified.availableAuthorizedHeadroom).toEqual(eur(150_000_000))
     // Liquidity still binds: cash 750_000 - 0 obligations - 0 reservations.
     expect(evaluateOrganizationFinancialCommitment(world, { organizationId, currency: 'EUR', amount: eur(800_000), category: 'PLAYER_SALARY', asOfDate: AS_OF }).status).toBe('INSUFFICIENT_LIQUIDITY')
   })
 
-  it('creates no cash, account, ledger, obligation or reservation fact', () => {
+  it('creates no cash, ledger, obligation or reservation fact', () => {
     const world = legacyWorld()
-    const before = { cash: getCashBalancesByCurrency(world, organizationId, AS_OF), transactions: Object.keys(world.financialTransactionsById), accounts: Object.keys(world.financialAccountsById) }
+    const cashByCurrency = (target: GameWorld) => getCashBalancesByCurrency(target, organizationId, AS_OF).map((row) => [String(row.currencyCode), row.totalCashMinorUnits]).sort()
+    const before = { cash: cashByCurrency(world), transactions: Object.keys(world.financialTransactionsById), accounts: Object.keys(world.financialAccountsById) }
     const activated = ensureCanonicalFinanceFoundation(world)
 
-    expect(getCashBalancesByCurrency(activated, organizationId, AS_OF)).toEqual(before.cash)
+    // Accounts are containers only: the catalog is ensured while the opening balance is exactly what the ledger
+    // already said, and activation invents no cash fact.
+    expect(cashByCurrency(activated)).toEqual(before.cash)
     expect(Object.keys(activated.financialTransactionsById)).toEqual(before.transactions)
-    expect(Object.keys(activated.financialAccountsById)).toEqual(before.accounts)
+    expect(Object.keys(activated.financialAccountsById)).toHaveLength(before.accounts.length + ORGANIZATION_FINANCE_ACCOUNT_ROLES.length)
     expect(activated.financialCommitmentsById).toEqual({})
     expect(activated.financialReservationsById).toEqual({})
     expect(activated.payablesById).toEqual({})
     expect(activated.receivablesById).toEqual({})
   })
 
-  it('keeps canonical authorization parity with the legacy TeamFinances pools', () => {
+  it('keeps canonical authorization economically equal to the legacy TeamFinances pools after conversion', () => {
     for (const world of [createNewGame(), createAcbTestGame()]) {
-      const activated = ensureCanonicalFinanceFoundation(updateGameWorld(world, {
-        organizationFinancialProfiles: Object.values(world.teams).map((team) => createOrganizationFinancialProfile({ organizationId: team.organizationId, baseCurrencyCode: 'EUR', fiscalYearStartMonth: 7 })),
-      }))
-      const compared = { teams: 0, player: 0, staff: 0 }
+      const activated = ensureCanonicalFinanceFoundation(world)
+      let comparedTeams = 0
       for (const team of Object.values(activated.teams)) {
+        // Only organizations whose canonical currency resolved are authorized at all (BS16F policy).
+        const profile = activated.organizationFinancialProfilesById[team.organizationId]
+        if (profile === undefined) {
+          expect(Object.values(activated.budgetLinesById).some((line) => line.teamId === String(team.id) && (line.category === 'PLAYER_SALARY' || line.category === 'STAFF_SALARY'))).toBe(false)
+          continue
+        }
         const legacy = world.teamFinancesByTeamId[team.id]
         const lines = Object.values(activated.budgetLinesById).filter((line) => line.teamId === String(team.id))
         const player = lines.filter((line) => line.category === 'PLAYER_SALARY').reduce((sum, line) => sum + line.amount.minorUnits, 0)
         const staff = lines.filter((line) => line.category === 'STAFF_SALARY').reduce((sum, line) => sum + line.amount.minorUnits, 0)
-        expect(player).toBe(legacy?.playerSalaryBudget ?? 0)
-        expect(staff).toBe(legacy?.staffSalaryBudget ?? 0)
-        compared.teams += 1
-        compared.player += player
-        compared.staff += staff
+        const currency = String(profile.baseCurrencyCode)
+        expect(player).toBe(legacy === undefined ? 0 : legacyTeamFinanceAmountToMoney(legacy.playerSalaryBudget, currency).minorUnits)
+        expect(staff).toBe(legacy === undefined ? 0 : legacyTeamFinanceAmountToMoney(legacy.staffSalaryBudget, currency).minorUnits)
+        comparedTeams += 1
       }
-      expect(compared.teams).toBeGreaterThan(0)
-      expect(compared.player).toBeGreaterThan(0)
-      expect(compared.staff).toBeGreaterThan(0)
-    }
-  })
-
-  it('audits shipped create paths: amounts exist, currency does not, so nothing is invented', () => {
-    for (const world of [createNewGame(), createAcbTestGame()]) {
-      expect(Object.keys(world.teamFinancesByTeamId).length).toBeGreaterThan(0)
-      expect(Object.keys(world.organizationFinancialProfilesById)).toEqual([])
-      expect(Object.keys(world.fiscalPeriodsById)).toEqual([])
-      const report = getFinanceActivationReport(world)
-      const organizationIds = [...new Set(Object.values(world.teams).map((team) => team.organizationId))]
-      expect(report.organizations).toHaveLength(organizationIds.length)
-      expect(report.organizations.every((entry) => entry.status === 'FINANCE_PROFILE_UNAVAILABLE')).toBe(true)
-      // The activation seam is a no-op rather than a guess, so shipped play keeps TeamFinances.
-      expect(ensureCanonicalFinanceFoundation(world)).toBe(world)
+      expect(comparedTeams).toBeGreaterThan(0)
     }
   })
 

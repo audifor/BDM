@@ -21,6 +21,8 @@ describe('startMenuCatalog', () => {
     expect(labels).toContain('Mi carrera')
     expect(labels).toContain('Mundo y narrativa')
     expect(labels).toContain('College Performance Center')
+    expect(labels).toContain('Talent Operations')
+    expect(START_MENU_GROUPS.find((group) => group.id === 'talent')?.appIds).toEqual(['talent', 'scouting', 'recruiting', 'portal', 'draft'])
     expect(START_MENU_GROUPS.find((group) => group.id === 'college')?.appIds).toEqual(['recruiting', 'nil', 'boosters'])
     expect(START_MENU_GROUPS.find((group) => group.id === 'equipo')?.appIds).toEqual(
       expect.arrayContaining(['player', 'scouting']),
@@ -28,7 +30,7 @@ describe('startMenuCatalog', () => {
   })
 
   it('exposes college and club apps in the searchable catalog', () => {
-    expect(allStartMenuApps()).toEqual(expect.arrayContaining(['schedule', 'club', 'contracts', 'recruiting', 'nil', 'boosters']))
+    expect(allStartMenuApps()).toEqual(expect.arrayContaining(['schedule', 'club', 'contracts', 'recruiting', 'talent', 'portal', 'nil', 'boosters']))
     expect(filterStartMenuApps('rec', NCAA)).toEqual(['recruiting'])
     expect(filterStartMenuApps('sta', FIBA)).toEqual(['staff'])
   })

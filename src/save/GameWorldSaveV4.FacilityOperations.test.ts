@@ -31,7 +31,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const facility = createFacility({ id: 'facility:ops-save-1', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Ops Save Center 1' })
     const component = createFacilityComponent({ id: 'component:ops-save-1', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const need = createFacilityMaintenanceNeed({ id: 'need:save-1', facilityId: facility.id, componentId: component.id, detectedAt: '2030-01-01', type: 'CORRECTIVE', severity: 'MODERATE', status: 'COMPLETED', source: 'inspection:save-1', resolvedAt: '2030-03-01' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityMaintenanceNeedsById).toEqual(world.facilityMaintenanceNeedsById)
@@ -44,7 +44,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const place = createPlace({ id: 'place:ops-save-2', kind: 'CITY', name: 'Ops Save City 2' })
     const facility = createFacility({ id: 'facility:ops-save-2', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Ops Save Arena 2' })
     const need = createFacilityMaintenanceNeed({ id: 'need:save-2', facilityId: facility.id, detectedAt: '2030-01-01', type: 'STRUCTURAL', severity: 'MAJOR', status: 'OPEN', source: 'incident:save-2' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityMaintenanceNeeds: [need] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityMaintenanceNeeds: [need] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityMaintenanceNeedsById[need.id]!.componentId).toBeNull()
@@ -57,7 +57,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const component = createFacilityComponent({ id: 'component:ops-save-3', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const need = createFacilityMaintenanceNeed({ id: 'need:save-3', facilityId: facility.id, componentId: component.id, detectedAt: '2030-01-01', type: 'CORRECTIVE', severity: 'MODERATE', status: 'OPEN', source: 'x' })
     const action = createFacilityMaintenanceAction({ id: 'action:save-3', needId: need.id, facilityId: facility.id, componentId: component.id, type: 'REPAIR', startedAt: '2030-02-01', completedAt: '2030-02-10', outcome: 'SUCCESSFUL', resultingCondition: 76, resultingServiceability: 'FULL' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityMaintenanceActions: [action] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityMaintenanceActions: [action] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityMaintenanceActionsById).toEqual(world.facilityMaintenanceActionsById)
@@ -70,7 +70,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const place = createPlace({ id: 'place:ops-save-4', kind: 'CAMPUS', name: 'Ops Save Campus 4' })
     const facility = createFacility({ id: 'facility:ops-save-4', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Ops Save Center 4' })
     const action = createFacilityMaintenanceAction({ id: 'action:save-4', facilityId: facility.id, type: 'ROUTINE_MAINTENANCE', startedAt: '2030-02-01' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityMaintenanceActions: [action] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityMaintenanceActions: [action] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityMaintenanceActionsById[action.id]!.completedAt).toBeNull()
@@ -85,7 +85,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const component = createFacilityComponent({ id: 'component:ops-save-5', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const need = createFacilityMaintenanceNeed({ id: 'need:save-5', facilityId: facility.id, componentId: component.id, detectedAt: '2030-01-01', type: 'SURFACE', severity: 'MODERATE', status: 'OPEN', source: 'inspection:save-5' })
     const inspection = createFacilityInspection({ id: 'inspection:save-5', facilityId: facility.id, componentId: component.id, inspectedAt: '2030-01-01', finding: 'MAINTENANCE_NEED_IDENTIFIED', observedCondition: 55, producedNeedId: need.id })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityInspections: [inspection] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityInspections: [inspection] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityInspectionsById).toEqual(world.facilityInspectionsById)
@@ -97,7 +97,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const place = createPlace({ id: 'place:ops-save-6', kind: 'CAMPUS', name: 'Ops Save Campus 6' })
     const facility = createFacility({ id: 'facility:ops-save-6', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Ops Save Center 6' })
     const inspection = createFacilityInspection({ id: 'inspection:save-6', facilityId: facility.id, inspectedAt: '2030-01-01', finding: 'NO_ISSUE' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityInspections: [inspection] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityInspections: [inspection] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityInspectionsById[inspection.id]!.finding).toBe('NO_ISSUE')
@@ -111,7 +111,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const component = createFacilityComponent({ id: 'component:ops-save-7', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE' })
     const need = createFacilityMaintenanceNeed({ id: 'need:save-7', facilityId: facility.id, componentId: component.id, detectedAt: '2030-03-10', type: 'STRUCTURAL', severity: 'MAJOR', status: 'OPEN', source: 'incident:save-7' })
     const incident = createFacilityOperationalIncident({ id: 'incident:save-7', facilityId: facility.id, componentId: component.id, category: 'PLUMBING', occurredAt: '2030-03-10', resultingServiceability: 'OUT_OF_SERVICE', producedNeedId: need.id })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityOperationalIncidents: [incident] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityMaintenanceNeeds: [need], facilityOperationalIncidents: [incident] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     expect(restored.facilityOperationalIncidentsById).toEqual(world.facilityOperationalIncidentsById)
@@ -122,7 +122,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const base = createNewGame()
     const place = createPlace({ id: 'place:ops-save-8', kind: 'CITY', name: 'Ops Save City 8' })
     const facility = createFacility({ id: 'facility:ops-save-8', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'Ops Save Arena 8' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility] })
     const saved = serializeGameWorldV4(world, savedAt)
 
     // Simulate a genuinely pre-CFI5 payload: strip the four new collections entirely.
@@ -146,7 +146,7 @@ describe('GameWorldSaveV4 — Operations, Maintenance & Deterioration (CFI5) per
     const component = createFacilityComponent({ id: 'component:ops-save-9', facilityId: facility.id, type: 'OUTDOOR_COURT', status: 'ACTIVE' })
     const { createFacilityComponentConditionRecord } = await import('@/domain/facilities')
     const conditionRecord = createFacilityComponentConditionRecord({ id: 'condition:ops-save-9', componentId: component.id, effectiveFrom: '2030-01-01', physicalCondition: 90, serviceability: 'FULL' })
-    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityComponents: [component], facilityComponentConditionRecords: [conditionRecord] })
+    const world = updateGameWorld(base, { places: [...Object.values(base.placesById), place], facilities: [facility], facilityComponents: [component], facilityComponentConditionRecords: [conditionRecord] })
 
     const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
     const { calculateComponentDeterioration } = await import('@/engine/facilities')

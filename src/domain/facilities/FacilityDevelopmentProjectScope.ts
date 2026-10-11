@@ -3,7 +3,7 @@ import { requireNonEmptyString } from '@/domain/validation'
 import { isFacilityComponentType, type CreateFacilityComponentInput, type FacilityComponentType } from './FacilityComponent'
 import { isFacilityTechnicalStandard, type FacilityTechnicalStandard } from './FacilityCondition'
 import type { CreateFacilityComponentSpecificationInput } from './FacilityComponentSpecification'
-import { isFacilityType, type FacilityType } from './FacilityType'
+import { isFacilityPurpose, isFacilityType, type FacilityPurpose, type FacilityType } from './FacilityType'
 
 /**
  * A `FacilityDevelopmentProject`'s scope is structured data, never free text — each project type
@@ -46,6 +46,8 @@ export interface CreateFacilityScope {
   readonly placeId: string
   readonly facilityType: FacilityType
   readonly canonicalName: string
+  /** Explicit physical purpose. Missing legacy data stays OTHER, never implicitly TRAINING. */
+  readonly purposes?: readonly FacilityPurpose[]
   readonly initialComponents: readonly ComponentBlueprint[]
 }
 export type CreateFacilityScopeInput = CreateFacilityScope
@@ -181,11 +183,14 @@ export function createFacilityDevelopmentProjectScope(input: CreateFacilityDevel
 
 function createCreateFacilityScope(input: CreateFacilityScopeInput): CreateFacilityScope {
   if (!isFacilityType(input.facilityType)) throw new TypeError(`Create facility scope facilityType is invalid: ${String(input.facilityType)}`)
+  const purposes = input.purposes ?? ['OTHER']
+  if (purposes.length === 0 || purposes.some((purpose) => !isFacilityPurpose(purpose)) || new Set(purposes).size !== purposes.length) throw new TypeError('Create facility scope purposes must be non-empty, valid and unique')
   return Object.freeze({
     kind: 'CREATE_FACILITY',
     placeId: requireNonEmptyString(input.placeId, 'Create facility scope placeId'),
     facilityType: input.facilityType,
     canonicalName: requireNonEmptyString(input.canonicalName, 'Create facility scope canonicalName'),
+    purposes: Object.freeze([...purposes]),
     initialComponents: validateComponentBlueprints(input.initialComponents),
   })
 }

@@ -7,7 +7,8 @@ import { negotiationIdForOpening, type ContractNegotiation } from '@/domain/mark
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { addDays } from '@/domain/date'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
-import { getTeamFinancialSnapshot, updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning/GMPlanningLifecycleService'
 import { assessRoutedFreeAgentOfferIntelligence } from './FreeAgentOfferIntelligenceService'
@@ -30,7 +31,12 @@ beforeAll(() => {
   const assignment = Object.values(released.teamStaffAssignmentsById).find((item) => item.teamId === team.id && ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'].includes(item.role))!
   const operatorId = assignment?.staffPersonId ?? staffPersonIdFromString('bs10d-b:contact-operator')
   const contactResponsibilityId = `responsibility:${team.id}:initiateNegotiationContact`
-  const shortRoster = updateGameWorld(released, {
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(released, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    team.id,
+    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+  )
+  const shortRoster = updateGameWorld(financed, {
     teams: Object.values(released.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.slice(0, 5) } : item),
     marketKnowledge: [...released.marketKnowledge, ...source.rosterPlayerIds.slice(0, 3).map((playerId) => ({ organizationId: team.organizationId, playerId, availability: 'OPEN' as const, expectedSalary: 650_000, expectedYears: 2, playerInterest: 60, confidence: 75, assessedAt: released.currentDate, source: 'AGENT' as const }))],
     organizationKnowledge: [...released.organizationKnowledge, ...source.rosterPlayerIds.slice(0, 3).map((subjectPlayerId) => ({ organizationId: team.organizationId, subjectPlayerId, dimensions: { shooting: { coverage: 0.9, confidence: 0.8, assessedAt: released.currentDate, provenance: 'scoutReport' as const, estimate: 75, uncertainty: 2 }, creation: { coverage: 0.9, confidence: 0.8, assessedAt: released.currentDate, provenance: 'scoutReport' as const, estimate: 75, uncertainty: 2 }, interiorDefense: { coverage: 0.9, confidence: 0.8, assessedAt: released.currentDate, provenance: 'scoutReport' as const, estimate: 70, uncertainty: 2 } } }))],
@@ -325,10 +331,8 @@ describe('initiatePreferredFreeAgentContact', () => {
 
   it('declines an otherwise current AI counter when the exact counter salary is unaffordable', () => {
     const setup = withAiCounteredOffer()
-    const payroll = getTeamFinancialSnapshot(setup.world, teamId).currentPlayerPayroll
-    const constrained = updateGameWorld(setup.world, {
-      teamFinances: Object.values(setup.world.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: payroll + 1 } : item),
-    })
+    // The club's liquidity is already committed canonically, so the exact counter salary is unaffordable.
+    const constrained = commitTeamLiquidityForTest(setup.world, teamId, 10_000_000_000)
     const result = progressAiNegotiationCounterResponses(constrained)
     expect(result.results.map((item) => item.status)).toEqual(['APPLIED'])
     expect(result.world.negotiationsById[setup.counter.id]).toMatchObject({ status: 'WITHDRAWN', clubAction: { outcome: 'DECLINED_COUNTER', actor: { kind: 'STAFF', staffPersonId: setup.setup.offerOwnerId } } })

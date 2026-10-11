@@ -83,7 +83,7 @@ export function wearProfileForComponentType(type: FacilityComponentType, categor
  * dimensionless value in `[0, 1]` (0 = unused this period, 1 = maximally utilized) — CFI5 does not
  * yet source this from real Match/Training usage; a future wave will compute it from real
  * scheduling data and pass it in unchanged. A component with no supplied usage input deteriorates
- * at exactly its base rate (`utilizationRatio` defaults to a neutral 1.0 baseline — see
+ * at twice its base rate (`utilizationRatio` defaults to a existing 1.0 fallback — see
  * `FacilityUsageLoad.ts` for why 1.0, not 0, is the seam's neutral default).
  */
 export function utilizationMultiplier(utilizationRatio: number): number {

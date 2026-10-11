@@ -4,7 +4,8 @@ import { recordPlayerContractSigningDecisionEvent } from '@/app/governance/Playe
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { addYears } from '@/domain/date'
-import { createOrganizationFinancialProfile, getContractFinancialSchedule } from '@/domain/finance'
+import { getContractFinancialSchedule, SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT } from '@/domain/finance'
+import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
@@ -50,7 +51,14 @@ function fixture(extraTerms: Partial<RetentionTermSet> = {}) {
     ],
     staffPeople: [...Object.values(base.staffPeopleById), staff(proposer, 'Proposer'), staff(approver, 'Approver')],
   })
-  return { world, team, negotiation, predecessor, approver }
+  // Binding a retention successor reserves canonical capacity, so the club must hold real canonical
+  // liquidity and authorization instead of a legacy payroll pool (BS16M-A/BS16M-B1).
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(world, team.id, { currencyCode: 'EUR', cashMinorUnits: 5_000_000_000 }),
+    team.id,
+    { currencyCode: 'EUR', playerSalaryMinorUnits: 500_000_000_000, staffSalaryMinorUnits: 0 },
+  )
+  return { world: financed, team, negotiation, predecessor, approver }
 }
 
 describe('BS11D1 retention signing', () => {
@@ -71,7 +79,9 @@ describe('BS11D1 retention signing', () => {
     expect(successor.compensation.years?.[0]).toMatchObject({ cashSalary: setup.negotiation.acceptedTerms!.salary, guaranteedAmount: setup.negotiation.acceptedTerms!.salary, capTreatment: { policy: 'NOT_APPLICABLE' } })
     expect(signed.world.contractsById[setup.predecessor.id]).toEqual(setup.predecessor)
     expect(signed.world.retentionNegotiationsById[setup.negotiation.id]?.execution).toMatchObject({ status: 'SIGNED', contractId: successor.id })
-    expect(getContractFinancialSchedule(signed.world, { organizationId: setup.team.organizationId, contractId: successor.id, currencyCode: 'EUR' })).toContainEqual(expect.objectContaining({ amount: { currencyCode: 'EUR', minorUnits: setup.negotiation.acceptedTerms!.salary }, compensationStatus: 'GUARANTEED', effectiveOn: successor.term.startsOn }))
+    // The successor's guaranteed schedule is the legacy annual salary in major units converted once to minor
+    // units, so the canonical amount is exactly the currency's major:minor ratio.
+    expect(getContractFinancialSchedule(signed.world, { organizationId: setup.team.organizationId, contractId: successor.id, currencyCode: 'EUR' })).toContainEqual(expect.objectContaining({ amount: { currencyCode: 'EUR', minorUnits: setup.negotiation.acceptedTerms!.salary * SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT.EUR! }, compensationStatus: 'GUARANTEED', effectiveOn: successor.term.startsOn }))
     const atActivation = reconcileExpiredPlayerContracts(signed.world, successor.term.startsOn)
     expect(getPlayerContractStatus(successor, successor.term.startsOn)).toBe('active')
     expect(atActivation.teams[setup.team.id]!.rosterPlayerIds).toContain(successor.playerId)
@@ -125,8 +135,7 @@ describe('BS11D1 retention signing', () => {
 
   it('records an accepted club agent fee as a separate Finance commitment', () => {
     const setup = fixture({ agentFee: 2_500, agentFeePayer: 'CLUB' })
-    const funded = updateGameWorld(setup.world, { organizationFinancialProfiles: [createOrganizationFinancialProfile({ organizationId: setup.team.organizationId, baseCurrencyCode: 'EUR' })] })
-    const pending = executeAcceptedRetentionAgreement(funded, setup.negotiation.id)
+    const pending = executeAcceptedRetentionAgreement(setup.world, setup.negotiation.id)
     const decision = Object.values(pending.world.governanceDecisionsById).find((item) => item.subject.kind === 'GENERIC' && item.subject.referenceId === `retention:${setup.negotiation.id}`)!
     const approved = recordPlayerContractSigningDecisionEvent(pending.world, { decisionId: decision.id, kind: 'APPROVED', actor: { kind: 'STAFF', id: setup.approver }, bodyId: 'body:retention-board' })
     const signed = executeAcceptedRetentionAgreement(approved.world, setup.negotiation.id)

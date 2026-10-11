@@ -8,7 +8,7 @@ import { type PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getOrganizationKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
+import { getFreeAgents, getOrganizationKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import type { NegotiationResponsibleActor } from '@/domain/market'
@@ -77,7 +77,7 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
   return (
     <NgHoloShell
       appLabel="Market"
-      meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} remaining`}
+      meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} salary budget remaining`}
       region="market-workspace"
       teamId={team.id}
       title="Free agents"

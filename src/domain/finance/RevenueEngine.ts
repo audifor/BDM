@@ -14,6 +14,14 @@ export type RevenueSourceStatus = 'ACTIVE' | 'INACTIVE'
 export type RevenueSourceAuthority = 'COMMERCIAL_CONTRACT' | 'COMPETITION' | 'TICKETING' | 'MEDIA' | 'ORGANIZATION' | 'MANUAL_SYSTEM_ACTION'
 export type RevenueGenerationPolicy = 'ONE_OFF' | 'ANNUAL' | 'SEASONAL' | 'EXPLICIT_SCHEDULE'
 export type RevenueDueDatePolicy = 'ON_RECOGNITION' | 'NO_DUE_DATE'
+/**
+ * BS16K-C — how a revenue source's receivables become cash. Collection is a **source policy**, never a global
+ * rule: `NONE` means the Organization owns the claim and its receivable stays outstanding until some authority
+ * collects it, while `COLLECT_ON_DUE_DATE` means the source's own contractual payment date is also the date the
+ * receivable is collected (cash received against that receivable, through the canonical Treasury primitive).
+ */
+export const REVENUE_COLLECTION_POLICIES = ['NONE', 'COLLECT_ON_DUE_DATE'] as const
+export type RevenueCollectionPolicy = (typeof REVENUE_COLLECTION_POLICIES)[number]
 
 export interface RevenuePaymentTerm {
   readonly recognitionOn: GameDate
@@ -34,6 +42,7 @@ export interface RevenueSource {
   readonly status: RevenueSourceStatus
   readonly generationPolicy: RevenueGenerationPolicy
   readonly dueDatePolicy: RevenueDueDatePolicy
+  readonly collectionPolicy: RevenueCollectionPolicy
   readonly teamId: TeamId | null
   readonly organizationSectionId: OrganizationSectionId | null
   readonly competitionId: CompetitionId | null
@@ -100,6 +109,7 @@ export function createRevenueSource(input: {
   readonly status?: RevenueSourceStatus
   readonly generationPolicy: RevenueGenerationPolicy
   readonly dueDatePolicy?: RevenueDueDatePolicy
+  readonly collectionPolicy?: RevenueCollectionPolicy
   readonly teamId?: TeamId | string | null
   readonly organizationSectionId?: OrganizationSectionId | string | null
   readonly competitionId?: CompetitionId | string | null
@@ -110,6 +120,8 @@ export function createRevenueSource(input: {
   if (!REVENUE_CATEGORIES.includes(input.category)) throw new TypeError('Revenue source category is invalid')
   if (!['COMMERCIAL_CONTRACT', 'COMPETITION', 'TICKETING', 'MEDIA', 'ORGANIZATION', 'MANUAL_SYSTEM_ACTION'].includes(input.sourceAuthority)) throw new TypeError('Revenue source authority is invalid')
   if (!['ONE_OFF', 'ANNUAL', 'SEASONAL', 'EXPLICIT_SCHEDULE'].includes(input.generationPolicy)) throw new TypeError('Revenue source generation policy is invalid')
+  const collectionPolicy = input.collectionPolicy ?? 'NONE'
+  if (!REVENUE_COLLECTION_POLICIES.includes(collectionPolicy)) throw new TypeError('Revenue source collection policy is invalid')
   const startsOn = parseGameDate(input.startsOn); const endsOn = parseGameDate(input.endsOn)
   if (compareGameDates(endsOn, startsOn) < 0) throw new RangeError('Revenue source endsOn cannot precede startsOn')
   const amount = createMoney(input.amount)
@@ -122,12 +134,14 @@ export function createRevenueSource(input: {
     if (termAmount.minorUnits <= 0) throw new RangeError('Revenue source payment term amount must be positive')
     if (compareGameDates(recognitionOn, startsOn) < 0 || compareGameDates(recognitionOn, endsOn) > 0) throw new RangeError('Revenue source payment term is outside its active period')
     if (dueOn !== null && compareGameDates(dueOn, recognitionOn) < 0) throw new RangeError('Revenue source dueOn cannot precede recognitionOn')
+    // A source that is collected on its due date must declare one: a receivable with no due date can never be collected.
+    if (collectionPolicy === 'COLLECT_ON_DUE_DATE' && dueOn === null) throw new TypeError('A revenue source collected on its due date requires a due date on every payment term')
     return Object.freeze({ recognitionOn, dueOn, amount: termAmount })
   }))
   const teamId = input.teamId === undefined || input.teamId === null ? null : String(input.teamId) as TeamId
   const organizationSectionId = input.organizationSectionId === undefined || input.organizationSectionId === null ? null : String(input.organizationSectionId) as OrganizationSectionId
   const competitionId = input.competitionId === undefined || input.competitionId === null ? null : String(input.competitionId) as CompetitionId
-  return Object.freeze({ id: nonEmpty(input.id, 'Revenue source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', teamId, organizationSectionId, competitionId, counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance), ...(input.indexation === undefined ? {} : { indexation: createIndexationPolicy(input.indexation) }) })
+  return Object.freeze({ id: nonEmpty(input.id, 'Revenue source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', collectionPolicy, teamId, organizationSectionId, competitionId, counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance), ...(input.indexation === undefined ? {} : { indexation: createIndexationPolicy(input.indexation) }) })
 }
 
 export function getActiveRevenueSources(world: GameWorld, organizationId: OrganizationId | string, asOfDate: GameDate | string = world.currentDate): readonly RevenueSource[] {

@@ -1,4 +1,5 @@
-import type { CountryId, PersonId, PlayerId } from '@/domain/ids'
+import type { CountryId, PersonId, PlayerId, PlaceId } from '@/domain/ids'
+import { placeIdFromString } from '@/domain/ids'
 import { parseGameDate, type GameDate } from '@/domain/date'
 import {
   requireBasketballPosition,
@@ -90,6 +91,16 @@ export type LegacyPlayerTendencies = Readonly<Record<TendencyKey, number>>
 export type DominantHand = 'LEFT' | 'RIGHT'
 export type DataProvenance = 'sourced' | 'generated' | 'migrated' | 'inferred'
 
+export const PLAYER_PATHWAY_SOURCES = ['US_HIGH_SCHOOL', 'JUCO', 'INTERNATIONAL_CLUB', 'ACADEMY_YOUTH', 'OTHER_PRECOLLEGE'] as const
+export type PlayerPathwaySource = typeof PLAYER_PATHWAY_SOURCES[number]
+export interface PlayerPathwayRecord {
+  readonly id: string
+  readonly source: PlayerPathwaySource
+  readonly occurredOn: GameDate
+  readonly placeId?: PlaceId
+  readonly evidenceId?: string
+}
+
 /** V1 input only; never persisted as PlayerTruth. */
 export interface LegacyPlayerRatings {
   readonly finishing: number
@@ -140,6 +151,10 @@ export interface Player {
   readonly basketball: BasketballProfile
   readonly bio: PlayerBio
   readonly development: PlayerDevelopmentProfile
+  /** Omitted for legacy saves and active careers; set once by the canonical career-end authority. */
+  readonly careerEnd?: { readonly endedOn: GameDate; readonly reason: 'ageLimit' | 'manual' }
+  /** Source history for pre-college acquisition; kept on this canonical Player across recruiting and enrollment. */
+  readonly pathwayHistory?: readonly PlayerPathwayRecord[]
   /** TEMPORARY derived compatibility view; not serialized. */
   readonly potential: PlayerPotential
 }
@@ -197,6 +212,8 @@ export interface CreatePlayerInput {
   }
   bio: PlayerBioInput
   development?: PlayerDevelopmentProfile
+  readonly careerEnd?: Player['careerEnd']
+  readonly pathwayHistory?: readonly PlayerPathwayRecord[]
   /** Legacy input accepted only at V1 boundaries. */
   potential?: PlayerPotential
 }
@@ -239,12 +256,35 @@ export function createPlayer(input: CreatePlayerInput): Player {
     development: createDevelopmentProfile(
       input.development ?? defaultDevelopmentProfile(ratings, input.potential?.ceiling),
     ),
+    ...(input.careerEnd === undefined ? {} : { careerEnd: Object.freeze({ ...input.careerEnd, endedOn: parseGameDate(input.careerEnd.endedOn) }) }),
+    ...(input.pathwayHistory === undefined ? {} : { pathwayHistory: normalizePathwayHistory(input.pathwayHistory) }),
   }
   Object.defineProperty(player, 'potential', {
     enumerable: false,
     value: deriveLegacyPotential(player.development),
   })
   return player as Player
+}
+
+export function recordPlayerPathway(player: Player, record: PlayerPathwayRecord): Player {
+  const existing = player.pathwayHistory?.find((item) => item.id === record.id)
+  if (existing !== undefined) {
+    if (existing.source !== record.source || existing.occurredOn !== record.occurredOn || existing.placeId !== record.placeId || existing.evidenceId !== record.evidenceId) throw new RangeError(`Player pathway record ${record.id} conflicts with existing history`)
+    return player
+  }
+  return createPlayer({ ...player, pathwayHistory: [...(player.pathwayHistory ?? []), record] })
+}
+
+function normalizePathwayHistory(records: readonly PlayerPathwayRecord[]): readonly PlayerPathwayRecord[] {
+  const ids = new Set<string>()
+  const normalized = records.map((record) => {
+    const id = requireNonEmptyString(record.id, 'Player pathway record id')
+    if (ids.has(id)) throw new RangeError('Duplicate Player pathway record id')
+    ids.add(id)
+    if (!(PLAYER_PATHWAY_SOURCES as readonly string[]).includes(record.source)) throw new TypeError('Player pathway source is invalid')
+    return Object.freeze({ ...record, id, occurredOn: parseGameDate(record.occurredOn), ...(record.placeId === undefined ? {} : { placeId: placeIdFromString(record.placeId) }), ...(record.evidenceId === undefined ? {} : { evidenceId: requireNonEmptyString(record.evidenceId, 'Player pathway evidence id') }) })
+  }).sort((a, b) => a.occurredOn.localeCompare(b.occurredOn) || a.id.localeCompare(b.id))
+  return Object.freeze(normalized)
 }
 
 function normalizeRatings(

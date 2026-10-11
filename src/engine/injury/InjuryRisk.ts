@@ -1,7 +1,7 @@
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
 import { injuryFamilyForKind, type InjuryFamily, type InjuryKind } from '@/domain/injury'
 import type { PlayerId } from '@/domain/ids'
-import type { GameWorld } from '@/domain/world'
+import { getInjuriesForPlayer, type GameWorld } from '@/domain/world'
 
 export function injuryFamily(kind: InjuryKind): InjuryFamily {
   return injuryFamilyForKind(kind)
@@ -10,8 +10,7 @@ export function injuryFamily(kind: InjuryKind): InjuryFamily {
 /** Related history adds 10% each, or 16% within the last year, capped at 40%. */
 export function recurrenceRiskMultiplier(world: GameWorld, playerId: PlayerId, kind: InjuryKind, onDate: GameDate): number {
   const family = injuryFamily(kind)
-  const related = Object.values(world.injuriesById).filter((injury) => injury.playerId === playerId
-    && injuryFamily(injury.kind) === family && compareGameDates(injury.injuredOn, onDate) < 0)
+  const related = getInjuriesForPlayer(world, playerId).filter((injury) => injuryFamily(injury.kind) === family && compareGameDates(injury.injuredOn, onDate) < 0)
   const recentCutoff = addDays(onDate, -365)
   const modifier = related.reduce((total, injury) => total + (compareGameDates(injury.injuredOn, recentCutoff) >= 0 ? .16 : .1), 0)
   return 1 + Math.min(.4, modifier)

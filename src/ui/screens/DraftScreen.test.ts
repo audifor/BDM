@@ -21,6 +21,7 @@ describe('DraftScreen', () => {
     expect(markup).toContain('You are on the clock')
     expect(markup).toContain('SELECT')
     expect(markup).toContain('Draft history')
+    expect(markup).toContain('A selection grants Draft rights')
   })
 
   it('does not expose selection controls for an AI pick and displays transferred ownership', () => {

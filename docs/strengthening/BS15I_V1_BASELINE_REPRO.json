@@ -1,0 +1,14 @@
+{
+  "base": "8d0e128181b39d1d0354ca3067b55a51428db213",
+  "worktree": "C:/BDM-BS15H",
+  "cleanBefore": true,
+  "cleanAfter": true,
+  "success": false,
+  "failed": 1,
+  "test": [
+    {
+      "name": "GameWorldSaveV1 round-trips canonical world data independently of the runtime object",
+      "failure": "AssertionError: expected { schemaVersion: 1, …(271) } to deeply equal { schemaVersion: 1, …(271) }"
+    }
+  ]
+}

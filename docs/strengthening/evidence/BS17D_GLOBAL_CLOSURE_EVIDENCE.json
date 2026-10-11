@@ -1,0 +1,260 @@
+{
+  "status": "PASS · BS17D GLOBAL SPORTING FACILITIES COMPLETE",
+  "reviewedBase": "65c2b2cdec4ec05f6d925a9e312c18d531824ebf",
+  "branch": "bdm-stage2-bs17d-global-closure",
+  "worktree": "C:/BDM-BS17D-GLOBAL-CLOSURE",
+  "protectedMainObserved": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+  "ancestry": {
+    "43db0beb7da0336892ec1bda84952b6ca9a441c8": true,
+    "fbe788ce01f1dd34fc40b360b4661ebaad63457c": true,
+    "64abd26a50e93fd827f27dccabaa486e0e73dd04": true,
+    "582f517e178ae8a7159237fd3d75e2db4c9d8f87": true,
+    "ece086779ad500833880bc47aad125f60dbc5a66": true
+  },
+  "sourceCertifications": {
+    "roadmap": {
+      "path": "docs/strengthening/BS17_FACILITIES_STRENGTHENING_ROADMAP.md",
+      "sha256": "2ba5dd302f7f95c5d6ac9956a453eaa76846a7a9ad3a49c02d9642ad018d6484"
+    },
+    "policy": {
+      "path": "docs/strengthening/BS17D_P0_SPORTING_OPERATIONS_POLICY.md",
+      "sha256": "de5631ff633eea7253b4fd8e8dd8a94d4d1c69ead3c2a7cff704353702c5d78a"
+    },
+    "coreP0": {
+      "path": "docs/strengthening/BS17D_P0_SPORTING_OPERATIONS_CERTIFICATION.md",
+      "sha256": "7c0c66a7bf77fcaac4a0025487d49386051aaa84df2b99efcb277a6c96194ac3"
+    },
+    "talentT": {
+      "path": "docs/strengthening/BS17D_T_TALENT_FACILITIES_CERTIFICATION.md",
+      "sha256": "7ffae2dbd7ab2c99358a2549e15ba43e3f913d2331dfa579c4848665c7cbce3d"
+    },
+    "recruitingT1": {
+      "path": "docs/strengthening/BS17D_T1_RECRUITING_FACILITIES_CERTIFICATION.md",
+      "sha256": "b07e8718d7566056a0c40bd50df7464976485fa076b0e108d6d7554e9e828f03"
+    },
+    "capacityC": {
+      "path": "docs/strengthening/BS17D_C_OPERATIONAL_CAPACITY_REPORT.md",
+      "sha256": "2d701cfcfed224abae683e8eafa14fe459f416575a8b4597e2ad3c565aa3622f"
+    },
+    "allocationC1": {
+      "path": "docs/strengthening/BS17D_C1_PHYSICAL_ALLOCATION_CERTIFICATION.md",
+      "sha256": "866aa01ab480af49a34d91e58033d3057cac200acac7c06f38d69e2ddbe04bc9"
+    },
+    "consumptionP1": {
+      "path": "docs/strengthening/BS17D_C1_P1_CONSUMPTION_FIX_CERTIFICATION.md",
+      "sha256": "c264a80794a91626d28b16186db05425bf1eba97605d143562e7556a44786c5d"
+    },
+    "medicalM1": {
+      "path": "docs/strengthening/BS17D_M1_P0_EQUIPPED_REHABILITATION_CERTIFICATION.md",
+      "sha256": "24eeecfc4a64250c050118ab8f4d80a2d750960c637f02ff066d6f249d2608b1"
+    },
+    "convergenceV2": {
+      "path": "docs/integration/BS15_BS16_BS17_CONVERGENCE_V2_CERTIFICATION.md",
+      "sha256": "08d8175db332bde7a85ea5bdba8ec08ef48ecfa170d310729fff0fcbfa9abf9c"
+    },
+    "c1Evidence": {
+      "path": "docs/strengthening/BS17D_C1_PHYSICAL_ALLOCATION_EVIDENCE.json",
+      "sha256": "0ba9742fbb043878715990f5bef40dac62ac2728fc1681b676d23bc823719022"
+    },
+    "talentEvidence": {
+      "path": "docs/strengthening/BS17D_T_TALENT_FACILITIES_EVIDENCE.json",
+      "sha256": "ffac0c9cb91dd3cbcc48a451d338613279e848f71d6054a66ae8195ac0cb7fa0"
+    },
+    "t1Evidence": {
+      "path": "docs/strengthening/BS17D_T1_RECRUITING_FACILITIES_EVIDENCE.json",
+      "sha256": "65a883a375de77a0773510157bd52393ba1ab0c7736b55269cf595b30f9ba78a"
+    },
+    "m1Evidence": {
+      "path": "docs/strengthening/evidence/BS17D_M1_P0_VALIDATION_EVIDENCE.json",
+      "sha256": "cba07ab3d23a98fefd8f263b46843dfa59d18b0d8c059efc3d6baa15586eae25"
+    },
+    "m1Adversarial": {
+      "path": "docs/strengthening/evidence/BS17D_M1_P0_HISTORICAL_EVIDENCE.json",
+      "sha256": "92696fc4ba82ba2d992d2e14213e59c5749f48a2ce7321b08c45ac44c0d2f9fc"
+    },
+    "p1RedGreen": {
+      "path": "docs/strengthening/evidence/BS17D_C1_P1_FIX_EVIDENCE.json",
+      "sha256": "b608ddc2d129804266cb11b531412a8039a457a69ad79902a96c17e3c1cab117"
+    }
+  },
+  "roadmapCoverage": [
+    {
+      "criterion": "Source lineage and authority boundaries",
+      "classification": "LIVE_VERIFIED",
+      "finding": "V2, BS15, BS16 K-C and the certified BS17 branches are in ancestry. No PlayerId, Talent, Finance or Governance authority was replaced."
+    },
+    {
+      "criterion": "BS17B physical source truth and production reachability",
+      "classification": "LIVE_VERIFIED",
+      "finding": "The certified source-backed Facilities/Place paths and canonical workspace remain reachable. Source support is scoped; unknown assets are not fabricated."
+    },
+    {
+      "criterion": "BS17C condition, works, availability and restoration",
+      "classification": "LIVE_VERIFIED",
+      "finding": "CFI4-CFI6A evidence, scoped works and lifecycle/restoration were certified; unrecorded condition remains unknown."
+    },
+    {
+      "criterion": "CFI8 physical resolution, dated Team rights and alternatives",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Capabilities, access, serviceability, rights and legitimate alternatives feed the approved consumers."
+    },
+    {
+      "criterion": "Training required-resource execution and sporting effects",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Approved module requirements reach the productive executor; known obstruction prevents only the affected operation/effects, restoration/retry uses Training."
+    },
+    {
+      "criterion": "Training quantitative demand and C1 reservations",
+      "classification": "LIVE_VERIFIED",
+      "finding": "C1 uses explicit participants, compatible SIMULTANEOUS_PLAYERS evidence, explicit intervals, reservations and atomic shared-capacity checks."
+    },
+    {
+      "criterion": "Training unreserved/P1 consumption and conflict priority",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Released/no-own-reservation consumption rechecks occupation; confirmed prior claims bind, incompatible unreserved contention has no iteration winner."
+    },
+    {
+      "criterion": "Youth scheduled Training through BS15 player identity",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Canonical youth rosters use the existing Training/P0/C1 path; no new academy players, quotas or supply factors."
+    },
+    {
+      "criterion": "Talent supply, PlayerId, materialization, pathways, NCAA, Portal, Draft",
+      "classification": "VERIFIED_NOT_APPLICABLE",
+      "finding": "These are preserved BS15 authorities and do not themselves have an approved facility prerequisite."
+    },
+    {
+      "criterion": "Training Academy physical consumer",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Talent T certifies this limited path: existing scheduled Training operates on BS15 youth Teams under the Training owner."
+    },
+    {
+      "criterion": "Separate Talent-owned intake/academy/accommodation activity",
+      "classification": "NOT_IMPLEMENTED_BUT_OUTSIDE_APPROVED_SCOPE",
+      "finding": "T found no executable operation with an approved physical requirement; an Academy Center record is not an activity. No quota, venue, accommodation lifecycle or Player materialization gate is inferred."
+    },
+    {
+      "criterion": "Recruiting physical demonstrations T1",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Optional demo is reachable in the real visit flow; known incompatible resources affect only the demonstration and no recruiting probability/identity is altered."
+    },
+    {
+      "criterion": "Recruiting occupancy/capacity booking",
+      "classification": "VERIFIED_NOT_APPLICABLE",
+      "finding": "Approved T1 stores an optional dated demonstration attempt but provides no activity interval/demand contract; calendar visit dates are not physical occupancy slots."
+    },
+    {
+      "criterion": "Medical equipped rehabilitation M1-P0",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Explicit clinical indication, Staff evidence, material requirement, CFI8 rights/availability, typed C1 claim, Calendar execution and UI are wired."
+    },
+    {
+      "criterion": "Medical imaging, hydrotherapy, cryotherapy and other unapproved procedures",
+      "classification": "NOT_IMPLEMENTED_BUT_OUTSIDE_APPROVED_SCOPE",
+      "finding": "No approved executable clinical procedure exists; no implied treatment is added."
+    },
+    {
+      "criterion": "Natural recovery, fitness and RTP authority",
+      "classification": "VERIFIED_NOT_APPLICABLE",
+      "finding": "Facilities does not modify BS12C medical duration, natural recovery, fatigue, fitness or RTP."
+    },
+    {
+      "criterion": "Known exclusivity, compatible shared capacity and unknown quantities",
+      "classification": "LIVE_VERIFIED",
+      "finding": "C1 enforces explicit exclusive/shared claims and compatible comparable units; unknown unit/demand remains unknown."
+    },
+    {
+      "criterion": "Generic global/non-Training capacity allocation",
+      "classification": "NOT_IMPLEMENTED_BUT_OUTSIDE_APPROVED_SCOPE",
+      "finding": "C1 closes the approved Training demand/reservation path. Recruiting lacks interval/demand; Talent activities lack an approved owner/requirement. No second global allocator is warranted."
+    },
+    {
+      "criterion": "UNKNOWN, LIMITED, OUT_OF_SERVICE, works and restoration semantics",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Unknown preserves approved continuity; limited needs concrete compatibility; outages/work block only affected resources; restoration and explicit retry remain available."
+    },
+    {
+      "criterion": "Manager experience and canonical system navigation",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Existing Training, Facilities, Medical and Recruiting routes expose real actions, causes, history and navigation for their approved consumers."
+    },
+    {
+      "criterion": "Save V4 and old-save compatibility",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Facilities, C1 allocations, recruiting attempts and Medical act/evidence survive round-trip; old saves do not acquire invented source facts."
+    },
+    {
+      "criterion": "Calendar single processor and exactly-once",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Existing Calendar executes each supported operation through its owner; persisted identities/history prevent replay."
+    },
+    {
+      "criterion": "No duplicate agenda, allocator or financial authority",
+      "classification": "LIVE_VERIFIED",
+      "finding": "PhysicalAllocation is the single C1 ledger; Calendar is the single clock; Finance/Governance remain unchanged and no Facilities costs are fabricated."
+    },
+    {
+      "criterion": "Causal proofs and adversarial closure",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Inherited accepted focal sets cover Training, youth, T1, C1/P1, M1, Save, Calendar and V2. Independent C1/P1 and M1 review findings were repaired and retained."
+    },
+    {
+      "criterion": "Supported-world data coverage",
+      "classification": "LIVE_VERIFIED",
+      "finding": "Production paths are reachable, but enriched fixtures prove only fixture facts. Worlds lacking Staff/equipment/rights remain UNKNOWN; no universal availability claim."
+    },
+    {
+      "criterion": "BS17E/F economy and Facilities AI",
+      "classification": "NOT_IMPLEMENTED_BUT_OUTSIDE_APPROVED_SCOPE",
+      "finding": "Roadmap assigns these to later phases with BS16-complete, policy and approval dependencies; none is introduced by BS17D."
+    },
+    {
+      "criterion": "Historical World DB 2029 / Y1-Y30",
+      "classification": "VERIFIED_NOT_APPLICABLE",
+      "finding": "The bounded convergence V2 and original unresolved historical status are preserved; Z excludes those reruns and they are not a BS17D gate."
+    },
+    {
+      "criterion": "Global Talent completion acceptance gate",
+      "classification": "LIVE_VERIFIED",
+      "finding": "BS17D-Z names youth Training and Recruiting demonstrations as the Talent consumers to verify; both are LIVE after BS15 integration. A distinct Talent-owned operation was never approved and is excluded by Z, so it is not a closure prerequisite."
+    }
+  ],
+  "originalCertifiedTestSelections": {
+    "C1": "374/374 across 31 files",
+    "C1-P1": "216/216 across 12 files",
+    "T1": "211/211 across 14 files",
+    "M1-P0": "256 case union across 21 files; final Medical/UI 28/28",
+    "counting": "overlapping selections; do not sum",
+    "rerun": "none; existing accepted milestone tests were reused by exact ancestry/base"
+  },
+  "toolGates": {
+    "typecheck": "PASS at reviewed base in M1-P0 cert; not rerun (audit-only/no production change)",
+    "build": "PASS at reviewed base in M1-P0 cert; existing bundle-size advisory; not rerun",
+    "diffCheck": "PASS for documentation-only closure diff",
+    "randomSourceScan": "inherited cert static PASS",
+    "domainEngineImportScan": "inherited cert static PASS",
+    "performance": "not measured in this closure; inherited M1 evidence used 30-second suite test timeout; no speed certification"
+  },
+  "adversarialReview": {
+    "result": "no new reproducible failure",
+    "method": "read-only cross-check of user enumerated paths, P1 independent red/green closure and M1 independent review, plus exact-base causal evidence",
+    "coverage": [
+      "Training occupancy/released claims",
+      "Medical occupancy and performing authorization",
+      "invalid Save source references and replay",
+      "UNKNOWN/limited/out-of-service restoration",
+      "exactly-once Calendar",
+      "UI navigation and real actions",
+      "Finance/Governance/MatchEngine boundaries"
+    ]
+  },
+  "acceptanceScope": {
+    "P0": "COMPLETE requires Talent closure after BS15 integration",
+    "T": "separate Talent-owned consumer remains NOT_IMPLEMENTED in the unchanged T certificate",
+    "Z": "the approved Talent consumers for this closure are youth Training and Recruiting demonstrations; an unapproved operation must not be made mandatory",
+    "decision": "the approved youth Training and Recruiting T1 consumers are LIVE; the separate unapproved Talent-owned operation is outside scope, satisfying the P0 closure gate without inventing functionality"
+  },
+  "testReruns": false,
+  "productionChanges": false,
+  "commitIntended": "docs(strengthening): audit BS17D global closure"
+}

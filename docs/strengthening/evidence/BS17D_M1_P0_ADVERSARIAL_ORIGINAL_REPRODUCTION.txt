@@ -1,0 +1,19 @@
+import { beforeAll, expect, it } from 'vitest'
+import { equippedMedicalFixture } from '@/app/game/testSupport/EquippedMedicalFixture'
+import { equippedActs, scheduleEquippedRehabilitation, executeEquippedRehabilitationForDay } from '@/engine/injury/EquippedRehabilitation'
+import { advanceDay } from '@/engine/calendar'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+let f: ReturnType<typeof equippedMedicalFixture>
+beforeAll(()=>{f=equippedMedicalFixture()},30000)
+it('accepted today scheduling is forever missed by Calendar',()=>{
+ const today=scheduleEquippedRehabilitation(f.indicated,{...f.schedule,requestId:'today',interval:{...f.schedule.interval,date:f.world.currentDate}})
+ expect(equippedActs(today)[0]?.status).toBe('SCHEDULED')
+ expect(equippedActs(advanceDay(advanceDay(today)))[0]?.status).toBe('SCHEDULED')
+})
+it('SaveV4 accepts nonexistent prescribing authorization and Calendar executes it',()=>{
+ const save=JSON.parse(JSON.stringify(serializeGameWorldV4(f.scheduled,'2026-10-10T00:00:00.000Z')))
+ console.log('savekeys',Object.keys(save),Object.keys(save.payload??{}).filter((key:string)=>/injur/.test(key)))
+ save.payload.injuries[0].equippedRehabilitationActs[0].prescribingAuthorizationId='NO_SUCH_GRANT'
+ const loaded=deserializeGameWorldV4(save)
+ expect(equippedActs(advanceDay(loaded))[0]?.status).toBe('COMPLETED')
+})

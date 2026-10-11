@@ -1,0 +1,122 @@
+.talent-operations-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 38px;
+  padding: 2px 12px;
+  border-bottom: 1px solid var(--ng-color-border, #263a45);
+  background: var(--ng-color-surface, #111e25);
+}
+
+.talent-operations-nav button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--ng-color-text-muted, #9aacb4);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.talent-operations-nav button:hover,
+.talent-operations-nav button:focus-visible {
+  color: var(--ng-color-text, #eef4f5);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.talent-operations-nav button.is-active {
+  color: var(--ng-color-text, #eef4f5);
+  border-bottom-color: var(--ng-color-accent, #56c8bd);
+}
+
+.talent-operations-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+.talent-operations-overview > section {
+  min-width: 0;
+  padding: 12px;
+}
+
+.talent-operations-overview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.talent-operations-overview ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.talent-portal-filters {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.talent-portal-filters label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.talent-portal-filters input,
+.talent-portal-filters select {
+  min-width: 170px;
+  min-height: 30px;
+}
+
+.talent-portal-filters > span {
+  padding-bottom: 7px;
+  color: var(--ng-color-text-muted, #9aacb4);
+}
+
+.talent-player-pathway-band {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px 12px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--ng-color-border, #263a45);
+  background: var(--ng-color-surface, #111e25);
+  font-size: 0.82rem;
+}
+
+.talent-player-pathway-band div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.talent-player-pathway-band span {
+  color: var(--ng-color-text-muted, #9aacb4);
+}
+
+.talent-player-pathway-band strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+@media (max-width: 760px) {
+  .talent-operations-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .talent-operations-nav {
+    overflow-x: auto;
+  }
+
+  .talent-player-pathway-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

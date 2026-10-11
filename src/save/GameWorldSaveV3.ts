@@ -57,7 +57,7 @@ export function serializeGameWorldV3(world: GameWorld, savedAt: string): SaveGam
   return { schemaVersion: 3, savedAt: compatibilityPayload.savedAt, payload: v3Payload(compatibilityPayload.payload, world) }
 }
 
-export function deserializeGameWorldV3(value: unknown): GameWorld {
+export function deserializeGameWorldV3(value: unknown, options: { readonly backfillStaffContracts?: boolean } = {}): GameWorld {
   const envelope = record(value, 'Save V3 file')
   assertExactKeys(envelope, ['schemaVersion', 'savedAt', 'payload'], 'Save V3 envelope')
   if (envelope.schemaVersion !== 3) throw new Error('Unsupported save version')
@@ -113,7 +113,10 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     supportFundingPledges: runtime.supportFundingPledges, supportFundingPledgeEvents: runtime.supportFundingPledgeEvents, supportContributions: runtime.supportContributions,
     supportComplianceCases: runtime.supportComplianceCases, supportComplianceCaseEvents: runtime.supportComplianceCaseEvents, supportComplianceFindings: runtime.supportComplianceFindings, supportConflictDisclosures: runtime.supportConflictDisclosures, supportConsequences: runtime.supportConsequences, supportRemediations: runtime.supportRemediations,
   })
-  const withCompleteStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withStaffCareer)))
+  const withEmployment = ensureStaffEmploymentStructure(withStaffCareer)
+  // Current V4 owns its persisted contract ledger. Legacy V3 migration retains
+  // enrichment, but loading a current save must not invent renewal contracts.
+  const withCompleteStaffCareer = ensureStaffReputationStructure(options.backfillStaffContracts === false ? withEmployment : ensureStaffContractStructure(withEmployment))
   const withTrainingStaff = restoreScheduledTrainingStaffAssignments(withCompleteStaffCareer, trainingStaffAssignments)
   return signedNegotiations.length === 0 && trades.executed.length === 0 ? withTrainingStaff : updateGameWorld(withTrainingStaff, {
     negotiations: [...Object.values(withTrainingStaff.negotiationsById).filter((item) => !signedNegotiations.some((signed) => signed.id === item.id)), ...signedNegotiations],
@@ -458,10 +461,11 @@ function parseStaffJobOfferV3(value: unknown): StaffJobOffer {
 
 function parseStaffContractV3(value: unknown): StaffContract {
   const v = record(value, 'Staff contract V3')
-  const keys = ['id', 'staffId', 'teamId', 'kind', 'term', 'compensation', ...(v.termination === undefined ? [] : ['termination'])]
+  const keys = ['id', 'staffId', 'teamId', 'kind', 'term', 'compensation', ...(v.financialScheduleStartsOn === undefined ? [] : ['financialScheduleStartsOn']), ...(v.termination === undefined ? [] : ['termination'])]
   assertExactKeys(v, keys, 'Staff contract V3')
   const term = record(v.term, 'Staff contract V3 term'); assertExactKeys(term, ['startsOn', 'expiresOn'], 'Staff contract V3 term')
   const compensation = record(v.compensation, 'Staff contract V3 compensation'); assertExactKeys(compensation, ['annualSalary'], 'Staff contract V3 compensation')
+  const financialScheduleStartsOn = v.financialScheduleStartsOn === undefined ? undefined : parseGameDate(text(v.financialScheduleStartsOn, 'Staff contract financialScheduleStartsOn'))
   const termination = v.termination === undefined ? undefined : (() => { const t = record(v.termination, 'Staff contract V3 termination'); assertExactKeys(t, ['effectiveOn', 'reason'], 'Staff contract V3 termination'); return { effectiveOn: parseGameDate(text(t.effectiveOn, 'Staff contract termination effectiveOn')), reason: enumValue(t.reason, ['performance', 'budgetCuts', 'roleEliminated', 'resigned'], 'Staff contract termination reason') as never } })()
   return createStaffContract({
     id: staffContractIdFromString(text(v.id, 'Staff contract id')),
@@ -470,6 +474,7 @@ function parseStaffContractV3(value: unknown): StaffContract {
     kind: enumValue(v.kind, ['standard'], 'Staff contract kind') as 'standard',
     term: { startsOn: parseGameDate(text(term.startsOn, 'Staff contract startsOn')), expiresOn: parseGameDate(text(term.expiresOn, 'Staff contract expiresOn')) },
     compensation: { annualSalary: finite(compensation.annualSalary, 'Staff contract annualSalary') },
+    ...(financialScheduleStartsOn === undefined ? {} : { financialScheduleStartsOn }),
     ...(termination === undefined ? {} : { termination }),
   })
 }

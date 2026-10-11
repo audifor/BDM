@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createAcbTestGame, createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
-import { canTeamTrainOnDate, cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, setTrainingParticipation, trainingStaffExecutionMultiplier } from '@/engine/training'
-import { updateGameWorld } from '@/domain/world'
+import { canTeamTrainOnDate, cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, scheduleTrainingSessionsBatch, setTrainingParticipation, trainingStaffExecutionMultiplier } from '@/engine/training'
+import { updateGameWorld, updateScheduledTrainingSessionRecord } from '@/domain/world'
 import { createScheduledTrainingSession } from '@/domain/training'
 import { createInjury } from '@/domain/injury'
 import { injuryIdFromString } from '@/domain/ids'
@@ -11,6 +11,7 @@ import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { trainingInjuryProbability } from '@/engine/injury/TrainingInjuries'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import { sessionsForTrainingWeek } from '@/domain/training'
+import { scheduledTrainingSessionsOnDate } from './ScheduledTrainingEngine'
 
 describe('ScheduledTrainingEngine', () => {
   it('persists eligible executing staff, rejects invalid/overlapping use, and applies bounded deterministic quality', () => {
@@ -59,6 +60,34 @@ describe('ScheduledTrainingEngine', () => {
     expect(Object.keys(scheduled.scheduledTrainingSessionsById)).toHaveLength(2)
   })
 
+  it('publishes a scheduled-session batch once while validating collisions against earlier additions', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const first = createScheduledTrainingSession({ id: 'batch-1', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' })
+    const second = createScheduledTrainingSession({ id: 'batch-2', teamId, date, startTime: '10:00', durationMinutes: 60, scope: 'team', definitionId: 'midRange', intensity: 'normal' })
+    const scheduled = scheduleTrainingSessionsBatch(world, [first, second])
+
+    expect(scheduled.scheduledTrainingSessionsById['batch-1']).toBe(first)
+    expect(scheduled.scheduledTrainingSessionsById['batch-2']).toBe(second)
+    expect(scheduledTrainingSessionsOnDate(scheduled.scheduledTrainingSessionsById, date)).toEqual([first, second])
+    const collision = createScheduledTrainingSession({ id: 'batch-collision', teamId, date, startTime: '09:30', durationMinutes: 60, scope: 'team', definitionId: 'passing', intensity: 'normal' })
+    expect(() => scheduleTrainingSessionsBatch(world, [first, collision])).toThrow(RangeError)
+  })
+
+  it('keeps repeated identical batch additions as one indexed session and executes once', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const date = nextEligibleTrainingDate(world.currentDate)
+    scheduledTrainingSessionsOnDate(world.scheduledTrainingSessionsById, date)
+    const session = createScheduledTrainingSession({ id: 'repeated-batch', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' })
+    const scheduled = scheduleTrainingSessionsBatch(world, [session, session])
+    expect(scheduledTrainingSessionsOnDate(scheduled.scheduledTrainingSessionsById, date)).toEqual([session])
+    const executed = executeScheduledTrainingSessions(updateGameWorld(scheduled, { currentDate: date }))
+    expect(executed.scheduledTrainingSessionsById[session.id]!.status).toBe('completed')
+    expect(executeScheduledTrainingSessions(executed)).toEqual(executed)
+  })
+
   it('cancels a scheduled session', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id
@@ -95,14 +124,29 @@ describe('ScheduledTrainingEngine', () => {
     const session = createScheduledTrainingSession({ id: 's1', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'high' })
     const scheduled = updateGameWorld(scheduleTrainingSession(world, session), { currentDate: date })
 
+    expect(scheduledTrainingSessionsOnDate(scheduled.scheduledTrainingSessionsById, date)[0]).toBe(session)
     const executedOnce = executeScheduledTrainingSessions(scheduled)
+    expect(scheduledTrainingSessionsOnDate(executedOnce.scheduledTrainingSessionsById, date)).toEqual([executedOnce.scheduledTrainingSessionsById['s1']])
+    expect(scheduledTrainingSessionsOnDate(scheduled.scheduledTrainingSessionsById, date)[0]).toBe(session)
     expect(executedOnce.scheduledTrainingSessionsById['s1']!.status).toBe('completed')
     const execution = executedOnce.scheduledTrainingSessionsById['s1']!.execution!
     expect(execution).toMatchObject({ plannedModuleName: 'Three-Point Shooting', moduleName: 'Three-Point Shooting', effectiveIntensity: 'high', executingStaffRoles: [] })
     expect(execution.participants.find((entry) => entry.playerId === playerId)).toMatchObject({ participation: 'FULL', careerFatigueDelta: expect.any(Number) })
     expect(execution.participants.find((entry) => entry.playerId === playerId)!.developmentStimulusEventId).toBe(`training:s1:${playerId}`)
     expect(executedOnce.developmentStimulusEventsById[`training:s1:${playerId}`]!.sourceType).toBe('training')
+    expect(() => updateGameWorld(executedOnce, { scheduledTrainingSessionsById: {
+      ...executedOnce.scheduledTrainingSessionsById,
+      collision: { ...session, id: 'collision', status: 'scheduled', execution: undefined },
+    } })).toThrow(/collides/)
+    const events = Object.values(executedOnce.developmentStimulusEventsById)
+    const event = events[0]!
+    expect(updateGameWorld(executedOnce, { developmentStimulusEvents: events }).developmentStimulusEventsById[event.id]).toBe(event)
+    expect(() => updateGameWorld(executedOnce, { developmentStimulusEvents: [] })).toThrow(/cannot be removed/)
+    expect(() => updateGameWorld(executedOnce, { developmentStimulusEvents: events.map(item => item.id === event.id ? { ...item, date: addDays(item.date, 1) } : item) })).toThrow(/immutable/)
+    expect(() => updateGameWorld(executedOnce, { developmentStimulusEvents: [...events, { ...event, id: 'invalid-new', byRating: { threePointShooting: -1 } }] })).toThrow(/invalid/)
+
     expect(() => updateGameWorld(executedOnce, { scheduledTrainingSessionsById: { ...executedOnce.scheduledTrainingSessionsById, s1: { ...executedOnce.scheduledTrainingSessionsById.s1!, execution: { ...execution, moduleName: 'Rewritten history' } } } })).toThrow(/immutable/)
+    expect(() => updateGameWorld(executedOnce, { scheduledTrainingSessionsById: updateScheduledTrainingSessionRecord(executedOnce.scheduledTrainingSessionsById, { ...executedOnce.scheduledTrainingSessionsById.s1!, execution: { ...execution, moduleName: 'Rewritten history' } }) })).toThrow(/immutable/)
     expect(executedOnce.players[playerId]!.basketball.ratings).toEqual(beforeRatings)
     expect(executedOnce.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting).toBeGreaterThan(0)
     expect(executedOnce.careerFatigueByPlayerId[playerId]!).toBeGreaterThan(beforeFatigue)

@@ -6,6 +6,7 @@ import type { GameDate } from '@/domain/date'
 import type { OrganizationId, PlayerId, TeamId } from '@/domain/ids'
 import type { BasketballPosition } from '@/domain/primitives'
 import type { GameWorld } from '@/domain/world'
+import { getDraftCandidates } from '@/engine/draft/DraftEngine'
 import { getEcosystemForTeam, getFreeAgents, getPlayerRosterTeamId } from '@/domain/world'
 import { getPlayerContractStatus } from '@/domain/contract'
 import type { ClubNeed, ClubNeedRole } from '@/engine/clubNeeds'
@@ -328,7 +329,7 @@ function isNcaaRosterPlayer(world: GameWorld, playerId: PlayerId): boolean {
 }
 
 function isDraftOrRecruitProspect(world: GameWorld, playerId: PlayerId): boolean {
-  return Object.values(world.draftsById).some((draft) => draft.prospectPlayerIds.includes(playerId))
+  return Object.values(world.draftsById).some((draft) => getDraftCandidates(world, draft.id).includes(playerId))
     || Object.values(world.recruitProfilesById).some((profile) => profile.playerId === playerId)
 }
 

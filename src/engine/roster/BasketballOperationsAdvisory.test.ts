@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
+import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { addYears } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -34,7 +35,12 @@ function fixture(kind: Kind, attributes: Record<typeof STAFF_PROFESSIONAL_ATTRIB
     teams: Object.values(base.teams).map((item) => item.id === source.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== playerId) } : item),
     contracts: Object.values(base.contractsById).filter((item) => item.playerId !== playerId),
   })
-  const withStaff = updateGameWorld(market, {
+  const financed = authorizeTeamSalaryForTest(
+    fundTeamWithOpeningCapital(market, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    team.id,
+    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+  )
+  const withStaff = updateGameWorld(financed, {
     staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Ops', lastName: 'Staff' }, professional: { attributes } }],
     teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`assignment:${staffSuffix}`), staffPersonId: staffId, teamId: team.id, role: ROLE_FOR_KIND[kind] as never, assignedOn: market.currentDate }],
     responsibilities: [...Object.values(market.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:${kind}`), { id: `responsibility:${team.id}:${kind}` as never, teamId: team.id, kind, mode: 'advisory', holderStaffId: staffId }],
@@ -182,7 +188,12 @@ describe('BasketballOperationsAdvisory', () => {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== topRanked && id !== fallback) } : item),
         contracts: Object.values(base.contractsById).filter((item) => item.playerId !== topRanked && item.playerId !== fallback),
       })
-      const withStaff = updateGameWorld(market, {
+      const financed = authorizeTeamSalaryForTest(
+        fundTeamWithOpeningCapital(market, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+        team.id,
+        { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+      )
+      const withStaff = updateGameWorld(financed, {
         staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Eligibility', lastName: 'Fallback' }, professional: { attributes: highAttributes } }],
         teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:eligibility-fallback'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: market.currentDate }],
         responsibilities: [...Object.values(market.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:recommendSignings`), { id: `responsibility:${team.id}:recommendSignings` as never, teamId: team.id, kind: 'recommendSignings', mode: 'advisory', holderStaffId: staffId }],

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createGameWorld, updateGameWorld } from '@/domain/world'
+import { createHash } from 'node:crypto'
+import { createGameWorld, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import * as CalendarEngine from '@/engine/calendar'
 import * as PlayerDevelopmentEngine from '@/engine/development'
 import { addDays, parseGameDate } from '@/domain/date'
@@ -12,7 +13,7 @@ import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseReposito
 import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { WorldDbSessionV1 } from './WorldDbSession'
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDay, type WorldDayAdvanceResult } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { getEligibleResponsibilityCandidates } from '@/ui/staffPresentation'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
@@ -26,7 +27,22 @@ import { spainCopaCompetitionSeasonId } from '@/data/worldCompetitionCalendars'
 import { createWorldDbSpainGame } from './WorldDbSpainGame'
 import { startNextSeason, startNextSeasonFor } from './startNextSeason'
 import * as SeasonLifecycle from './startNextSeason'
-import { simulateUntilDate } from './simulateUntilDate'
+import { simulateUntilDate, type SimulateUntilResult } from './simulateUntilDate'
+import { continueGame, getExplicitAdvanceStopReason } from './ContinueFlow'
+import { createLongitudinalEvidence, fingerprint, classifyContinueEvidence } from './WorldDbCertificationDiagnostics'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString } from '@/domain/ids'
+import { reviewReturnToPlay } from '@/engine/injury/ReturnToPlayEngine'
+import { createInlineMatchRunner } from '@/app/matchNext/MatchSimulationRunner'
+import { advanceGameDayWithResult, advanceGameDayWithResultAsync } from './advanceGameDay'
+import { createPlace, createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityUsageRight } from '@/domain/facilities'
+import { createTalentCohort } from '@/domain/talent'
+import { materializeTalentCandidate } from '@/engine/world/TalentSupply'
+import { createScheduledTrainingSession } from '@/domain/training'
+import { executeScheduledTrainingSessions, scheduleTrainingSessionsBatch } from '@/engine/training/ScheduledTrainingEngine'
+import { processCoachFinancesForMonth } from '@/engine/coachFinances'
+import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
+import { createPreMatchMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
 
 const source = { databaseId: 'real-world.db', schemaId: 'DDL-PHASE1-A' } as const
 const runtimeBundle: WorldCompetitionRuntimeBundle = { bundleSchemaVersion: 1, contentId: 'bdm-phase1-competition-runtime-v1', contentHashAlgorithm: 'BLAKE3', contentHash: 'a'.repeat(64), worldDbSchema: 'DDL-PHASE1-A', competitionFormats: [leagueFormat(), cupFormat()], initialScoreDocuments: [] }
@@ -66,7 +82,220 @@ function catalog(): WorldDbSelectionCatalogV1 { const teams = slice().teams; ret
 function repository(bootstrapSlice = slice()): WorldDatabaseRepository { const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [selection.competitionSeasonId, spainCopaCompetitionSeasonId(2025)] }; return { inspectDatabase: vi.fn(async () => info), loadSelectionCatalog: vi.fn(async () => catalog()), loadCompetitionSeason: vi.fn(), loadMatchRealizations: vi.fn(), loadGameBootstrapSlice: vi.fn(async () => bootstrapSlice), loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle) } }
 function openSession(repo = repository()): WorldDbSessionV1 { return new WorldDbSessionV1({ repository: repo, databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }) }
 
+// Explicit shared-authority projection. BS16 club accounting and BS17 physical attempt facts
+// are additions, tested independently; they cannot be used to hide sporting/identity differences.
+function sharedProjection(world: GameWorld) {
+  const keys = ['currentDate', 'currentSeasonId', 'userCoachId', 'teams', 'players', 'personsById', 'coaches',
+    'seasons', 'games', 'seasonHistoryBySeasonId', 'injuriesById', 'mediaOpportunitiesById',
+    'talentCohortsById', 'talentMaterializationsByCandidateKey', 'playerEnrollmentsById',
+    'developmentStimulusEventsById', 'developmentStimulusByPlayerId', 'moraleByPersonId', 'teamCohesionByTeamId', 'careerFatigueByPlayerId', 'coachFinancesByCoachId',
+    'governanceDecisionsById'] as const satisfies readonly (keyof GameWorld)[]
+  const sessions = Object.fromEntries(Object.entries(world.scheduledTrainingSessionsById).map(([id, session]) => [id,
+    Object.fromEntries(Object.entries(session).filter(([key]) => key !== 'physicalAttempt'))]))
+  return { ...Object.fromEntries(keys.map(key => [key, world[key as keyof GameWorld]])), scheduledTrainingSessionsById: sessions }
+}
+function reportV2(label: string, initial: GameWorld, world: GameWorld, facts: unknown) {
+  process.stdout.write(`[World DB V2 differential] ${JSON.stringify({ label, seed: 151617,
+    sourceFingerprint: fingerprint({ slice: slice(), selection, runtimeBundle }),
+    initialShared: fingerprint(sharedProjection(initial)), finalShared: fingerprint(sharedProjection(world)), sharedFields: Object.fromEntries(Object.entries(sharedProjection(world)).map(([key, value]) => [key, fingerprint(value ?? null)])), facts })}\n`)
+}
+
+/** Transient test evidence only; synthetic/bounded runs do not identify the historical 2029 stop. */
+function reportWorldDbStop(label: string, initial: GameWorld, target: string, result: SimulateUntilResult, seed: number, lastDay?: WorldDayAdvanceResult) {
+  const relevantState = { date: initial.currentDate, userCoachId: initial.userCoachId, teams: initial.teams, players: initial.players,
+    games: initial.games, seasons: initial.seasons, injuries: initial.injuriesById, media: initial.mediaOpportunitiesById }
+  const diagnosis = {
+    label, historicalStopRecovered: false,
+    originDate: initial.currentDate, currentDate: result.world.currentDate,
+    requestedTargetDate: target, actualReachedDate: result.finalDate, daysAdvanced: result.daysAdvanced,
+    stopReason: result.stopReason,
+    pendingDecisions: evaluateSimulationBreakpoints(result.world).candidates
+      .filter(item => item.level === 'ACTION_REQUIRED' || item.level === 'BLOCKING')
+      .map(item => ({ reason: item.reason, sourceKind: item.sourceKind, sourceId: item.sourceId, diagnostic: item.diagnostic })),
+    relevantIds: { userCoachId: result.world.userCoachId, currentSeasonId: result.world.currentSeasonId,
+      userTeamId: Object.values(result.world.teams).find(team => team.coachId === result.world.userCoachId)?.id },
+    phase: lastDay?.phases.at(-1)?.phaseId ?? 'EXPLICIT_ADVANCE_PRECHECK',
+    lastDayStatus: lastDay?.status ?? null,
+    lastMatchOperation: lastDay?.phases.find(phase => phase.phaseId === 'MATCH_RESOLUTION')?.summary ?? null,
+    completedGameIds: Object.values(result.world.games).filter(game => game.status === 'completed' && initial.games[game.id]?.status !== 'completed').map(game => game.id).sort(),
+    lastOperation: lastDay?.phases.at(-1)?.summary ?? 'Required-decision projection before advancing',
+    exceptionClassification: 'NO_EXCEPTION_RETURNED',
+    replay: { matchSeed: seed, factory: 'injected constant MatchSeedFactory', productionRngChanged: false },
+    sourceFixtureSha256: createHash('sha256').update(JSON.stringify({ slice: slice(), selection, runtimeBundle })).digest('hex'),
+    relevantOriginStateSha256: createHash('sha256').update(JSON.stringify(relevantState)).digest('hex'),
+  }
+  process.stdout.write(`[World DB closure diagnostic] ${JSON.stringify(diagnosis)}\n`)
+  return diagnosis
+}
+
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+  it('V2 differential: Medical review is a coherent required stop, with only the explicit fixture decision executed', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const team = Object.values(initial.teams).find(item => item.coachId === initial.userCoachId)!
+    const injury = createInjury({ id: injuryIdFromString('v2:medical'), playerId: team.rosterPlayerIds[0]!, kind: 'ankleSprain', severity: 'moderate', injuredOn: addDays(initial.currentDate, -10), expectedReturnDate: initial.currentDate })
+    const due = updateGameWorld(initial, { injuries: [injury] })
+    const before = serializeGameWorldV4(due, '2025-10-01T00:00:00.000Z')
+    let seedCalls = 0
+    const stopped = simulateUntilDate(due, addDays(due.currentDate, 1), () => { seedCalls++; return 151617 })
+    expect(stopped).toMatchObject({ finalDate: due.currentDate, daysAdvanced: 0, stopReason: { type: 'breakpoint', breakpoint: { reason: 'returnToPlayReview', sourceKind: 'USER_RTP_REVIEW', sourceId: injury.id, effectiveDate: due.currentDate, route: 'medical' } } })
+    expect(seedCalls).toBe(0)
+    expect(classifyContinueEvidence(stopped, addDays(due.currentDate, 1))).toBe('CANONICAL_DECISION')
+    expect(serializeGameWorldV4(due, '2025-10-01T00:00:00.000Z')).toEqual(before)
+    const loaded = deserializeGameWorldV4(before)
+    expect(getExplicitAdvanceStopReason(loaded)).toEqual(stopped.stopReason)
+    // Explicit fixture choice: defer the review. Never auto-clear or bypass clinical authority.
+    const choice = reviewReturnToPlay(loaded, { injuryId: injury.id, decision: 'CONTINUE_RECOVERY', actor: { kind: 'USER', coachId: loaded.userCoachId } })
+    expect(choice.ok).toBe(true)
+    if (!choice.ok) throw new Error(choice.reason)
+    expect(choice.world.injuriesById[injury.id]?.expectedReturnDate).toBe(injury.expectedReturnDate)
+    expect(choice.world.injuriesById[injury.id]?.returnToPlay?.reviewDueOn).toBe(addDays(due.currentDate, 1))
+    reportV2('medical-review', due, choice.world, { stopReason: stopped.stopReason, decision: 'CONTINUE_RECOVERY', seedCalls })
+  }, 120_000)
+
+  it('V2 differential: SeasonComplete stops Continue, while an explicit rollover preserves sporting consequences and identity', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    // Bounded season-end fixture: supplied completed scores, not a longitudinal simulation.
+    let completed = initial
+    for (let stage = 0; stage < 32; stage++) {
+      const scheduled = Object.values(completed.games).filter(game => game.status === 'scheduled')
+      if (!scheduled.length) break
+      completed = withSingleWorldValidation(completed, world => {
+        let current = world
+        for (const game of scheduled) current = applyMatchResult(current, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 100, awayScore: 80 })
+        return current
+      })
+    }
+    expect(Object.values(completed.games).filter(game => game.status === 'scheduled')).toHaveLength(0)
+    for (const season of Object.values(completed.seasons)) {
+      if (isSeasonComplete(completed, season.id)) completed = finalizeCompletedSeason(completed, season.id)
+    }
+    let atEnd = updateGameWorld(completed, { currentDate: parseGameDate('2026-06-30') })
+    // Explicit fixture decisions, through the canonical Media command, to isolate SeasonComplete.
+    const mediaChoices = Object.values(atEnd.mediaOpportunitiesById).filter(item => item.status === 'pending').map(item => item.id).sort()
+    for (const opportunityId of mediaChoices) atEnd = skipMediaOpportunity(atEnd, opportunityId)
+    const stopped = continueGame(atEnd, 1, () => 151617)
+    expect(stopped, JSON.stringify(stopped.stopReason)).toMatchObject({ daysAdvanced: 0, finalDate: atEnd.currentDate, stopReason: { type: 'seasonComplete', breakpoint: { sourceKind: 'SEASON_LIFECYCLE', sourceId: atEnd.currentSeasonId } } })
+    expect(classifyContinueEvidence(stopped, addDays(atEnd.currentDate, 1))).toBe('CANONICAL_DECISION')
+    const rolled = startNextSeason(atEnd)
+    expect(rolled.currentDate).toBe(atEnd.currentDate)
+    expect(Object.keys(rolled.seasons).length).toBeGreaterThan(Object.keys(atEnd.seasons).length)
+    expect(startNextSeasonFor(rolled, atEnd.currentSeasonId)).toBe(rolled)
+    expect(rolled.seasonHistoryBySeasonId[atEnd.currentSeasonId]).toEqual(atEnd.seasonHistoryBySeasonId[atEnd.currentSeasonId])
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(rolled, '2026-06-30T00:00:00.000Z'))
+    expect(sharedProjection(loaded)).toEqual(sharedProjection(rolled))
+    reportV2('season-complete-rollover', atEnd, loaded, { stopReason: stopped.stopReason, mediaChoices: mediaChoices.map(opportunityId => ({ command: 'skipMediaOpportunity', opportunityId })), newSeasons: Object.keys(rolled.seasons).filter(id => !atEnd.seasons[id as never]).sort() })
+  }, 120_000)
+
+  it('V2 differential: Calendar sync and async publish the same shared authorities exactly once', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const before = serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')
+    const sync = advanceGameDayWithResult(initial, () => 151617, ['userGame'], { forceDetail: 'BACKGROUND' })
+    const runner = createInlineMatchRunner()
+    try {
+      const asyncResult = await advanceGameDayWithResultAsync(initial, runner, () => 151617, ['userGame'], { forceDetail: 'BACKGROUND' })
+      expect(sync.failure).toBeUndefined()
+      expect(asyncResult.failure).toBeUndefined()
+      expect(serializeGameWorldV4(asyncResult.world, '2025-10-01T00:00:00.000Z')).toEqual(serializeGameWorldV4(sync.world, '2025-10-01T00:00:00.000Z'))
+      expect(sync.phases.filter(phase => phase.phaseId === 'DAY_PUBLICATION')).toHaveLength(1)
+      expect(new Set(sync.phases.map(phase => phase.phaseId)).size).toBe(sync.phases.length)
+      expect(serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')).toEqual(before)
+      reportV2('calendar-sync-async', initial, sync.world, { date: sync.world.currentDate, publications: 1 })
+    } finally { runner.dispose() }
+  }, 120_000)
+
+  it('V2 differential: Talent materialization preserves seeded identity and repeated supply is a no-op', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const place = createPlace({ id: 'v2:place', kind: 'CITY', name: 'Explicit fixture city', countryId: initial.players[Object.keys(initial.players)[0] as never]!.nationalityId })
+    const cohort = createTalentCohort({ id: 'v2:cohort', placeId: place.id, birthYear: 2008, generationYear: 2025, gender: 'male', seed: 151617, inputs: { ageCohortPopulation: 100, basketballParticipationPerThousand: 100, accessOpportunityBasisPoints: 10000 }, inputVersion: 'v2-fixture-v1' })
+    const ready = updateGameWorld(initial, { places: [place], talentCohorts: [cohort] })
+    const created = materializeTalentCandidate(ready, cohort.id, 1, 'SCOUTING_DISCOVERY')
+    expect(created.created).toBe(true)
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(created.world, '2025-10-01T00:00:00.000Z'))
+    const replay = materializeTalentCandidate(loaded, cohort.id, 1, 'SCOUTING_DISCOVERY')
+    expect(replay.created).toBe(false)
+    expect(replay.player).toEqual(created.player)
+    expect(replay.world).toBe(loaded)
+    reportV2('talent-materialization', ready, replay.world, { playerId: created.player.id, cohort, created: created.created, replayCreated: replay.created })
+  }, 120_000)
+
+  it.each(['FULL', 'OUT_OF_SERVICE', 'UNKNOWN'] as const)('V2 differential: Training physical resource %s preserves unrelated authorities', async serviceability => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const team = Object.values(initial.teams).find(item => item.coachId === initial.userCoachId)!
+    const place = createPlace({ id: 'v2:training-place', kind: 'CAMPUS', name: 'Explicit fixture campus' })
+    const facility = createFacility({ id: 'v2:facility', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Explicit fixture center' })
+    const component = createFacilityComponent({ id: 'v2:court', facilityId: facility.id, type: 'PRACTICE_COURT', status: 'ACTIVE', specification: { kind: 'COURT', isFullCourt: true, isIndoor: true } })
+    const physical = serviceability === 'UNKNOWN' ? initial : updateGameWorld(initial, { places: [place], facilities: [facility], facilityComponents: [component], facilityComponentConditionRecords: [createFacilityComponentConditionRecord({ id: 'v2:condition', componentId: component.id, effectiveFrom: initial.currentDate, physicalCondition: 80, serviceability })], facilityUsageRights: [createFacilityUsageRight({ id: 'v2:right', facilityId: facility.id, teamId: team.id, purpose: 'OTHER', exclusivity: 'SHARED', validFrom: initial.currentDate })] })
+    const ready = scheduleTrainingSessionsBatch(physical, [createScheduledTrainingSession({ id: 'v2:training', teamId: team.id, date: addDays(physical.currentDate, 1), startTime: '10:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' })])
+    const onDate = updateGameWorld(ready, { currentDate: addDays(ready.currentDate, 1) }) // Explicit initial execution date, not an advance bypass.
+    const executed = executeScheduledTrainingSessions(onDate)
+    const session = executed.scheduledTrainingSessionsById['v2:training']!
+    // Explicit version difference: BS15 has no Training P0 consumer. Never relax other projections.
+    const hasPhysicalPolicy = session.physicalAttempt !== undefined
+    expect(session.status).toBe(hasPhysicalPolicy && serviceability === 'OUT_OF_SERVICE' ? 'scheduled' : 'completed')
+    expect(executed.injuriesById).toEqual(ready.injuriesById)
+    expect(executed.talentMaterializationsByCandidateKey).toEqual(ready.talentMaterializationsByCandidateKey)
+    expect(executeScheduledTrainingSessions(executed)).toEqual(executed)
+    reportV2(`training-${serviceability}`, onDate, executed, { status: session.status, hasPhysicalPolicy, physicalAttempt: session.physicalAttempt ?? null,
+      stimulus: Object.values(executed.developmentStimulusEventsById).filter(event => event.sourceId === session.id),
+      unrelated: fingerprint({ games: executed.games, seasons: executed.seasons, talent: executed.talentCohortsById, injuries: executed.injuriesById, governance: executed.governanceDecisionsById }) })
+  }, 120_000)
+
+  it('V2 differential: shared Coach Finance monthly execution is exactly once', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const processed = processCoachFinancesForMonth(initial)
+    expect(processCoachFinancesForMonth(processed)).toEqual(processed)
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(processed, '2025-10-01T00:00:00.000Z'))
+    expect(processCoachFinancesForMonth(loaded)).toEqual(loaded)
+    reportV2('coach-finance-exactly-once', initial, loaded, { profiles: loaded.coachFinancesByCoachId })
+  }, 120_000)
+
+  it('closure diagnostic: resolves the first scheduled match day from the original World DB fixture with a replayable seed', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const before = serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')
+    const firstUserGame = Object.values(initial.games).filter(game => game.status === 'scheduled' && [game.homeTeamId, game.awayTeamId].includes(selection.teamId as never)).sort((a, b) => a.date.localeCompare(b.date))[0]!
+    const target = addDays(firstUserGame.date, 1)
+    let lastDay: WorldDayAdvanceResult | undefined
+    const result = simulateUntilDate(initial, target, () => 151617, { onDayAdvance: day => { lastDay = day } })
+    reportWorldDbStop('bounded-original-fixture', initial, target, result, 151617, lastDay)
+    expect(classifyContinueEvidence(result, target)).toBe('ARRIVED')
+    expect(result).toMatchObject({ finalDate: target, daysAdvanced: 4, stopReason: { type: 'arrived' } })
+    expect(Object.values(result.world.games).some(game => game.status === 'completed')).toBe(true)
+    expect(lastDay?.phases.find(phase => phase.phaseId === 'MATCH_RESOLUTION')?.ran).toBe(true)
+    expect(lastDay?.failure).toBeUndefined()
+    expect(lastDay?.phases.at(-1)?.phaseId).toBe('DAY_COMPLETE')
+    expect(serializeGameWorldV4(initial, '2025-10-01T00:00:00.000Z')).toEqual(before)
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(result.world, '2025-10-02T00:00:00.000Z'))
+    expect(loaded.currentDate).toBe(result.finalDate)
+    expect(getExplicitAdvanceStopReason(loaded)).toEqual(getExplicitAdvanceStopReason(result.world))
+  }, 120_000)
+
+  it('closure diagnostic: preserves a controlled media stop through save/reload until its explicit canonical command', async () => {
+    const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
+    const game = Object.values(initial.games).find(item => item.status === 'scheduled' && [item.homeTeamId, item.awayTeamId].includes(selection.teamId as never))!
+    expect(game).toBeDefined()
+    // Explicit controlled fixture fact, not a reconstruction of June 2029.
+    const important = updateGameWorld(initial, { games: [{ ...game, stakes: 'final' }] })
+    const world = createPreMatchMediaOpportunity(important, game.id)
+    const opportunity = Object.values(world.mediaOpportunitiesById).find(item => item.status === 'pending')!
+    expect(opportunity).toBeDefined()
+    const before = serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z')
+    let seedCalls = 0
+    const stopped = simulateUntilDate(world, addDays(world.currentDate, 1), () => { seedCalls += 1; return 151617 })
+    const diagnosis = reportWorldDbStop('controlled-media-fixture', world, addDays(world.currentDate, 1), stopped, 151617)
+    expect(stopped).toMatchObject({ world, finalDate: world.currentDate, daysAdvanced: 0, stopReason: { type: 'mediaOpportunity', opportunityId: opportunity.id } })
+    expect(stopped.stopReason).toEqual(getExplicitAdvanceStopReason(world))
+    expect(diagnosis.pendingDecisions).toContainEqual(expect.objectContaining({ reason: 'mediaOpportunity', sourceId: opportunity.id }))
+    expect(seedCalls).toBe(0)
+    expect(serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z')).toEqual(before)
+    const loaded = deserializeGameWorldV4(before)
+    expect(simulateUntilDate(loaded, addDays(loaded.currentDate, 1), () => 151617).stopReason).toEqual(stopped.stopReason)
+    const resolved = skipMediaOpportunity(loaded, opportunity.id)
+    expect(resolved.mediaOpportunitiesById[opportunity.id]?.status).toBe('skipped')
+    expect(getExplicitAdvanceStopReason(resolved)).toBeUndefined()
+    expect(skipMediaOpportunity(resolved, opportunity.id)).toEqual(resolved)
+    for (const key of ['injuriesById', 'financialTransactionsById', 'governanceDecisionsById'] as const satisfies readonly (keyof GameWorld)[]) expect(resolved[key]).toEqual(loaded[key])
+  }, 120_000)
+
   it('materializes imported Staff career state and supports delegated team Training planning', () => {
     const world = worldWithAssistantCoach()
     for (const item of Object.values(world.teamStaffAssignmentsById)) {
@@ -489,7 +718,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   // count and cadence (deriveNextEditionCalendarPolicy), never a fixed offset copied from the
   // reference 2025-26 edition, so it can no longer run out of margin however the aligned
   // start date's weekday falls across repeated rollovers.
-  it('RWS-BUG-002 long run: advances the world clock exactly 1000 calendar days through multiple ACB season rollovers without stopping', async () => {
+  it.skipIf(process.env.BDM_WORLD_DB_LONGITUDINAL !== '1')('RWS-BUG-002 long run: advances the world clock exactly 1000 calendar days through multiple ACB season rollovers without stopping', async () => {
     const initialWorld = await createWorldDbSpainGame(selection.teamId, {
       repository: repository(slice()),
       databasePath: source.databaseId,
@@ -500,6 +729,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
 
     const primaryCompetitionId = initialWorld.seasons[initialWorld.currentSeasonId]!.competitionId
 
+    const evidence = createLongitudinalEvidence(initialWorld, expectedFinalDate, { slice: slice(), selection, runtimeBundle }, 151617, 'advanceGameDay loop with explicit supported rollover')
     let world = initialWorld
     let seasonsCreated = 0
     let postseasonsCreated = 0
@@ -511,46 +741,53 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const rolledSeasonIds = new Set<string>()
     const seasonIdsSeen = new Set<string>([world.currentSeasonId as string])
 
-    let safety = 0
-    while (world.currentDate < expectedFinalDate) {
-      safety += 1
-      if (safety > 5000) throw new Error('Long-run safety limit exceeded before reaching the expected final date')
-      const beforePostseasonGames = Object.values(world.games).filter((game) => game.competitionStageKey !== 'REGULAR').length
-      const beforeCompletedGames = Object.values(world.games).filter((game) => game.status === 'completed').length
+    try {
+      let safety = 0
+      while (world.currentDate < expectedFinalDate) {
+        safety += 1
+        if (safety > 5000) throw new Error('Long-run safety limit exceeded before reaching the expected final date')
+        const beforePostseasonGames = Object.values(world.games).filter((game) => game.competitionStageKey !== 'REGULAR').length
+        const beforeCompletedGames = Object.values(world.games).filter((game) => game.status === 'completed').length
 
-      world = advanceGameDay(world)
+        world = advanceGameDay(world, evidence.createSeed, ['userGame'], evidence.onDayAdvance)
 
-      const afterCompletedGames = Object.values(world.games).filter((game) => game.status === 'completed').length
-      gamesCompletedTotal += afterCompletedGames - beforeCompletedGames
-      const afterPostseasonGames = Object.values(world.games).filter((game) => game.competitionStageKey !== 'REGULAR').length
-      if (afterPostseasonGames > beforePostseasonGames) postseasonsCreated += 1
+        const afterCompletedGames = Object.values(world.games).filter((game) => game.status === 'completed').length
+        gamesCompletedTotal += afterCompletedGames - beforeCompletedGames
+        const afterPostseasonGames = Object.values(world.games).filter((game) => game.competitionStageKey !== 'REGULAR').length
+        if (afterPostseasonGames > beforePostseasonGames) postseasonsCreated += 1
 
-      const latestPrimarySeason = Object.values(world.seasons)
-        .filter((season) => season.competitionId === primaryCompetitionId)
-        .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
-      if (!rolledSeasonIds.has(latestPrimarySeason.id) && isSeasonComplete(world, latestPrimarySeason.id) && world.seasonHistoryBySeasonId[latestPrimarySeason.id] !== undefined) {
-        world = startNextSeasonFor(world, latestPrimarySeason.id)
-        rolledSeasonIds.add(latestPrimarySeason.id)
-        seasonsCreated += 1
-        const newest = Object.values(world.seasons)
+        const latestPrimarySeason = Object.values(world.seasons)
           .filter((season) => season.competitionId === primaryCompetitionId)
           .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
-        seasonIdsSeen.add(newest.id)
+        if (!rolledSeasonIds.has(latestPrimarySeason.id) && isSeasonComplete(world, latestPrimarySeason.id) && world.seasonHistoryBySeasonId[latestPrimarySeason.id] !== undefined) {
+          world = startNextSeasonFor(world, latestPrimarySeason.id)
+          evidence.observeWorld(world, 'EXPLICIT_FIXTURE_ROLLOVER', { command: 'startNextSeasonFor', seasonId: latestPrimarySeason.id })
+          rolledSeasonIds.add(latestPrimarySeason.id)
+          seasonsCreated += 1
+          const newest = Object.values(world.seasons)
+            .filter((season) => season.competitionId === primaryCompetitionId)
+            .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+          seasonIdsSeen.add(newest.id)
+        }
       }
+
+      expect(world.currentDate).toBe(expectedFinalDate)
+      expect(seasonsCreated).toBeGreaterThanOrEqual(1)
+      expect(postseasonsCreated).toBeGreaterThanOrEqual(1)
+      expect(gamesCompletedTotal).toBeGreaterThan(306)
+
+      // No duplicated CompetitionSeasons: every rollover produced a distinct Season identity.
+      expect(seasonIdsSeen.size).toBe(seasonsCreated + 1)
+      // No duplicated Games: canonical Game IDs remain unique across the whole run.
+      expect(new Set(Object.values(world.games).map((game) => game.id)).size).toBe(Object.values(world.games).length)
+      evidence.finish({ world, finalDate: world.currentDate, daysAdvanced: 1000, stopReason: { type: 'arrived' }, seasonTransitions: [] })
+    } catch (error) {
+      evidence.fail(error)
+      throw error
     }
-
-    expect(world.currentDate).toBe(expectedFinalDate)
-    expect(seasonsCreated).toBeGreaterThanOrEqual(1)
-    expect(postseasonsCreated).toBeGreaterThanOrEqual(1)
-    expect(gamesCompletedTotal).toBeGreaterThan(306)
-
-    // No duplicated CompetitionSeasons: every rollover produced a distinct Season identity.
-    expect(seasonIdsSeen.size).toBe(seasonsCreated + 1)
-    // No duplicated Games: canonical Game IDs remain unique across the whole run.
-    expect(new Set(Object.values(world.games).map((game) => game.id)).size).toBe(Object.values(world.games).length)
   }, 120_000)
 
-  it('RWS-BUG-002 ten-year run: reaches 2035-10-01 through canonical simulation, rollovers, and annual development', async () => {
+  it.skipIf(process.env.BDM_WORLD_DB_LONGITUDINAL !== '1')('RWS-BUG-002 ten-year run: reaches 2035-10-01 through canonical simulation, rollovers, and annual development', async () => {
     const startDate = parseGameDate('2025-10-01')
     const targetDate = parseGameDate('2035-10-01')
     const initialWorld = await createWorldDbSpainGame(selection.teamId, {
@@ -599,78 +836,90 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       return originalApplyOffseasonDevelopment(world, context)
     })
 
+    const evidence = createLongitudinalEvidence(initialWorld, targetDate, { slice: slice(), selection, runtimeBundle }, 151617)
     let result: ReturnType<typeof simulateUntilDate>
     let capturedSpyCalls: { readonly cycleId: string | undefined; readonly date: string }[] = []
     try {
-      result = simulateUntilDate(initialWorld, targetDate)
+      result = simulateUntilDate(initialWorld, targetDate, evidence.createSeed, { onDayAdvance: evidence.onDayAdvance })
+      evidence.finish(result)
       // Capture the spy history while it is still active; mockRestore() clears its call history.
       capturedSpyCalls = developmentSpy.mock.calls.map(([world, context]) => ({ cycleId: context.cycleId, date: world.currentDate }))
+    } catch (error) {
+      evidence.fail(error)
+      throw error
     } finally {
       developmentSpy.mockRestore()
       rolloverSpy.mockRestore()
       advanceDaySpy.mockRestore()
     }
 
-    const { world } = result!
-    const seasons = Object.values(world.seasons)
-    const seasonIds = seasons.map((season) => season.id)
-    const duplicateSeasonIds = seasonIds.filter((id, index) => seasonIds.indexOf(id) !== index)
-    const competitionSeasonIds = seasons.flatMap((season) =>
-      season.worldCompetitionFormat === undefined ? [] : [season.worldCompetitionFormat.competitionSeasonId],
-    )
-    const duplicateCompetitionSeasonIds = competitionSeasonIds.filter((id, index) => competitionSeasonIds.indexOf(id) !== index)
-    const games = Object.values(world.games)
-    const gameIds = games.map((game) => game.id)
-    const duplicateGameIds = gameIds.filter((id, index) => gameIds.indexOf(id) !== index)
-    const pendingGamesInPast = games.filter((game) => game.status === 'scheduled' && game.date < world.currentDate)
-    const observedCycleIds = observedApplications.map((application) => application.cycleId).filter((id): id is string => id !== undefined)
-    const duplicateCycleIds = observedCycleIds.filter((id, index) => observedCycleIds.indexOf(id) !== index)
-    const competitionSeasonsCreated = seasons.length - Object.keys(initialWorld.seasons).length
+    try {
+      process.stdout.write(`[RWS legacy long-run stop] ${JSON.stringify({ finalDate: result!.finalDate, stopReason: result!.stopReason })}\n`)
+      const { world } = result!
+      const seasons = Object.values(world.seasons)
+      const seasonIds = seasons.map((season) => season.id)
+      const duplicateSeasonIds = seasonIds.filter((id, index) => seasonIds.indexOf(id) !== index)
+      const competitionSeasonIds = seasons.flatMap((season) =>
+        season.worldCompetitionFormat === undefined ? [] : [season.worldCompetitionFormat.competitionSeasonId],
+      )
+      const duplicateCompetitionSeasonIds = competitionSeasonIds.filter((id, index) => competitionSeasonIds.indexOf(id) !== index)
+      const games = Object.values(world.games)
+      const gameIds = games.map((game) => game.id)
+      const duplicateGameIds = gameIds.filter((id, index) => gameIds.indexOf(id) !== index)
+      const pendingGamesInPast = games.filter((game) => game.status === 'scheduled' && game.date < world.currentDate)
+      const observedCycleIds = observedApplications.map((application) => application.cycleId).filter((id): id is string => id !== undefined)
+      const duplicateCycleIds = observedCycleIds.filter((id, index) => observedCycleIds.indexOf(id) !== index)
+      const competitionSeasonsCreated = seasons.length - Object.keys(initialWorld.seasons).length
 
-    console.log(JSON.stringify({
-      startDate,
-      targetDate,
-      finalDate: result!.finalDate,
-      expectedCycleIds,
-      observedCycleIds,
-      applications: observedApplications,
-      capturedSpyCalls,
-      duplicateCycleIds,
-      competitionSeasonsCreated,
-      competitionSeasonsInWorld: seasons.length,
-      pendingGamesInPast: pendingGamesInPast.length,
-      duplicateSeasonIds,
-      duplicateCompetitionSeasonIds,
-      duplicateGameIds,
-    }))
+      console.log(JSON.stringify({
+        startDate,
+        targetDate,
+        finalDate: result!.finalDate,
+        stopReason: result!.stopReason,
+        expectedCycleIds,
+        observedCycleIds,
+        applications: observedApplications,
+        capturedSpyCalls,
+        duplicateCycleIds,
+        competitionSeasonsCreated,
+        competitionSeasonsInWorld: seasons.length,
+        pendingGamesInPast: pendingGamesInPast.length,
+        duplicateSeasonIds,
+        duplicateCompetitionSeasonIds,
+        duplicateGameIds,
+      }))
 
-    expect(result!.finalDate).toBe(targetDate)
-    expect(world.currentDate).toBe(targetDate)
-    expect(result!.daysAdvanced).toBe(3652)
-    expect(['arrived', 'userGame', 'mediaOpportunity']).toContain(result!.stopReason.type)
-    expect(advancedDates.at(-1)).toBe(targetDate)
-    expect(noGameDates.length).toBeGreaterThan(0)
-    expect(pendingGamesInPast).toHaveLength(0)
-    expect(duplicateSeasonIds).toEqual([])
-    expect(duplicateCompetitionSeasonIds).toEqual([])
-    expect(seasons.every((season) => season.startDate <= season.endDate)).toBe(true)
-    for (const competitionId of new Set(seasons.map((season) => season.competitionId))) {
-      const editions = seasons
-        .filter((season) => season.competitionId === competitionId)
-        .sort((left, right) => left.startDate.localeCompare(right.startDate))
-      expect(editions.every((season, index) => index === 0 || editions[index - 1]!.endDate < season.startDate)).toBe(true)
+      expect(result!.finalDate).toBe(targetDate)
+      expect(world.currentDate).toBe(targetDate)
+      expect(result!.daysAdvanced).toBe(3652)
+      expect(['arrived', 'userGame', 'mediaOpportunity']).toContain(result!.stopReason.type)
+      expect(advancedDates.at(-1)).toBe(targetDate)
+      expect(noGameDates.length).toBeGreaterThan(0)
+      expect(pendingGamesInPast).toHaveLength(0)
+      expect(duplicateSeasonIds).toEqual([])
+      expect(duplicateCompetitionSeasonIds).toEqual([])
+      expect(seasons.every((season) => season.startDate <= season.endDate)).toBe(true)
+      for (const competitionId of new Set(seasons.map((season) => season.competitionId))) {
+        const editions = seasons
+          .filter((season) => season.competitionId === competitionId)
+          .sort((left, right) => left.startDate.localeCompare(right.startDate))
+        expect(editions.every((season, index) => index === 0 || editions[index - 1]!.endDate < season.startDate)).toBe(true)
+      }
+      expect(duplicateGameIds).toEqual([])
+      expect(rolloverDates.length).toBeGreaterThanOrEqual(10)
+      expect(rolloverDates.every((date) => date >= startDate && date < targetDate)).toBe(true)
+      expect(capturedSpyCalls).toEqual(observedApplications)
+      expect(observedCycleIds).toEqual(expectedCycleIds)
+      expect(new Set(observedCycleIds).size).toBe(observedCycleIds.length)
+      expect(duplicateCycleIds).toEqual([])
+      expect(observedApplications.map((application) => application.date)).toEqual(
+        expectedCycleIds.map((cycleId) => `${cycleId.slice('annual-development:'.length)}-07-01`),
+      )
+      expect(world.worldAnnualDevelopmentCycle?.lastAppliedCycleId).toBe(expectedCycleIds.at(-1))
+    } catch (error) {
+      evidence.fail(error)
+      throw error
     }
-    expect(duplicateGameIds).toEqual([])
-    expect(rolloverDates.length).toBeGreaterThanOrEqual(10)
-    expect(rolloverDates.every((date) => date >= startDate && date < targetDate)).toBe(true)
-    expect(capturedSpyCalls).toEqual(observedApplications)
-    expect(observedCycleIds).toEqual(expectedCycleIds)
-    expect(new Set(observedCycleIds).size).toBe(observedCycleIds.length)
-    expect(duplicateCycleIds).toEqual([])
-    expect(observedApplications.map((application) => application.date)).toEqual(
-      expectedCycleIds.map((cycleId) => `${cycleId.slice('annual-development:'.length)}-07-01`),
-    )
-    expect(world.worldAnnualDevelopmentCycle?.lastAppliedCycleId).toBe(expectedCycleIds.at(-1))
   }, 900_000)
 
   it.each([100, 365])('measures advanceGameDay performance over %i consecutive days', async (dayCount) => {

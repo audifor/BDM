@@ -1,0 +1,133 @@
+> bdm@0.1.0 test
+
+> vitest run --passWithNoTests --maxWorkers=1 src/engine/injury/EquippedRehabilitation.test.ts
+
+
+
+
+
+ RUN  v4.1.10 C:/BDM-BS17D-M1-IMPLEMENTATION
+
+
+
+ ❯ src/engine/injury/EquippedRehabilitation.test.ts (22 tests | 3 failed) 9479ms
+
+     × rejects same-day requests that the next-day Calendar cannot execute 22ms
+
+     × rejects missing or perform-only prescribing evidence on Save reload 500ms
+
+     × replays accepted commands after completion or revocation without new acts or claims 88ms
+
+node.exe :
+
+En línea: 1 Carácter: 1
+
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+
+
+ FAIL  src/engine/injury/EquippedRehabilitation.test.ts > BS17D-M1 equipped rehabilitation productive authority and
+
+causal execution > rejects same-day requests that the next-day Calendar cannot execute
+
+AssertionError: expected [Function] to throw an error
+
+
+
+- Expected:
+
+null
+
+
+
++ Received:
+
+undefined
+
+
+
+ ❯ src/engine/injury/EquippedRehabilitation.test.ts:151:147
+
+    149|   })
+
+    150|   it('rejects same-day requests that the next-day Calendar cannot exec…
+
+    151|     expect(() => scheduleEquippedRehabilitation(f.indicated, { ...f.sc…
+
+       |
+
+                                    ^
+
+    152|   })
+
+    153|   it('rejects missing or perform-only prescribing evidence on Save rel…
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+
+ FAIL  src/engine/injury/EquippedRehabilitation.test.ts > BS17D-M1 equipped rehabilitation productive authority and
+
+causal execution > rejects missing or perform-only prescribing evidence on Save reload
+
+AssertionError: expected [Function] to throw an error
+
+ ❯ src/engine/injury/EquippedRehabilitation.test.ts:157:51
+
+    155|     const missing = JSON.parse(JSON.stringify(saved))
+
+    156|     missing.payload.injuries[0].equippedRehabilitationActs[0].prescrib…
+
+    157|     expect(() => deserializeGameWorldV4(missing)).toThrow()
+
+       |                                                   ^
+
+    158|     const wrongScope = JSON.parse(JSON.stringify(saved))
+
+    159|     const person = wrongScope.payload.staffPeople.find((item: { id: st…
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+
+ FAIL  src/engine/injury/EquippedRehabilitation.test.ts > BS17D-M1 equipped rehabilitation productive authority and
+
+causal execution > replays accepted commands after completion or revocation without new acts or claims
+
+RangeError: Medical act cannot be scheduled
+
+ ❯ scheduleEquippedRehabilitation src/engine/injury/EquippedRehabilitation.ts:70:157
+
+
+
+ ❯ src/engine/injury/EquippedRehabilitation.test.ts:166:12
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+
+
+
+ Test Files  1 failed (1)
+
+      Tests  3 failed | 19 passed (22)
+
+   Start at  10:41:14
+
+   Duration  22.08s (transform 9.92s, setup 0ms, import 12.17s, tests 9.48s, environment 0ms)

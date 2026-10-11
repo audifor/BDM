@@ -19,11 +19,9 @@ const CAPACITY_LIMIT_BY_SENIORITY: Readonly<Record<StaffRoleSeniority, number>> 
 export function getTeamResponsibilities(world: GameWorld, teamId: TeamId): readonly Responsibility[] {
   return [...(responsibilityIndex(world.responsibilitiesById).byTeam.get(teamId) ?? [])].sort((a, b) => a.kind.localeCompare(b.kind))
 }
-
 export function getResponsibilitiesHeldByStaff(world: GameWorld, staffId: StaffPersonId): readonly Responsibility[] {
   return responsibilityIndex(world.responsibilitiesById).byHolder.get(staffId) ?? []
 }
-
 export function getResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind): Responsibility | undefined {
   return responsibilityIndex(world.responsibilitiesById).byTeamKind.get(teamKindKey(teamId, kind))
 }

@@ -8,9 +8,10 @@ import {
   createOrganizationFinancialProfile,
   createTeamFinances,
   ensureCanonicalFinanceFoundation,
-  fiscalPeriodIdFor,
+  financeFiscalPeriodIdFor,
   getFinanceActivationReport,
   getOrganizationFinancialAuthorization,
+  ORGANIZATION_FINANCE_ACCOUNT_ROLES,
 } from '@/domain/finance'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from './GameWorldSaveV4'
 
@@ -58,16 +59,16 @@ describe('BS16E activation persistence', () => {
     expect(restored.fiscalPeriodsById).toEqual(activated.fiscalPeriodsById)
     expect(restored.financialBudgetsById).toEqual(activated.financialBudgetsById)
     expect(restored.budgetLinesById).toEqual(activated.budgetLinesById)
-    expect(authorization.fiscalPeriodId).toBe(fiscalPeriodIdFor(organizationId, '2032-01-01'))
-    expect(authorization.authorizedMinorUnits).toBe(1_500_000)
-    expect(authorization.lines.map((line) => [line.category, line.authorizedMinorUnits])).toEqual([['PLAYER_SALARY', 1_000_000], ['STAFF_SALARY', 500_000]])
+    expect(authorization.fiscalPeriodId).toBe(financeFiscalPeriodIdFor(organizationId, '2032-01-01'))
+    expect(authorization.authorizedMinorUnits).toBe(150_000_000)
+    expect(authorization.lines.map((line) => [line.category, line.authorizedMinorUnits])).toEqual([['PLAYER_SALARY', 100_000_000], ['STAFF_SALARY', 50_000_000]])
     expect(authorization.currencyCode).toBe('EUR')
     expect(authorization.approval).toEqual(Object.values(activated.financialBudgetsById)[0]!.approval)
     // Headroom stays derived, never persisted: reloading re-derives it from the same facts. The value
     // itself can move because the canonical save normalization also completes world structure (it
     // materializes the head-coach staff contract), which is pre-existing load behaviour, not authorization state.
     expect(authorization.availableHeadroomMinorUnits).toBe(authorization.authorizedMinorUnits - authorization.committedMinorUnits - authorization.reservedMinorUnits)
-    expect(getOrganizationFinancialAuthorization(activated, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).authorizedMinorUnits).toBe(1_500_000)
+    expect(getOrganizationFinancialAuthorization(activated, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).authorizedMinorUnits).toBe(150_000_000)
   })
 
   it('keeps headroom derived and creates no accounting fact on load', () => {
@@ -79,7 +80,10 @@ describe('BS16E activation persistence', () => {
     expect('availableHeadroomMinorUnits' in persistedBudget).toBe(false)
     expect(Object.keys(payload).sort().filter((key) => key.includes('Headroom'))).toEqual([])
     expect(Object.keys(restored.financialTransactionsById)).toEqual(['finance:opening'])
-    expect(Object.keys(restored.financialAccountsById)).toEqual(['cash:eur', 'equity:eur'])
+    // The organization's canonical account catalog is ensured by activation; the fixture's own two accounts and
+    // no other money fact exist, and nothing but the catalog was added.
+    expect(Object.keys(restored.financialAccountsById)).toHaveLength(2 + ORGANIZATION_FINANCE_ACCOUNT_ROLES.length)
+    expect(Object.keys(restored.financialAccountsById)).toEqual(expect.arrayContaining(['cash:eur', 'equity:eur']))
     expect(restored.financialReservationsById).toEqual({})
     expect(restored.payablesById).toEqual({})
     expect(restored.receivablesById).toEqual({})
@@ -104,7 +108,7 @@ describe('BS16E activation persistence', () => {
     const loaded = ensureCanonicalFinanceFoundation(roundTrip(changedLegacy))
 
     expect(Object.keys(loaded.financialBudgetsById)).toHaveLength(1)
-    expect(getOrganizationFinancialAuthorization(loaded, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).authorizedMinorUnits).toBe(1_500_000)
+    expect(getOrganizationFinancialAuthorization(loaded, { organizationId, currencyCode: 'EUR', asOfDate: AS_OF }).authorizedMinorUnits).toBe(150_000_000)
     expect(getFinanceActivationReport(loaded).organizations.find((entry) => entry.organizationId === organizationId)?.status).toBe('ALREADY_PROVISIONED')
   })
 

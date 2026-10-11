@@ -1,6 +1,7 @@
 import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
 import { createCompetition, defaultLeagueCompetitionRules, NBA_GAME_FORMAT, NCAA_MEN_GAME_FORMAT, NCAA_WOMEN_GAME_FORMAT, WNBA_GAME_FORMAT, type CompetitionRules, type GameFormatRules } from '@/domain/competition'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
+import { nbaDraftRulesForYear } from '@/domain/draft'
 import { createConference, createConferenceMembership } from '@/domain/conference'
 import { createCountry } from '@/domain/country'
 import { addDays, createGameDate, formatGameDate, type GameDate } from '@/domain/date'
@@ -32,6 +33,7 @@ import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
 import { createNbaLikeTradeRules, NBA_LIKE_TRADE_DEADLINE_POLICY, WNBA_LIKE_TRADE_DEADLINE_POLICY } from '@/engine/trade'
 import { defaultRecruitingRules } from '@/domain/recruiting'
+import { generatePersonName } from './GeneratedPersonName'
 
 const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -45,32 +47,6 @@ const GENERATED_NBA_SEASON_ID = seasonIdFromString('generated-season-0003')
 const GENERATED_NCAA_SEASON_ID = seasonIdFromString('generated-season-0005')
 const DEFAULT_START_DATE = createGameDate(2032, 10, 1)
 const SEASON_LENGTH_DAYS = 272
-
-const FIRST_NAMES = [
-  'Arel',
-  'Bren',
-  'Cira',
-  'Daro',
-  'Eris',
-  'Falen',
-  'Galen',
-  'Hira',
-  'Iven',
-  'Jora',
-] as const
-
-const LAST_NAMES = [
-  'Arden',
-  'Bexley',
-  'Corven',
-  'Dain',
-  'Elian',
-  'Farrow',
-  'Grove',
-  'Hale',
-  'Istra',
-  'Joren',
-] as const
 
 const TEAM_NAMES = [
   'Ashvale Kites',
@@ -187,7 +163,10 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     startDate,
     endDate,
   })
-  const nbaSeason = nbaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NBA_SEASON_ID, competitionId: nbaCompetition.id, label: `${formatGameDate(addDays(startDate, 19))} to ${formatGameDate(addDays(endDate, 31))}`, startDate: addDays(startDate, 19), endDate: addDays(endDate, 31) })
+  // Finish the NBA-like regular season before the configured late-April early-entry deadline.
+  // This lets the completed standings create the next Draft cycle in time for real declarations.
+  const nbaSeasonEnd = addDays(startDate, 197)
+  const nbaSeason = nbaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NBA_SEASON_ID, competitionId: nbaCompetition.id, label: `${formatGameDate(addDays(startDate, 19))} to ${formatGameDate(nbaSeasonEnd)}`, startDate: addDays(startDate, 19), endDate: nbaSeasonEnd })
   const conferences = ncaaCompetition === undefined ? [] : ['Aster', 'Boreal', 'Cinder'].map((name, index) => createConference({ id: conferenceIdFromString(`generated-conference-${formatSequence(index + 1)}`), ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: `${name} Conference` }))
   const ncaaMemberships = ncaaCompetition === undefined ? [] : teams.slice(nbaTeamsEnd).map((team, index) => createConferenceMembership({ conferenceId: conferences[Math.floor(index / 4)]!.id, teamId: team.id, seasonId: GENERATED_NCAA_SEASON_ID }))
   const ncaaSeason = ncaaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NCAA_SEASON_ID, competitionId: ncaaCompetition.id, label: `${formatGameDate(addDays(startDate, 90))} to ${formatGameDate(addDays(startDate, 180))}`, startDate: addDays(startDate, 90), endDate: addDays(startDate, 180), conferenceMembershipSnapshot: ncaaMemberships })
@@ -212,7 +191,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     players,
     teams,
     competitions: [competition, ...(nbaCompetition === undefined ? [] : [nbaCompetition]), ...(ncaaCompetition === undefined ? [] : [ncaaCompetition])],
-    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender), draftRules: { rounds: 2, orderMethod: 'reverseStandings', scheduledAfterDays: 7 }, tradeDeadlinePolicy: gender === 'female' ? WNBA_LIKE_TRADE_DEADLINE_POLICY : NBA_LIKE_TRADE_DEADLINE_POLICY })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender), recruitingRules: defaultRecruitingRules })])],
+    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender), draftRules: nbaDraftRulesForYear(2027), tradeDeadlinePolicy: gender === 'female' ? WNBA_LIKE_TRADE_DEADLINE_POLICY : NBA_LIKE_TRADE_DEADLINE_POLICY })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender), recruitingRules: defaultRecruitingRules })])],
     conferences, conferenceMemberships: ncaaMemberships,
     seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],
@@ -228,13 +207,6 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 
 const ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SG','SG','SF','SF','PF','PF','PF','C','C']
 const NCAA_ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SF','PF','C','C']
-
-function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {
-  return {
-    firstName: random.pick(FIRST_NAMES),
-    lastName: random.pick(LAST_NAMES),
-  }
-}
 
 function shuffle<Item>(items: Item[], random: RandomSource): Item[] {
   for (let index = items.length - 1; index > 0; index -= 1) {

@@ -165,11 +165,15 @@ function requestRelevantReports(world: GameWorld, organizationId: OrganizationId
   const ordered = [...pool.values()].map((candidate) => scoreCandidate(world, organizationId, teams, candidate)).filter((item): item is CandidateProjection => item !== undefined)
     .sort((a, b) => b.priority - a.priority || a.playerId.localeCompare(b.playerId))
   let next = world
+  const nonterminalPlayers = new Set(Object.values(world.scoutingAssignmentsById)
+    .filter(item => item.organizationId === organizationId && item.status !== 'COMPLETED' && item.status !== 'CANCELLED').map(item => item.subjectPlayerId))
+  const reportedToday = new Set(Object.values(world.evaluatorReportsById)
+    .filter(item => item.organizationId === organizationId && item.createdAt === world.currentDate).map(item => item.subjectPlayerId))
   const usedStaff = new Set<StaffPersonId>()
   let created = 0
   for (const candidate of ordered) {
     if (created >= MAX_REPORTS_PER_ORGANIZATION_PER_CYCLE) break
-    if (hasNonterminalAssignment(next, organizationId, candidate.playerId) || hasSameDayReport(next, organizationId, candidate.playerId)) continue
+    if (nonterminalPlayers.has(candidate.playerId) || reportedToday.has(candidate.playerId)) continue
     const mission = chooseMission(next, organizationId, candidate)
     if (mission === undefined) continue
     const evaluator = chooseEvaluator(next, slots, mission)
@@ -177,6 +181,7 @@ function requestRelevantReports(world: GameWorld, organizationId: OrganizationId
     const previousAssignmentIds = new Set(Object.keys(next.scoutingAssignmentsById))
     next = requestScouting(next, { organizationId, playerId: candidate.playerId, missionType: mission, evaluatorStaffId: evaluator.staffId, requestedBy: 'SCOUTING_DEPARTMENT', teamContextId: evaluator.teamId })
     if (Object.keys(next.scoutingAssignmentsById).some((id) => !previousAssignmentIds.has(id))) {
+      nonterminalPlayers.add(candidate.playerId)
       usedStaff.add(evaluator.staffId)
       created += 1
     }
@@ -189,7 +194,7 @@ function collectCandidates(world: GameWorld, organizationId: OrganizationId, tea
   const ownRoster = new Set(teams.flatMap((team) => team.rosterPlayerIds))
   const positionNeeds = positionalNeeds(world, teams)
   const add = (playerId: PlayerId, source: CandidateSource, base: number) => {
-    if (ownRoster.has(playerId) || world.players[playerId] === undefined || candidates.size >= MAX_CANDIDATES_PER_ORGANIZATION && !candidates.has(playerId)) return
+    if (ownRoster.has(playerId) || world.players[playerId] === undefined || world.players[playerId]!.careerEnd !== undefined || candidates.size >= MAX_CANDIDATES_PER_ORGANIZATION && !candidates.has(playerId)) return
     const current = candidates.get(playerId)
     if (current === undefined) candidates.set(playerId, { playerId, priority: base, sources: new Set([source]) })
     else { current.sources.add(source); current.priority = Math.max(current.priority, base) }
@@ -258,14 +263,6 @@ function chooseEvaluator(world: GameWorld, slots: readonly ScoutSlot[], mission:
       return { slot, rank }
     })
     .sort((a, b) => b.rank - a.rank || a.slot.staffId.localeCompare(b.slot.staffId))[0]?.slot
-}
-
-function hasNonterminalAssignment(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId): boolean {
-  return Object.values(world.scoutingAssignmentsById).some((item) => item.organizationId === organizationId && item.subjectPlayerId === playerId && item.status !== 'COMPLETED' && item.status !== 'CANCELLED')
-}
-
-function hasSameDayReport(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId): boolean {
-  return Object.values(world.evaluatorReportsById).some((item) => item.organizationId === organizationId && item.subjectPlayerId === playerId && item.createdAt === world.currentDate)
 }
 
 function positionalNeeds(world: GameWorld, teams: readonly GameWorld['teams'][TeamId][]): Readonly<Record<string, number>> {

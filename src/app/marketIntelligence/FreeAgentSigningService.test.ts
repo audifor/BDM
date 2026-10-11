@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { createOrganizationFinancialProfile } from '@/domain/finance'
+import { provisionOrganizationFinanceFoundation } from '@/domain/finance'
+import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { addDays, addYears } from '@/domain/date'
 import { contractIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
@@ -13,11 +15,20 @@ import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSa
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { completeAcceptedFreeAgentSigning, completeAiAcceptedFreeAgentSignings } from './FreeAgentSigningService'
 
-function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?: NegotiationRole; readonly agentFee?: number; readonly teamId?: string } = {}) {
+function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?: NegotiationRole; readonly agentFee?: number; readonly teamId?: string } = {}, options: { readonly funded?: boolean } = {}) {
   const base = createNewGame()
   const team = input.teamId === undefined
     ? Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
     : base.teams[input.teamId as keyof typeof base.teams]!
+  // Canonical Finance, not a legacy payroll pool, decides whether the accepted salary may be signed, so
+  // the fixture provisions the club currency and (unless a test wants a poor club) funds and authorizes it.
+  const provisioned = options.funded === false
+    ? provisionOrganizationFinanceFoundation(base, team.organizationId, { currencyCode: 'EUR' })
+    : authorizeTeamSalaryForTest(
+      fundTeamWithOpeningCapital(base, team.id, { currencyCode: 'EUR', cashMinorUnits: 10_000_000_000 }),
+      team.id,
+      { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 10_000_000_000 },
+    )
   const playerId = team.rosterPlayerIds[0]!
   const player = base.players[playerId]!
   const baseContracts = Object.values(base.contractsById).map((contract) => contract.playerId === player.id
@@ -36,9 +47,8 @@ function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?:
     ...(input.agentFee === undefined ? {} : { agentFee: input.agentFee }),
     round: 1,
   }
-  const world = updateGameWorld(base, {
+  const world = updateGameWorld(provisioned, {
     negotiations: [negotiation],
-    teamFinances: Object.values(base.teamFinancesByTeamId).map((finances) => finances.teamId === team.id ? { ...finances, playerSalaryBudget: 1_000_000_000 } : finances),
     contracts: baseContracts,
     teams: Object.values(base.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== player.id) } : item),
     lineupsByTeamId: Object.fromEntries(Object.entries(base.lineupsByTeamId).map(([id, lineup]) => [id, clearPlayerFromLineup(lineup, player.id)])),
@@ -130,22 +140,27 @@ describe('completeAcceptedFreeAgentSigning', () => {
     expect(Object.values(result.world.governanceDecisionEventsById).filter((event) => event.decisionId === 'decision:signing-test' && event.kind === 'EXECUTED')).toHaveLength(1)
   })
 
-  it('records an agreed agent fee as one sourced Finance commitment and never signs without fee accounting support', () => {
+  it('records an agreed agent fee as one sourced Finance commitment and never signs without an organization currency', () => {
     const setup = fixture({ agentFee: 75_000 })
     const approved = withGovernance(setup.world, setup.negotiation, true)
-    const blocked = completeAcceptedFreeAgentSigning(approved, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
-    expect(blocked.status).toBe('FEE_ACCOUNTING_UNAVAILABLE')
-    expect(blocked.world).toBe(approved)
+    // Without a canonical Organization currency Finance can express neither the salary nor the fee, so
+    // nothing is signed and no fee fact is invented.
+    const withoutFinance = updateGameWorld(approved, { organizationFinancialProfiles: [] })
+    const blocked = completeAcceptedFreeAgentSigning(withoutFinance, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
+    expect(blocked.status).toBe('FINANCIAL_BLOCK')
+    expect(blocked.world).toBe(withoutFinance)
+    expect(Object.values(blocked.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE')).toEqual([])
 
-    const financeReady = updateGameWorld(approved, { organizationFinancialProfiles: [createOrganizationFinancialProfile({ organizationId: setup.team.organizationId, baseCurrencyCode: 'EUR' })] })
+    const financeReady = updateGameWorld(withoutFinance, { organizationFinancialProfiles: [createOrganizationFinancialProfile({ organizationId: setup.team.organizationId, baseCurrencyCode: 'EUR' })] })
     const signed = completeAcceptedFreeAgentSigning(financeReady, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
     expect(signed.status).toBe('SIGNED')
     expect(Object.values(signed.world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE' && item.provenance.id === setup.negotiation.id)).toMatchObject([
-      { amount: { currencyCode: 'EUR', minorUnits: 75_000 }, category: 'PLAYER_AGENT_FEE', startsOn: financeReady.currentDate, dueOn: financeReady.currentDate },
+      // 75,000 EUR of legacy major units is a 7,500,000 minor-unit canonical commitment (BS16G scale).
+      { amount: { currencyCode: 'EUR', minorUnits: 7_500_000 }, category: 'PLAYER_AGENT_FEE', startsOn: financeReady.currentDate, dueOn: financeReady.currentDate },
     ])
   })
 
-  it('rechecks availability and current payroll, and returns unchanged state for conflicts', () => {
+  it('rechecks availability and canonical Finance, and returns unchanged state for conflicts', () => {
     const setup = fixture()
     const approved = withGovernance(setup.world, setup.negotiation, true)
     const conflictingContract = createPlayerContract({ id: contractIdFromString('contract:signing-conflict'), playerId: setup.player.id, teamId: setup.team.id, kind: 'standard', term: { startsOn: setup.world.currentDate, expiresOn: addDays(setup.world.currentDate, 30) }, compensation: { annualSalary: 100_000 } })
@@ -154,8 +169,10 @@ describe('completeAcceptedFreeAgentSigning', () => {
     expect(unavailableResult.status).toBe('CONFLICT')
     expect(unavailableResult.world).toBe(unavailable)
 
-    const poor = updateGameWorld(approved, { teamFinances: Object.values(approved.teamFinancesByTeamId).map((value) => value.teamId === setup.team.id ? { ...value, playerSalaryBudget: 1 } : value) })
-    const poorResult = completeAcceptedFreeAgentSigning(poor, { teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId! })
+    // A club with no canonical liquidity cannot sign, however large its legacy payroll pool is.
+    const poorSetup = fixture({}, { funded: false })
+    const poor = withGovernance(poorSetup.world, poorSetup.negotiation, true)
+    const poorResult = completeAcceptedFreeAgentSigning(poor, { teamId: poorSetup.team.id, negotiationId: poorSetup.negotiation.id, expectedProposalId: poorSetup.negotiation.sourceProposalId! })
     expect(poorResult.status).toBe('FINANCIAL_BLOCK')
     expect(poorResult.world).toBe(poor)
   })

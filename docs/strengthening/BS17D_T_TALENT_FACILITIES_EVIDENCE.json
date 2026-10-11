@@ -1,0 +1,182 @@
+{
+  "milestone": "BS17D-T",
+  "base": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+  "branch": "bdm-stage2-bs17d-talent-facilities",
+  "status": "PASS · BS17D-T INTEGRATION AUDIT",
+  "talentPhysicalContext": "LIVE (read-only, explicitly configured youth pathways)",
+  "talentProductiveConsumer": "NOT_IMPLEMENTED",
+  "trainingAcademyConsumer": "LIVE (existing scheduled Training P0 owner only)",
+  "playerSupplyAuthority": "PRESERVED",
+  "bs17dGlobal": "PARTIAL",
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE",
+  "fixture": {
+    "seed": 151617,
+    "initialDate": "2032-10-01",
+    "firstTrainingDate": "2032-10-02",
+    "genders": [
+      "male",
+      "female"
+    ],
+    "source": "src/app/youth/testFixtures.ts",
+    "sha256": "426c3da80a23bb19588d42ad7250a9149dc9ec31c6f5f1c89826bce3dd594ed8",
+    "actions": [
+      "configureTeamPathway",
+      "acceptYouthIntake",
+      "scheduleTrainingSessionsBatch",
+      "executeScheduledTrainingSessions",
+      "advanceDayWithTrace",
+      "promotePathwayPlayer",
+      "serializeGameWorldV4/deserializeGameWorldV4"
+    ],
+    "scope": "Small deterministic fixture; no longitudinal World DB run"
+  },
+  "focusedTests": {
+    "passed": 170,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      {
+        "path": "src/save/GameWorldSaveV4.Facilities.test.ts",
+        "status": "passed",
+        "count": 30
+      },
+      {
+        "path": "src/save/GameWorldSaveV4.FacilityOperations.test.ts",
+        "status": "passed",
+        "count": 9
+      },
+      {
+        "path": "src/app/game/BS15BS16BS17Convergence.test.ts",
+        "status": "passed",
+        "count": 5
+      },
+      {
+        "path": "src/app/youth/YouthFacilitiesIntegration.test.ts",
+        "status": "passed",
+        "count": 10
+      },
+      {
+        "path": "src/integration/facilitiesSporting/SportingFacilityContext.test.ts",
+        "status": "passed",
+        "count": 42
+      },
+      {
+        "path": "src/engine/calendar/CalendarEngine.test.ts",
+        "status": "passed",
+        "count": 25
+      },
+      {
+        "path": "src/engine/injury/MedicalPhysicalCompatibility.test.ts",
+        "status": "passed",
+        "count": 8
+      },
+      {
+        "path": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+        "status": "passed",
+        "count": 17
+      },
+      {
+        "path": "src/engine/youth/YouthPathwayEngine.test.ts",
+        "status": "passed",
+        "count": 5
+      },
+      {
+        "path": "src/engine/world/TalentSupply.test.ts",
+        "status": "passed",
+        "count": 8
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentFacilitiesContext.test.tsx",
+        "status": "passed",
+        "count": 3
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentOperationsWorkspace.test.tsx",
+        "status": "passed",
+        "count": 1
+      },
+      {
+        "path": "src/ui-ng/applications/talent/TalentProjections.test.ts",
+        "status": "passed",
+        "count": 7
+      }
+    ]
+  },
+  "causalTests": [
+    "BS17D-T canonical youth and Facilities integration keeps male intake, candidate identity, materialization and registration independent of physical service/access",
+    "BS17D-T canonical youth and Facilities integration keeps female intake, candidate identity, materialization and registration independent of physical service/access",
+    "BS17D-T canonical youth and Facilities integration a real registered male youth Player trains through the existing P0 owner; outage blocks only its court module",
+    "BS17D-T canonical youth and Facilities integration a real registered female youth Player trains through the existing P0 owner; outage blocks only its court module",
+    "BS17D-T canonical youth and Facilities integration handles UNKNOWN without inventing youth capacity or changing the supply authority",
+    "BS17D-T canonical youth and Facilities integration handles LIMITED without inventing youth capacity or changing the supply authority",
+    "BS17D-T canonical youth and Facilities integration handles DENIED without inventing youth capacity or changing the supply authority",
+    "BS17D-T canonical youth and Facilities integration handles EXPIRED without inventing youth capacity or changing the supply authority",
+    "BS17D-T canonical youth and Facilities integration shared Team rights do not invent slots, exclusivity or additional Players",
+    "BS17D-T canonical youth and Facilities integration Calendar executes youth Training once, preserves supply/Finance and reloads a pending physical attempt"
+  ],
+  "artifacts": {
+    "focusedReport": {
+      "path": "node_modules/.cache/bs17d-t/focused.json",
+      "sha256": "75feeff536d4a4edc96a744e79b3aa279b4d81d8ccc82d4b109198870de7c7d6"
+    },
+    "focusedLog": {
+      "path": "node_modules/.cache/bs17d-t/focused.log",
+      "sha256": "93b375f5b9f667d323e6ce51647a32dcabeec5524c120d22c24354979ba9d9e2"
+    },
+    "typecheckLog": {
+      "path": "node_modules/.cache/bs17d-t/typecheck.log",
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec"
+    },
+    "buildLog": {
+      "path": "node_modules/.cache/bs17d-t/build.log",
+      "sha256": "8e68aae25a6046c69db1319d14043a0e7eeaa991cd4dffdf284fe6b8a2f87384"
+    }
+  },
+  "ancestry": {
+    "BS15": {
+      "sha": "94c077092224a9f75c861a853d9d52fceae526fe",
+      "inAncestry": true
+    },
+    "BS16_K_C": {
+      "sha": "97c58b98b9192a569f30bdfd8b63565f0b02a744",
+      "inAncestry": true
+    },
+    "BS17D_M": {
+      "sha": "6945cb90604bd349edd9d2333aa7d1861e9a311a",
+      "inAncestry": true
+    },
+    "V2": {
+      "sha": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+      "inAncestry": true
+    }
+  },
+  "unchangedProductionAuthorities": [
+    "src/domain",
+    "src/engine",
+    "src/save",
+    "src/integration",
+    "src/app/game",
+    "src/app/facilities"
+  ],
+  "scopeExclusions": [
+    "Historical 2029 World DB",
+    "Y1-Y30",
+    "BS16 global completion",
+    "BS17D global completion",
+    "Specialized Medical",
+    "Facilities AI management",
+    "Global quantitative facility allocation",
+    "New Talent-owned physical operation"
+  ],
+  "validation": {
+    "focusedTests": "PASS: 170 tests, 13 files, zero failed/pending",
+    "typecheck": "PASS (exit 0)",
+    "build": "PASS (exit 0; Vite chunk-size warning retained)",
+    "diffCheck": "PASS",
+    "productionRandomness": "No Math.random() in src",
+    "domainEngineImports": "No improper production React/Zustand/Tauri imports; pre-existing test-only React render import retained",
+    "financeGovernanceDiff": "NONE",
+    "rust": "UNCHANGED; no Rust build rerun under narrowed focal contract",
+    "protectedWorktrees": "Main and certified convergence remained clean at their original HEADs; no merges, push or newer BS16 imports"
+  }
+}

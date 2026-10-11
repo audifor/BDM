@@ -187,7 +187,7 @@ export function createFacilityClubScenario(): FacilityClubScenario {
   ]
 
   const world = updateGameWorld(base, {
-    places: [campus, rivalPlace],
+    places: [...Object.values(base.placesById), campus, rivalPlace],
     facilities: [trainingCenter, rivalArena],
     facilityComponents: components,
     facilityComponentConditionRecords: conditionRecords,

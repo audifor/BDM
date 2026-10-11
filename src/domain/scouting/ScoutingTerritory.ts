@@ -27,7 +27,7 @@ export interface OrganizationPlayerAwareness {
   readonly organizationId: OrganizationId
   readonly playerId: PlayerId
   readonly discoveredAt: GameDate
-  readonly source: 'TERRITORY_DISCOVERY'
+  readonly source: 'TERRITORY_DISCOVERY'|'RECRUITING_DISCOVERY'
   readonly discoveredByStaffId: StaffPersonId
   readonly territory: ScoutingTerritory
 }
@@ -55,7 +55,7 @@ export function createScoutingTerritoryAssignment(value: ScoutingTerritoryAssign
 }
 
 export function createOrganizationPlayerAwareness(value: OrganizationPlayerAwareness): OrganizationPlayerAwareness {
-  if (value.source !== 'TERRITORY_DISCOVERY') throw new TypeError('Organization player awareness source is invalid')
+  if (value.source !== 'TERRITORY_DISCOVERY' && value.source !== 'RECRUITING_DISCOVERY') throw new TypeError('Organization player awareness source is invalid')
   validateTerritory(value.territory)
   return Object.freeze({ ...value, discoveredAt: parseGameDate(value.discoveredAt), territory: Object.freeze({ ...value.territory }) })
 }

@@ -1,0 +1,194 @@
+{
+  "milestone": "BS17D-T1",
+  "status": "PASS · BS17D-T1 RECRUITING PHYSICAL DEMONSTRATIONS",
+  "consumer": "LIVE",
+  "base": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+  "branch": "bdm-stage2-bs17d-t1-recruiting-facilities",
+  "bs17dGlobal": "PARTIAL",
+  "historical2029": "UNRESOLVED_HISTORICAL_CAUSE",
+  "fixture": {
+    "seed": 151617,
+    "initialDate": "2032-10-01",
+    "gender": "female",
+    "source": "src/app/youth/recruitingTestFixtures.ts",
+    "sha256": "44747749376a1a5c79dd4bc41fdb308b6b769f3feae5894a32bfe8aad2473cd7",
+    "materialization": "materializeRecruitingTalentCandidate(t1:cycle, t:cohort, 2)",
+    "ncaaRuleset": "t1-test-v1; explicit testFixture contact/dead windows; canonical count/lodging checks"
+  },
+  "tests": {
+    "passed": 211,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      {
+        "path": "src/save/GameWorldSaveV4.Facilities.test.ts",
+        "count": 30,
+        "status": "passed"
+      },
+      {
+        "path": "src/save/GameWorldSaveV4.FacilityOperations.test.ts",
+        "count": 9,
+        "status": "passed"
+      },
+      {
+        "path": "src/app/game/BS15BS16BS17Convergence.test.ts",
+        "count": 5,
+        "status": "passed"
+      },
+      {
+        "path": "src/app/youth/YouthFacilitiesIntegration.test.ts",
+        "count": 10,
+        "status": "passed"
+      },
+      {
+        "path": "src/integration/facilitiesSporting/SportingFacilityContext.test.ts",
+        "count": 42,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/calendar/CalendarEngine.test.ts",
+        "count": 25,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingEngine.test.ts",
+        "count": 8,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingFacilityDemonstration.test.ts",
+        "count": 14,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingLifecycle.test.ts",
+        "count": 5,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingPermission.test.ts",
+        "count": 16,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/recruiting/RecruitingRpg.test.ts",
+        "count": 20,
+        "status": "passed"
+      },
+      {
+        "path": "src/engine/training/TrainingPhysicalConsequences.test.tsx",
+        "count": 17,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx",
+        "count": 4,
+        "status": "passed"
+      },
+      {
+        "path": "src/ui-ng/applications/recruiting/RecruitingWorkspace.test.tsx",
+        "count": 6,
+        "status": "passed"
+      }
+    ]
+  },
+  "causalAndManagerTests": [
+    "BS17D-T1 subordinate recruiting facility activity records FULL execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+    "BS17D-T1 subordinate recruiting facility activity records LIMITED execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+    "BS17D-T1 subordinate recruiting facility activity records OUT_OF_SERVICE execution evidence without changing the canonical visit or any RPG/economic/talent consequence",
+    "BS17D-T1 subordinate recruiting facility activity causally changes only the demonstration when the same court goes out of service",
+    "BS17D-T1 subordinate recruiting facility activity does not turn Organization ownership or DENIED Team rights into usable access",
+    "BS17D-T1 subordinate recruiting facility activity does not turn Organization ownership or EXPIRED Team rights into usable access",
+    "BS17D-T1 subordinate recruiting facility activity LIMITED full-court demonstration rejects a known half-court specification without blocking the visit",
+    "BS17D-T1 subordinate recruiting facility activity known incompatible capability is blocked, not misclassified as missing context",
+    "BS17D-T1 subordinate recruiting facility activity unknown service evidence cannot certify a demonstration and actual BS17C component work prevents it",
+    "BS17D-T1 subordinate recruiting facility activity offers a legitimate alternative through a retry of one activity, then never completes it twice",
+    "BS17D-T1 subordinate recruiting facility activity UNKNOWN keeps the visit result and records no verified demonstration; not selected keeps the old payload",
+    "BS17D-T1 subordinate recruiting facility activity restoration and reload replay no visit or activity; Calendar cannot automatically complete a blocked demonstration",
+    "BS17D-T1 subordinate recruiting facility activity preserves official NCAA permission and count rules, including a dead-period rejection with no partial activity",
+    "BS17D-T1 subordinate recruiting facility activity preserves unofficial NCAA permission and count rules, including a dead-period rejection with no partial activity",
+    "manager selection and confirmation produce a real BS15 visit, persisted demonstration and visible executed result",
+    "canceling a selected but unconfirmed visit writes no event; Facilities navigation writes no simulation state",
+    "outage affects only the demonstration; an explicit manager restoration retry completes the same visit activity",
+    "visit without demonstration is optional and unknown context never creates a verified completion"
+  ],
+  "validation": {
+    "typecheck": "PASS exit 0",
+    "build": "PASS exit 0; chunk-size advisory retained",
+    "diffCheck": "PASS",
+    "randomness": "No Math.random() in src",
+    "productionImports": "No improper React/Zustand/Tauri imports in Domain/Engine",
+    "save": "Existing V4 optional visit evidence round-trip; no version change",
+    "calendar": "Existing phases unchanged; no T1 scheduler or automatic pending completion",
+    "financeGovernance": "No extra mutations compared with canonical general visit",
+    "recruitingEffects": "No extra RPG/interest/potential/NIL/aid/cost effect compared with canonical general visit",
+    "cancellation": "Pre-confirmation UI cancellation; no canonical post-execution cancellation authority exists",
+    "rust": "Untouched; no rerun under focused user contract"
+  },
+  "ancestry": {
+    "BS15": {
+      "sha": "94c077092224a9f75c861a853d9d52fceae526fe",
+      "inAncestry": true
+    },
+    "BS16_K_C": {
+      "sha": "97c58b98b9192a569f30bdfd8b63565f0b02a744",
+      "inAncestry": true
+    },
+    "BS17D_M": {
+      "sha": "6945cb90604bd349edd9d2333aa7d1861e9a311a",
+      "inAncestry": true
+    },
+    "V2": {
+      "sha": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+      "inAncestry": true
+    },
+    "BS17D_T": {
+      "sha": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+      "inAncestry": true
+    }
+  },
+  "artifacts": {
+    "focused.json": {
+      "path": "node_modules/.cache/bs17d-t1/focused.json",
+      "sha256": "83661b5152fecced8e3443c5908af11782292e42e0346dce645566dd88147df3"
+    },
+    "focused.log": {
+      "path": "node_modules/.cache/bs17d-t1/focused.log",
+      "sha256": "0729df9bb2c5a9e02675e65eba705a98eb8b754aedc090a1c3c0d4eacec9ebb3"
+    },
+    "typecheck.log": {
+      "path": "node_modules/.cache/bs17d-t1/typecheck.log",
+      "sha256": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec"
+    },
+    "build.log": {
+      "path": "node_modules/.cache/bs17d-t1/build.log",
+      "sha256": "f5185d38af48dd1d8806ca185b797294fe8a2e91388062854ba33e714858bc6e"
+    },
+    "causal-first.log": {
+      "path": "node_modules/.cache/bs17d-t1/causal-first.log",
+      "sha256": "d35cf34625b79eb77a59e1b2816c9ff4ee3755edfceaa0dc67528218d99534c2"
+    },
+    "first.log": {
+      "path": "node_modules/.cache/bs17d-t1/first.log",
+      "sha256": "6c40004c171cf8ee1fa94c481e5ffe8a41485cc07e5573529b460a536e3ed3e2"
+    }
+  },
+  "protectedWorktrees": {
+    "main": "8a0b359e9ae48fe372668241788c9d5aa7a33b03",
+    "originMain": "94c077092224a9f75c861a853d9d52fceae526fe",
+    "V2": "fbe788ce01f1dd34fc40b360b4661ebaad63457c",
+    "sourceTalent": "64abd26a50e93fd827f27dccabaa486e0e73dd04",
+    "status": "Preserved, main/V2/source clean; no new BS16 imports, merges or push"
+  },
+  "scopeExclusions": [
+    "Historical World DB 2029",
+    "Y1-Y30",
+    "BS16 global completion",
+    "BS17D global completion",
+    "Specialized Medical",
+    "Facilities AI",
+    "Global allocation",
+    "Psychological Recruiting effects",
+    "New scheduled visit lifecycle or post-completion cancellation"
+  ]
+}

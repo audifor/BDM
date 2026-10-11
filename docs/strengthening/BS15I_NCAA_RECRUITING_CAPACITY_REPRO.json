@@ -1,0 +1,477 @@
+[
+  {
+    "date": "2036-02-03",
+    "sourceSave": "C:\\Temp\\BS15I-2036-02-03-original-failed-save-v4.json",
+    "balances": [
+      {
+        "programTeamId": "generated-team-0013",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0014",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0015",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0016",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0017",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0018",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0019",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0020",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0021",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0022",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0023",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0024",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0013",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0014",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0015",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0016",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0017",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0018",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0019",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0020",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0021",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0022",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0023",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0024",
+        "value": 0
+      }
+    ],
+    "balanceDistribution": {
+      "0": 24
+    },
+    "activeCapacityReductions": [],
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "periodCapacity": 10,
+        "profiles": 72,
+        "offers": 34,
+        "commitments": 8,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "periodCapacity": 10,
+        "profiles": 72,
+        "offers": 28,
+        "commitments": 4,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "status": "completed",
+        "opensOn": "2033-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 31,
+        "commitments": 6,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "status": "completed",
+        "opensOn": "2034-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 27,
+        "commitments": 3,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0019",
+        "status": "completed",
+        "opensOn": "2034-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 29,
+        "commitments": 5,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0020",
+        "status": "completed",
+        "opensOn": "2035-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 30,
+        "commitments": 6,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0027",
+        "status": "open",
+        "opensOn": "2035-12-30",
+        "periodCapacity": 10,
+        "profiles": 75,
+        "offers": 23,
+        "commitments": 2,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0028",
+        "status": "open",
+        "opensOn": "2036-01-06",
+        "periodCapacity": 10,
+        "profiles": 74,
+        "offers": 27,
+        "commitments": 3,
+        "signings": 0
+      }
+    ],
+    "historicalActiveOffersByProgram": {
+      "generated-team-0013": 8,
+      "generated-team-0014": 8,
+      "generated-team-0015": 8,
+      "generated-team-0016": 8,
+      "generated-team-0017": 8,
+      "generated-team-0018": 8,
+      "generated-team-0019": 8,
+      "generated-team-0020": 8,
+      "generated-team-0021": 8,
+      "generated-team-0022": 8,
+      "generated-team-0023": 8,
+      "generated-team-0024": 8,
+      "women-team-0013": 8,
+      "women-team-0014": 8,
+      "women-team-0015": 8,
+      "women-team-0016": 8,
+      "women-team-0017": 8,
+      "women-team-0018": 8,
+      "women-team-0019": 8,
+      "women-team-0020": 8,
+      "women-team-0021": 8,
+      "women-team-0022": 8,
+      "women-team-0023": 8,
+      "women-team-0024": 8
+    },
+    "historicalActiveOfferCountDistribution": {
+      "8": 24
+    }
+  },
+  {
+    "date": "2037-06-22",
+    "sourceSave": "C:\\Temp\\BS15I-NCAA-2037-06-22-failed-save-v4.json",
+    "balances": [
+      {
+        "programTeamId": "generated-team-0013",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0014",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0015",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0016",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0017",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0018",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0019",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0020",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0021",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0022",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0023",
+        "value": 0
+      },
+      {
+        "programTeamId": "generated-team-0024",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0013",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0014",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0015",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0016",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0017",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0018",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0019",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0020",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0021",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0022",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0023",
+        "value": 0
+      },
+      {
+        "programTeamId": "women-team-0024",
+        "value": 0
+      }
+    ],
+    "balanceDistribution": {
+      "0": 24
+    },
+    "activeCapacityReductions": [],
+    "cycles": [
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0005",
+        "status": "completed",
+        "opensOn": "2032-12-30",
+        "periodCapacity": 10,
+        "profiles": 72,
+        "offers": 36,
+        "commitments": 8,
+        "signings": 8
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:women-season-0005",
+        "status": "completed",
+        "opensOn": "2033-01-06",
+        "periodCapacity": 10,
+        "profiles": 72,
+        "offers": 36,
+        "commitments": 5,
+        "signings": 5
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0011",
+        "status": "completed",
+        "opensOn": "2033-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 32,
+        "commitments": 7,
+        "signings": 7
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0012",
+        "status": "completed",
+        "opensOn": "2034-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 34,
+        "commitments": 4,
+        "signings": 4
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0019",
+        "status": "completed",
+        "opensOn": "2034-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 31,
+        "commitments": 6,
+        "signings": 6
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0020",
+        "status": "completed",
+        "opensOn": "2035-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 32,
+        "commitments": 6,
+        "signings": 6
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0027",
+        "status": "completed",
+        "opensOn": "2035-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 24,
+        "commitments": 5,
+        "signings": 5
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0028",
+        "status": "completed",
+        "opensOn": "2036-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 11,
+        "commitments": 1,
+        "signings": 1
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0035",
+        "status": "completed",
+        "opensOn": "2036-12-30",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 0,
+        "commitments": 0,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0036",
+        "status": "completed",
+        "opensOn": "2037-01-06",
+        "periodCapacity": 10,
+        "profiles": 76,
+        "offers": 0,
+        "commitments": 0,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:generated-ecosystem-0003:generated-season-0043",
+        "status": "scheduled",
+        "opensOn": "2037-12-30",
+        "periodCapacity": 10,
+        "profiles": 0,
+        "offers": 0,
+        "commitments": 0,
+        "signings": 0
+      },
+      {
+        "id": "recruiting:women-ecosystem-0003:generated-season-0044",
+        "status": "scheduled",
+        "opensOn": "2038-01-06",
+        "periodCapacity": 10,
+        "profiles": 0,
+        "offers": 0,
+        "commitments": 0,
+        "signings": 0
+      }
+    ],
+    "historicalActiveOffersByProgram": {
+      "generated-team-0013": 8,
+      "generated-team-0014": 9,
+      "generated-team-0015": 8,
+      "generated-team-0016": 8,
+      "generated-team-0017": 8,
+      "generated-team-0018": 8,
+      "generated-team-0019": 8,
+      "generated-team-0020": 8,
+      "generated-team-0021": 8,
+      "generated-team-0022": 8,
+      "generated-team-0023": 8,
+      "generated-team-0024": 8,
+      "women-team-0013": 8,
+      "women-team-0014": 8,
+      "women-team-0015": 9,
+      "women-team-0016": 8,
+      "women-team-0017": 8,
+      "women-team-0018": 8,
+      "women-team-0019": 8,
+      "women-team-0020": 8,
+      "women-team-0021": 8,
+      "women-team-0022": 8,
+      "women-team-0023": 8,
+      "women-team-0024": 8
+    },
+    "historicalActiveOfferCountDistribution": {
+      "8": 22,
+      "9": 2
+    }
+  }
+]
