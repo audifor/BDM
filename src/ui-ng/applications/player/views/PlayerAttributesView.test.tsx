@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -24,31 +24,6 @@ vi.mock('@/ui-ng/applications/player/components/AttributeTrainingOptions', () =>
 }))
 
 vi.mock('@/ui-ng/applications/player/components/DeclaredGaps', () => ({ GapList: () => null }))
-vi.mock('@/ui-ng/applications/player/components/visual/BasketballVisuals', () => ({
-  AttributeRadar: () => <div aria-label="Attribute radar" />,
-}))
-
-class TestResizeObserver {
-  static instances: TestResizeObserver[] = []
-
-  constructor(private readonly callback: ResizeObserverCallback) {
-    TestResizeObserver.instances.push(this)
-  }
-
-  private target: Element | undefined
-  observe = vi.fn((target: Element, _options?: ResizeObserverOptions) => { this.target = target })
-  disconnect = vi.fn()
-  unobserve = vi.fn()
-
-  resize(width: number, height: number) {
-    if (this.target === undefined) throw new Error('ResizeObserver has no observed element')
-    this.callback(
-      [{ borderBoxSize: [{ inlineSize: width, blockSize: height }], contentRect: { width, height }, target: this.target } as unknown as ResizeObserverEntry],
-      this as unknown as ResizeObserver,
-    )
-  }
-}
-
 const categoryRows: readonly {
   readonly category: RatingCategory
   readonly label: string
@@ -75,8 +50,8 @@ function makeEvolution(id: PlayerTruthRatingKey, value: number) {
     hasRecordedHistory: false,
     note: `${value} current rating`,
     accumulatedStimulus: null,
-    league: { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: null, note: 'No league sample.' },
-    team: { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: null, note: 'No team sample.' },
+    league: { status: 'available', average: 55, sampleSize: 8, scopeLabel: 'Liga', note: 'League sample.' },
+    team: { status: 'available', average: 57, sampleSize: 8, scopeLabel: 'Team', note: 'Team sample.' },
     standing: {
       status: 'unavailable',
       percentile: null,
@@ -98,7 +73,7 @@ const attributes = {
     all: [{ id: entry.ratingId, label: entry.ratingLabel, category: entry.category, value: entry.value }],
     note: `${entry.label} profile`,
   })),
-  allRatings: [],
+  allRatings: categoryRows.map(entry => ({ id: entry.ratingId, label: entry.ratingLabel, category: entry.category, value: entry.value })),
   evolutionByRating: Object.fromEntries(categoryRows.map((entry) => [entry.ratingId, makeEvolution(entry.ratingId, entry.value)])),
   signatureSkills: [],
   weakLinks: [],
@@ -109,7 +84,7 @@ const model = {
   identity: { playerId: 'player-test' },
   knowledgeAccess: { kind: 'own-roster' },
   attributes,
-  radarAxes: [],
+  radarAxes: categoryRows.map((entry, index) => ({ key: entry.category, label: ['SHOOT','FIN','HANDLE','PLAY','OFF','DEF','PHYS','MENT'][index]!, value: entry.value })),
 } as unknown as PlayerWorkspaceModel
 
 function AttributesHarness() {
@@ -138,67 +113,50 @@ function AttributesHarness() {
 
 afterEach(() => {
   cleanup()
-  TestResizeObserver.instances = []
   vi.unstubAllGlobals()
 })
 
-describe('PlayerAttributesView structural compact', () => {
-  it('uses the measured width, keeps every category in the picker, and updates the detail by keyboard', async () => {
-    vi.stubGlobal('ResizeObserver', TestResizeObserver)
-    const { unmount } = render(<AttributesHarness />)
-    const observer = TestResizeObserver.instances[0]
-    const board = document.querySelector('[data-ng-region="player-attributes"]') as HTMLElement
+describe('Player Attributes Courtside interactions', () => {
+  it('renders the same 8 family radar as Overview and keeps pointer/keyboard selection', () => {
+    render(<AttributesHarness />)
+    const radar = screen.getByRole('img', { name: /Attribute profile radar:/ })
+    expect(radar).toHaveAttribute('viewBox', '0 0 340 325')
+    expect(radar.querySelectorAll('.po-cs-radar__label')).toHaveLength(8)
+    expect(radar.querySelectorAll('.po-cs-radar__value')).toHaveLength(8)
+    expect(radar.querySelectorAll('.po-cs-radar__shape')).toHaveLength(1)
+    const fin = screen.getByRole('button', { name: 'Explorar FIN, 58' })
+    fireEvent.click(fin)
+    expect(fin).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'FINISHING ATTRIBUTES' })).toBeInTheDocument()
+    const mental = screen.getByRole('button', { name: 'Explorar MENT, 64' })
+    fireEvent.keyDown(mental, { key: 'Enter' })
+    expect(mental).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'MENTAL ATTRIBUTES' })).toBeInTheDocument()
+  })
 
-    const detailMetrics = board.querySelector('.po-at-detail__metrics')?.textContent ?? ''
-    expect(detailMetrics).toContain('League average')
-    expect(detailMetrics).toContain('Team average')
-    expect(detailMetrics).toContain('Position average')
+  it('keeps opt-in reference comparisons, the two-overlay limit and clearing', () => {
+    const { container } = render(<AttributesHarness />)
+    const radar = container.querySelector('.po-cs-family-radar')!
+    const unchangedPlayerShape = radar.querySelector('.po-cs-radar__shape')!.getAttribute('points')
+    fireEvent.click(screen.getByRole('button', { name: /COMPARAR/ }))
+    const choices = screen.getByRole('group', { name: 'Referencias de comparación' })
+    fireEvent.click(choices.querySelector('button')!)
+    expect(radar.querySelectorAll('.po-cs-family-radar__comparison')).toHaveLength(1)
+    const options = choices.querySelectorAll('button')
+    fireEvent.click(options[1]!)
+    expect(radar.querySelectorAll('.po-cs-family-radar__comparison')).toHaveLength(2)
+    expect(options[2]).toBeDisabled()
+    expect(radar.querySelector('.po-cs-radar__shape')!.getAttribute('points')).toBe(unchangedPlayerShape)
+    fireEvent.click(screen.getByRole('button', { name: 'LIMPIAR' }))
+    expect(radar.querySelectorAll('.po-cs-family-radar__comparison')).toHaveLength(0)
+  })
 
-    const ratingCells = Array.from(board.querySelectorAll('.po-at-matrix .po-attr-rating > span'))
-      .filter((cell) => !cell.classList.contains('po-attr-rating__marker'))
-    expect(ratingCells.map((cell) => Array.from(cell.classList).find((name) => name.startsWith('po-attr-rating__'))))
-      .toEqual([
-        'po-attr-rating__label',
-        'po-attr-rating__value',
-        'po-attr-rating__scale',
-        'po-attr-rating__change',
-        'po-attr-rating__percentile',
-      ])
-
-    act(() => observer?.resize(599, 500))
-    await waitFor(() => expect(board.getAttribute('data-bdm-structural-compact')).toBe('true'))
-
-    const trigger = screen.getByRole('button', { name: /Choose attribute category, Shooting, rating 61/i })
-    expect(trigger.getAttribute('aria-haspopup')).toBe('listbox')
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
-    await waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
-
-    const options = await screen.findAllByRole('option')
-    expect(options).toHaveLength(8)
-    expect(screen.getByRole('option', { name: 'Shooting, rating 61' }).getAttribute('aria-selected')).toBe('true')
-    expect(screen.getByRole('option', { name: 'Defense / Rebounding, rating 62' })).toBeTruthy()
-
-    fireEvent.keyDown(options[0] as HTMLElement, { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(options[1])
-    fireEvent.keyDown(options[1] as HTMLElement, { key: 'Enter' })
-
-    await waitFor(() => expect(document.querySelector('.po-at-detail__name')?.textContent).toBe('Rim Finishing'))
-    expect(trigger.getAttribute('aria-expanded')).toBe('false')
-    expect(document.activeElement).toBe(trigger)
-    expect(trigger.textContent).toContain('Finishing')
-
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
-    await waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
-    const selectedOption = screen.getByRole('option', { name: 'Finishing, rating 58' })
-    expect(selectedOption.getAttribute('aria-selected')).toBe('true')
-    fireEvent.keyDown(selectedOption, { key: 'Escape' })
-    await waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
-    expect(document.activeElement).toBe(trigger)
-
-    act(() => observer?.resize(600, 500))
-    await waitFor(() => expect(board.getAttribute('data-bdm-structural-compact')).toBe('false'))
-    expect(observer?.disconnect).not.toHaveBeenCalled()
-    unmount()
-    expect(observer?.disconnect).toHaveBeenCalledOnce()
+  it('keeps the existing category selector and focus tracker', () => {
+    render(<AttributesHarness />)
+    const option = screen.getByRole('option', { name: 'Finishing, rating 58' })
+    fireEvent.click(option)
+    expect(option).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('button', { name: /WATCH SELECTED ATTRIBUTE/i }))
+    expect(screen.getByRole('button', { name: /REMOVE SELECTED/i })).toBeInTheDocument()
   })
 })
