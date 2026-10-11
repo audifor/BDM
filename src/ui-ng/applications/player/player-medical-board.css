@@ -1461,3 +1461,25 @@
   .po-med-board--v2 > .po-med-filters {grid-column:1;grid-row:auto;}
   .bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-v2__rival {grid-template-columns:minmax(0,1fr);}
 }
+
+/* Selected injury data is now inline rather than isolated in an empty inspector. */
+.po-med-board--v2 .po-med-v2__history-detail {
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  gap:5px 9px;
+  align-items:center;
+  padding:6px 8px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+}
+.po-med-board--v2 .po-med-v2__history-detail strong {
+  font:700 11px/1.15 var(--cs-font);
+  color:var(--cs-lime);
+}
+.po-med-board--v2 .po-med-v2__history-detail span,
+.po-med-board--v2 .po-med-v2__history-detail small {
+  font:500 10px/1.2 var(--cs-font);
+  color:var(--cs-text2);
+}
