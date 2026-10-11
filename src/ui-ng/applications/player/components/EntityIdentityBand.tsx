@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import type { TeamId } from '@/domain/ids'
 import type { PresentationField } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
 import { formatPhysicalMeasurement } from '@/ui-ng/applications/player/data/formatPhysicalMeasurement'
+import { formatMedicalNumber } from '@/ui-ng/applications/player/data/formatMedicalNumber'
 import { UNAVAILABLE_LABEL } from '@/ui-ng/applications/player/playerStructuralData'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { CountryNationalityMark } from '@/ui-ng/applications/player/components/CountryNationalityMark'
@@ -152,7 +153,7 @@ export function EntityIdentityBand() {
                 label="Fatigue"
                 meter={typeof status.fatigue.value === 'number' ? status.fatigue.value : undefined}
                 tone="neutral"
-                value={presentationValue(status.fatigue, (value) => `${value}%`)}
+                value={presentationValue(status.fatigue, (value) => `${formatMedicalNumber(value)}%`)}
               />
             )}
             {status.risk.status === 'available' ? (
