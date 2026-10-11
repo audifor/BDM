@@ -3,18 +3,16 @@ import { useMemo, useState } from 'react'
 import type { MedicalBodyRegionId } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
 import { MedicalBodyMap } from '@/ui-ng/applications/player/components/MedicalBodyMap'
 import { MedicalDetailInspector } from '@/ui-ng/applications/player/components/MedicalDetailInspector'
+import { PlayerMedicalHistoryBoard } from '@/ui-ng/applications/player/components/PlayerMedicalHistoryBoard'
 import {
   PlayerMedicalDecisionHero,
   PlayerMedicalDecisionPanel,
   PlayerRivalMedicalBoundary,
 } from '@/ui-ng/applications/player/components/PlayerMedicalDecisions'
 import {
-  InjuryPatternPanel,
   LoadManagementPanel,
-  MedicalHistoryPanel,
   PhysicalReadinessPanel,
   RecoveryTimelinePanel,
-  StaffNotesPanel,
 } from '@/ui-ng/applications/player/components/MedicalBoardPanels'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { findMedicalInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
@@ -33,10 +31,6 @@ export function PlayerMedicalView() {
   const [selectedRegionId, setSelectedRegionId] = useState<MedicalBodyRegionId | null>(null)
   const [activeTab, setActiveTab] = useState<MedicalCanvasTab>('body')
   const medical = model?.medical
-  const staffNoteGaps = useMemo(
-    () => model?.medical.gaps.filter(gap => gap.id === 'staff-notes') ?? [],
-    [model?.medical.gaps],
-  )
   if (model === null || medical === undefined) return null
 
   // No private injury, rehabilitation, fatigue or risk data for rivals.
@@ -51,11 +45,10 @@ export function PlayerMedicalView() {
   const region = selectedRegionId === null ? undefined
     : medical.bodyRegions.find(entry => entry.id === selectedRegionId)
   const riskReason = medical.risk?.primaryReason
-  const insight = medical.activeInjury !== null
-    ? `${medical.activeInjury.kindLabel} is recorded. Next review: ${medical.activeInjury.reviewDueLabel}.`
-    : riskReason ?? (medical.fatigue.value >= 50
-      ? `Fatigue is ${medical.fatigue.value}/100. Review recorded training and match load.`
-      : null)
+  // Do not repeat injury dates already visible in the hero and recovery timeline.
+  const insight = riskReason ?? (medical.activeInjury === null && medical.fatigue.value >= 50
+    ? 'Fatigue is elevated. Review recorded training and match load before the next game.'
+    : null)
 
   return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical"
     onKeyDownCapture={event => {
@@ -114,16 +107,9 @@ export function PlayerMedicalView() {
             : <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />}
         </div>}
         {activeTab === 'history' && <div className="po-med-v3__history">
-          <MedicalHistoryPanel emptyMessage={medical.historyEmptyMessage}
-            onSelectRow={id => setSelectedEventId(id as never)}
-            rows={medical.history}
+          <PlayerMedicalHistoryBoard medical={medical}
             selectedEventId={selectedEventId}
-            selectedDetail={findMedicalInspectorDetail(medical, selectedEventId)} />
-          <details className="po-med-v3__history-extras">
-            <summary>INJURY PATTERNS & DATA COVERAGE</summary>
-            <InjuryPatternPanel pattern={medical.injuryPattern} />
-            <StaffNotesPanel gaps={staffNoteGaps} />
-          </details>
+            onSelectEvent={setSelectedEventId} />
         </div>}
       </div>
     </section>
