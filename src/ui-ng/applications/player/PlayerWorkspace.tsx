@@ -53,10 +53,7 @@ import {
 } from '@/ui-ng/applications/player/playerStructuralData'
 import { PlayerAttributesView } from '@/ui-ng/applications/player/views/PlayerAttributesView'
 import { PlayerOverviewView } from '@/ui-ng/applications/player/views/PlayerOverviewView'
-import {
-  ContractInspectorContent,
-  PlayerContractView,
-} from '@/ui-ng/applications/player/views/PlayerContractView'
+import { PlayerContractView } from '@/ui-ng/applications/player/views/PlayerContractView'
 import { PlayerPerformanceView } from '@/ui-ng/applications/player/views/PlayerPerformanceView'
 import {
   MedicalInspectorContent,
@@ -315,15 +312,7 @@ function PlayerWorkspaceLayout({
       >
         <WorkspaceBody
           inspector={
-            activeView === 'contract' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Contract Detail"
-              >
-                <ContractInspectorContent />
-              </InspectorPane>
-            ) : activeView === 'medical' ? (
+            activeView === 'medical' ? (
               <InspectorPane
                 collapsed={inspectorCollapsed}
                 onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
