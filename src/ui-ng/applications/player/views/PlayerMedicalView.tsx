@@ -66,7 +66,8 @@ export function PlayerMedicalView() {
     <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
 
     <aside className="po-med-v3__left" aria-label="Readiness and recorded recovery">
-      <PhysicalReadinessPanel meters={medical.readiness.filter(meter => meter.id !== 'injury-risk')} />
+      <PhysicalReadinessPanel meters={medical.readiness.filter(meter =>
+        meter.id !== 'injury-risk' && meter.id !== 'recovery')} />
       {medical.activeInjury !== null && <section className="po-med-v3__recovery">
         <RecoveryTimelinePanel milestones={medical.recoveryMilestones} />
       </section>}
@@ -139,10 +140,12 @@ export function PlayerMedicalView() {
           <button type="button" aria-label="Clear selected body region"
             onClick={() => setSelectedRegionId(null)}>×</button>
         </header>
-        <strong className="po-med-v3__region-detail-name">{region.label}</strong>
-        <div className="po-med-v3__region-detail-status">
-          <span className={region.status === 'attention' ? 'is-warning' : 'is-positive'} aria-hidden="true">●</span>
-          <span>{region.statusLabel}</span>
+        <div className="po-med-v3__region-detail-main">
+          <strong className="po-med-v3__region-detail-name">{region.label}</strong>
+          <div className="po-med-v3__region-detail-status">
+            <span className={region.status === 'attention' ? 'is-warning' : 'is-positive'} aria-hidden="true">●</span>
+            <span>{region.statusLabel}</span>
+          </div>
         </div>
         <p>{region.detail}</p>
       </section>}
