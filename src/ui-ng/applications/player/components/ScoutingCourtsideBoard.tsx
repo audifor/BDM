@@ -54,6 +54,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
         a.player.lastName.localeCompare(b.player.lastName))
   }, [world, team, inspectedId])
   const [family, setFamily] = useState<RatingCategory>('shooting')
+  const [showAll, setShowAll] = useState(false)
   const selectedId = eligible.some(row => row.id === comparisonId) ? comparisonId : eligible[0]?.id ?? null
   const rows = useMemo(() => selectedId === null ? [] :
     buildScoutingRosterComparison(world, inspectedId, selectedId), [world, inspectedId, selectedId])
@@ -77,7 +78,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
       </label>
       <label>ATTRIBUTE FAMILY
         <select aria-label="Comparison attribute family" value={family}
-          onChange={event => setFamily(event.target.value as RatingCategory)}>
+          onChange={event => {setFamily(event.target.value as RatingCategory);setShowAll(false)}}>
           {COMPARE_FAMILIES.map(key => <option key={key} value={key}>{CATEGORY_LABELS[key]}</option>)}
         </select>
       </label>
@@ -93,7 +94,8 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
             <small>Never compare estimated category strength with an exact 80-rating family average.</small>
           </div>
         : <div className="po-scv3__compare-rows">
-            {rankedRows.slice(0,8).map(row => {
+            <div className="po-scv3__compare-column-head"><span>ATTRIBUTE</span><span>PLAYER / OURS</span><span>SCOUT</span><span>OURS</span><span>EDGE</span></div>
+            {(showAll ? rankedRows : rankedRows.slice(0,8)).map(row => {
               const difference = row.subject === null ? null : row.subject - row.own
               const supportedAdvantage = row.low !== null && row.low >= row.own + 5
               const supportedConcern = row.high !== null && row.high <= row.own - 5
@@ -113,7 +115,11 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
                     : `${difference > 0 ? '+' : ''}${difference}`}</span>
               </div>
             })}
-            <small className="po-scv3__compare-footnote">{verified.length} / {matched.length} comparable attributes in this family. Top differences first. +≥ and −≥ require non-overlapping scouting bounds; OVERLAP means no proven advantage. No market availability implied.</small>
+            {rankedRows.length > 8 && <button type="button" className="po-scv3__compare-more"
+              aria-expanded={showAll} onClick={()=>setShowAll(value=>!value)}>
+              {showAll ? 'SHOW TOP 8' : `SHOW ALL ${rankedRows.length} ATTRIBUTES`}
+            </button>}
+            <small className="po-scv3__compare-footnote">{verified.length} / {matched.length} comparable in this family. Ranked by largest observed difference. +≥ and −≥ require non-overlapping bounds. OVERLAP means no proven advantage.</small>
           </div>}
   </section>
 }
