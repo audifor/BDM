@@ -3,6 +3,8 @@ import type { GameWorld } from '@/domain/world'
 import type { ScoutingRosterComparisonRow } from './buildScoutingRosterComparison'
 import type { PlayerScoutingModel } from './buildPlayerScoutingModel'
 import { getUserTeam } from '@/engine/calendar'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 
 export interface PlayerScoutingDecision {
   readonly headline: string
@@ -17,16 +19,37 @@ export interface PlayerScoutingDecision {
   readonly comparableCount: number
   readonly evidenceCount: number
   readonly nextStep: string
+  readonly uncertainComparableCount: number
+  readonly confidenceNote: string
 }
 
-/** Same-position roster alternative first, without rating or hidden-potential sorting. */
-export function defaultScoutingRosterComparisonId(world: GameWorld, inspectedId: PlayerId): PlayerId | null {
+/**
+ * Explicit roster baselines, based only on OWN roster ratings.
+ * The leader is the top mean over the 80 canonical ratings, which is not
+ * a tactical overall, a starting-lineup selection or a minutes prediction.
+ */
+export type ScoutingBenchmarkMode = 'role-peer' | 'rating-leader' | 'manual'
+export function scoutingRosterBenchmarks(world: GameWorld, inspectedId: PlayerId) {
   const team = getUserTeam(world)
-  if (team === undefined) return null
-  const position = world.players[inspectedId]?.basketball.primaryPosition
+  if (team === undefined) return { rolePeer: null, ratingLeader: null }
+  const player = world.players[inspectedId]
   const candidates = team.rosterPlayerIds.filter(id => id !== inspectedId && world.players[id] !== undefined)
-  const samePosition = candidates.find(id => world.players[id]?.basketball.primaryPosition === position)
-  return samePosition ?? candidates[0] ?? null
+  const positionPeers = candidates.filter(id =>
+    world.players[id]?.basketball.primaryPosition === player?.basketball.primaryPosition)
+  const group = positionPeers.length > 0 ? positionPeers : candidates
+  const rolePeer = group[0] ?? null
+  const scored = group.map(id => {
+    const access = derivePlayerKnowledgeAccess(world, id)
+    const average = access.kind === 'own-roster'
+      ? PLAYER_TRUTH_RATING_KEYS.reduce((sum, key) => sum + access.currentRatings[key], 0) / PLAYER_TRUTH_RATING_KEYS.length
+      : 0
+    return { id, average }
+  }).sort((a,b)=>b.average-a.average || String(a.id).localeCompare(String(b.id)))
+  return { rolePeer, ratingLeader: scored[0]?.id ?? null }
+}
+
+export function defaultScoutingRosterComparisonId(world: GameWorld, inspectedId: PlayerId): PlayerId | null {
+  return scoutingRosterBenchmarks(world, inspectedId).rolePeer
 }
 
 /**
@@ -57,6 +80,8 @@ export function buildPlayerScoutingDecision(input: {
     confirmedConcernCount: weaker.length,
     comparableCount: eligible.length,
     evidenceCount: reportCount,
+    uncertainComparableCount: eligible.filter(row => row.high! - row.low! > 16).length,
+    confidenceNote: own ? 'Verified roster ratings' : 'Scouting ranges, not Player Truth',
   }
   if (own) {
     if (eligible.length < 8) return {
@@ -88,18 +113,24 @@ export function buildPlayerScoutingDecision(input: {
     nextStep:'Obtain a fuller report or observe the next game.',
   }
   const reliability = scouting.statusPanel?.confidenceLabel.toLowerCase() ?? 'low'
-  const enough = eligible.length >= 12 && reliability !== 'low'
-  if (!enough) return {
+  const uncertainCount = base.uncertainComparableCount
+  const uncertainShare = eligible.length > 0 ? uncertainCount / eligible.length : 1
+  // Broad intervals can be confident in provenance but still unsuitable for
+  // a firm player-replacement verdict. A report count alone never proves fit.
+  const strongEvidence = eligible.length >= 40 && reliability === 'high' &&
+    uncertainShare <= .25 &&
+    scouting.strengths.length >= 1 && scouting.archetypeTitle !== 'Insufficient scouting information'
+  if (!strongEvidence) return {
     ...base, headline:'INTERESTING · VERIFY BEFORE CONTACT',
     tone:'neutral',status:'provisional',
-    meaning:`${eligible.length} comparable attributes, but coverage or report confidence is not sufficient for a strong signing case.`,
-    nextStep:'Commission additional scouting before committing resources.',
+    meaning:`${stronger.length} supported attribute advantages and ${weaker.length} concerns vs ${suffix}, but ${uncertainCount} of ${eligible.length} comparisons have wide ranges. A trustworthy signing recommendation still needs narrower evidence and a verified playing profile.`,
+    nextStep:'Request targeted scouting, confirm the role and review contractual/competition eligibility before contact.',
   }
   if (stronger.length >= 5 && stronger.length >= weaker.length + 3) return {
-    ...base, headline:'STRONG TARGET · EXPLORE SIGNING',
+    ...base, headline:'SPORTING UPGRADE · REVIEW OPTIONS',
     tone:'positive',status:'supported',
-    meaning:`The scouting range is ahead of ${suffix} in at least ${stronger.length} attributes, even using its conservative bound. Sporting support only: availability, contracts, cost and NCAA/NBA/FIBA rules are not verified here.`,
-    nextStep:'Review contact pathways and verify eligibility and contract status.',
+    meaning:`The conservative scouting bound is ahead of ${suffix} in ${stronger.length} attributes. This supports further recruitment work, not a confirmed signing or tactical fit. Cost, contract and NCAA/NBA/FIBA eligibility remain unverified here.`,
+    nextStep:'Review contact pathways, competition eligibility and the employing club before any offer.',
   }
   if (weaker.length >= 5 && weaker.length >= stronger.length + 3) return {
     ...base, headline:'NOT A CLEAR UPGRADE', tone:'caution',status:'supported',
