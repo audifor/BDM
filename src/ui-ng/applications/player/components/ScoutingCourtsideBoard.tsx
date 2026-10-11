@@ -4,6 +4,7 @@ import type { GameWorld } from '@/domain/world'
 import type { PlayerWorkspaceModel } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
 import type { PlayerScoutingModel } from '@/ui-ng/applications/player/data/buildPlayerScoutingModel'
 import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/buildScoutingRosterComparison'
+import { buildPlayerScoutingDecision, defaultScoutingRosterComparisonId } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { ratingCategory, CATEGORY_LABELS, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { getUserTeam } from '@/engine/calendar'
 
@@ -34,9 +35,11 @@ const knowledgeText = (value: string, certaintyNote: string) =>
   value === 'known' ? 'VERIFIED' : value === 'estimated' ? 'ESTIMATED' :
   value === 'low' ? 'LOW CONFIDENCE' : 'NOT SCOUTED'
 
-export function ScoutingRosterComparison({ world, inspectedId }: {
+export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onChange }: {
   readonly world: GameWorld
   readonly inspectedId: PlayerId
+  readonly comparisonId: PlayerId | null
+  readonly onChange: (id: PlayerId) => void
 }) {
   const team = getUserTeam(world)
   const eligible = useMemo(() => {
@@ -50,21 +53,22 @@ export function ScoutingRosterComparison({ world, inspectedId }: {
         Number(a.player.basketball.primaryPosition === subject?.basketball.primaryPosition) ||
         a.player.lastName.localeCompare(b.player.lastName))
   }, [world, team, inspectedId])
-  const [chosenId, setChosenId] = useState<PlayerId | null>(null)
   const [family, setFamily] = useState<RatingCategory>('shooting')
-  const selectedId = eligible.some(row => row.id === chosenId) ? chosenId : eligible[0]?.id ?? null
+  const selectedId = eligible.some(row => row.id === comparisonId) ? comparisonId : eligible[0]?.id ?? null
   const rows = useMemo(() => selectedId === null ? [] :
     buildScoutingRosterComparison(world, inspectedId, selectedId), [world, inspectedId, selectedId])
   const matched = rows.filter(row => ratingCategory(row.id) === family)
   const verified = matched.filter(row => row.subject !== null)
+  const rankedRows = [...verified].sort((a,b)=>
+    Math.abs((b.subject ?? 0)-b.own)-Math.abs((a.subject ?? 0)-a.own))
   const ownName = eligible.find(row => row.id === selectedId)?.player
   const subjectName = world.players[inspectedId]
   return <section className="po-scv3__card po-scv3__compare" data-ng-region="scouting-roster-compare">
-    <div className="po-scv3__card-head"><strong>ROSTER COMPARISON</strong><span>FM-STYLE · SAME ATTRIBUTE</span></div>
+    <div className="po-scv3__card-head"><strong>HEAD-TO-HEAD · OUR ROSTER</strong><span>80 ATTRIBUTES · SAME KEY · NO HIDDEN RATINGS</span></div>
     <div className="po-scv3__compare-tools">
       <label>OUR PLAYER
         <select aria-label="Compare against my player"
-          value={selectedId ?? ''} onChange={event => setChosenId(event.target.value as PlayerId)}>
+          value={selectedId ?? ''} onChange={event => onChange(event.target.value as PlayerId)}>
           {eligible.length === 0 && <option value="">No teammates available</option>}
           {eligible.map(({id,player}) => <option key={id} value={id}>
             {player.firstName} {player.lastName} · {player.basketball.primaryPosition}
@@ -79,7 +83,7 @@ export function ScoutingRosterComparison({ world, inspectedId }: {
       </label>
     </div>
     <div className="po-scv3__compare-key" aria-label="Comparison legend">
-      <span>SCOUT SUBJECT: {subjectName?.lastName ?? '—'}</span><span>OUR PLAYER: {ownName?.lastName ?? '—'}</span>
+      <span className="po-scv3__key-subject">PLAYER: {subjectName?.lastName ?? '—'} · LIME</span><span>OUR BENCHMARK: {ownName?.lastName ?? '—'} · MUTED</span>
     </div>
     {selectedId === null ? <p className="po-scv3__empty">No other own-roster player is available for comparison.</p> :
       verified.length === 0
@@ -89,8 +93,10 @@ export function ScoutingRosterComparison({ world, inspectedId }: {
             <small>Never compare estimated category strength with an exact 80-rating family average.</small>
           </div>
         : <div className="po-scv3__compare-rows">
-            {verified.slice(0,7).map(row => {
+            {rankedRows.slice(0,10).map(row => {
               const difference = row.subject === null ? null : row.subject - row.own
+              const supportedAdvantage = row.low !== null && row.low >= row.own + 5
+              const supportedConcern = row.high !== null && row.high <= row.own - 5
               return <div className="po-scv3__compare-row" key={row.id} title={row.isEstimate ? 'Scouting estimate, not Player Truth' : 'Both values are roster ratings'}>
                 <span className="po-scv3__compare-name">{row.label}</span>
                 <div className="po-scv3__compare-pair">
@@ -100,11 +106,14 @@ export function ScoutingRosterComparison({ world, inspectedId }: {
                 <span className="po-scv3__compare-value">{row.subject === null ? '?' :
                   row.isEstimate ? `≈${row.low}–${row.high}` : row.subject}</span>
                 <span className="po-scv3__compare-value">{row.own}</span>
-                <span className="po-scv3__compare-delta">{difference === null ? '—' :
-                  `≈${difference > 0 ? '+' : ''}${difference}`}</span>
+                <span className={'po-scv3__compare-delta ' + (supportedAdvantage ? 'is-up' : supportedConcern ? 'is-down' : 'is-overlap')}>
+                  {difference === null ? '—' : row.isEstimate
+                    ? supportedAdvantage ? `+≥${row.low! - row.own}`
+                      : supportedConcern ? `−≥${row.own - row.high!}` : 'OVERLAP'
+                    : `${difference > 0 ? '+' : ''}${difference}`}</span>
               </div>
             })}
-            <small className="po-scv3__compare-footnote">{verified.length} / {matched.length} individual attributes supported in this family. Green marks the scouting subject, muted bar our player. ≈ indicates uncertainty, not a verified advantage.</small>
+            <small className="po-scv3__compare-footnote">{verified.length} / {matched.length} comparable attributes in this family. Top differences first. +≥ and −≥ require non-overlapping scouting bounds; OVERLAP means no proven advantage. No market availability implied.</small>
           </div>}
   </section>
 }
@@ -116,7 +125,20 @@ export function ScoutingCourtsideBoard({
   const [focusRoute, setFocusRoute] = useState<ActionId>('request-report')
   const [intelligenceFocus, setIntelligenceFocus] = useState('shooting')
   const [bottomTab, setBottomTab] = useState<'reports' | 'games'>('reports')
+  const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
   const own = model.knowledgeAccess.kind === 'own-roster'
+  const team = getUserTeam(world)
+  const defaultCompareId = defaultScoutingRosterComparisonId(world, model.identity.playerId)
+  const eligibleComparisonId = comparisonId !== null && team?.rosterPlayerIds.includes(comparisonId) && comparisonId !== model.identity.playerId
+    ? comparisonId : defaultCompareId
+  const comparator = eligibleComparisonId === null ? null : world.players[eligibleComparisonId]
+  const comparable = useMemo(() => eligibleComparisonId === null ? [] :
+    buildScoutingRosterComparison(world, model.identity.playerId, eligibleComparisonId),
+    [world, model.identity.playerId, eligibleComparisonId])
+  const verdict = buildPlayerScoutingDecision({
+    own, rows: comparable, scouting,
+    comparatorName: comparator === null || comparator === undefined ? null : comparator.lastName,
+  })
   const internalCategories = own ? model.attributes.categories : []
   const strongestOwn = [...internalCategories].sort((a,b)=>b.profileValue-a.profileValue)
   const weakestOwn = [...internalCategories].sort((a,b)=>a.profileValue-b.profileValue)
@@ -154,6 +176,26 @@ export function ScoutingCourtsideBoard({
       </section>
     </div>
 
+    <section className={'po-scv3__verdict is-' + verdict.tone} data-ng-region="scouting-decision-verdict">
+      <div className="po-scv3__verdict-core">
+        <small>{own ? 'OUR SQUAD · EVIDENCE-BASED ROLE REVIEW' : 'RECRUITMENT · EVIDENCE-BASED SPORTING VERDICT'}</small>
+        <strong>{verdict.headline}</strong>
+        <p>{verdict.meaning}</p>
+      </div>
+      <div className="po-scv3__verdict-proof">
+        <div><b>{verdict.comparableCount}<span>/80</span></b><small>COMPARABLE ATTRIBUTES</small></div>
+        <div><b>{verdict.confirmedAdvantageCount}</b><small>SUPPORTED ADVANTAGES</small></div>
+        <div><b>{verdict.confirmedConcernCount}</b><small>SUPPORTED CONCERNS</small></div>
+      </div>
+      <div className="po-scv3__verdict-action">
+        <span>{verdict.basis} · {verdict.evidenceCount} filed reports</span>
+        <button type="button" onClick={() => onAction(own ? 'development-route' :
+          verdict.status === 'insufficient' ? 'request-report' : 'contract-route')}
+          disabled={!own && verdict.status === 'insufficient' && requestReason !== null}>
+          {own ? 'REVIEW DEVELOPMENT ↗' : verdict.status === 'insufficient' ? 'GET EVIDENCE ↗' : 'EXPLORE SIGNING ↗'}
+        </button>
+      </div>
+    </section>
     <div className="po-scv3__workspace">
       <div className="po-scv3__primary">
         <section className="po-scv3__card po-scv3__snapshot">
@@ -177,7 +219,8 @@ export function ScoutingCourtsideBoard({
           </div>
           <div className="po-scv3__snapshot-note">{own ? 'Internal ratings are direct roster knowledge. Scouting reports and projections remain separate.' : 'Projection and personality remain UNKNOWN without authorized reports. No hidden potential is exposed.'}</div>
         </section>
-        <ScoutingRosterComparison world={world} inspectedId={model.identity.playerId} />
+        <ScoutingRosterComparison world={world} inspectedId={model.identity.playerId}
+          comparisonId={eligibleComparisonId} onChange={setComparisonId} />
       </div>
 
       <section className="po-scv3__card po-scv3__intelligence">
