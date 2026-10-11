@@ -5,7 +5,7 @@ import type { ScoutingRosterComparisonRow } from './buildScoutingRosterCompariso
 import type { PlayerScoutingModel } from './buildPlayerScoutingModel'
 import { getUserTeam } from '@/engine/calendar'
 import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
-import { positionEvidenceKeys, sharedScoutingPositions } from './scoutingPositionEvidence'
+import { positionEvidenceKeys, sharedScoutingPositions, resolveScoutingPositionMatch, type ScoutingPositionMatch, type ScoutingPositionCompatibility } from './scoutingPositionEvidence'
 
 export type ScoutingBenchmarkMode = 'role-peer' | 'rating-leader' | 'manual'
 
@@ -27,6 +27,7 @@ export interface PlayerScoutingDecision {
   readonly confidenceNote: string
   readonly position: BasketballPosition
   readonly positionMatched: boolean
+  readonly positionCompatibility: ScoutingPositionCompatibility
   readonly positionalComparableCount: number
   readonly positionalEvidenceTotal: number
   readonly positionalAdvantageCount: number
@@ -51,7 +52,13 @@ export function scoutingRosterBenchmarks(world: GameWorld, inspectedId: PlayerId
     world.players[id] !== undefined)
   const peers = candidates.filter(id=>
     sharedScoutingPositions(subject,world.players[id]!.basketball).length > 0)
-  const rankedByPriority = peers.slice().sort((a,b)=>{
+  const rank = (id: PlayerId) => {
+    const match = resolveScoutingPositionMatch(subject,world.players[id]!.basketball)
+    return match.compatibility === 'primary' ? 3 : match.compatibility === 'mixed' ? 2 : match.compatibility === 'secondary' ? 1 : 0
+  }
+  const bestRank = Math.max(0,...peers.map(rank))
+  const comparablePeers = peers.filter(id=>rank(id)===bestRank)
+  const rankedByPriority = comparablePeers.slice().sort((a,b)=>{
     const first = world.players[a]!.basketball
     const second = world.players[b]!.basketball
     const firstExact = Number(first.primaryPosition === subject.primaryPosition)
@@ -61,8 +68,7 @@ export function scoutingRosterBenchmarks(world: GameWorld, inspectedId: PlayerId
   const rolePeer = rankedByPriority[0] ?? null
   const ratingsFor = (id:PlayerId) => {
     const player = world.players[id]!.basketball
-    const shared = sharedScoutingPositions(subject,player)
-    const position = shared.includes(subject.primaryPosition) ? subject.primaryPosition : shared[0]
+    const position = resolveScoutingPositionMatch(subject,player).position
     const access = derivePlayerKnowledgeAccess(world,id)
     if (position === undefined || access.kind !== 'own-roster') return 0
     const keys = positionEvidenceKeys(position)
@@ -85,11 +91,15 @@ export function buildPlayerScoutingDecision(input: {
   readonly comparatorName: string | null
   readonly subjectPosition: BasketballPosition
   readonly sharedPositions: readonly BasketballPosition[]
+  readonly positionMatch?: ScoutingPositionMatch
 }): PlayerScoutingDecision {
   const {own,rows,scouting,comparatorName,subjectPosition,sharedPositions}=input
-  const positionMatched = sharedPositions.length > 0
-  const effectivePosition = sharedPositions.includes(subjectPosition) ? subjectPosition :
-    sharedPositions[0] ?? subjectPosition
+  // Older tests/callers may omit the match; production always passes it.
+  const resolvedMatch = input.positionMatch
+  const positionMatched = resolvedMatch ? resolvedMatch.compatibility !== 'none' : sharedPositions.length > 0
+  const effectivePosition = resolvedMatch?.position ?? (sharedPositions.includes(subjectPosition) ? subjectPosition :
+    sharedPositions[0] ?? subjectPosition)
+  const positionCompatibility = resolvedMatch?.compatibility ?? (positionMatched ? 'primary' : 'none')
   const positionalKeys = new Set(positionEvidenceKeys(effectivePosition))
   const eligible = rows.filter(row=>row.subject!==null && row.low!==null && row.high!==null)
   const stronger = eligible.filter(row=>row.low! >= row.own+5)
@@ -116,6 +126,7 @@ export function buildPlayerScoutingDecision(input: {
     confidenceNote:own?'Verified roster ratings':'Scouting ranges, not Player Truth',
     position:effectivePosition,
     positionMatched,
+    positionCompatibility,
     positionalComparableCount:positional.length,
     positionalEvidenceTotal:positionalKeys.size,
     positionalAdvantageCount:posBetter.length,
@@ -127,6 +138,18 @@ export function buildPlayerScoutingDecision(input: {
     ...base, headline:'CROSS-POSITION · NO FIT VERDICT',tone:'neutral',status:'insufficient',
     meaning:`You are comparing ${subjectPosition} with ${suffix} outside a shared playable position. Attribute differences are visible for exploration, but cannot justify a same-position recommendation.`,
     nextStep:'Choose a player who shares a primary or secondary position before drawing a sporting conclusion.',
+  }
+  if (positionCompatibility === 'secondary') return {
+    ...base, headline:'SECONDARY ONLY · EXPLORE ATTRIBUTES',
+    tone:'neutral',status:'insufficient',
+    meaning:`Both players list ${effectivePosition} only as a secondary position. Their ${positional.length} comparable relevant ratings are informative but cannot establish either player's suitability for that role.`,
+    nextStep:'Compare two primary-position players for a firm judgment or seek recorded role evidence.',
+  }
+  if (positionCompatibility === 'mixed') return {
+    ...base, headline:'SECONDARY ROLE · PROVISIONAL',
+    tone:'neutral',status:'provisional',
+    meaning:`${effectivePosition} is a primary position for only one of these players. The ${positional.length} comparisons are exploratory; ${posBetter.length} advantages and ${posWorse.length} concerns cannot justify a positional upgrade or signing recommendation.`,
+    nextStep:'Verify the secondary-position player's match experience and actual role before deciding.',
   }
   if (positional.length < Math.ceil(positionalKeys.size*.65)) return {
     ...base, headline:own?'POSITION REVIEW · MORE DATA NEEDED':'SCOUT POSITION · MORE EVIDENCE',
