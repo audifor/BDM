@@ -54,13 +54,50 @@ describe('Courtside PLAYER Medical decisions',()=>{
     const injured=updateGameWorld(world,{injuries:[...Object.values(world.injuriesById),injury]})
     const {container}=loadPlayer(injured,playerId)
     expect(screen.getByText('INJURY RECORDED')).toBeInTheDocument()
+    const tablist=screen.getByRole('tablist',{name:'Medical profile views'})
+    fireEvent.click(within(tablist).getByRole('tab',{name:'HISTORY'}))
     expect(container.querySelector('[data-ng-region="medical-history"]')).toHaveTextContent('Ankle sprain')
+    const row=within(container.querySelector('[data-ng-region="medical-history"]') as HTMLElement)
+      .getByRole('button',{name:/Ankle sprain/})
+    fireEvent.click(row)
     expect(container.querySelector('[data-ng-region="medical-selected-history-detail"]')).toHaveTextContent('Ankle sprain')
     fireEvent.click(screen.getByRole('button',{name:/REHAB PLAN/}))
     const url=new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('medical')
     expect(url.searchParams.get('medicalTab')).toBe('injured')
     expect(url.searchParams.get('playerId')).toBe(playerId)
+  })
+
+  it('keeps BODY, LOAD and HISTORY as interactive views without displaying all sections at once',()=>{
+    const world=createNewGame()
+    const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
+    const {container}=loadPlayer(world,playerId)
+    const tablist=screen.getByRole('tablist',{name:'Medical profile views'})
+    expect(within(tablist).getByRole('tab',{name:'BODY'})).toHaveAttribute('aria-selected','true')
+    expect(container.querySelector('.po-med-bodymap')).not.toBeNull()
+    expect(container.querySelector('[data-ng-region="medical-load"]')).toBeNull()
+
+    const head=container.querySelector('.po-med-bodymap__region') as SVGGElement
+    fireEvent.click(head)
+    expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toHaveTextContent('Head')
+    expect(head).toHaveClass('is-selected')
+    fireEvent.click(screen.getByRole('button',{name:'Clear selected body region'}))
+    expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toBeNull()
+
+    fireEvent.click(within(tablist).getByRole('tab',{name:'LOAD'}))
+    expect(container.querySelector('[data-ng-region="medical-load"]')).not.toBeNull()
+    expect(container.querySelector('.po-med-bodymap')).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:/VIEW HISTORY/}))
+    expect(within(tablist).getByRole('tab',{name:'HISTORY'})).toHaveAttribute('aria-selected','true')
+    expect(container.querySelector('[data-ng-region="medical-history"]')).not.toBeNull()
+  })
+
+  it('preserves Medical and Training navigation as genuinely executable route choices',()=>{
+    const world=createNewGame()
+    const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
+    loadPlayer(world,playerId)
+    fireEvent.click(screen.getByRole('button',{name:/TRAINING PLAN/}))
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('training')
   })
 
   it('never exposes private rival diagnoses, fatigue, risk or injury records',()=>{
