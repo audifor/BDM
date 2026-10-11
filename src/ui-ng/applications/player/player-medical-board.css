@@ -1957,3 +1957,97 @@
     width:min(315px,80%);
   }
 }
+
+
+/* MEDICAL V3.2 · selected region is a contextual RIGHT-COLUMN card.
+   It never overlays the SVG or alters its available geometry. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-board--v3 .po-med-v3__right {
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--cs-line2) transparent;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-board--v3 .po-med-v3__right > .po-med-v3__region-detail {
+  position:relative;
+  inset:auto;
+  z-index:auto;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+  width:100%;
+  max-width:none;
+  flex:0 0 auto;
+  box-sizing:border-box;
+  min-width:0;
+  padding:12px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+  box-shadow:none;
+}
+.po-med-board--v3 .po-med-v3__region-detail-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-width:0;
+  gap:12px;
+  padding-bottom:7px;
+  border-bottom:1px solid var(--cs-line2);
+}
+.po-med-board--v3 .po-med-v3__region-detail-head > span {
+  font:700 15px/1 var(--cs-font-display);
+  color:var(--cs-text);
+}
+.po-med-board--v3 .po-med-v3__region-detail-head > button {
+  display:grid;
+  place-items:center;
+  width:25px;
+  height:25px;
+  padding:0;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 17px/1 var(--cs-font);
+  cursor:pointer;
+}
+.po-med-board--v3 .po-med-v3__region-detail-head > button:hover,
+.po-med-board--v3 .po-med-v3__region-detail-head > button:focus-visible {
+  border-color:var(--cs-lime);
+  color:var(--cs-lime);
+}
+.po-med-board--v3 .po-med-v3__region-detail-name {
+  display:block;
+  font:700 22px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.po-med-board--v3 .po-med-v3__region-detail-status {
+  display:flex;
+  gap:7px;
+  align-items:center;
+  min-width:0;
+  font:600 12px/1.2 var(--cs-font);
+  color:var(--cs-text);
+}
+.po-med-board--v3 .po-med-v3__region-detail-status .is-positive {color:var(--cs-positive);}
+.po-med-board--v3 .po-med-v3__region-detail-status .is-warning {color:var(--cs-orange2);}
+.po-med-board--v3 .po-med-v3__right > .po-med-v3__region-detail p {
+  padding:0;
+  margin:0;
+  grid-row:auto;
+  grid-column:auto;
+  font:500 11px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+@container player-space (max-width:1220px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-board--v3 .po-med-v3__right {
+    flex-direction:column;
+    align-items:stretch;
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-board--v3 .po-med-v3__right > * {
+    flex:0 0 auto;
+    width:100%;
+  }
+}
