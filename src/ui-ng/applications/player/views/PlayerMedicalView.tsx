@@ -49,9 +49,9 @@ export function PlayerMedicalView() {
   const riskReason = medical.risk?.primaryReason
   const insight = medical.activeInjury !== null
     ? `${medical.activeInjury.kindLabel} is recorded. Next review: ${medical.activeInjury.reviewDueLabel}.`
-    : riskReason !== null && riskReason !== undefined
-      ? riskReason
-      : 'No active injury recorded. Use the real fatigue and workload data to plan the next session.'
+    : riskReason ?? (medical.fatigue.value >= 50
+      ? `Fatigue is ${medical.fatigue.value}/100. Review recorded training and match load.`
+      : null)
 
   return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical">
     <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
@@ -112,25 +112,14 @@ export function PlayerMedicalView() {
       </div>
     </section>
 
-    <aside className="po-med-v3__right" aria-label="Manager decisions and insights">
+    <aside className="po-med-v3__right" aria-label="Manager medical decisions">
       <PlayerMedicalDecisionPanel medical={medical} playerId={model.identity.playerId} />
-      <section className="po-med-v3__intelligence">
+      {insight !== null && <section className="po-med-v3__intelligence">
         <div className="po-med-v3__section-title">MEDICAL INTELLIGENCE</div>
         <small>{medical.activeInjury !== null ? 'RECORDED INJURY' : 'ENGINE ASSESSMENT'}</small>
         <p>{insight}</p>
-        <span>{medical.activeInjury !== null
-          ? 'Rehabilitation and fitness clearance are managed in Medical.'
-          : 'Interpretation of existing data, not an unrecorded staff opinion.'}</span>
-      </section>
-      <section className="po-med-v3__recent">
-        <div className="po-med-v3__section-title">MEDICAL HISTORY <span>{medical.history.length} RECORDS</span></div>
-        {latest === undefined
-          ? <p>NO SIGNIFICANT INJURIES RECORDED</p>
-          : <div><strong>{latest.injuryLabel}</strong><small>{latest.injuredOnLabel} · {latest.statusLabel}</small></div>}
-        <button type="button" onClick={() => setActiveTab('history')}>VIEW HISTORY ↗</button>
-      </section>
+      </section>}
     </aside>
-
   </div>
 }
 
