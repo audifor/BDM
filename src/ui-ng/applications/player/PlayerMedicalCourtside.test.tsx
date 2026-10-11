@@ -138,7 +138,7 @@ describe('Courtside PLAYER Medical decisions',()=>{
     const injured=updateGameWorld(world,{injuries:[...Object.values(world.injuriesById),injury]})
     const {container}=loadPlayer(injured,playerId)
     const outlook=container.querySelector('[data-ng-region="medical-recovery-timeline"]')!
-    expect(outlook).toHaveTextContent('Training')
+    expect(outlook).toHaveTextContent('TRAINING')
     expect(outlook).toHaveTextContent('Not recorded')
     expect(outlook).toHaveTextContent('Unavailable')
     expect(container.querySelector('.po-med-v3__intelligence')).toBeNull()
@@ -157,7 +157,12 @@ describe('Courtside PLAYER Medical decisions',()=>{
     const injuries=[
       createInjury({id:injuryIdFromString('medical-history-one'),playerId,
         kind:'ankleSprain',severity:'minor',injuredOn:addDays(world.currentDate,-40),
-        expectedReturnDate:addDays(world.currentDate,-28)}),
+        expectedReturnDate:addDays(world.currentDate,-28),
+        returnToPlay:{
+          reviewDueOn:addDays(world.currentDate,-28),
+          clearedOn:addDays(world.currentDate,-28),
+          reviews:[],
+        }}),
       createInjury({id:injuryIdFromString('medical-history-two'),playerId,
         kind:'hamstringStrain',severity:'moderate',injuredOn:addDays(world.currentDate,-8),
         expectedReturnDate:addDays(world.currentDate,8)}),
