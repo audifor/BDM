@@ -29,7 +29,7 @@ interface Props {
 }
 
 const knowledgeText = (value: string, certaintyNote: string) =>
-  certaintyNote === 'Mixed reports' ? 'MIXED EVIDENCE' :
+  certaintyNote === 'High uncertainty' ? 'WIDE UNCERTAINTY' :
   certaintyNote === 'Qualitative descriptor' ? 'QUALITATIVE' :
   value === 'known' ? 'VERIFIED' : value === 'estimated' ? 'ESTIMATED' :
   value === 'low' ? 'LOW CONFIDENCE' : 'NOT SCOUTED'
@@ -142,7 +142,7 @@ export function ScoutingCourtsideBoard({
         <strong>{own ? (coverage === 0 ? 'NO FILED REPORT' : level) : level}</strong>
         <span>{coverage} scouted domains · {coverage === 0 ? 'No scout evaluation' : (status?.knowledgeLabel ?? 'Unknown')}</span></section>
       <section className="po-scv3__stat"><small>REPORT RELIABILITY</small><strong>{coverage === 0 ? 'UNKNOWN' : (status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
-        <span>{coverage === 0 ? 'No evaluator report' : `Disagreement: ${status?.disagreementLabel ?? 'Unknown'}`}</span></section>
+        <span>{coverage === 0 ? 'No evaluator report' : `Uncertainty: ${status?.disagreementLabel ?? 'Unknown'}`}</span></section>
       <section className="po-scv3__stat"><small>LAST ASSESSED</small><strong>{status?.lastScoutedLabel ?? 'NO REPORT'}</strong>
         <span>{status?.observerLabel ?? 'No evaluator'}</span></section>
       <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
@@ -237,7 +237,7 @@ export function ScoutingCourtsideBoard({
           <p>{(own
               ? ['Staff assessment', 'Tactical fit']
               : scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').slice(0,2).map(area=>area.label)
-            ).join(' · ') || 'Refresh evaluations and investigate report disagreement'}</p>
+            ).join(' · ') || 'Refresh evaluations and clarify uncertain ratings'}</p>
         </section>
         <section className="po-scv3__card po-scv3__routes">
           <div className="po-scv3__card-head"><strong>ACTION ROUTES</strong><span>{own?'INTERNAL':'TARGET'} · GAMEPLAY</span></div>
