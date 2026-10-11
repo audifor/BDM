@@ -162,3 +162,11 @@
  .po-scv3__timeline-items {grid-template-columns:repeat(2,minmax(0,1fr))}
  .po-scv3__card-head > strong {font-size:15px}
 }
+
+/* Own-player report distinguishes direct 80-rating knowledge from filed scout reports. */
+.po-scv3__internal {display:flex;flex-direction:column;gap:6px;overflow-y:auto;min-height:0;flex:1}
+.po-scv3__internal > p {margin:3px 0 5px;color:var(--cs-text2);font:500 11px/1.3 var(--cs-font)}
+.po-scv3__internal-row {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 33px;
+  align-items:center;gap:9px;padding:7px 4px;border-bottom:1px solid var(--cs-line2)}
+.po-scv3__internal-row > strong {color:var(--cs-text);font:700 12px/1.1 var(--cs-font)}
+.po-scv3__internal-row > b {color:var(--cs-lime);font:700 15px/1 var(--cs-font-display);text-align:right}
