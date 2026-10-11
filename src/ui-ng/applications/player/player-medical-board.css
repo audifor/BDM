@@ -2051,3 +2051,59 @@
     width:100%;
   }
 }
+
+
+/* MEDICAL V3.2 finishing pass · selected-region hierarchy in both Courtside themes. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .po-med-board--v3 .po-med-v3__right > .po-med-v3__region-detail {
+  gap:9px;
+  padding:11px 13px 12px;
+}
+.po-med-board--v3 .po-med-v3__region-detail-head {
+  min-height:22px;
+  padding-bottom:7px;
+}
+.po-med-board--v3 .po-med-v3__region-detail-head > span {
+  font:700 14px/1 var(--cs-font-display);
+}
+.po-med-board--v3 .po-med-v3__region-detail-main {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:7px 12px;
+  min-width:0;
+}
+.po-med-board--v3 .po-med-v3__region-detail-main > .po-med-v3__region-detail-name {
+  flex:0 1 auto;
+  font:700 22px/1.1 var(--cs-font-display);
+  color:var(--cs-text);
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.po-med-board--v3 .po-med-v3__region-detail-main > .po-med-v3__region-detail-status {
+  display:inline-flex;
+  flex:0 1 auto;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  min-width:0;
+  max-width:100%;
+  margin-left:auto;
+  color:var(--cs-text);
+  font:600 11px/1.2 var(--cs-font);
+  text-align:right;
+}
+.po-med-board--v3 .po-med-v3__region-detail-status > span:first-child {
+  font-size:12px;
+  line-height:1;
+}
+.po-med-board--v3 .po-med-v3__region-detail-status > span:last-child {
+  overflow-wrap:anywhere;
+}
+.po-med-board--v3 .po-med-v3__right > .po-med-v3__region-detail p {
+  color:var(--cs-text2);
+  font:500 11px/1.4 var(--cs-font);
+}
