@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
@@ -90,6 +90,7 @@ describe('Courtside PLAYER Medical decisions',()=>{
     window.history.replaceState({},'','/?ui=ng&app=medical&playerId='+encodeURIComponent(playerId)+'&medicalTab=risk')
     const {container}=render(<NgWorkspaceNavigationProvider><MedicalWorkspace /></NgWorkspaceNavigationProvider>)
     expect(container.querySelector('[data-ng-region="medical-workspace"]')).not.toBeNull()
-    expect(screen.getByRole('button',{name:/^Risk/})).toHaveAttribute('aria-current','page')
+    expect(within(screen.getByRole('navigation',{name:'Workspace tabs'}))
+      .getByRole('button',{name:'Risk'})).toHaveAttribute('aria-current','page')
   })
 })
