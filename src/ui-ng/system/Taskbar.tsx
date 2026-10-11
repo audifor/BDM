@@ -168,7 +168,6 @@ export function Taskbar() {
         onPointerLeave={scheduleGroupClose}
         aria-label={`Instancias de ${taskbarAppLabel(instanceGroup)}`}
         style={{left:groupAnchor.left,bottom:groupAnchor.bottom}}>
-        <header><strong>{taskbarAppLabel(instanceGroup)}</strong><span>{groupInstances.length} abiertas</span></header>
         {groupInstances.map(instance=><div key={instance.key} data-instance={instance.key}
           className={'ng-taskbar__instance-row'+(activeInstanceKey===instance.key?' is-active':'')}>
           <button type="button" role="menuitem" onClick={()=>{activateInstance(instance.key);setInstanceGroup(null)}}>
@@ -180,7 +179,7 @@ export function Taskbar() {
             onClick={()=>{closeInstance(instance.key);if(groupInstances.length===1)setInstanceGroup(null)}}>×</button>
         </div>)}
       </div>
-    </>,document.body)}
+    </>,document.querySelector('.bdm-os-ng[data-bdm-courtside-shell="true"]') ?? document.body)}
     <span className="ng-taskbar__status">{busy?'Simulation running':'Simulation idle'}</span>
   </footer>
 }
