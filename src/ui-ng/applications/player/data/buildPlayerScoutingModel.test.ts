@@ -116,6 +116,50 @@ describe('buildPlayerScoutingModel', () => {
     expect(model.knowledgeAreas.find((area) => area.id === 'physical')!.status).toBe('available')
   })
 
+  it('normalizes evaluator confidence from the engine 0-100 scale to presentation 0-1', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const subject = Object.values(base.players).find(player => !team.rosterPlayerIds.includes(player.id))!.id
+    const staffId = Object.keys(base.staffPeopleById)[0]! as never
+    const withKnowledge = withScoutingKnowledge(base, subject, {
+      shooting: {estimate: 77, uncertainty: 4},
+    })
+    const world = updateGameWorld(withKnowledge, {
+      evaluatorReportsById: {
+        ...withKnowledge.evaluatorReportsById,
+        'report:scouting-ui-confidence': {
+          id: 'report:scouting-ui-confidence', organizationId: team.organizationId,
+          subjectPlayerId: subject, evaluatorStaffId: staffId, missionType: 'FULL_REPORT',
+          createdAt: withKnowledge.currentDate, evidenceIds: ['evidence:ui-confidence'],
+          findings: [{
+            dimension: 'shooting', estimate: 77, uncertainty: 4,
+            confidence: 80, coverageContribution: .8,
+          }],
+        },
+      },
+    })
+    const model = buildPlayerScoutingModel(world, subject)
+    const shooting = model.attributes.find(row => row.id === 'shooting')!
+    expect(shooting.confidence).toBeCloseTo(.9)
+    expect(shooting.knowledgeState).toBe('estimated')
+    expect(model.consensus[0]!.knowledgeCoverage).toBeCloseTo(.8)
+    expect(model.consensus[0]!.knowledgeLabel).toBe('80%')
+    expect(model.noteTimeline[0]!.detail).toContain('mean confidence 80%')
+    expect(JSON.stringify(model)).not.toContain('8000%')
+  })
+
+  it('identifies mixed reports as conflict, not as a low-confidence verdict', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const rival = Object.values(base.players).find(player => !team.rosterPlayerIds.includes(player.id))!.id
+    const model = buildPlayerScoutingModel(withScoutingKnowledge(base, rival, {
+      shooting: {estimate: 61, uncertainty: 13},
+    }), rival)
+    const reading = model.attributes.find(row => row.id === 'shooting')!
+    expect(reading.certaintyNote).toBe('Mixed reports')
+    expect(reading.confidence).toBeCloseTo(.9)
+  })
+
   it('lists the tracked games as the observed record, with real box scores', () => {
     const world = createNewGame()
     const simulation = prepareUserMatch(world)
