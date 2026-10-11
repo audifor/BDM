@@ -104,6 +104,7 @@ export function PlayerMedicalView() {
           onSelectRow={(id) => setSelectedEventId(id as never)}
           rows={medical.history}
           selectedEventId={selectedEventId}
+          selectedDetail={findMedicalInspectorDetail(medical, selectedEventId)}
         />
         <details className="po-med-v2__secondary">
           <summary>INJURY PATTERN & DATA BOUNDARIES</summary>
