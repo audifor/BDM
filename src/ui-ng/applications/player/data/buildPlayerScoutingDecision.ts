@@ -149,7 +149,7 @@ export function buildPlayerScoutingDecision(input: {
     ...base, headline:'SECONDARY ROLE · PROVISIONAL',
     tone:'neutral',status:'provisional',
     meaning:`${effectivePosition} is a primary position for only one of these players. The ${positional.length} comparisons are exploratory; ${posBetter.length} advantages and ${posWorse.length} concerns cannot justify a positional upgrade or signing recommendation.`,
-    nextStep:'Verify the secondary-position player's match experience and actual role before deciding.',
+    nextStep:"Verify the secondary-position player's match experience and actual role before deciding.",
   }
   if (positional.length < Math.ceil(positionalKeys.size*.65)) return {
     ...base, headline:own?'POSITION REVIEW · MORE DATA NEEDED':'SCOUT POSITION · MORE EVIDENCE',
