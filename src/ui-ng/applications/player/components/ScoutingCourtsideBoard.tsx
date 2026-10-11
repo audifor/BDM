@@ -7,6 +7,7 @@ import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/
 import { buildPlayerScoutingDecision, scoutingRosterBenchmarks, type ScoutingBenchmarkMode } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { ratingCategory, CATEGORY_LABELS, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { getUserTeam } from '@/engine/calendar'
+import { positionEvidenceKeys, sharedScoutingPositions } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
 
 const COMPARE_FAMILIES: readonly RatingCategory[] = [
   'shooting','finishing','ballHandling','playmaking','offBall','defense','physical','mental',
@@ -42,8 +43,8 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
   readonly onChange: (id: PlayerId) => void
   readonly benchmarkMode: ScoutingBenchmarkMode
   readonly onBenchmarkMode: (mode: ScoutingBenchmarkMode) => void
-  readonly family: RatingCategory
-  readonly onFamilyChange: (family: RatingCategory) => void
+  readonly family: RatingCategory | 'position'
+  readonly onFamilyChange: (family: RatingCategory | 'position') => void
 }) {
   const team = getUserTeam(world)
   const eligible = useMemo(() => {
@@ -58,10 +59,13 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
         a.player.lastName.localeCompare(b.player.lastName))
   }, [world, team, inspectedId])
   const [showAll, setShowAll] = useState(false)
-  const selectedId = eligible.some(row => row.id === comparisonId) ? comparisonId : eligible[0]?.id ?? null
+  const selectedId = eligible.some(row => row.id === comparisonId) ? comparisonId : null
   const rows = useMemo(() => selectedId === null ? [] :
     buildScoutingRosterComparison(world, inspectedId, selectedId), [world, inspectedId, selectedId])
-  const matched = rows.filter(row => ratingCategory(row.id) === family)
+  const positionalKeys = new Set(positionEvidenceKeys(world.players[inspectedId]!.basketball.primaryPosition))
+  const matched = rows.filter(row => family==='position' ? positionalKeys.has(row.id) : ratingCategory(row.id)===family)
+  const familyLabel = family === 'position' ? 'positional essentials' : CATEGORY_LABELS[family]
+  const crossPosition = selectedId !== null && sharedScoutingPositions(world.players[inspectedId]!.basketball,world.players[selectedId]!.basketball).length === 0
   const verified = matched.filter(row => row.subject !== null)
   const rankedRows = [...verified].sort((a,b)=>
     Math.abs((b.subject ?? 0)-b.own)-Math.abs((a.subject ?? 0)-a.own))
@@ -81,28 +85,31 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
       <label>OUR PLAYER
         <select aria-label="Compare against my player"
           value={selectedId ?? ''} onChange={event => {onBenchmarkMode('manual');onChange(event.target.value as PlayerId)}}>
+          {selectedId === null && <option value="">No same-position player; choose manually</option>}
           {eligible.length === 0 && <option value="">No teammates available</option>}
           {eligible.map(({id,player}) => <option key={id} value={id}>
-            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}
+            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}{sharedScoutingPositions(world.players[inspectedId]!.basketball,player.basketball).length===0 ? ' · DIFFERENT POSITION' : ''}
           </option>)}
         </select>
       </label>
       <label>ATTRIBUTE FAMILY
         <select aria-label="Comparison attribute family" value={family}
-          onChange={event => {onFamilyChange(event.target.value as RatingCategory);setShowAll(false)}}>
+          onChange={event => {onFamilyChange(event.target.value as RatingCategory | 'position');setShowAll(false)}}>
+          <option value="position">{world.players[inspectedId]?.basketball.primaryPosition} · Positional essentials</option>
           {COMPARE_FAMILIES.map(key => <option key={key} value={key}>{CATEGORY_LABELS[key]}</option>)}
         </select>
       </label>
     </div>
     <div className="po-scv3__compare-key" aria-label="Comparison legend">
       <span className="po-scv3__key-subject">SUBJECT: {subjectName?.lastName ?? '—'} · LIME</span>
-      <span>BENCHMARK: {ownName?.lastName ?? '—'} · {benchmarkMode==='rating-leader' ? 'HIGHEST 80-RATING MEAN' : benchmarkMode==='role-peer' ? 'POSITION PEER' : 'MANUAL'} · MUTED</span>
+      <span>BENCHMARK: {ownName?.lastName ?? '—'} · {benchmarkMode==='rating-leader' ? 'HIGHEST POSITION-LENS MEAN' : benchmarkMode==='role-peer' ? 'POSITION PEER' : 'MANUAL'} · MUTED</span>
     </div>
-    {selectedId === null ? <p className="po-scv3__empty">No other own-roster player is available for comparison.</p> :
+    {crossPosition && <div className="po-scv3__cross-warning" role="status">DIFFERENT POSITIONS · Attribute comparison only. No positional verdict or signing recommendation.</div>}
+    {selectedId === null ? <p className="po-scv3__empty">No same-position teammate available. Choose a roster player manually to explore attributes without a fit verdict.</p> :
       verified.length === 0
         ? <div className="po-scv3__compare-locked">
             <strong>NO COMPARABLE INDIVIDUAL ATTRIBUTES YET</strong>
-            <p>Our player's ratings are known. The subject's {CATEGORY_LABELS[family].toLowerCase()} values remain unknown until scouting evaluates the same individual attributes.</p>
+            <p>Our player's ratings are known. The subject's {familyLabel.toLowerCase()} values remain unknown until scouting evaluates the same individual attributes.</p>
             <small>Never compare estimated category strength with an exact 80-rating family average.</small>
           </div>
         : <div className="po-scv3__compare-rows">
@@ -145,8 +152,8 @@ export function ScoutingCourtsideBoard({
   const [bottomTab, setBottomTab] = useState<'reports' | 'sources' | 'games'>('reports')
   const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
   const [benchmarkMode, setBenchmarkMode] = useState<ScoutingBenchmarkMode>('rating-leader')
-  const [family, setFamily] = useState<RatingCategory>('shooting')
-  const [evidenceScope, setEvidenceScope] = useState<'overall' | 'family'>('family')
+  const [family, setFamily] = useState<RatingCategory | 'position'>('position')
+  const [evidenceScope, setEvidenceScope] = useState<'position' | 'overall' | 'family'>('position')
   const own = model.knowledgeAccess.kind === 'own-roster'
   const team = getUserTeam(world)
   const rosterBenchmarks = useMemo(() => scoutingRosterBenchmarks(world, model.identity.playerId),
@@ -163,9 +170,11 @@ export function ScoutingCourtsideBoard({
   const verdict = buildPlayerScoutingDecision({
     own, rows: comparable, scouting,
     comparatorName: comparator === null || comparator === undefined ? null : comparator.lastName,
+    subjectPosition: world.players[model.identity.playerId]!.basketball.primaryPosition,
+    sharedPositions: comparator === null ? [] : sharedScoutingPositions(world.players[model.identity.playerId]!.basketball, comparator.basketball),
   })
-  const familyRows = comparable.filter(row => ratingCategory(row.id) === family)
-  const scopedRows = evidenceScope === 'family' ? familyRows : comparable
+  const familyRows = comparable.filter(row => family === 'position' ? positionEvidenceKeys(verdict.position).includes(row.id) : ratingCategory(row.id) === family)
+  const scopedRows = evidenceScope === 'position' ? comparable.filter(row => positionEvidenceKeys(verdict.position).includes(row.id)) : evidenceScope === 'family' ? familyRows : comparable
   const supportedRows = scopedRows.filter(row => row.low !== null && row.high !== null)
   const advantages = supportedRows.filter(row => row.low! >= row.own + 5)
     .sort((a,b) => (b.low! - b.own) - (a.low! - a.own))
@@ -217,13 +226,13 @@ export function ScoutingCourtsideBoard({
         <strong>{verdict.headline}</strong>
         <p>{verdict.meaning}</p>
       </div>
-      <div className="po-scv3__verdict-proof" title="These are comparable individual rating keys, not scouting-domain coverage or confidence.">
-        <div><b>{verdict.comparableCount}<span>/80</span></b><small>INDIVIDUAL RATINGS COMPARED</small></div>
-        <div><b>{verdict.confirmedAdvantageCount}</b><small>{own ? 'RATING ADVANTAGES' : 'BOUNDED ADVANTAGES'}</small></div>
-        <div><b>{verdict.confirmedConcernCount}</b><small>{own ? 'RATING WEAKNESSES' : 'BOUNDED CONCERNS'}</small></div>
+      <div className="po-scv3__verdict-proof" title="Positionally relevant canonical attribute keys only; no invented fit score. All 80 remain available in Head-to-Head.">
+        <div><b>{verdict.positionalComparableCount}<span>/{verdict.positionalEvidenceTotal}</span></b><small>POSITIONAL ATTRIBUTES COMPARED</small></div>
+        <div><b>{verdict.positionalAdvantageCount}</b><small>{own ? 'POSITION ADVANTAGES' : 'BOUNDED POSITION ADVANTAGES'}</small></div>
+        <div><b>{verdict.positionalConcernCount}</b><small>{own ? 'POSITION WEAKNESSES' : 'BOUNDED POSITION CONCERNS'}</small></div>
       </div>
       <div className="po-scv3__verdict-action">
-        <span>{verdict.basis} · {verdict.evidenceCount} filed reports · vs {comparatorName} ({benchmarkMode === 'rating-leader' ? 'highest 80-rating mean, not starter' : benchmarkMode === 'role-peer' ? 'position peer' : 'manual'})</span>
+        <span>{verdict.basis} · {verdict.evidenceCount} filed reports · vs {comparatorName} ({benchmarkMode === 'rating-leader' ? 'highest position-essentials mean, not starter' : benchmarkMode === 'role-peer' ? 'position peer' : 'manual'})</span>
         <button type="button" onClick={() => onAction(own ? 'development-route' :
           verdict.status === 'insufficient' ? 'request-report' : 'contract-route')}
           disabled={!own && verdict.status === 'insufficient' && requestReason !== null}>
@@ -259,12 +268,13 @@ export function ScoutingCourtsideBoard({
           <span>{own ? 'DIRECT RATINGS · COMPARATIVE EVIDENCE' : `${known.length} EVALUATED DIMENSIONS`}</span></div>
         {own && <>
           <div className="po-scv3__evidence-scope" role="group" aria-label="Comparison evidence scope">
-            <button type="button" aria-pressed={evidenceScope === 'family'} onClick={()=>setEvidenceScope('family')}>{CATEGORY_LABELS[family].toUpperCase()}</button>
+            <button type="button" aria-pressed={evidenceScope === 'position'} onClick={()=>setEvidenceScope('position')}>{verdict.position} · POSITION</button>
+            <button type="button" aria-pressed={evidenceScope === 'family'} onClick={()=>setEvidenceScope('family')}>{family === 'position' ? 'SELECTED POSITION' : CATEGORY_LABELS[family].toUpperCase()}</button>
             <button type="button" aria-pressed={evidenceScope === 'overall'} onClick={()=>setEvidenceScope('overall')}>ALL 80 ATTRIBUTES</button>
           </div>
           <div className="po-scv3__internal po-scv3__internal--reasons">
           <div className="po-scv3__reason-group">
-            <h4>WHY CHOOSE HIM · {evidenceScope === 'family' ? CATEGORY_LABELS[family].toUpperCase() : 'ALL ATTRIBUTES'}</h4>
+            <h4>WHY CHOOSE HIM · {evidenceScope === 'position' ? `${verdict.position} ESSENTIALS` : evidenceScope === 'family' ? (family === 'position' ? 'SELECTED POSITION' : CATEGORY_LABELS[family].toUpperCase()) : 'ALL ATTRIBUTES'}</h4>
             {advantages.length === 0
               ? <span>No clear advantage in this comparison.</span>
               : advantages.slice(0,3).map(row=><span className="is-advantage" key={row.id}>+ {comparisonArgument(row,true)}</span>)}
@@ -320,7 +330,7 @@ export function ScoutingCourtsideBoard({
             <div><small>POTENTIAL</small><strong>{scouting.potentialOutcomes.every(outcome=>outcome.knowledgeState==='unknown')?'UNKNOWN':'SCOUTED RANGES'}</strong></div>
           </div>
           <div className="po-scv3__call">
-            <strong>{own ? 'KEEP / DEVELOP' : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
+            <strong>{!verdict.positionMatched ? 'COMPARE SAME POSITION' : own ? 'KEEP / DEVELOP' : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
             <p>{verdict.nextStep}</p>
             <div className="po-scv3__call-actions">
               <button type="button" onClick={()=>onAction(own ? 'development-route' : verdict.status === 'supported' ? 'contract-route' : 'request-report')}
