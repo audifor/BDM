@@ -89,13 +89,13 @@ export function buildPlayerScoutingDecision(input: {
       tone:'neutral', status:'insufficient', nextStep:'Compare against another roster player.',
     }
     if (stronger.length >= 5 && stronger.length >= weaker.length + 3) return {
-      ...base, headline:'STRONG SQUAD OPTION', tone:'positive',status:'supported',
-      meaning:`Outperforms ${suffix} on ${stronger.length} attributes by at least 5 points. This is a relative skill comparison, not an automatic starting-role recommendation.`,
+      ...base, headline:'STRONG IN THIS MATCHUP', tone:'positive',status:'supported',
+      meaning:`Outperforms ${suffix} on ${stronger.length} attributes by at least 5 points. This only compares these two players' ratings, not squad rank, role or match performance.`,
       nextStep:'Review development, actual performance and coaching role before deciding.',
     }
     if (weaker.length >= 5 && weaker.length >= stronger.length + 3) return {
-      ...base, headline:'DEVELOPMENT PRIORITY', tone:'caution',status:'supported',
-      meaning:`Trails ${suffix} on ${weaker.length} attributes by at least 5 points. Consider role and development before personnel changes.`,
+      ...base, headline:'WEAKER IN THIS MATCHUP', tone:'caution',status:'supported',
+      meaning:`Trails ${suffix} on ${weaker.length} attributes by at least 5 points. This is not an instruction to drop the player; consider role and development before personnel changes.`,
       nextStep:'Open Development and check recent performance.',
     }
     return {
