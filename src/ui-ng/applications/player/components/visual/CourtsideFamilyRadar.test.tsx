@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { RADAR_CATEGORY_ORDER } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { CourtsideFamilyRadar } from './CourtsideFamilyRadar'
+
+afterEach(cleanup)
 
 const LABELS = ['SHOOT','FIN','HANDLE','PLAY','OFF','DEF','PHYS','MENT']
 const VALUES = [38,47,49,56,64,60,66,52]
