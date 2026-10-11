@@ -79,7 +79,7 @@ describe('PLAYER Scouting positional decision safety',()=>{
     }
   })
 
-  it('selects only shared primary/secondary positional roster peers, never silently a different position',()=>{
+  it('selects same-primary-position peers only, never auto-promoting source secondaries',()=>{
     const {world,team,ownId}=seed()
     const benchmark=scoutingRosterBenchmarks(world,ownId)
     const subject=world.players[ownId]!.basketball
@@ -87,7 +87,7 @@ describe('PLAYER Scouting positional decision safety',()=>{
       if(id===null)continue
       expect(team.rosterPlayerIds).toContain(id)
       expect(id).not.toBe(ownId)
-      expect(sharedScoutingPositions(subject,world.players[id]!.basketball).length).toBeGreaterThan(0)
+      expect(world.players[id]!.basketball.primaryPosition).toBe(subject.primaryPosition)
     }
     if(benchmark.rolePeer!==null){
       const verdict=decide(world,ownId,benchmark.rolePeer)
@@ -100,18 +100,38 @@ describe('PLAYER Scouting positional decision safety',()=>{
     }
   })
 
+  it('does not manufacture an auto peer when all other players list all positions as secondary',()=>{
+    const {world,team,ownId}=seed()
+    const subject=world.players[ownId]!
+    const positions=['PG','SG','SF','PF','C'] as const
+    const otherPrimary=positions.find(position=>position!==subject.basketball.primaryPosition)!
+    const rewrittenPlayers={...world.players}
+    for(const id of team.rosterPlayerIds.filter(id=>id!==ownId)){
+      const existing=world.players[id]!
+      rewrittenPlayers[id]={...existing,basketball:{...existing.basketball,
+        primaryPosition:otherPrimary,
+        secondaryPositions:positions.filter(position=>position!==otherPrimary),
+      }}
+    }
+    const modeledWorld={...world,players:rewrittenPlayers}
+    const automatic=scoutingRosterBenchmarks(modeledWorld,ownId)
+    expect(automatic.rolePeer).toBeNull()
+    expect(automatic.ratingLeader).toBeNull()
+    const other=rewrittenPlayers[team.rosterPlayerIds.find(id=>id!==ownId)!]!
+    expect(resolveScoutingPositionMatch(subject.basketball,other.basketball).compatibility).toBe('mixed')
+  })
+
   it('chooses a positional rating leader by transparent relevant-key mean, not all 80',()=>{
     const {world,team,ownId}=seed()
     const leader=scoutingRosterBenchmarks(world,ownId).ratingLeader
     if(leader===null)return
     const subject=world.players[ownId]!.basketball
     const peers=team.rosterPlayerIds.filter(id=>id!==ownId &&
-      sharedScoutingPositions(subject,world.players[id]!.basketball).length>0)
+      world.players[id]!.basketball.primaryPosition===subject.primaryPosition)
     const average=(id:PlayerId)=>{
       const access=derivePlayerKnowledgeAccess(world,id)
       if(access.kind!=='own-roster')return 0
-      const positions=sharedScoutingPositions(subject,world.players[id]!.basketball)
-      const position=positions.includes(subject.primaryPosition)?subject.primaryPosition:positions[0]!
+      const position=subject.primaryPosition
       const keys=positionEvidenceKeys(position)
       return keys.reduce((sum,key)=>sum+access.currentRatings[key],0)/keys.length
     }

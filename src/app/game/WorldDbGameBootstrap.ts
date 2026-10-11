@@ -73,7 +73,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     return createPlayer({
       id: playerIdFromString(source.playerId), personId: source.personId as never, firstName: person.firstName, lastName: person.lastName,
       gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
-      basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
+      basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ...(source.positionFamiliarity === undefined ? {} : { positionFamiliarity: source.positionFamiliarity }), ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
       bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
       development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.startDate),
     })

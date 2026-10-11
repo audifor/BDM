@@ -135,6 +135,7 @@ pub struct WorldDbGameBootstrapPlayerV1 {
     person_id: String,
     primary_position: String,
     secondary_positions: Vec<String>,
+    position_familiarity: BTreeMap<String, Option<f64>>,
     dominant_hand: String,
     ratings: BTreeMap<String, f64>,
     tendencies: BTreeMap<String, f64>,
@@ -723,7 +724,7 @@ fn query_player(
     if positions.is_empty() {
         return Err(format!("World DB player has no position: {person_id}"));
     }
-    let primary_count = positions.iter().filter(|(_, primary)| *primary).count();
+    let primary_count = positions.iter().filter(|(_, primary, _)| *primary).count();
     if primary_count != 1 {
         return Err(format!(
             "World DB player must have exactly one primary position: {person_id}"
@@ -731,14 +732,18 @@ fn query_player(
     }
     let primary_position = positions
         .iter()
-        .find(|(_, primary)| *primary)
+        .find(|(_, primary, _)| *primary)
         .unwrap()
         .0
         .clone();
     let secondary_positions = positions
-        .into_iter()
-        .filter(|(_, primary)| !*primary)
-        .map(|(code, _)| code)
+        .iter()
+        .filter(|(_, primary, _)| !*primary)
+        .map(|(code, _, _)| code.clone())
+        .collect();
+    // Preserve unmodified source familiarity. No numeric eligibility threshold.
+    let position_familiarity = positions.into_iter()
+        .map(|(code, _, familiarity)| (code, familiarity))
         .collect();
     let ratings = query_values(
         connection,
@@ -780,6 +785,7 @@ fn query_player(
         person_id: person_id.to_owned(),
         primary_position,
         secondary_positions,
+        position_familiarity,
         dominant_hand,
         ratings,
         tendencies,
@@ -790,11 +796,11 @@ fn query_player(
 fn query_positions(
     connection: &Connection,
     person_id: &str,
-) -> Result<Vec<(String, bool)>, String> {
-    let mut statement = connection.prepare("SELECT position_code,is_primary FROM player_position WHERE person_id=?1 ORDER BY is_primary DESC,familiarity DESC,position_code").map_err(|error| format!("Unable to prepare World DB position query: {error}"))?;
+) -> Result<Vec<(String, bool, Option<f64>)>, String> {
+    let mut statement = connection.prepare("SELECT position_code,is_primary,familiarity FROM player_position WHERE person_id=?1 ORDER BY is_primary DESC,familiarity DESC,position_code").map_err(|error| format!("Unable to prepare World DB position query: {error}"))?;
     let rows = statement
         .query_map([person_id], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? != 0))
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? != 0, row.get::<_, Option<f64>>(2)?))
         })
         .map_err(|error| format!("Unable to query World DB positions: {error}"))?;
     rows.collect::<rusqlite::Result<Vec<_>>>()
@@ -994,6 +1000,18 @@ fn ecosystem_kind(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn query_positions_preserves_numeric_familiarity_without_promoting_roles() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection.execute_batch("CREATE TABLE player_position(person_id TEXT, position_code TEXT, is_primary INTEGER, familiarity REAL);
+            INSERT INTO player_position VALUES ('p','SG',1,91),('p','PG',0,65),('p','SF',0,12),('p','PF',0,1),('p','C',0,NULL);").unwrap();
+        let rows = query_positions(&connection, "p").unwrap();
+        assert_eq!(rows.len(), 5);
+        assert_eq!(rows[0], ("SG".to_owned(), true, Some(91.0)));
+        assert_eq!(rows[1], ("PG".to_owned(), false, Some(65.0)));
+        assert!(rows.iter().any(|(pos, _, score)| pos == "C" && score.is_none()));
+    }
 
     #[test]
     fn bootstrap_projection_reads_canonical_organization_ids_and_records() {

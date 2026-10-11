@@ -5,7 +5,7 @@ import type { ScoutingRosterComparisonRow } from './buildScoutingRosterCompariso
 import type { PlayerScoutingModel } from './buildPlayerScoutingModel'
 import { getUserTeam } from '@/engine/calendar'
 import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
-import { positionEvidenceKeys, sharedScoutingPositions, resolveScoutingPositionMatch, type ScoutingPositionMatch, type ScoutingPositionCompatibility } from './scoutingPositionEvidence'
+import { positionEvidenceKeys, type ScoutingPositionMatch, type ScoutingPositionCompatibility } from './scoutingPositionEvidence'
 
 export type ScoutingBenchmarkMode = 'role-peer' | 'rating-leader' | 'manual'
 
@@ -35,10 +35,10 @@ export interface PlayerScoutingDecision {
 }
 
 /**
- * Position-peer and leader use only roster players who can actually play a
- * position shared with the subject. Secondary positions count, exact primary
- * positions are favored. When no eligible peer exists we return null, never
- * silently substitute a center for a guard. Manual exploration stays possible.
+ * Automatic benchmarks use players with the SAME PRIMARY position only.
+ * Source-listed secondary positions do not establish match-role competence.
+ * When no primary-position peer exists return null, while manual cross-position
+ * exploration remains available (without a firm positional verdict).
  *
  * Rating leader = arithmetic mean of the EXPLICIT unweighted position lens
  * among those players, NOT game/coach rating, starter selection or tactical fit.
@@ -50,31 +50,17 @@ export function scoutingRosterBenchmarks(world: GameWorld, inspectedId: PlayerId
   if (subject === undefined) return {rolePeer:null,ratingLeader:null,position:null}
   const candidates = team.rosterPlayerIds.filter(id=>id !== inspectedId &&
     world.players[id] !== undefined)
-  const peers = candidates.filter(id=>
-    sharedScoutingPositions(subject,world.players[id]!.basketball).length > 0)
-  const rank = (id: PlayerId) => {
-    const match = resolveScoutingPositionMatch(subject,world.players[id]!.basketball)
-    return match.compatibility === 'primary' ? 3 : match.compatibility === 'mixed' ? 2 : match.compatibility === 'secondary' ? 1 : 0
-  }
-  const bestRank = Math.max(0,...peers.map(rank))
-  const comparablePeers = peers.filter(id=>rank(id)===bestRank)
-  const rankedByPriority = comparablePeers.slice().sort((a,b)=>{
-    const first = world.players[a]!.basketball
-    const second = world.players[b]!.basketball
-    const firstExact = Number(first.primaryPosition === subject.primaryPosition)
-    const secondExact = Number(second.primaryPosition === subject.primaryPosition)
-    return secondExact - firstExact || String(a).localeCompare(String(b))
-  })
-  const rolePeer = rankedByPriority[0] ?? null
+  const primaryPeers = candidates.filter(id=>
+    world.players[id]!.basketball.primaryPosition === subject.primaryPosition)
+    .sort((a,b)=>String(a).localeCompare(String(b)))
+  const rolePeer = primaryPeers[0] ?? null
   const ratingsFor = (id:PlayerId) => {
-    const player = world.players[id]!.basketball
-    const position = resolveScoutingPositionMatch(subject,player).position
     const access = derivePlayerKnowledgeAccess(world,id)
-    if (position === undefined || access.kind !== 'own-roster') return 0
-    const keys = positionEvidenceKeys(position)
+    if (access.kind !== 'own-roster') return 0
+    const keys = positionEvidenceKeys(subject.primaryPosition)
     return keys.reduce((sum,key)=>sum+access.currentRatings[key],0)/keys.length
   }
-  const leader = rankedByPriority.slice().sort((a,b)=>ratingsFor(b)-ratingsFor(a) ||
+  const leader = primaryPeers.slice().sort((a,b)=>ratingsFor(b)-ratingsFor(a) ||
     String(a).localeCompare(String(b)))[0] ?? null
   return {rolePeer, ratingLeader:leader,position:subject.primaryPosition}
 }
@@ -159,8 +145,8 @@ export function buildPlayerScoutingDecision(input: {
   }
   if (own) {
     if (posBetter.length >= 4 && posBetter.length >= posWorse.length+2) return {
-      ...base,headline:'STRONG IN POSITION MATCHUP',tone:'positive',status:'supported',
-      meaning:`${posBetter.length} advantages and ${posWorse.length} concerns in ${positional.length} relevant ${effectivePosition} attributes vs ${suffix}. Not a judgment of tactical role, starter status or entire squad quality.`,
+      ...base,headline:'POSITIONAL ATTRIBUTE LEAD',tone:'positive',status:'supported',
+      meaning:`${posBetter.length} of ${positional.length} ${effectivePosition} attributes exceed ${suffix} by at least 5 rating points; ${posWorse.length} fall behind. This does not prove superior match performance or squad fit.`,
       nextStep:'Review performance, development and actual role before deciding playing time.',
     }
     if (posWorse.length >= 4 && posWorse.length >= posBetter.length+2) return {

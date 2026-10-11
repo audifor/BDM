@@ -26,8 +26,8 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(screen.getByText('WHY THIS PLAYER MATTERS')).toBeInTheDocument()
     const bench=within(container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement)
     expect(bench.getByRole('button',{name:'POSITION RATING LEADER'})).toHaveAttribute('aria-pressed','true')
-    fireEvent.click(bench.getByRole('button',{name:'ROLE PEER'}))
-    expect(bench.getByRole('button',{name:'ROLE PEER'})).toHaveAttribute('aria-pressed','true')
+    fireEvent.click(bench.getByRole('button',{name:'SAME-POSITION PEER'}))
+    expect(bench.getByRole('button',{name:'SAME-POSITION PEER'})).toHaveAttribute('aria-pressed','true')
     expect(screen.getByText('80 VERIFIED RATINGS')).toBeInTheDocument()
     expect(screen.getByText('NO STAFF REPORT')).toBeInTheDocument()
     const knowledgeNote=container.querySelector('.po-scv3__coverage-note') as HTMLElement
@@ -46,6 +46,8 @@ describe('PLAYER Scouting Courtside V3',()=>{
     const positionCaption=within(comparator).getByText(/BOTH PRIMARY|PRIMARY \/ SECONDARY|BOTH SECONDARY|NO COMMON POSITION/)
     expect(positionCaption).toBeInTheDocument()
     const ownPicker=within(comparator).getByLabelText('Compare against my player') as HTMLSelectElement
+    expect([...ownPicker.options].every(option=>!option.textContent?.includes(' / PG, SF, PF, C'))).toBe(true)
+    expect(container.querySelector('.po-scv3__stat')).not.toBeNull()
     expect(ownPicker.options.length).toBeGreaterThan(0)
     const verdict=container.querySelector('[data-ng-region="scouting-decision-verdict"]')!
     const before=verdict.textContent

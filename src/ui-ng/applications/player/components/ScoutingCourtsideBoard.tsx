@@ -8,7 +8,7 @@ import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/
 import { buildPlayerScoutingDecision, scoutingRosterBenchmarks, type ScoutingBenchmarkMode } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { ratingCategory, CATEGORY_LABELS, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { getUserTeam } from '@/engine/calendar'
-import { positionEvidenceKeys, sharedScoutingPositions, resolveScoutingPositionMatch, type ScoutingPositionMatch } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
+import { positionEvidenceKeys, resolveScoutingPositionMatch, type ScoutingPositionMatch } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
 
 const COMPARE_FAMILIES: readonly RatingCategory[] = [
   'shooting','finishing','ballHandling','playmaking','offBall','defense','physical','mental',
@@ -79,7 +79,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
     <div className="po-scv3__card-head"><strong>HEAD-TO-HEAD · OUR ROSTER</strong><span>80 ATTRIBUTES · SAME KEY · NO HIDDEN RATINGS</span></div>
     <div className="po-scv3__benchmark-modes" role="group" aria-label="Roster benchmark">
       <button type="button" aria-pressed={benchmarkMode==='role-peer'}
-        onClick={()=>onBenchmarkMode('role-peer')}>ROLE PEER</button>
+        onClick={()=>onBenchmarkMode('role-peer')}>SAME-POSITION PEER</button>
       <button type="button" aria-pressed={benchmarkMode==='rating-leader'}
         onClick={()=>onBenchmarkMode('rating-leader')}>POSITION RATING LEADER</button>
       <button type="button" aria-pressed={benchmarkMode==='manual'}
@@ -92,7 +92,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
           {selectedId === null && <option value="">No same-position player; choose manually</option>}
           {eligible.length === 0 && <option value="">No teammates available</option>}
           {eligible.map(({id,player}) => <option key={id} value={id}>
-            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}{(player.basketball.secondaryPositions?.length ?? 0)>0 ? ` / ${player.basketball.secondaryPositions?.join(', ')}` : ''}{sharedScoutingPositions(world.players[inspectedId]!.basketball,player.basketball).length===0 ? ' · DIFFERENT POSITION' : ''}
+            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}{player.basketball.primaryPosition===world.players[inspectedId]!.basketball.primaryPosition ? ' · SAME PRIMARY' : ' · CROSS-POSITION'}
           </option>)}
         </select>
       </label>
@@ -109,7 +109,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
         <select aria-label="Position assessed" value={positionMatch.position}
           onChange={event=>{onPositionChange(event.target.value as BasketballPosition);setShowAll(false)}}>
           {positionMatch.availablePositions.length>0
-            ? positionMatch.availablePositions.map(position=><option key={position} value={position}>{position} · {position===world.players[inspectedId]!.basketball.primaryPosition?'Subject primary':'Subject secondary'} / {position===world.players[selectedId!]!.basketball.primaryPosition?'Benchmark primary':'Benchmark secondary'}</option>)
+            ? positionMatch.availablePositions.map(position=><option key={position} value={position}>{position} · {position===world.players[inspectedId]!.basketball.primaryPosition?'Subject primary':`Subject secondary (raw familiarity ${world.players[inspectedId]!.basketball.positionFamiliarity?.[position] ?? 'unknown'})`} / {position===world.players[selectedId!]!.basketball.primaryPosition?'Benchmark primary':`Benchmark secondary (raw familiarity ${world.players[selectedId!]!.basketball.positionFamiliarity?.[position] ?? 'unknown'})`}</option>)
             : <option value={positionMatch.position}>{positionMatch.position} · Subject only · NO SHARED POSITION</option>}
         </select>
       </label>
@@ -121,9 +121,9 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
     </div>
     <div className="po-scv3__compare-key" aria-label="Comparison legend">
       <span className="po-scv3__key-subject">SUBJECT: {subjectName?.lastName ?? '—'} · LIME</span>
-      <span>BENCHMARK: {ownName?.lastName ?? '—'} · {benchmarkMode==='rating-leader' ? 'HIGHEST POSITION-LENS MEAN' : benchmarkMode==='role-peer' ? 'POSITION PEER' : 'MANUAL'} · MUTED</span>
+      <span>BENCHMARK: {ownName?.lastName ?? '—'} · {benchmarkMode==='rating-leader' ? 'HIGHEST PRIMARY-POSITION LENS MEAN' : benchmarkMode==='role-peer' ? 'SAME PRIMARY POSITION' : 'MANUAL'} · MUTED</span>
     </div>
-    {selectedId !== null && positionMatch.compatibility !== 'primary' && <div className="po-scv3__cross-warning" role="status">{crossPosition ? 'DIFFERENT POSITIONS' : positionMatch.compatibility==='mixed' ? 'SECONDARY-POSITION COMPARISON' : 'BOTH PLAY THIS AS SECONDARY'} · Attribute exploration only. No firm positional upgrade or signing verdict.</div>}
+    {selectedId !== null && positionMatch.compatibility !== 'primary' && <div className="po-scv3__cross-warning" role="status">{crossPosition ? 'DIFFERENT POSITIONS' : positionMatch.compatibility==='mixed' ? 'SECONDARY-POSITION COMPARISON' : 'BOTH LIST THIS AS SECONDARY'} · Attribute exploration only. Secondary-position suitability is unverified; no firm upgrade or signing verdict.</div>}
     {selectedId === null ? <p className="po-scv3__empty">No same-position teammate available. Choose a roster player manually to explore attributes without a fit verdict.</p> :
       verified.length === 0
         ? <div className="po-scv3__compare-locked">
@@ -206,6 +206,15 @@ export function ScoutingCourtsideBoard({
   const comparatorName = comparator?.lastName ?? 'our benchmark'
   const comparisonArgument = (row: (typeof comparable)[number], better: boolean) =>
     `${row.label}: ${own ? '' : 'at least '}${better ? '+' : '−'}${better ? row.low! - row.own : row.own - row.high!} vs ${comparatorName}`
+  // Possible implications only, not demonstrated match impact or role fit.
+  const attributeImplication = (key: string): string => ({
+    STAMINA: 'Higher stamina may support sustained effort; verify minutes and fatigue.',
+    OFF_BALL_MOVEMENT: 'Better off-ball movement may create more passing options; verify in games.',
+    SPACING: 'Stronger spacing attributes can help team offence; inspect actual usage.',
+    THREE_POINT_STATIC: 'Spot-up shooting matters when receiving in position; check attempts and accuracy.',
+    SHOT_TOUCH: 'Shot touch can help around the basket; check the real shot profile.',
+    POINT_OF_ATTACK_DEFENSE: 'Point-of-attack defending may help versus ball handlers; review matchups.',
+  } as Readonly<Record<string,string>>)[key] ?? 'An attribute difference is not proof of better match performance.'
   const internalCategories = own ? model.attributes.categories : []
   const strongestOwn = [...internalCategories].sort((a,b)=>b.profileValue-a.profileValue)
   const weakestOwn = [...internalCategories].sort((a,b)=>a.profileValue-b.profileValue)
@@ -231,8 +240,8 @@ export function ScoutingCourtsideBoard({
         <section className="po-scv3__stat"><small>INTERNAL KNOWLEDGE</small>
           <strong>80 VERIFIED RATINGS</strong><span>Direct club records, not scout estimates</span></section>
         <section className="po-scv3__stat"><small>PRIMARY / SECONDARY</small>
-          <strong>{subjectBasketball.primaryPosition} {(subjectBasketball.secondaryPositions?.length ?? 0) ? '/ '+subjectBasketball.secondaryPositions?.join(', ') : ''}</strong>
-          <span>Current comparison evaluates {positionMatch.position}</span></section>
+          <strong>{subjectBasketball.primaryPosition}{subjectBasketball.secondaryPositions?.[0] === undefined ? '' : ' / '+subjectBasketball.secondaryPositions[0]}{(subjectBasketball.secondaryPositions?.length ?? 0) > 1 ? ` · +${subjectBasketball.secondaryPositions!.length-1} listed` : ''}</strong>
+          <span title={subjectBasketball.secondaryPositions?.join(', ') ?? ''}>Source-listed secondaries; suitability unverified · analysing {positionMatch.position}</span></section>
         <section className="po-scv3__stat"><small>STAFF SCOUT FILE</small>
           <strong>{coverage===0 ? 'NO STAFF REPORT' : level}</strong>
           <span>Separate from 80 verified player ratings</span></section>
@@ -326,7 +335,7 @@ export function ScoutingCourtsideBoard({
           </div>
           <div className="po-scv3__reason-next">
             <h4>COACHING DECISION</h4>
-            <p>{verdict.nextStep}</p>
+            <p>{own && positionMatch.compatibility === 'primary' && advantages[0] !== undefined ? `${attributeImplication(advantages[0].id)} ${verdict.nextStep}` : verdict.nextStep}</p>
             <small>{supportedRows.length} comparable attributes in this view. Ratings alone do not establish match performance or tactical fit.</small>
           </div>
         </div></>}
@@ -374,7 +383,7 @@ export function ScoutingCourtsideBoard({
             <strong>{!verdict.positionMatched ? 'COMPARE SAME POSITION'
               : own ? positionMatch.compatibility !== 'primary' ? 'VERIFY POSITIONAL ROLE'
                 : verdict.headline === 'POSITIONAL GAPS TO ADDRESS' ? 'REVIEW DEVELOPMENT PRIORITIES'
-                : verdict.headline === 'STRONG IN POSITION MATCHUP' ? 'REVIEW MINUTES & ROLE'
+                : verdict.headline === 'POSITIONAL ATTRIBUTE LEAD' ? 'REVIEW MINUTES & ROLE'
                 : 'REVIEW ROLE & PERFORMANCE'
               : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
             <p>{verdict.nextStep}</p>
