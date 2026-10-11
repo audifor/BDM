@@ -58,6 +58,9 @@ jobs:
             src/ui-ng/applications/player/data/buildPlayerContractModel.test.ts \
             src/ui-ng/applications/player/data/buildPlayerMedicalModel.test.ts \
             src/ui-ng/applications/player/PlayerMedicalCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildScoutingRosterComparison.test.ts \
+            src/ui-ng/applications/player/data/buildPlayerScoutingModel.test.ts \
+            src/ui-ng/applications/player/PlayerScoutingCourtside.test.tsx \
             src/ui-ng/applications/player/PlayerContractHubLink.test.tsx \
             src/ui-ng/applications/player/components/visual/CourtsideFamilyRadar.test.tsx \
             src/ui-ng/system/Taskbar.test.tsx \
