@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import type { InjuryId, PlayerId, StaffPersonId } from '@/domain/ids'
 import type { RehabilitationMode, ReturnToPlayDecision } from '@/domain/injury'
@@ -463,11 +463,25 @@ export function MedicalWorkspace() {
   const reviewReturnToPlay = useGameStore((state) => state.reviewReturnToPlay)
   const setRehabilitationPlan = useGameStore((state) => state.setRehabilitationPlan)
   const conductFitnessTest = useGameStore((state) => state.conductFitnessTest)
-  const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>('overview')
+  const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>(() => {
+    const tab = typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('medicalTab')
+    return MEDICAL_WORKSPACE_TABS.find(candidate => candidate === tab) ?? 'overview'
+  })
+  const focusedPlayerId = typeof window === 'undefined'
+    ? null : new URL(window.location.href).searchParams.get('playerId')
   const [selectedInjuryId, setSelectedInjuryId] = useState<InjuryId | undefined>(undefined)
-  const [selectedRiskPlayerId, setSelectedRiskPlayerId] = useState<PlayerId | undefined>(undefined)
+  const [selectedRiskPlayerId, setSelectedRiskPlayerId] = useState<PlayerId | undefined>(
+    focusedPlayerId as PlayerId | undefined ?? undefined,
+  )
 
   const model = useMemo(() => (world === null ? null : buildMedicalWorkspaceModel(world)), [world])
+  useEffect(() => {
+    if (focusedPlayerId === null || model === null) return
+    const entry = model.injured.find(row => row.playerId === focusedPlayerId)
+    if (entry !== undefined) setSelectedInjuryId(entry.injuryId)
+    const risk = model.risk.find(row => row.playerId === focusedPlayerId)
+    if (risk !== undefined) setSelectedRiskPlayerId(risk.playerId)
+  }, [focusedPlayerId, model])
   const team = useMemo(() => (world === null ? undefined : getUserTeam(world)), [world])
   const teamStyle = useMemo(() => {
     if (team === undefined) return undefined
