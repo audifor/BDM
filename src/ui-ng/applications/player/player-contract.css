@@ -819,7 +819,8 @@
   background:var(--cs-lime);
   border:1px solid var(--cs-lime);
   border-radius:6px;
-  color:var(--cs-bg,#15121d);
+  /* Bright lime needs stable dark foreground in BOTH Courtside themes. */
+  color:#17141f;
   font:700 14px/1 var(--cs-font-display);
   white-space:nowrap;
   cursor:pointer;
