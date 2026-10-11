@@ -2353,3 +2353,61 @@
   }
   .po-med-caseboard__ledger-list {overflow-x:auto;}
 }
+
+
+/* V4 · Evidence-led recovery outlook and neutral laterality treatment */
+.po-med-board--v3 .po-med-recovery-summary {
+  display:flex;flex-direction:column;gap:10px;
+  padding:11px 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+  background:var(--cs-s1);
+  min-width:0;
+}
+.po-med-recovery-summary > header {
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  flex-wrap:wrap;
+}
+.po-med-recovery-summary > header span {
+  color:var(--cs-text);
+  font:700 17px/1 var(--cs-font-display);
+}
+.po-med-recovery-summary > header small {color:var(--cs-text2);font:500 10px/1 var(--cs-font);}
+.po-med-recovery-summary__next {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 12px;border:1px solid var(--cs-line2);
+  border-radius:7px;background:var(--cs-s2);
+}
+.po-med-recovery-summary__next > div {display:flex;flex-direction:column;gap:5px;}
+.po-med-recovery-summary__next small {font:700 10px/1 var(--cs-font);color:var(--cs-text2);}
+.po-med-recovery-summary__next strong {
+  font:700 clamp(20px,1.9cqi,27px)/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.po-med-recovery-summary__next > span {color:var(--cs-orange2);font:700 27px/1 var(--cs-font-display);}
+.po-med-recovery-summary__states {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+}
+.po-med-recovery-summary__states > div {
+  display:flex;flex-direction:column;gap:6px;min-width:0;
+  padding:8px 7px;
+  border-left:2px solid var(--cs-orange2);
+  background:var(--cs-s2);
+}
+.po-med-recovery-summary__states > div.is-positive {border-left-color:var(--cs-positive);}
+.po-med-recovery-summary__states span {color:var(--cs-text2);font:700 9px/1.1 var(--cs-font);}
+.po-med-recovery-summary__states strong {color:var(--cs-text);font:700 13px/1.1 var(--cs-font-display);overflow-wrap:anywhere;}
+
+/* Unknown side means both illustrated hand locations are possibilities,
+   and selecting either cannot turn one green as if it were healthy. */
+.po-med-board--v3 .po-med-v3__body .po-med-bodymap__region.is-attention.is-selected .po-med-bodymap__node {
+  fill:var(--cs-s1);
+  stroke:var(--cs-orange2);
+  filter:drop-shadow(0 0 2px var(--cs-orange2));
+}
+.po-med-board--v3 .po-med-v3__body .po-med-bodymap__region.is-attention.is-selected .po-med-bodymap__label {
+  fill:var(--cs-orange2);
+}
+.po-med-board--v3 .po-med-v3__body .po-med-bodymap__region.is-attention.is-selected .po-med-bodymap__link {
+  stroke:var(--cs-orange2);
+}
