@@ -238,7 +238,7 @@ export function ScoutingCourtsideBoard({
             <p>{verdict.nextStep}</p>
             <small>Comparative ratings do not establish match performance or coaching suitability.</small>
           </div>
-        </div>
+        </div>}
         {!own && (isUnscouted
           ? <div className="po-scv3__intelligence-empty">
               <strong>NO EVALUATION ON FILE</strong>
