@@ -1597,3 +1597,328 @@
   .pc-schedule__selected {grid-template-columns:repeat(2,minmax(0,1fr));}
   .pc-schedule__selected-title {grid-column:1/-1;}
 }
+
+
+/* CONTRACT V3.1: remove ornamental empty real estate, keep Courtside theme authority. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--v31 {
+  height:100%;
+  align-content:start;
+  gap:8px;
+  overflow-x:hidden;
+}
+.pc-no-agreement--v31 {
+  grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);
+  align-items:stretch;
+  gap:8px;
+}
+.pc-no-agreement--v31 .pc-no-agreement__hero,
+.pc-no-agreement--v31 .pc-no-agreement__actions {
+  min-height:160px;
+  padding:18px 20px;
+  justify-content:center;
+  gap:12px;
+}
+.pc-no-agreement__main {display:flex;align-items:center;gap:19px;min-width:0;}
+.pc-no-agreement__main > div {display:flex;flex-direction:column;gap:9px;min-width:0;}
+.pc-no-agreement__main strong {
+  display:block;
+  font:700 clamp(24px,2.9cqi,41px)/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.pc-no-agreement__main small {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+  max-width:580px;
+}
+.pc-no-agreement__document {
+  display:flex;
+  flex:0 0 55px;
+  height:65px;
+  flex-direction:column;
+  gap:6px;
+  padding:16px 10px 9px;
+  box-sizing:border-box;
+  border:2px solid var(--cs-orange2);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--cs-orange2) 8%,var(--cs-s1));
+}
+.pc-no-agreement__document i {height:4px;width:100%;border-radius:3px;background:color-mix(in srgb,var(--cs-orange2) 44%,transparent);}
+.pc-no-agreement__document i:last-child {width:64%;}
+.pc-no-agreement__evidence {display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+.pc-no-agreement__evidence span {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 8px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-no-agreement__evidence span:first-child {color:var(--cs-positive);}
+.pc-no-agreement__evidence b {font:700 13px/1 var(--cs-font);}
+.pc-no-agreement--v31 .pc-no-agreement__actions {gap:8px;}
+.pc-no-agreement--v31 .pc-no-agreement__actions strong {font-size:clamp(18px,1.9cqi,26px);}
+.pc-no-agreement--v31 .pc-no-agreement__actions button {margin-top:2px;}
+.pc-no-agreement__registration {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 13px;
+  min-height:37px;
+  padding:9px 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__registration > strong {
+  margin-right:5px;
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-no-agreement__registration > span {
+  display:flex;
+  gap:8px;
+  color:var(--cs-text);
+  font:700 11px/1.1 var(--cs-font);
+}
+.pc-no-agreement__registration > span b {color:var(--cs-text2);font-weight:500;}
+
+/* Rival dossier: four strong choice cards with a genuinely useful detail strip.
+   The page must not allocate a huge panel to missing information. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-rpg--v31 {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto auto auto;
+  align-content:start;
+  gap:8px;
+}
+.pc-rpg--v31 .pc-rpg__hero {
+  grid-template-columns:minmax(0,1.25fr) minmax(175px,.65fr) auto;
+  gap:13px;
+  min-height:73px;
+  padding:10px 15px;
+}
+.pc-rpg--v31 .pc-rpg__hero h2 {
+  font-size:clamp(20px,2.05cqi,29px);
+  margin:5px 0 4px;
+}
+.pc-rpg--v31 .pc-rpg__hero p {font-size:11px;}
+.pc-rpg--v31 .pc-rpg__hero-status strong {font-size:clamp(20px,1.9cqi,27px);}
+.pc-rpg--v31 .pc-rpg__intel-strip {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  align-items:center;
+  min-height:51px;
+  padding:9px 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  padding:2px 12px;
+  border-right:1px solid var(--cs-line2);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div:first-child {padding-left:0;}
+.pc-rpg--v31 .pc-rpg__intel-strip > div:last-child {border-right:0;}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > span {
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > strong {
+  color:var(--cs-text);
+  font:700 clamp(14px,1.3cqi,19px)/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > small {
+  color:var(--cs-text2);
+  font:500 10px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip.is-unknown {
+  display:flex;
+  min-height:35px;
+  align-items:center;
+  gap:11px;
+}
+.pc-rpg--v31 .pc-rpg__intel-icon {
+  color:var(--cs-orange2);
+  font:700 23px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip.is-unknown > strong {
+  flex:0 0 auto;
+  color:var(--cs-text);
+  font:700 15px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-explanation {
+  color:var(--cs-text2);
+  font:500 11px/1.3 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__approaches {
+  min-height:0;
+  gap:8px;
+  padding:12px 13px;
+}
+.pc-rpg--v31 .pc-rpg__approaches > header {padding-bottom:8px;}
+.pc-rpg--v31 .pc-rpg__approach-grid {gap:8px;}
+.pc-rpg--v31 .pc-rpg__approach-grid > button {
+  min-height:123px;
+  gap:7px;
+  padding:12px 13px;
+  position:relative;
+  transition:border-color .13s ease,background .13s ease;
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button[aria-pressed='true'] {
+  border-color:var(--cs-lime);
+  box-shadow:inset 0 3px var(--cs-lime);
+}
+.pc-rpg--v31 .pc-rpg__approach-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+}
+.pc-rpg--v31 .pc-rpg__approach-index {
+  color:var(--cs-text3);
+  font:700 11px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button strong {
+  font-size:clamp(16px,1.45cqi,22px);
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button small {
+  font-size:11px;
+}
+.pc-rpg--v31 .pc-rpg__approach-flag {
+  margin-top:auto;
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+  letter-spacing:.03em;
+}
+.pc-rpg--v31 .pc-rpg__approach-details {
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1.05fr) minmax(145px,.5fr);
+  align-items:center;
+  gap:14px;
+  min-height:76px;
+  padding:11px 14px;
+}
+.pc-rpg--v31 .pc-rpg__route-description {display:flex;flex-direction:column;gap:5px;min-width:0;}
+.pc-rpg--v31 .pc-rpg__route-description > span,
+.pc-rpg--v31 .pc-rpg__risk > span {
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__route-description > strong {
+  color:var(--cs-lime);
+  font:700 20px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__route-description p,
+.pc-rpg--v31 .pc-rpg__risk p {
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text);
+}
+.pc-rpg--v31 .pc-rpg__risk {display:flex;flex-direction:column;gap:7px;padding-left:12px;}
+.pc-rpg--v31 .pc-rpg__route-state {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:9px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s1);
+  min-width:0;
+}
+.pc-rpg--v31 .pc-rpg__route-state span {
+  color:var(--cs-orange2);
+  font:700 11px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__route-state small {
+  color:var(--cs-text2);
+  font:500 10px/1.25 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__history {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:9px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+}
+.pc-rpg--v31 .pc-rpg__history-title {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex-wrap:wrap;
+  gap:9px;
+}
+.pc-rpg--v31 .pc-rpg__history-title strong {
+  color:var(--cs-text);
+  font:700 16px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__history-title > span {color:var(--cs-text2);font:600 11px/1 var(--cs-font);}
+.pc-rpg--v31 .pc-rpg__history-title button {
+  margin-left:auto;
+  padding:7px 10px;
+  border:1px solid var(--cs-lime);
+  border-radius:5px;
+  color:var(--cs-lime);
+  background:transparent;
+  font:700 12px/1 var(--cs-font-display);
+  cursor:pointer;
+}
+.pc-rpg--v31 .pc-rpg__history-empty {
+  color:var(--cs-text2);
+  font:500 11px/1.25 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__history ol {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  padding:0;
+  margin:0;
+  list-style:none;
+}
+.pc-rpg--v31 .pc-rpg__history li {
+  display:flex;
+  gap:7px;
+  flex-direction:column;
+  padding:8px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+}
+.pc-rpg--v31 .pc-rpg__history li time,
+.pc-rpg--v31 .pc-rpg__history li > span {color:var(--cs-text2);font:500 10px/1.15 var(--cs-font);}
+.pc-rpg--v31 .pc-rpg__history li strong {color:var(--cs-text);font:700 12px/1 var(--cs-font);}
+
+@container player-space (max-width:1250px) {
+  .pc-rpg--v31 .pc-rpg__hero {grid-template-columns:minmax(0,1fr) minmax(0,.7fr);}
+  .pc-rpg--v31 .pc-rpg__primary {grid-column:1/-1;justify-self:start;}
+  .pc-rpg--v31 .pc-rpg__approach-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg--v31 .pc-rpg__approach-details {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg--v31 .pc-rpg__route-state {grid-column:1/-1;}
+}
+@container player-space (max-width:850px) {
+  .pc-no-agreement--v31 {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg--v31 .pc-rpg__intel-strip {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .pc-rpg--v31 .pc-rpg__intel-strip > div {border-right:0;padding:4px;}
+  .pc-rpg--v31 .pc-rpg__history ol {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@container player-space (max-width:600px) {
+  .pc-rpg--v31 .pc-rpg__hero,
+  .pc-rpg--v31 .pc-rpg__approach-grid,
+  .pc-rpg--v31 .pc-rpg__approach-details,
+  .pc-rpg--v31 .pc-rpg__history ol {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg--v31 .pc-rpg__route-state {grid-column:auto;}
+  .pc-rpg--v31 .pc-rpg__intel-strip.is-unknown {flex-wrap:wrap;}
+  .pc-no-agreement__document {display:none;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .pc-rpg--v31 .pc-rpg__approach-grid > button {transition:none;}
+}
