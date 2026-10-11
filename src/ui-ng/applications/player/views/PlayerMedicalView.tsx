@@ -56,36 +56,11 @@ export function PlayerMedicalView() {
   return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical">
     <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
 
-    <aside className="po-med-v3__left" aria-label="Medical snapshot">
-      <section className="po-med-v3__snapshot">
-        <div className="po-med-v3__section-title">MEDICAL SNAPSHOT</div>
-        <div className="po-med-v3__snapshot-primary">
-          <span className={medical.activeInjury === null ? 'is-good' : 'is-warning'} aria-hidden="true">
-            {medical.activeInjury === null ? '✓' : '!'}
-          </span>
-          <div>
-            <small>PLAYER STATUS</small>
-            <strong>{medical.activeInjury === null ? 'CLEARED FOR PLAY' : 'INJURY ON RECORD'}</strong>
-            <span>{medical.activeInjury?.severityLabel ?? 'No active injury recorded'}</span>
-          </div>
-        </div>
-        <div className="po-med-v3__snapshot-facts">
-          <div><small>ALERT LEVEL</small><b>{medical.activeInjury !== null ? 'ACTIVE INJURY' : medical.risk?.riskBandLabel ?? 'NOT ASSESSED'}</b></div>
-          <div><small>LATEST ASSESSMENT</small><b>{medical.activeInjury?.injuredOnLabel ?? 'NO INJURY RECORD'}</b></div>
-        </div>
-      </section>
+    <aside className="po-med-v3__left" aria-label="Readiness and recorded recovery">
       <PhysicalReadinessPanel meters={medical.readiness.filter(meter => meter.id !== 'injury-risk')} />
-      <section className="po-med-v3__recovery">
-        {medical.activeInjury === null
-          ? <>
-            <div className="po-med-v3__section-title">RECOVERY</div>
-            <div className="po-med-v3__recovery-clear">
-              <span aria-hidden="true">✓</span>
-              <div><strong>NO ACTIVE RECOVERY</strong><small>No injury rehabilitation is currently recorded.</small></div>
-            </div>
-          </>
-          : <RecoveryTimelinePanel milestones={medical.recoveryMilestones} />}
-      </section>
+      {medical.activeInjury !== null && <section className="po-med-v3__recovery">
+        <RecoveryTimelinePanel milestones={medical.recoveryMilestones} />
+      </section>}
     </aside>
 
     <section className="po-med-v3__center" aria-label="Medical exploration">
