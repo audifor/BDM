@@ -85,6 +85,54 @@ describe('Courtside PLAYER Medical decisions',()=>{
     expect(url.searchParams.get('playerId')).toBe(playerId)
   })
 
+  it('renders a selected clinical case with scheduled, not invented, absence and compact pattern intelligence',()=>{
+    const world=createNewGame()
+    const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
+    const event=createInjury({
+      id:injuryIdFromString('medical-ledger-hand-case'),
+      playerId,kind:'handInjury',severity:'moderate',injuredOn:world.currentDate,
+      expectedReturnDate:addDays(world.currentDate,15),
+    })
+    const injured=updateGameWorld(world,{injuries:[...Object.values(world.injuriesById),event]})
+    const {container}=loadPlayer(injured,playerId)
+    expect(container.querySelector('[data-ng-region="medical-recovery-timeline"]')).toHaveTextContent('RECOVERY OUTLOOK')
+    expect(container.querySelector('[data-ng-region="medical-recovery-timeline"]')).toHaveTextContent('NEXT RECORDED REVIEW')
+    const tablist=screen.getByRole('tablist',{name:'Medical profile views'})
+    expect(screen.getByText('HAND INJURY · SIDE NOT RECORDED')).toBeInTheDocument()
+    const right=screen.getByRole('button',{name:/Hand \(R\): Hand injury/})
+    const left=screen.getByRole('button',{name:/Hand \(L\): Hand injury/})
+    expect(right).toBeInTheDocument()
+    expect(left).toBeInTheDocument()
+    fireEvent.click(right)
+    expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toHaveTextContent('Laterality is unknown')
+    fireEvent.click(within(tablist).getByRole('tab',{name:'HISTORY'}))
+    const board=container.querySelector('[data-ng-region="medical-history"]')!
+    expect(board).toHaveTextContent('INJURY LEDGER')
+    expect(board).toHaveTextContent('SELECTED INJURY CASE')
+    expect(board).toHaveTextContent('PATTERN INSIGHT')
+    expect(board).toHaveTextContent('SCHEDULED ABSENCE')
+    expect(board).toHaveTextContent('15 days')
+    expect(board).toHaveTextContent('BODY SIDE')
+    expect(board).toHaveTextContent('NOT RECORDED')
+    expect(container.querySelector('[data-ng-region="medical-staff-notes"]')).toBeNull()
+    expect(container.querySelector('.po-med-v3__history-extras')).toBeNull()
+    expect(container.querySelector('[data-ng-region="medical-selected-history-detail"]')).toHaveTextContent('Hand injury')
+  })
+
+  it('formats floating-point fatigue consistently in global header, medical hero and readiness',()=>{
+    const world=createNewGame()
+    const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
+    const fatigued=updateGameWorld(world,{
+      careerFatigueByPlayerId:{...world.careerFatigueByPlayerId,[playerId]:1.7200000000000006},
+    })
+    const {container}=loadPlayer(fatigued,playerId)
+    const hero=container.querySelector('[data-ng-region="medical-decision-hero"]')!
+    const readiness=container.querySelector('[data-ng-region="medical-readiness"]')!
+    expect(hero).toHaveTextContent('1.7/100')
+    expect(readiness).toHaveTextContent('1.7%')
+    expect(container).not.toHaveTextContent('1.7200000000000006')
+  })
+
   it('keeps BODY, LOAD and HISTORY as interactive views without displaying all sections at once',()=>{
     const world=createNewGame()
     const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
