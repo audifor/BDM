@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { loadGridPreferences } from '@/ui/dataGrid/persistence'
+import { COURTSIDE_ROSTER_GRID_PREFIX } from './CourtsideRosterTable'
 import type { DataGridView } from '@/ui/dataGrid/types'
 import { ROSTER_POSITION_FILTERS } from '@/ui-ng/applications/roster/rosterPositionFilter'
 import { useRosterWorkspaceSession } from '@/ui-ng/applications/roster/rosterWorkspaceSession'
@@ -51,7 +52,7 @@ export function RosterV4Controls({ selectedCount, onOpenInspector }: {
   const [saved,setSaved] = useState(savedFilters)
   const allOptions = [...OPTIONS,...customViews.map(view=>({id:view.id,name:view.name}))]
   const selectedIsCustom = customViews.some(view=>view.id===activePreset)
-  const snapshot = () => loadGridPreferences('plantilla-pcb-'+activePreset)
+  const snapshot = () => loadGridPreferences(COURTSIDE_ROSTER_GRID_PREFIX+activePreset)
   const newView = (reuseName?: string) => {
     const name = reuseName ?? window.prompt('Nombre de la nueva vista')
     if (name === null || name === undefined || name.trim()==='') return
@@ -76,7 +77,7 @@ export function RosterV4Controls({ selectedCount, onOpenInspector }: {
     }))
   }
   const columnManager = () =>
-    document.querySelector<HTMLButtonElement>('.roster-workspace--v4 .canonical-roster__actions > button[aria-label="Configurar columnas"]')?.click()
+    document.querySelector<HTMLButtonElement>('.courtside-roster-table__columns-button')?.click()
 
   const saveFilter = () => {
     const name=window.prompt('Nombre de este filtro')
@@ -100,8 +101,9 @@ export function RosterV4Controls({ selectedCount, onOpenInspector }: {
       {favorites.map(id=><button type="button" key={id} aria-pressed={activePreset===id}
         className={activePreset===id?'is-active':''} onClick={()=>setActivePreset(id)}>
         {viewName(id,customViews)}</button>)}
-      <select aria-label="Todas las vistas de plantilla" value={activePreset}
-        onChange={event=>setActivePreset(event.target.value)}>
+      <select aria-label="Todas las vistas de plantilla" value=""
+        onChange={event=>{if(event.target.value)setActivePreset(event.target.value)}}>
+        <option value="">TODAS LAS VISTAS ▾</option>
         {allOptions.map(view=><option key={view.id} value={view.id}>{view.name}</option>)}
       </select>
       <span className="roster-v4__push"/>

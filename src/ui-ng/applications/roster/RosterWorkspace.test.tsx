@@ -143,6 +143,19 @@ describe('CanonicalRoster NG variant', () => {
     expect(screen.queryByText(/seleccionados/)).not.toBeInTheDocument()
   })
 
+  it('renders a compact General view and allows optional columns without modifying Legacy',()=>{
+    mountRosterWorkspace()
+    const grid=screen.getByRole('region',{name:'Plantilla Courtside'})
+    expect(grid.querySelectorAll('thead th')).toHaveLength(11)
+    expect(grid.querySelectorAll('tbody tr').length).toBeGreaterThan(0)
+    expect(screen.getByRole('columnheader',{name:/JUGADOR/})).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'PESO'})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:/COLUMNAS/}))
+    expect(screen.getByRole('complementary',{name:'Editor de columnas'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox',{name:'PESO'}))
+    expect(grid.querySelectorAll('thead th')).toHaveLength(12)
+  })
+
   it('keeps the table full-width and opens an optional popup only on request', () => {
     const {world,team}=mountRosterWorkspace()
     expect(screen.getByRole('navigation',{name:'Secciones de plantilla'})).toBeInTheDocument()
@@ -188,7 +201,8 @@ describe('RosterWorkspace session restoration', () => {
     expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)
     unmount()
     mountRosterWorkspace()
-    expect(screen.getByLabelText('Todas las vistas de plantilla')).toHaveValue('psico')
+    expect(useRosterWorkspaceSession.getState().activePreset).toBe('psico')
+    expect(screen.getByLabelText('Todas las vistas de plantilla')).toHaveValue('')
     expect(screen.getByLabelText('Posición del roster')).toHaveValue('SG')
     expect(screen.getByLabelText('Buscar jugador en roster')).toHaveValue('mart')
     expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(2)
@@ -314,14 +328,14 @@ describe('WorkspaceHost player navigation', () => {
       </NgWorkspaceNavigationProvider>,
     )
 
-    expect(screen.getByLabelText('Preset de columnas')).toBeInTheDocument()
+    expect(screen.getByRole('region',{name:'Plantilla Courtside'})).toBeInTheDocument()
 
     act(() => {
       navigateToPlayerFromRoster(playerId)
     })
 
     await waitFor(() => {
-      expect(screen.queryByLabelText('Preset de columnas')).not.toBeInTheDocument()
+      expect(screen.queryByRole('region',{name:'Plantilla Courtside'})).not.toBeInTheDocument()
     })
     expect(screen.getAllByRole('button', { name: 'Overview' }).length).toBeGreaterThan(0)
   })

@@ -36,6 +36,7 @@ import { buildRosterStaffComments } from "@/ui-ng/applications/roster/buildRoste
 import { RosterRowInspector } from "@/ui-ng/applications/roster/components/RosterRowInspector";
 import { RosterStaffComments } from "@/ui-ng/applications/roster/components/RosterStaffComments";
 import { buildRosterInspectorSeasonStats } from '@/ui-ng/applications/roster/buildRosterInspectorSeasonStats';
+import { CourtsideRosterTable } from '@/ui-ng/applications/roster/components/CourtsideRosterTable';
 
 import "./CanonicalRoster.css";
 
@@ -435,7 +436,7 @@ export function CanonicalRoster({
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
           return contract === undefined
-            ? "Beca"
+            ? (v4Mode ? "Sin contrato" : "Beca")
             : compactMoney(contract.compensation.annualSalary);
         },
       },
@@ -521,7 +522,9 @@ export function CanonicalRoster({
       // Compact FM-like overview: core roster fields plus the established
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
-      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
+      columnIds: v4Mode
+        ? ["player", "position", "age", "rotation", "status", "season-MIN", "season-PTS", "season-REB", "season-AST", "fatigue", "expiry"]
+        : [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
     },
     ...(v4Mode ? [{
       id: 'performance',
@@ -614,6 +617,15 @@ export function CanonicalRoster({
     sessionBridge?.onSelectedRowIdsChange(ids);
   };
   const inspectedPlayer = inspectedId === undefined ? undefined : rows.find((player) => player.id === inspectedId);
+
+  // Courtside owns its own grid UI and view-scoped storage. Legacy/NG remains untouched.
+  if (v4Mode) {
+    return <CourtsideRosterTable
+      key={selectedView.id} columns={columns} rows={rows} view={selectedView}
+      searchQuery={gridSearchQuery ?? query} selectedIds={currentSelection}
+      onSelectionChange={handleSelectionChange} onOpenPlayer={openPlayer}
+    />;
+  }
 
   return (
     <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}${v4Mode ? ' canonical-roster--v4' : ''}`}>

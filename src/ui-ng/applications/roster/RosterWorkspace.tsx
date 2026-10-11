@@ -24,8 +24,7 @@ import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigatio
 import { readNgWorkspaceNavigation } from '@/ui-ng/workspace/workspaceApps'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 
-import './roster-workspace.css'
-import './roster-v4.css'
+import './courtside-roster.css'
 
 export function RosterWorkspace() {
   const world = useGameStore(state=>state.world)
@@ -123,12 +122,12 @@ export function RosterWorkspace() {
   useEffect(()=>{setInspectorOpen(false)},[tab])
 
   if(world===null||context===null||team===undefined){
-    return <div className="roster-workspace roster-workspace--empty" data-ng-region="roster-workspace">
+    return <div className="courtside-roster-screen courtside-roster-screen--empty" data-ng-region="roster-workspace">
       <section className="roster-workspace__empty-state"><h1>ROSTER</h1><p>No hay equipo asociado al entrenador.</p></section>
     </div>
   }
 
-  return <div className="roster-workspace roster-workspace--v4" style={teamStyle} data-ng-region="roster-workspace">
+  return <div className="courtside-roster-screen" style={teamStyle} data-ng-region="roster-workspace">
     <ApplicationWorkspace header={<RosterWorkspaceHeader context={context} activeTab={tab} onTabChange={setTab}/>}>
       <main className="roster-v4__body">
         {tab==='plantilla'&&<>
