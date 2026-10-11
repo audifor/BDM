@@ -42,12 +42,11 @@ export const SCOUTING_POSITION_KEYS: Readonly<Record<BasketballPosition, readonl
 }
 
 export function sharedScoutingPositions(
-  subject: {primaryPosition: BasketballPosition; secondaryPosition: BasketballPosition | null},
-  comparator: {primaryPosition: BasketballPosition; secondaryPosition: BasketballPosition | null},
+  subject: {primaryPosition: BasketballPosition; secondaryPositions?: readonly BasketballPosition[]},
+  comparator: {primaryPosition: BasketballPosition; secondaryPositions?: readonly BasketballPosition[]},
 ): readonly BasketballPosition[] {
-  const subjectPositions = [subject.primaryPosition,subject.secondaryPosition].filter(
-    (value):value is BasketballPosition=>value!==null)
-  const comparatorPositions = new Set([comparator.primaryPosition,comparator.secondaryPosition])
+  const subjectPositions = [...new Set([subject.primaryPosition,...(subject.secondaryPositions ?? [])])]
+  const comparatorPositions = new Set([comparator.primaryPosition,...(comparator.secondaryPositions ?? [])])
   return subjectPositions.filter(position=>comparatorPositions.has(position))
 }
 
