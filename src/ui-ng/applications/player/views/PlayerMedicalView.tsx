@@ -57,7 +57,12 @@ export function PlayerMedicalView() {
       ? `Fatigue is ${medical.fatigue.value}/100. Review recorded training and match load.`
       : null)
 
-  return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical">
+  return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical"
+    onKeyDownCapture={event => {
+      if (event.key === 'Escape' && selectedRegionId !== null) {
+        setSelectedRegionId(null)
+      }
+    }}>
     <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
 
     <aside className="po-med-v3__left" aria-label="Readiness and recorded recovery">
@@ -82,13 +87,7 @@ export function PlayerMedicalView() {
       </header>
       <div className="po-med-v3__canvas" id={`po-med-panel-${activeTab}`}
         role="tabpanel" aria-labelledby={`po-med-tab-${activeTab}`}>
-        {activeTab === 'body' && <div className="po-med-v3__body"
-          onKeyDownCapture={event => {
-            if (event.key === 'Escape' && selectedRegionId !== null) {
-              event.stopPropagation()
-              setSelectedRegionId(null)
-            }
-          }}>
+        {activeTab === 'body' && <div className="po-med-v3__body">
           <div className="po-med-v3__body-status">
             <span className={medical.bodyRegions.some(r => r.status === 'attention') ? 'is-warning' : 'is-good'}>●</span>
             {medical.bodyRegions.some(r => r.status === 'attention') ? 'RECORDED INJURY REGIONS' : 'NO RECORDED REGIONAL INJURY'}
@@ -96,14 +95,7 @@ export function PlayerMedicalView() {
           <MedicalBodyMap onSelectRegion={id =>
               setSelectedRegionId(previous => previous === id ? null : id)}
             selectedRegionId={selectedRegionId} regions={medical.bodyRegions} />
-          {region !== undefined && <div className="po-med-v3__region-detail"
-            data-ng-region="medical-selected-region" aria-live="polite">
-            <div><small>SELECTED REGION</small><strong>{region.label}</strong></div>
-            <div><small>RECORDED STATUS</small><strong className={region.status === 'attention' ? 'is-warning' : ''}>{region.statusLabel}</strong></div>
-            <p>{region.detail}</p>
-            <button type="button" aria-label="Clear selected body region"
-              onClick={() => setSelectedRegionId(null)}>×</button>
-          </div>}
+
         </div>}
         {activeTab === 'load' && <div className="po-med-v3__load">
           {noRecordedLoad
@@ -137,6 +129,23 @@ export function PlayerMedicalView() {
 
     <aside className="po-med-v3__right" aria-label="Manager medical decisions">
       <PlayerMedicalDecisionPanel medical={medical} playerId={model.identity.playerId} />
+      {activeTab === 'body' && region !== undefined && <section
+        className="po-med-v3__region-detail"
+        data-ng-region="medical-selected-region"
+        aria-label="Selected body region"
+        aria-live="polite">
+        <header className="po-med-v3__region-detail-head">
+          <span>SELECTED REGION</span>
+          <button type="button" aria-label="Clear selected body region"
+            onClick={() => setSelectedRegionId(null)}>×</button>
+        </header>
+        <strong className="po-med-v3__region-detail-name">{region.label}</strong>
+        <div className="po-med-v3__region-detail-status">
+          <span className={region.status === 'attention' ? 'is-warning' : 'is-positive'} aria-hidden="true">●</span>
+          <span>{region.statusLabel}</span>
+        </div>
+        <p>{region.detail}</p>
+      </section>}
       {insight !== null && <section className="po-med-v3__intelligence">
         <div className="po-med-v3__section-title">MEDICAL INTELLIGENCE</div>
         <small>{medical.activeInjury !== null ? 'RECORDED INJURY' : 'ENGINE ASSESSMENT'}</small>
