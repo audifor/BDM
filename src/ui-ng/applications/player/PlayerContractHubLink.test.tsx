@@ -20,10 +20,30 @@ describe('Player contract integration', () => {
 
     render(<NgWorkspaceNavigationProvider><PlayerWorkspace /></NgWorkspaceNavigationProvider>)
     expect(screen.getByRole('region', { name: 'Player contract status' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Open Contracts / Planning' }))
+    fireEvent.click(screen.getByRole('button', { name: /MANAGE CONTRACT/ }))
     const url = new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('contracts')
     expect(url.searchParams.get('teamId')).toBe(team.id)
     expect(url.searchParams.get('playerId')).toBe(playerId)
+  })
+
+  it('protects rival financials, negotiations and role promises from World Truth', () => {
+    const world = createNewGame()
+    const userTeam = getUserTeam(world)!
+    const rivalPlayer = Object.values(world.players).find((player) =>
+      !userTeam.rosterPlayerIds.includes(player.id) &&
+      Object.values(world.contractsById).some((contract) => contract.playerId === player.id),
+    )
+    expect(rivalPlayer).toBeDefined()
+    useGameStore.getState().replaceWorld(world)
+    window.history.replaceState({}, '',
+      `/?ui=ng&app=player&playerId=${encodeURIComponent(rivalPlayer!.id)}&playerView=contract`)
+
+    render(<NgWorkspaceNavigationProvider><PlayerWorkspace /></NgWorkspaceNavigationProvider>)
+    expect(screen.getByText('CONTRACT TERMS NOT VERIFIED')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /MANAGE CONTRACT/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Financial snapshot')).not.toBeInTheDocument()
+    expect(screen.queryByText('Financial Schedule')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /OPEN SCOUTING REPORT/ })).toBeInTheDocument()
   })
 })
