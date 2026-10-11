@@ -23,7 +23,7 @@ export function PlayerContractView() {
     return <PlayerContractOpportunities
       world={world}
       playerId={model.identity.playerId}
-      playerName={model.identity.displayName}
+      playerName={`${model.identity.firstName} ${model.identity.lastName}`}
       onScouting={() => session.setActiveView('scouting')}
     />
   }
