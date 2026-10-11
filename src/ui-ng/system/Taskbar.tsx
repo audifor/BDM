@@ -1,4 +1,4 @@
-import { useEffect, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { PlayerId, StaffPersonId, TeamId, CompetitionId } from '@/domain/ids'
 import type { TaskbarInstance } from '@/ui-ng/workspace/taskbarInstances'
@@ -42,6 +42,14 @@ export function Taskbar() {
   const world=useGameStore(s=>s.world)
   const [instanceGroup,setInstanceGroup]=useState<WorkspaceAppId|null>(null)
   const [groupAnchor,setGroupAnchor]=useState({left:0,bottom:0})
+  const groupExitTimer=useRef<ReturnType<typeof setTimeout>|null>(null)
+  const cancelGroupClose=()=>{
+    if(groupExitTimer.current!==null){clearTimeout(groupExitTimer.current);groupExitTimer.current=null}
+  }
+  const scheduleGroupClose=()=>{
+    cancelGroupClose()
+    groupExitTimer.current=setTimeout(()=>{setInstanceGroup(null);groupExitTimer.current=null},200)
+  }
   const busy=useGameStore(s=>s.simulationBusy)
   const [startOpen,setStartOpen]=useState(false)
   const [menu,setMenu]=useState<WorkspaceAppId|null>(null)
@@ -53,9 +61,10 @@ export function Taskbar() {
   const isPinned=(id:WorkspaceAppId)=>pinnedApps.includes(id)
   const closeMenu=()=>setMenu(null)
   const openInstanceGroup=(id:WorkspaceAppId, anchor:HTMLButtonElement)=>{
+    cancelGroupClose()
     const box=anchor.getBoundingClientRect()
     setGroupAnchor({left:Math.max(8,Math.min(box.left,window.innerWidth-320)),bottom:window.innerHeight-box.top+6})
-    setInstanceGroup(current=>current===id?null:id)
+    setInstanceGroup(id)
     setMenu(null)
     setMoreOpen(false)
     setStartOpen(false)
@@ -80,6 +89,20 @@ export function Taskbar() {
     measure();window.addEventListener('resize',measure)
     return()=>window.removeEventListener('resize',measure)
   },[])
+  useEffect(()=>()=>cancelGroupClose(),[])
+  useEffect(()=>{
+    if(instanceGroup===null)return
+    const closeOnOutside=(event:PointerEvent)=>{
+      const target=event.target
+      if(!(target instanceof Element))return
+      if(target.closest('.ng-taskbar__instance-popover'))return
+      if(target.closest('.ng-taskbar__app-slot[data-app="'+instanceGroup+'"]'))return
+      cancelGroupClose()
+      setInstanceGroup(null)
+    }
+    document.addEventListener('pointerdown',closeOnOutside,true)
+    return()=>document.removeEventListener('pointerdown',closeOnOutside,true)
+  },[instanceGroup])
   useEffect(()=>{
     const keys=(event:KeyboardEvent)=>{
       if(event.key==='Escape'){setMenu(null);setMoreOpen(false);setInstanceGroup(null)}
@@ -95,7 +118,7 @@ export function Taskbar() {
     <div className="ng-taskbar__apps" role="toolbar" onDragOver={event=>event.preventDefault()} onDrop={event=>drop(event)}>
       <button aria-label="Abrir menú de inicio BDM" aria-haspopup="dialog" aria-expanded={startOpen}
         className={`ng-taskbar__app ng-taskbar__start${startOpen?' is-open':''}`} type="button"
-        onClick={()=>{setStartOpen(o=>!o);setMenu(null);setMoreOpen(false)}}>
+        onClick={()=>{setStartOpen(o=>!o);setMenu(null);setMoreOpen(false);cancelGroupClose();setInstanceGroup(null)}}>
         <CourtsideGlyph name="diamond"/>
       </button>
       {shown.map(id=>{
@@ -103,24 +126,20 @@ export function Taskbar() {
         const members=instances.filter(instance=>instance.app===id)
         const index=taskbarApps.indexOf(id)
         return <div key={id} className="ng-taskbar__app-slot" data-app={id}
+          onPointerLeave={()=>{if(instanceGroup===id)scheduleGroupClose()}}
           onDragOver={event=>event.preventDefault()} onDrop={event=>{event.stopPropagation();drop(event,id)}}>
           <button type="button" aria-label={label} aria-current={active?'page':undefined}
-            aria-expanded={id==='home'?undefined:menuOpen} aria-haspopup={id==='home'?undefined:'menu'}
+            aria-expanded={id==='home'?undefined:instanceGroup===id||menuOpen} aria-haspopup={id==='home'?undefined:'menu'}
             className={`ng-taskbar__app${active?' is-active':''}${opened?' is-running':''}${pinned?' is-pinned':''}`}
             title={label} draggable={id!=='home'} onDragStart={event=>beginDrag(event,id)}
-            onClick={()=>{if(id!=='home'&&opened)closeApp(id);else setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);setInstanceGroup(null)}}
-            onContextMenu={event=>{event.preventDefault();setStartOpen(false);setMenu(id==='home'?null:id)}}
+            onPointerEnter={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
+            onFocus={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
+            onClick={()=>{if(id!=='home'&&opened)closeApp(id);else setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);cancelGroupClose();setInstanceGroup(null)}}
+            onContextMenu={event=>{event.preventDefault();setStartOpen(false);cancelGroupClose();setInstanceGroup(null);setMenu(id==='home'?null:id)}}
             onAuxClick={event=>{if(event.button===1&&opened&&isClosableTaskbarApp(id)){event.preventDefault();closeApp(id);setMenu(null)}}}
             onMouseDown={event=>{if(event.button===1)event.preventDefault()}}>
             <CourtsideTaskbarIcon id={id}/><span>{label}</span>
           </button>
-          {members.length>0 && <button type="button"
-            className="ng-taskbar__instances-trigger"
-            aria-label={`Ver ${members.length} instancias de ${label}`}
-            aria-haspopup="menu" aria-expanded={instanceGroup===id}
-            onClick={event=>openInstanceGroup(id,event.currentTarget)}>
-            <b>{members.length}</b><span aria-hidden="true">▴</span>
-          </button>}
           {menuOpen?<><div className="ng-taskbar__menu-backdrop" data-ng-region="taskbar-app-menu" onPointerDown={closeMenu}/>
             <div className="ng-taskbar__menu" role="menu" aria-label={`Opciones de ${label}`}>
               <div className="ng-taskbar__menu-heading">{label}</div>
@@ -145,8 +164,9 @@ export function Taskbar() {
       </div>:null}
     </div>
     {instanceGroup!==null && groupInstances.length>0 && createPortal(<>
-      <div className="ng-taskbar__instance-backdrop" onPointerDown={()=>setInstanceGroup(null)} />
       <div className="ng-taskbar__instance-popover" role="menu"
+        onPointerEnter={cancelGroupClose}
+        onPointerLeave={scheduleGroupClose}
         aria-label={`Instancias de ${taskbarAppLabel(instanceGroup)}`}
         style={{left:groupAnchor.left,bottom:groupAnchor.bottom}}>
         <header><strong>{taskbarAppLabel(instanceGroup)}</strong><span>{groupInstances.length} abiertas</span></header>
