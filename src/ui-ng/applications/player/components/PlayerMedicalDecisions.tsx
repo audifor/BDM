@@ -1,5 +1,6 @@
 import type { PlayerId } from '@/domain/ids'
 import type { PlayerMedicalModel } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
+import { formatMedicalNumber } from '@/ui-ng/applications/player/data/formatMedicalNumber'
 import { navigateToMedicalDecision, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
 export function PlayerMedicalDecisionHero({
@@ -21,7 +22,7 @@ export function PlayerMedicalDecisionHero({
     </div>
     <div className="po-med-v2__hero-metric">
       <span>CAREER FATIGUE</span>
-      <strong className={medical.fatigue.value>=70?'is-warning':''}>{medical.fatigue.value}<small>/100</small></strong>
+      <strong className={medical.fatigue.value>=70?'is-warning':''}>{formatMedicalNumber(medical.fatigue.value)}<small>/100</small></strong>
       <small>{medical.fatigue.loadLabel}</small>
     </div>
     <div className="po-med-v2__hero-metric">
