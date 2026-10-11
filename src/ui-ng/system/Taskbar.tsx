@@ -148,6 +148,8 @@ export function Taskbar() {
                 {pinned?'Desanclar de barra':'Anclar a barra'}</button>
               <button role="menuitem" type="button" disabled={index<=1} onClick={()=>{moveTaskbarApp(id,taskbarApps[index-1]!);closeMenu()}}>Mover a la izquierda</button>
               <button role="menuitem" type="button" disabled={index===taskbarApps.length-1} onClick={()=>{moveTaskbarApp(id,taskbarApps[index+1]!);closeMenu()}}>Mover a la derecha</button>
+              {opened&&isClosableTaskbarApp(id)?<button role="menuitem" type="button"
+                onClick={()=>{closeApp(id);closeMenu();cancelGroupClose();setInstanceGroup(null)}}>Cerrar</button>:null}
             </div></>:null}
         </div>
       })}
