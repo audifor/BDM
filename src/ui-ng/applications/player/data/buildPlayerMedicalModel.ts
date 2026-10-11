@@ -818,9 +818,11 @@ function buildRecoveryMilestones(
     {
       id: 'training',
       label: 'Training',
-      stateLabel: available ? 'Full' : 'Restricted',
-      tone: available ? 'positive' : 'caution',
-      note: available ? null : 'Load is managed until the medical staff clear the player.',
+      // Match-selection availability is NOT evidence of a training restriction.
+      // No authoritative player-specific training-clearance field exists in Save.
+      stateLabel: 'Not recorded',
+      tone: 'neutral',
+      note: 'Training clearance is not recorded. Match unavailability does not imply a training ban.',
     },
     {
       id: 'match-play',
