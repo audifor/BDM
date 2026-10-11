@@ -55,10 +55,7 @@ import { PlayerAttributesView } from '@/ui-ng/applications/player/views/PlayerAt
 import { PlayerOverviewView } from '@/ui-ng/applications/player/views/PlayerOverviewView'
 import { PlayerContractView } from '@/ui-ng/applications/player/views/PlayerContractView'
 import { PlayerPerformanceView } from '@/ui-ng/applications/player/views/PlayerPerformanceView'
-import {
-  MedicalInspectorContent,
-  PlayerMedicalView,
-} from '@/ui-ng/applications/player/views/PlayerMedicalView'
+import { PlayerMedicalView } from '@/ui-ng/applications/player/views/PlayerMedicalView'
 import { PlayerDevelopmentView } from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
 import {
   PlayerHistoryView,
@@ -312,15 +309,7 @@ function PlayerWorkspaceLayout({
       >
         <WorkspaceBody
           inspector={
-            activeView === 'medical' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Medical Detail"
-              >
-                <MedicalInspectorContent />
-              </InspectorPane>
-            ) : undefined
+            undefined
           }
           main={
             <div className="po-workspace-content" data-ng-region="player-workspace-content">
