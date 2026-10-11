@@ -1,5 +1,5 @@
 import { compareGameDates, type GameDate } from '@/domain/date'
-import { componentConditionAt, resolveFacilityStatusAt, usableComponentsForTeamAt, type FacilityDevelopmentProject } from '@/domain/facilities'
+import { componentConditionAt, resolveFacilityStatusAt, usableComponentsForTeamAt, type FacilityComponent, type FacilityComponentConditionRecord, type FacilityDevelopmentProject, type FacilityMaintenanceAction, type FacilityStatusRecord, type FacilityUsageRight } from '@/domain/facilities'
 import type { GameWorld } from '@/domain/world'
 import type { FacilityComponentId, TeamId } from '@/domain/ids'
 
@@ -43,16 +43,63 @@ export function projectPhysicalBlocker(world: GameWorld, project: FacilityDevelo
 }
 
 /** Physical proof is distinct from a CFI4 default and from an access entitlement. Never persisted. */
+/**
+ * Per-world lookup tables for `componentPhysicalAvailabilityAt`. A GameWorld is immutable, so the index built for one world value
+ * is valid for exactly that value; a changed world gets a fresh index. Every table holds the same records, in the same order, as
+ * the full scans it replaces, so results are identical (see FacilityPhysicalOperationsIndex.test.ts).
+ */
+interface PhysicalLookup {
+  readonly conditionsByComponent: Map<string, FacilityComponentConditionRecord[]>
+  readonly maintenanceByComponent: Map<string, FacilityMaintenanceAction[]>
+  readonly statusRecords: readonly FacilityStatusRecord[]
+  readonly rights: readonly FacilityUsageRight[]
+  readonly components: readonly FacilityComponent[]
+  readonly usableByTeamDate: Map<string, ReadonlySet<string>>
+  readonly activeProjectsByDate: Map<string, readonly FacilityDevelopmentProject[]>
+}
+const physicalLookups = new WeakMap<GameWorld, PhysicalLookup>()
+
+function physicalLookup(world: GameWorld): PhysicalLookup {
+  const cached = physicalLookups.get(world)
+  if (cached !== undefined) return cached
+  const conditionsByComponent = new Map<string, FacilityComponentConditionRecord[]>()
+  for (const record of Object.values(world.facilityComponentConditionRecordsById)) {
+    const list = conditionsByComponent.get(record.componentId)
+    if (list === undefined) conditionsByComponent.set(record.componentId, [record]); else list.push(record)
+  }
+  const maintenanceByComponent = new Map<string, FacilityMaintenanceAction[]>()
+  for (const action of Object.values(world.facilityMaintenanceActionsById)) {
+    if (action.componentId === null) continue
+    const list = maintenanceByComponent.get(action.componentId)
+    if (list === undefined) maintenanceByComponent.set(action.componentId, [action]); else list.push(action)
+  }
+  const lookup: PhysicalLookup = {
+    conditionsByComponent, maintenanceByComponent, statusRecords: Object.values(world.facilityStatusRecordsById), rights: Object.values(world.facilityUsageRightsById),
+    components: Object.values(world.facilityComponentsById), usableByTeamDate: new Map(), activeProjectsByDate: new Map(),
+  }
+  physicalLookups.set(world, lookup)
+  return lookup
+}
+
 export function componentPhysicalAvailabilityAt(world: GameWorld, componentId: FacilityComponentId, onDate: GameDate, teamId?: TeamId) {
+  const lookup = physicalLookup(world)
   const component = world.facilityComponentsById[componentId]!
   const facility = world.facilitiesById[component.facilityId]!
-  const condition = componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), componentId, onDate)
-  const work = componentWorkProjectsAt(world, componentId, onDate)
+  const condition = componentConditionAt(lookup.conditionsByComponent.get(componentId) ?? [], componentId, onDate)
+  let activeProjects = lookup.activeProjectsByDate.get(onDate)
+  if (activeProjects === undefined) { activeProjects = activePhysicalProjectsAt(world, onDate); lookup.activeProjectsByDate.set(onDate, activeProjects) }
+  const work = activeProjects.filter((p) => p.facilityId === component.facilityId && (p.scope.kind === 'DEMOLISH_FACILITY' || p.scope.kind === 'CREATE_FACILITY' || projectAffectedComponentIds(p).includes(componentId)))
   // BS17 maintenance/repair works in progress occupy the component exactly like development works: a started, not yet
   // completed action makes it unavailable, and completing or stopping it releases it.
-  const maintenance = Object.values(world.facilityMaintenanceActionsById).filter((action) => action.componentId === componentId && compareGameDates(action.startedAt, onDate) <= 0 && (action.completedAt === null || compareGameDates(action.completedAt, onDate) > 0))
-  const facilityStatus = resolveFacilityStatusAt(Object.values(world.facilityStatusRecordsById), facility.id, onDate, facility.status)
-  const access = teamId === undefined ? null : usableComponentsForTeamAt(Object.values(world.facilityUsageRightsById), Object.values(world.facilityComponentsById), teamId, onDate).includes(componentId)
+  const maintenance = (lookup.maintenanceByComponent.get(componentId) ?? []).filter((action) => compareGameDates(action.startedAt, onDate) <= 0 && (action.completedAt === null || compareGameDates(action.completedAt, onDate) > 0))
+  const facilityStatus = resolveFacilityStatusAt(lookup.statusRecords, facility.id, onDate, facility.status)
+  let access: boolean | null = null
+  if (teamId !== undefined) {
+    const key = `${teamId}|${onDate}`
+    let usable = lookup.usableByTeamDate.get(key)
+    if (usable === undefined) { usable = new Set(usableComponentsForTeamAt(lookup.rights, lookup.components, teamId, onDate)); lookup.usableByTeamDate.set(key, usable) }
+    access = usable.has(componentId)
+  }
   const closed = component.status === 'PLANNED' || component.openedAt !== null && component.openedAt > onDate || component.closedAt !== null && component.closedAt <= onDate || ['TEMPORARILY_CLOSED', 'DECOMMISSIONED', 'DEMOLISHED', 'UNDER_CONSTRUCTION', 'PLANNED'].includes(facilityStatus)
   const status = closed || work.length > 0 || maintenance.length > 0 || condition?.serviceability === 'OUT_OF_SERVICE' ? 'OUT_OF_SERVICE' : condition !== undefined && condition.serviceability !== 'FULL' ? 'LIMITED' : condition === undefined || condition.physicalCondition === null || facilityStatus === 'UNKNOWN' ? 'UNKNOWN' : 'AVAILABLE'
   const specification = component.specification

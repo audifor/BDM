@@ -592,19 +592,60 @@ export function facilityOperationIdFor(needId: string, attempt: number): string 
   return `facility-operation:maintenance:${needId}:${attempt}`
 }
 
+/**
+ * Read indexes over one `facilityEconomyRecordsById` value. The collection is immutable (every write publishes a new object), so an
+ * index built for one value is valid for exactly that value. Each list keeps the order of `Object.values` and the same filters as a
+ * full scan, so callers observe identical results; the arrays are frozen because they are shared between callers.
+ */
+interface FacilityEconomyIndex {
+  readonly byKind: Map<string, readonly FacilityEconomyRecord[]>
+  operationEvents?: Map<string, readonly FacilityOperationEvent[]>
+  operationIds?: readonly string[]
+}
+const facilityEconomyIndexes = new WeakMap<object, FacilityEconomyIndex>()
+
+function facilityEconomyIndex(world: Pick<GameWorld, 'facilityEconomyRecordsById'>): FacilityEconomyIndex {
+  const records = world.facilityEconomyRecordsById
+  let index = facilityEconomyIndexes.get(records)
+  if (index === undefined) { index = { byKind: new Map() }; facilityEconomyIndexes.set(records, index) }
+  return index
+}
+
 export function facilityEconomyRecordsOfKind<K extends FacilityEconomyRecord['recordKind']>(
   world: Pick<GameWorld, 'facilityEconomyRecordsById'>,
   kind: K,
 ): readonly Extract<FacilityEconomyRecord, { readonly recordKind: K }>[] {
-  return Object.values(world.facilityEconomyRecordsById).filter((record): record is Extract<FacilityEconomyRecord, { readonly recordKind: K }> => record.recordKind === kind)
+  const index = facilityEconomyIndex(world)
+  let list = index.byKind.get(kind)
+  if (list === undefined) {
+    list = Object.freeze(Object.values(world.facilityEconomyRecordsById).filter((record) => record.recordKind === kind))
+    index.byKind.set(kind, list)
+  }
+  return list as readonly Extract<FacilityEconomyRecord, { readonly recordKind: K }>[]
+}
+
+function operationEventIndex(world: Pick<GameWorld, 'facilityEconomyRecordsById'>): Map<string, readonly FacilityOperationEvent[]> {
+  const index = facilityEconomyIndex(world)
+  if (index.operationEvents === undefined) {
+    const grouped = new Map<string, FacilityOperationEvent[]>()
+    for (const event of facilityEconomyRecordsOfKind(world, 'OPERATION_EVENT')) {
+      const list = grouped.get(event.operationId)
+      if (list === undefined) grouped.set(event.operationId, [event]); else list.push(event)
+    }
+    index.operationEvents = new Map([...grouped].map(([id, events]) => [id, Object.freeze([...events].sort((a, b) => a.sequence - b.sequence))]))
+  }
+  return index.operationEvents
 }
 
 export function facilityOperationEvents(world: Pick<GameWorld, 'facilityEconomyRecordsById'>, operationId: string): readonly FacilityOperationEvent[] {
-  return facilityEconomyRecordsOfKind(world, 'OPERATION_EVENT').filter((event) => event.operationId === operationId).sort((a, b) => a.sequence - b.sequence)
+  return operationEventIndex(world).get(operationId) ?? EMPTY_OPERATION_EVENTS
 }
+const EMPTY_OPERATION_EVENTS: readonly FacilityOperationEvent[] = Object.freeze([])
 
 export function facilityOperationIds(world: Pick<GameWorld, 'facilityEconomyRecordsById'>): readonly string[] {
-  return [...new Set(facilityEconomyRecordsOfKind(world, 'OPERATION_EVENT').map((event) => event.operationId))].sort()
+  const index = facilityEconomyIndex(world)
+  if (index.operationIds === undefined) index.operationIds = Object.freeze([...operationEventIndex(world).keys()].sort())
+  return index.operationIds
 }
 
 export const FACILITY_OPERATION_STAGES = [

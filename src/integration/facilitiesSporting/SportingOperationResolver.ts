@@ -33,7 +33,10 @@ export function resolveSportingOperation(world: GameWorld, input: {
         hasAccess: physical.access === true, nominalCapacity: physical.nominalCapacity, capacityUnit: physical.capacityUnit, operationalCapacity: null,
       } satisfies PhysicalResourceEvidence]
     })
-    resources.push(...candidates)
+    // Evidence: the resources the Team could actually use. Components the Team has no right to are recorded only when nothing else
+    // exists for the requirement (they are then the cause). The status below is still decided over every candidate.
+    const accessible = candidates.filter((candidate) => candidate.hasAccess)
+    resources.push(...(accessible.length > 0 ? accessible : candidates))
     // Exhaust all legitimate alternatives before blocking. A known denied resource cannot be
     // made usable by the absence of additional data elsewhere in the world.
     if (candidates.some((c) => c.status === 'VERIFIED_AVAILABLE')) return 'VERIFIED_AVAILABLE'
