@@ -36,7 +36,7 @@ describe('Courtside PLAYER Medical decisions',()=>{
     expect(hero).toHaveTextContent('3 /day')
     const readiness=container.querySelector('[data-ng-region="medical-readiness"]')!
     expect(readiness).not.toHaveTextContent('FATIGUE RECOVERY')
-    expect(readiness).toHaveTextContent('MATCH LOAD')
+    expect(readiness).toHaveTextContent('Match load (7D)')
     expect(container.querySelector('[data-ng-region="medical-decisions"]')).not.toBeNull()
     expect(container.querySelector('[data-ng-region="medical-bodymap"]') ?? container.querySelector('.po-med-bodymap')).not.toBeNull()
     expect(screen.queryByText('Medical Detail')).not.toBeInTheDocument()
