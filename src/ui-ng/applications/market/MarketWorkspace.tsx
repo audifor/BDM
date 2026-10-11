@@ -41,7 +41,12 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
   const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
-  const [selectedId, setSelectedId] = useState<PlayerId | undefined>()
+  // PLAYER > CONTRACT passes a specific free-agent dossier in the URL.
+  // Selection is only shown if the player is really present in the free-agent list.
+  const [selectedId, setSelectedId] = useState<PlayerId | undefined>(() => {
+    const id = typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('playerId')
+    return id ? id as PlayerId : undefined
+  })
   const [revisions, setRevisions] = useState<Record<string, { salary: string; years: string }>>({})
   const team = world === null ? undefined : getUserTeam(world)
 
