@@ -1,142 +1,173 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
-import type { ScoutingRosterComparisonRow } from './buildScoutingRosterComparison'
+import type { PlayerId } from '@/domain/ids'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 import { buildScoutingRosterComparison } from './buildScoutingRosterComparison'
 import { buildPlayerScoutingModel } from './buildPlayerScoutingModel'
-import { buildPlayerScoutingDecision, defaultScoutingRosterComparisonId, scoutingRosterBenchmarks } from './buildPlayerScoutingDecision'
-import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
-import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
+import { buildPlayerScoutingDecision, scoutingRosterBenchmarks } from './buildPlayerScoutingDecision'
+import { positionEvidenceKeys, sharedScoutingPositions, SCOUTING_POSITION_KEYS } from './scoutingPositionEvidence'
 
-describe('PLAYER scouting decision transparency',()=>{
-  it('starts with a roster teammate in the same primary position when possible',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=team.rosterPlayerIds[0]!
-    const reference=defaultScoutingRosterComparisonId(world,subject)
-    expect(reference).not.toBe(subject)
-    expect(team.rosterPlayerIds).toContain(reference)
-    if(team.rosterPlayerIds.some(id=>id!==subject &&
-        world.players[id]?.basketball.primaryPosition===world.players[subject]?.basketball.primaryPosition)){
-      expect(world.players[reference!]!.basketball.primaryPosition).toBe(world.players[subject]!.basketball.primaryPosition)
+const seed = () => {
+  const world = createNewGame()
+  const team = getUserTeam(world)!
+  const ownId = team.rosterPlayerIds[0]!
+  const externalId = Object.values(world.players).find(p => !team.rosterPlayerIds.includes(p.id))!.id
+  return { world, team, ownId, externalId }
+}
+function decide(
+  world: ReturnType<typeof createNewGame>, subject: PlayerId, comparator: PlayerId,
+  overrides?: {own?:boolean; rows?:ReturnType<typeof buildScoutingRosterComparison>;
+    scouting?:ReturnType<typeof buildPlayerScoutingModel>}
+) {
+  const player = world.players[subject]!
+  const rival = world.players[comparator]!
+  return buildPlayerScoutingDecision({
+    own: overrides?.own ?? getUserTeam(world)!.rosterPlayerIds.includes(subject),
+    rows: overrides?.rows ?? buildScoutingRosterComparison(world,subject,comparator),
+    scouting: overrides?.scouting ?? buildPlayerScoutingModel(world,subject),
+    comparatorName:rival.lastName,
+    subjectPosition:player.basketball.primaryPosition,
+    sharedPositions:sharedScoutingPositions(player.basketball,rival.basketball),
+  })
+}
+describe('PLAYER Scouting positional decision safety',()=>{
+  it('uses only canonical 80-rating keys for each of the five explicit unweighted position lenses',()=>{
+    for (const [position,keys] of Object.entries(SCOUTING_POSITION_KEYS)){
+      expect(keys).toHaveLength(14)
+      expect(new Set(keys).size).toBe(14)
+      expect(keys.every(key=>PLAYER_TRUTH_RATING_KEYS.includes(key))).toBe(true)
+      expect(position).toMatch(/^(PG|SG|SF|PF|C)$/)
     }
   })
 
-  it('supports an own-roster decision but never calls it match performance',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=team.rosterPlayerIds[0]!
-    const comparison=defaultScoutingRosterComparisonId(world,subject)!
-    const rows=buildScoutingRosterComparison(world,subject,comparison)
-    const result=buildPlayerScoutingDecision({
-      own:true,rows,scouting:buildPlayerScoutingModel(world,subject),
-      comparatorName:world.players[comparison]!.lastName,
-    })
-    expect(result.comparableCount).toBe(80)
-    expect(result.status).toBe('supported')
-    expect(result.basis).toBe('Direct roster ratings')
-    expect(result.meaning).not.toMatch(/will score|guarantee|must sign/i)
+  it('selects only shared primary/secondary positional roster peers, never silently a different position',()=>{
+    const {world,team,ownId}=seed()
+    const benchmark=scoutingRosterBenchmarks(world,ownId)
+    const subject=world.players[ownId]!.basketball
+    for(const id of [benchmark.rolePeer,benchmark.ratingLeader]){
+      if(id===null)continue
+      expect(team.rosterPlayerIds).toContain(id)
+      expect(id).not.toBe(ownId)
+      expect(sharedScoutingPositions(subject,world.players[id]!.basketball).length).toBeGreaterThan(0)
+    }
+    if(benchmark.rolePeer!==null){
+      const verdict=decide(world,ownId,benchmark.rolePeer)
+      expect(verdict.positionMatched).toBe(true)
+      expect(verdict.positionalComparableCount).toBe(14)
+      expect(verdict.positionalEvidenceTotal).toBe(14)
+      expect(verdict.status).toBe('supported')
+      expect(verdict.basis).toBe('Direct roster ratings')
+      expect(verdict.meaning).not.toMatch(/starting five|guaranteed starter|must keep/)
+    }
   })
 
-  it('does not recommend signing an unsighted rival even when the engine has hidden truth',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!.id
-    const comparison=team.rosterPlayerIds[0]!
-    const rows=buildScoutingRosterComparison(world,subject,comparison)
-    const result=buildPlayerScoutingDecision({
-      own:false,rows,scouting:buildPlayerScoutingModel(world,subject),
-      comparatorName:world.players[comparison]!.lastName,
-    })
-    expect(result.headline).toBe('SCOUT FIRST · NO VERDICT')
-    expect(result.status).toBe('insufficient')
-    expect(result.comparableCount).toBe(0)
-    expect(result.confirmedAdvantageCount).toBe(0)
-  })
-
-  it('only counts a rival advantage if even the conservative scouting bound wins by five',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!.id
-    const sample=buildScoutingRosterComparison(world,subject,team.rosterPlayerIds[0]!)[0]!
-    const rows=[
-      {...sample,subject:75,low:62,high:85,own:61,isEstimate:true},
-      {...sample,id:buildScoutingRosterComparison(world,subject,team.rosterPlayerIds[0]!)[1]!.id,subject:65,low:64,high:82,own:64,isEstimate:true},
-      {...sample,id:buildScoutingRosterComparison(world,subject,team.rosterPlayerIds[0]!)[2]!.id,subject:24,low:15,high:35,own:42,isEstimate:true},
-    ] satisfies readonly ScoutingRosterComparisonRow[]
-    const result=buildPlayerScoutingDecision({
-      own:false,rows,scouting:buildPlayerScoutingModel(world,subject),
-      comparatorName:'Bench Player',
-    })
-    expect(result.confirmedAdvantageCount).toBe(0)
-    expect(result.confirmedConcernCount).toBe(1)
-    expect(result.status).toBe('insufficient')
-  })
-
-  it('uses the true own-roster rating-mean leader rather than asserting a starting five',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=team.rosterPlayerIds[0]!
-    const refs=scoutingRosterBenchmarks(world,subject)
-    expect(team.rosterPlayerIds).toContain(refs.ratingLeader)
-    const position=world.players[subject]!.basketball.primaryPosition
-    const peers=team.rosterPlayerIds.filter(id=>id!==subject &&
-      world.players[id]?.basketball.primaryPosition===position)
-    const pool=peers.length ? peers : team.rosterPlayerIds.filter(id=>id!==subject)
-    const average=(id:typeof subject)=>{
+  it('chooses a positional rating leader by transparent relevant-key mean, not all 80',()=>{
+    const {world,team,ownId}=seed()
+    const leader=scoutingRosterBenchmarks(world,ownId).ratingLeader
+    if(leader===null)return
+    const subject=world.players[ownId]!.basketball
+    const peers=team.rosterPlayerIds.filter(id=>id!==ownId &&
+      sharedScoutingPositions(subject,world.players[id]!.basketball).length>0)
+    const average=(id:PlayerId)=>{
       const access=derivePlayerKnowledgeAccess(world,id)
       if(access.kind!=='own-roster')return 0
-      return PLAYER_TRUTH_RATING_KEYS.reduce((sum,key)=>sum+access.currentRatings[key],0)/80
+      const positions=sharedScoutingPositions(subject,world.players[id]!.basketball)
+      const position=positions.includes(subject.primaryPosition)?subject.primaryPosition:positions[0]!
+      const keys=positionEvidenceKeys(position)
+      return keys.reduce((sum,key)=>sum+access.currentRatings[key],0)/keys.length
     }
-    expect(pool.every(id=>average(refs.ratingLeader!)>=average(id))).toBe(true)
+    expect(peers.every(id=>average(leader)>=average(id))).toBe(true)
   })
 
-  it('withholds a strong signing recommendation when broad ranges prevent verified playing identity',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!.id
-    const original=buildScoutingRosterComparison(world,subject,team.rosterPlayerIds[0]!).slice(0,80)
-    const rows=original.map((row,i)=>({
-      ...row,own:35,subject:i<24?65:38,
-      low:i<24?52:25,high:i<24?78:51,isEstimate:true,
-    }))
-    const actual=buildPlayerScoutingModel(world,subject)
-    const seeded={...actual,noteTimeline:[{id:'test-report',dateLabel:'01 OCT 2025',
-      title:'Scout',detail:'Report',knowledgeState:'known' as const}],
-      statusPanel:{...actual.statusPanel!,confidenceLabel:'High'}}
-    const result=buildPlayerScoutingDecision({
-      own:false,rows,scouting:seeded,comparatorName:'Our Guard',
-    })
+  it('keeps 80 rating comparison available but blocks cross-position sporting verdicts',()=>{
+    const {world,team}=seed()
+    const candidates=team.rosterPlayerIds
+    const subject=candidates.find(id=>candidates.some(other=>other!==id &&
+      sharedScoutingPositions(world.players[id]!.basketball,world.players[other]!.basketball).length===0))!
+    const other=candidates.find(id=>id!==subject &&
+      sharedScoutingPositions(world.players[subject]!.basketball,world.players[id]!.basketball).length===0)!
+    expect(subject).toBeDefined()
+    expect(other).toBeDefined()
+    const result=decide(world,subject,other)
     expect(result.comparableCount).toBe(80)
-    expect(result.confirmedAdvantageCount).toBe(24)
+    expect(result.positionMatched).toBe(false)
+    expect(result.status).toBe('insufficient')
+    expect(result.headline).toBe('CROSS-POSITION · NO FIT VERDICT')
+    expect(result.meaning).toContain('cannot justify')
+  })
+
+  it('does not leak unscouted rival attributes or recommend signing',()=>{
+    const {world,ownId,externalId}=seed()
+    const result=decide(world,externalId,ownId)
+    expect(result.comparableCount).toBe(0)
+    expect(result.positionalComparableCount).toBe(0)
+    expect(result.confirmedAdvantageCount).toBe(0)
+    expect(result.status).toBe('insufficient')
+  })
+
+  it('requires position-specific coverage, not 80 generic attributes, to support a recruitment recommendation',()=>{
+    const {world,team,externalId}=seed()
+    const subject=world.players[externalId]!.basketball
+    const other=team.rosterPlayerIds.find(id=>
+      sharedScoutingPositions(subject,world.players[id]!.basketball).length>0)
+    if(other===undefined)return
+    const position=sharedScoutingPositions(subject,world.players[other]!.basketball)[0]!
+    const keys=new Set(positionEvidenceKeys(position))
+    const baseline=buildScoutingRosterComparison(world,externalId,other)
+    // 66 external attributes are excellent but only a few are relevant to the position.
+    const rows=baseline.map(row=>keys.has(row.id)
+      ? {...row,subject:null,low:null,high:null}
+      : {...row,own:45,subject:85,low:78,high:90})
+    const result=decide(world,externalId,other,{rows})
+    expect(result.comparableCount).toBe(66)
+    expect(result.positionalComparableCount).toBe(0)
+    expect(result.status).toBe('insufficient')
+    expect(result.headline).toContain('MORE EVIDENCE')
+  })
+
+  it('withholds a signing conclusion with 14 position ratings but wide ranges and unverified archetype',()=>{
+    const {world,team,externalId}=seed()
+    const subject=world.players[externalId]!.basketball
+    const other=team.rosterPlayerIds.find(id=>
+      sharedScoutingPositions(subject,world.players[id]!.basketball).length>0)
+    if(other===undefined)return
+    const keys=new Set(positionEvidenceKeys(sharedScoutingPositions(subject,world.players[other]!.basketball)[0]!))
+    const rows=buildScoutingRosterComparison(world,externalId,other).map(row=>({
+      ...row,own:35,subject:65,low:keys.has(row.id)?50:55,high:keys.has(row.id)?80:75,isEstimate:true,
+    }))
+    const original=buildPlayerScoutingModel(world,externalId)
+    const scouting={...original,noteTimeline:[{id:'report',dateLabel:'01 OCT 2025',
+      title:'Scout',detail:'Reported',knowledgeState:'known' as const}],
+      statusPanel:{...original.statusPanel!,confidenceLabel:'High'}}
+    const result=decide(world,externalId,other,{own:false,rows,scouting})
+    expect(result.positionalComparableCount).toBe(14)
     expect(result.uncertainComparableCount).toBe(80)
     expect(result.status).toBe('provisional')
-    expect(result.headline).toContain('VERIFY BEFORE CONTACT')
-    expect(result.headline).not.toContain('EXPLORE SIGNING')
+    expect(result.headline).toContain('VERIFY POSITIONAL CASE')
   })
 
-  it('supports recruitment exploration only after narrow evidence and verified sporting profile',()=>{
-    const world=createNewGame()
-    const team=getUserTeam(world)!
-    const subject=Object.values(world.players).find(p=>!team.rosterPlayerIds.includes(p.id))!.id
-    const original=buildScoutingRosterComparison(world,subject,team.rosterPlayerIds[0]!).slice(0,55)
-    const rows=original.map((row,i)=>({
-      ...row,own:50,subject:i<24?71:52,
-      low:i<24?66:48,high:i<24?76:56,isEstimate:true,
+  it('allows investigating a positional upgrade only with narrow ranges, evidence and same-position benchmark',()=>{
+    const {world,team,externalId}=seed()
+    const subject=world.players[externalId]!.basketball
+    const other=team.rosterPlayerIds.find(id=>
+      sharedScoutingPositions(subject,world.players[id]!.basketball).length>0)
+    if(other===undefined)return
+    const keys=new Set(positionEvidenceKeys(sharedScoutingPositions(subject,world.players[other]!.basketball)[0]!))
+    const rows=buildScoutingRosterComparison(world,externalId,other).map(row=>({
+      ...row,own:50,subject:keys.has(row.id)?76:52,
+      low:keys.has(row.id)?70:48,high:keys.has(row.id)?82:56,isEstimate:true,
     }))
-    const actual=buildPlayerScoutingModel(world,subject)
-    const seeded={...actual,archetypeTitle:'Verified scouting playing profile',
-      strengths:[{id:'shooting',label:'Shooting',rangeLabel:'Strong',knowledgeState:'estimated' as const}],
-      noteTimeline:[{id:'test-report',dateLabel:'01 OCT 2025',
-        title:'Scout',detail:'Recorded evaluation',knowledgeState:'known' as const}],
-      statusPanel:{...actual.statusPanel!,confidenceLabel:'High'}}
-    const result=buildPlayerScoutingDecision({
-      own:false,rows,scouting:seeded,comparatorName:'Our Guard',
-    })
+    const original=buildPlayerScoutingModel(world,externalId)
+    const scouting={...original,archetypeTitle:'Observed playing identity',
+      strengths:[{id:'shooting',label:'Shooting',rangeLabel:'Above average',knowledgeState:'estimated' as const}],
+      noteTimeline:[{id:'report',dateLabel:'01 OCT 2025',title:'Scout',detail:'Evidence',knowledgeState:'known' as const}],
+      statusPanel:{...original.statusPanel!,confidenceLabel:'High'}}
+    const result=decide(world,externalId,other,{own:false,rows,scouting})
+    expect(result.positionalAdvantageCount).toBe(14)
     expect(result.status).toBe('supported')
-    expect(result.headline).toContain('REVIEW OPTIONS')
-    expect(result.confirmedAdvantageCount).toBe(24)
-    expect(result.meaning).toContain('Cost')
-    expect(result.meaning).not.toContain('will sign')
+    expect(result.headline).toContain('POSITIONAL UPGRADE')
+    expect(result.meaning).toContain('tactical')
   })
 })
