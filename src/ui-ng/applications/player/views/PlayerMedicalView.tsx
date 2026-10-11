@@ -44,6 +44,10 @@ export function PlayerMedicalView() {
     return <PlayerRivalMedicalBoundary onScouting={() => session.setActiveView('scouting')} />
   }
 
+  const noRecordedLoad = medical.loadWindows.every(window =>
+    window.matchMinutes === 0 && window.programmeLoad === 0 &&
+    window.matches === 0 && window.sessionCount === 0,
+  )
   const region = selectedRegionId === null ? undefined
     : medical.bodyRegions.find(entry => entry.id === selectedRegionId)
   const riskReason = medical.risk?.primaryReason
@@ -102,7 +106,19 @@ export function PlayerMedicalView() {
           </div>}
         </div>}
         {activeTab === 'load' && <div className="po-med-v3__load">
-          <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />
+          {noRecordedLoad
+            ? <section className="po-med-v3__load-empty" data-ng-region="medical-load">
+                <div className="po-med-v3__load-empty-icon" aria-hidden="true">▤</div>
+                <strong>NO WORKLOAD LOGGED YET</strong>
+                <p>No match minutes or training sessions are recorded in these windows.
+                  A chart will appear when real workload is available.</p>
+                <div className="po-med-v3__load-windows">
+                  {medical.loadWindows.map(window => <div key={window.id}>
+                    <b>{window.label}</b><span>{window.matchMinutes} MIN · {window.sessionCount} SESSIONS</span>
+                  </div>)}
+                </div>
+              </section>
+            : <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />}
         </div>}
         {activeTab === 'history' && <div className="po-med-v3__history">
           <MedicalHistoryPanel emptyMessage={medical.historyEmptyMessage}
