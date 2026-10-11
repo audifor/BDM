@@ -486,6 +486,26 @@ function buildContractIntelligence(
   onDate: GameDate,
 ): ContractIntelligenceModel {
   const daysToExpiry = calendarDaysBetween(onDate, contract.term.expiresOn)
+  if (status === 'scheduled') {
+    const daysToStart = calendarDaysBetween(onDate, contract.term.startsOn)
+    return {
+      nextKeyDateLabel: formatGameDateLabel(contract.term.startsOn),
+      nextKeyDateNote: `Contract starts in ${daysToStart} days.`,
+      expiryRiskLabel: 'Not started',
+      expiryRiskTone: 'low',
+      expiryRiskNote: 'The agreed term has not started. The start date is the next milestone.',
+      decisionLabel: 'No',
+      decisionNote: 'A signed future agreement is already scheduled.',
+      events: contracts.map((entry) => ({
+        id: entry.id,
+        dateLabel: formatGameDateLabel(entry.term.startsOn),
+        label: entry.id === contract.id
+          ? `Scheduled agreement · ${teamName(world, entry.teamId)}`
+          : `Other agreement · ${teamName(world, entry.teamId)}`,
+        tone: 'neutral' as const,
+      })).sort((left, right) => right.dateLabel.localeCompare(left.dateLabel)),
+    }
+  }
   const expiryRiskTone: ContractIntelligenceModel['expiryRiskTone'] =
     daysToExpiry <= 365 ? 'high' : daysToExpiry <= 730 ? 'moderate' : 'low'
 
