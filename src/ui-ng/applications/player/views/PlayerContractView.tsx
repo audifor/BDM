@@ -56,39 +56,38 @@ export function PlayerContractView() {
     : latestNegotiation.status.replaceAll('_', ' ')
 
   if (contract.viewStatus === 'none') {
-    return <section className="pc-root pc-root--no-agreement" data-ng-region="player-contract"
+    return <section className="pc-root pc-root--no-agreement pc-root--v31" data-ng-region="player-contract"
       aria-label="No recorded agreement">
-      <div className="pc-no-agreement">
+      <div className="pc-no-agreement pc-no-agreement--v31">
         <div className="pc-no-agreement__hero">
-          <span>CONTRACT RECORD</span>
-          <strong>NO ACTIVE AGREEMENT RECORDED</strong>
-          <small>The player is on your roster, but the save has no active contract terms to display.</small>
+          <span>CONTRACT EVIDENCE</span>
+          <div className="pc-no-agreement__main">
+            <span className="pc-no-agreement__document" aria-hidden="true"><i /><i /><i /></span>
+            <div>
+              <strong>NO CONTRACT DATA ON FILE</strong>
+              <small>Roster membership is recorded. No current or scheduled employment agreement is stored for this player.</small>
+            </div>
+          </div>
+          <div className="pc-no-agreement__evidence" role="group" aria-label="Contract evidence coverage">
+            <span><b>✓</b> ROSTER CONFIRMED</span>
+            <span>— TERMS UNAVAILABLE</span>
+            <span>— SALARY UNAVAILABLE</span>
+          </div>
         </div>
         <div className="pc-no-agreement__actions">
-          <span>NEXT MANAGER ACTION</span>
+          <span>MANAGER DECISION</span>
           <strong>REVIEW CONTRACT STATUS</strong>
-          <p>Check planning and roster commitments before taking a decision.</p>
+          <p>Check Contracts / Planning for an existing agreement or available contract actions. Missing values are never estimated.</p>
           {mayManage && <button type="button" onClick={manage}>MANAGE CONTRACT ↗</button>}
         </div>
       </div>
-      <div className="pc-no-agreement__support">
-        <div>
-          <span>COMPENSATION</span><strong>NOT RECORDED</strong>
-          <small>Financial figures are not estimated.</small>
-        </div>
-        <div>
-          <span>TERM & EXPIRY</span><strong>UNKNOWN</strong>
-          <small>No active term is stored.</small>
-        </div>
-        <div>
-          <span>ROSTER RIGHTS</span>
-          <strong>{contract.rights.items.length ? 'RECORDED' : 'NOT RECORDED'}</strong>
-          <small>Registration is separate from an employment contract.</small>
-        </div>
-      </div>
-      {contract.rights.items.length > 0 && <ContractRightsStrip rights={contract.rights} />}
+      {contract.rights.items.length > 0 && <div className="pc-no-agreement__registration" data-ng-region="player-contract-registration">
+        <strong>REGISTRATION</strong>
+        {contract.rights.items.map((entry, index) =>
+          <span key={index}><b>{entry.label}</b>{entry.value}</span>)}
+      </div>}
       {contract.gaps.length > 0 && <details className="pc-root__data-boundaries">
-        <summary>DATA NOT RECORDED <span>{contract.gaps.length} areas</span></summary>
+        <summary>OTHER DATA NOT RECORDED <span>{contract.gaps.length} areas</span></summary>
         <ContractClosingPanels gaps={contract.gaps} />
       </details>}
     </section>
