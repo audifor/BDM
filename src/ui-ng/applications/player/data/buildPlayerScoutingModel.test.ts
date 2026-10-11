@@ -125,18 +125,18 @@ describe('buildPlayerScoutingModel', () => {
       shooting: {estimate: 77, uncertainty: 4},
     })
     const world = updateGameWorld(withKnowledge, {
-      evaluatorReportsById: {
-        ...withKnowledge.evaluatorReportsById,
-        'report:scouting-ui-confidence': {
+      evaluatorReports: [
+        ...Object.values(withKnowledge.evaluatorReportsById),
+        {
           id: 'report:scouting-ui-confidence', organizationId: team.organizationId,
           subjectPlayerId: subject, evaluatorStaffId: staffId, missionType: 'FULL_REPORT',
-          createdAt: withKnowledge.currentDate, evidenceIds: ['evidence:ui-confidence'],
+          createdAt: withKnowledge.currentDate, evidenceIds: [],
           findings: [{
             dimension: 'shooting', estimate: 77, uncertainty: 4,
             confidence: 80, coverageContribution: .8,
           }],
         },
-      },
+      ],
     })
     const model = buildPlayerScoutingModel(world, subject)
     const shooting = model.attributes.find(row => row.id === 'shooting')!
