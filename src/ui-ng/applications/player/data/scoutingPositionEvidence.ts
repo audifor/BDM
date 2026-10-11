@@ -50,6 +50,40 @@ export function sharedScoutingPositions(
   return subjectPositions.filter(position=>comparatorPositions.has(position))
 }
 
+
+export type ScoutingPositionCompatibility = 'primary' | 'mixed' | 'secondary' | 'none'
+export interface ScoutingPositionMatch {
+  readonly position: BasketballPosition
+  readonly availablePositions: readonly BasketballPosition[]
+  readonly compatibility: ScoutingPositionCompatibility
+  readonly subjectPrimary: boolean
+  readonly comparatorPrimary: boolean
+}
+/**
+ * A shared secondary position is a possibility, not evidence of a real role.
+ * Both primary positions MUST match for a definitive same-position appraisal.
+ * The selected lens and the decision use the same returned position.
+ */
+export function resolveScoutingPositionMatch(
+  subject: {primaryPosition: BasketballPosition; secondaryPositions?: readonly BasketballPosition[]},
+  comparator: {primaryPosition: BasketballPosition; secondaryPositions?: readonly BasketballPosition[]} | null,
+  preferredPosition?: BasketballPosition | null,
+): ScoutingPositionMatch {
+  const availablePositions = comparator === null ? [] : sharedScoutingPositions(subject, comparator)
+  const position = (preferredPosition !== null && preferredPosition !== undefined &&
+    availablePositions.includes(preferredPosition) ? preferredPosition : undefined) ??
+    availablePositions.find(pos=>pos===subject.primaryPosition && pos===comparator?.primaryPosition) ??
+    availablePositions.find(pos=>pos===subject.primaryPosition) ??
+    availablePositions.find(pos=>pos===comparator?.primaryPosition) ??
+    availablePositions[0] ?? subject.primaryPosition
+  const subjectPrimary = subject.primaryPosition===position
+  const comparatorPrimary = comparator?.primaryPosition===position
+  const compatibility: ScoutingPositionCompatibility = availablePositions.length===0 ? 'none'
+    : subjectPrimary && comparatorPrimary ? 'primary'
+    : subjectPrimary || comparatorPrimary ? 'mixed' : 'secondary'
+  return {position,availablePositions,compatibility,subjectPrimary,comparatorPrimary}
+}
+
 export function positionEvidenceKeys(position: BasketballPosition): readonly PlayerTruthRatingKey[] {
   return SCOUTING_POSITION_KEYS[position]
 }
