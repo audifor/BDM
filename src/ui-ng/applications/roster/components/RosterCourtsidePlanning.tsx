@@ -56,7 +56,7 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
           <td>{player.firstName} {player.lastName}</td><td><span className="roster-v4-planning__position">{player.basketball.primaryPosition}</span></td>
           <td>{contract?.term.expiresOn??'—'}</td>
           <td><span className={confirmed?'is-confirmed':'is-unconfirmed'}>{status}</span></td>
-          <td><button type="button" onClick={()=>onOpenPlayer({type:'player',playerId:player.id,section:'contract'})}>ABRIR CONTRATO ↗</button></td>
+          <td><button type="button" onClick={()=>onOpenPlayer({type:'player',playerId:player.id,section:'overview'})}>VER JUGADOR ↗</button></td>
         </tr>)}</tbody>
       </table>
     </div>

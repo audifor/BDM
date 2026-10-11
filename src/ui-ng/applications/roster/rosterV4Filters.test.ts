@@ -31,8 +31,8 @@ describe('Courtside Roster V4 filters',()=>{
     const world=createNewGame()
     const player=getTeamRoster(world,getUserTeam(world)!.id)[0]!
     const age=getPlayerAge(world,player.id)
-    const impossible={id:'never',field:'age',operator:'lte' as const,value:String(age-100)}
-    const matching={id:'yes',field:'age',operator:'gte' as const,value:String(age)}
+    const impossible={id:'never',field:'age' as const,operator:'lte' as const,value:String(age-100)}
+    const matching={id:'yes',field:'age' as const,operator:'gte' as const,value:String(age)}
     const groups=[
       {id:'one',operator:'AND' as const,conditions:[impossible]},
       {id:'two',operator:'OR' as const,conditions:[matching,impossible]},
