@@ -1,7 +1,11 @@
 /*
  * BS17 GLOBAL CERTIFICATION — multi-season continuity of Facilities, Economy, Governance and AI.
  *
- * Long-running (about three simulated seasons through the real Calendar): enabled only with BDM_BS17_MULTISEASON=1.
+ * Long-running, through the raw daily Calendar (`advanceDayWithTrace`): enabled only with BDM_BS17_MULTISEASON=1.
+ * The raw Calendar never runs the canonical competition rollover (`advanceCompetitionLifecycles`, used by simulate-until and the
+ * UI's next-season action), so this harness cannot pass the second 1 July: the world keeps its first season and the second annual
+ * development would rewrite that season's rating history. It certifies Facilities continuity up to 2034-06-30 only; the
+ * three-season certification of the integrated product is `src/app/game/testSupport/BSAllThreeSeasonContinuity.test.ts`.
  * A new production game; the user club runs a capital renovation and a conservation service through the real commands while the
  * AI clubs plan and execute through the same commands. The world is saved and reloaded at every checkpoint and invariants are
  * asserted after each one. Metrics are written to the path in BDM_BS17_MULTISEASON_OUT.

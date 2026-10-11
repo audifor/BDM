@@ -1,5 +1,11 @@
 # BS17 GLOBAL COMPLETION — Certification
 
+> **Erratum (BS ALL FINAL INTEGRATION, see `BS_ALL_FINAL_INTEGRATION_CERTIFICATION.md`).** Known limitation 1 below is mis-attributed.
+> The "second 1 July" failure is not a defect of the base Calendar: the multi-season harness advanced the raw daily Calendar, which never
+> performs the canonical competition rollover that simulate-until and the next-season action perform. Without a rollover the world keeps
+> its first season, and the second annual development would rewrite that season's immutable rating history. Through the canonical path
+> the rollover happens and the second and third 1 July checkpoints are crossed (certified in the integration document).
+
 Worktree `C:\BDM-BS17-FINAL` · branch `bdm-stage2-bs17-global-completion` · base `fdeaf817f207a5fd23a2fedc45566f7334515484`.
 No merge, no push, source branches and `main` untouched.
 
