@@ -78,12 +78,19 @@ export function PlayerMedicalView() {
       </header>
       <div className="po-med-v3__canvas" id={`po-med-panel-${activeTab}`}
         role="tabpanel" aria-labelledby={`po-med-tab-${activeTab}`}>
-        {activeTab === 'body' && <div className="po-med-v3__body">
+        {activeTab === 'body' && <div className="po-med-v3__body"
+          onKeyDownCapture={event => {
+            if (event.key === 'Escape' && selectedRegionId !== null) {
+              event.stopPropagation()
+              setSelectedRegionId(null)
+            }
+          }}>
           <div className="po-med-v3__body-status">
             <span className={medical.bodyRegions.some(r => r.status === 'attention') ? 'is-warning' : 'is-good'}>●</span>
             {medical.bodyRegions.some(r => r.status === 'attention') ? 'RECORDED INJURY REGIONS' : 'NO RECORDED REGIONAL INJURY'}
           </div>
-          <MedicalBodyMap onSelectRegion={setSelectedRegionId}
+          <MedicalBodyMap onSelectRegion={id =>
+              setSelectedRegionId(previous => previous === id ? null : id)}
             selectedRegionId={selectedRegionId} regions={medical.bodyRegions} />
           {region !== undefined && <div className="po-med-v3__region-detail"
             data-ng-region="medical-selected-region" aria-live="polite">
