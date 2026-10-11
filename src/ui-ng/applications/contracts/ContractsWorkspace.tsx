@@ -38,6 +38,8 @@ export function ContractsWorkspace() {
   const releasePlayer = useGameStore((state) => state.releasePlayer)
   const [section, setSection] = useState<SectionId>('overview')
   const [releasePlayerId, setReleasePlayerId] = useState<string | null>(null)
+  // Respect PLAYER > CONTRACT's deep link without mutating contract state.
+  const focusedPlayerId = typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('playerId')
 
   const team = world === null ? undefined : getUserTeam(world)
   const contracts = useMemo(() => world === null || team === undefined ? [] : Object.values(world.contractsById)
@@ -53,7 +55,9 @@ export function ContractsWorkspace() {
 
   const renderContractRows = (items: typeof contracts) => items.length === 0
     ? <p className="ng-canon__empty">{section === 'expiring' ? 'No expiring contracts this season.' : 'No contracts to show.'}</p>
-    : <div className="ng-canon__panel" style={{ overflowX: 'auto' }}><table><thead><tr><th>Player</th><th>Contract</th><th>Compensation</th><th>Lineage / approval</th><th>Planning</th></tr></thead><tbody>{items.map((contract) => {
+    : <div className="ng-canon__panel" style={{ overflowX: 'auto' }}><table><thead><tr><th>Player</th><th>Contract</th><th>Compensation</th><th>Lineage / approval</th><th>Planning</th></tr></thead><tbody>{[...items].sort((a, b) =>
+      Number(b.playerId === focusedPlayerId) - Number(a.playerId === focusedPlayerId)
+    ).map((contract) => {
       const player = world.players[contract.playerId]
       const compensation = getContractYearCompensation(contract, world.currentDate)
       const successor = Object.values(world.contractsById).find((item) => item.predecessorContractId === contract.id)
@@ -68,7 +72,11 @@ export function ContractsWorkspace() {
       const cappedSalary = capRules !== undefined && capRules.capAccounting !== 'NOT_APPLICABLE' && compensation.capTreatment?.policy !== 'NOT_APPLICABLE'
       const contractStatus = status === 'active' && seasonEnd !== undefined && compareGameDates(contract.term.expiresOn, seasonEnd) <= 0 ? 'Expiring' : status === 'active' ? 'Active' : status === 'scheduled' ? 'Signed for future' : status
       const signedOn = retentionExecution?.signedOn ?? signedTransaction?.occurredOn
-      return <tr key={contract.id}>
+      return <tr key={contract.id} data-focused-player={contract.playerId === focusedPlayerId ? 'true' : undefined}
+        style={contract.playerId === focusedPlayerId ? {
+          outline:'2px solid var(--cs-lime, #bedc38)', outlineOffset:'-2px',
+          background:'color-mix(in srgb, var(--cs-lime, #bedc38) 8%, transparent)',
+        } : undefined}>
         <td><button type="button" onClick={() => navigateToPlayer(contract.playerId)}>{player?.firstName ?? 'Unknown'} {player?.lastName ?? ''}</button><div>{player?.basketball.primaryPosition ?? '?'}</div></td>
         <td>{contractStatus}<div>Through {contract.term.expiresOn}</div></td>
         <td>{compensation.cashSalary.toLocaleString()} contract units{cappedSalary ? ` ? cap ${compensation.capHit.toLocaleString()}` : ''}<div>{compensation.guaranteedAmount.toLocaleString()} guaranteed</div></td>
