@@ -226,20 +226,35 @@ export function ScoutingCourtsideBoard({
   const chosenRoute = routes.find(route => route.id===focusRoute) ?? routes[1]!
   return <div className="po-scv3" data-ng-region="player-scouting">
     <div className="po-scv3__status-row">
-      <section className="po-scv3__stat"><small>{own ? 'SCOUT REPORT COVERAGE' : 'SCOUTING COVERAGE'}</small>
-        <strong>{own ? (coverage === 0 ? 'NO FILED REPORT' : level) : level}</strong>
-        <span>{coverage} scouted domains · {coverage === 0 ? 'No scout evaluation' : (status?.knowledgeLabel ?? 'Unknown')}</span></section>
-      <section className="po-scv3__stat"><small>SOURCE CONFIDENCE</small><strong>{coverage === 0 ? 'UNKNOWN' : (status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
-        <span>{coverage === 0 ? 'No evaluator report' : `Rating-range uncertainty is separate`}</span></section>
-      <section className="po-scv3__stat"><small>LAST ASSESSED</small><strong>{status?.lastScoutedLabel ?? 'NO REPORT'}</strong>
-        <span>{status?.observerLabel ?? 'No evaluator'}</span></section>
-      <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
-        <strong>{canCancel ? 'SCOUT ASSIGNED' : requestReason === null ? (hasReport ? 'UPDATE REPORT' : 'REQUEST SCOUTING') : 'REVIEW CAPACITY'}</strong>
-        <button type="button" onClick={canCancel ? () => onAction('detailed-report') : requestReason === null ? () => onAction('request-report') : onOpenScoutingCentre}
-          disabled={canCancel && !hasReport}>
-          {canCancel && hasReport ? 'OPEN REPORT ↗' : canCancel ? 'IN PROGRESS' : requestReason === null ? (hasReport ? 'REQUEST UPDATE ↗' : 'REQUEST REPORT ↗') : 'SCOUTING CENTRE ↗'}
-        </button>
-      </section>
+      {own ? <>
+        <section className="po-scv3__stat"><small>INTERNAL KNOWLEDGE</small>
+          <strong>80 VERIFIED RATINGS</strong><span>Direct club records, not scout estimates</span></section>
+        <section className="po-scv3__stat"><small>PRIMARY / SECONDARY</small>
+          <strong>{subjectBasketball.primaryPosition} {subjectBasketball.secondaryPositions.length ? '/ '+subjectBasketball.secondaryPositions.join(', ') : ''}</strong>
+          <span>Current comparison evaluates {positionMatch.position}</span></section>
+        <section className="po-scv3__stat"><small>STAFF SCOUT FILE</small>
+          <strong>{coverage===0 ? 'NO STAFF REPORT' : level}</strong>
+          <span>Separate from 80 verified player ratings</span></section>
+        <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
+          <strong>REVIEW PLAYER DEVELOPMENT</strong>
+          <button type="button" onClick={()=>onAction('development-route')}>DEVELOPMENT ↗</button>
+        </section>
+      </> : <>
+        <section className="po-scv3__stat"><small>SCOUTING COVERAGE</small>
+          <strong>{level}</strong><span>{coverage} scouted domains · {coverage===0?'No scout evaluation':status?.knowledgeLabel ?? 'Unknown'}</span></section>
+        <section className="po-scv3__stat"><small>SOURCE CONFIDENCE</small>
+          <strong>{coverage===0?'UNKNOWN':(status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
+          <span>{coverage===0?'No evaluator report':'Rating-range uncertainty is separate'}</span></section>
+        <section className="po-scv3__stat"><small>LAST ASSESSED</small>
+          <strong>{status?.lastScoutedLabel ?? 'NO REPORT'}</strong><span>{status?.observerLabel ?? 'No evaluator'}</span></section>
+        <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
+          <strong>{canCancel?'SCOUT ASSIGNED':requestReason===null?(hasReport?'UPDATE REPORT':'REQUEST SCOUTING'):'REVIEW CAPACITY'}</strong>
+          <button type="button" onClick={canCancel?()=>onAction('detailed-report'):requestReason===null?()=>onAction('request-report'):onOpenScoutingCentre}
+            disabled={canCancel&&!hasReport}>
+            {canCancel&&hasReport?'OPEN REPORT ↗':canCancel?'IN PROGRESS':requestReason===null?(hasReport?'REQUEST UPDATE ↗':'REQUEST REPORT ↗'):'SCOUTING CENTRE ↗'}
+          </button>
+        </section>
+      </>}
     </div>
 
     <section className={'po-scv3__verdict is-' + verdict.tone} data-ng-region="scouting-decision-verdict">
