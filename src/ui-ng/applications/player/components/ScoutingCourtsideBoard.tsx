@@ -198,15 +198,15 @@ export function ScoutingCourtsideBoard({
       <section className="po-scv3__stat"><small>{own ? 'SCOUT REPORT COVERAGE' : 'SCOUTING COVERAGE'}</small>
         <strong>{own ? (coverage === 0 ? 'NO FILED REPORT' : level) : level}</strong>
         <span>{coverage} scouted domains · {coverage === 0 ? 'No scout evaluation' : (status?.knowledgeLabel ?? 'Unknown')}</span></section>
-      <section className="po-scv3__stat"><small>REPORT RELIABILITY</small><strong>{coverage === 0 ? 'UNKNOWN' : (status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
-        <span>{coverage === 0 ? 'No evaluator report' : `Uncertainty: ${status?.disagreementLabel ?? 'Unknown'}`}</span></section>
+      <section className="po-scv3__stat"><small>SOURCE CONFIDENCE</small><strong>{coverage === 0 ? 'UNKNOWN' : (status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
+        <span>{coverage === 0 ? 'No evaluator report' : `Rating-range uncertainty is separate`}</span></section>
       <section className="po-scv3__stat"><small>LAST ASSESSED</small><strong>{status?.lastScoutedLabel ?? 'NO REPORT'}</strong>
         <span>{status?.observerLabel ?? 'No evaluator'}</span></section>
       <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
-        <strong>{canCancel ? 'SCOUT ASSIGNED' : requestReason === null ? 'REQUEST SCOUTING' : 'REVIEW CAPACITY'}</strong>
+        <strong>{canCancel ? 'SCOUT ASSIGNED' : requestReason === null ? (hasReport ? 'UPDATE REPORT' : 'REQUEST SCOUTING') : 'REVIEW CAPACITY'}</strong>
         <button type="button" onClick={canCancel ? () => onAction('detailed-report') : requestReason === null ? () => onAction('request-report') : onOpenScoutingCentre}
           disabled={canCancel && !hasReport}>
-          {canCancel && hasReport ? 'OPEN REPORT ↗' : canCancel ? 'IN PROGRESS' : requestReason === null ? 'REQUEST REPORT ↗' : 'SCOUTING CENTRE ↗'}
+          {canCancel && hasReport ? 'OPEN REPORT ↗' : canCancel ? 'IN PROGRESS' : requestReason === null ? (hasReport ? 'REQUEST UPDATE ↗' : 'REQUEST REPORT ↗') : 'SCOUTING CENTRE ↗'}
         </button>
       </section>
     </div>
@@ -237,7 +237,7 @@ export function ScoutingCourtsideBoard({
           comparisonId={eligibleComparisonId} onChange={setComparisonId}
           benchmarkMode={benchmarkMode} onBenchmarkMode={setBenchmarkMode}
           family={family} onFamilyChange={setFamily} />
-        {!own && known.length > 0 && <section className="po-scv3__card po-scv3__snapshot">
+        {!own && known.length > 0 && (scouting.strengths.length > 0 || scouting.weaknesses.length > 0 || scouting.archetypeTitle !== 'Insufficient scouting information') && <section className="po-scv3__card po-scv3__snapshot">
           <div className="po-scv3__card-head"><strong>SCOUT'S PLAYER PROFILE</strong><span>REPORTED · NOT PLAYER TRUTH</span></div>
           <div className="po-scv3__snapshot-title">
             <strong>{scouting.archetypeTitle === 'Insufficient scouting information'
