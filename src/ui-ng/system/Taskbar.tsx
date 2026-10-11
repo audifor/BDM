@@ -131,7 +131,7 @@ export function Taskbar() {
           <button type="button" aria-label={label} aria-current={active?'page':undefined}
             aria-expanded={id==='home'?undefined:instanceGroup===id||menuOpen} aria-haspopup={id==='home'?undefined:'menu'}
             className={`ng-taskbar__app${active?' is-active':''}${opened?' is-running':''}${pinned?' is-pinned':''}`}
-            title={label} draggable={id!=='home'} onDragStart={event=>beginDrag(event,id)}
+            title={members.length>0?undefined:label} draggable={id!=='home'} onDragStart={event=>beginDrag(event,id)}
             onPointerEnter={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
             onFocus={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
             onClick={()=>{if(id!=='home'&&opened)closeApp(id);else setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);cancelGroupClose();setInstanceGroup(null)}}
