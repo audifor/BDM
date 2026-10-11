@@ -31,6 +31,7 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(screen.getByText('NO FILED REPORT')).toBeInTheDocument()
     const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
     expect(comparator).toHaveTextContent('HEAD-TO-HEAD · OUR ROSTER')
+    expect(within(comparator).getByLabelText('Comparison attribute family')).toHaveValue('position')
     const ownPicker=within(comparator).getByLabelText('Compare against my player') as HTMLSelectElement
     expect(ownPicker.options.length).toBeGreaterThan(0)
     const verdict=container.querySelector('[data-ng-region="scouting-decision-verdict"]')!
@@ -39,16 +40,18 @@ describe('PLAYER Scouting Courtside V3',()=>{
     fireEvent.change(ownPicker,{target:{value:other}})
     expect(ownPicker.value).toBe(other)
     expect(within(comparator).getByRole('button',{name:'CHOOSE PLAYER'})).toHaveAttribute('aria-pressed','true')
-    expect(verdict).toHaveTextContent('INDIVIDUAL RATINGS COMPARED')
-    expect(verdict).toHaveTextContent('RATING ADVANTAGES')
-    expect(verdict).toHaveTextContent('RATING WEAKNESSES')
+    expect(verdict).toHaveTextContent('POSITIONAL ATTRIBUTES COMPARED')
+    expect(verdict).toHaveTextContent('POSITION ADVANTAGES')
+    expect(verdict).toHaveTextContent('POSITION WEAKNESSES')
     // Changing the selected player drives the same source of truth used by the FM matchup.
     expect(verdict.textContent).not.toBeNull()
     expect(before).not.toBeNull()
     fireEvent.change(within(comparator).getByLabelText('Comparison attribute family'),{target:{value:'physical'}})
     expect(comparator).toHaveTextContent('comparable in this family')
-    expect(within(container.querySelector('[aria-label="Comparison evidence scope"]') as HTMLElement)
-      .getByRole('button',{name:'PHYSICAL'})).toHaveAttribute('aria-pressed','true')
+    const scopes=within(container.querySelector('[aria-label="Comparison evidence scope"]') as HTMLElement)
+    expect(scopes.getByRole('button',{name:/POSITION/})).toHaveAttribute('aria-pressed','true')
+    fireEvent.click(scopes.getByRole('button',{name:'PHYSICAL'}))
+    expect(scopes.getByRole('button',{name:'PHYSICAL'})).toHaveAttribute('aria-pressed','true')
     expect(comparator).toHaveTextContent('ATTRIBUTE')
     expect(comparator).toHaveTextContent('EDGE')
     const expand=within(comparator).queryByRole('button',{name:/SHOW ALL .* ATTRIBUTES/})
@@ -70,10 +73,10 @@ describe('PLAYER Scouting Courtside V3',()=>{
     const {container}=showPlayer(world,rival.id)
     expect(container.querySelector('[data-ng-region="player-scouting"]')).not.toBeNull()
     expect(screen.getByText('NO EVALUATION ON FILE')).toBeInTheDocument()
-    expect(screen.getByText('NO COMPARABLE INDIVIDUAL ATTRIBUTES YET')).toBeInTheDocument()
+    const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
+    expect(comparator).toHaveTextContent(/NO COMPARABLE INDIVIDUAL ATTRIBUTES YET|No same-position teammate available/)
     expect(screen.queryByText('WHY THIS PLAYER MATTERS')).not.toBeInTheDocument()
     expect(screen.getByText(/No scout report has been filed/)).toBeInTheDocument()
-    const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
     expect(comparator).not.toHaveTextContent('≈72–78')
     expect(screen.getByRole('button',{name:'CONTACT ROUTES'})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'CONTACT ROUTES'}))
