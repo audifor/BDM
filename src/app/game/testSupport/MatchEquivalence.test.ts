@@ -6,10 +6,15 @@ import { getUserTeam } from '@/engine/calendar'
 import { simulateMatchWithRotations } from '@/engine/match'
 import type { PlayerId } from '@/domain/ids'
 
+/**
+ * Snapshots of the canonical integrated engine. The previous values were captured on the BS15 branch (a20ea256) before it was
+ * integrated with main's Match Next engine (first divergent commits 7a2eea34 / ee38b928 / fcb0eaec): they described the replaced
+ * engine, not the canonical one. Re-captured on the integrated candidate; two consecutive runs produced identical hashes.
+ */
 const expectedSnapshots = [
-  ['schedule-generated-season-0001-game-0002', 'd2aaf2d90e887c99c6e2b31d2fb8bd9dd6a871809be05eb2d30d7f83b1dbb9d3'],
-  ['schedule-generated-season-0001-game-0003', '93e3276240eabdc49e759422f231b0d45ff551c30ca93d1b5970c6c2e8c7ed74'],
-  ['schedule-generated-season-0001-game-0004', '16502bbe49e6f40722d7acb20400d0267ea1dcb9eb05cd4fc36ee1cb2be4a7f6'],
+  ['schedule-generated-season-0001-game-0002', '0de0c12d7f797532b846ecdce9d6ba8f9aa992ca4f05ef2a0fdf4ff6150ee23a'],
+  ['schedule-generated-season-0001-game-0003', 'b36c00f26a4f7e6784dbdfb53330a554b137196bb82dd2a87e2f21bb8ff52027'],
+  ['schedule-generated-season-0001-game-0004', '347be2cd8a067ac74209523bcbf7e2786212b8ae32297ea4fe73f2cab43fa1bd'],
 ]
 
 it('capture representative canonical match snapshots', () => {
