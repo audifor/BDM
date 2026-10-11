@@ -134,7 +134,7 @@ export function Taskbar() {
             title={members.length>0?undefined:label} draggable={id!=='home'} onDragStart={event=>beginDrag(event,id)}
             onPointerEnter={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
             onFocus={event=>{if(members.length>0)openInstanceGroup(id,event.currentTarget)}}
-            onClick={()=>{if(id!=='home'&&opened)closeApp(id);else setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);cancelGroupClose();setInstanceGroup(null)}}
+            onClick={()=>{setActiveApp(id);setStartOpen(false);setMenu(null);setMoreOpen(false);cancelGroupClose();setInstanceGroup(null)}}
             onContextMenu={event=>{event.preventDefault();setStartOpen(false);cancelGroupClose();setInstanceGroup(null);setMenu(id==='home'?null:id)}}
             onAuxClick={event=>{if(event.button===1&&opened&&isClosableTaskbarApp(id)){event.preventDefault();closeApp(id);setMenu(null)}}}
             onMouseDown={event=>{if(event.button===1)event.preventDefault()}}>
@@ -144,7 +144,6 @@ export function Taskbar() {
             <div className="ng-taskbar__menu" role="menu" aria-label={`Opciones de ${label}`}>
               <div className="ng-taskbar__menu-heading">{label}</div>
               <button role="menuitem" type="button" onClick={()=>{setActiveApp(id);closeMenu()}}>Activar última instancia</button>
-              {opened&&isClosableTaskbarApp(id)?<button role="menuitem" type="button" onClick={()=>{closeApp(id);closeMenu()}}>Cerrar todas las instancias</button>:null}
               <button role="menuitem" type="button" onClick={()=>{pinned?unpinApp(id):pinApp(id);closeMenu()}}>
                 {pinned?'Desanclar de barra':'Anclar a barra'}</button>
               <button role="menuitem" type="button" disabled={index<=1} onClick={()=>{moveTaskbarApp(id,taskbarApps[index-1]!);closeMenu()}}>Mover a la izquierda</button>
@@ -180,8 +179,6 @@ export function Taskbar() {
             aria-label={'Cerrar '+instanceLabel(instance,world)}
             onClick={()=>{closeInstance(instance.key);if(groupInstances.length===1)setInstanceGroup(null)}}>×</button>
         </div>)}
-        <button type="button" className="ng-taskbar__instance-close-all"
-          onClick={()=>{closeApp(instanceGroup);setInstanceGroup(null)}}>Cerrar todas</button>
       </div>
     </>,document.body)}
     <span className="ng-taskbar__status">{busy?'Simulation running':'Simulation idle'}</span>
