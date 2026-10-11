@@ -287,7 +287,7 @@ describe('RosterWorkspace session restoration', () => {
     fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
     const chart = screen.getByLabelText('Depth chart')
     expect(chart).toBeInTheDocument()
-    expect(chart).toHaveTextContent(`${team.rosterPlayerIds.length} players`)
+    expect(chart).toHaveTextContent(`${team.rosterPlayerIds.length} jugadores`)
     expect(chart.querySelector('.canonical-roster__player-link')).toBeInTheDocument()
 
     const lanes = [...chart.querySelectorAll('.roster-depth-chart__lane')]
@@ -308,8 +308,35 @@ describe('RosterWorkspace session restoration', () => {
     }
     expect(chart.textContent).not.toMatch(/FREE/)
     expect(chart.querySelector('.roster-depth-chart__group')).toBeNull()
-    expect(chart.querySelector('.roster-depth-chart__meter')).toBeNull()
+    const meters=[...chart.querySelectorAll('.roster-depth-chart__meter')]
+    expect(meters).toHaveLength(5)
+    expect(screen.getByLabelText('Leyenda de distribución de roles')).toHaveTextContent('Titulares')
+    for (const meter of meters) {
+      expect(meter.querySelector('.is-starter')).toHaveStyle({width:'0%'})
+      expect(meter.querySelector('.is-bench')).toHaveStyle({width:'0%'})
+      expect(meter.querySelector('.is-unassigned')).toHaveStyle({width:'100%'})
+    }
     expect(chart.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
+  })
+
+  it('divides a lane meter by all players, not by assigned players only',()=>{
+    const world=createNewGame()
+    const team=getUserTeam(world)!
+    const guards=getTeamRoster(world,team.id).filter(p=>p.basketball.primaryPosition==='PG')
+    expect(guards.length).toBeGreaterThan(1)
+    const assigned=setLineupSlot(world,team.id,'B1',guards[0]!.id)
+    mountRosterWorkspace(assigned)
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
+    const lanes=[...screen.getByLabelText('Depth chart').querySelectorAll('.roster-depth-chart__lane')]
+    const guardLane=lanes.find(l=>l.querySelector('.roster-depth-chart__pos')?.textContent==='PG')!
+    const meter=guardLane.querySelector('.roster-depth-chart__meter')!
+    const benchPercent=(1/guards.length)*100
+    const unassignedPercent=((guards.length-1)/guards.length)*100
+    expect(meter.querySelector('.is-starter')).toHaveStyle({width:'0%'})
+    expect(meter.querySelector('.is-bench')).toHaveStyle({width:`${benchPercent}%`})
+    expect(meter.querySelector('.is-unassigned')).toHaveStyle({width:`${unassignedPercent}%`})
+    expect(meter.getAttribute('aria-label')).toContain(`1 en banquillo y ${guards.length-1} sin asignar`)
+    expect(guardLane.querySelector('.roster-v4-depth__summary')).toHaveTextContent('BANQUILLO 1')
   })
 
   it('groups assigned lineup slots into BDM depth bands', () => {

@@ -320,6 +320,26 @@
 .courtside-roster-screen .roster-v4__section-title>strong {
   text-align:right;color:var(--rc-highlight);font:700 18px var(--rc-head);
 }
+.courtside-roster-screen .roster-v4-depth {
+  display:block;margin:0;padding:0;border:0;border-radius:0;min-height:0;
+  background:transparent;box-shadow:none;overflow:visible;
+}
+.courtside-roster-screen .roster-v4-depth::before,
+.courtside-roster-screen .roster-v4-depth::after {content:none;display:none}
+.courtside-roster-screen .roster-v4-depth__legend {
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  padding:0 5px 12px;color:var(--rc-muted);
+  font:700 12px var(--rc-body);
+}
+.courtside-roster-screen .roster-v4-depth__legend>span {
+  display:inline-flex;align-items:center;gap:7px;
+}
+.courtside-roster-screen .roster-v4-depth__legend i {
+  display:inline-block;width:12px;height:9px;border-radius:3px;
+}
+.courtside-roster-screen .roster-v4-depth__legend .is-starter {background:var(--rc-highlight)}
+.courtside-roster-screen .roster-v4-depth__legend .is-bench {background:var(--rc-accent)}
+.courtside-roster-screen .roster-v4-depth__legend .is-unassigned {background:var(--rc-line2)}
 .courtside-roster-screen .roster-v4-depth__lanes {
   display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;
   min-width:950px;align-items:stretch;
@@ -343,10 +363,14 @@
 .courtside-roster-screen .roster-depth-chart__balance {
   font:700 12px var(--rc-head);color:var(--rc-muted);text-align:right;
 }
-.courtside-roster-screen .roster-depth-chart__meter {height:6px;display:flex;overflow:hidden;border-radius:9px;margin-bottom:10px;background:var(--rc-raised2)}
+.courtside-roster-screen .roster-depth-chart__meter {
+  height:8px;display:flex;overflow:hidden;border-radius:9px;
+  margin:0 0 14px;background:var(--rc-line2);
+}
+.courtside-roster-screen .roster-depth-chart__meter>span {display:block;height:100%;flex:0 0 auto}
 .courtside-roster-screen .roster-depth-chart__meter .is-starter {background:var(--rc-highlight)}
-.courtside-roster-screen .roster-depth-chart__meter .is-rotation {background:var(--rc-accent)}
-.courtside-roster-screen .roster-depth-chart__meter .is-bench {background:var(--rc-muted)}
+.courtside-roster-screen .roster-depth-chart__meter .is-bench {background:var(--rc-accent)}
+.courtside-roster-screen .roster-depth-chart__meter .is-unassigned {background:var(--rc-line2)}
 .courtside-roster-screen .roster-depth-chart__players {list-style:none;margin:0;padding:0;flex:1;display:grid;align-content:start;gap:7px}
 .courtside-roster-screen .roster-depth-chart__group {font:800 11px var(--rc-head);color:var(--rc-accent);margin-top:7px}
 .courtside-roster-screen .roster-depth-chart__row {

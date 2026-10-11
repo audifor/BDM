@@ -17,29 +17,36 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLine
   readonly onLineupSlotChange?: (slot:LineupSlot,playerId:PlayerId)=>void
   readonly onLineupSlotClear?: (slot:LineupSlot)=>void
 }) {
-  return <section className="roster-depth-chart roster-v4-depth" aria-label="Depth chart" data-ng-region="roster-depth-chart">
+  return <section className="roster-v4-depth" aria-label="Depth chart" data-ng-region="roster-depth-chart">
     <header className="roster-v4__section-title">
       <div><span>GESTIÓN DE EQUIPO / ROTACIÓN</span><h2>PROFUNDIDAD</h2>
         <p>Quinteto, relevos y cobertura por posición principal · datos reales de la plantilla.</p></div>
-      <strong>{model.rosterCount} players</strong>
+      <strong>{model.rosterCount} jugadores</strong>
     </header>
+    <div className="roster-v4-depth__legend" aria-label="Leyenda de distribución de roles">
+      <span><i className="is-starter" aria-hidden="true"/>Titulares</span>
+      <span><i className="is-bench" aria-hidden="true"/>Banquillo</span>
+      <span><i className="is-unassigned" aria-hidden="true"/>Sin asignar</span>
+    </div>
     <div className="roster-v4-depth__lanes roster-depth-chart__lanes">
       {model.lanes.map(lane=>{
         const withRoles=laneHasAssignedRoles(lane.players)
         const items=buildDepthChartLaneItems(lane.players)
         const chosen=lane.players.some(p=>p.id===selectedPlayerId)
-        const total=Math.max(1,lane.starterCount+lane.rotationCount+lane.benchCount)
+        const total=Math.max(1,lane.count)
+        const benchCount=lane.rotationCount+lane.benchCount
         return <article className={`roster-depth-chart__lane roster-v4-depth__lane is-${lane.balance}${withRoles?' has-roles':''}${chosen?' is-selected':''}`} key={lane.position}>
           <div className="roster-depth-chart__lane-head">
             <div className="roster-depth-chart__identity"><span className="roster-depth-chart__pos">{lane.position}</span>
               <strong className="roster-depth-chart__count">{lane.count}</strong></div>
             <span className="roster-depth-chart__balance">{BALANCE[lane.balance]}</span>
           </div>
-          {withRoles&&<div className="roster-depth-chart__meter" aria-label="Distribución de roles">
+          <div className="roster-depth-chart__meter" role="img"
+            aria-label={`${lane.position}: ${lane.starterCount} titulares, ${benchCount} en banquillo y ${lane.unassignedCount} sin asignar de ${lane.count} jugadores`}>
             <span className="is-starter" style={{width:`${lane.starterCount/total*100}%`}}/>
-            <span className="is-rotation" style={{width:`${lane.rotationCount/total*100}%`}}/>
-            <span className="is-bench" style={{width:`${lane.benchCount/total*100}%`}}/>
-          </div>}
+            <span className="is-bench" style={{width:`${benchCount/total*100}%`}}/>
+            <span className="is-unassigned" style={{width:`${lane.unassignedCount/total*100}%`}}/>
+          </div>
           <ul className="roster-depth-chart__players">
             {items.length===0&&<li className="roster-depth-chart__empty">Sin jugadores en esta posición principal</li>}
             {items.map(item=>item.kind==='group'
@@ -68,7 +75,7 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLine
                 </li>)}
           </ul>
           <footer className="roster-v4-depth__summary">
-            <span>TITULARES {lane.starterCount}</span><span>ROTACIÓN {lane.rotationCount}</span>
+            <span>TITULARES {lane.starterCount}</span><span>BANQUILLO {benchCount}</span>
             <span>SIN ROL {lane.unassignedCount}</span>
           </footer>
         </article>
@@ -76,7 +83,7 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLine
     </div>
     <div className="roster-v4-depth__footnote">
       <strong>LECTURA DE PROFUNDIDAD</strong>
-      <p>Las asignaciones modifican la rotación real del equipo. Cada puesto admite un jugador; sustituirlo deja al anterior sin asignación. Las columnas agrupan por posición principal, no por compatibilidad táctica inferida.</p>
+      <p>La barra muestra titulares, banquillo y jugadores sin asignar respecto al total de la posición principal. Las asignaciones modifican la rotación real; no indican compatibilidad con posiciones secundarias ni minutos garantizados.</p>
     </div>
   </section>
 }
