@@ -12,7 +12,7 @@ const COMPARE_FAMILIES: readonly RatingCategory[] = [
 ]
 
 type ActionId = 'assign-scout' | 'request-report' | 'watch-next-game' |
-  'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route'
+  'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route' | 'development-route'
 
 interface Props {
   readonly world: GameWorld
@@ -113,6 +113,9 @@ export function ScoutingCourtsideBoard({
   const [intelligenceFocus, setIntelligenceFocus] = useState('shooting')
   const [bottomTab, setBottomTab] = useState<'reports' | 'games'>('reports')
   const own = model.knowledgeAccess.kind === 'own-roster'
+  const internalCategories = own ? model.attributes.categories : []
+  const strongestOwn = [...internalCategories].sort((a,b)=>b.profileValue-a.profileValue)
+  const weakestOwn = [...internalCategories].sort((a,b)=>a.profileValue-b.profileValue)
   const status = scouting.statusPanel
   const known = scouting.attributes
   const focused = known.find(row => row.id === intelligenceFocus) ?? known[0]
@@ -124,7 +127,9 @@ export function ScoutingCourtsideBoard({
     {id:'assign-scout',title:'QUICK LOOK',subtitle:'First evaluation',disabled:requestReason!==null},
     {id:'request-report',title:'FULL REPORT',subtitle:'Deep scouting mission',disabled:requestReason!==null},
     {id:'watch-next-game',title:'WATCH GAME',subtitle:nextGameLabel ?? 'No fixture',disabled:requestReason!==null||nextGameLabel===null},
-    {id:'contract-route',title:'CONTACT ROUTES',subtitle:'Contract opportunities',disabled:own},
+    own
+      ? {id:'development-route',title:'DEVELOPMENT',subtitle:'Internal player plan',disabled:false}
+      : {id:'contract-route',title:'CONTACT ROUTES',subtitle:'Contract opportunities',disabled:false},
   ]
   const chosenRoute = routes.find(route => route.id===focusRoute) ?? routes[1]!
   return <div className="po-scv3" data-ng-region="player-scouting">
@@ -150,13 +155,13 @@ export function ScoutingCourtsideBoard({
           <div className="po-scv3__card-head"><strong>PLAYER SNAPSHOT</strong><span>{own ? 'OWN PLAYER' : 'AUTHORIZED SCOUTING ONLY'}</span></div>
           <div className="po-scv3__snapshot-title">
             <small>REPORTED PLAY STYLE</small>
-            <strong>{scouting.archetypeTitle === 'Insufficient scouting information' ? 'STYLE NOT VERIFIED' : scouting.archetypeTitle.toUpperCase()}</strong>
-            <p>{scouting.archetypeRoleTitle === 'Insufficient reports' ? 'A reliable archetype requires more scouted dimensions.' : scouting.archetypeRoleTitle}</p>
+            <strong>{own ? 'INTERNAL ATTRIBUTE PROFILE' : scouting.archetypeTitle === 'Insufficient scouting information' ? 'STYLE NOT VERIFIED' : scouting.archetypeTitle.toUpperCase()}</strong>
+            <p>{own ? 'Ratings are known internally; tactical role projection is not modeled.' : scouting.archetypeRoleTitle === 'Insufficient reports' ? 'A reliable archetype requires more scouted dimensions.' : scouting.archetypeRoleTitle}</p>
           </div>
           <div className="po-scv3__snapshot-signals">
-            <div><h4>STRENGTH SIGNALS</h4>{scouting.strengths.length===0 ? <small>Not established</small> : scouting.strengths.slice(0,3).map(row=>
+            <div><h4>STRENGTH SIGNALS</h4>{own ? strongestOwn.slice(0,3).map(row=><span key={row.category}>+ {row.label} <b>{row.profileValue}</b></span>) : scouting.strengths.length===0 ? <small>Not established</small> : scouting.strengths.slice(0,3).map(row=>
               <span key={row.id}>+ {row.label} <b>{row.rangeLabel}</b></span>)}</div>
-            <div><h4>CONCERN SIGNALS</h4>{scouting.weaknesses.length===0 ? <small>Not established</small> : scouting.weaknesses.slice(0,3).map(row=>
+            <div><h4>CONCERN SIGNALS</h4>{own ? weakestOwn.slice(0,3).map(row=><span key={row.category}>− {row.label} <b>{row.profileValue}</b></span>) : scouting.weaknesses.length===0 ? <small>Not established</small> : scouting.weaknesses.slice(0,3).map(row=>
               <span key={row.id}>− {row.label} <b>{row.rangeLabel}</b></span>)}</div>
           </div>
           <div className="po-scv3__coverage-grid">
@@ -164,14 +169,21 @@ export function ScoutingCourtsideBoard({
               <div key={area.id}><small>{area.label.toUpperCase()}</small><strong>{area.coverageLabel}</strong>
                 <span className="po-scv3__track"><span style={{width:`${Math.round(area.coverage*100)}%`}} /></span></div>)}
           </div>
-          <div className="po-scv3__snapshot-note">Projection and personality remain UNKNOWN unless an authorized report supports them. No hidden potential is exposed.</div>
+          <div className="po-scv3__snapshot-note">{own ? 'Internal ratings are direct roster knowledge. Scouting reports and projections remain separate.' : 'Projection and personality remain UNKNOWN without authorized reports. No hidden potential is exposed.'}</div>
         </section>
         <ScoutingRosterComparison world={world} inspectedId={model.identity.playerId} />
       </div>
 
       <section className="po-scv3__card po-scv3__intelligence">
-        <div className="po-scv3__card-head"><strong>SCOUTING INTELLIGENCE</strong><span>{known.length} EVALUATED DIMENSIONS</span></div>
-        {isUnscouted
+        <div className="po-scv3__card-head"><strong>{own ? 'INTERNAL EVALUATION' : 'SCOUTING INTELLIGENCE'}</strong>
+          <span>{own ? '8 CANONICAL RATING FAMILIES' : `${known.length} EVALUATED DIMENSIONS`}</span></div>
+        {own && <div className="po-scv3__internal">
+          <p>Direct club knowledge. These 8 families summarize the player's 80 real ratings, not a scout estimate.</p>
+          {internalCategories.map(row=><div className="po-scv3__internal-row" key={row.category}>
+            <strong>{row.label}</strong><div className="po-scv3__track"><span style={{width:`${row.profileValue}%`}} /></div>
+            <b>{row.profileValue}</b></div>)}
+        </div>}
+        {!own && (isUnscouted
           ? <div className="po-scv3__intelligence-empty">
               <strong>NO EVALUATION ON FILE</strong>
               <p>Request a scouting assignment to develop a source-backed picture of this player's abilities.</p>
@@ -195,7 +207,7 @@ export function ScoutingCourtsideBoard({
                 <span>{focused.certaintyNote} · {focused.confidence===null?'Confidence unknown':`Confidence ${Math.round(focused.confidence*100)}%`}</span>
                 <p>{focused.rangeLabel}. {focused.knowledgeState === 'known' ? 'Supported by organizational evaluations.' : 'Estimate is uncertain and may change with further scouting.'}</p>
               </div>}
-            </>}
+            </>)}
         <div className="po-scv3__coverage-note">
           <strong>KNOWLEDGE GAPS</strong>
           <span>{scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').map(area=>area.label).join(' · ') || 'All modeled knowledge areas evaluated'}</span>
@@ -226,7 +238,7 @@ export function ScoutingCourtsideBoard({
             <p>{chosenRoute.subtitle}</p>
             <small>{assignmentSummary ?? requestReason ?? 'Assignment and evaluator choice are confirmed in the canonical scouting dialog.'}</small>
             <button type="button" onClick={()=>onAction(chosenRoute.id)} disabled={chosenRoute.disabled}>
-              {chosenRoute.id==='contract-route'?'VIEW CONTRACT ROUTES ↗':chosenRoute.id==='watch-next-game'?'REQUEST GAME OBSERVATION ↗':'CONTINUE ↗'}
+              {chosenRoute.id==='contract-route'?'VIEW CONTRACT ROUTES ↗':chosenRoute.id==='development-route'?'OPEN DEVELOPMENT ↗':chosenRoute.id==='watch-next-game'?'REQUEST GAME OBSERVATION ↗':'CONTINUE ↗'}
             </button>
           </div>
           {canCancel && <div className="po-scv3__assignment-controls">
