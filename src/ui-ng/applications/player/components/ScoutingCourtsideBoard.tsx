@@ -146,7 +146,7 @@ export function ScoutingCourtsideBoard({
   const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
   const [benchmarkMode, setBenchmarkMode] = useState<ScoutingBenchmarkMode>('rating-leader')
   const [family, setFamily] = useState<RatingCategory>('shooting')
-  const [evidenceScope, setEvidenceScope] = useState<'overall' | 'family'>('overall')
+  const [evidenceScope, setEvidenceScope] = useState<'overall' | 'family'>('family')
   const own = model.knowledgeAccess.kind === 'own-roster'
   const team = getUserTeam(world)
   const rosterBenchmarks = useMemo(() => scoutingRosterBenchmarks(world, model.identity.playerId),
