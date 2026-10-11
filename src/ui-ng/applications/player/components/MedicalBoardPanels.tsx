@@ -6,6 +6,7 @@ import type {
   MedicalAvailabilityBandModel,
   MedicalDetailModel,
   MedicalInjuryPatternModel,
+  MedicalInspectorInjuryDetail,
   MedicalLoadWindowModel,
   MedicalReadinessMeterModel,
   MedicalRecoveryMilestoneModel,
@@ -293,6 +294,7 @@ export function MedicalHistoryPanel({
   onSelectRow,
   rows,
   selectedEventId,
+  selectedDetail,
 }: {
   readonly emptyMessage: string | null
   readonly onSelectRow: (id: string) => void
@@ -306,6 +308,7 @@ export function MedicalHistoryPanel({
     readonly clearedOnLabel?: string | null
   }[]
   readonly selectedEventId: string | null
+  readonly selectedDetail?: MedicalInspectorInjuryDetail
 }) {
   return (
     <section className="po-med-panel po-med-history" data-ng-region="medical-history">
@@ -352,6 +355,11 @@ export function MedicalHistoryPanel({
         )}
       </div>
 
+      {selectedDetail !== undefined && <div className="po-med-v2__history-detail" data-ng-region="medical-selected-history-detail">
+        <strong>{selectedDetail.injuryLabel} · {selectedDetail.severityLabel}</strong>
+        <span>{selectedDetail.injuredOnLabel} · {selectedDetail.durationLabel} · {selectedDetail.statusLabel}</span>
+        <small>{selectedDetail.availabilityImpact}</small>
+      </div>}
       {rows.length === 0 && emptyMessage !== null && (
         <p className="po-med-note">{emptyMessage}</p>
       )}
