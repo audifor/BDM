@@ -93,7 +93,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
             <small>Never compare estimated category strength with an exact 80-rating family average.</small>
           </div>
         : <div className="po-scv3__compare-rows">
-            {rankedRows.slice(0,10).map(row => {
+            {rankedRows.slice(0,8).map(row => {
               const difference = row.subject === null ? null : row.subject - row.own
               const supportedAdvantage = row.low !== null && row.low >= row.own + 5
               const supportedConcern = row.high !== null && row.high <= row.own - 5
@@ -224,14 +224,27 @@ export function ScoutingCourtsideBoard({
       </div>
 
       <section className="po-scv3__card po-scv3__intelligence">
-        <div className="po-scv3__card-head"><strong>{own ? 'INTERNAL EVALUATION' : 'SCOUTING INTELLIGENCE'}</strong>
-          <span>{own ? '8 CANONICAL RATING FAMILIES' : `${known.length} EVALUATED DIMENSIONS`}</span></div>
-        {own && <div className="po-scv3__internal">
-          <p>Direct club knowledge. These 8 families summarize the player's 80 real ratings, not a scout estimate.</p>
-          {internalCategories.map(row=><div className="po-scv3__internal-row" key={row.category}>
-            <strong>{row.label}</strong><div className="po-scv3__track"><span style={{width:`${row.profileValue}%`}} /></div>
-            <b>{row.profileValue}</b></div>)}
-        </div>}
+        <div className="po-scv3__card-head"><strong>{own ? 'WHY THIS PLAYER MATTERS' : 'SCOUTING INTELLIGENCE'}</strong>
+          <span>{own ? 'DIRECT RATINGS · COMPARATIVE EVIDENCE' : `${known.length} EVALUATED DIMENSIONS`}</span></div>
+        {own && <div className="po-scv3__internal po-scv3__internal--reasons">
+          <div className="po-scv3__reason-group">
+            <h4>SUPPORTED STRENGTHS VS OUR BENCHMARK</h4>
+            {verdict.strengths.length === 0
+              ? <span>No clear advantage in the current comparison.</span>
+              : verdict.strengths.map(item=><span className="is-advantage" key={item}>+ {item}</span>)}
+          </div>
+          <div className="po-scv3__reason-group">
+            <h4>WHERE TO IMPROVE / TRADE-OFFS</h4>
+            {verdict.concerns.length === 0
+              ? <span>No clear weakness in the current comparison.</span>
+              : verdict.concerns.map(item=><span className="is-concern" key={item}>− {item}</span>)}
+          </div>
+          <div className="po-scv3__reason-next">
+            <h4>COACHING DECISION</h4>
+            <p>{verdict.nextStep}</p>
+            <small>Comparative ratings do not establish match performance or coaching suitability.</small>
+          </div>
+        </div>
         {!own && (isUnscouted
           ? <div className="po-scv3__intelligence-empty">
               <strong>NO EVALUATION ON FILE</strong>
@@ -265,22 +278,16 @@ export function ScoutingCourtsideBoard({
 
       <div className="po-scv3__right">
         <section className="po-scv3__card po-scv3__fit">
-          <div className="po-scv3__card-head"><strong>FIT & DECISION</strong><span>{own?'DEVELOPMENT REVIEW':'ACQUISITION READ'}</span></div>
+          <div className="po-scv3__card-head"><strong>DECISION SUPPORT</strong><span>{own?'SQUAD PLANNING':'RECRUITMENT CASE'}</span></div>
           <div className="po-scv3__fit-banner">
-            <div><small>TACTICAL TEAM FIT</small><strong>NOT EVALUATED</strong></div>
+            <div><small>TACTICAL READ</small><strong>{scouting.consensus.some(row=>row.tacticalFitLabel!==null) ? 'SCOUT REPORT ON FILE' : 'NOT EVALUATED'}</strong></div>
             <div><small>POTENTIAL</small><strong>{scouting.potentialOutcomes.every(outcome=>outcome.knowledgeState==='unknown')?'UNKNOWN':'SCOUTED RANGES'}</strong></div>
           </div>
-          <h4>WHAT WE KNOW</h4>
-          <p>{own
-            ? '80 canonical ratings available internally. Staff reports and tactical fit are separate evidence.'
-            : known.length>0
-              ? `${known.length} scouting dimensions evaluated · ${scouting.consensus.length} reporting evaluators.`
-              : 'No scouting evidence yet. Do not infer quality, character or availability.'}</p>
-          <h4>WHAT TO LEARN NEXT</h4>
-          <p>{(own
-              ? ['Staff assessment', 'Tactical fit']
-              : scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').slice(0,2).map(area=>area.label)
-            ).join(' · ') || 'Refresh evaluations and clarify uncertain ratings'}</p>
+          <h4>{own ? 'ROSTER JUDGMENT' : 'SPORTING CASE'}</h4>
+          <p>{verdict.headline}: {verdict.status === 'insufficient' ? 'More evidence required.' :
+              `${verdict.confirmedAdvantageCount} clear pluses, ${verdict.confirmedConcernCount} clear minuses vs current benchmark.`}</p>
+          <h4>BEFORE THE FINAL CALL</h4>
+          <p>{verdict.nextStep}</p>
         </section>
         <section className="po-scv3__card po-scv3__routes">
           <div className="po-scv3__card-head"><strong>ACTION ROUTES</strong><span>{own?'INTERNAL':'TARGET'} · GAMEPLAY</span></div>
