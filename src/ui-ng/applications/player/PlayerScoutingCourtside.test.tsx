@@ -23,7 +23,7 @@ describe('PLAYER Scouting Courtside V3',()=>{
     const {container}=showPlayer(world,team.rosterPlayerIds[0]!)
     expect(container.querySelector('[data-ng-region="player-scouting"]')).toBeInTheDocument()
     expect(screen.getByText('INTERNAL ATTRIBUTE PROFILE')).toBeInTheDocument()
-    expect(screen.getByText('INTERNAL EVALUATION')).toBeInTheDocument()
+    expect(screen.getAllByText('INTERNAL EVALUATION')).toHaveLength(2)
     const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
     expect(comparator).toHaveTextContent('ROSTER COMPARISON')
     const ownPicker=within(comparator).getByLabelText('Compare against my player') as HTMLSelectElement
