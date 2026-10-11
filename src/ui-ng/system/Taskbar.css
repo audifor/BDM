@@ -281,21 +281,6 @@
   font:700 19px/1 var(--ng-font-display);
 }
 .ng-taskbar__instance-close:hover {color:#ffe0dd;border-color:#f48d87;background:rgba(244,141,135,.13);}
-.ng-taskbar__instance-close-all {
-  display:block;
-  width:100%;
-  min-height:34px;
-  margin-top:7px;
-  padding:7px 9px;
-  border:1px solid rgba(244,141,135,.20);
-  border-radius:6px;
-  background:rgba(244,141,135,.05);
-  color:#f5b1a9;
-  cursor:pointer;
-  font:700 12px/1 var(--ng-font-display);
-  text-transform:uppercase;
-}
-.ng-taskbar__instance-close-all:hover {background:rgba(244,141,135,.14);border-color:#f48d87;}
 .ng-taskbar__instance-popover button:focus-visible,
 .ng-taskbar__app-slot > .ng-taskbar__app:focus-visible {
   outline:2px solid var(--ng-cyan-bright);
