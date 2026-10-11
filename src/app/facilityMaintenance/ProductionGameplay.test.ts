@@ -90,7 +90,7 @@ describe('BS17E-A FINAL: maintenance is playable from a new game, with no hand-b
     expect(world.facilityMaintenanceNeedsById[needId as never]!.status).toBe('COMPLETED')
 
     // 6. Physical completion is not payment: recognition and settlement come from the Calendar only.
-    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY')).toHaveLength(0)
+    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY' && String(item.organizationId) === organizationId)).toHaveLength(0)
     expect(cash()).toBe(cashBeforeWork)
     world = advance(world, 1)
     view = buildFacilityMaintenanceOperationView(world, team.id, operationId)!
@@ -103,6 +103,6 @@ describe('BS17E-A FINAL: maintenance is playable from a new game, with no hand-b
     view = buildFacilityMaintenanceOperationView(world, team.id, operationId)!
     expect(view.economics).toMatchObject({ state: 'SETTLED', settledMinorUnits: cheapest.amountMinorUnits, outstandingMinorUnits: 0 })
     expect(cash()).toBe(cashBeforeWork - cheapest.amountMinorUnits)
-    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY')).toHaveLength(1)
+    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY' && String(item.organizationId) === organizationId)).toHaveLength(1)
   })
 })

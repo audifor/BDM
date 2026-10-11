@@ -70,8 +70,8 @@ function withCapitalAuthorization(world: GameWorld, minorUnits: number): GameWor
   const lines = current.lines.map((line) => createBudgetLine({ id: `${budgetId}:${line.category}`, budgetId, organizationId, category: line.category, direction: 'EXPENSE', amount: { currencyCode, minorUnits: line.category === 'FACILITY_DEVELOPMENT' ? minorUnits : line.authorizedMinorUnits }, ...(line.teamId === undefined ? {} : { teamId: line.teamId }), provenance }))
   return updateGameWorld(world, { financialBudgets: [...Object.values(world.financialBudgetsById), budget], budgetLines: [...Object.values(world.budgetLinesById), ...lines] })
 }
-const capitalExpenses = (world: GameWorld) => Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY_DEVELOPMENT')
-const capitalReservations = (world: GameWorld) => Object.values(world.financialReservationsById).filter((item) => item.sourceAuthority === 'FACILITY' && item.sourceEntityId.startsWith('capital-tranche:'))
+const capitalExpenses = (world: GameWorld) => Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY_DEVELOPMENT' && String(item.organizationId) === organizationId)
+const capitalReservations = (world: GameWorld) => Object.values(world.financialReservationsById).filter((item) => item.sourceAuthority === 'FACILITY' && item.sourceEntityId.startsWith('capital-tranche:') && String(item.organizationId) === organizationId)
 const cash = (world: GameWorld) => getCashBalancesByCurrency(world, organizationId as never, world.currentDate).reduce((sum, row) => sum + row.totalCashMinorUnits, 0)
 
 describe('BS17E-B causal: justification, authority, Finance and cancellation', () => {

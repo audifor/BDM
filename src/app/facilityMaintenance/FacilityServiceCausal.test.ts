@@ -41,7 +41,7 @@ describe('BS17E-C causal rules of recurring services', () => {
     // Unsigned: signing without a decision is refused and nothing is billed on any day.
     expect(ctx.act({ kind: 'SERVICE_SIGN', operationId }, 'BLOCKED').reasons).toEqual(['COST_UNKNOWN'])
     ctx.world = advance(ctx.world, 40)
-    expect(Object.keys(ctx.world.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(0)
+    expect(Object.keys(ctx.world.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(0)
     ctx.act({ kind: 'SERVICE_TERMINATE', operationId })
     const view = buildFacilityServiceOperationView(ctx.world, ctx.team.id, operationId)
     expect(view).toMatchObject({ stage: 'CANCELLED', periods: { processed: 0, skipped: 0 } })
@@ -61,7 +61,7 @@ describe('BS17E-C causal rules of recurring services', () => {
     const once = processFacilityServices(ctx.world)
     const twice = processFacilityServices(once)
     expect(buildFacilityServiceOperationView(twice, ctx.team.id, operationId)!.periods.processed).toBe(1)
-    expect(Object.keys(twice.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(1)
+    expect(Object.keys(twice.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(1)
     expect(twice).toBe(once)
     // Signing again changes nothing.
     expect(executeFacilityMaintenanceUiCommand(twice, ctx.team.id, { kind: 'SERVICE_SIGN', operationId }).status).toBe('NO_CHANGE')

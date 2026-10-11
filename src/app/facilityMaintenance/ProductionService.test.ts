@@ -30,7 +30,7 @@ describe('BS17E-C: a recurring conservation service is playable from a new game'
     }
     // Owning a facility never creates a recurring charge.
     expect(facilityEconomyRecordsOfKind(world, 'SERVICE_OFFER')).toHaveLength(0)
-    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(0)
+    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(0)
 
     const row = buildFacilityServiceRows(world, team.id)[0]!
     expect(row.option.eligible).toBe(true)
@@ -66,14 +66,14 @@ describe('BS17E-C: a recurring conservation service is playable from a new game'
     // Save/reload never renews or duplicates.
     const reloaded = deserializeGameWorldV4(serializeGameWorldV4(world, SAVED_AT))
     expect(buildFacilityServiceOperationView(reloaded, team.id, operationId)!.periods.processed).toBe(1)
-    expect(Object.keys(reloaded.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(1)
+    expect(Object.keys(reloaded.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(1)
 
     // Period 1 falls due 30 days after the signature.
     world = advance(reloaded, 30)
     view = buildFacilityServiceOperationView(world, team.id, operationId)!
     expect(view.periods.processed).toBe(2)
     expect(view.periods.billedMinorUnits).toBe(2 * cheapest.amountPerPeriodMinorUnits)
-    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(2)
+    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(2)
 
     // Termination takes effect after the notice, never earlier, and billing stops.
     act({ kind: 'SERVICE_TERMINATE', operationId })
@@ -83,8 +83,8 @@ describe('BS17E-C: a recurring conservation service is playable from a new game'
     view = buildFacilityServiceOperationView(world, team.id, operationId)!
     expect(view.contract!.ended).toBe(true)
     expect(view.periods.processed).toBe(3)
-    const factsAtEnd = Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service')).length
+    const factsAtEnd = Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId)).length
     world = advance(world, 60)
-    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service'))).toHaveLength(factsAtEnd)
+    expect(Object.keys(world.operatingCostFactsById).filter((id) => id.includes('facility-service') && id.includes(operationId))).toHaveLength(factsAtEnd)
   })
 })

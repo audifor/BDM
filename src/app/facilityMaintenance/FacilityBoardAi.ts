@@ -33,7 +33,7 @@ function activeAppointee(world: GameWorld, bodyId: string): GovernanceActor | un
 }
 
 /** True when the offer is affordable now and passes the Board's routine-share rule. */
-function boardApprovesWork(world: GameWorld, operationId: string): boolean {
+export function boardApprovesWork(world: GameWorld, operationId: string): boolean {
   const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
   if (lifecycle === null || lifecycle.selectedOfferId === null || lifecycle.organizationId === null) return false
   const offer = world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
@@ -53,7 +53,7 @@ function boardApprovesWork(world: GameWorld, operationId: string): boolean {
  * allow the price PLUS a liquidity buffer (a share of the FACILITY maintenance authorization) so a club never invests away the
  * cash it needs to keep its facilities running.
  */
-function boardApprovesInvestment(world: GameWorld, operationId: string): boolean {
+export function boardApprovesInvestment(world: GameWorld, operationId: string): boolean {
   const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
   if (lifecycle === null || lifecycle.selectedOfferId === null || lifecycle.organizationId === null || lifecycle.projectId === null) return false
   const offer = world.facilityEconomyRecordsById[lifecycle.selectedOfferId]
@@ -80,7 +80,7 @@ function boardApprovesInvestment(world: GameWorld, operationId: string): boolean
  * Service rule: a recurring contract is an annual commitment. The Board approves it only when Finance allows the first period now and the
  * whole contract value fits within the FACILITY authorization headroom, so recurring costs can never crowd out the line.
  */
-function boardApprovesService(world: GameWorld, operationId: string): boolean {
+export function boardApprovesService(world: GameWorld, operationId: string): boolean {
   const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
   if (lifecycle === null || lifecycle.selectedOfferId === null || lifecycle.organizationId === null) return false
   const offer = world.facilityEconomyRecordsById[lifecycle.selectedOfferId]

@@ -98,6 +98,6 @@ describe('BS17E-B: a capital renovation is playable from a new game', () => {
     expect(view.tranches.map((tranche) => tranche.state)).toEqual(['SETTLED', 'SETTLED'])
     expect(view.economics).toMatchObject({ owedMinorUnits: 0, paidMinorUnits: cheapest.amountMinorUnits })
     expect(cash()).toBe(cashBefore - cheapest.amountMinorUnits)
-    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY_DEVELOPMENT')).toHaveLength(2)
+    expect(Object.values(world.expenseRecognitionsById).filter((item) => item.category === 'FACILITY_DEVELOPMENT' && String(item.organizationId) === organizationId)).toHaveLength(2)
   })
 })

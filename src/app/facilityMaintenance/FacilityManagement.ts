@@ -1,5 +1,6 @@
 import type { GameWorld } from '@/domain/world'
 import { processBoardFacilityDecisions } from './FacilityBoardAi'
+import { processAiFacilityManagement } from './FacilityAiManagement'
 import { processFacilityServices } from './FacilityServiceCommands'
 
 /**
@@ -9,5 +10,5 @@ import { processFacilityServices } from './FacilityServiceCommands'
  */
 export function processFacilityManagement(world: GameWorld): GameWorld {
   if (Object.keys(world.facilityEconomyRecordsById).length === 0) return world
-  return processFacilityServices(processBoardFacilityDecisions(world))
+  return processFacilityServices(processAiFacilityManagement(processBoardFacilityDecisions(world)))
 }
