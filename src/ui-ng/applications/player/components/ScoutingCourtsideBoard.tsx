@@ -74,6 +74,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
     Math.abs((b.subject ?? 0)-b.own)-Math.abs((a.subject ?? 0)-a.own))
   const ownName = eligible.find(row => row.id === selectedId)?.player
   const subjectName = world.players[inspectedId]
+  const subjectOwned = team?.rosterPlayerIds.includes(inspectedId) ?? false
   return <section className="po-scv3__card po-scv3__compare" data-ng-region="scouting-roster-compare">
     <div className="po-scv3__card-head"><strong>HEAD-TO-HEAD · OUR ROSTER</strong><span>80 ATTRIBUTES · SAME KEY · NO HIDDEN RATINGS</span></div>
     <div className="po-scv3__benchmark-modes" role="group" aria-label="Roster benchmark">
@@ -131,7 +132,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
             <small>Never compare estimated category strength with an exact 80-rating family average.</small>
           </div>
         : <div className={'po-scv3__compare-rows'+(showAll?' is-expanded':'')}>
-            <div className="po-scv3__compare-column-head"><span>ATTRIBUTE</span><span>PLAYER / OURS</span><span>SCOUT</span><span>OURS</span><span>EDGE</span></div>
+            <div className="po-scv3__compare-column-head"><span>ATTRIBUTE</span><span>PLAYER COMPARISON</span><span title={`${subjectName?.firstName ?? ""} ${subjectName?.lastName ?? ""}`}>{subjectOwned ? subjectName?.lastName.toUpperCase() : "SCOUT"}</span><span title={`${ownName?.firstName ?? ""} ${ownName?.lastName ?? ""}`}>{ownName?.lastName.toUpperCase() ?? "OUR PLAYER"}</span><span>EDGE</span></div>
             {(showAll ? rankedRows : rankedRows.slice(0,6)).map(row => {
               const difference = row.subject === null ? null : row.subject - row.own
               const supportedAdvantage = row.low !== null && row.low >= row.own + 5
@@ -165,7 +166,7 @@ export function ScoutingCourtsideBoard({
   world, model, scouting, assignmentSummary, nextGameLabel, requestReason, canIncrease,
   canCancel, hasReport, onAction, onOpenScoutingCentre,
 }: Props) {
-  const [focusRoute, setFocusRoute] = useState<ActionId>('request-report')
+  const [focusRoute, setFocusRoute] = useState<ActionId>(model.knowledgeAccess.kind === 'own-roster' ? 'development-route' : 'request-report')
   const [intelligenceFocus, setIntelligenceFocus] = useState('shooting')
   const [bottomTab, setBottomTab] = useState<'reports' | 'sources' | 'games'>('reports')
   const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
@@ -355,8 +356,10 @@ export function ScoutingCourtsideBoard({
               </div>}
             </>)}
         <div className="po-scv3__coverage-note">
-          <strong>KNOWLEDGE GAPS</strong>
-          <span>{scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').map(area=>area.label).join(' · ') || 'All modeled knowledge areas evaluated'}</span>
+          <strong>{own ? 'INTERNAL KNOWLEDGE' : 'KNOWLEDGE GAPS'}</strong>
+          <span>{own
+            ? 'All 80 player ratings are known internally. Tactical role, medical context, potential and staff opinions require their own evidence.'
+            : scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').map(area=>area.label).join(' · ') || 'All modeled knowledge areas evaluated'}</span>
         </div>
       </section>
 
@@ -368,7 +371,12 @@ export function ScoutingCourtsideBoard({
             <div><small>POTENTIAL</small><strong>{scouting.potentialOutcomes.every(outcome=>outcome.knowledgeState==='unknown')?'UNKNOWN':'SCOUTED RANGES'}</strong></div>
           </div>
           <div className="po-scv3__call">
-            <strong>{!verdict.positionMatched ? 'COMPARE SAME POSITION' : own ? 'KEEP / DEVELOP' : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
+            <strong>{!verdict.positionMatched ? 'COMPARE SAME POSITION'
+              : own ? positionMatch.compatibility !== 'primary' ? 'VERIFY POSITIONAL ROLE'
+                : verdict.headline === 'POSITIONAL GAPS TO ADDRESS' ? 'REVIEW DEVELOPMENT PRIORITIES'
+                : verdict.headline === 'STRONG IN POSITION MATCHUP' ? 'REVIEW MINUTES & ROLE'
+                : 'REVIEW ROLE & PERFORMANCE'
+              : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
             <p>{verdict.nextStep}</p>
             <div className="po-scv3__call-actions">
               <button type="button" onClick={()=>onAction(own ? 'development-route' : verdict.status === 'supported' ? 'contract-route' : 'request-report')}
