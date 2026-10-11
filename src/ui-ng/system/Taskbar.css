@@ -201,31 +201,6 @@
 
 /* Windows-like grouped taskbar, keeping the Courtside dock height unchanged. */
 .ng-taskbar__app-slot {display:flex;align-items:center;gap:2px;flex:0 0 auto;}
-.ng-taskbar__instances-trigger {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:3px;
-  flex:0 0 auto;
-  height:28px;
-  min-width:28px;
-  padding:2px 5px;
-  border:1px solid rgba(22,217,243,.25);
-  border-radius:5px;
-  color:#b1c4c8;
-  background:rgba(22,217,243,.055);
-  cursor:pointer;
-  font:700 11px/1 var(--ng-font-display);
-}
-.ng-taskbar__instances-trigger b {font:inherit;}
-.ng-taskbar__instances-trigger > span {font-size:10px;}
-.ng-taskbar__instances-trigger:hover,
-.ng-taskbar__instances-trigger[aria-expanded='true'] {
-  border-color:var(--ng-cyan-bright);
-  color:var(--ng-cyan-bright);
-  background:rgba(22,217,243,.12);
-}
-.ng-taskbar__instance-backdrop {position:fixed;inset:0;z-index:9998;background:transparent;}
 .ng-taskbar__instance-popover {
   position:fixed;
   z-index:9999;
@@ -322,7 +297,13 @@
 }
 .ng-taskbar__instance-close-all:hover {background:rgba(244,141,135,.14);border-color:#f48d87;}
 .ng-taskbar__instance-popover button:focus-visible,
-.ng-taskbar__instances-trigger:focus-visible {
+.ng-taskbar__app-slot > .ng-taskbar__app:focus-visible {
   outline:2px solid var(--ng-cyan-bright);
   outline-offset:2px;
+}
+
+/* Hovering the existing app icon is the only visual trigger, no count badge. */
+.ng-taskbar__app-slot > .ng-taskbar__app[aria-expanded='true'] {
+  border-color:rgba(22,217,243,.40);
+  color:var(--ng-cyan-bright);
 }
