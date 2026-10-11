@@ -34,7 +34,7 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(comparator).toHaveTextContent('HEAD-TO-HEAD · OUR ROSTER')
     expect(within(comparator).getByLabelText('Comparison attribute family')).toHaveValue('position')
     const assessed=within(comparator).getByLabelText('Position assessed') as HTMLSelectElement
-    expect(assessed).toHaveValue(expect.stringMatching(/^(PG|SG|SF|PF|C)$/))
+    expect(assessed.value).toMatch(/^(PG|SG|SF|PF|C)$/)
     const positionCaption=within(comparator).getByText(/BOTH PRIMARY|PRIMARY \/ SECONDARY|BOTH SECONDARY|NO COMMON POSITION/)
     expect(positionCaption).toBeInTheDocument()
     const ownPicker=within(comparator).getByLabelText('Compare against my player') as HTMLSelectElement
