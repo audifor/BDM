@@ -91,7 +91,7 @@ export function ScoutingRosterComparison({ world, inspectedId, comparisonId, onC
           {selectedId === null && <option value="">No same-position player; choose manually</option>}
           {eligible.length === 0 && <option value="">No teammates available</option>}
           {eligible.map(({id,player}) => <option key={id} value={id}>
-            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}{player.basketball.secondaryPositions.length>0 ? ` / ${player.basketball.secondaryPositions.join(', ')}` : ''}{sharedScoutingPositions(world.players[inspectedId]!.basketball,player.basketball).length===0 ? ' · DIFFERENT POSITION' : ''}
+            {player.firstName} {player.lastName} · {player.basketball.primaryPosition}{(player.basketball.secondaryPositions?.length ?? 0)>0 ? ` / ${player.basketball.secondaryPositions?.join(', ')}` : ''}{sharedScoutingPositions(world.players[inspectedId]!.basketball,player.basketball).length===0 ? ' · DIFFERENT POSITION' : ''}
           </option>)}
         </select>
       </label>
@@ -230,7 +230,7 @@ export function ScoutingCourtsideBoard({
         <section className="po-scv3__stat"><small>INTERNAL KNOWLEDGE</small>
           <strong>80 VERIFIED RATINGS</strong><span>Direct club records, not scout estimates</span></section>
         <section className="po-scv3__stat"><small>PRIMARY / SECONDARY</small>
-          <strong>{subjectBasketball.primaryPosition} {subjectBasketball.secondaryPositions.length ? '/ '+subjectBasketball.secondaryPositions.join(', ') : ''}</strong>
+          <strong>{subjectBasketball.primaryPosition} {(subjectBasketball.secondaryPositions?.length ?? 0) ? '/ '+subjectBasketball.secondaryPositions?.join(', ') : ''}</strong>
           <span>Current comparison evaluates {positionMatch.position}</span></section>
         <section className="po-scv3__stat"><small>STAFF SCOUT FILE</small>
           <strong>{coverage===0 ? 'NO STAFF REPORT' : level}</strong>
