@@ -614,3 +614,178 @@
 .courtside-roster-screen .roster-v4__filters select {
   min-height:31px;font:700 12px var(--rc-body);
 }
+
+
+/* RPG-facing squad management: decisions first, never fake results. */
+.courtside-roster-screen .roster-manager-ribbon {
+  display:flex;gap:0;align-items:stretch;min-height:42px;
+  flex:0 0 auto;background:var(--rc-panel);border:1px solid var(--rc-line2);
+  border-radius:11px;overflow:hidden;
+}
+.courtside-roster-screen .roster-manager-ribbon__eyebrow {
+  display:flex;align-items:center;padding:0 13px;white-space:nowrap;
+  color:var(--rc-accent);font:800 13px var(--rc-head);letter-spacing:.09em;
+}
+.courtside-roster-screen .roster-manager-ribbon>button {
+  display:flex;gap:8px;align-items:center;min-width:0;flex:1 1 0;
+  padding:7px 13px;border:0;border-left:1px solid var(--rc-line);
+  background:transparent;color:var(--rc-muted);text-align:left;
+}
+.courtside-roster-screen .roster-manager-ribbon>button:hover {
+  background:var(--rc-raised);color:var(--rc-text);
+}
+.courtside-roster-screen .roster-manager-ribbon>button strong {
+  color:var(--rc-highlight);font:800 20px/1 var(--rc-head);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.courtside-roster-screen .roster-manager-ribbon>button span {
+  font:700 11px var(--rc-head);letter-spacing:.055em;line-height:1.15;
+}
+.courtside-roster-screen .roster-manager-agenda {
+  padding:15px;background:var(--rc-raised);border:1px solid var(--rc-line2);
+  border-radius:16px;margin:0 0 14px;
+}
+.courtside-roster-screen .roster-manager-agenda>header {
+  display:flex;justify-content:space-between;gap:15px;align-items:end;margin-bottom:12px;
+}
+.courtside-roster-screen .roster-manager-agenda>header div>span {
+  color:var(--rc-accent);font:800 12px var(--rc-head);letter-spacing:.1em;
+}
+.courtside-roster-screen .roster-manager-agenda h3 {
+  margin:4px 0 0;color:var(--rc-text);font:800 24px/1 var(--rc-head);
+  letter-spacing:.04em;
+}
+.courtside-roster-screen .roster-manager-agenda>header>span {
+  color:var(--rc-faint);font:700 11px var(--rc-head);
+}
+.courtside-roster-screen .roster-manager-agenda__cards {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+}
+.courtside-roster-screen .roster-manager-agenda__cards article {
+  min-width:0;display:flex;flex-direction:column;gap:8px;
+  background:var(--rc-panel);border:1px solid var(--rc-line2);
+  border-radius:12px;padding:14px 15px;
+}
+.courtside-roster-screen .roster-manager-agenda__step {
+  color:var(--rc-accent);font:800 12px var(--rc-head);letter-spacing:.06em;
+}
+.courtside-roster-screen .roster-manager-agenda__cards article>strong {
+  display:flex;gap:9px;align-items:baseline;
+  color:var(--rc-highlight);font:800 32px/1 var(--rc-head);
+}
+.courtside-roster-screen .roster-manager-agenda__cards article>strong small {
+  color:var(--rc-muted);font:700 13px var(--rc-head);
+}
+.courtside-roster-screen .roster-manager-agenda__cards article>p {
+  flex:1;min-height:35px;margin:0;color:var(--rc-muted);
+  font:500 12px/1.4 var(--rc-body);overflow-wrap:anywhere;
+}
+.courtside-roster-screen .roster-manager-agenda__cards article button,
+.courtside-roster-screen .roster-manager-positions__heading button {
+  align-self:flex-start;border:1px solid var(--rc-line2);
+  background:var(--rc-raised2);color:var(--rc-text);
+  font:800 13px var(--rc-head);border-radius:8px;padding:8px 12px;
+}
+.courtside-roster-screen .roster-manager-agenda__cards article button:hover,
+.courtside-roster-screen .roster-manager-positions__heading button:hover {
+  border-color:var(--rc-highlight);color:var(--rc-highlight);
+}
+.courtside-roster-screen .roster-manager-agenda__disclaimer,
+.courtside-roster-screen .roster-manager-positions__note {
+  margin:11px 0 0;color:var(--rc-faint);font:500 11px/1.45 var(--rc-body);
+}
+.courtside-roster-screen .roster-manager-positions {
+  border:1px solid var(--rc-line2);border-radius:16px;padding:15px;
+  background:var(--rc-raised);margin:0 0 14px;
+}
+.courtside-roster-screen .roster-manager-positions__heading {
+  display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px;
+}
+.courtside-roster-screen .roster-manager-positions__heading>div {
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;
+}
+.courtside-roster-screen .roster-manager-positions__heading strong {
+  color:var(--rc-text);font:800 23px var(--rc-head);letter-spacing:.06em;
+}
+.courtside-roster-screen .roster-manager-positions__heading span {
+  color:var(--rc-muted);font:500 12px var(--rc-body);
+}
+.courtside-roster-screen .roster-manager-positions__grid {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;
+}
+.courtside-roster-screen .roster-manager-positions__card {
+  min-width:0;border:1px solid var(--rc-line2);border-radius:11px;
+  background:var(--rc-panel);padding:11px;display:flex;flex-direction:column;gap:9px;
+}
+.courtside-roster-screen .roster-manager-positions__card.has-decision {
+  border-color:color-mix(in srgb,var(--rc-highlight) 55%,var(--rc-line2));
+}
+.courtside-roster-screen .roster-manager-positions__line {
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.courtside-roster-screen .roster-manager-positions__line strong {
+  color:var(--rc-highlight);font:800 27px/1 var(--rc-head);
+}
+.courtside-roster-screen .roster-manager-positions__line span {
+  color:var(--rc-muted);font:600 11px/1.3 var(--rc-body);
+}
+.courtside-roster-screen .roster-manager-positions__options {
+  display:flex;flex-direction:column;gap:5px;
+}
+.courtside-roster-screen .roster-manager-positions__options button {
+  text-align:left;width:100%;border-radius:7px;
+  border:1px solid var(--rc-line2);padding:7px 9px;
+  background:var(--rc-raised);color:var(--rc-text);
+  font:700 12px var(--rc-head);
+}
+.courtside-roster-screen .roster-manager-positions__options button[aria-pressed='true'] {
+  background:var(--rc-highlight);border-color:var(--rc-highlight);color:var(--rc-inverse);
+}
+.courtside-roster-screen .roster-manager-positions__options button:hover:not(:disabled) {
+  border-color:var(--rc-accent);
+}
+.courtside-roster-screen .roster-manager-positions__card>p {
+  margin:auto 0 0;color:var(--rc-faint);font:500 11px/1.35 var(--rc-body);
+}
+.courtside-roster-screen .roster-v4-depth .roster-depth-chart__row {
+  display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;
+  min-height:65px;padding:9px;gap:5px 8px;
+}
+.courtside-roster-screen .roster-v4-depth .roster-depth-chart__rank {
+  color:var(--rc-muted);font-size:13px;min-width:22px;
+}
+.courtside-roster-screen .roster-v4-depth .roster-depth-chart__row.is-starter .roster-depth-chart__rank {
+  color:var(--rc-highlight);
+}
+.courtside-roster-screen .roster-v4-depth .roster-depth-chart__player {
+  font:700 12px/1.28 var(--rc-body);white-space:normal;
+  overflow-wrap:anywhere;min-width:0;
+}
+.courtside-roster-screen .roster-v4-depth .courtside-role-picker {
+  grid-column:2/-1;grid-row:auto;width:100%;max-width:none;min-width:0;
+}
+.courtside-roster-screen .roster-v4-depth__injured,
+.courtside-roster-screen .roster-v4-depth__secondary {
+  font:800 11px var(--rc-head);white-space:nowrap;border-radius:5px;
+  border:1px solid var(--rc-line2);padding:2px 4px;
+}
+.courtside-roster-screen .roster-v4-depth__injured {color:var(--rc-accent);border-color:var(--rc-accent)}
+.courtside-roster-screen .roster-v4-depth__secondary {color:var(--rc-muted)}
+.courtside-roster-screen .roster-v4-briefing__alert button {
+  margin-left:auto;border:1px solid var(--rc-line2);background:var(--rc-raised2);
+  color:var(--rc-text);border-radius:7px;padding:7px 10px;
+  font:800 12px var(--rc-head);
+}
+.courtside-roster-screen .roster-v4-briefing__alert button:hover {
+  color:var(--rc-highlight);border-color:var(--rc-highlight);
+}
+@media(max-width:1250px) {
+  .courtside-roster-screen .roster-manager-ribbon {flex-wrap:wrap}
+  .courtside-roster-screen .roster-manager-ribbon__eyebrow {flex:0 0 100%;padding:7px 12px}
+  .courtside-roster-screen .roster-manager-ribbon>button {min-width:23%}
+  .courtside-roster-screen .roster-manager-positions__grid {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:800px) {
+  .courtside-roster-screen .roster-manager-agenda__cards {grid-template-columns:1fr}
+  .courtside-roster-screen .roster-manager-positions__grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}

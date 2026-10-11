@@ -3,12 +3,19 @@ import type { Player } from '@/domain/player'
 import type { GameWorld } from '@/domain/world'
 import { getCurrentPlayerContract } from '@/domain/world'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
+import type { BasketballPosition } from '@/domain/primitives'
+import { ROSTER_MANAGER_PRIORITY_LABEL, type RosterManagerPriorities, type RosterManagerPriority, type RosterManagerStatus } from '../rosterManagerPlan'
 
 /** Confirmed-contract-only planning. This is not a future squad simulation. */
-export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
+export function RosterCourtsidePlanning({world,roster,onOpenPlayer,status,priorities,onSetPriority,onOpenDepth,canManage}:{
   readonly world:GameWorld
   readonly roster:readonly Player[]
   readonly onOpenPlayer:(destination:EntityDestination)=>void
+  readonly status:RosterManagerStatus
+  readonly priorities:RosterManagerPriorities
+  readonly onSetPriority:(position:BasketballPosition,priority:RosterManagerPriority|undefined)=>void
+  readonly onOpenDepth:()=>void
+  readonly canManage:boolean
 }) {
   const [offset,setOffset]=useState<0|1|2>(0)
   const currentSeason=world.seasons[world.currentSeasonId]
@@ -37,6 +44,32 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
         <p>Proyección de cobertura contractual confirmada, no de resultados o fichajes futuros.</p></div>
       <strong>{knownContracts===0?'SIN DATOS CONTRACTUALES REGISTRADOS':`${rows.filter(row=>row.confirmed).length} / ${roster.length} con contrato confirmado`}</strong>
     </header>
+    <section className="roster-manager-positions" aria-label="Objetivos por posición">
+      <div className="roster-manager-positions__heading">
+        <div><strong>TU PLAN DE PLANTILLA</strong><span>Decide dónde consolidar, desarrollar o estudiar incorporaciones</span></div>
+        <button type="button" onClick={onOpenDepth}>VER ROTACIÓN ↗</button>
+      </div>
+      <div className="roster-manager-positions__grid">
+        {status.positions.map(({position,count,isStarterAssigned})=><article key={position}
+          className={'roster-manager-positions__card'+(priorities[position]?' has-decision':'')}>
+          <div className="roster-manager-positions__line">
+            <strong>{position}</strong><span>{count} jugador{count===1?'':'es'} · {isStarterAssigned?'Titular asignado':'Titular pendiente'}</span>
+          </div>
+          <div className="roster-manager-positions__options" role="group" aria-label={'Prioridad del mánager en '+position}>
+            {(['keep','develop','explore'] as const).map(priority=><button type="button" key={priority}
+              disabled={!canManage} aria-pressed={priorities[position]===priority}
+              onClick={()=>onSetPriority(position,priorities[position]===priority?undefined:priority)}>
+              {ROSTER_MANAGER_PRIORITY_LABEL[priority]}</button>)}
+          </div>
+          <p>{priorities[position]===undefined?'Sin prioridad definida':
+            'Decisión registrada: '+ROSTER_MANAGER_PRIORITY_LABEL[priorities[position]]}</p>
+        </article>)}
+      </div>
+      <p className="roster-manager-positions__note">
+        Estas prioridades son notas de gestión locales a este entrenador, club y temporada.
+        No ejecutan fichajes, entrenamientos ni conversaciones con jugadores.
+      </p>
+    </section>
     <div className="roster-v4-planning__horizons">
       {horizon.map((h,i)=><button key={h.year} aria-pressed={offset===i}
         className={offset===i?'is-active':''} type="button" onClick={()=>setOffset(i as 0|1|2)}>

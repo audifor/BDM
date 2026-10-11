@@ -25,6 +25,7 @@ afterEach(cleanup)
 
 beforeEach(() => {
   useRosterWorkspaceSession.getState().reset()
+  localStorage.clear()
   window.history.replaceState({}, '', '/?ui=ng&app=roster')
 })
 
@@ -260,6 +261,42 @@ describe('RosterWorkspace session restoration', () => {
     expect(briefing?.textContent).toMatch(/sin rol/i)
   })
 
+  it('turns the canonical lineup into live manager agenda progress',()=>{
+    const {team}=mountRosterWorkspace()
+    expect(screen.getByLabelText('Agenda del mánager')).toHaveTextContent('0/5')
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    const agenda=screen.getByRole('region',{name:'Decisiones del mánager'})
+    expect(agenda).toHaveTextContent('0/5')
+    fireEvent.click(screen.getByRole('button',{name:'GESTIONAR QUINTETO ↗'}))
+    expect(screen.getByLabelText('Depth chart')).toBeInTheDocument()
+    const world=useGameStore.getState().world!
+    const guard=getTeamRoster(world,team.id).find(p=>p.basketball.primaryPosition==='PG')!
+    fireEvent.click(screen.getByRole('button',{name:`Rotación ${guard.firstName} ${guard.lastName}`}))
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    expect(screen.getByRole('region',{name:'Decisiones del mánager'})).toHaveTextContent('1/5')
+    expect(getLineupSlotForPlayer(getTeamLineup(useGameStore.getState().world!,team.id)!,guard.id)).toBe('PG')
+  })
+
+  it('saves a planning priority as a local manager intention without making a signing',()=>{
+    const {unmount,team}=mountRosterWorkspace()
+    const before=useGameStore.getState().world!
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    const pg=screen.getByRole('group',{name:'Prioridad del mánager en PG'})
+    fireEvent.click(pg.querySelector<HTMLButtonElement>('button:last-child')!)
+    expect(pg.querySelector('button:last-child')).toHaveAttribute('aria-pressed','true')
+    expect(useGameStore.getState().world).toBe(before)
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    expect(screen.getByRole('region',{name:'Decisiones del mánager'}))
+      .toHaveTextContent('PG · Estudiar refuerzo')
+    unmount()
+    mountRosterWorkspace(before)
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    expect(screen.getByRole('group',{name:'Prioridad del mánager en PG'})
+      .querySelector('button:last-child')).toHaveAttribute('aria-pressed','true')
+    expect(useGameStore.getState().world!.teams[team.id].rosterPlayerIds).toEqual(before.teams[team.id].rosterPlayerIds)
+  })
+
   it('opens contractual planning with real roster players, not fictitious signings',()=>{
     const {world,team}=mountRosterWorkspace()
     fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
@@ -274,9 +311,8 @@ describe('RosterWorkspace session restoration', () => {
     const world=useGameStore.getState().world!
     const guard=getTeamRoster(world,team.id).find(player=>player.basketball.primaryPosition==='PG')!
     fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
-    fireEvent.change(screen.getByRole('combobox',{name:`Asignar rotación a ${guard.firstName} ${guard.lastName}`}),{
-      target:{value:'PG'},
-    })
+    fireEvent.click(screen.getByRole('button',{name:`Rotación ${guard.firstName} ${guard.lastName}`}))
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
     const updated=useGameStore.getState().world!
     expect(getLineupSlotForPlayer(getTeamLineup(updated,team.id)!,guard.id)).toBe('PG')
     expect(screen.getByLabelText('Depth chart').textContent).toContain('TITULAR')
@@ -316,7 +352,7 @@ describe('RosterWorkspace session restoration', () => {
       expect(meter.querySelector('.is-bench')).toHaveStyle({width:'0%'})
       expect(meter.querySelector('.is-unassigned')).toHaveStyle({width:'100%'})
     }
-    expect(chart.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
+    expect(chart.querySelector('.roster-depth-chart__rank')?.textContent).toBe('·')
   })
 
   it('divides a lane meter by all players, not by assigned players only',()=>{
@@ -361,7 +397,7 @@ describe('RosterWorkspace session restoration', () => {
     expect(pgLane).toHaveClass('has-roles')
     expect(pgLane?.textContent).toContain('TITULAR')
     expect(pgLane?.textContent).not.toContain('FREE')
-    expect(pgLane?.querySelector(`[data-player-id="${starter.id}"]`)?.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
+    expect(pgLane?.querySelector(`[data-player-id="${starter.id}"]`)?.querySelector('.roster-depth-chart__rank')?.textContent).toBe('T')
     if (rotation !== undefined) {
       expect(pgLane?.textContent).toContain('ROTACIÓN')
     }

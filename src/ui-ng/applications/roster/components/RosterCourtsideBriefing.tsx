@@ -4,17 +4,22 @@ import { getTeamRoster } from '@/domain/world'
 import { getPlayerAge } from '@/domain/player'
 import type { TeamId } from '@/domain/ids'
 import type { RosterBriefingModel, RosterLaneDiagnosis } from '@/ui-ng/applications/roster/buildRosterBriefing'
+import type { RosterManagerPriorities, RosterManagerStatus } from '../rosterManagerPlan'
+import { RosterManagerAgenda } from './RosterManagerAgenda'
 
 const DIAGNOSIS:Record<RosterLaneDiagnosis,string>={
   shortage:'SIN COBERTURA',thin:'COBERTURA REDUCIDA',balanced:'COBERTURA DE REFERENCIA',
   overload:'CONCENTRACIÓN ALTA',critical:'CONCENTRACIÓN MUY ALTA',
 }
 
-export function RosterCourtsideBriefing({model,world,teamId,onOpenDepth}:{
+export function RosterCourtsideBriefing({model,world,teamId,onOpenDepth,onOpenPlanning,status,priorities}:{
   readonly model:RosterBriefingModel
   readonly world:GameWorld
   readonly teamId:TeamId
   readonly onOpenDepth?:()=>void
+  readonly onOpenPlanning?:()=>void
+  readonly status?:RosterManagerStatus
+  readonly priorities?:RosterManagerPriorities
 }) {
   const ages=useMemo(()=>{
     const ageBuckets=[0,0,0,0,0]
@@ -33,6 +38,8 @@ export function RosterCourtsideBriefing({model,world,teamId,onOpenDepth}:{
         <p>Lectura de la plantilla, prioridades y equilibrio deportivo.</p></div>
       <strong>{model.rosterCount} jugadores · {model.unassignedCount} sin rol · {model.injuredCount} baja(s)</strong>
     </header>
+    {status&&<RosterManagerAgenda status={status} priorities={priorities??{}}
+      onDepth={()=>onOpenDepth?.()} onPlanning={()=>onOpenPlanning?.()}/>}
     <div className="roster-v4-briefing__metrics">
       {[
         {title:'JUGADORES',value:model.rosterCount,note:'En roster actual'},

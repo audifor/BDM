@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import type { LineupSlot } from '@/domain/tactics'
 import type { PlayerId } from '@/domain/ids'
+import type { BasketballPosition } from '@/domain/primitives'
 import { getCurrentPlayerContract, getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
@@ -13,6 +14,8 @@ import { RosterCourtsidePlanning } from '@/ui-ng/applications/roster/components/
 import { RosterWorkspaceHeader } from '@/ui-ng/applications/roster/components/RosterWorkspaceHeader'
 import { RosterV4Controls } from '@/ui-ng/applications/roster/components/RosterV4Controls'
 import { RosterRowInspector } from '@/ui-ng/applications/roster/components/RosterRowInspector'
+import { RosterManagerRibbon } from '@/ui-ng/applications/roster/components/RosterManagerAgenda'
+import { buildRosterManagerStatus, readRosterManagerPriorities, rosterManagerPlanKey, saveRosterManagerPriorities, type RosterManagerPriority, type RosterManagerPriorities } from './rosterManagerPlan'
 import { buildRosterBriefing } from '@/ui-ng/applications/roster/buildRosterBriefing'
 import { buildRosterDepthChart } from '@/ui-ng/applications/roster/buildRosterDepthChart'
 import { buildRosterWorkspaceContext, rosterTeamForWorld } from '@/ui-ng/applications/roster/buildRosterWorkspaceContext'
@@ -60,6 +63,21 @@ export function RosterWorkspace() {
   const canEditLineup = team!==undefined&&userTeam?.id===team.id
   const roster = useMemo(()=>world===null||team===undefined?[]:getTeamRoster(world,team.id),[world,team])
   const rosterCandidates = useMemo(()=>world===null||team===undefined?[]:getClubRosterCandidates(world,team.id),[world,team])
+  const managerStatus = useMemo(()=>world===null||team===undefined?null:buildRosterManagerStatus(world,team.id),[world,team])
+  const planScope=world===null||team===undefined?'':rosterManagerPlanKey(world,team.id)
+  const [planStore,setPlanStore]=useState<{scope:string;priorities:RosterManagerPriorities}>({scope:'',priorities:{}})
+  useEffect(()=>{
+    if(world!==null&&team!==undefined)setPlanStore({scope:planScope,priorities:readRosterManagerPriorities(world,team.id)})
+  },[planScope,team?.id])
+  const managerPriorities: RosterManagerPriorities=planStore.scope===planScope?planStore.priorities:{}
+  const setManagerPriority=useCallback((position:BasketballPosition,priority:RosterManagerPriority|undefined)=>{
+    if(!canEditLineup||world===null||team===undefined)return
+    const next: Partial<Record<BasketballPosition,RosterManagerPriority>>={...managerPriorities}
+    if(priority===undefined)delete next[position]
+    else next[position]=priority
+    setPlanStore({scope:planScope,priorities:next})
+    saveRosterManagerPriorities(world,team.id,next)
+  },[canEditLineup,world,team?.id,managerPriorities,planScope])
   const injuries = useMemo(()=>world===null?0:roster.filter(player=>getCurrentPlayerInjury(world,player.id)!==undefined).length,[roster,world])
   const expiring = useMemo(()=>world===null?0:roster.filter(player=>rosterContractStatus(world,player)==='expiring').length,[roster,world])
   const hasContractData = useMemo(()=>world!==null&&roster.some(player=>getCurrentPlayerContract(world,player.id)!==undefined),[roster,world])
@@ -140,6 +158,9 @@ export function RosterWorkspace() {
             <div title={!hasContractData?'No constan contratos activos para esta plantilla':undefined}><small>VENCIMIENTOS REGISTRADOS</small><strong className="is-orange">{hasContractData?expiring:'—'}</strong></div>
             <div><small>SELECCIÓN ACTIVA</small><strong>{selectedRowIds.length}</strong></div>
           </div>
+          {managerStatus!==null&&<RosterManagerRibbon status={managerStatus} priorities={managerPriorities}
+            onDepth={()=>setTab('profundidad')} onPlanning={()=>setTab('planificar')}
+            onBriefing={()=>setTab('briefing')}/>}
           <RosterV4Controls selectedCount={selectedRowIds.length} onOpenInspector={()=>setInspectorOpen(true)}/>
           <div className="roster-v4__table-pane">
             <ScrollRegion className="roster-workspace__scroll" onScroll={persistScroll} ref={scrollRef}>
@@ -170,11 +191,14 @@ export function RosterWorkspace() {
         </section>}
         {tab==='briefing'&&<section className="roster-v4__tab-panel" aria-label="Briefing de plantilla">
           {briefing===null?<p>Informe no disponible.</p>:<RosterCourtsideBriefing
-            model={briefing} teamId={team.id} world={world} onOpenDepth={()=>setTab('profundidad')}/>}
+            model={briefing} teamId={team.id} world={world} onOpenDepth={()=>setTab('profundidad')}
+            onOpenPlanning={()=>setTab('planificar')} status={managerStatus??undefined} priorities={managerPriorities}/>}
         </section>}
         {tab==='planificar'&&<section className="roster-v4__tab-panel roster-v4__planning"
           aria-label="Planificar plantilla">
-          <RosterCourtsidePlanning world={world} roster={roster} onOpenPlayer={openPlayer}/>
+          <RosterCourtsidePlanning world={world} roster={roster} onOpenPlayer={openPlayer}
+            status={managerStatus!} priorities={managerPriorities} onSetPriority={setManagerPriority}
+            onOpenDepth={()=>setTab('profundidad')} canManage={canEditLineup}/>
         </section>}
       </main>
     </ApplicationWorkspace>

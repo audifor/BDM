@@ -1,5 +1,6 @@
 import type { PlayerId } from '@/domain/ids'
-import { BENCH_SLOTS, type LineupSlot } from '@/domain/tactics'
+import type { LineupSlot } from '@/domain/tactics'
+import { CourtsideRosterRolePicker } from './CourtsideRosterRolePicker'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import type { RosterDepthChartModel, RosterDepthBand } from '@/ui-ng/applications/roster/buildRosterDepthChart'
@@ -53,24 +54,23 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLine
               ?<li className={`roster-depth-chart__group is-${item.band}`} key={`group-${item.band}`}>{BAND_LABEL[item.band]}</li>
               :<li data-player-id={item.player.id} key={item.player.id}
                 className={`roster-depth-chart__row is-${item.player.band}${item.player.id===selectedPlayerId?' is-selected':''}`}>
-                  <span className="roster-depth-chart__rank">{item.rank}</span>
+                  <span className="roster-depth-chart__rank" title="Rol asignado; no representa un ranking de calidad">
+                    {item.player.band==='starter'?'T':item.player.band==='unassigned'?'·':'B'}
+                  </span>
                   <EntityLink className="canonical-roster__player-link roster-depth-chart__player"
                     destination={{type:'player',playerId:item.player.id,section:'overview'}}
                     onNavigate={onOpenPlayer}>{item.player.name}</EntityLink>
+                  {item.player.injured&&<span className="roster-v4-depth__injured" title="Lesión activa registrada">BAJA</span>}
+                  {item.player.secondaryPositions.length>0&&<span className="roster-v4-depth__secondary"
+                    title="Posiciones secundarias registradas, no garantía de rendimiento">
+                    {item.player.secondaryPositions.join('/')}
+                  </span>}
                   {onLineupSlotChange!==undefined
-                    ? <select className="roster-v4-depth__slot" value={item.player.slot??''}
-                        aria-label={`Asignar rotación a ${item.player.name}`}
-                        title="Los cambios se aplican a la rotación del equipo"
-                        onChange={event=>{
-                          const next=event.target.value
-                          if(next==='') {
-                            if(item.player.slot!==undefined)onLineupSlotClear?.(item.player.slot)
-                          } else onLineupSlotChange(next as LineupSlot,item.player.id)
-                        }}>
-                        <option value="">Sin rol</option>
-                        <option value={lane.position}>TITULAR {lane.position}</option>
-                        {BENCH_SLOTS.map(slot=><option key={slot} value={slot}>BANQUILLO {slot}</option>)}
-                      </select>
+                    ? <CourtsideRosterRolePicker
+                        name={item.player.name} slot={item.player.slot} disabled={false}
+                        onAssign={slot=>onLineupSlotChange(slot,item.player.id)}
+                        onClear={()=>{if(item.player.slot!==undefined)onLineupSlotClear?.(item.player.slot)}}
+                      />
                     : <span className="roster-v4-depth__slot">{item.player.slot??BAND_LABEL[item.player.band]}</span>}
                 </li>)}
           </ul>
@@ -83,7 +83,7 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLine
     </div>
     <div className="roster-v4-depth__footnote">
       <strong>LECTURA DE PROFUNDIDAD</strong>
-      <p>La barra muestra titulares, banquillo y jugadores sin asignar respecto al total de la posición principal. Las asignaciones modifican la rotación real; no indican compatibilidad con posiciones secundarias ni minutos garantizados.</p>
+      <p>La barra muestra titulares, banquillo y jugadores sin asignar respecto al total de la posición principal. Las asignaciones modifican la rotación real. Las posiciones secundarias son registros, no una garantía de rendimiento; la lista no clasifica jugadores por calidad oculta ni promete minutos.</p>
     </div>
   </section>
 }
