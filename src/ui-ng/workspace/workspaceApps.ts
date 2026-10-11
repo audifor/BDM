@@ -284,6 +284,20 @@ export function navigateToPlayerMedical(playerId: PlayerId) {
   notifyNgNavigation()
 }
 
+/** Navigate from a player dossier into the real medical department actions. */
+export function navigateToMedicalDecision(
+  playerId: PlayerId,
+  tab: 'overview' | 'injured' | 'risk' | 'history' = 'overview',
+) {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.set('app', 'medical')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.set('medicalTab', tab)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
 export function navigateToContracts(teamId?: TeamId, playerId?: PlayerId) {
   const url = new URL(window.location.href)
   clearEntityQuery(url)
