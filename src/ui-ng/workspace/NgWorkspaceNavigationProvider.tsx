@@ -140,6 +140,31 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
     }
   }, [])
 
+  // Generic opening routes (without playerId/teamId) can be mounted before
+  // the save loads or before the player picker changes. Keep their dock identity
+  // synchronized with the actual displayed dossier.
+  useEffect(() => {
+    const updateCurrentInstance = () => {
+      const next = rememberTaskbarInstance(instancesRef.current, currentTaskbarInstance())
+      if (next !== instancesRef.current) {
+        instancesRef.current = next
+        setInstances(next)
+      }
+    }
+    const unsubscribeWorld = useGameStore.subscribe((state, previous) => {
+      if (state.world !== previous.world && (state.world === null || previous.world === null)) {
+        updateCurrentInstance()
+      }
+    })
+    const unsubscribePlayer = useNgPlayerSelectionStore.subscribe((state, previous) => {
+      if (state.selectedPlayerId !== previous.selectedPlayerId) updateCurrentInstance()
+    })
+    return () => {
+      unsubscribeWorld()
+      unsubscribePlayer()
+    }
+  }, [])
+
   const value = useMemo<NgWorkspaceNavigationValue>(
     () => ({
       ...navigation,
