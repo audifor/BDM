@@ -47,41 +47,39 @@ export function PlayerMedicalDecisionPanel({
   readonly medical: PlayerMedicalModel
   readonly playerId: PlayerId
 }) {
-  const injured=medical.activeInjury!==null
-  const elevated=medical.risk?.riskBand==='high'||medical.risk?.riskBand==='elevated'
-  return <section className="po-med-panel po-med-v2__decisions" data-ng-region="medical-decisions">
-    <header className="po-med-panel__head"><span className="po-med-panel__title">MANAGER DECISIONS</span>
-      <span className="po-med-panel__meta">{injured?'RECOVERY':'PREVENTION'}</span></header>
-    <div className="po-med-v2__decision-card">
-      <div className="po-med-v2__decision-symbol" aria-hidden="true">{injured?'✚':elevated?'!':'✓'}</div>
+  const injured = medical.activeInjury !== null
+  const elevated = medical.risk?.riskBand === 'high' || medical.risk?.riskBand === 'elevated'
+  return <section className="po-med-panel po-med-v2__decisions po-med-v3__decisions" data-ng-region="medical-decisions">
+    <header className="po-med-panel__head">
+      <span className="po-med-panel__title">ACTION ROUTES</span>
+      <span className="po-med-panel__meta">{injured ? 'RECOVERY' : 'PREVENTION'}</span>
+    </header>
+    <div className="po-med-v3__route-summary">
+      <span aria-hidden="true">{injured ? '✚' : elevated ? '!' : '✓'}</span>
       <div>
-        <small>{injured?'INJURY MANAGEMENT':elevated?'RISK REQUIRES ATTENTION':'PLAYER READINESS'}</small>
-        <strong>{injured?'REHABILITATION PLAN':elevated?'REVIEW PLAYER LOAD':'MAINTAIN FITNESS'}</strong>
-        <p>{injured
-          ? 'Choose rehabilitation settings in Medical. Changes affect recovery and selection decisions.'
-          : elevated
-            ? 'The injury risk model detects pressure. Review workload before the next game.'
-            : 'The player is available. Adjust training if fatigue or workload changes.'}</p>
+        <small>MANAGER PRIORITY</small>
+        <strong>{injured ? 'RECOVERY MANAGEMENT' : elevated ? 'REVIEW PLAYER LOAD' : 'MAINTAIN FITNESS'}</strong>
       </div>
     </div>
-    <div className="po-med-v2__decision-buttons">
-      {injured ? <>
-        <button type="button" onClick={()=>navigateToMedicalDecision(playerId,'injured')}>
-          REHAB PLAN ↗
-        </button>
-        <button type="button" onClick={()=>navigateToMedicalDecision(playerId,'overview')}>
-          FITNESS TEST / CLEARANCE ↗
-        </button>
-      </> : <>
-        <button type="button" onClick={()=>navigateToMedicalDecision(playerId,'risk')}>
-          MEDICAL RISK ↗
-        </button>
-        <button type="button" onClick={()=>syncWorkspaceAppQuery('training','push')}>
-          TRAINING PLAN ↗
-        </button>
-      </>}
+    <div className="po-med-v3__routes">
+      <button type="button" onClick={() => navigateToMedicalDecision(playerId, injured ? 'injured' : 'risk')}>
+        <span aria-hidden="true">01</span>
+        <span><strong>{injured ? 'REHAB PLAN' : 'MEDICAL RISK'}</strong>
+          <small>{injured ? 'Manage the recorded rehabilitation' : 'Review injury risk and exposure'}</small></span>
+        <b aria-hidden="true">↗</b>
+      </button>
+      <button type="button" onClick={() => syncWorkspaceAppQuery('training', 'push')}>
+        <span aria-hidden="true">02</span>
+        <span><strong>TRAINING PLAN</strong><small>Adjust real workload in Training</small></span>
+        <b aria-hidden="true">↗</b>
+      </button>
+      {injured && <button type="button" onClick={() => navigateToMedicalDecision(playerId, 'overview')}>
+        <span aria-hidden="true">03</span>
+        <span><strong>FITNESS TEST / CLEARANCE</strong><small>Consult the club medical department</small></span>
+        <b aria-hidden="true">↗</b>
+      </button>}
     </div>
-    <p className="po-med-v2__decision-note">Medical and Training execute real club actions. This panel does not change treatment without your decision.</p>
+    <p className="po-med-v3__route-note">Real actions open Medical or Training. No treatment is changed from this preview.</p>
   </section>
 }
 
