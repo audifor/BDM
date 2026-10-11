@@ -665,9 +665,9 @@ function buildReadiness(
     },
     {
       id: 'recovery',
-      label: 'Daily recovery',
+      label: 'Fatigue recovery',
       fill: null,
-      valueLabel: `-${CAREER_FATIGUE_DAILY_RECOVERY}`,
+      valueLabel: `${CAREER_FATIGUE_DAILY_RECOVERY}/day`,
       bandLabel: 'Fatigue points recovered per day',
       tone: 'neutral',
     },
