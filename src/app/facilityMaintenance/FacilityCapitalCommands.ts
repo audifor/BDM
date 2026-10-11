@@ -118,7 +118,7 @@ function capitalTargetOf(project: { readonly scope: { readonly kind: string; rea
 function activeCapitalOperationFor(world: GameWorld, facilityId: string, kind: FacilityInvestmentKind, componentId: string | null): string | null {
   for (const operationId of facilityOperationIds(world)) {
     const lifecycle = deriveFacilityOperationLifecycle(facilityOperationEvents(world, operationId))
-    if (lifecycle === null || lifecycle.projectId === null || lifecycle.cancelled || lifecycle.facilityId !== facilityId || lifecycle.interventionType !== INTERVENTION[kind]) continue
+    if (lifecycle === null || lifecycle.projectId === null || lifecycle.cancelled || lifecycle.facilityId !== facilityId || (componentId === null ? lifecycle.interventionType !== INTERVENTION[kind] : lifecycle.interventionType === INTERVENTION.EXPANSION)) continue
     const project = world.facilityDevelopmentProjectsById[lifecycle.projectId as never]
     if (project === undefined) continue
     if (capitalTargetOf(project) === componentId && lifecycle.stage !== 'WORK_COMPLETED') return operationId
@@ -176,10 +176,12 @@ export function openFacilityInvestmentProposal(world: GameWorld, input: OpenFaci
   if (!option.eligible) return blocked(world, null, 'INVESTMENT_NOT_JUSTIFIED', [option.reason])
   const organizationId = String(team.organizationId)
   const previous = facilityEconomyRecordsOfKind(world, 'OPERATION_EVENT').filter((event) => event.kind === 'PROPOSAL_CREATED' && event.facilityId === input.facilityId && event.interventionType === INTERVENTION[input.kind] && event.projectId !== null && capitalTargetOf(world.facilityDevelopmentProjectsById[event.projectId as never]) === componentId).length
-  const attempt = previous + 1
   const slug = componentId === null ? 'facility' : componentId.split(':').at(-1) ?? 'component'
-  const projectId = gameBalanceId('project', organizationId, input.kind.toLowerCase(), slug, String(attempt))
-  const operationId = gameBalanceId('operation', 'capital', organizationId, input.kind.toLowerCase(), slug, String(attempt))
+  // The attempt number is the first one whose project and operation ids are both unused: a retired component's successor can share its slug.
+  let attempt = previous + 1
+  const idsFor = (n: number) => ({ projectId: gameBalanceId('project', organizationId, input.kind.toLowerCase(), slug, String(n)), operationId: gameBalanceId('operation', 'capital', organizationId, input.kind.toLowerCase(), slug, String(n)) })
+  while (world.facilityDevelopmentProjectsById[idsFor(attempt).projectId as never] !== undefined || facilityOperationEvents(world, idsFor(attempt).operationId).length > 0) attempt += 1
+  const { projectId, operationId } = idsFor(attempt)
   const spec = GAME_BALANCE_INVESTMENT[input.kind]
   const standardDays = spec.durationDays
   const component = componentId === null ? undefined : world.facilityComponentsById[componentId as never]
@@ -400,8 +402,10 @@ export function acceptFacilityInvestmentWork(world: GameWorld, input: { readonly
   let current = completed.world
   // A new component has no condition history; the contract promised its condition, so that is the first recorded observation.
   const promised = offer.promisedCondition
-  if (completed.outcome.createdComponentIds.length > 0 && promised !== null) {
-    const records = completed.outcome.createdComponentIds.map((componentId) => createFacilityComponentConditionRecord({
+  // (A replacement already records its resulting condition through the project engine; only components without one get it here.)
+  const undocumented = completed.outcome.createdComponentIds.filter((componentId) => !Object.values(current.facilityComponentConditionRecordsById).some((record) => record.componentId === componentId))
+  if (undocumented.length > 0 && promised !== null) {
+    const records = undocumented.map((componentId) => createFacilityComponentConditionRecord({
       id: `facility-component-condition:${componentId}:${world.currentDate}:project:${project.id}`, componentId, effectiveFrom: world.currentDate,
       physicalCondition: promised, serviceability: worstServiceabilityImpliedByCondition(promised),
     }))

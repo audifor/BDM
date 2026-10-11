@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { createConfiguredGame } from '@/app/game/createConfiguredGame'
 import { buildClubFacilitiesWorkspaceModel } from '@/app/facilities'
-import { componentConditionAt } from '@/domain/facilities'
+import { componentConditionAt, createFacilityComponentConditionRecord } from '@/domain/facilities'
 import { createBudgetLine, createFinancialBudget, financeFiscalPeriodsOf, getCashBalancesByCurrency, getOrganizationFinancialAuthorization } from '@/domain/finance'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { advanceDayWithTrace, getUserTeam } from '@/engine/calendar'
@@ -272,5 +272,23 @@ describe('BS17E-B: an expansion adds a physical component that Training can use'
     // The limitation is gone: the option is no longer justified.
     expect(buildFacilityInvestmentRows(finished, teamId).find((row) => row.option.kind === 'EXPANSION')!.option).toMatchObject({ eligible: false, reason: 'NO_LIMITATION' })
     expect(run(finished, { kind: 'INVEST_OPEN', facilityId, investment: 'EXPANSION', componentId: null })).toMatchObject({ status: 'BLOCKED', reasons: ['INVESTMENT_NOT_JUSTIFIED'] })
+  })
+
+  it('accepts a REPLACEMENT once: the replaced court is retired, the new one has exactly one condition record', () => {
+    // A documented, severely worn court (60) justifies replacement. This is an observation of the physical state, not a financial fixture.
+    const worn = updateGameWorld(base, { facilityComponentConditionRecords: [...Object.values(base.facilityComponentConditionRecordsById), createFacilityComponentConditionRecord({
+      id: `facility-component-condition:${courtId}:${base.currentDate}:test-observation`, componentId: courtId as never, sequence: 9, effectiveFrom: base.currentDate, physicalCondition: 60, serviceability: 'LIMITED',
+    })] })
+    expect(buildFacilityInvestmentRows(worn, teamId).find((row) => row.option.kind === 'REPLACEMENT' && row.option.componentId === courtId)!.option.eligible).toBe(true)
+    const contracted = contractedInvestment(worn, 'REPLACEMENT', 'CHEAPEST')
+    const started = must(contracted.world, { kind: 'INVEST_START', operationId: contracted.operationId! }).world
+    const finished = must(advance(started, contracted.offer.executionDays!), { kind: 'INVEST_ACCEPT', operationId: contracted.operationId! }).world
+    const courts = Object.values(finished.facilityComponentsById).filter((component) => component.facilityId === facilityId && component.type === 'PRACTICE_COURT' && component.status === 'ACTIVE' && component.closedAt === null)
+    expect(courts).toHaveLength(1)
+    expect(courts[0]!.id).not.toBe(courtId)
+    const records = Object.values(finished.facilityComponentConditionRecordsById).filter((record) => record.componentId === courts[0]!.id)
+    expect(records).toHaveLength(1)
+    expect(records[0]!.physicalCondition).toBe(contracted.offer.promisedCondition)
+    expect(advance(finished, 3).currentDate).not.toBe(finished.currentDate)
   })
 })
