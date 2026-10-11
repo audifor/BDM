@@ -1183,3 +1183,417 @@
   }
   .pc-contract-hero__manage {width:100%;}
 }
+
+
+/* CONTRACT V3: no empty inspector, no false data, real information and actions. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--agreement,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--no-agreement {
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-width:0;
+}
+.pc-schedule__selected {
+  display:grid;
+  grid-template-columns:minmax(100px,1.25fr) repeat(4,minmax(0,1fr));
+  align-items:center;
+  gap:7px;
+  padding:7px 9px;
+  min-width:0;
+  border:1px solid var(--cs-line2);
+  border-radius:7px;
+  background:var(--cs-s2);
+}
+.pc-schedule__selected-title {
+  color:var(--cs-lime);
+  font:700 clamp(18px,1.6cqi,25px)/1 var(--cs-font-display);
+}
+.pc-schedule__selected > div {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  padding-left:9px;
+  border-left:1px solid var(--cs-line2);
+}
+.pc-schedule__selected small {
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-schedule__selected strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:var(--cs-text);
+  font:700 clamp(14px,1.2cqi,20px)/1.1 var(--cs-font-display);
+}
+
+/* Missing contract is a single actionable case, not three invented reports. */
+.pc-no-agreement {
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(260px,.85fr);
+  gap:9px;
+}
+.pc-no-agreement__hero,
+.pc-no-agreement__actions {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:10px;
+  min-height:155px;
+  padding:18px 21px;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__hero {
+  background:linear-gradient(120deg,color-mix(in srgb,var(--cs-orange2) 7%,var(--cs-s1)),var(--cs-s1) 66%);
+}
+.pc-no-agreement__hero > span,
+.pc-no-agreement__actions > span,
+.pc-no-agreement__support > div > span {
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+  letter-spacing:.06em;
+}
+.pc-no-agreement__hero > strong {
+  font:700 clamp(26px,3.1cqi,44px)/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.pc-no-agreement__hero > small {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-no-agreement__actions > strong {
+  color:var(--cs-lime);
+  font:700 clamp(19px,2cqi,28px)/1 var(--cs-font-display);
+}
+.pc-no-agreement__actions > p {
+  margin:0;
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-no-agreement__actions > button {
+  border:1px solid var(--cs-lime);
+  background:var(--cs-lime);
+  border-radius:6px;
+  color:#17141f;
+  padding:10px 13px;
+  cursor:pointer;
+  font:700 13px/1 var(--cs-font-display);
+}
+.pc-no-agreement__support {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.pc-no-agreement__support > div {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:100px;
+  padding:15px;
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__support strong {
+  color:var(--cs-text);
+  font:700 22px/1 var(--cs-font-display);
+}
+.pc-no-agreement__support small {
+  color:var(--cs-text2);
+  font:500 11px/1.3 var(--cs-font);
+}
+
+/* Rival opportunity dossier: market intelligence is never omniscient. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-rpg {
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  min-width:0;
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:8px 10px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--cs-line2) transparent;
+  color:var(--cs-text);
+  font-family:var(--cs-font);
+}
+.pc-rpg__hero {
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,.7fr) auto;
+  align-items:center;
+  gap:16px;
+  min-height:104px;
+  padding:12px 15px;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  background:var(--cs-s1);
+}
+.pc-rpg__eyebrow,
+.pc-rpg__hero-status > small,
+.pc-rpg__intelligence > div > span,
+.pc-rpg__approaches > header > span,
+.pc-rpg__approach-details > div:first-child > span,
+.pc-rpg__risk > span {
+  display:block;
+  color:var(--cs-text2);
+  font:700 10px/1.1 var(--cs-font);
+  letter-spacing:.04em;
+}
+.pc-rpg__hero h2 {
+  margin:6px 0;
+  color:var(--cs-lime);
+  font:700 clamp(24px,2.7cqi,41px)/1 var(--cs-font-display);
+  text-transform:uppercase;
+}
+.pc-rpg__hero p {
+  margin:0;
+  color:var(--cs-text2);
+  font:500 11px/1.4 var(--cs-font);
+}
+.pc-rpg__hero-status {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-left:15px;
+  border-left:1px solid var(--cs-line2);
+}
+.pc-rpg__hero-status > strong {
+  color:var(--cs-lime);
+  font:700 clamp(19px,2cqi,30px)/1 var(--cs-font-display);
+  white-space:nowrap;
+}
+.pc-rpg__hero-status > span {
+  color:var(--cs-text2);
+  font:600 10px/1.15 var(--cs-font);
+}
+.pc-rpg__primary {
+  min-height:40px;
+  padding:10px 12px;
+  background:var(--cs-lime);
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  color:#17141f;
+  font:700 13px/1 var(--cs-font-display);
+  white-space:nowrap;
+  cursor:pointer;
+}
+.pc-rpg__intelligence {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+}
+.pc-rpg__intelligence > div {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-height:62px;
+  padding:10px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s1);
+  min-width:0;
+}
+.pc-rpg__intelligence > div > strong {
+  color:var(--cs-text);
+  font:700 clamp(15px,1.5cqi,22px)/1 var(--cs-font-display);
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+.pc-rpg__intelligence > div > small {
+  font:500 10px/1.15 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-rpg__flow {
+  display:grid;
+  grid-template-columns:minmax(0,1.42fr) minmax(260px,.65fr);
+  gap:9px;
+  align-items:stretch;
+  min-height:0;
+  flex:1 1 auto;
+}
+.pc-rpg__approaches,
+.pc-rpg__signals {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  padding:12px;
+  background:var(--cs-s1);
+}
+.pc-rpg__approaches > header,
+.pc-rpg__signals > header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:29px;
+  padding-bottom:9px;
+  border-bottom:1px solid var(--cs-line2);
+}
+.pc-rpg__approaches > header > span,
+.pc-rpg__signals > header > strong {
+  color:var(--cs-text);
+  font:700 clamp(16px,1.5cqi,21px)/1 var(--cs-font-display);
+}
+.pc-rpg__approaches > header small,
+.pc-rpg__signals > header small {
+  color:var(--cs-text2);
+  font:500 10px/1.2 var(--cs-font);
+}
+.pc-rpg__approach-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.pc-rpg__approach-grid > button {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+  min-height:106px;
+  min-width:0;
+  padding:10px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  text-align:left;
+  cursor:pointer;
+}
+.pc-rpg__approach-grid > button[aria-pressed='true'] {
+  border-color:var(--cs-lime);
+  background:color-mix(in srgb,var(--cs-lime) 7%,var(--cs-s1));
+}
+.pc-rpg__approach-grid > button:hover {
+  border-color:color-mix(in srgb,var(--cs-lime) 55%,var(--cs-line2));
+}
+.pc-rpg__approach-icon {
+  font:700 27px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.pc-rpg__approach-grid > button strong {
+  font:700 clamp(13px,1.2cqi,17px)/1 var(--cs-font-display);
+  color:var(--cs-text);
+}
+.pc-rpg__approach-grid > button small {
+  color:var(--cs-text2);
+  font:500 10px/1.15 var(--cs-font);
+}
+.pc-rpg__approach-details {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px;
+  padding:13px;
+  flex:1 1 auto;
+  min-height:135px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+}
+.pc-rpg__approach-details > div:first-child > strong {
+  display:block;
+  margin-top:6px;
+  font:700 25px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.pc-rpg__approach-details > p,
+.pc-rpg__risk p {
+  margin:0;
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text);
+}
+.pc-rpg__risk {
+  display:grid;
+  gap:5px;
+  padding-left:10px;
+  border-left:2px solid var(--cs-orange2);
+}
+.pc-rpg__not-live {
+  margin-top:auto;
+  padding:7px 9px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  color:var(--cs-text2);
+  font:600 10px/1.35 var(--cs-font);
+}
+.pc-rpg__signals > header {flex:0 0 auto;}
+.pc-rpg__signals > header strong {font:700 clamp(16px,1.5cqi,21px)/1 var(--cs-font-display);}
+.pc-rpg__empty {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  flex:1 1 auto;
+  min-height:130px;
+  padding:15px;
+  border:1px dashed var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+  text-align:center;
+}
+.pc-rpg__empty strong {font:700 19px/1 var(--cs-font-display);color:var(--cs-text);}
+.pc-rpg__empty span {font:500 11px/1.3 var(--cs-font);color:var(--cs-text2);}
+.pc-rpg__signals ol {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:0;
+  margin:0;
+  list-style:none;
+}
+.pc-rpg__signals li {
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:4px;
+  padding:8px;
+  border:1px solid var(--cs-line2);
+  border-radius:6px;
+  background:var(--cs-s2);
+}
+.pc-rpg__signals li > time {color:var(--cs-text2);font:600 10px var(--cs-font);}
+.pc-rpg__signals li > strong {font:700 12px var(--cs-font);color:var(--cs-text);}
+.pc-rpg__signals li > span {grid-column:1/-1;font:500 11px var(--cs-font);color:var(--cs-text2);}
+.pc-rpg__next-action {
+  margin-top:auto;
+  padding-top:10px;
+  border-top:1px solid var(--cs-line2);
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-rpg__next-action > button {
+  width:100%;
+  min-height:36px;
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  background:transparent;
+  color:var(--cs-lime);
+  cursor:pointer;
+  font:700 13px/1 var(--cs-font-display);
+}
+
+@container player-space (max-width:1200px) {
+  .pc-rpg__hero {grid-template-columns:minmax(0,1fr) minmax(0,.85fr);}
+  .pc-rpg__primary {grid-column:1/-1;justify-self:start;}
+  .pc-rpg__flow {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__approach-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg__intelligence {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-no-agreement {grid-template-columns:minmax(0,1fr);}
+}
+@container player-space (max-width:700px) {
+  .pc-rpg__hero {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__hero-status {border-left:0;border-top:1px solid var(--cs-line2);padding:9px 0 0;}
+  .pc-rpg__approach-grid {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__intelligence,.pc-no-agreement__support {grid-template-columns:minmax(0,1fr);}
+  .pc-schedule__selected {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-schedule__selected-title {grid-column:1/-1;}
+}
