@@ -6,6 +6,7 @@ import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { PlayerWorkspace } from '@/ui-ng/applications/player/PlayerWorkspace'
+import { ContractsWorkspace } from '@/ui-ng/applications/contracts/ContractsWorkspace'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
 afterEach(cleanup)
@@ -25,6 +26,19 @@ describe('Player contract integration', () => {
     expect(url.searchParams.get('app')).toBe('contracts')
     expect(url.searchParams.get('teamId')).toBe(team.id)
     expect(url.searchParams.get('playerId')).toBe(playerId)
+  })
+
+  it('focuses the selected player after navigating into Contracts Planning', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const playerId = team.rosterPlayerIds[0]!
+    useGameStore.getState().replaceWorld(world)
+    window.history.replaceState({}, '',
+      `/?ui=ng&app=contracts&teamId=${encodeURIComponent(team.id)}&playerId=${encodeURIComponent(playerId)}`)
+    const { container } = render(<NgWorkspaceNavigationProvider><ContractsWorkspace /></NgWorkspaceNavigationProvider>)
+    const focused = container.querySelector('tr[data-focused-player="true"]')
+    expect(focused).not.toBeNull()
+    expect(focused?.textContent).toContain(world.players[playerId]?.lastName)
   })
 
   it('protects rival financials, negotiations and role promises from World Truth', () => {
