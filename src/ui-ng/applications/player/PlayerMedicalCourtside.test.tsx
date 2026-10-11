@@ -35,6 +35,10 @@ describe('Courtside PLAYER Medical decisions',()=>{
     expect(container.querySelector('[data-ng-region="medical-decisions"]')).not.toBeNull()
     expect(container.querySelector('[data-ng-region="medical-bodymap"]') ?? container.querySelector('.po-med-bodymap')).not.toBeNull()
     expect(screen.queryByText('Medical Detail')).not.toBeInTheDocument()
+    expect(container.querySelector('.po-med-filters')).toBeNull()
+    expect(container.querySelector('.po-med-v3__recent')).toBeNull()
+    expect(container.querySelector('.po-med-v3__snapshot')).toBeNull()
+    expect(screen.queryByText('CLEARED FOR PLAY')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:/REVIEW MEDICAL RISK/}))
     const url=new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('medical')
@@ -78,18 +82,42 @@ describe('Courtside PLAYER Medical decisions',()=>{
     expect(container.querySelector('[data-ng-region="medical-load"]')).toBeNull()
 
     const head=container.querySelector('.po-med-bodymap__region') as SVGGElement
+    const mapStage=container.querySelector('.po-med-bodymap__stage')!
+    const initialRadius=head.querySelector('.po-med-bodymap__node')?.getAttribute('r')
     fireEvent.click(head)
     expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toHaveTextContent('Head')
     expect(head).toHaveClass('is-selected')
+    expect(mapStage.querySelector('.po-med-bodymap__node')?.getAttribute('r')).toBe(initialRadius)
+    expect(container.querySelector('.po-med-v3__region-detail')).not.toBeNull()
+    fireEvent.click(head)
+    expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toBeNull()
+    fireEvent.click(head)
+    fireEvent.keyDown(head,{key:'Escape'})
+    expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toBeNull()
+    fireEvent.click(head)
     fireEvent.click(screen.getByRole('button',{name:'Clear selected body region'}))
     expect(container.querySelector('[data-ng-region="medical-selected-region"]')).toBeNull()
 
     fireEvent.click(within(tablist).getByRole('tab',{name:'LOAD'}))
     expect(container.querySelector('[data-ng-region="medical-load"]')).not.toBeNull()
+    expect(screen.getByText('NO WORKLOAD LOGGED YET')).toBeInTheDocument()
     expect(container.querySelector('.po-med-bodymap')).toBeNull()
     fireEvent.click(screen.getByRole('button',{name:/VIEW HISTORY/}))
     expect(within(tablist).getByRole('tab',{name:'HISTORY'})).toHaveAttribute('aria-selected','true')
     expect(container.querySelector('[data-ng-region="medical-history"]')).not.toBeNull()
+  })
+
+  it('hides healthy-state repetition without losing accessible regional details',()=>{
+    const world=createNewGame()
+    const playerId=getUserTeam(world)!.rosterPlayerIds[0]!
+    const {container}=loadPlayer(world,playerId)
+    const map=container.querySelector('.po-med-bodymap')!
+    expect(map.querySelectorAll('.po-med-bodymap__region')).toHaveLength(13)
+    expect(map.querySelectorAll('.po-med-bodymap__state')).toHaveLength(0)
+    expect(screen.getByRole('button',{name:/Head: No injury recorded/})).toBeInTheDocument()
+    expect(container.querySelector('.po-med-v3__recent')).toBeNull()
+    expect(container.querySelector('.po-med-filters')).toBeNull()
+    expect(container.querySelector('.po-med-v3__intelligence')).toBeNull()
   })
 
   it('preserves Medical and Training navigation as genuinely executable route choices',()=>{
