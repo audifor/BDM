@@ -30,9 +30,9 @@ export function PlayerMedicalDecisionHero({
       <small>{risk?.riskBandLabel ?? medical.riskUnavailableLabel ?? 'Not assessed'}</small>
     </div>
     <div className="po-med-v2__hero-metric">
-      <span>{injured?'NEXT INJURY REVIEW':'RECOVERY RATE'}</span>
-      <strong>{review ?? '-'+medical.fatigue.dailyRecoveryRate}<small>{review?'':' /day'}</small></strong>
-      <small>{review?'Recorded review milestone':'Fatigue points per day'}</small>
+      <span>{injured?'NEXT INJURY REVIEW':'FATIGUE RECOVERY'}</span>
+      <strong>{review ?? medical.fatigue.dailyRecoveryRate}<small>{review?'':' /day'}</small></strong>
+      <small>{review?'Recorded review milestone':'Fatigue points recovered daily'}</small>
     </div>
     <button className="po-med-v2__hero-action" type="button"
       onClick={()=>navigateToMedicalDecision(playerId,injured?'injured':'risk')}>
