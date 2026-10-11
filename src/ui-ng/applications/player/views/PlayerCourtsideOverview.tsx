@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
 
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
+import { CourtsideFamilyRadar } from '@/ui-ng/applications/player/components/visual/CourtsideFamilyRadar'
 import type { PlayerWorkspaceModel } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
 import {
   buildScoutedFamilyProfiles, hasScoutedRadarProfile, opponentKnowledgeSummary,
@@ -254,18 +254,6 @@ function Radar({ model }: { readonly model: PlayerWorkspaceModel }) {
     key: family.id, label: family.label, value: family.estimate!,
   })) : []
   const scoutedCount = own ? null : opponentKnowledgeSummary(model.knowledgeAccess)
-  const nodes = useMemo(() => {
-    const count = values.length
-    return values.map((axis, i) => {
-      const angle = -Math.PI / 2 + 2 * Math.PI * i / count
-      return { ...axis, angle }
-    })
-  }, [values])
-  const points = (factor: number, personalized: boolean): string =>
-    nodes.map(({ angle, value }) => {
-      const radius = 111 * factor * (personalized ? Math.max(0, Math.min(100, value)) / 100 : 1)
-      return `${(170 + Math.cos(angle) * radius).toFixed(1)},${(161 + Math.sin(angle) * radius).toFixed(1)}`
-    }).join(' ')
 
   return (
     <section className={`po-cs-card po-cs-radar${own ? '' : ' po-cs-radar--scouted'}`}>
@@ -273,25 +261,16 @@ function Radar({ model }: { readonly model: PlayerWorkspaceModel }) {
         <h2>{own ? 'ATTRIBUTE RADAR' : 'RADAR ESTIMADO'}</h2>
         <span>{own ? 'Familias reales · 0 a 100' : 'Scouting de tu club · 0 a 100'}</span>
       </header>
-      {nodes.length < 3 ? <div className="po-cs-empty po-cs-radar__unknown">
+      {values.length < 3 ? <div className="po-cs-empty po-cs-radar__unknown">
         {own ? 'El radar requiere conocimiento autorizado de los atributos.'
           : <span><strong>PERFIL POR COMPLETAR</strong>
               <small>Tu club ha evaluado {scoutedCount?.knownRatings ?? 0}/{scoutedCount?.totalRatings ?? 0} atributos. El radar estimado requiere ocho familias completas y suficiente cobertura y confianza, nunca datos internos.</small>
             </span>}
-      </div> : (
-        <svg viewBox="0 0 340 325" className="po-cs-radar__svg" role="img"
-          aria-label={`${own ? 'Radar deportivo' : 'Radar estimado por scouting'}: ${values.map(a => `${a.label} ${own ? '' : 'aproximadamente '}${a.value}`).join(', ')}`}>
-          {[0.25, 0.5, 0.75, 1].map(f => <polygon key={f} points={points(f, false)} fill="none" stroke="currentColor" strokeOpacity=".18" />)}
-          {nodes.map(axis => <line key={axis.key} x1={170} y1={161} x2={170 + 111 * Math.cos(axis.angle)} y2={161 + 111 * Math.sin(axis.angle)} stroke="currentColor" strokeOpacity=".25"/>)}
-          <polygon points={points(1, true)} className="po-cs-radar__shape" />
-          {nodes.map(axis => {
-            const x = 170 + Math.cos(axis.angle) * 140
-            const y = 161 + Math.sin(axis.angle) * 140
-            return <g key={axis.key}><text x={x} y={y - 2} textAnchor="middle" className="po-cs-radar__label">{axis.label}</text>
-              <text x={x} y={y + 13} textAnchor="middle" className="po-cs-radar__value">{own ? axis.value : '≈' + axis.value}</text></g>
-          })}
-        </svg>
-      )}
+      </div> : <CourtsideFamilyRadar
+        axes={values}
+        estimated={!own}
+        ariaLabel={`${own ? 'Radar deportivo' : 'Radar estimado por scouting'}: ${values.map(a => `${a.label} ${own ? '' : 'aproximadamente '}${a.value}`).join(', ')}`}
+      />}
       {values.length > 0 && <div className="po-cs-radar__insights">
         <span><b>{own ? 'FORTALEZA' : 'ESTIMACIÓN MAYOR'}</b>{[...values].sort((a,b) => b.value - a.value)[0]?.label}</span>
         <span><b>{own ? 'A MEJORAR' : 'ESTIMACIÓN MENOR'}</b>{[...values].sort((a,b) => a.value - b.value)[0]?.label}</span>
