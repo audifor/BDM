@@ -523,11 +523,11 @@ export function CanonicalRoster({
       // projections of the 35 canonical ratings) - not every rating/personality column.
       columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
     },
-    {
+    ...(v4Mode ? [{
       id: 'performance',
       name: 'RENDIMIENTO',
       columnIds: [...baseColumnIds, 'season-MIN','season-PTS','season-REB','season-AST','season-VAL', 'fatigue'],
-    },
+    }] : []),
     {
       id: "offense",
       name: "OFENSIVA",
@@ -558,7 +558,7 @@ export function CanonicalRoster({
       name: "PSICO",
       columnIds: [...baseColumnIds, ...personalityColumnIds],
     },
-    {
+    ...(v4Mode ? [{
       id: 'contracts',
       name: 'CONTRATOS',
       columnIds: [...baseColumnIds, 'salary','expiry','contract-plan'],
@@ -567,7 +567,7 @@ export function CanonicalRoster({
       id: 'development',
       name: 'DESARROLLO',
       columnIds: [...baseColumnIds, 'fatigue','height','weight', ...physicalColumnIds, ...brainColumnIds],
-    },
+    }] : []),
     {
       id: "custom",
       name: "PERSONALIZADA",

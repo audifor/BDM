@@ -2,13 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import type { LineupSlot } from '@/domain/tactics'
 import type { PlayerId } from '@/domain/ids'
-import { getCurrentPlayerContract, getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
+import { getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { CanonicalRoster } from '@/ui/pcb-migrated/plantilla/CanonicalRoster'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
-import { RosterContextDeck } from '@/ui-ng/applications/roster/components/RosterContextDeck'
-import { RosterDepthChart } from '@/ui-ng/applications/roster/components/RosterDepthChart'
+import { RosterCourtsideBriefing } from '@/ui-ng/applications/roster/components/RosterCourtsideBriefing'
+import { RosterCourtsideDepth } from '@/ui-ng/applications/roster/components/RosterCourtsideDepth'
+import { RosterCourtsidePlanning } from '@/ui-ng/applications/roster/components/RosterCourtsidePlanning'
 import { RosterWorkspaceHeader } from '@/ui-ng/applications/roster/components/RosterWorkspaceHeader'
 import { RosterV4Controls } from '@/ui-ng/applications/roster/components/RosterV4Controls'
 import { RosterRowInspector } from '@/ui-ng/applications/roster/components/RosterRowInspector'
@@ -160,40 +161,16 @@ export function RosterWorkspace() {
           </div>
         </>}
         {tab==='profundidad'&&<section className="roster-v4__tab-panel" aria-label="Profundidad de plantilla">
-          {depthChart===null?<p>Mapa de profundidad no disponible.</p>:<RosterDepthChart
+          {depthChart===null?<p>Mapa de profundidad no disponible.</p>:<RosterCourtsideDepth
             model={depthChart} onOpenPlayer={openPlayer} selectedPlayerId={inspectedPlayer?.id}/>}
         </section>}
         {tab==='briefing'&&<section className="roster-v4__tab-panel" aria-label="Briefing de plantilla">
-          {briefing===null?<p>Informe no disponible.</p>:<RosterContextDeck briefing={briefing}
-            onOpenPlayer={player=>openPlayer({type:'player',playerId:player.id,section:'overview'})}
-            player={undefined} teamId={team.id} world={world}/>}
+          {briefing===null?<p>Informe no disponible.</p>:<RosterCourtsideBriefing
+            model={briefing} teamId={team.id} world={world}/>}
         </section>}
         {tab==='planificar'&&<section className="roster-v4__tab-panel roster-v4__planning"
           aria-label="Planificar plantilla">
-          <div className="roster-v4__planning-head">
-            <div><h2>PLANIFICAR PLANTILLA</h2><p>Perspectiva contractual con datos confirmados. Los fichajes y renovaciones no acordados no se contabilizan.</p></div>
-            <strong>{expiring} vencimiento(s) esta temporada</strong>
-          </div>
-          <div className="roster-v4__planning-rows">
-            <div className="roster-v4__planning-row roster-v4__planning-columns">
-              <span>JUGADOR</span><span>POS</span><span>FIN CONTRATO</span><span>ESTADO</span><span>ACCIÓN</span>
-            </div>
-            {roster.map(player=>{
-              const contract=getCurrentPlayerContract(world,player.id)
-              const status=rosterContractStatus(world,player)
-              return <div className="roster-v4__planning-row" key={player.id}>
-                <strong>{player.firstName} {player.lastName}</strong>
-                <span>{player.basketball.primaryPosition}</span>
-                <span>{contract?.term.expiresOn??'Sin contrato activo'}</span>
-                <span className={status==='expiring'?'is-orange':''}>
-                  {status==='expiring'?'VENCE ESTA TEMPORADA':status==='none'?'SIN CONTRATO':'VIGENTE MÁS ALLÁ'}
-                </span>
-                <button type="button" onClick={()=>openPlayer({type:'player',playerId:player.id,section:'contract'})}>
-                  VER CONTRATO ↗
-                </button>
-              </div>
-            })}
-          </div>
+          <RosterCourtsidePlanning world={world} roster={roster} onOpenPlayer={openPlayer}/>
         </section>}
       </main>
     </ApplicationWorkspace>

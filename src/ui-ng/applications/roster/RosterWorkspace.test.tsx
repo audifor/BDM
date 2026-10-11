@@ -214,7 +214,7 @@ describe('RosterWorkspace session restoration', () => {
     const {world,team}=mountRosterWorkspace()
     fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
     expect(screen.getByRole('heading',{name:'PLANIFICAR PLANTILLA'})).toBeInTheDocument()
-    expect(document.querySelectorAll('.roster-v4__planning-row').length).toBe(team.rosterPlayerIds.length+1)
+    expect(document.querySelectorAll('.roster-v4-planning__table tbody tr').length).toBe(team.rosterPlayerIds.length)
     const player=world.players[team.rosterPlayerIds[0]!]!
     expect(screen.getByText(player.firstName+' '+player.lastName)).toBeInTheDocument()
   })
@@ -269,11 +269,11 @@ describe('RosterWorkspace session restoration', () => {
       (lane) => lane.querySelector('.roster-depth-chart__pos')?.textContent === 'PG',
     )
     expect(pgLane).toHaveClass('has-roles')
-    expect(pgLane?.textContent).toContain('STARTER')
+    expect(pgLane?.textContent).toContain('TITULAR')
     expect(pgLane?.textContent).not.toContain('FREE')
     expect(pgLane?.querySelector(`[data-player-id="${starter.id}"]`)?.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
     if (rotation !== undefined) {
-      expect(pgLane?.textContent).toContain('ROTATION')
+      expect(pgLane?.textContent).toContain('ROTACIÓN')
     }
   })
 })
@@ -323,6 +323,6 @@ describe('WorkspaceHost player navigation', () => {
     await waitFor(() => {
       expect(screen.queryByLabelText('Preset de columnas')).not.toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Overview' }).length).toBeGreaterThan(0)
   })
 })
