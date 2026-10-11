@@ -1,6 +1,7 @@
 import { describe,expect,it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getPlayerAge } from '@/domain/player'
+import { parseGameDate } from '@/domain/date'
 import { getTeamRoster, type GameWorld } from '@/domain/world'
 import type { ContractId } from '@/domain/ids'
 import { getClubRosterCandidates } from './rosterClubPresence'
@@ -31,7 +32,7 @@ describe('Courtside Roster V4 filters',()=>{
       ...world.contractsById,
       [contractId]:{
         id:contractId,playerId:outside.id,teamId:team.id,kind:'standard' as const,
-        term:{startsOn:'2025-07-01' as const,expiresOn:'2027-06-30' as const},
+        term:{startsOn:world.currentDate,expiresOn:parseGameDate(`${Number(world.currentDate.slice(0,4))+2}-06-30`)},
         compensation:{annualSalary:100000},
       },
     }} as GameWorld
