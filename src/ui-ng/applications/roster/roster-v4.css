@@ -1,0 +1,461 @@
+/* ROSTER V4 · Courtside. Scoped to Roster NG only; no global shell/sidebar overrides. */
+.roster-workspace--v4 {
+  --v4-bg:#0c0a14;
+  --v4-surface:#17141f;
+  --v4-surface-raised:#1e1a29;
+  --v4-text:#f7f3ee;
+  --v4-muted:#8b8399;
+  --v4-orange:#ff6a2b;
+  --v4-lime:#d4ff3a;
+  background:var(--v4-bg);
+  color:var(--v4-text);
+  --ng-workspace-header-height:82px;
+  --roster-holo-border:rgba(255,255,255,.11);
+  --roster-holo-fill:none;
+}
+.roster-workspace--v4::before {background:none}
+.roster-workspace--v4 .ng-application-workspace {height:100%;min-height:0;background:var(--v4-bg)}
+.roster-workspace--v4 .ng-application-workspace__header-slot {
+  padding:0 16px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  min-height:0;
+}
+.roster-workspace--v4 .roster-workspace-header.roster-v4__header {
+  height:82px;min-height:0;padding:7px 0 0;
+  align-items:flex-start;justify-content:center;
+  flex-direction:column;gap:4px;background:transparent;border:0;
+}
+.roster-v4__heading {display:flex;align-items:baseline;gap:16px;min-width:0;width:100%}
+.roster-v4__title {font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;font-size:40px;font-weight:800;letter-spacing:.012em;line-height:1}
+.roster-v4__subtitle {font-size:11px;color:var(--v4-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roster-v4__tabs {display:flex;gap:7px;align-items:center;max-width:100%;overflow-x:auto}
+.roster-v4__tabs button {
+  border:0;border-radius:25px;background:var(--v4-surface);
+  min-height:28px;padding:3px 19px;
+  font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-weight:750;font-size:17px;letter-spacing:.02em;white-space:nowrap;
+  color:#c4bdd0;cursor:pointer;
+}
+.roster-v4__tabs button.is-active {color:#0c0a14;background:#f7f3ee}
+.roster-v4__tabs button:hover:not(.is-active) {color:var(--v4-text);background:#282336}
+.roster-v4__body {
+  display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;
+  gap:7px;padding:8px 16px 7px;background:var(--v4-bg);
+}
+.roster-v4__metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:0 0 auto}
+.roster-v4__metrics > div {
+  min-height:51px;background:var(--v4-surface);border-radius:14px;
+  padding:6px 15px;display:flex;align-items:center;gap:12px;
+  border:1px solid rgba(255,255,255,.055);
+}
+.roster-v4__metrics small {color:#a79eb1;letter-spacing:.1em;font-size:9px;font-weight:800;text-transform:uppercase;max-width:70%}
+.roster-v4__metrics strong {
+  order:-1;font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-weight:800;font-size:29px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.roster-v4__metrics strong.is-lime {color:var(--v4-lime)}
+.roster-v4__metrics strong.is-orange,.roster-v4__planning .is-orange {color:var(--v4-orange)}
+.roster-v4__metrics em {font-size:14px;font-style:normal;color:var(--v4-muted)}
+.roster-v4__controls {display:flex;flex-direction:column;gap:6px;flex:0 0 auto;min-width:0}
+.roster-v4__views,.roster-v4__filters,.roster-v4__table-actions {
+  display:flex;align-items:center;gap:6px;min-width:0;
+  border-radius:12px;background:var(--v4-surface);padding:5px 11px;
+  min-height:38px;
+}
+.roster-v4__views,.roster-v4__filters {flex-wrap:nowrap}
+.roster-v4__views > strong,.roster-v4__filters > strong,.roster-v4__table-actions > strong {
+  color:#aaa1b8;font-weight:800;letter-spacing:.09em;font-size:10px;white-space:nowrap;margin-right:6px;
+}
+.roster-v4__push {flex:1;min-width:5px}
+.roster-v4__views button,.roster-v4__table-actions button,.roster-v4__filters button,
+.roster-v4__views select {
+  font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,.1);
+  color:#c4bdd0;background:#252033;border-radius:20px;padding:7px 10px;
+  min-height:27px;cursor:pointer;white-space:nowrap;
+}
+.roster-v4__views button.is-active {background:var(--v4-lime);color:#16101c;border-color:var(--v4-lime)}
+.roster-v4__views button:hover,.roster-v4__filters button:hover,.roster-v4__table-actions button:hover {border-color:var(--v4-orange)}
+.roster-v4__views select,.roster-v4__filters select {color:#f7f3ee;cursor:pointer}
+.roster-v4__views select {max-width:126px;overflow:hidden;text-overflow:ellipsis}
+.roster-v4__views option,.roster-v4__filters option,.roster-v4__advanced option {background:#1e1a29;color:#f7f3ee}
+.roster-v4__filters label {color:#aaa1b8;display:flex;align-items:center;gap:5px;font-size:10px;white-space:nowrap}
+.roster-v4__filters select {min-width:85px;max-width:155px;background:#252033;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 8px;font-size:11px}
+.roster-v4__filters .roster-v4__filter-trigger {border-color:var(--v4-orange);color:var(--v4-orange);background:#221a21}
+.roster-v4__filters input[type=search] {
+  margin-left:auto;min-width:130px;max-width:210px;width:16%;border-radius:9px;
+  background:#252033;border:1px solid rgba(255,255,255,.09);
+  color:#f7f3ee;font-size:11px;padding:7px 10px;
+}
+.roster-v4__table-actions {background:transparent;padding:0 5px;min-height:29px}
+.roster-v4__table-actions span {font-size:10px;color:#aaa1b8;white-space:nowrap}
+.roster-v4__table-actions button {background:var(--v4-surface);border-radius:18px;padding:5px 10px}
+.roster-v4__table-actions button:disabled {opacity:.45;cursor:not-allowed}
+.roster-v4__table-actions .roster-v4__hint {font-size:9px;color:#706b83}
+.roster-v4__manage,.roster-v4__advanced {
+  border:1px solid rgba(255,106,43,.28);border-radius:12px;
+  padding:10px 14px;background:var(--v4-surface-raised);color:var(--v4-text);
+  max-height:280px;overflow:auto;
+}
+.roster-v4__manage {display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.roster-v4__manage strong {font-size:11px;color:var(--v4-lime)}
+.roster-v4__manage p {font-size:10px;color:#aaa1b8;margin:0}
+.roster-v4__manage label {display:flex;gap:5px;align-items:center;font-size:11px}
+.roster-v4__manage button,.roster-v4__advanced button {
+  border:1px solid rgba(255,255,255,.13);background:#282336;color:#f7f3ee;
+  border-radius:8px;padding:6px 9px;font-size:10px;cursor:pointer;
+}
+.roster-v4__advanced-top,.roster-v4__condition,.roster-v4__group,.roster-v4__saved {display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:7px}
+.roster-v4__advanced-top strong {color:var(--v4-orange);font-size:12px}
+.roster-v4__advanced label {font-size:10px;display:flex;gap:5px;align-items:center;color:#c4bdd0}
+.roster-v4__advanced select,.roster-v4__advanced input {
+  background:#282336;color:#f7f3ee;font-size:11px;
+  border-radius:7px;padding:6px;border:1px solid rgba(255,255,255,.15);max-width:210px;
+}
+.roster-v4__group {padding:7px 12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin:7px 0}
+.roster-v4__group > label {width:100%}
+.roster-v4__condition {width:100%}
+.roster-v4__table-pane {flex:1 1 0;min-height:0;min-width:0;position:relative;overflow:hidden}
+.roster-workspace--v4 .roster-v4__table-pane .roster-workspace__scroll {
+  height:100%;width:100%;display:flex;min-height:0;overflow:hidden;padding:0;
+}
+.roster-workspace--v4 .canonical-roster.canonical-roster--v4 {
+  height:100%;min-height:0;flex:1 1 auto;background:var(--v4-surface)!important;
+  border:1px solid rgba(255,255,255,.13);border-radius:12px;box-shadow:none!important;
+  background-image:none!important;
+}
+.roster-workspace--v4 .canonical-roster--v4::before,
+.roster-workspace--v4 .canonical-roster--v4::after {display:none}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__toolbar {display:none}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid {
+  display:flex;flex:1 1 0;min-height:0;height:100%;
+  --bdm-grid-row-height:34px;--desktop-density-row:34px;
+  --bdm-grid-header-height:32px;--bdm-grid-font-size:11px;--bdm-grid-header-font-size:10px;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid .bdm-data-table {
+  height:100%;width:100%;max-height:100%;overflow:auto;scrollbar-color:#60536d #181321;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid table {
+  min-width:max-content;max-width:none;width:max-content;
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid th {
+  background:#231f30!important;color:#bfb0d0!important;
+  position:sticky;top:0;z-index:3;
+  font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-size:12px;letter-spacing:.06em;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid td {
+  height:34px;min-height:34px;font-size:11px;color:#f7f3ee;
+  border-color:rgba(255,255,255,.06);
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid tbody tr.is-selected td {
+  background:rgba(255,106,43,.11)!important;
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid tbody tr.is-selected td:first-child {
+  box-shadow:inset 3px 0 0 #ff6a2b!important;
+}
+.roster-workspace--v4 .canonical-roster__player-link:hover {color:var(--v4-lime)}
+.roster-workspace--v4 .canonical-roster__position {background:var(--v4-lime);color:#0c0a14;border:0;border-radius:7px}
+.roster-v4__popup {
+  position:absolute;right:14px;bottom:12px;width:min(460px,calc(100% - 28px));
+  max-height:min(610px,calc(100% - 24px));overflow:auto;z-index:15;
+  border:1px solid rgba(255,255,255,.25);border-radius:15px;
+  background:#17141f;box-shadow:0 12px 50px rgba(0,0,0,.75);
+}
+.roster-v4__popup-bar {
+  position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;
+  padding:8px 13px;background:#231e30;color:var(--v4-orange);font-size:11px;letter-spacing:.08em;
+}
+.roster-v4__popup-bar button {
+  border:0;background:transparent;color:#f7f3ee;font-size:23px;cursor:pointer;line-height:1;
+}
+.roster-v4__popup .canonical-roster__inspector {
+  width:100%;padding:12px;background:#17141f;border:0;border-radius:0;box-shadow:none;
+}
+.roster-v4__tab-panel {flex:1;min-height:0;overflow:auto;padding:4px}
+.roster-v4__tab-panel .roster-depth-chart,.roster-v4__tab-panel .roster-workspace__deck {
+  height:auto;min-height:0;width:100%;max-height:none;overflow:visible;
+}
+.roster-v4__planning-head {display:flex;justify-content:space-between;gap:20px;align-items:center;padding:12px 16px;background:var(--v4-surface);border-radius:14px}
+.roster-v4__planning-head h2 {font:800 30px 'Barlow Condensed',var(--ng-font-display),sans-serif;margin:0}
+.roster-v4__planning-head p {margin:2px 0;font-size:12px;color:#aaa1b8}
+.roster-v4__planning-head strong {color:var(--v4-orange);font-size:13px;white-space:nowrap}
+.roster-v4__planning-rows {border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-top:10px;overflow:auto}
+.roster-v4__planning-row {display:grid;grid-template-columns:minmax(160px,2fr) 70px minmax(130px,1fr) minmax(170px,1.1fr) 125px;gap:8px;align-items:center;min-width:700px;padding:8px 15px;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
+.roster-v4__planning-row strong {font-weight:650}
+.roster-v4__planning-columns {color:#aaa1b8;background:#231f30;font-size:10px;font-weight:800}
+.roster-v4__planning-row button {border-radius:7px;background:#282336;color:#f7f3ee;border:1px solid rgba(255,255,255,.11);cursor:pointer;padding:6px;font-size:11px}
+@media(max-width:1200px){
+  .roster-v4__metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .roster-v4__views,.roster-v4__filters {flex-wrap:wrap}
+  .roster-v4__filters input[type=search] {width:180px;margin-left:0}
+}
+@media(max-width:720px){
+  .roster-v4__heading {gap:6px;align-items:flex-start;flex-direction:column}
+  .roster-v4__title {font-size:31px}
+  .roster-v4__metrics>div {min-height:42px;padding:5px 8px}
+  .roster-v4__body {padding:6px}
+  .roster-v4__table-actions .roster-v4__hint {display:none}
+  .roster-workspace--v4 .roster-v4__header {height:82px}
+}
+
+
+/* ── Courtside V4 · Profundidad / Depth ── */
+.roster-workspace--v4 .roster-v4__tab-panel {background:#0c0a14;padding:0;overflow:auto}
+.roster-workspace--v4 .roster-v4__section-title {
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:8px 5px 15px;background:transparent;
+}
+.roster-workspace--v4 .roster-v4__section-title > div > span {
+  color:#ff6a2b;letter-spacing:.15em;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;
+}
+.roster-workspace--v4 .roster-v4__section-title h2 {
+  margin:2px 0 0;font-family:'Barlow Condensed',sans-serif;
+  color:#f7f3ee;font-size:48px;font-weight:800;line-height:1;letter-spacing:.015em;text-transform:uppercase;
+}
+.roster-workspace--v4 .roster-v4__section-title p {font-size:12px;margin:5px 0 0;color:#8b8399}
+.roster-workspace--v4 .roster-v4__section-title > strong {
+  font-family:'Barlow Condensed',sans-serif;color:#d4ff3a;
+  font-size:19px;font-weight:700;text-align:right;max-width:310px;
+}
+.roster-workspace--v4 .roster-v4-depth {display:block;height:auto;min-height:0;background:transparent;border:none;padding:6px 0}
+.roster-workspace--v4 .roster-v4-depth__lanes {
+  display:grid;grid-template-columns:repeat(5,minmax(185px,1fr));align-items:stretch;
+  gap:12px;overflow-x:auto;padding:2px 2px 12px;
+}
+.roster-workspace--v4 .roster-v4-depth__lane {
+  display:flex;flex-direction:column;gap:0;min-height:375px;
+  background:#17141f;border:1px solid rgba(255,255,255,.09);border-radius:17px;
+  padding:15px;overflow:hidden;
+}
+.roster-workspace--v4 .roster-v4-depth__lane.is-selected {border-color:rgba(212,255,58,.65)}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__lane-head {
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:49px;gap:7px;border:0;margin:0;padding:0 0 13px;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__pos {
+  font:800 30px/1 'Barlow Condensed',sans-serif;color:#f7f3ee;background:transparent;border:0;padding:0;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__count {
+  display:grid;place-items:center;background:#d4ff3a;color:#0c0a14;
+  width:27px;height:27px;border-radius:50%;font:800 17px 'Barlow Condensed',sans-serif;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__balance {
+  font:700 9px/1.2 'Inter Tight',sans-serif;color:#8b8399;max-width:86px;text-align:right;
+  letter-spacing:.04em;font-style:normal;
+}
+.roster-workspace--v4 .roster-v4-depth .is-thin .roster-depth-chart__balance {color:#ff9a4d}
+.roster-workspace--v4 .roster-v4-depth .is-loaded .roster-depth-chart__balance {color:#8fd6ff}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__meter {
+  display:flex;height:6px;border-radius:999px;background:#282336;overflow:hidden;margin:0 0 12px;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__meter .is-starter {background:#d4ff3a}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__meter .is-rotation {background:#ff6a2b}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__meter .is-bench {background:#8fd6ff}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__players {
+  display:flex;flex-direction:column;gap:6px;list-style:none;min-height:0;flex:1;
+  padding:0;margin:0;background:transparent;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__group {
+  color:#ff9a4d;font:800 11px 'Barlow Condensed',sans-serif;
+  text-transform:uppercase;letter-spacing:.1em;background:transparent;border:0;
+  padding:9px 0 3px;margin:0;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__row {
+  display:flex;align-items:center;gap:8px;min-height:43px;
+  padding:6px 8px;background:#211d2c;border:1px solid rgba(255,255,255,.05);
+  border-radius:10px;color:#f7f3ee;margin:0;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__row.is-starter {
+  border-color:rgba(212,255,58,.45);background:#262735;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__rank {
+  width:25px;height:26px;border-radius:7px;background:#302a3d;
+  font:800 16px/26px 'Barlow Condensed',sans-serif;color:#d4ff3a;text-align:center;flex-shrink:0;
+}
+.roster-workspace--v4 .roster-v4-depth .roster-depth-chart__player {
+  flex:1;min-width:0;white-space:normal;
+  font-size:11px;line-height:1.35;font-weight:750;color:#f7f3ee;text-align:left;
+}
+.roster-workspace--v4 .roster-v4-depth__slot {
+  font:700 10px 'Barlow Condensed',sans-serif;color:#ff9a4d;white-space:nowrap;
+}
+.roster-workspace--v4 .roster-v4-depth__summary {
+  display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  border-top:1px solid rgba(255,255,255,.08);margin-top:14px;padding-top:10px;
+  font:700 10px 'Barlow Condensed',sans-serif;color:#b3a8bf;
+}
+.roster-workspace--v4 .roster-v4-depth__footnote {
+  padding:17px 20px;margin:8px 0 0;border-radius:16px;background:#1e1a29;
+  border-left:3px solid #ff6a2b;display:flex;gap:12px;align-items:baseline;
+}
+.roster-workspace--v4 .roster-v4-depth__footnote strong {
+  color:#d4ff3a;font:800 14px 'Barlow Condensed',sans-serif;white-space:nowrap;
+}
+.roster-workspace--v4 .roster-v4-depth__footnote p {color:#a79eb1;margin:0;font-size:11px}
+
+/* ── Courtside V4 · Briefing cards ── */
+.roster-workspace--v4 .roster-v4-briefing {display:block;background:transparent;height:auto;min-height:0;padding:6px 0}
+.roster-workspace--v4 .roster-v4-briefing__metrics {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 14px;
+}
+.roster-workspace--v4 .roster-v4-briefing__metric {
+  display:flex;align-items:center;gap:10px;min-height:71px;
+  background:#17141f;border-radius:16px;padding:10px 16px;border:1px solid rgba(255,255,255,.07);
+}
+.roster-workspace--v4 .roster-v4-briefing__metric small {
+  order:2;color:#8b8399;font:700 10px 'Barlow Condensed',sans-serif;letter-spacing:.06em;
+}
+.roster-workspace--v4 .roster-v4-briefing__metric strong {
+  color:#d4ff3a;font:800 38px/1 'Barlow Condensed',sans-serif;order:1;
+}
+.roster-workspace--v4 .roster-v4-briefing__metric span {
+  order:3;font-size:10px;color:#9d93ac;margin-left:auto;text-align:right;
+}
+.roster-workspace--v4 .roster-v4-briefing__board {
+  display:grid;grid-template-columns:1.2fr .85fr;gap:12px;align-items:stretch;
+}
+.roster-workspace--v4 .roster-v4-briefing__card {
+  min-height:220px;background:#17141f;border:1px solid rgba(255,255,255,.09);
+  border-radius:19px;padding:20px 22px;
+}
+.roster-workspace--v4 .roster-v4-briefing__card h3 {
+  font:800 23px/1 'Barlow Condensed',sans-serif;letter-spacing:.045em;color:#f7f3ee;margin:0;
+}
+.roster-workspace--v4 .roster-v4-briefing__card h3::before {
+  content:'';display:inline-block;vertical-align:middle;width:8px;height:8px;
+  background:#ff6a2b;transform:rotate(45deg);margin:0 9px 2px 0;
+}
+.roster-workspace--v4 .roster-v4-briefing__card p {
+  color:#8b8399;font-size:11px;margin:6px 0 16px;
+}
+.roster-workspace--v4 .roster-v4-briefing__card > small {
+  display:block;color:#837c91;font-size:10px;margin-top:15px;
+}
+.roster-workspace--v4 .roster-v4-briefing__position-list {display:grid;gap:11px}
+.roster-workspace--v4 .roster-v4-briefing__position-list .roster-briefing__lane {
+  display:grid;grid-template-columns:44px minmax(0,1fr) 34px 150px;
+  align-items:center;gap:10px;margin:0;padding:0;background:transparent;border:0;
+}
+.roster-workspace--v4 .roster-v4-briefing__pos {
+  font:800 21px 'Barlow Condensed',sans-serif;color:#f7f3ee;
+}
+.roster-workspace--v4 .roster-v4-briefing__position-track {
+  height:9px;border-radius:99px;background:#282336;overflow:hidden;
+}
+.roster-workspace--v4 .roster-v4-briefing__position-track span {
+  display:block;height:100%;border-radius:99px;background:#d4ff3a;
+}
+.roster-workspace--v4 .roster-v4-briefing__position-list .roster-briefing__lane>strong:not(.roster-v4-briefing__pos) {
+  color:#f7f3ee;font:800 20px 'Barlow Condensed',sans-serif;text-align:right;
+}
+.roster-workspace--v4 .roster-v4-briefing__position-list .roster-briefing__lane em {
+  color:#aaa1b8;font-size:10px;font-style:normal;
+}
+.roster-workspace--v4 .roster-v4-briefing__age-graph {
+  height:178px;display:flex;align-items:stretch;gap:14px;justify-content:space-around;
+}
+.roster-workspace--v4 .roster-v4-briefing__age-graph>div {
+  flex:1;min-width:36px;display:flex;align-items:center;flex-direction:column;justify-content:space-between;
+}
+.roster-workspace--v4 .roster-v4-briefing__age-graph strong {
+  color:#f7f3ee;font:800 20px 'Barlow Condensed',sans-serif;
+}
+.roster-workspace--v4 .roster-v4-briefing__age-graph small {color:#8b8399;font-size:10px}
+.roster-workspace--v4 .roster-v4-briefing__age-bar {
+  flex:1;width:100%;min-height:55px;display:flex;align-items:flex-end;
+  justify-content:center;border-bottom:1px solid rgba(255,255,255,.16);
+}
+.roster-workspace--v4 .roster-v4-briefing__age-bar i {
+  display:block;width:70%;max-width:42px;background:#d4ff3a;border-radius:8px 8px 0 0;
+}
+.roster-workspace--v4 .roster-v4-briefing__contract-number {
+  display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(255,255,255,.07);padding:12px 0;
+}
+.roster-workspace--v4 .roster-v4-briefing__contract-number strong {
+  font:800 35px 'Barlow Condensed',sans-serif;color:#d4ff3a;
+}
+.roster-workspace--v4 .roster-v4-briefing__contract-number span {
+  font:700 12px 'Barlow Condensed',sans-serif;color:#c4bdd0;
+}
+.roster-workspace--v4 .roster-v4-briefing__alert {
+  display:flex;align-items:center;gap:10px;padding:10px;margin:7px 0;
+  background:#221e2c;border-radius:10px;color:#c4bdd0;font-size:11px;
+}
+.roster-workspace--v4 .roster-v4-briefing__alert strong {
+  color:#ff9a4d;font:800 16px 'Barlow Condensed',sans-serif;
+}
+
+/* ── Courtside V4 · Planificar ── */
+.roster-workspace--v4 .roster-v4-planning {display:block;padding:6px 0;background:transparent}
+.roster-workspace--v4 .roster-v4-planning__horizons {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:4px 0 12px;
+}
+.roster-workspace--v4 .roster-v4-planning__horizons button {
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;
+  background:#17141f;border:1px solid rgba(255,255,255,.1);
+  padding:13px 19px;border-radius:17px;color:#f7f3ee;text-align:left;cursor:pointer;
+}
+.roster-workspace--v4 .roster-v4-planning__horizons button.is-active {
+  border-color:#ff6a2b;background:#251a27;
+}
+.roster-workspace--v4 .roster-v4-planning__horizons button span {
+  font:800 14px 'Barlow Condensed',sans-serif;color:#f7f3ee;
+}
+.roster-workspace--v4 .roster-v4-planning__horizons button strong {
+  color:#d4ff3a;font:800 36px/1 'Barlow Condensed',sans-serif;grid-column:2;grid-row:1 / span 2;
+}
+.roster-workspace--v4 .roster-v4-planning__horizons button small {color:#8b8399;font-size:10px}
+.roster-workspace--v4 .roster-v4-planning__summary {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 14px;
+}
+.roster-workspace--v4 .roster-v4-planning__summary>div {
+  background:#1e1a29;border-radius:14px;display:flex;align-items:center;gap:13px;padding:12px 17px;
+}
+.roster-workspace--v4 .roster-v4-planning__summary strong {
+  color:#ff9a4d;font:800 30px 'Barlow Condensed',sans-serif;
+}
+.roster-workspace--v4 .roster-v4-planning__summary span {
+  color:#b7acc4;font:700 11px 'Barlow Condensed',sans-serif;
+}
+.roster-workspace--v4 .roster-v4-planning__table-wrap {
+  background:#17141f;border:1px solid rgba(255,255,255,.08);
+  border-radius:17px;overflow:auto;
+}
+.roster-workspace--v4 .roster-v4-planning__table {width:100%;min-width:720px;border-collapse:collapse}
+.roster-workspace--v4 .roster-v4-planning__table th {
+  position:sticky;top:0;background:#282336;color:#b7acc4;text-align:left;
+  font:800 13px 'Barlow Condensed',sans-serif;letter-spacing:.06em;padding:11px 16px;
+}
+.roster-workspace--v4 .roster-v4-planning__table td {
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.07);
+  color:#f7f3ee;font-size:11px;
+}
+.roster-workspace--v4 .roster-v4-planning__table tr:hover td {background:rgba(255,255,255,.025)}
+.roster-workspace--v4 .roster-v4-planning__position {
+  display:inline-block;border-radius:8px;padding:4px 9px;
+  color:#17141f;background:#d4ff3a;font:800 13px 'Barlow Condensed',sans-serif;
+}
+.roster-workspace--v4 .roster-v4-planning__table .is-confirmed {color:#5cf29a}
+.roster-workspace--v4 .roster-v4-planning__table .is-unconfirmed {color:#ff9a4d}
+.roster-workspace--v4 .roster-v4-planning__table button {
+  padding:5px 10px;color:#f7f3ee;font:800 12px 'Barlow Condensed',sans-serif;
+  border:1px solid rgba(255,255,255,.15);background:#282336;border-radius:99px;cursor:pointer;
+}
+.roster-workspace--v4 .roster-v4-planning__table button:hover {border-color:#d4ff3a;color:#d4ff3a}
+.roster-workspace--v4 .roster-v4-planning__note {font-size:10px;color:#8b8399;padding:7px 6px}
+
+@media(max-width:1100px){
+  .roster-workspace--v4 .roster-v4-depth__lanes {grid-template-columns:repeat(5, minmax(210px,1fr))}
+  .roster-workspace--v4 .roster-v4-briefing__board {grid-template-columns:1fr}
+  .roster-workspace--v4 .roster-v4-briefing__metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .roster-workspace--v4 .roster-v4-planning__horizons {grid-template-columns:1fr}
+  .roster-workspace--v4 .roster-v4-planning__summary {grid-template-columns:1fr}
+  .roster-workspace--v4 .roster-v4__section-title h2 {font-size:34px}
+  .roster-workspace--v4 .roster-v4__section-title {align-items:flex-start;flex-direction:column}
+  .roster-workspace--v4 .roster-v4-briefing__position-list .roster-briefing__lane {
+    grid-template-columns:34px minmax(30px,1fr) 24px;gap:5px;
+  }
+  .roster-workspace--v4 .roster-v4-briefing__position-list .roster-briefing__lane em {grid-column:1 / -1}
+}

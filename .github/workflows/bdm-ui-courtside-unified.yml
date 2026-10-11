@@ -1,0 +1,83 @@
+name: BDM UI Courtside unified
+on:
+  push:
+    branches: [feat/bdm-ui-courtside]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bdm-ui-courtside-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  typecheck-build:
+    name: Unified TypeScript and build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+  home-and-shell:
+    name: Home, bars and desktop regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/ui-ng/applications/home/homeLeaderCategories.test.ts src/ui-ng/applications/home/homeStandingsDigest.test.ts src/ui-ng/applications/home/HomeWorkspace.test.tsx src/ui-ng/system/NgStartMenu.test.tsx src/ui-ng/system/Taskbar.test.tsx src/ui-ng/workspace/taskbarInstances.test.ts src/ui-ng/workspace/taskbarOpenApps.test.ts src/ui-ng/workspace/workspaceApps.test.ts --maxWorkers=2 --no-file-parallelism
+  player:
+    name: Player Courtside regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/player/components/PerformanceNineZoneCourt.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerPerformanceModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerPerformanceCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerDevelopmentModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerDevelopmentCourtside.test.tsx \
+            src/ui-ng/applications/player/views/PlayerCourtsideOverview.fow.test.tsx \
+            src/ui-ng/applications/player/views/PlayerAttributesView.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerContractModel.test.ts \
+            src/ui-ng/applications/player/PlayerMedicalCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerScoutingDecision.test.ts \
+            src/ui-ng/applications/player/PlayerScoutingCourtside.test.tsx \
+            src/ui-ng/applications/player/PlayerContractHubLink.test.tsx \
+            src/ui-ng/applications/player/components/visual/CourtsideFamilyRadar.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
+  roster:
+    name: Roster Courtside regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/ui-ng/applications/roster/RosterWorkspace.test.tsx src/ui-ng/applications/roster/rosterV4Filters.test.ts src/ui/pcb-migrated/plantilla/CanonicalRoster.test.ts --maxWorkers=2 --no-file-parallelism
