@@ -1,12 +1,17 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import type { CompetitionId, TeamId } from '@/domain/ids'
+import { useGameStore } from '@/stores/gameStore'
+import { getUserTeam } from '@/engine/calendar'
+import { defaultPlayerIdForNg } from '@/ui-ng/applications/player/data/buildPlayerWorkspaceModel'
+import { useNgPlayerSelectionStore } from '@/ui-ng/stores/ngPlayerSelectionStore'
 import {
   closeTaskbarAppInstances,
   closeTaskbarInstance,
   rememberTaskbarInstance,
   taskbarInstanceFromUrl,
   type TaskbarInstance,
+  withTaskbarDefaultEntity,
 } from './taskbarInstances'
 import {
   COURTSIDE_PIN_STORAGE_KEY,
@@ -76,8 +81,18 @@ function readNavigation() {
 function seedOpenApps(): readonly WorkspaceAppId[] {
   return rememberOpenedTaskbarApp([], readNavigation().app)
 }
+function currentTaskbarInstance(): TaskbarInstance | null {
+  const world = useGameStore.getState().world
+  const selected = useNgPlayerSelectionStore.getState().selectedPlayerId
+  const playerId = world === null ? null :
+    selected !== null && world.players[selected] !== undefined ? selected : defaultPlayerIdForNg(world)
+  const teamId = world === null ? null : getUserTeam(world)?.id ?? null
+  const url = withTaskbarDefaultEntity(new URL(window.location.href), { playerId, teamId })
+  return taskbarInstanceFromUrl(url)
+}
+
 function seedInstances(): readonly TaskbarInstance[] {
-  return rememberTaskbarInstance([], taskbarInstanceFromUrl(new URL(window.location.href)))
+  return rememberTaskbarInstance([], currentTaskbarInstance())
 }
 
 function restoreInstance(instance: TaskbarInstance) {
@@ -113,7 +128,7 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
       openAppsRef.current = remembered
       setNavigation(next)
       setOpenApps(remembered)
-      const updated = rememberTaskbarInstance(instancesRef.current, taskbarInstanceFromUrl(new URL(window.location.href)))
+      const updated = rememberTaskbarInstance(instancesRef.current, currentTaskbarInstance())
       instancesRef.current = updated
       setInstances(updated)
     }
@@ -132,13 +147,13 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
       pinnedApps,
       taskbarApps: orderedVisibleTaskbarApps(pinnedApps, openApps, taskbarOrder),
       instances,
-      activeInstanceKey: taskbarInstanceFromUrl(new URL(window.location.href))?.key ?? null,
+      activeInstanceKey: currentTaskbarInstance()?.key ?? null,
       activateInstance: (key: string) => {
         const target = instancesRef.current.find(instance => instance.key === key)
         if (target !== undefined) restoreInstance(target)
       },
       closeInstance: (key: string) => {
-        const current = taskbarInstanceFromUrl(new URL(window.location.href))
+        const current = currentTaskbarInstance()
         const target = instancesRef.current.find(instance => instance.key === key)
         if (target === undefined) return
         const remaining = closeTaskbarInstance(instancesRef.current, key)
