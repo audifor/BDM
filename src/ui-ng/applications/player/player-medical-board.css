@@ -2411,3 +2411,65 @@
 .po-med-board--v3 .po-med-v3__body .po-med-bodymap__region.is-attention.is-selected .po-med-bodymap__link {
   stroke:var(--cs-orange2);
 }
+
+
+/* MEDICAL V4.1 · short histories fit without a distracting scroll track.
+   Scrolling remains functional if the viewport is smaller; multiple events
+   retain their own ledger scroll. */
+.po-med-board--v3 .po-med-v3__history--compact {
+  overflow-y:auto;
+  scrollbar-width:none;
+}
+.po-med-board--v3 .po-med-v3__history--compact::-webkit-scrollbar {
+  display:none;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard {
+  gap:6px;
+  padding-bottom:1px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__heading {
+  min-height:31px;
+  padding:7px 10px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__ledger-head {
+  padding:5px 9px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__ledger-row {
+  min-height:37px;
+  padding:7px 9px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__case-title {
+  padding:8px 10px 6px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__case-facts {
+  gap:5px;
+  padding:0 10px 7px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__case-facts > div {
+  padding:6px 9px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__case-foot {
+  padding:7px 10px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__pattern-stats {
+  padding:0 10px 5px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__pattern-kinds {
+  padding:0 10px 6px;
+}
+.po-med-board--v3 .po-med-v3__history--compact .po-med-caseboard__footnote {
+  padding:3px 10px 7px;
+}
+/* Neither playing eligibility nor a hypothetical treatment plan establishes
+   a training clearance status. An unknown source must look neutral. */
+.po-med-board--v3 .po-med-recovery-summary__states > div.is-neutral {
+  border-left-color:var(--cs-line2);
+}
+@container player-space (max-width:850px) {
+  .po-med-board--v3 .po-med-v3__history--compact {
+    scrollbar-width:thin;
+  }
+  .po-med-board--v3 .po-med-v3__history--compact::-webkit-scrollbar {
+    display:block;
+  }
+}
