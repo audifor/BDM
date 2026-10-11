@@ -28,7 +28,11 @@ interface Props {
   readonly onOpenScoutingCentre: () => void
 }
 
-const knowledgeText = (value: string) => value === 'known' ? 'VERIFIED' : value === 'estimated' ? 'ESTIMATED' : value === 'low' ? 'LOW CONFIDENCE' : 'NOT SCOUTED'
+const knowledgeText = (value: string, certaintyNote: string) =>
+  certaintyNote === 'Mixed reports' ? 'MIXED EVIDENCE' :
+  certaintyNote === 'Qualitative descriptor' ? 'QUALITATIVE' :
+  value === 'known' ? 'VERIFIED' : value === 'estimated' ? 'ESTIMATED' :
+  value === 'low' ? 'LOW CONFIDENCE' : 'NOT SCOUTED'
 
 export function ScoutingRosterComparison({ world, inspectedId }: {
   readonly world: GameWorld
@@ -134,10 +138,11 @@ export function ScoutingCourtsideBoard({
   const chosenRoute = routes.find(route => route.id===focusRoute) ?? routes[1]!
   return <div className="po-scv3" data-ng-region="player-scouting">
     <div className="po-scv3__status-row">
-      <section className="po-scv3__stat"><small>SCOUTING COVERAGE</small><strong>{own ? 'INTERNAL EVALUATION' : level}</strong>
-        <span>{coverage} evaluated domains · {status?.knowledgeLabel ?? 'Unknown'}</span></section>
+      <section className="po-scv3__stat"><small>{own ? 'SCOUT REPORT COVERAGE' : 'SCOUTING COVERAGE'}</small>
+        <strong>{own ? (coverage === 0 ? 'NO FILED REPORT' : level) : level}</strong>
+        <span>{coverage} scouted domains · {coverage === 0 ? 'No scout evaluation' : (status?.knowledgeLabel ?? 'Unknown')}</span></section>
       <section className="po-scv3__stat"><small>REPORT RELIABILITY</small><strong>{coverage === 0 ? 'UNKNOWN' : (status?.confidenceLabel ?? 'Unknown').toUpperCase()}</strong>
-        <span>{status?.disagreementLabel ?? 'No evaluated source'}</span></section>
+        <span>{coverage === 0 ? 'No evaluator report' : `Disagreement: ${status?.disagreementLabel ?? 'Unknown'}`}</span></section>
       <section className="po-scv3__stat"><small>LAST ASSESSED</small><strong>{status?.lastScoutedLabel ?? 'NO REPORT'}</strong>
         <span>{status?.observerLabel ?? 'No evaluator'}</span></section>
       <section className="po-scv3__stat po-scv3__stat--action"><small>NEXT MANAGER STEP</small>
@@ -166,8 +171,9 @@ export function ScoutingCourtsideBoard({
           </div>
           <div className="po-scv3__coverage-grid">
             {scouting.knowledgeAreas.filter(area=>['attributes','physical','potential'].includes(area.id)).map(area=>
-              <div key={area.id}><small>{area.label.toUpperCase()}</small><strong>{area.coverageLabel}</strong>
-                <span className="po-scv3__track"><span style={{width:`${Math.round(area.coverage*100)}%`}} /></span></div>)}
+              <div key={area.id}><small>{area.label.toUpperCase()}</small>
+                <strong>{own && area.id !== 'potential' ? 'KNOWN INTERNALLY' : area.coverageLabel}</strong>
+                <span className="po-scv3__track"><span style={{width:`${own && area.id !== 'potential' ? 100 : Math.round(area.coverage*100)}%`}} /></span></div>)}
           </div>
           <div className="po-scv3__snapshot-note">{own ? 'Internal ratings are direct roster knowledge. Scouting reports and projections remain separate.' : 'Projection and personality remain UNKNOWN without authorized reports. No hidden potential is exposed.'}</div>
         </section>
@@ -199,7 +205,7 @@ export function ScoutingCourtsideBoard({
                     aria-pressed={focused?.id===row.id}
                     className={'po-scv3__matrix-row'+(focused?.id===row.id?' is-selected':'')}>
                     <span>{row.label}</span><strong>{row.rangeLabel}</strong>
-                    <span className={'po-scv3__knowledge is-'+row.knowledgeState}>{knowledgeText(row.knowledgeState)}</span>
+                    <span className={'po-scv3__knowledge is-'+row.knowledgeState}>{knowledgeText(row.knowledgeState, row.certaintyNote)}</span>
                   </button>)}
               </div>
               {focused !== undefined && <div className="po-scv3__matrix-focus">
@@ -222,9 +228,16 @@ export function ScoutingCourtsideBoard({
             <div><small>POTENTIAL</small><strong>{scouting.potentialOutcomes.every(outcome=>outcome.knowledgeState==='unknown')?'UNKNOWN':'SCOUTED RANGES'}</strong></div>
           </div>
           <h4>WHAT WE KNOW</h4>
-          <p>{known.length>0?`${known.length} broad dimensions have evaluated evidence. ${scouting.consensus.length} evaluators have filed reports.`:'No reliable report yet. Do not infer quality, character or availability.'}</p>
+          <p>{own
+            ? '80 canonical ratings available internally. Staff reports and tactical fit are separate evidence.'
+            : known.length>0
+              ? `${known.length} scouting dimensions evaluated · ${scouting.consensus.length} reporting evaluators.`
+              : 'No scouting evidence yet. Do not infer quality, character or availability.'}</p>
           <h4>WHAT TO LEARN NEXT</h4>
-          <p>{scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').slice(0,2).map(area=>area.label).join(' · ') || 'Refresh aging evaluations and investigate disagreement'}</p>
+          <p>{(own
+              ? ['Staff assessment', 'Tactical fit']
+              : scouting.knowledgeAreas.filter(area=>area.knowledgeState==='unknown').slice(0,2).map(area=>area.label)
+            ).join(' · ') || 'Refresh evaluations and investigate report disagreement'}</p>
         </section>
         <section className="po-scv3__card po-scv3__routes">
           <div className="po-scv3__card-head"><strong>ACTION ROUTES</strong><span>{own?'INTERNAL':'TARGET'} · GAMEPLAY</span></div>
