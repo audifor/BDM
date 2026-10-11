@@ -11,7 +11,6 @@ import {
 import {
   InjuryPatternPanel,
   LoadManagementPanel,
-  MedicalFilterStrip,
   MedicalHistoryPanel,
   PhysicalReadinessPanel,
   RecoveryTimelinePanel,
@@ -47,7 +46,6 @@ export function PlayerMedicalView() {
 
   const region = selectedRegionId === null ? undefined
     : medical.bodyRegions.find(entry => entry.id === selectedRegionId)
-  const latest = medical.history[0]
   const riskReason = medical.risk?.primaryReason
   const insight = medical.activeInjury !== null
     ? `${medical.activeInjury.kindLabel} is recorded. Next review: ${medical.activeInjury.reviewDueLabel}.`
@@ -158,8 +156,6 @@ export function PlayerMedicalView() {
       </section>
     </aside>
 
-    <MedicalFilterStrip alerts={model.overview.alerts}
-      onOpenPage={view => session.setActiveView(view)} />
   </div>
 }
 
