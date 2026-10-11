@@ -3,7 +3,7 @@ import { addDays } from '@/domain/date'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
-import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
+import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { ensureCanonicalFinanceFoundation, resolveOrganizationCurrency } from '@/domain/finance'
 import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
 import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
@@ -86,7 +86,9 @@ export function activateNewGameFinance(planned: GameWorld, options: NewGameOptio
   })
   // Seed current-period Finance authorization before adding the independent completed-year
   // college sport budgets: those historical facts must not suppress the initial salary authority.
-  const financed = processClubFinanceForDate(ensureNcaaSportBudgets(career), career.currentDate).world
+  // The day-0 Finance pass records every opening contract obligation; like the Calendar's CLUB_FINANCE phase (WSR2) the whole
+  // pass is validated once, on its result, instead of once per recorded fact.
+  const financed = withSingleWorldValidation(ensureNcaaSportBudgets(career), (initial) => processClubFinanceForDate(initial, career.currentDate).world)
   return options.gameBalance === undefined ? financed : applyGameBalanceBootstrap(financed)
 }
 
