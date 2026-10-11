@@ -7,7 +7,7 @@ import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 import { buildScoutingRosterComparison } from './buildScoutingRosterComparison'
 import { buildPlayerScoutingModel } from './buildPlayerScoutingModel'
 import { buildPlayerScoutingDecision, scoutingRosterBenchmarks } from './buildPlayerScoutingDecision'
-import { positionEvidenceKeys, sharedScoutingPositions, SCOUTING_POSITION_KEYS } from './scoutingPositionEvidence'
+import { positionEvidenceKeys, sharedScoutingPositions, resolveScoutingPositionMatch, SCOUTING_POSITION_KEYS } from './scoutingPositionEvidence'
 
 const seed = () => {
   const world = createNewGame()
@@ -33,6 +33,43 @@ function decide(
   })
 }
 describe('PLAYER Scouting positional decision safety',()=>{
+  it('uses one explicitly selected common position and classifies primary/secondary claims',()=>{
+    const subject={primaryPosition:'SG' as const,secondaryPositions:['PG' as const]}
+    const primary={primaryPosition:'SG' as const,secondaryPositions:['SF' as const]}
+    const mixed={primaryPosition:'PG' as const,secondaryPositions:['C' as const]}
+    const secondary={primaryPosition:'C' as const,secondaryPositions:['PG' as const]}
+    const none={primaryPosition:'C' as const,secondaryPositions:['PF' as const]}
+    expect(resolveScoutingPositionMatch(subject,primary).compatibility).toBe('primary')
+    expect(resolveScoutingPositionMatch(subject,mixed)).toMatchObject({position:'PG',compatibility:'mixed',subjectPrimary:false,comparatorPrimary:true})
+    expect(resolveScoutingPositionMatch(subject,secondary)).toMatchObject({position:'PG',compatibility:'secondary'})
+    expect(resolveScoutingPositionMatch(subject,none)).toMatchObject({position:'SG',compatibility:'none'})
+    const dual={primaryPosition:'SG' as const,secondaryPositions:['PG' as const]}
+    const selected=resolveScoutingPositionMatch(subject,dual,'PG')
+    expect(selected).toMatchObject({position:'PG',compatibility:'secondary'})
+    expect(selected.availablePositions).toEqual(['SG','PG'])
+  })
+
+  it('does not convert secondary only or primary/secondary cross roles into confirmed upgrades',()=>{
+    const {world,team,ownId}=seed()
+    const other=team.rosterPlayerIds.find(id=>id!==ownId)!
+    const subject={primaryPosition:'SG' as const,secondaryPositions:['PG' as const]}
+    const secondary={primaryPosition:'C' as const,secondaryPositions:['PG' as const]}
+    const mixed={primaryPosition:'PG' as const,secondaryPositions:['C' as const]}
+    const original=buildScoutingRosterComparison(world,ownId,other)
+    for(const comparator of [secondary,mixed]){
+      const positionMatch=resolveScoutingPositionMatch(subject,comparator)
+      const result=buildPlayerScoutingDecision({
+        own:true,rows:original,scouting:buildPlayerScoutingModel(world,ownId),
+        comparatorName:'Comparison player',subjectPosition:'SG',
+        sharedPositions:positionMatch.availablePositions,positionMatch,
+      })
+      expect(result.status).not.toBe('supported')
+      expect(result.position).toBe('PG')
+      expect(result.positionCompatibility).toBe(positionMatch.compatibility)
+      expect(result.positionalEvidenceTotal).toBe(positionEvidenceKeys('PG').length)
+    }
+  })
+
   it('uses only canonical 80-rating keys for each of the five explicit unweighted position lenses',()=>{
     for (const [position,keys] of Object.entries(SCOUTING_POSITION_KEYS)){
       expect(keys).toHaveLength(14)
