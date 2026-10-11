@@ -385,3 +385,52 @@
 @container player-space (max-width:850px) {
   .po-scv3__evidence-scope {grid-template-columns:1fr;}
 }
+
+
+/* V3.4.1: one comparison-position authority and a quiet, no-dual-scroll dashboard. */
+.po-scv3__position-selector {
+  display:grid;grid-template-columns:minmax(0,1.45fr) minmax(130px,.85fr);
+  gap:7px;align-items:end;flex:0 0 auto;
+}
+.po-scv3__position-selector label {
+  display:flex;flex-direction:column;gap:4px;min-width:0;
+  color:var(--cs-text2);font:700 9px/1.1 var(--cs-font);
+}
+.po-scv3__position-selector select {
+  display:block;width:100%;min-width:0;min-height:28px;
+  background:var(--cs-s2);color:var(--cs-text);
+  border:1px solid var(--cs-line2);border-radius:5px;
+  padding:3px 5px;font:700 11px/1.1 var(--cs-font);
+}
+.po-scv3__position-match {
+  display:flex;align-items:center;justify-content:center;
+  min-height:28px;padding:4px 6px;min-width:0;text-align:center;
+  border:1px solid var(--cs-positive);border-radius:5px;
+  color:var(--cs-positive);font:700 9px/1.15 var(--cs-font);
+}
+.po-scv3__position-match.is-mixed,
+.po-scv3__position-match.is-secondary,
+.po-scv3__position-match.is-none {
+  border-color:var(--cs-orange2);color:var(--cs-orange2);
+}
+.po-scv3__compare-key {display:none;}
+.po-scv3__compare-rows {overflow-y:hidden;min-height:0;scrollbar-width:thin;}
+.po-scv3__compare-rows.is-expanded {overflow-y:auto;}
+.po-scv3__compare-row {padding:4px 2px;min-height:21px;}
+.po-scv3__compare-column-head {padding:4px 2px;}
+.po-scv3__compare-more {min-height:25px;padding:5px;}
+.po-scv3__internal--reasons {
+  overflow:hidden;scrollbar-width:none;
+  flex:1 1 auto;min-height:0;
+  gap:7px;padding-top:7px;
+}
+.po-scv3__reason-group {gap:4px;}
+.po-scv3__reason-group > span {padding:6px 7px;font-size:11px;}
+.po-scv3__reason-next {padding:7px 8px;gap:4px;}
+.po-scv3__intelligence {overflow:hidden;}
+@container player-space (max-width:850px) {
+  .po-scv3__position-selector {grid-template-columns:minmax(0,1fr);}
+  .po-scv3__compare-rows {overflow-y:auto;}
+  .po-scv3__internal--reasons {overflow:visible;flex:0 0 auto;}
+  .po-scv3__intelligence {overflow:visible;}
+}
