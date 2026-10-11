@@ -30,8 +30,16 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(bench.getByRole('button',{name:'ROLE PEER'})).toHaveAttribute('aria-pressed','true')
     expect(screen.getByText('80 VERIFIED RATINGS')).toBeInTheDocument()
     expect(screen.getByText('NO STAFF REPORT')).toBeInTheDocument()
+    const knowledgeNote=container.querySelector('.po-scv3__coverage-note') as HTMLElement
+    expect(knowledgeNote).toHaveTextContent('INTERNAL KNOWLEDGE')
+    expect(knowledgeNote).toHaveTextContent('All 80 player ratings are known internally.')
+    expect(knowledgeNote).not.toHaveTextContent('KNOWLEDGE GAPS')
+    expect(container.querySelector('.po-scv3__route-detail')).toHaveTextContent('DEVELOPMENT')
     const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
     expect(comparator).toHaveTextContent('HEAD-TO-HEAD · OUR ROSTER')
+    const ratingHead=comparator.querySelector('.po-scv3__compare-column-head') as HTMLElement
+    expect(ratingHead).toHaveTextContent(world.players[team.rosterPlayerIds[0]!]!.lastName.toUpperCase())
+    expect(ratingHead).not.toHaveTextContent('SCOUT')
     expect(within(comparator).getByLabelText('Comparison attribute family')).toHaveValue('position')
     const assessed=within(comparator).getByLabelText('Position assessed') as HTMLSelectElement
     expect(assessed.value).toMatch(/^(PG|SG|SF|PF|C)$/)
