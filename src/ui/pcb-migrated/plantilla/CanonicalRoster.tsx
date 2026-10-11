@@ -35,6 +35,7 @@ import type { RosterNgSessionBridge } from "@/ui-ng/applications/roster/rosterWo
 import { buildRosterStaffComments } from "@/ui-ng/applications/roster/buildRosterStaffComments";
 import { RosterRowInspector } from "@/ui-ng/applications/roster/components/RosterRowInspector";
 import { RosterStaffComments } from "@/ui-ng/applications/roster/components/RosterStaffComments";
+import { buildRosterInspectorSeasonStats } from '@/ui-ng/applications/roster/buildRosterInspectorSeasonStats';
 
 import "./CanonicalRoster.css";
 
@@ -195,6 +196,8 @@ export function CanonicalRoster({
   onViewChange,
   rosterSection = "overview",
   sessionBridge,
+  v4Mode = false,
+  rowPredicate,
   team,
   variant = "legacy",
   world,
@@ -207,6 +210,8 @@ export function CanonicalRoster({
   readonly onViewChange?: (view: string) => void;
   readonly rosterSection?: string;
   readonly sessionBridge?: RosterNgSessionBridge;
+  readonly v4Mode?: boolean;
+  readonly rowPredicate?: (player: Player) => boolean;
   readonly team: { readonly id: TeamId; readonly name: string };
   readonly variant?: CanonicalRosterVariant;
   readonly world: GameWorld;
@@ -235,11 +240,10 @@ export function CanonicalRoster({
             .toLocaleLowerCase()
             .includes(query.trim().toLocaleLowerCase()),
         );
-    if (isNg && sessionBridge !== undefined) {
-      return filterRosterByPosition(filteredBySection, positionFilter);
-    }
-    return filteredBySection;
-  }, [isNg, positionFilter, query, roster, sessionBridge]);
+    const positioned = isNg && sessionBridge !== undefined
+      ? filterRosterByPosition(filteredBySection, positionFilter) : filteredBySection;
+    return rowPredicate === undefined ? positioned : positioned.filter(rowPredicate);
+  }, [isNg, positionFilter, query, roster, sessionBridge, rowPredicate]);
   const openPlayer = (player: Player) =>
     onOpenEntity?.({
       type: "player",
@@ -250,6 +254,22 @@ export function CanonicalRoster({
     () => (isNg ? buildRosterRatingEvaluationLookup(world, team.id) : undefined),
     [isNg, world, team.id],
   );
+  const seasonStatistics = useMemo(() => new Map(roster.map(player =>
+    [player.id, buildRosterInspectorSeasonStats(world, player.id)])), [roster, world]);
+  const performanceColumns = useMemo<readonly DataGridColumn<Player>[]>(() =>
+    ['MIN','PTS','REB','AST','VAL'].map(label => ({
+      id: 'season-' + label,
+      label,
+      defaultWidth: 72,
+      minWidth: 56,
+      numeric: true,
+      sortable: true,
+      value: player => {
+        const value = seasonStatistics.get(player.id)?.find(row => row.label === label)?.value;
+        return value === undefined || value === '—' ? undefined : Number(value);
+      },
+      render: player => seasonStatistics.get(player.id)?.find(row => row.label === label)?.value ?? '—',
+    })), [seasonStatistics]);
   const columns = useMemo<readonly DataGridColumn<Player>[]>(
     () => {
       const summaryColumns =
@@ -455,6 +475,7 @@ export function CanonicalRoster({
         },
       },
       ...summaryColumns,
+      ...performanceColumns,
       ...ratingColumns(OFFENSE_RATING_KEYS),
       ...ratingColumns(BRAIN_RATING_KEYS),
       ...ratingColumns(DEFENSE_RATING_KEYS),
@@ -476,6 +497,7 @@ export function CanonicalRoster({
     },
     [
       isNg,
+      performanceColumns,
       lineup,
       onLineupSlotChange,
       onLineupSlotClear,
@@ -500,6 +522,11 @@ export function CanonicalRoster({
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
       columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
+    },
+    {
+      id: 'performance',
+      name: 'RENDIMIENTO',
+      columnIds: [...baseColumnIds, 'season-MIN','season-PTS','season-REB','season-AST','season-VAL', 'fatigue'],
     },
     {
       id: "offense",
@@ -532,13 +559,23 @@ export function CanonicalRoster({
       columnIds: [...baseColumnIds, ...personalityColumnIds],
     },
     {
+      id: 'contracts',
+      name: 'CONTRATOS',
+      columnIds: [...baseColumnIds, 'salary','expiry','contract-plan'],
+    },
+    {
+      id: 'development',
+      name: 'DESARROLLO',
+      columnIds: [...baseColumnIds, 'fatigue','height','weight', ...physicalColumnIds, ...brainColumnIds],
+    },
+    {
       id: "custom",
       name: "PERSONALIZADA",
       columnIds: columns.map((column) => column.id),
     },
   ];
   const selectedView =
-    views.find((view) => view.id === ratingView) ?? views[0]!;
+    [...views, ...(sessionBridge?.customViews ?? [])].find((view) => view.id === ratingView) ?? views[0]!;
 
   useEffect(() => {
     if (!viewMenuOpen) return
@@ -579,7 +616,7 @@ export function CanonicalRoster({
   const inspectedPlayer = inspectedId === undefined ? undefined : rows.find((player) => player.id === inspectedId);
 
   return (
-    <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}`}>
+    <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}${v4Mode ? ' canonical-roster--v4' : ''}`}>
       <header className="canonical-roster__toolbar">
         <div className="canonical-roster__identity">
           {!isNg && (

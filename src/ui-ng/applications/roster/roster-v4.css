@@ -1,0 +1,199 @@
+/* ROSTER V4 · Courtside. Scoped to Roster NG only; no global shell/sidebar overrides. */
+.roster-workspace--v4 {
+  --v4-bg:#0c0a14;
+  --v4-surface:#17141f;
+  --v4-surface-raised:#1e1a29;
+  --v4-text:#f7f3ee;
+  --v4-muted:#8b8399;
+  --v4-orange:#ff6a2b;
+  --v4-lime:#d4ff3a;
+  background:var(--v4-bg);
+  color:var(--v4-text);
+  --ng-workspace-header-height:82px;
+  --roster-holo-border:rgba(255,255,255,.11);
+  --roster-holo-fill:none;
+}
+.roster-workspace--v4::before {background:none}
+.roster-workspace--v4 .ng-application-workspace {height:100%;min-height:0;background:var(--v4-bg)}
+.roster-workspace--v4 .ng-application-workspace__header-slot {
+  padding:0 16px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  min-height:0;
+}
+.roster-workspace--v4 .roster-workspace-header.roster-v4__header {
+  height:82px;min-height:0;padding:7px 0 0;
+  align-items:flex-start;justify-content:center;
+  flex-direction:column;gap:4px;background:transparent;border:0;
+}
+.roster-v4__heading {display:flex;align-items:baseline;gap:16px;min-width:0;width:100%}
+.roster-v4__title {font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;font-size:40px;font-weight:800;letter-spacing:.012em;line-height:1}
+.roster-v4__subtitle {font-size:11px;color:var(--v4-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roster-v4__tabs {display:flex;gap:7px;align-items:center;max-width:100%;overflow-x:auto}
+.roster-v4__tabs button {
+  border:0;border-radius:25px;background:var(--v4-surface);
+  min-height:28px;padding:3px 19px;
+  font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-weight:750;font-size:17px;letter-spacing:.02em;white-space:nowrap;
+  color:#c4bdd0;cursor:pointer;
+}
+.roster-v4__tabs button.is-active {color:#0c0a14;background:#f7f3ee}
+.roster-v4__tabs button:hover:not(.is-active) {color:var(--v4-text);background:#282336}
+.roster-v4__body {
+  display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;
+  gap:7px;padding:8px 16px 7px;background:var(--v4-bg);
+}
+.roster-v4__metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:0 0 auto}
+.roster-v4__metrics > div {
+  min-height:51px;background:var(--v4-surface);border-radius:14px;
+  padding:6px 15px;display:flex;align-items:center;gap:12px;
+  border:1px solid rgba(255,255,255,.055);
+}
+.roster-v4__metrics small {color:#a79eb1;letter-spacing:.1em;font-size:9px;font-weight:800;text-transform:uppercase;max-width:70%}
+.roster-v4__metrics strong {
+  order:-1;font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-weight:800;font-size:29px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.roster-v4__metrics strong.is-lime {color:var(--v4-lime)}
+.roster-v4__metrics strong.is-orange,.roster-v4__planning .is-orange {color:var(--v4-orange)}
+.roster-v4__metrics em {font-size:14px;font-style:normal;color:var(--v4-muted)}
+.roster-v4__controls {display:flex;flex-direction:column;gap:6px;flex:0 0 auto;min-width:0}
+.roster-v4__views,.roster-v4__filters,.roster-v4__table-actions {
+  display:flex;align-items:center;gap:6px;min-width:0;
+  border-radius:12px;background:var(--v4-surface);padding:5px 11px;
+  min-height:38px;
+}
+.roster-v4__views,.roster-v4__filters {flex-wrap:nowrap}
+.roster-v4__views > strong,.roster-v4__filters > strong,.roster-v4__table-actions > strong {
+  color:#aaa1b8;font-weight:800;letter-spacing:.09em;font-size:10px;white-space:nowrap;margin-right:6px;
+}
+.roster-v4__push {flex:1;min-width:5px}
+.roster-v4__views button,.roster-v4__table-actions button,.roster-v4__filters button,
+.roster-v4__views select {
+  font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,.1);
+  color:#c4bdd0;background:#252033;border-radius:20px;padding:7px 10px;
+  min-height:27px;cursor:pointer;white-space:nowrap;
+}
+.roster-v4__views button.is-active {background:var(--v4-lime);color:#16101c;border-color:var(--v4-lime)}
+.roster-v4__views button:hover,.roster-v4__filters button:hover,.roster-v4__table-actions button:hover {border-color:var(--v4-orange)}
+.roster-v4__views select,.roster-v4__filters select {color:#f7f3ee;cursor:pointer}
+.roster-v4__views select {max-width:126px;overflow:hidden;text-overflow:ellipsis}
+.roster-v4__views option,.roster-v4__filters option,.roster-v4__advanced option {background:#1e1a29;color:#f7f3ee}
+.roster-v4__filters label {color:#aaa1b8;display:flex;align-items:center;gap:5px;font-size:10px;white-space:nowrap}
+.roster-v4__filters select {min-width:85px;max-width:155px;background:#252033;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 8px;font-size:11px}
+.roster-v4__filters .roster-v4__filter-trigger {border-color:var(--v4-orange);color:var(--v4-orange);background:#221a21}
+.roster-v4__filters input[type=search] {
+  margin-left:auto;min-width:130px;max-width:210px;width:16%;border-radius:9px;
+  background:#252033;border:1px solid rgba(255,255,255,.09);
+  color:#f7f3ee;font-size:11px;padding:7px 10px;
+}
+.roster-v4__table-actions {background:transparent;padding:0 5px;min-height:29px}
+.roster-v4__table-actions span {font-size:10px;color:#aaa1b8;white-space:nowrap}
+.roster-v4__table-actions button {background:var(--v4-surface);border-radius:18px;padding:5px 10px}
+.roster-v4__table-actions button:disabled {opacity:.45;cursor:not-allowed}
+.roster-v4__table-actions .roster-v4__hint {font-size:9px;color:#706b83}
+.roster-v4__manage,.roster-v4__advanced {
+  border:1px solid rgba(255,106,43,.28);border-radius:12px;
+  padding:10px 14px;background:var(--v4-surface-raised);color:var(--v4-text);
+  max-height:280px;overflow:auto;
+}
+.roster-v4__manage {display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.roster-v4__manage strong {font-size:11px;color:var(--v4-lime)}
+.roster-v4__manage p {font-size:10px;color:#aaa1b8;margin:0}
+.roster-v4__manage label {display:flex;gap:5px;align-items:center;font-size:11px}
+.roster-v4__manage button,.roster-v4__advanced button {
+  border:1px solid rgba(255,255,255,.13);background:#282336;color:#f7f3ee;
+  border-radius:8px;padding:6px 9px;font-size:10px;cursor:pointer;
+}
+.roster-v4__advanced-top,.roster-v4__condition,.roster-v4__group,.roster-v4__saved {display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:7px}
+.roster-v4__advanced-top strong {color:var(--v4-orange);font-size:12px}
+.roster-v4__advanced label {font-size:10px;display:flex;gap:5px;align-items:center;color:#c4bdd0}
+.roster-v4__advanced select,.roster-v4__advanced input {
+  background:#282336;color:#f7f3ee;font-size:11px;
+  border-radius:7px;padding:6px;border:1px solid rgba(255,255,255,.15);max-width:210px;
+}
+.roster-v4__group {padding:7px 12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin:7px 0}
+.roster-v4__group > label {width:100%}
+.roster-v4__condition {width:100%}
+.roster-v4__table-pane {flex:1 1 0;min-height:0;min-width:0;position:relative;overflow:hidden}
+.roster-workspace--v4 .roster-v4__table-pane .roster-workspace__scroll {
+  height:100%;width:100%;display:flex;min-height:0;overflow:hidden;padding:0;
+}
+.roster-workspace--v4 .canonical-roster.canonical-roster--v4 {
+  height:100%;min-height:0;flex:1 1 auto;background:var(--v4-surface)!important;
+  border:1px solid rgba(255,255,255,.13);border-radius:12px;box-shadow:none!important;
+  background-image:none!important;
+}
+.roster-workspace--v4 .canonical-roster--v4::before,
+.roster-workspace--v4 .canonical-roster--v4::after {display:none}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__toolbar {display:none}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid {
+  display:flex;flex:1 1 0;min-height:0;height:100%;
+  --bdm-grid-row-height:34px;--desktop-density-row:34px;
+  --bdm-grid-header-height:32px;--bdm-grid-font-size:11px;--bdm-grid-header-font-size:10px;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid .bdm-data-table {
+  height:100%;width:100%;max-height:100%;overflow:auto;scrollbar-color:#60536d #181321;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid table {
+  min-width:max-content;max-width:none;width:max-content;
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid th {
+  background:#231f30!important;color:#bfb0d0!important;
+  position:sticky;top:0;z-index:3;
+  font-family:'Barlow Condensed',var(--ng-font-display),sans-serif;
+  font-size:12px;letter-spacing:.06em;
+}
+.roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid td {
+  height:34px;min-height:34px;font-size:11px;color:#f7f3ee;
+  border-color:rgba(255,255,255,.06);
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid tbody tr.is-selected td {
+  background:rgba(255,106,43,.11)!important;
+}
+.bdm-os-ng .roster-workspace--v4 .canonical-roster--v4 .canonical-roster__grid tbody tr.is-selected td:first-child {
+  box-shadow:inset 3px 0 0 #ff6a2b!important;
+}
+.roster-workspace--v4 .canonical-roster__player-link:hover {color:var(--v4-lime)}
+.roster-workspace--v4 .canonical-roster__position {background:var(--v4-lime);color:#0c0a14;border:0;border-radius:7px}
+.roster-v4__popup {
+  position:absolute;right:14px;bottom:12px;width:min(460px,calc(100% - 28px));
+  max-height:min(610px,calc(100% - 24px));overflow:auto;z-index:15;
+  border:1px solid rgba(255,255,255,.25);border-radius:15px;
+  background:#17141f;box-shadow:0 12px 50px rgba(0,0,0,.75);
+}
+.roster-v4__popup-bar {
+  position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;
+  padding:8px 13px;background:#231e30;color:var(--v4-orange);font-size:11px;letter-spacing:.08em;
+}
+.roster-v4__popup-bar button {
+  border:0;background:transparent;color:#f7f3ee;font-size:23px;cursor:pointer;line-height:1;
+}
+.roster-v4__popup .canonical-roster__inspector {
+  width:100%;padding:12px;background:#17141f;border:0;border-radius:0;box-shadow:none;
+}
+.roster-v4__tab-panel {flex:1;min-height:0;overflow:auto;padding:4px}
+.roster-v4__tab-panel .roster-depth-chart,.roster-v4__tab-panel .roster-workspace__deck {
+  height:auto;min-height:0;width:100%;max-height:none;overflow:visible;
+}
+.roster-v4__planning-head {display:flex;justify-content:space-between;gap:20px;align-items:center;padding:12px 16px;background:var(--v4-surface);border-radius:14px}
+.roster-v4__planning-head h2 {font:800 30px 'Barlow Condensed',var(--ng-font-display),sans-serif;margin:0}
+.roster-v4__planning-head p {margin:2px 0;font-size:12px;color:#aaa1b8}
+.roster-v4__planning-head strong {color:var(--v4-orange);font-size:13px;white-space:nowrap}
+.roster-v4__planning-rows {border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-top:10px;overflow:auto}
+.roster-v4__planning-row {display:grid;grid-template-columns:minmax(160px,2fr) 70px minmax(130px,1fr) minmax(170px,1.1fr) 125px;gap:8px;align-items:center;min-width:700px;padding:8px 15px;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
+.roster-v4__planning-row strong {font-weight:650}
+.roster-v4__planning-columns {color:#aaa1b8;background:#231f30;font-size:10px;font-weight:800}
+.roster-v4__planning-row button {border-radius:7px;background:#282336;color:#f7f3ee;border:1px solid rgba(255,255,255,.11);cursor:pointer;padding:6px;font-size:11px}
+@media(max-width:1200px){
+  .roster-v4__metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .roster-v4__views,.roster-v4__filters {flex-wrap:wrap}
+  .roster-v4__filters input[type=search] {width:180px;margin-left:0}
+}
+@media(max-width:720px){
+  .roster-v4__heading {gap:6px;align-items:flex-start;flex-direction:column}
+  .roster-v4__title {font-size:31px}
+  .roster-v4__metrics>div {min-height:42px;padding:5px 8px}
+  .roster-v4__body {padding:6px}
+  .roster-v4__table-actions .roster-v4__hint {display:none}
+  .roster-workspace--v4 .roster-v4__header {height:82px}
+}

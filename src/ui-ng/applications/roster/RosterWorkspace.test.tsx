@@ -143,98 +143,55 @@ describe('CanonicalRoster NG variant', () => {
     expect(screen.queryByText(/seleccionados/)).not.toBeInTheDocument()
   })
 
-  it('opens a leftover inspector with basic player data when a row is selected', () => {
-    const { team, world } = mountRosterWorkspace()
-    const player = world.players[team.rosterPlayerIds[0]!]!
-
-    expect(document.querySelector('[data-ng-region="roster-row-inspector"]')).toBeNull()
-
+  it('keeps the table full-width and opens an optional popup only on request', () => {
+    const {world,team}=mountRosterWorkspace()
+    expect(screen.getByRole('navigation',{name:'Secciones de plantilla'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'PLANIFICAR'})).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'VER CALENDARIO'})).toBeNull()
+    expect(document.querySelector('[data-ng-region="roster-v4-popup"]')).toBeNull()
+    expect(document.querySelector('[data-ng-region="roster-context-deck"]')).toBeNull()
+    expect(document.querySelector('.roster-depth-chart')).toBeNull()
     fireEvent.click(document.querySelector('.bdm-data-table tbody tr')!)
-
-    const inspector = screen.getByRole('complementary', { name: 'Inspector del jugador' })
-    expect(inspector).toHaveClass('canonical-roster__inspector')
-    expect(inspector.querySelector('.canonical-roster__inspector-portrait img')).toHaveAttribute(
-      'src',
-      expect.stringContaining('player-portrait-placeholder'),
-    )
-    expect(inspector.textContent).toContain(player.firstName)
-    expect(inspector.textContent).toContain(player.lastName)
-    expect(inspector.textContent).toContain(String(player.bio.heightCm))
-    expect(inspector.textContent).toContain(String(player.bio.wingspanCm))
-    expect(inspector.querySelector('.canonical-roster__inspector-identity')?.textContent).toMatch(
-      /Age.*Height.*Weight.*Wingspan/s,
-    )
-    expect(inspector.querySelector('.canonical-roster__inspector-production')?.textContent).toMatch(
-      /PTS.*REB.*AST.*MIN.*VAL/s,
-    )
-    expect(inspector.textContent).not.toContain('+/-')
-    expect(inspector.querySelector('.canonical-roster__inspector-signals')).toBeNull()
-    expect(inspector.textContent).not.toMatch(/\bFIN\b/)
-
-    const dossier = screen.getByRole('complementary', { name: 'Dossier del jugador' })
-    expect(dossier.textContent).toContain('CONTRACT')
-    expect(dossier.textContent).toContain('STATUS')
-    expect(dossier.textContent).toContain('NOTES')
-    expect(dossier.querySelector('.roster-inspector-dossier__measures')).not.toBeNull()
-    expect(dossier.querySelector('.canonical-roster__inspector-measure-label')?.textContent).toMatch(
-      /Status|Availability|Scouting/i,
-    )
-    expect(dossier.textContent).not.toContain('El staff no ha emitido comentarios sobre este jugador.')
-    expect(dossier.querySelector('[data-zone="staff"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-briefing"]')).toBeNull()
-
-    const depthRow = document.querySelector(`[data-player-id="${player.id}"]`)
-    expect(depthRow).toHaveClass('is-selected')
-    expect(depthRow?.closest('.roster-depth-chart__lane')).toHaveClass('is-selected')
-    expect(depthRow?.querySelector('.roster-depth-chart__rank')?.textContent).toMatch(/^\d+$/)
+    expect(document.querySelector('[data-ng-region="roster-v4-popup"]')).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:/INSPECTOR/}))
+    expect(screen.getByRole('dialog',{name:'Inspector flotante de jugador'})).toBeInTheDocument()
+    expect(screen.getByRole('complementary',{name:'Inspector del jugador'})).toBeInTheDocument()
+    expect(screen.getByRole('complementary',{name:'Inspector del jugador'}).textContent)
+      .toContain(world.players[team.rosterPlayerIds[0]!]!.lastName)
+    fireEvent.pointerDown(document.querySelector('.roster-v4__metrics')!)
+    expect(screen.queryByRole('dialog',{name:'Inspector flotante de jugador'})).not.toBeInTheDocument()
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(1)
   })
 
-  it('hides the leftover inspector when the same row is clicked again', () => {
+  it('closes the inspector with Escape while keeping selection', () => {
     mountRosterWorkspace()
-    const row = document.querySelector('.bdm-data-table tbody tr')!
-
-    fireEvent.click(row)
-    expect(screen.getByRole('complementary', { name: 'Inspector del jugador' })).toBeInTheDocument()
-
-    fireEvent.click(row)
-    expect(screen.queryByRole('complementary', { name: 'Inspector del jugador' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('complementary', { name: 'Dossier del jugador' })).not.toBeInTheDocument()
-    expect(document.querySelector('[data-ng-region="roster-row-inspector"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-inspector-dossier"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-briefing"]')).not.toBeNull()
-    expect(document.querySelector('.roster-depth-chart__row.is-selected')).toBeNull()
-    expect(document.querySelector('.roster-depth-chart__lane.is-selected')).toBeNull()
+    fireEvent.click(document.querySelector('.bdm-data-table tbody tr')!)
+    fireEvent.click(screen.getByRole('button',{name:/INSPECTOR/}))
+    fireEvent.keyDown(document,{key:'Escape'})
+    expect(screen.queryByRole('dialog',{name:'Inspector flotante de jugador'})).not.toBeInTheDocument()
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(1)
   })
 })
 
 describe('RosterWorkspace session restoration', () => {
   it('preserves preset, search, selection, and position filter across unmount', () => {
-    const { unmount } = mountRosterWorkspace()
-
-    fireEvent.click(screen.getByLabelText('Preset de columnas'))
-    fireEvent.click(screen.getByRole('option', { name: 'PSICO' }))
-
-    const rows = document.querySelectorAll('.bdm-data-table tbody tr')
-    expect(rows.length).toBeGreaterThanOrEqual(2)
-    fireEvent.click(rows[0]!, { ctrlKey: true })
-    fireEvent.click(rows[1]!, { ctrlKey: true })
-
-    fireEvent.change(screen.getByPlaceholderText('Buscar jugador...'), { target: { value: 'mart' } })
-    fireEvent.click(screen.getByRole('button', { name: 'SG' }))
-
+    const {unmount}=mountRosterWorkspace()
+    fireEvent.change(screen.getByLabelText('Todas las vistas de plantilla'),{target:{value:'psico'}})
+    const rows=document.querySelectorAll('.bdm-data-table tbody tr')
+    fireEvent.click(rows[0]!,{ctrlKey:true})
+    fireEvent.click(rows[1]!,{ctrlKey:true})
+    fireEvent.change(screen.getByLabelText('Buscar jugador en roster'),{target:{value:'mart'}})
+    fireEvent.change(screen.getByLabelText('Posición del roster'),{target:{value:'SG'}})
     expect(useRosterWorkspaceSession.getState().activePreset).toBe('psico')
     expect(useRosterWorkspaceSession.getState().positionFilter).toBe('SG')
     expect(useRosterWorkspaceSession.getState().searchQuery).toBe('mart')
     expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)
-
     unmount()
-
     mountRosterWorkspace()
-
-    expect(screen.getByLabelText('Preset de columnas')).toHaveAttribute('data-preset', 'psico')
-    expect(screen.getByRole('button', { name: 'SG' })).toHaveAttribute('aria-pressed', 'true')
-    expect((screen.getByPlaceholderText('Buscar jugador...') as HTMLInputElement).value).toBe('mart')
-    expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)
+    expect(screen.getByLabelText('Todas las vistas de plantilla')).toHaveValue('psico')
+    expect(screen.getByLabelText('Posición del roster')).toHaveValue('SG')
+    expect(screen.getByLabelText('Buscar jugador en roster')).toHaveValue('mart')
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(2)
   })
 
   it('does not render embedded PlayerProfileApp panel', () => {
@@ -243,21 +200,28 @@ describe('RosterWorkspace session restoration', () => {
     expect(document.querySelector('.bdm-app-frame')).not.toBeInTheDocument()
   })
 
-  it('fills the leftover space with a roster briefing when no row is selected', () => {
+  it('shows source-backed briefing only when the Briefing tab is selected',()=>{
     mountRosterWorkspace()
-    const briefing = document.querySelector('[data-ng-region="roster-briefing"]')
+    expect(document.querySelector('[data-ng-region="roster-briefing"]')).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    const briefing=document.querySelector('[data-ng-region="roster-briefing"]')
     expect(briefing).not.toBeNull()
     expect(briefing?.textContent).toMatch(/jugadores/i)
     expect(briefing?.textContent).toMatch(/sin rol/i)
-    expect(briefing?.textContent).toMatch(/Scouting conocido/i)
-    expect(briefing?.textContent).toMatch(/Target 2–3/)
-    expect(briefing?.textContent).toMatch(/Balanced|Thin|Shortage|Overload|Critical/)
-    expect(document.querySelector('.roster-briefing__lane')).not.toBeNull()
-    expect(screen.queryByRole('complementary', { name: 'Inspector del jugador' })).not.toBeInTheDocument()
+  })
+
+  it('opens contractual planning with real roster players, not fictitious signings',()=>{
+    const {world,team}=mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    expect(screen.getByRole('heading',{name:'PLANIFICAR PLANTILLA'})).toBeInTheDocument()
+    expect(document.querySelectorAll('.roster-v4__planning-row').length).toBe(team.rosterPlayerIds.length+1)
+    const player=world.players[team.rosterPlayerIds[0]!]!
+    expect(screen.getByText(player.firstName+' '+player.lastName)).toBeInTheDocument()
   })
 
   it('renders a position depth chart whose counts match the live roster', () => {
     const { team, world } = mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
     const chart = screen.getByLabelText('Depth chart')
     expect(chart).toBeInTheDocument()
     expect(chart).toHaveTextContent(`${team.rosterPlayerIds.length} players`)
@@ -299,6 +263,7 @@ describe('RosterWorkspace session restoration', () => {
     }
 
     mountRosterWorkspace(assigned)
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
     const chart = screen.getByLabelText('Depth chart')
     const pgLane = [...chart.querySelectorAll('.roster-depth-chart__lane')].find(
       (lane) => lane.querySelector('.roster-depth-chart__pos')?.textContent === 'PG',

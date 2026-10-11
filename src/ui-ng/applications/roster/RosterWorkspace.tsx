@@ -1,8 +1,8 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import type { LineupSlot } from '@/domain/tactics'
 import type { PlayerId } from '@/domain/ids'
-
+import { getCurrentPlayerContract, getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { CanonicalRoster } from '@/ui/pcb-migrated/plantilla/CanonicalRoster'
@@ -10,16 +10,13 @@ import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import { RosterContextDeck } from '@/ui-ng/applications/roster/components/RosterContextDeck'
 import { RosterDepthChart } from '@/ui-ng/applications/roster/components/RosterDepthChart'
 import { RosterWorkspaceHeader } from '@/ui-ng/applications/roster/components/RosterWorkspaceHeader'
+import { RosterV4Controls } from '@/ui-ng/applications/roster/components/RosterV4Controls'
+import { RosterRowInspector } from '@/ui-ng/applications/roster/components/RosterRowInspector'
 import { buildRosterBriefing } from '@/ui-ng/applications/roster/buildRosterBriefing'
 import { buildRosterDepthChart } from '@/ui-ng/applications/roster/buildRosterDepthChart'
-import {
-  buildRosterWorkspaceContext,
-  rosterTeamForWorld,
-} from '@/ui-ng/applications/roster/buildRosterWorkspaceContext'
-import {
-  useRosterWorkspaceSession,
-  type RosterNgSessionBridge,
-} from '@/ui-ng/applications/roster/rosterWorkspaceSession'
+import { buildRosterWorkspaceContext, rosterTeamForWorld } from '@/ui-ng/applications/roster/buildRosterWorkspaceContext'
+import { useRosterWorkspaceSession, type RosterNgSessionBridge } from '@/ui-ng/applications/roster/rosterWorkspaceSession'
+import { matchesRosterV4Filters, rosterContractStatus } from '@/ui-ng/applications/roster/rosterV4Filters'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -27,175 +24,178 @@ import { readNgWorkspaceNavigation } from '@/ui-ng/workspace/workspaceApps'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 
 import './roster-workspace.css'
+import './roster-v4.css'
 
 export function RosterWorkspace() {
-  const world = useGameStore((state) => state.world)
-  const setLineupSlot = useGameStore((state) => state.setLineupSlot)
-  const clearLineupSlot = useGameStore((state) => state.clearLineupSlot)
+  const world = useGameStore(state=>state.world)
+  const setLineupSlot = useGameStore(state=>state.setLineupSlot)
+  const clearLineupSlot = useGameStore(state=>state.clearLineupSlot)
   const { openEntity, teamId: navTeamId } = useNgWorkspaceNavigation()
   const teamId = navTeamId ?? readNgWorkspaceNavigation().teamId
   const scrollRef = useRef<HTMLDivElement>(null)
-  const scrollSnapshotRef = useRef(0)
-  const activePreset = useRosterWorkspaceSession((state) => state.activePreset)
-  const searchQuery = useRosterWorkspaceSession((state) => state.searchQuery)
-  const positionFilter = useRosterWorkspaceSession((state) => state.positionFilter)
-  const selectedRowIds = useRosterWorkspaceSession((state) => state.selectedRowIds)
-  const scrollTop = useRosterWorkspaceSession((state) => state.scrollTop)
-  const setActivePreset = useRosterWorkspaceSession((state) => state.setActivePreset)
-  const setSearchQuery = useRosterWorkspaceSession((state) => state.setSearchQuery)
-  const setPositionFilter = useRosterWorkspaceSession((state) => state.setPositionFilter)
-  const setSelectedRowIds = useRosterWorkspaceSession((state) => state.setSelectedRowIds)
-  const setScrollTop = useRosterWorkspaceSession((state) => state.setScrollTop)
+  const popupRef = useRef<HTMLDivElement>(null)
+  const gridSnapshotRef = useRef({top:0,left:0})
+  const [inspectorOpen,setInspectorOpen] = useState(false)
+  const tab = useRosterWorkspaceSession(s=>s.tab)
+  const setTab = useRosterWorkspaceSession(s=>s.setTab)
+  const activePreset = useRosterWorkspaceSession(s=>s.activePreset)
+  const searchQuery = useRosterWorkspaceSession(s=>s.searchQuery)
+  const positionFilter = useRosterWorkspaceSession(s=>s.positionFilter)
+  const selectedRowIds = useRosterWorkspaceSession(s=>s.selectedRowIds)
+  const scrollTop = useRosterWorkspaceSession(s=>s.scrollTop)
+  const scrollLeft = useRosterWorkspaceSession(s=>s.scrollLeft)
+  const customViews = useRosterWorkspaceSession(s=>s.customViews)
+  const v4Filters = useRosterWorkspaceSession(s=>s.v4Filters)
+  const setActivePreset = useRosterWorkspaceSession(s=>s.setActivePreset)
+  const setSearchQuery = useRosterWorkspaceSession(s=>s.setSearchQuery)
+  const setPositionFilter = useRosterWorkspaceSession(s=>s.setPositionFilter)
+  const setSelectedRowIds = useRosterWorkspaceSession(s=>s.setSelectedRowIds)
+  const setScrollTop = useRosterWorkspaceSession(s=>s.setScrollTop)
+  const setScrollLeft = useRosterWorkspaceSession(s=>s.setScrollLeft)
 
-  const context = useMemo(
-    () => (world === null ? null : buildRosterWorkspaceContext(world, teamId)),
-    [teamId, world],
-  )
-  const team = useMemo(
-    () => (world === null ? undefined : rosterTeamForWorld(world, teamId)),
-    [teamId, world],
-  )
-  const userTeam = world === null ? undefined : getUserTeam(world)
-  const canEditLineup = team !== undefined && userTeam?.id === team.id
+  const context = useMemo(()=>world===null?null:buildRosterWorkspaceContext(world,teamId),[world,teamId])
+  const team = useMemo(()=>world===null?undefined:rosterTeamForWorld(world,teamId),[world,teamId])
+  const userTeam = world===null?undefined:getUserTeam(world)
+  const canEditLineup = team!==undefined&&userTeam?.id===team.id
+  const roster = useMemo(()=>world===null||team===undefined?[]:getTeamRoster(world,team.id),[world,team])
+  const injuries = useMemo(()=>world===null?0:roster.filter(player=>getCurrentPlayerInjury(world,player.id)!==undefined).length,[roster,world])
+  const expiring = useMemo(()=>world===null?0:roster.filter(player=>rosterContractStatus(world,player)==='expiring').length,[roster,world])
+  const teamStyle = useMemo(()=>{
+    if(team===undefined)return undefined
+    const colors=deriveTeamColors(team.id)
+    return {'--po-team-primary':colors.primary,'--po-team-secondary':colors.secondary,'--po-team-muted':colors.muted} as CSSProperties
+  },[team])
+  const depthChart = useMemo(()=>world===null||team===undefined?null:buildRosterDepthChart(world,team.id),[world,team])
+  const briefing = useMemo(()=>world===null||team===undefined?null:buildRosterBriefing(world,team.id),[world,team])
+  const inspectedPlayer = useMemo(()=>{
+    if(world===null)return undefined
+    const id=selectedRowIds.at(-1)
+    return id===undefined?undefined:world.players[id as PlayerId]
+  },[world,selectedRowIds])
+  const rowPredicate = useCallback((player: typeof roster[number])=>
+    world!==null&&matchesRosterV4Filters(world,player,v4Filters),[world,v4Filters])
+  const sessionBridge = useMemo<RosterNgSessionBridge>(()=>({
+    activePreset,onActivePresetChange:setActivePreset,
+    searchQuery,onSearchQueryChange:setSearchQuery,
+    positionFilter,onPositionFilterChange:setPositionFilter,
+    selectedRowIds,onSelectedRowIdsChange:setSelectedRowIds,
+    customViews,
+  }),[activePreset,searchQuery,positionFilter,selectedRowIds,customViews,
+    setActivePreset,setSearchQuery,setPositionFilter,setSelectedRowIds])
 
-  const persistScroll = useCallback(() => {
-    const element = scrollRef.current
-    if (element !== null) {
-      scrollSnapshotRef.current = element.scrollTop
+  const persistScroll = useCallback(()=>{
+    const element=scrollRef.current?.querySelector<HTMLElement>('.bdm-data-table')
+    if(element!==null && element!==undefined){
+      gridSnapshotRef.current={top:element.scrollTop,left:element.scrollLeft}
       setScrollTop(element.scrollTop)
+      setScrollLeft(element.scrollLeft)
     }
-  }, [setScrollTop])
-
-  const openPlayerFromRoster = useCallback(
-    (destination: EntityDestination) => {
-      if (destination.type !== 'player') return
-      setScrollTop(scrollSnapshotRef.current)
-      openEntity(destination)
-    },
-    [openEntity, setScrollTop],
-  )
-
-  useLayoutEffect(() => {
-    const element = scrollRef.current
-    if (element === null) return
-    const snapshotBeforeInteraction = () => {
-      scrollSnapshotRef.current = element.scrollTop
+  },[setScrollTop,setScrollLeft])
+  const openPlayer = useCallback((destination: EntityDestination)=>{
+    if(destination.type!=='player')return
+    persistScroll()
+    setInspectorOpen(false)
+    openEntity(destination)
+  },[openEntity,persistScroll])
+  useLayoutEffect(()=>{
+    if(tab!=='plantilla')return
+    const element=scrollRef.current?.querySelector<HTMLElement>('.bdm-data-table')
+    if(element===undefined||element===null)return
+    element.scrollTop=scrollTop
+    element.scrollLeft=scrollLeft
+    const track=()=>persistScroll()
+    element.addEventListener('scroll',track,{passive:true})
+    return ()=>element.removeEventListener('scroll',track)
+    // Restoration is per tab/preset activation, not each scroll tick.
+  },[tab,activePreset,persistScroll])
+  useEffect(()=>{
+    if(!inspectorOpen)return
+    const outside=(event:PointerEvent)=>{
+      if(popupRef.current!==null&&!popupRef.current.contains(event.target as Node))
+        setInspectorOpen(false)
     }
-    element.addEventListener('mousedown', snapshotBeforeInteraction, true)
-    return () => element.removeEventListener('mousedown', snapshotBeforeInteraction, true)
-  }, [])
+    const keyboard=(event:KeyboardEvent)=>{if(event.key==='Escape')setInspectorOpen(false)}
+    document.addEventListener('pointerdown',outside)
+    document.addEventListener('keydown',keyboard)
+    return ()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard)}
+  },[inspectorOpen])
+  useEffect(()=>{setInspectorOpen(false)},[tab])
 
-  useLayoutEffect(() => {
-    const element = scrollRef.current
-    if (element === null || scrollTop <= 0) return
-    element.scrollTop = scrollTop
-    requestAnimationFrame(() => {
-      if (element.scrollTop + 48 < scrollTop) {
-        element.scrollTop = scrollTop
-      }
-    })
-  }, [scrollTop])
-
-  const teamStyle = useMemo(() => {
-    if (team === undefined) return undefined
-    const colors = deriveTeamColors(team.id)
-    return {
-      '--po-team-primary': colors.primary,
-      '--po-team-secondary': colors.secondary,
-      '--po-team-muted': colors.muted,
-    } as CSSProperties
-  }, [team])
-
-  const depthChart = useMemo(
-    () => (world === null || team === undefined ? null : buildRosterDepthChart(world, team.id)),
-    [team, world],
-  )
-  const briefing = useMemo(
-    () => (world === null || team === undefined ? null : buildRosterBriefing(world, team.id)),
-    [team, world],
-  )
-  const inspectedPlayer = useMemo(() => {
-    if (world === null) return undefined
-    const inspectedId = selectedRowIds.at(-1)
-    return inspectedId === undefined ? undefined : world.players[inspectedId as PlayerId]
-  }, [selectedRowIds, world])
-
-  const sessionBridge = useMemo<RosterNgSessionBridge>(
-    () => ({
-      activePreset,
-      onActivePresetChange: setActivePreset,
-      searchQuery,
-      onSearchQueryChange: setSearchQuery,
-      positionFilter,
-      onPositionFilterChange: setPositionFilter,
-      selectedRowIds,
-      onSelectedRowIdsChange: setSelectedRowIds,
-    }),
-    [
-      activePreset,
-      positionFilter,
-      searchQuery,
-      selectedRowIds,
-      setActivePreset,
-      setPositionFilter,
-      setSearchQuery,
-      setSelectedRowIds,
-    ],
-  )
-
-  if (world === null || context === null || team === undefined) {
-    return (
-      <div className="roster-workspace roster-workspace--empty" data-ng-region="roster-workspace">
-        <section className="roster-workspace__empty-state">
-          <h1 className="roster-workspace__empty-title">Roster</h1>
-          <p className="roster-workspace__empty-message">No team assigned to the user coach.</p>
-        </section>
-      </div>
-    )
+  if(world===null||context===null||team===undefined){
+    return <div className="roster-workspace roster-workspace--empty" data-ng-region="roster-workspace">
+      <section className="roster-workspace__empty-state"><h1>ROSTER</h1><p>No hay equipo asociado al entrenador.</p></section>
+    </div>
   }
 
-  return (
-    <div className="roster-workspace" data-ng-region="roster-workspace" style={teamStyle}>
-      <ApplicationWorkspace header={<RosterWorkspaceHeader context={context} />}>
-        <div className="roster-workspace__body">
-          <ScrollRegion
-            className="roster-workspace__scroll"
-            onScroll={persistScroll}
-            ref={scrollRef}
-          >
-            <CanonicalRoster
-              embedInspector={false}
-              onLineupSlotChange={
-                canEditLineup ? (slot: LineupSlot, playerId) => setLineupSlot(slot, playerId) : undefined
-              }
-              onLineupSlotClear={canEditLineup ? (slot: LineupSlot) => clearLineupSlot(slot) : undefined}
-              onOpenEntity={openPlayerFromRoster}
-              sessionBridge={sessionBridge}
-              team={team}
-              variant="ng"
-              world={world}
-            />
-          </ScrollRegion>
-          {briefing !== null && (
-            <RosterContextDeck
-              briefing={briefing}
-              onOpenPlayer={(player) =>
-                openPlayerFromRoster({ type: 'player', playerId: player.id, section: 'overview' })
-              }
-              player={inspectedPlayer}
-              teamId={team.id}
-              world={world}
-            />
-          )}
-          {depthChart !== null && (
-            <RosterDepthChart
-              model={depthChart}
-              onOpenPlayer={openPlayerFromRoster}
-              selectedPlayerId={inspectedPlayer?.id}
-            />
-          )}
-        </div>
-      </ApplicationWorkspace>
-    </div>
-  )
+  return <div className="roster-workspace roster-workspace--v4" style={teamStyle} data-ng-region="roster-workspace">
+    <ApplicationWorkspace header={<RosterWorkspaceHeader context={context} activeTab={tab} onTabChange={setTab}/>}>
+      <main className="roster-v4__body">
+        {tab==='plantilla'&&<>
+          <div className="roster-v4__metrics" aria-label="Resumen de plantilla">
+            <div><small>JUGADORES EN PLANTILLA</small><strong>{roster.length}</strong></div>
+            <div><small>SIN LESIÓN ACTUAL</small><strong className="is-lime">{roster.length-injuries}<em> / {roster.length}</em></strong></div>
+            <div><small>CONTRATOS QUE VENCEN ESTA TEMPORADA</small><strong className="is-orange">{expiring}</strong></div>
+            <div><small>SELECCIÓN ACTIVA</small><strong>{selectedRowIds.length}</strong></div>
+          </div>
+          <RosterV4Controls selectedCount={selectedRowIds.length} onOpenInspector={()=>setInspectorOpen(true)}/>
+          <div className="roster-v4__table-pane">
+            <ScrollRegion className="roster-workspace__scroll" onScroll={persistScroll} ref={scrollRef}>
+              <CanonicalRoster
+                embedInspector={false} v4Mode rowPredicate={rowPredicate}
+                onLineupSlotChange={canEditLineup?(slot:LineupSlot,playerId)=>setLineupSlot(slot,playerId):undefined}
+                onLineupSlotClear={canEditLineup?(slot:LineupSlot)=>clearLineupSlot(slot):undefined}
+                onOpenEntity={openPlayer} sessionBridge={sessionBridge} team={team} variant="ng" world={world}
+              />
+            </ScrollRegion>
+            {inspectorOpen&&inspectedPlayer!==undefined&&selectedRowIds.length===1&&
+              <div ref={popupRef} role="dialog" aria-modal="false" aria-label="Inspector flotante de jugador"
+                className="roster-v4__popup" data-ng-region="roster-v4-popup">
+                <div className="roster-v4__popup-bar">
+                  <strong>INSPECTOR · VISTA RÁPIDA</strong>
+                  <button type="button" aria-label="Cerrar inspector" onClick={()=>setInspectorOpen(false)}>×</button>
+                </div>
+                <RosterRowInspector player={inspectedPlayer} team={team} world={world}
+                  onOpenPlayer={player=>openPlayer({type:'player',playerId:player.id,section:'overview'})}/>
+              </div>}
+          </div>
+        </>}
+        {tab==='profundidad'&&<section className="roster-v4__tab-panel" aria-label="Profundidad de plantilla">
+          {depthChart===null?<p>Mapa de profundidad no disponible.</p>:<RosterDepthChart
+            model={depthChart} onOpenPlayer={openPlayer} selectedPlayerId={inspectedPlayer?.id}/>}
+        </section>}
+        {tab==='briefing'&&<section className="roster-v4__tab-panel" aria-label="Briefing de plantilla">
+          {briefing===null?<p>Informe no disponible.</p>:<RosterContextDeck briefing={briefing}
+            onOpenPlayer={player=>openPlayer({type:'player',playerId:player.id,section:'overview'})}
+            player={undefined} teamId={team.id} world={world}/>}
+        </section>}
+        {tab==='planificar'&&<section className="roster-v4__tab-panel roster-v4__planning"
+          aria-label="Planificar plantilla">
+          <div className="roster-v4__planning-head">
+            <div><h2>PLANIFICAR PLANTILLA</h2><p>Perspectiva contractual con datos confirmados. Los fichajes y renovaciones no acordados no se contabilizan.</p></div>
+            <strong>{expiring} vencimiento(s) esta temporada</strong>
+          </div>
+          <div className="roster-v4__planning-rows">
+            <div className="roster-v4__planning-row roster-v4__planning-columns">
+              <span>JUGADOR</span><span>POS</span><span>FIN CONTRATO</span><span>ESTADO</span><span>ACCIÓN</span>
+            </div>
+            {roster.map(player=>{
+              const contract=getCurrentPlayerContract(world,player.id)
+              const status=rosterContractStatus(world,player)
+              return <div className="roster-v4__planning-row" key={player.id}>
+                <strong>{player.firstName} {player.lastName}</strong>
+                <span>{player.basketball.primaryPosition}</span>
+                <span>{contract?.term.expiresOn??'Sin contrato activo'}</span>
+                <span className={status==='expiring'?'is-orange':''}>
+                  {status==='expiring'?'VENCE ESTA TEMPORADA':status==='none'?'SIN CONTRATO':'VIGENTE MÁS ALLÁ'}
+                </span>
+                <button type="button" onClick={()=>openPlayer({type:'player',playerId:player.id,section:'contract'})}>
+                  VER CONTRATO ↗
+                </button>
+              </div>
+            })}
+          </div>
+        </section>}
+      </main>
+    </ApplicationWorkspace>
+  </div>
 }
