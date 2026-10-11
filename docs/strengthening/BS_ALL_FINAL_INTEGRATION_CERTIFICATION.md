@@ -5,17 +5,20 @@ nothing was pushed or fetched, no other worktree was modified (temporary measure
 
 ## Verdict
 
-**`PARTIAL · INHERITED TEST REGRESSIONS VS MAIN` — not `READY_FOR_SINGLE_MAIN_UPDATE`.**
+**`PASS · BS ALL FINAL INTEGRATION CERTIFIED` — `READY_FOR_SINGLE_MAIN_UPDATE`** (R2, after test reconciliation; see *R2 — Test
+reconciliation and final certification* at the end of this document).
 
 - Every certified BS source is integrated (inventory below); nothing certified is left pending.
-- The integration itself is clean: two real merges without conflicts, three focal commits, typecheck, build and guards pass.
-- The candidate introduces **no** failing test of its own (every failure was reproduced on a source or on `main`).
-- The second/third 1 July "blocker" was a harness artifact, not a game defect; **three complete seasons are certified** through the
-  production path (2032-10-01 → 2035-10-01).
-- BUT 26 test files / 129 tests that pass on `main` fail on the candidate. All of them fail identically on the already certified
-  BS15/BS16/BS17 V3.1 integration (`67c61edc`), whose certification explicitly did not claim a full repository suite. They are legacy
-  fixtures that create/remove contracts or sign players without the canonical BS16-final Finance (see *Regressions vs main*). Updating
-  `main` with them would turn green tests red, so the candidate is not declared ready.
+- The 129 tests (26 files) that passed on `main` but failed on the candidate are reconciled: 127 by causal fixture corrections
+  through canonical authorities, 1 re-captured snapshot whose old baseline predated the Match Next engine of `main`, and 1
+  evidence-gated audit aligned with its BS15I siblings (reported as NOT RUN, not PASS).
+- Global suite on the final candidate: 5,286 tests, 5,138 passed, 51 failed, 97 skipped (opt-in long horizons). 47 failures are the
+  same tests failing on `main`; the other 4 are load-induced 5 s timeouts that pass alone at the default timeout. No regression is
+  introduced.
+- Three performance defects were repaired with equivalence proven by identical Save V4 hashes.
+- Three complete seasons were certified through the production path (R1); the R2 changes do not alter causality (hash-identical).
+
+R1 verdict (superseded): `PARTIAL · INHERITED TEST REGRESSIONS VS MAIN`, because of those 129 tests.
 
 ## Shas
 
@@ -23,7 +26,8 @@ nothing was pushed or fetched, no other worktree was modified (temporary measure
 |---|---|
 | Original `main` | `8a0b359e9ae48fe372668241788c9d5aa7a33b03` (local `origin/main` ref is `94c07709`, an ancestor of the BS17 final, not of `main`) |
 | BS17 final (frozen source) | `1559409751223f88353ff52e04a2d1444508e510` |
-| Final candidate | see the final commit of `integration/bs-all-final` (reported with this document) |
+| R1 candidate | `76bd64bcd1a7e0bdefc4a5b49411615e53835d0b` |
+| Final candidate (R2) | the commit that adds the R2 section on `integration/bs-all-final` (reported with this document) |
 
 Ancestry: `main`, BS17 final and `dc63d604` are ancestors of the candidate. `main` was itself an ancestor of BS17 final, so the source
 code of the candidate equals BS17 final plus the commits listed under *Changes made in this integration*.
@@ -182,7 +186,83 @@ changed.
 4. Calendar is ≈18 % slower than V3.1 over 120 days (new AI/Facilities/Finance work); Save +6 MB at 120 days.
 5. `BS17MultiSeasonContinuity` (raw Calendar) cannot cross the second 1 July by construction; use the production-path test.
 
-## Next step required before `READY_FOR_SINGLE_MAIN_UPDATE`
+## R1 next step (completed in R2)
 
 Reconcile the 26 inherited fixture files with canonical Finance (fund through declared financing/authorization, never delete a
 recognized contract), re-run them on the candidate and on `main`, then re-issue this certification.
+
+---
+
+## R2 — Test reconciliation and final certification
+
+Base `76bd64bcd1a7e0bdefc4a5b49411615e53835d0b`; same worktree and branch; no merge repeated, no worktree created or removed, `main`
+untouched, nothing pushed. Commits: `d3994a2f`, `dd63d727`, `c10c1ab6`, `c91d616f`, `93008705`, `2a580eb3` and the commit that adds
+this section.
+
+### Original classification (R1 global run, 4 workers on a shared machine)
+
+5,286 tests, 619 failed: 481 timeouts (5 s), 129 functional failures in 26 files passing on `main` (V3.1 lineage), 9 functional
+failures also failing on `main`. Re-checked without duplicates: each of the 129 belongs to exactly one root cause below.
+
+### Root causes (grouped by cause, not by file)
+
+| Cause | Tests | Diagnosis | Correction (canonical authority) |
+|---|---|---|---|
+| A. Contract scenarios after Finance activation | 61 | Since BS16 final, `createNewGame` recognizes every opening contract payroll at creation; fixtures then deleted or replaced those contracts and the Finance facts pointed at nothing (`contract dimension references missing ID`). | `createNewGame` is now `activateNewGameFinance(createNewGameBeforeFinance())` with identical output. Scenarios are shaped on the pre-Finance career, so Finance materializes exactly the scenario (`createNewGameScenario`). No Finance fact is written or removed by tests. Files: BasketballOperationsAdvisory, ContractReview, AiRetention, ClubNeeds, RosterContractIntegrity, SimulationBreakpoints, ClubStrategyScreen. |
+| B. Signing or hiring without canonical capacity | 38 | Fixtures raised legacy payroll pools, or added a second opening-capital fact (ignored because the opening state is already settled) in USD while the prototype currency is EUR (`INSUFFICIENT_LIQUIDITY`, `INSUFFICIENT_AUTHORIZED_HEADROOM`); bare ACB careers have no opening balance. | The certified helpers V3.1 already used: executed financing drawdown (`financingDrawdownForTest`), approved EUR salary authorization (`authorizeTeamSalaryForTest`), and `ensureCanonicalFinanceFoundation` at the later date of the undrafted signing. Files: FreeAgentSigning, MarketEngine, MarketService, RetentionSigning, GameWorldSaveV3 (staff hire), createAcbTestGame, ClubPcbPage, SimulateUntilTargetRepair, ProfessionalDecisionRealism. Negative tests (unaffordable salary, insufficient liquidity, rejected decisions) are unchanged and still pass. |
+| C. Governance fixture without capacity | 22 | The MX0.7 Governance fixture could not propose the signing (`FINANCIAL_BLOCK`); dependent PlayerContractSigning tests also failed. | Same canonical capacity in the shared fixture; no approval is automated; rights, grants and appointments untouched. Files: BoardGovernance, BoardWorkspace.governance, PlayerContractSigningGovernance. |
+| D1. Bare-prototype liquidity premise | 3 | With no opening cash every club has HIGH financial pressure, so strategy candidates become SURVIVE; these tests premise a club without a shortfall. The deliberate liquidity-stress test is unchanged. | Canonical financing drawdown for the club under test. Files: ClubStrategyEngine (2), GMDecisionContext (1). |
+| D2. Obsolete expectations | 3 | The account catalog gained the BS16L `loanAsset` role (`1112b335`); a "no display currency" scenario is a pre-Finance career (the prototype currency policy is applied at activation); a rating-history invariant ignored that a +1 truth change can leave the rounded canonical projection unchanged. | Expectation updated with its cause; pre-Finance career for the currency case; the rating-history assertion replaced by the exact property (recorded deltas equal the projection difference and truth deltas equal the persisted ratings), which is stronger, not weaker. |
+| D3. Snapshot baseline older than the engine of `main` | 1 | `MatchEquivalence` hashes were captured on the BS15 branch (`a20ea256`, where the test still passes) before the Match Next engine of `main` was integrated; `git bisect` lands on `7a2eea34` / `ee38b928` / `fcb0eaec`. | Re-captured on the integrated engine; deterministic over two runs. |
+| D4. Evidence-gated audit | 1 | `BS15IFinalY5SaveAudit` requires external Y5 Save evidence and threw when none was configured. | Like its BS15I siblings it does nothing without evidence (a partial configuration still fails). Reported as **NOT RUN**. |
+
+Tests before and after on the 26 files: 129 functional failures before, 0 after (303 tests in a 2-worker run; the only failures left
+there were two 5 s timeouts under load that pass alone).
+
+Also found and fixed: `RosterWorkspace` — the BS15H "Talent operations" navigation adds a second "Overview" button to the player
+workspace; the test now asserts the player's own Overview tab exactly once outside that navigation. The duplicated accessible name is
+listed as a limitation; labels are a product decision and were not changed.
+
+### Timeouts and performance repairs (production)
+
+The 481 timeouts were not all load: the integrated world was 3–10× slower than `main` on many tests (ACB `continueGame` for 7 days took
+9.5 s against 0.8 s; StaffHumanState 110 s against 20 s). Profiling found three focal defects. Each fix was proven equivalent by
+identical Save V4 SHA-256 for the prototype career (two seeds), 7 ACB days, 10 prototype days and 200 memory updates.
+
+| Commit | Defect | Fix | Effect |
+|---|---|---|---|
+| `c10c1ab6` | The day-0 Finance pass in `createNewGame` validated the whole world once per recorded fact. | Runs inside `withSingleWorldValidation` (WSR2), like the CLUB_FINANCE phase of the Calendar; the result is still fully validated. | career creation 3.1 s → 1.5 s |
+| `c91d616f` | Every world update re-created and JSON-compared every record of the append-only Finance and Facilities collections (quadratic on a contract-start day: 826 facts). | A record that is its collection creator's canonical frozen output is reused; immutability checks skip identical references; new or different records go through the creator and the full comparison. | ACB 7 days 9.9 s → 1.8 s |
+| `93008705` | `validateTreasuryState` searched every recognition for each payable or receivable (quadratic) and re-created canonical records on each validation. | Lookup by id (the index key is the record id); canonical records are not re-created; every relational check still runs. | 200 memory updates 2.0 s → 1.1 s; 10 days 1.2 s → 0.75 s |
+
+Measured against `main` on the same machine: career creation 0.97 s against 0.63 s; ACB continue for 7 days 1.4 s against 0.8 s. The
+remaining difference is new work (BS15 talent world, BS16 contract Finance, BS17 Facilities), not a pathology. No timeout was raised.
+
+### Final validation
+
+| Gate | Result |
+|---|---|
+| 26 reconciled files | PASS (0 functional failures) |
+| Global suite, final candidate, 3 workers | 5,286 tests: 5,138 passed, 51 failed, 97 skipped (opt-in long horizons) |
+| — failing identically on `main` | 47 (8 functional: SeasonContentActivation, WorldDbGameBootstrap ×2, MatchSession, MatchRotationRunner, nextTruth audit, MatchNextDebugApp, DesktopAppHost; 39 timeouts: GameApplication, gameStore, StaffScreen and others) |
+| — candidate-only | 4 load timeouts (FinanceConvergenceFinalCertification static scan, CollegeEligibility, MemoryEngine, StaffPoliticalCase); all pass alone at the default timeout (19/19 and 26/26) |
+| Areas (global run) | Convergence 32 tests (1 load timeout), STAFF-CONTRACT V4-01 24/24, Save V4 83/83, Finance 492 (1 load timeout), Facilities 565/565, Governance 217/217, Market 142/142, Training 223/223, Medical 126/126, Staff 742 (18 also failing on `main`, 1 load timeout), Talent 224 (2 also failing on `main`) |
+| `npm run typecheck` / `npm run build` | PASS / PASS |
+| `git diff --check`, conflict markers | clean / none |
+| RNG, `Date.now` or `new Date` in R2 production code | none |
+| Domain imports of app/engine/ui; Engine imports of UI (R2) | none |
+| Ancestry | `main`, the R1 candidate, BS17 final and `dc63d604` are ancestors |
+| Working tree | clean |
+
+Gates reused, with justification: the three-season continuity run and the R1 performance tables were not repeated. The R2 production
+changes are validation and indexing only and produce byte-identical Save V4 worlds, so no simulated causality changed. BS15 Y1–Y30
+was not repeated.
+
+### Limitations (R2)
+
+1. The 47 failures that exist on `main` itself remain (match-engine audits, desktop host, World DB bootstrap, season content activation
+   and 5 s timeouts of heavy suites). The candidate does not introduce them.
+2. Heavy suites remain close to the 5 s default timeout under parallel load (the 4 candidate-only cases pass alone).
+3. The player workspace shows two "Overview" buttons (player tab and BS15H talent navigation) with the same accessible name.
+4. Revenue: only the ACB demo has an approved revenue profile (unchanged from R1).
+5. `BS15IFinalY5SaveAudit` is NOT RUN without its external evidence.
