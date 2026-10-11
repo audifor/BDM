@@ -41,7 +41,14 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(verdict.textContent).not.toBeNull()
     expect(before).not.toBeNull()
     fireEvent.change(within(comparator).getByLabelText('Comparison attribute family'),{target:{value:'physical'}})
-    expect(comparator).toHaveTextContent('individual attributes supported')
+    expect(comparator).toHaveTextContent('comparable in this family')
+    expect(comparator).toHaveTextContent('ATTRIBUTE')
+    expect(comparator).toHaveTextContent('EDGE')
+    const expand=within(comparator).queryByRole('button',{name:/SHOW ALL .* ATTRIBUTES/})
+    if (expand !== null) {
+      fireEvent.click(expand)
+      expect(expand).toHaveAttribute('aria-expanded','true')
+    }
     expect(container.querySelector('.po-scv3__reason-group')).not.toBeNull()
     fireEvent.click(screen.getByRole('button',{name:'DEVELOPMENT'}))
     fireEvent.click(screen.getByRole('button',{name:'OPEN DEVELOPMENT ↗'}))
