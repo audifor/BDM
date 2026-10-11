@@ -57,7 +57,7 @@ export function PlayerScoutingReportView() {
         : null
   const openRequest = (mission: ScoutingMission) => {setRequestMission(mission);setActionModal('request')}
   const onAction = (id: 'assign-scout' | 'request-report' | 'watch-next-game' |
-    'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route' | 'development-route') => {
+    'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route' | 'development-route' | 'performance-route') => {
     if (id === 'detailed-report' && latestReport !== undefined) setReportModalId(latestReport.id)
     if (id === 'assign-scout' && requestReason === null) openRequest('QUICK_LOOK')
     if (id === 'request-report' && requestReason === null) openRequest(scouting.statusPanel?.knownDimensionCount === 0 ? 'QUICK_LOOK' : 'FULL_REPORT')
@@ -68,6 +68,7 @@ export function PlayerScoutingReportView() {
     if (id === 'end-scouting' && assignment !== undefined) setActionModal('cancel')
     if (id === 'contract-route') session.setActiveView('contract')
     if (id === 'development-route') session.setActiveView('development')
+    if (id === 'performance-route') session.setActiveView('performance')
   }
 
   return <>
