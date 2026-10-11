@@ -45,10 +45,13 @@ export function PlayerMedicalView() {
   const region = selectedRegionId === null ? undefined
     : medical.bodyRegions.find(entry => entry.id === selectedRegionId)
   const riskReason = medical.risk?.primaryReason
-  // Do not repeat injury dates already visible in the hero and recovery timeline.
-  const insight = riskReason ?? (medical.activeInjury === null && medical.fatigue.value >= 50
-    ? 'Fatigue is elevated. Review recorded training and match load before the next game.'
-    : null)
+  // Injury and its severity are already explained by the case, status and review.
+  // The risk engine can echo "Active moderate injury"; do not duplicate it here.
+  const insight = medical.activeInjury !== null ? null : (riskReason ?? (
+    medical.fatigue.value >= 50
+      ? 'Fatigue is elevated. Review recorded training and match load before the next game.'
+      : null
+  ))
 
   return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical"
     onKeyDownCapture={event => {
@@ -108,7 +111,8 @@ export function PlayerMedicalView() {
               </section>
             : <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />}
         </div>}
-        {activeTab === 'history' && <div className="po-med-v3__history">
+        {activeTab === 'history' && <div className={'po-med-v3__history' +
+          (medical.history.length <= 1 ? ' po-med-v3__history--compact' : '')}>
           <PlayerMedicalHistoryBoard medical={medical}
             selectedEventId={selectedEventId}
             onSelectEvent={setSelectedEventId} />
