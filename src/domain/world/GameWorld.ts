@@ -1199,7 +1199,7 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     if (inputKey === 'expenseRecognitions') assertExpenseRecognitionsAppendOnly(world, value as readonly ExpenseRecognition[])
     if (inputKey === 'financialCommitments') assertFinancialCommitmentsAppendOnly(world, value as readonly FinancialCommitment[])
     if (inputKey === 'facilityFinancialBindings') assertFacilityFinancialBindingsAppendOnly(world, value as readonly FacilityFinancialBinding[])
-    if (inputKey === 'facilityEconomyRecords') assertImmutableCollection(world.facilityEconomyRecordsById, (value as readonly FacilityEconomyRecord[]).map(createFacilityEconomyRecord), 'Facility economy record')
+    if (inputKey === 'facilityEconomyRecords') assertImmutableCollection(world.facilityEconomyRecordsById, canonicalRecords('facilityEconomyRecords', value as readonly FacilityEconomyRecord[], createFacilityEconomyRecord), 'Facility economy record')
     if (inputKey === 'financialEntitlements') assertFinancialEntitlementsAppendOnly(world, value as readonly FinancialEntitlement[])
     if (inputKey === 'revenueSources') assertRevenueSourcesAppendOnly(world, value as readonly RevenueSource[])
     if (inputKey === 'operatingCostSources') assertOperatingCostSourcesAppendOnly(world, value as readonly OperatingCostSource[])
@@ -1329,9 +1329,9 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   exchangeRates: (value) => indexById((value as readonly ExchangeRate[]).map(createExchangeRate), 'Exchange rate'),
   revenueSources: (value) => indexById((value as readonly RevenueSource[]).map(createRevenueSource), 'Revenue source'),
   operatingCostSources: (value) => indexById((value as readonly OperatingCostSource[]).map(createOperatingCostSource), 'Operating cost source'),
-  facilityFinancialBindings: (value) => indexById((value as readonly FacilityFinancialBinding[]).map(createFacilityFinancialBinding), 'Facility financial binding'),
-  facilityEconomyRecords: (value) => indexById((value as readonly FacilityEconomyRecord[]).map(createFacilityEconomyRecord), 'Facility economy record'),
-  operatingCostFacts: (value) => indexById((value as readonly AuthorizedOperatingCostFact[]).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
+  facilityFinancialBindings: (value) => indexById(canonicalRecords('facilityFinancialBindings', value as readonly FacilityFinancialBinding[], createFacilityFinancialBinding), 'Facility financial binding'),
+  facilityEconomyRecords: (value) => indexById(canonicalRecords('facilityEconomyRecords', value as readonly FacilityEconomyRecord[], createFacilityEconomyRecord), 'Facility economy record'),
+  operatingCostFacts: (value) => indexById(canonicalRecords('operatingCostFacts', value as readonly AuthorizedOperatingCostFact[], createAuthorizedOperatingCostFact), 'Operating cost fact'),
   debtInstruments: (value) => indexById((value as readonly DebtInstrument[]).map(createDebtInstrument), 'Debt instrument'),
   financingAgreements: (value) => indexById((value as readonly FinancingAgreement[]).map(createFinancingAgreement), 'Financing agreement'),
   financingDrawdowns: (value) => indexById((value as readonly FinancingDrawdown[]).map(createFinancingDrawdown), 'Financing drawdown'),
@@ -1345,10 +1345,10 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   facilityOwnershipInterests: (value) => indexById((value as readonly FacilityOwnershipInterest[]).map(createFacilityOwnershipInterest), 'Facility ownership interest'),
   facilityControlRights: (value) => indexById((value as readonly FacilityControlRight[]).map(createFacilityControlRight), 'Facility control right'),
   facilityOperatorAssignments: (value) => indexById((value as readonly FacilityOperatorAssignment[]).map(createFacilityOperatorAssignment), 'Facility operator assignment'),
-  facilityComponentConditionRecords: (value) => indexById((value as readonly FacilityComponentConditionRecord[]).map(createFacilityComponentConditionRecord), 'Facility component condition record'),
+  facilityComponentConditionRecords: (value) => indexById(canonicalRecords('facilityComponentConditionRecords', value as readonly FacilityComponentConditionRecord[], createFacilityComponentConditionRecord), 'Facility component condition record'),
   facilityConditionRecords: (value) => indexById((value as readonly FacilityConditionRecord[]).map(createFacilityConditionRecord), 'Facility condition record'),
   facilityMaintenanceNeeds: (value) => indexById((value as readonly FacilityMaintenanceNeed[]).map(createFacilityMaintenanceNeed), 'Facility maintenance need'),
-  facilityMaintenanceActions: (value) => indexById((value as readonly FacilityMaintenanceAction[]).map(createFacilityMaintenanceAction), 'Facility maintenance action'),
+  facilityMaintenanceActions: (value) => indexById(canonicalRecords('facilityMaintenanceActions', value as readonly FacilityMaintenanceAction[], createFacilityMaintenanceAction), 'Facility maintenance action'),
   facilityInspections: (value) => indexById((value as readonly FacilityInspection[]).map(createFacilityInspection), 'Facility inspection'),
   facilityOperationalIncidents: (value) => indexById((value as readonly FacilityOperationalIncident[]).map(createFacilityOperationalIncident), 'Facility operational incident'),
   facilityDevelopmentProjects: (value) => indexById((value as readonly FacilityDevelopmentProject[]).map(createFacilityDevelopmentProject), 'Facility development project'),
@@ -1398,17 +1398,17 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
   teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
   financialAccounts: (value) => indexById((value as readonly FinancialAccount[]).map(createFinancialAccount), 'Financial account'),
-  financialTransactions: (value) => indexById((value as readonly FinancialTransaction[]).map(createFinancialTransaction), 'Financial transaction'),
+  financialTransactions: (value) => indexById(canonicalRecords('financialTransactions', value as readonly FinancialTransaction[], createFinancialTransaction), 'Financial transaction'),
   fiscalPeriods: (value) => indexById((value as readonly FiscalPeriod[]).map(createFiscalPeriod), 'Fiscal period'),
   organizationFinancialProfiles: (value) => indexFinancialProfiles(value as readonly OrganizationFinancialProfile[]),
-  receivables: (value) => indexById((value as readonly Receivable[]).map(createReceivable), 'Receivable'),
-  payables: (value) => indexById((value as readonly Payable[]).map(createPayable), 'Payable'),
-  treasuryApplications: (value) => indexById((value as readonly TreasurySettlement[]).map(createTreasurySettlement), 'Treasury application'),
-  revenueRecognitions: (value) => indexById((value as readonly RevenueRecognition[]).map(createRevenueRecognition), 'Revenue recognition'),
-  expenseRecognitions: (value) => indexById((value as readonly ExpenseRecognition[]).map(createExpenseRecognition), 'Expense recognition'),
-  financialCommitments: (value) => indexById((value as readonly FinancialCommitment[]).map(createFinancialCommitment), 'Financial commitment'),
-  financialEntitlements: (value) => indexById((value as readonly FinancialEntitlement[]).map(createFinancialEntitlement), 'Financial entitlement'),
-  financialReservations: (value) => indexById((value as readonly FinancialReservation[]).map(createFinancialReservation), 'Financial reservation'),
+  receivables: (value) => indexById(canonicalRecords('receivables', value as readonly Receivable[], createReceivable), 'Receivable'),
+  payables: (value) => indexById(canonicalRecords('payables', value as readonly Payable[], createPayable), 'Payable'),
+  treasuryApplications: (value) => indexById(canonicalRecords('treasuryApplications', value as readonly TreasurySettlement[], createTreasurySettlement), 'Treasury application'),
+  revenueRecognitions: (value) => indexById(canonicalRecords('revenueRecognitions', value as readonly RevenueRecognition[], createRevenueRecognition), 'Revenue recognition'),
+  expenseRecognitions: (value) => indexById(canonicalRecords('expenseRecognitions', value as readonly ExpenseRecognition[], createExpenseRecognition), 'Expense recognition'),
+  financialCommitments: (value) => indexById(canonicalRecords('financialCommitments', value as readonly FinancialCommitment[], createFinancialCommitment), 'Financial commitment'),
+  financialEntitlements: (value) => indexById(canonicalRecords('financialEntitlements', value as readonly FinancialEntitlement[], createFinancialEntitlement), 'Financial entitlement'),
+  financialReservations: (value) => indexById(canonicalRecords('financialReservations', value as readonly FinancialReservation[], createFinancialReservation), 'Financial reservation'),
   marketReality: (value) => Object.freeze(Object.fromEntries((value as readonly MarketReality[]).map((item) => [item.playerId, item]))),
   tradeNegotiations: (value) => indexById((value as readonly TradeNegotiation[]).map(createTradeNegotiation), 'Trade negotiation'),
   staffHumanStates: (value) => indexHumanStatesByContextId(value as readonly StaffHumanState[]),
@@ -3738,11 +3738,28 @@ function assertUniqueRecognitionSource(seen: Set<string>, provenance: import('@/
   seen.add(key)
 }
 
+/**
+ * Canonical record reuse for append-only collections. `create*` normalizes and validates a record; a record that is already the
+ * canonical output of the same collection's creator (kept in a per-collection WeakSet) is returned as is instead of being
+ * re-normalized on every world update. A new or different object is always created and validated. Because the stored record
+ * is the creator's own output, reusing it yields exactly what re-creating it would, and immutability checks then compare an
+ * unchanged record by identity instead of by serialization. Without this, appending one fact re-normalized and re-serialized
+ * the whole ledger (quadratic cost on contract start days).
+ */
+const canonicalRecordSets = new Map<string, WeakSet<object>>()
+function canonicalRecords<T extends object>(collection: string, items: readonly T[], create: (item: T) => T): T[] {
+  let canonical = canonicalRecordSets.get(collection)
+  if (canonical === undefined) { canonical = new WeakSet(); canonicalRecordSets.set(collection, canonical) }
+  return items.map((item) => {
+    if (canonical!.has(item)) return item
+    const created = create(item)
+    canonical!.add(created)
+    return created
+  })
+}
+
 function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: readonly FinancialTransaction[]): void {
-  const nextById = new Map(proposed.map((transaction) => {
-    const normalized = createFinancialTransaction(transaction)
-    return [String(normalized.id), normalized] as const
-  }))
+  const nextById = new Map(canonicalRecords('financialTransactions', proposed, createFinancialTransaction).map((normalized) => [String(normalized.id), normalized] as const))
   for (const existing of Object.values(world.financialTransactionsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Financial transaction ${existing.id} cannot be removed from the ledger`)
@@ -3751,7 +3768,7 @@ function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: reado
 }
 
 function assertTreasurySettlementsAppendOnly(world: GameWorld, proposed: readonly TreasurySettlement[]): void {
-  const nextById = new Map(proposed.map((settlement) => [String(settlement.id), createTreasurySettlement(settlement)] as const))
+  const nextById = new Map(canonicalRecords('treasuryApplications', proposed, createTreasurySettlement).map((settlement) => [String(settlement.id), settlement] as const))
   for (const existing of Object.values(world.treasuryApplicationsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Treasury settlement ${existing.id} cannot be removed`)
@@ -3760,33 +3777,35 @@ function assertTreasurySettlementsAppendOnly(world: GameWorld, proposed: readonl
 }
 
 function assertRevenueRecognitionsAppendOnly(world: GameWorld, proposed: readonly RevenueRecognition[]): void {
-  const nextById = new Map(proposed.map((recognition) => [String(recognition.id), createRevenueRecognition(recognition)] as const))
+  const nextById = new Map(canonicalRecords('revenueRecognitions', proposed, createRevenueRecognition).map((recognition) => [String(recognition.id), recognition] as const))
   for (const existing of Object.values(world.revenueRecognitionsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Revenue recognition ${existing.id} cannot be removed`)
+    if (next === existing) continue
     if (JSON.stringify({ ...next, receivableId: null, ledgerTransactionId: null }) !== JSON.stringify({ ...existing, receivableId: null, ledgerTransactionId: null }) || (existing.receivableId !== null && next.receivableId !== existing.receivableId) || (existing.ledgerTransactionId !== null && next.ledgerTransactionId !== existing.ledgerTransactionId)) throw new GameWorldValidationError(`Revenue recognition ${existing.id} is immutable`)
   }
 }
 
 function assertExpenseRecognitionsAppendOnly(world: GameWorld, proposed: readonly ExpenseRecognition[]): void {
-  const nextById = new Map(proposed.map((recognition) => [String(recognition.id), createExpenseRecognition(recognition)] as const))
+  const nextById = new Map(canonicalRecords('expenseRecognitions', proposed, createExpenseRecognition).map((recognition) => [String(recognition.id), recognition] as const))
   for (const existing of Object.values(world.expenseRecognitionsById)) {
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Expense recognition ${existing.id} cannot be removed`)
+    if (next === existing) continue
     if (JSON.stringify({ ...next, payableId: null, ledgerTransactionId: null }) !== JSON.stringify({ ...existing, payableId: null, ledgerTransactionId: null }) || (existing.payableId !== null && next.payableId !== existing.payableId) || (existing.ledgerTransactionId !== null && next.ledgerTransactionId !== existing.ledgerTransactionId)) throw new GameWorldValidationError(`Expense recognition ${existing.id} is immutable`)
   }
 }
 
 function assertFinancialCommitmentsAppendOnly(world: GameWorld, proposed: readonly FinancialCommitment[]): void {
-  assertImmutableCollection(world.financialCommitmentsById, proposed.map(createFinancialCommitment), 'Financial commitment')
+  assertImmutableCollection(world.financialCommitmentsById, canonicalRecords('financialCommitments', proposed, createFinancialCommitment), 'Financial commitment')
 }
 
 function assertFacilityFinancialBindingsAppendOnly(world: GameWorld, proposed: readonly FacilityFinancialBinding[]): void {
-  assertImmutableCollection(world.facilityFinancialBindingsById, proposed.map(createFacilityFinancialBinding), 'Facility financial binding')
+  assertImmutableCollection(world.facilityFinancialBindingsById, canonicalRecords('facilityFinancialBindings', proposed, createFacilityFinancialBinding), 'Facility financial binding')
 }
 
 function assertFinancialEntitlementsAppendOnly(world: GameWorld, proposed: readonly FinancialEntitlement[]): void {
-  assertImmutableCollection(world.financialEntitlementsById, proposed.map(createFinancialEntitlement), 'Financial entitlement')
+  assertImmutableCollection(world.financialEntitlementsById, canonicalRecords('financialEntitlements', proposed, createFinancialEntitlement), 'Financial entitlement')
 }
 
 function assertRevenueSourcesAppendOnly(world: GameWorld, proposed: readonly RevenueSource[]): void {
@@ -3798,7 +3817,7 @@ function assertOperatingCostSourcesAppendOnly(world: GameWorld, proposed: readon
 }
 
 function assertOperatingCostFactsAppendOnly(world: GameWorld, proposed: readonly AuthorizedOperatingCostFact[]): void {
-  assertImmutableCollection(world.operatingCostFactsById, proposed.map(createAuthorizedOperatingCostFact), 'Operating cost fact')
+  assertImmutableCollection(world.operatingCostFactsById, canonicalRecords('operatingCostFacts', proposed, createAuthorizedOperatingCostFact), 'Operating cost fact')
 }
 
 function assertPlanningCollectionsAppendOnly(world: GameWorld, inputKey: string, proposed: readonly { readonly id: string }[]): void {
