@@ -6,6 +6,7 @@ import {
   closeTaskbarInstance,
   rememberTaskbarInstance,
   taskbarInstanceFromUrl,
+  withTaskbarDefaultEntity,
 } from './taskbarInstances'
 
 const route = (app: string, field: string, value: string, view?: string) =>
@@ -44,4 +45,24 @@ describe('grouped taskbar instance identity',()=>{
     expect(route('contracts','playerId','player:a').key).not.toBe(route('contracts','playerId','player:b').key)
     expect(route('recruiting','focusPlayerId','player:a').key).not.toBe(route('recruiting','focusPlayerId','player:b').key)
   })
+  it('labels first opened implicit player and team as actual entities rather than generic shell',()=>{
+    const implicit=new URL('https://example.test/?ui=ng&app=player')
+    const normalized=withTaskbarDefaultEntity(implicit,{playerId:'player:chosen',teamId:'team:home'})
+    expect(implicit.searchParams.get('playerId')).toBeNull()
+    expect(normalized.searchParams.get('playerId')).toBe('player:chosen')
+    const first=taskbarInstanceFromUrl(normalized)!
+    expect(first.entityId).toBe('player:chosen')
+    expect(first.key).not.toBe('player')
+    for(const app of ['roster','club','staff']){
+      const url=withTaskbarDefaultEntity(new URL('https://example.test/?app='+app),{teamId:'team:home'})
+      expect(taskbarInstanceFromUrl(url)?.entityId).toBe('team:home')
+    }
+  })
+  it('replaces an anonymous app slot with a chosen dossier, never duplicates it',()=>{
+    const generic=taskbarInstanceFromUrl(new URL('https://example.test/?app=player'))!
+    const chosen=route('player','playerId','player:a')
+    expect(rememberTaskbarInstance([generic],chosen)).toEqual([chosen])
+    expect(rememberTaskbarInstance([chosen],generic)).toEqual([chosen])
+  })
+
 })
