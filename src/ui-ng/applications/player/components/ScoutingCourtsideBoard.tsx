@@ -164,6 +164,16 @@ export function ScoutingCourtsideBoard({
     own, rows: comparable, scouting,
     comparatorName: comparator === null || comparator === undefined ? null : comparator.lastName,
   })
+  const familyRows = comparable.filter(row => ratingCategory(row.id) === family)
+  const scopedRows = evidenceScope === 'family' ? familyRows : comparable
+  const supportedRows = scopedRows.filter(row => row.low !== null && row.high !== null)
+  const advantages = supportedRows.filter(row => row.low! >= row.own + 5)
+    .sort((a,b) => (b.low! - b.own) - (a.low! - a.own))
+  const concerns = supportedRows.filter(row => row.high! <= row.own - 5)
+    .sort((a,b) => (b.own - b.high!) - (a.own - a.high!))
+  const comparatorName = comparator?.lastName ?? 'our benchmark'
+  const comparisonArgument = (row: (typeof comparable)[number], better: boolean) =>
+    `${row.label}: ${own ? '' : 'at least '}${better ? '+' : '−'}${better ? row.low! - row.own : row.own - row.high!} vs ${comparatorName}`
   const internalCategories = own ? model.attributes.categories : []
   const strongestOwn = [...internalCategories].sort((a,b)=>b.profileValue-a.profileValue)
   const weakestOwn = [...internalCategories].sort((a,b)=>a.profileValue-b.profileValue)
@@ -213,7 +223,7 @@ export function ScoutingCourtsideBoard({
         <div><b>{verdict.confirmedConcernCount}</b><small>SUPPORTED CONCERNS</small></div>
       </div>
       <div className="po-scv3__verdict-action">
-        <span>{verdict.basis} · {verdict.evidenceCount} filed reports</span>
+        <span>{verdict.basis} · {verdict.evidenceCount} filed reports · vs {comparatorName} ({benchmarkMode === 'rating-leader' ? 'highest 80-rating mean, not starter' : benchmarkMode === 'role-peer' ? 'position peer' : 'manual'})</span>
         <button type="button" onClick={() => onAction(own ? 'development-route' :
           verdict.status === 'insufficient' ? 'request-report' : 'contract-route')}
           disabled={!own && verdict.status === 'insufficient' && requestReason !== null}>
@@ -247,25 +257,30 @@ export function ScoutingCourtsideBoard({
       <section className="po-scv3__card po-scv3__intelligence">
         <div className="po-scv3__card-head"><strong>{own ? 'WHY THIS PLAYER MATTERS' : 'SCOUTING INTELLIGENCE'}</strong>
           <span>{own ? 'DIRECT RATINGS · COMPARATIVE EVIDENCE' : `${known.length} EVALUATED DIMENSIONS`}</span></div>
-        {own && <div className="po-scv3__internal po-scv3__internal--reasons">
+        {own && <>
+          <div className="po-scv3__evidence-scope" role="group" aria-label="Comparison evidence scope">
+            <button type="button" aria-pressed={evidenceScope === 'family'} onClick={()=>setEvidenceScope('family')}>{CATEGORY_LABELS[family].toUpperCase()}</button>
+            <button type="button" aria-pressed={evidenceScope === 'overall'} onClick={()=>setEvidenceScope('overall')}>ALL 80 ATTRIBUTES</button>
+          </div>
+          <div className="po-scv3__internal po-scv3__internal--reasons">
           <div className="po-scv3__reason-group">
-            <h4>SUPPORTED STRENGTHS VS OUR BENCHMARK</h4>
-            {verdict.strengths.length === 0
-              ? <span>No clear advantage in the current comparison.</span>
-              : verdict.strengths.map(item=><span className="is-advantage" key={item}>+ {item}</span>)}
+            <h4>WHY CHOOSE HIM · {evidenceScope === 'family' ? CATEGORY_LABELS[family].toUpperCase() : 'ALL ATTRIBUTES'}</h4>
+            {advantages.length === 0
+              ? <span>No clear advantage in this comparison.</span>
+              : advantages.slice(0,3).map(row=><span className="is-advantage" key={row.id}>+ {comparisonArgument(row,true)}</span>)}
           </div>
           <div className="po-scv3__reason-group">
-            <h4>WHERE TO IMPROVE / TRADE-OFFS</h4>
-            {verdict.concerns.length === 0
-              ? <span>No clear weakness in the current comparison.</span>
-              : verdict.concerns.map(item=><span className="is-concern" key={item}>− {item}</span>)}
+            <h4>WHY NOT · TRADE-OFFS</h4>
+            {concerns.length === 0
+              ? <span>No clear concern in this comparison.</span>
+              : concerns.slice(0,3).map(row=><span className="is-concern" key={row.id}>− {comparisonArgument(row,false)}</span>)}
           </div>
           <div className="po-scv3__reason-next">
             <h4>COACHING DECISION</h4>
             <p>{verdict.nextStep}</p>
-            <small>Comparative ratings do not establish match performance or coaching suitability.</small>
+            <small>{supportedRows.length} comparable attributes in this view. Ratings alone do not establish match performance or tactical fit.</small>
           </div>
-        </div>}
+        </div></>}
         {!own && (isUnscouted
           ? <div className="po-scv3__intelligence-empty">
               <strong>NO EVALUATION ON FILE</strong>
