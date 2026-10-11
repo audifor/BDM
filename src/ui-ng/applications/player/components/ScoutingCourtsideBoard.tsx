@@ -198,29 +198,23 @@ export function ScoutingCourtsideBoard({
     </section>
     <div className="po-scv3__workspace">
       <div className="po-scv3__primary">
-        <section className="po-scv3__card po-scv3__snapshot">
-          <div className="po-scv3__card-head"><strong>PLAYER SNAPSHOT</strong><span>{own ? 'OWN PLAYER' : 'AUTHORIZED SCOUTING ONLY'}</span></div>
-          <div className="po-scv3__snapshot-title">
-            <small>REPORTED PLAY STYLE</small>
-            <strong>{own ? 'INTERNAL ATTRIBUTE PROFILE' : scouting.archetypeTitle === 'Insufficient scouting information' ? 'STYLE NOT VERIFIED' : scouting.archetypeTitle.toUpperCase()}</strong>
-            <p>{own ? 'Ratings are known internally; tactical role projection is not modeled.' : scouting.archetypeRoleTitle === 'Insufficient reports' ? 'A reliable archetype requires more scouted dimensions.' : scouting.archetypeRoleTitle}</p>
-          </div>
-          <div className="po-scv3__snapshot-signals">
-            <div><h4>STRENGTH SIGNALS</h4>{own ? strongestOwn.slice(0,3).map(row=><span key={row.category}>+ {row.label} <b>{row.profileValue}</b></span>) : scouting.strengths.length===0 ? <small>Not established</small> : scouting.strengths.slice(0,3).map(row=>
-              <span key={row.id}>+ {row.label} <b>{row.rangeLabel}</b></span>)}</div>
-            <div><h4>CONCERN SIGNALS</h4>{own ? weakestOwn.slice(0,3).map(row=><span key={row.category}>− {row.label} <b>{row.profileValue}</b></span>) : scouting.weaknesses.length===0 ? <small>Not established</small> : scouting.weaknesses.slice(0,3).map(row=>
-              <span key={row.id}>− {row.label} <b>{row.rangeLabel}</b></span>)}</div>
-          </div>
-          <div className="po-scv3__coverage-grid">
-            {scouting.knowledgeAreas.filter(area=>['attributes','physical','potential'].includes(area.id)).map(area=>
-              <div key={area.id}><small>{area.label.toUpperCase()}</small>
-                <strong>{own && area.id !== 'potential' ? 'KNOWN INTERNALLY' : area.coverageLabel}</strong>
-                <span className="po-scv3__track"><span style={{width:`${own && area.id !== 'potential' ? 100 : Math.round(area.coverage*100)}%`}} /></span></div>)}
-          </div>
-          <div className="po-scv3__snapshot-note">{own ? 'Internal ratings are direct roster knowledge. Scouting reports and projections remain separate.' : 'Projection and personality remain UNKNOWN without authorized reports. No hidden potential is exposed.'}</div>
-        </section>
         <ScoutingRosterComparison world={world} inspectedId={model.identity.playerId}
           comparisonId={eligibleComparisonId} onChange={setComparisonId} />
+        {!own && known.length > 0 && <section className="po-scv3__card po-scv3__snapshot">
+          <div className="po-scv3__card-head"><strong>SCOUT'S PLAYER PROFILE</strong><span>REPORTED · NOT PLAYER TRUTH</span></div>
+          <div className="po-scv3__snapshot-title">
+            <strong>{scouting.archetypeTitle === 'Insufficient scouting information'
+              ? 'STYLE NOT VERIFIED' : scouting.archetypeTitle.toUpperCase()}</strong>
+            <p>{scouting.archetypeRoleTitle === 'Insufficient reports'
+              ? 'Archetype requires more reliable dimensions.' : scouting.archetypeRoleTitle}</p>
+          </div>
+          <div className="po-scv3__snapshot-signals">
+            <div><h4>SCOUTED STRENGTHS</h4>{scouting.strengths.length===0 ? <small>Not established</small> :
+              scouting.strengths.slice(0,2).map(row=><span key={row.id}>+ {row.label}<b>{row.rangeLabel}</b></span>)}</div>
+            <div><h4>SCOUTED CONCERNS</h4>{scouting.weaknesses.length===0 ? <small>Not established</small> :
+              scouting.weaknesses.slice(0,2).map(row=><span key={row.id}>− {row.label}<b>{row.rangeLabel}</b></span>)}</div>
+          </div>
+        </section>}
       </div>
 
       <section className="po-scv3__card po-scv3__intelligence">
