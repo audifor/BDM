@@ -23,9 +23,10 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
     return {year:cutoffYear+i,date,count}
   }),[world,roster,cutoffYear,reference])
   const cutoff=horizon[offset]!
+  const knownContracts=roster.filter(player=>getCurrentPlayerContract(world,player.id)!==undefined).length
   const rows=useMemo(()=>roster.map(player=>{
     const contract=getCurrentPlayerContract(world,player.id)
-    const status=contract===undefined?'Sin contrato activo':
+    const status=contract===undefined?'No consta contrato activo':
       contract.term.expiresOn<cutoff.date?'Sin cobertura confirmada para esta fecha':
       contract.term.expiresOn===cutoff.date?'Vence en fecha de corte':'Contrato vigente en fecha de corte'
     return {player,contract,status,confirmed:contract!==undefined&&contract.term.expiresOn>=cutoff.date}
@@ -34,7 +35,7 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
     <header className="roster-v4__section-title">
       <div><span>OPERACIONES / PLANIFICACIÓN DE PLANTILLA</span><h2>PLANIFICAR PLANTILLA</h2>
         <p>Proyección de cobertura contractual confirmada, no de resultados o fichajes futuros.</p></div>
-      <strong>{rows.filter(row=>row.confirmed).length} / {roster.length} con contrato hasta la fecha de corte</strong>
+      <strong>{knownContracts===0?'SIN DATOS CONTRACTUALES REGISTRADOS':`${rows.filter(row=>row.confirmed).length} / ${roster.length} con contrato confirmado`}</strong>
     </header>
     <div className="roster-v4-planning__horizons">
       {horizon.map((h,i)=><button key={h.year} aria-pressed={offset===i}
@@ -46,7 +47,7 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
     </div>
     <div className="roster-v4-planning__summary">
       <div><strong>{cutoff.count}</strong><span>CON COBERTURA CONTRACTUAL</span></div>
-      <div><strong>{roster.length-cutoff.count}</strong><span>SIN COBERTURA CONFIRMADA</span></div>
+      <div><strong>{roster.length-cutoff.count}</strong><span>COBERTURA NO VERIFICABLE</span></div>
       <div><strong>{roster.length}</strong><span>JUGADORES DEL ROSTER ACTUAL</span></div>
     </div>
     <div className="roster-v4-planning__table-wrap">
@@ -60,6 +61,6 @@ export function RosterCourtsidePlanning({world,roster,onOpenPlayer}:{
         </tr>)}</tbody>
       </table>
     </div>
-    <p className="roster-v4-planning__note">Las futuras firmas, renovaciones, inscripciones y bajas dependen del juego y pueden modificar esta situación. Este tablero no crea transacciones ni anticipa acuerdos.</p>
+    <p className="roster-v4-planning__note">La ausencia de contrato registrado no demuestra que un jugador esté libre. Las futuras firmas, renovaciones, inscripciones y bajas dependen del juego y pueden modificar esta situación. Este tablero no crea transacciones ni anticipa acuerdos.</p>
   </section>
 }

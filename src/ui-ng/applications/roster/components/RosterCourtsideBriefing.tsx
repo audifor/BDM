@@ -70,8 +70,8 @@ export function RosterCourtsideBriefing({model,world,teamId}:{
       <article className="roster-v4-briefing__card roster-v4-briefing__contracts">
         <h3>SITUACIÓN CONTRACTUAL</h3><p>Tipos de vínculo disponibles en el mundo</p>
         <div className="roster-v4-briefing__contract-number"><strong>{model.contractedCount}</strong><span>CON CONTRATO REGISTRADO</span></div>
-        <div className="roster-v4-briefing__contract-number"><strong>{model.scholarshipCount}</strong><span>SIN CONTRATO SALARIAL ACTIVO</span></div>
-        <small>El segundo grupo no presupone una beca NCAA: puede contener otros tipos de vínculo.</small>
+        <div className="roster-v4-briefing__contract-number"><strong>{model.scholarshipCount}</strong><span>SIN CONTRATO SALARIAL REGISTRADO</span></div>
+        <small>La ausencia de registro salarial no demuestra que un jugador esté libre; también puede corresponder a otros tipos de vínculo.</small>
       </article>
       <article className="roster-v4-briefing__card roster-v4-briefing__alerts">
         <h3>ASUNTOS A REVISAR</h3><p>Señales constatables, no órdenes automáticas</p>

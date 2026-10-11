@@ -8,7 +8,8 @@ import { createNewGame } from '@/app/game'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { injuryIdFromString, type PlayerId } from '@/domain/ids'
 import { createInjury } from '@/domain/injury'
-import { updateGameWorld } from '@/domain/world'
+import { getTeamLineup, getTeamRoster, updateGameWorld } from '@/domain/world'
+import { getLineupSlotForPlayer } from '@/domain/tactics'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { CanonicalRoster } from '@/ui/pcb-migrated/plantilla/CanonicalRoster'
@@ -146,14 +147,14 @@ describe('CanonicalRoster NG variant', () => {
   it('renders a compact General view and allows optional columns without modifying Legacy',()=>{
     mountRosterWorkspace()
     const grid=screen.getByRole('region',{name:'Plantilla Courtside'})
-    expect(grid.querySelectorAll('thead th')).toHaveLength(11)
+    expect(grid.querySelectorAll('thead th')).toHaveLength(9)
     expect(grid.querySelectorAll('tbody tr').length).toBeGreaterThan(0)
     expect(screen.getByRole('columnheader',{name:/JUGADOR/})).toBeInTheDocument()
-    expect(screen.queryByRole('columnheader',{name:'PESO'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'PTS'})).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:/COLUMNAS/}))
     expect(screen.getByRole('complementary',{name:'Editor de columnas'})).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('checkbox',{name:'PESO'}))
-    expect(grid.querySelectorAll('thead th')).toHaveLength(12)
+    fireEvent.click(screen.getByRole('checkbox',{name:'PTS'}))
+    expect(grid.querySelectorAll('thead th')).toHaveLength(10)
   })
 
   it('keeps the table full-width and opens an optional popup only on request', () => {
@@ -231,6 +232,19 @@ describe('RosterWorkspace session restoration', () => {
     expect(document.querySelectorAll('.roster-v4-planning__table tbody tr').length).toBe(team.rosterPlayerIds.length)
     const player=world.players[team.rosterPlayerIds[0]!]!
     expect(screen.getByText(player.firstName+' '+player.lastName)).toBeInTheDocument()
+  })
+
+  it('updates the canonical starting lineup from the Courtside depth selector',()=>{
+    const {team}=mountRosterWorkspace()
+    const world=useGameStore.getState().world!
+    const guard=getTeamRoster(world,team.id).find(player=>player.basketball.primaryPosition==='PG')!
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
+    fireEvent.change(screen.getByRole('combobox',{name:`Asignar rotación a ${guard.firstName} ${guard.lastName}`}),{
+      target:{value:'PG'},
+    })
+    const updated=useGameStore.getState().world!
+    expect(getLineupSlotForPlayer(getTeamLineup(updated,team.id)!,guard.id)).toBe('PG')
+    expect(screen.getByLabelText('Depth chart').textContent).toContain('TITULAR')
   })
 
   it('renders a position depth chart whose counts match the live roster', () => {

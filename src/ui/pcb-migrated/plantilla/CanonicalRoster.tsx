@@ -436,7 +436,7 @@ export function CanonicalRoster({
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
           return contract === undefined
-            ? (v4Mode ? "Sin contrato" : "Beca")
+            ? (v4Mode ? "No consta" : "Beca")
             : compactMoney(contract.compensation.annualSalary);
         },
       },
@@ -459,7 +459,7 @@ export function CanonicalRoster({
         sortable: true,
         value: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
-          if (contract === undefined) return "No active contract";
+          if (contract === undefined) return v4Mode ? "No consta contrato" : "No active contract";
           const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
           const hasSuccessor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
           const hasNegotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
@@ -467,7 +467,7 @@ export function CanonicalRoster({
         },
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
-          if (contract === undefined) return <span>No active contract</span>;
+          if (contract === undefined) return <span>{v4Mode ? "No consta contrato" : "No active contract"}</span>;
           const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
           const successor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
           const negotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
@@ -523,7 +523,7 @@ export function CanonicalRoster({
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
       columnIds: v4Mode
-        ? ["player", "position", "age", "rotation", "status", "season-MIN", "season-PTS", "season-REB", "season-AST", "fatigue", "expiry"]
+        ? ["player", "position", "age", "rotation", "status", "height", "weight", "fatigue", "salary"]
         : [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
     },
     ...(v4Mode ? [{

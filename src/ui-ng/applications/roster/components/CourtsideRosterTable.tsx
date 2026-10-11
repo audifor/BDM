@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import type { Player } from '@/domain/player'
 import type { DataGridColumn, DataGridSort, DataGridView } from '@/ui/dataGrid/types'
 import { loadGridPreferences, saveGridPreferences } from '@/ui/dataGrid/persistence'
@@ -83,8 +83,10 @@ export function CourtsideRosterTable({ columns, rows, view, searchQuery, selecte
       changeSelection(next.selectedIds)
     }
   }
+  // A view fills the available width; a wider custom view scrolls horizontally.
+  // Column size preferences remain the minimum rather than forcing an unused right half.
   const totalWidth=visibleColumns.reduce((n,c)=>n+(widths[c.id]??c.defaultWidth??c.width??90),0)
-  const style={width:Math.max(750,totalWidth)} as CSSProperties
+  const style={width:'100%',minWidth:Math.max(720,totalWidth)}
   return <div className="courtside-roster-table bdm-data-table" role="region"
     aria-label="Plantilla Courtside" tabIndex={0} onKeyDown={keyboard}>
     <div className="courtside-roster-table__hidden-tools">

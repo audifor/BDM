@@ -1,11 +1,13 @@
 import { buildRosterWorkspaceContext } from '@/ui-ng/applications/roster/buildRosterWorkspaceContext'
+import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
+import type { WorkspaceTab } from '@/ui-ng/types/workspace'
 import type { RosterWorkspaceSessionState } from '@/ui-ng/applications/roster/rosterWorkspaceSession'
 
-const TABS: readonly { id: RosterWorkspaceSessionState['tab']; name: string }[] = [
-  {id:'plantilla',name:'PLANTILLA'},
-  {id:'profundidad',name:'PROFUNDIDAD'},
-  {id:'briefing',name:'BRIEFING'},
-  {id:'planificar',name:'PLANIFICAR'},
+const TABS: readonly WorkspaceTab[] = [
+  {id:'plantilla',label:'PLANTILLA'},
+  {id:'profundidad',label:'PROFUNDIDAD'},
+  {id:'briefing',label:'BRIEFING'},
+  {id:'planificar',label:'PLANIFICAR'},
 ]
 
 export function RosterWorkspaceHeader({
@@ -22,9 +24,9 @@ export function RosterWorkspaceHeader({
       <strong className="roster-v4__title">ROSTER</strong>
       <span className="roster-v4__subtitle">{context.teamName} · {context.competitionLabel ?? 'Competición sin asignar'} · {context.seasonLabel ?? 'Temporada sin asignar'}</span>
     </div>
-    <nav className="roster-v4__tabs" aria-label="Secciones de plantilla">
-      {TABS.map(tab=><button type="button" key={tab.id} className={tab.id===activeTab?'is-active':''}
-        aria-current={tab.id===activeTab?'page':undefined} onClick={()=>onTabChange?.(tab.id)}>{tab.name}</button>)}
-    </nav>
+    <div className="roster-v4__tabs">
+      <WorkspaceTabs ariaLabel="Secciones de plantilla" tabs={TABS}
+        activeTabId={activeTab} onTabSelect={id=>onTabChange?.(id as RosterWorkspaceSessionState['tab'])}/>
+    </div>
   </header>
 }

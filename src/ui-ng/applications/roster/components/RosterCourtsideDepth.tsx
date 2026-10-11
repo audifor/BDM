@@ -1,4 +1,5 @@
 import type { PlayerId } from '@/domain/ids'
+import { BENCH_SLOTS, type LineupSlot } from '@/domain/tactics'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import type { RosterDepthChartModel, RosterDepthBand } from '@/ui-ng/applications/roster/buildRosterDepthChart'
@@ -9,10 +10,12 @@ const BAND_LABEL: Record<RosterDepthBand,string> = {
 }
 const BALANCE: Record<string,string> = {thin:'POCA PROFUNDIDAD',ok:'COBERTURA',loaded:'ALTA CONCENTRACIÓN'}
 
-export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId}:{
+export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId,onLineupSlotChange,onLineupSlotClear}:{
   readonly model:RosterDepthChartModel
   readonly onOpenPlayer:(destination:EntityDestination)=>void
   readonly selectedPlayerId?:PlayerId
+  readonly onLineupSlotChange?: (slot:LineupSlot,playerId:PlayerId)=>void
+  readonly onLineupSlotClear?: (slot:LineupSlot)=>void
 }) {
   return <section className="roster-depth-chart roster-v4-depth" aria-label="Depth chart" data-ng-region="roster-depth-chart">
     <header className="roster-v4__section-title">
@@ -47,7 +50,21 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId}:{
                   <EntityLink className="canonical-roster__player-link roster-depth-chart__player"
                     destination={{type:'player',playerId:item.player.id,section:'overview'}}
                     onNavigate={onOpenPlayer}>{item.player.name}</EntityLink>
-                  <span className="roster-v4-depth__slot">{item.player.slot??BAND_LABEL[item.player.band]}</span>
+                  {onLineupSlotChange!==undefined
+                    ? <select className="roster-v4-depth__slot" value={item.player.slot??''}
+                        aria-label={`Asignar rotación a ${item.player.name}`}
+                        title="Los cambios se aplican a la rotación del equipo"
+                        onChange={event=>{
+                          const next=event.target.value
+                          if(next==='') {
+                            if(item.player.slot!==undefined)onLineupSlotClear?.(item.player.slot)
+                          } else onLineupSlotChange(next as LineupSlot,item.player.id)
+                        }}>
+                        <option value="">Sin rol</option>
+                        <option value={lane.position}>TITULAR {lane.position}</option>
+                        {BENCH_SLOTS.map(slot=><option key={slot} value={slot}>BANQUILLO {slot}</option>)}
+                      </select>
+                    : <span className="roster-v4-depth__slot">{item.player.slot??BAND_LABEL[item.player.band]}</span>}
                 </li>)}
           </ul>
           <footer className="roster-v4-depth__summary">
@@ -59,7 +76,7 @@ export function RosterCourtsideDepth({model,onOpenPlayer,selectedPlayerId}:{
     </div>
     <div className="roster-v4-depth__footnote">
       <strong>LECTURA DE PROFUNDIDAD</strong>
-      <p>La distribución se basa en posiciones principales y asignaciones de quinteto/banquillo. No demuestra compatibilidad con posiciones secundarias, calidad global ni minutos prometidos.</p>
+      <p>Las asignaciones modifican la rotación real del equipo. Cada puesto admite un jugador; sustituirlo deja al anterior sin asignación. Las columnas agrupan por posición principal, no por compatibilidad táctica inferida.</p>
     </div>
   </section>
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 
 import type { LineupSlot } from '@/domain/tactics'
 import type { PlayerId } from '@/domain/ids'
-import { getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
+import { getCurrentPlayerContract, getCurrentPlayerInjury, getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { CanonicalRoster } from '@/ui/pcb-migrated/plantilla/CanonicalRoster'
@@ -60,6 +60,7 @@ export function RosterWorkspace() {
   const roster = useMemo(()=>world===null||team===undefined?[]:getTeamRoster(world,team.id),[world,team])
   const injuries = useMemo(()=>world===null?0:roster.filter(player=>getCurrentPlayerInjury(world,player.id)!==undefined).length,[roster,world])
   const expiring = useMemo(()=>world===null?0:roster.filter(player=>rosterContractStatus(world,player)==='expiring').length,[roster,world])
+  const hasContractData = useMemo(()=>world!==null&&roster.some(player=>getCurrentPlayerContract(world,player.id)!==undefined),[roster,world])
   const teamStyle = useMemo(()=>{
     if(team===undefined)return undefined
     const colors=deriveTeamColors(team.id)
@@ -134,7 +135,7 @@ export function RosterWorkspace() {
           <div className="roster-v4__metrics" aria-label="Resumen de plantilla">
             <div><small>JUGADORES EN PLANTILLA</small><strong>{roster.length}</strong></div>
             <div><small>SIN LESIÓN ACTUAL</small><strong className="is-lime">{roster.length-injuries}<em> / {roster.length}</em></strong></div>
-            <div><small>CONTRATOS QUE VENCEN ESTA TEMPORADA</small><strong className="is-orange">{expiring}</strong></div>
+            <div title={!hasContractData?'No constan contratos activos para esta plantilla':undefined}><small>VENCIMIENTOS REGISTRADOS</small><strong className="is-orange">{hasContractData?expiring:'—'}</strong></div>
             <div><small>SELECCIÓN ACTIVA</small><strong>{selectedRowIds.length}</strong></div>
           </div>
           <RosterV4Controls selectedCount={selectedRowIds.length} onOpenInspector={()=>setInspectorOpen(true)}/>
@@ -161,11 +162,13 @@ export function RosterWorkspace() {
         </>}
         {tab==='profundidad'&&<section className="roster-v4__tab-panel" aria-label="Profundidad de plantilla">
           {depthChart===null?<p>Mapa de profundidad no disponible.</p>:<RosterCourtsideDepth
-            model={depthChart} onOpenPlayer={openPlayer} selectedPlayerId={inspectedPlayer?.id}/>}
+            model={depthChart} onOpenPlayer={openPlayer} selectedPlayerId={inspectedPlayer?.id}
+            onLineupSlotChange={canEditLineup?(slot,playerId)=>setLineupSlot(slot,playerId):undefined}
+            onLineupSlotClear={canEditLineup?slot=>clearLineupSlot(slot):undefined}/>}
         </section>}
         {tab==='briefing'&&<section className="roster-v4__tab-panel" aria-label="Briefing de plantilla">
           {briefing===null?<p>Informe no disponible.</p>:<RosterCourtsideBriefing
-            model={briefing} teamId={team.id} world={world}/>}
+            model={briefing} teamId={team.id} world={world} onOpenDepth={()=>setTab('profundidad')}/>}
         </section>}
         {tab==='planificar'&&<section className="roster-v4__tab-panel roster-v4__planning"
           aria-label="Planificar plantilla">
