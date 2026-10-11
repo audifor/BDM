@@ -41,6 +41,36 @@ describe('Player contract integration', () => {
     expect(focused?.textContent).toContain(world.players[playerId]?.lastName)
   })
 
+  it('shows authorized market observation without consulting rival hidden terms', () => {
+    const world = createNewGame()
+    const userTeam = getUserTeam(world)!
+    const outsider = Object.values(world.players).find(player => !userTeam.rosterPlayerIds.includes(player.id))!
+    const knowledge = {
+      organizationId: userTeam.organizationId,
+      playerId: outsider.id,
+      availability: 'LISTENING' as const,
+      playerInterest: 61,
+      confidence: 74,
+      assessedAt: world.currentDate,
+      source: 'AGENT' as const,
+    }
+    useGameStore.getState().replaceWorld({
+      ...world,
+      marketKnowledge: [...world.marketKnowledge, knowledge],
+    })
+    window.history.replaceState({}, '',
+      `/?ui=ng&app=player&playerId=${encodeURIComponent(outsider.id)}&playerView=contract`)
+    render(<NgWorkspaceNavigationProvider><PlayerWorkspace /></NgWorkspaceNavigationProvider>)
+    expect(screen.getByText('MAY LISTEN')).toBeInTheDocument()
+    expect(screen.getByText('AGENT SOURCE')).toBeInTheDocument()
+    expect(screen.getByText('MIXED SIGNAL')).toBeInTheDocument()
+    expect(screen.getByText('74%')).toBeInTheDocument()
+    expect(screen.queryByText('Financial Schedule')).not.toBeInTheDocument()
+    expect(screen.queryByText('Contract Detail')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /DIRECT CONTACT/ }))
+    expect(screen.getByText(/A personal relationship may help/)).toBeInTheDocument()
+  })
+
   it('protects rival financials, negotiations and role promises from World Truth', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
