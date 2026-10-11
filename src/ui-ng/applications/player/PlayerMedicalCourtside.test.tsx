@@ -102,7 +102,7 @@ describe('Courtside PLAYER Medical decisions',()=>{
     expect(container.querySelector('[data-ng-region="medical-load"]')).not.toBeNull()
     expect(screen.getByText('NO WORKLOAD LOGGED YET')).toBeInTheDocument()
     expect(container.querySelector('.po-med-bodymap')).toBeNull()
-    fireEvent.click(screen.getByRole('button',{name:/VIEW HISTORY/}))
+    fireEvent.click(within(tablist).getByRole('tab',{name:'HISTORY'}))
     expect(within(tablist).getByRole('tab',{name:'HISTORY'})).toHaveAttribute('aria-selected','true')
     expect(container.querySelector('[data-ng-region="medical-history"]')).not.toBeNull()
   })
