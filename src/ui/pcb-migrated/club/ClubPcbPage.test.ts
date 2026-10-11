@@ -15,6 +15,7 @@ import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceMode
 import { ClubPcbPage } from './ClubPcbPage'
 import { createFacilityClubScenario } from '@/app/facilities/testFixtures'
 import { useGameStore } from '@/stores/gameStore'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 
 afterEach(cleanup)
 
@@ -25,7 +26,8 @@ function startCandidacy(world: GameWorld, roleId: StaffRoleId, staffId: StaffPer
 }
 
 function StaffSandbox() {
-  const [world, setWorld] = useState(() => createAcbTestGame({ userTeamKey: 'caz' }))
+  // The bare ACB career has no opening balance; hiring is decided by canonical Finance, so the club gets real liquidity first.
+  const [world, setWorld] = useState(() => { const created = createAcbTestGame({ userTeamKey: 'caz' }); return financingDrawdownForTest(created, getUserTeam(created)!.id, 1_000_000_000) })
   return createElement(ClubPcbPage, {
     initialTab: 'staff',
     world,

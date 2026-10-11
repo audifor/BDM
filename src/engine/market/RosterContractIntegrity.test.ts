@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
+import { createPlayerContract, getPlayerContractStatus, type PlayerContract } from '@/domain/contract'
+import { createNewGameScenario } from '@/app/game/testFixtures'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { addDays, addYears } from '@/domain/date'
 import { contractIdFromString } from '@/domain/ids'
 import { releasePlayer, signFreeAgent } from '@/app/market'
@@ -31,13 +33,16 @@ describe('roster and active contract integrity repair', () => {
   })
 
   it('keeps a scheduled future contract separate from current roster membership', () => {
-    const world = createNewGame()
-    const contract = Object.values(world.contractsById)[0]!
-    const { termination: _termination, ...contractWithoutTermination } = contract
-    const scheduled = createPlayerContract({ ...contractWithoutTermination, id: contractIdFromString(`future:${contract.id}`), term: { startsOn: addDays(world.currentDate, 30), expiresOn: addDays(world.currentDate, 395) } })
-    const futureOnly = updateGameWorld(world, {
-      contracts: [...Object.values(world.contractsById).filter((item) => item.playerId !== contract.playerId), scheduled],
-      teams: Object.values(world.teams).map((team) => ({ ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== contract.playerId) })),
+    // The scenario is shaped before Finance activates, so Finance never sees a recognized contract disappear.
+    let contract!: PlayerContract
+    const futureOnly = createNewGameScenario((world) => {
+      contract = Object.values(world.contractsById)[0]!
+      const { termination: _termination, ...contractWithoutTermination } = contract
+      const scheduled = createPlayerContract({ ...contractWithoutTermination, id: contractIdFromString(`future:${contract.id}`), term: { startsOn: addDays(world.currentDate, 30), expiresOn: addDays(world.currentDate, 395) } })
+      return updateGameWorld(world, {
+        contracts: [...Object.values(world.contractsById).filter((item) => item.playerId !== contract.playerId), scheduled],
+        teams: Object.values(world.teams).map((team) => ({ ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== contract.playerId) })),
+      })
     })
     const result = repairRosterContractIntegrity(futureOnly)
     expect(result.world).toBe(futureOnly)
@@ -46,9 +51,11 @@ describe('roster and active contract integrity repair', () => {
   })
 
   it('does not infer a contract requirement from roster membership without contract history', () => {
-    const world = createNewGame()
-    const contract = Object.values(world.contractsById)[0]!
-    const noContractHistory = updateGameWorld(world, { contracts: Object.values(world.contractsById).filter((item) => item.playerId !== contract.playerId) })
+    let contract!: PlayerContract
+    const noContractHistory = createNewGameScenario((world) => {
+      contract = Object.values(world.contractsById)[0]!
+      return updateGameWorld(world, { contracts: Object.values(world.contractsById).filter((item) => item.playerId !== contract.playerId) })
+    })
     const result = repairRosterContractIntegrity(noContractHistory)
     expect(result.world).toBe(noContractHistory)
     expect(result.reports.find((report) => report.targetEntity === contract.playerId)).toMatchObject({ classification: 'NOT_APPLICABLE', worldChanged: false })
@@ -78,7 +85,8 @@ describe('roster and active contract integrity repair', () => {
     const sourceTeam = Object.values(base.teams)[0]!
     const targetTeam = Object.values(base.teams).find((team) => team.id !== sourceTeam.id)!
     const playerId = sourceTeam.rosterPlayerIds[0]!
-    const funded = updateGameWorld(base, { teamFinances: Object.values(base.teamFinancesByTeamId).map((item) => item.teamId === targetTeam.id ? { ...item, playerSalaryBudget: 100_000_000 } : item) })
+    // Canonical liquidity for the signing club: one executed financing drawdown (a legacy payroll pool is not an economic authority).
+    const funded = financingDrawdownForTest(base, targetTeam.id, 10_000_000_000)
     const released = releasePlayer(funded, sourceTeam.id, playerId)
     const signed = signFreeAgent(released, targetTeam.id, playerId)
     const staleMembership = updateGameWorld(signed, { teams: Object.values(signed.teams).map((team) => team.id === sourceTeam.id ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, playerId] } : team.id === targetTeam.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== playerId) } : team) })
@@ -95,7 +103,8 @@ describe('roster and active contract integrity repair', () => {
     const sourceTeam = Object.values(base.teams)[0]!
     const targetTeam = Object.values(base.teams).find((team) => team.id !== sourceTeam.id)!
     const playerId = sourceTeam.rosterPlayerIds[0]!
-    const funded = updateGameWorld(base, { teamFinances: Object.values(base.teamFinancesByTeamId).map((item) => item.teamId === targetTeam.id ? { ...item, playerSalaryBudget: 100_000_000 } : item) })
+    // Canonical liquidity for the signing club: one executed financing drawdown (a legacy payroll pool is not an economic authority).
+    const funded = financingDrawdownForTest(base, targetTeam.id, 10_000_000_000)
     const signed = signFreeAgent(releasePlayer(funded, sourceTeam.id, playerId), targetTeam.id, playerId)
     const unrostered = updateGameWorld(signed, { teams: Object.values(signed.teams).map((team) => team.id === targetTeam.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== playerId) } : team) })
 

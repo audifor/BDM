@@ -1,19 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { activateNewGameFinance, createNewGameBeforeFinance } from '@/app/game'
 import { createContractReviewDecision, contractReviewDecisionIdFor } from '@/domain/contract/ContractReviewDecision'
 import { createPlayerContract } from '@/domain/contract/PlayerContract'
 import { createClubStrategicState } from '@/domain/clubStrategy'
 import { addDays } from '@/domain/date'
 import { agentIdFromString, contractIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
+import type { GameWorld } from '@/domain/world'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds/ContractReviewEngine'
 import { advanceDayWithTrace } from '@/engine/calendar/CalendarEngine'
 import { openAiRetentionNegotiation, submitAiRetentionOffer } from './ContractRetentionEngine'
 import { progressAiRetentionNegotiations, progressAiRetentionNegotiationsWithEvidence } from './AiRetentionEngine'
 
-function fixture() {
-  const base = createNewGame()
+/**
+ * The retention scenario's contracts are shaped on the pre-Finance career and Finance is then activated, so canonical Finance
+ * materializes exactly these contracts (it never sees a recognized contract disappear). `shapeExtra` lets a test add further
+ * contract facts to the same pre-Finance career. Liquidity is a canonical financing drawdown in the prototype currency (EUR).
+ */
+function fixture(shapeExtra: (world: GameWorld) => GameWorld = (world) => world) {
+  const base = createNewGameBeforeFinance()
   const team = Object.values(base.teams).find((candidate) => candidate.coachId !== undefined && candidate.coachId !== base.userCoachId)!
   const playerId = team.rosterPlayerIds[0]!
   const player = base.players[playerId]!
@@ -29,15 +35,15 @@ function fixture() {
   })
   const lineup = base.lineupsByTeamId[team.id]!
   const templateRules = Object.values(base.salaryRulesBySeasonId)[0]!
-  const withContract = updateGameWorld(base, {
+  const withContract = activateNewGameFinance(shapeExtra(updateGameWorld(base, {
     contracts: [...Object.values(base.contractsById).filter((item) => item.playerId !== playerId), contract],
     lineupsByTeamId: { ...base.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
     salaryRulesBySeasonId: { ...base.salaryRulesBySeasonId, [base.currentSeasonId]: { ...templateRules, seasonId: base.currentSeasonId } },
-  })
+  })))
   const financed = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(withContract, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    financingDrawdownForTest(withContract, team.id, 10_000_000_000),
     team.id,
-    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+    { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
   )
   const strategicState = createClubStrategicState({
     teamId: team.id,
@@ -113,17 +119,24 @@ describe('BS11C6 AI retention ownership', () => {
   })
 
   it('never initiates or responds for a user-controlled club, even with a pursuit decision', () => {
-    const { world, team } = fixture()
-    const userTeam = Object.values(world.teams).find((candidate) => candidate.coachId === world.userCoachId)!
-    const playerId = userTeam.rosterPlayerIds[0]!
-    const prior = Object.values(world.contractsById).find((contract) => contract.playerId === playerId)!
-    const contract = createPlayerContract({ id: contractIdFromString(`bs11c6-user-retention:${userTeam.id}`), playerId, teamId: userTeam.id, kind: 'standard', term: { startsOn: addDays(world.currentDate, -30), expiresOn: addDays(world.currentDate, 120) }, compensation: { annualSalary: prior.compensation.annualSalary } })
-    const position = world.players[playerId]!.basketball.primaryPosition
-    const lineup = world.lineupsByTeamId[userTeam.id]!
-    const withUserCandidate = updateGameWorld(world, {
-      contracts: [...Object.values(world.contractsById).filter((item) => item.playerId !== playerId), contract],
-      lineupsByTeamId: { ...world.lineupsByTeamId, [userTeam.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+    let userTeamId!: ReturnType<typeof fixture>['team']['id']
+    let playerId!: ReturnType<typeof fixture>['playerId']
+    let contract!: ReturnType<typeof fixture>['contract']
+    const { world, team } = fixture((pre) => {
+      const userTeam = Object.values(pre.teams).find((candidate) => candidate.coachId === pre.userCoachId)!
+      userTeamId = userTeam.id
+      playerId = userTeam.rosterPlayerIds[0]!
+      const prior = Object.values(pre.contractsById).find((item) => item.playerId === playerId)!
+      contract = createPlayerContract({ id: contractIdFromString(`bs11c6-user-retention:${userTeam.id}`), playerId, teamId: userTeam.id, kind: 'standard', term: { startsOn: addDays(pre.currentDate, -30), expiresOn: addDays(pre.currentDate, 120) }, compensation: { annualSalary: prior.compensation.annualSalary } })
+      const position = pre.players[playerId]!.basketball.primaryPosition
+      const lineup = pre.lineupsByTeamId[userTeam.id]!
+      return updateGameWorld(pre, {
+        contracts: [...Object.values(pre.contractsById).filter((item) => item.playerId !== playerId), contract],
+        lineupsByTeamId: { ...pre.lineupsByTeamId, [userTeam.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+      })
     })
+    const userTeam = world.teams[userTeamId]!
+    const withUserCandidate = world
     const pursued = setAiIntent(withUserCandidate, userTeam.id, contract.id, 'PURSUE_EXTENSION')
     const result = progressAiRetentionNegotiationsWithEvidence(pursued)
     expect(result.decisions.some((item) => item.teamId === userTeam.id || item.contractId === contract.id)).toBe(false)

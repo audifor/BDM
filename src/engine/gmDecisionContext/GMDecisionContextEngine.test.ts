@@ -13,6 +13,7 @@ import { createGovernanceDecisionParticipationGrant } from '@/domain/governance/
 import { createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance/GovernanceRequest'
 import { assessClubNeeds } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, assessGMOptionAuthority, resolveGovernanceOptionPolicy } from './GMDecisionContextEngine'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 
 describe('GM decision context', () => {
   let base: GameWorld
@@ -59,8 +60,10 @@ describe('GM decision context', () => {
 
   it('keeps organizational strategy primary and orders response options from inspectable factors', () => {
     const club = team(false)
-    const contend = assessGMDecisionContext(mode(shortRoster(base, club.id), club.id, 'CONTEND'), club.id)
-    const develop = assessGMDecisionContext(mode(shortRoster(base, club.id), club.id, 'DEVELOP'), club.id)
+    // The premise is a club without a liquidity shortfall (the bare prototype has no opening cash): canonical liquidity first.
+    const liquid = financingDrawdownForTest(base, club.id, 10_000_000_000)
+    const contend = assessGMDecisionContext(mode(shortRoster(liquid, club.id), club.id, 'CONTEND'), club.id)
+    const develop = assessGMDecisionContext(mode(shortRoster(liquid, club.id), club.id, 'DEVELOP'), club.id)
     const need = contend.needsAssessment.needs.find((item) => item.severity === 'HIGH' || item.severity === 'CRITICAL')
     expect(need).toBeDefined()
     if (!need) throw new Error('Expected a representative high-priority need in the seeded club')

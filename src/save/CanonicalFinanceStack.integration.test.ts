@@ -47,7 +47,8 @@ describe('BS16 canonical stack integration (A→E)', () => {
     // 1. BS16B foundation: explicit currency -> profile, canonical account catalog, opening fiscal period.
     const founded = provisionOrganizationFinanceFoundation(world, org, { currencyCode: 'EUR' })
     const accounts = getOrganizationFinanceAccounts(founded, org, 'EUR')
-    expect(Object.keys(accounts).sort()).toEqual(['cashOperating', 'currencyCode', 'debtLiability', 'equityControl', 'expenseOperating', 'organizationId', 'payableControl', 'receivableControl', 'revenueOperating'])
+    // BS16L financing added the LOAN_ASSET role to the canonical account catalog (FinanceFoundation, 1112b335).
+    expect(Object.keys(accounts).sort()).toEqual(['cashOperating', 'currencyCode', 'debtLiability', 'equityControl', 'expenseOperating', 'loanAsset', 'organizationId', 'payableControl', 'receivableControl', 'revenueOperating'])
     expect(Object.keys(founded.organizationFinancialProfilesById)).toEqual([org])
     expect(Object.keys(founded.fiscalPeriodsById)).toHaveLength(1)
     expect(resolveCashAccount(founded, org, 'EUR').currencyCode).toBe('EUR')

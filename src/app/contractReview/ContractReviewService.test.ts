@@ -4,22 +4,30 @@ import { addDays } from '@/domain/date'
 import { contractIdFromString } from '@/domain/ids'
 import { clearPlayerFromLineup, createDefaultTeamLineup } from '@/domain/tactics'
 import { updateGameWorld } from '@/domain/world'
-import { createNewGame } from '@/app/game'
+import { createNewGameScenario } from '@/app/game/testFixtures'
+import type { PlayerContract } from '@/domain/contract'
+import type { PlayerId } from '@/domain/ids'
+import type { Team } from '@/domain/team'
 import { assessClubNeeds, assessContractReviewOutlook } from '@/engine/clubNeeds'
 import { recordContractReviewDecision } from './ContractReviewService'
 
 function reviewFixture() {
-  const base = createNewGame()
-  const team = Object.values(base.teams).find((candidate) => candidate.coachId === base.userCoachId)!
-  const playerId = team.rosterPlayerIds[0]!
-  const position = base.players[playerId]!.basketball.primaryPosition
-  const contract = createPlayerContract({ id: contractIdFromString(`bs11b-review:${team.id}`), teamId: team.id, playerId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: addDays(base.currentDate, 120) }, compensation: { annualSalary: 1_000_000 } })
-  const lineup = base.lineupsByTeamId[team.id]!
-  const world = updateGameWorld(base, {
-    contracts: [...Object.values(base.contractsById).filter((item) => item.playerId !== playerId), contract],
-    lineupsByTeamId: { ...base.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+  // The scenario contract replaces the generated one before Finance activates, so Finance materializes this exact career.
+  let team!: Team
+  let playerId!: PlayerId
+  let contract!: PlayerContract
+  const world = createNewGameScenario((base) => {
+    team = Object.values(base.teams).find((candidate) => candidate.coachId === base.userCoachId)!
+    playerId = team.rosterPlayerIds[0]!
+    const position = base.players[playerId]!.basketball.primaryPosition
+    contract = createPlayerContract({ id: contractIdFromString(`bs11b-review:${team.id}`), teamId: team.id, playerId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: addDays(base.currentDate, 120) }, compensation: { annualSalary: 1_000_000 } })
+    const lineup = base.lineupsByTeamId[team.id]!
+    return updateGameWorld(base, {
+      contracts: [...Object.values(base.contractsById).filter((item) => item.playerId !== playerId), contract],
+      lineupsByTeamId: { ...base.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+    })
   })
-  return { world, team, playerId, contract }
+  return { world, team: world.teams[team.id]!, playerId, contract: world.contractsById[contract.id]! }
 }
 
 describe('contract review decisions', () => {

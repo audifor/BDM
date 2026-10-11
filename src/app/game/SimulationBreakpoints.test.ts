@@ -1,3 +1,4 @@
+import type { Team } from '@/domain/team'
 import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
@@ -20,7 +21,7 @@ import { continueGame, getContinueStopReason } from './ContinueFlow'
 import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 import { openRetentionNegotiation, submitRetentionOffer } from '@/engine/contractRetention/ContractRetentionEngine'
 import { simulateUntilDate } from './simulateUntilDate'
-import { withShortGameFormat } from './testFixtures'
+import { createNewGameScenario, withShortGameFormat } from './testFixtures'
 
 // ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
 const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
@@ -47,19 +48,22 @@ describe('simulation breakpoints', () => {
   })
 
   it('surfaces one nonblocking contract review notice when an unresolved expiry enters the BS9 horizon', () => {
-    const base = createNewGame()
-    const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
-    const playerId = userTeam.rosterPlayerIds[0]!
-    const position = base.players[playerId]!.basketball.primaryPosition
-    const expiry = addDays(base.currentDate, 365)
-    const replacement = createPlayerContract({ id: contractIdFromString(`breakpoint-review:${userTeam.id}`), teamId: userTeam.id, playerId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: expiry }, compensation: { annualSalary: 1_000_000 } })
-    const lineup = base.lineupsByTeamId[userTeam.id]!
-    const world = updateGameWorld(base, {
-      contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), replacement],
-      lineupsByTeamId: { ...base.lineupsByTeamId, [userTeam.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
-      games: [],
-    })
-
+    // The replacement contract is shaped before Finance activates, so Finance materializes it instead of seeing a recognized contract vanish.
+    let userTeam!: Team
+    const world = withShortGameFormat(createNewGameScenario((base) => {
+      userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+      const playerId = userTeam.rosterPlayerIds[0]!
+      const position = base.players[playerId]!.basketball.primaryPosition
+      const expiry = addDays(base.currentDate, 365)
+      const replacement = createPlayerContract({ id: contractIdFromString(`breakpoint-review:${userTeam.id}`), teamId: userTeam.id, playerId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: expiry }, compensation: { annualSalary: 1_000_000 } })
+      const lineup = base.lineupsByTeamId[userTeam.id]!
+      return updateGameWorld(base, {
+        contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), replacement],
+        lineupsByTeamId: { ...base.lineupsByTeamId, [userTeam.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+        games: [],
+      })
+    }))
+    const base = world
     const crossing = evaluateSimulationBreakpoints(world)
     expect(crossing.candidates).toContainEqual(expect.objectContaining({
       level: 'IMPORTANT', reason: 'contractReviewHorizon', sourceKind: 'USER_CONTRACT_REVIEW', route: 'contracts',

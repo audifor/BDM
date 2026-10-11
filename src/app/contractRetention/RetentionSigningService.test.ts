@@ -5,7 +5,7 @@ import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/
 import { getPlayerContractStatus } from '@/domain/contract'
 import { addYears } from '@/domain/date'
 import { getContractFinancialSchedule, SUPPORTED_CURRENCY_MINOR_UNITS_PER_MAJOR_UNIT } from '@/domain/finance'
-import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
@@ -54,7 +54,7 @@ function fixture(extraTerms: Partial<RetentionTermSet> = {}) {
   // Binding a retention successor reserves canonical capacity, so the club must hold real canonical
   // liquidity and authorization instead of a legacy payroll pool (BS16M-A/BS16M-B1).
   const financed = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(world, team.id, { currencyCode: 'EUR', cashMinorUnits: 5_000_000_000 }),
+    financingDrawdownForTest(world, team.id, 5_000_000_000),
     team.id,
     { currencyCode: 'EUR', playerSalaryMinorUnits: 500_000_000_000, staffSalaryMinorUnits: 0 },
   )

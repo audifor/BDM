@@ -11,13 +11,15 @@ import { contractIdFromString, injuryIdFromString, type PlayerId, type TeamId } 
 import { createClubStrategicState } from '@/domain/clubStrategy'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { BasketballPosition } from '@/domain/primitives'
-import { createNewGame } from '@/app/game'
+import { activateNewGameFinance, createNewGameBeforeFinance } from '@/app/game'
 import { calculatePlayerImpact } from '@/engine/team'
 import { assessClubNeeds, type ClubNeedKind } from './ClubNeedsEngine'
 
 describe('Club needs assessment', () => {
+  // Contract scenarios are shaped on the pre-Finance career and then activated, so Finance materializes the scenario's contracts.
+  let preFinance: GameWorld
   let base: GameWorld
-  beforeAll(() => { base = createNewGame() }, 120_000)
+  beforeAll(() => { preFinance = createNewGameBeforeFinance(); base = activateNewGameFinance(preFinance) }, 120_000)
 
   it('uses one derived engine for user and AI clubs without changing game state', () => {
     const ai = Object.values(base.teams).find((team) => team.coachId !== undefined && team.coachId !== base.userCoachId)!
@@ -88,7 +90,7 @@ describe('Club needs assessment', () => {
     expect(ids.length).toBeGreaterThanOrEqual(3)
     const contracts = ids.slice(0, 3).map((playerId, index) => createPlayerContract({ id: contractIdFromString(`club-needs-contract:${team.id}:${index}`), playerId, teamId: team.id, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: addDays(base.currentDate, 60 + index) }, compensation: { annualSalary: 1_000_000 } }))
     const replacedPlayerIds = new Set(contracts.map((contract) => contract.playerId))
-    const world = updateGameWorld(base, { contracts: [...Object.values(base.contractsById).filter((contract) => !replacedPlayerIds.has(contract.playerId)), ...contracts] })
+    const world = activateNewGameFinance(updateGameWorld(preFinance, { contracts: [...Object.values(base.contractsById).filter((contract) => !replacedPlayerIds.has(contract.playerId)), ...contracts] }))
     const result = assessClubNeeds(world, team.id)
     expect(result.needs.filter((need) => need.kind === 'CONTRACT_CONTINUITY').length).toBeGreaterThanOrEqual(3)
     expect(findNeed(result.needs, 'CONTRACT_CLUSTER')?.deadline).toBe(addDays(base.currentDate, 60))
@@ -101,7 +103,7 @@ describe('Club needs assessment', () => {
     const expiresOn = addDays(base.currentDate, 60)
     const contract = createPlayerContract({ id: contractIdFromString(`club-needs-successor:${team.id}`), playerId, teamId: team.id, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn }, compensation: { annualSalary: 1_000_000 } })
     const successor = createPlayerContract({ id: contractIdFromString(`club-needs-successor-next:${team.id}`), playerId, teamId: team.id, kind: 'standard', term: { startsOn: expiresOn, expiresOn: addDays(expiresOn, 365) }, compensation: { annualSalary: 1_000_000 } })
-    const world = updateGameWorld(base, { contracts: [...Object.values(base.contractsById).filter((candidate) => candidate.playerId !== playerId), contract, successor] })
+    const world = activateNewGameFinance(updateGameWorld(preFinance, { contracts: [...Object.values(base.contractsById).filter((candidate) => candidate.playerId !== playerId), contract, successor] }))
     const assessment = assessClubNeeds(world, team.id)
     expect(assessment.needs.some((need) => need.kind === 'CONTRACT_CONTINUITY' && need.relatedPlayerIds.includes(playerId))).toBe(false)
     expect(assessment.contractRosterPlanning.currentRosterCount).toBe(team.rosterPlayerIds.length)
@@ -118,7 +120,7 @@ describe('Club needs assessment', () => {
     const teamRoster = new Set(base.teams[teamId]!.rosterPlayerIds)
     const incomingPlayerId = Object.values(base.teams).find((team) => team.id !== teamId && team.rosterPlayerIds.some((id) => !teamRoster.has(id)))!.rosterPlayerIds.find((id) => !teamRoster.has(id))!
     const arrival = createPlayerContract({ id: contractIdFromString(`club-needs-arrival:${teamId}`), playerId: incomingPlayerId, teamId, kind: 'standard', term: { startsOn: addDays(base.currentDate, 2), expiresOn: addDays(season.endDate, 1) }, compensation: { annualSalary: 1_000_000 } })
-    const world = updateGameWorld(base, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== incomingPlayerId), arrival] })
+    const world = activateNewGameFinance(updateGameWorld(preFinance, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== incomingPlayerId), arrival] }))
     const projection = assessClubNeeds(world, teamId).contractRosterPlanning
     const seasonHorizon = projection.horizons.find((horizon) => horizon.seasonId === season.id && horizon.kind === 'SEASON_END')!
     expect(seasonHorizon.contractuallyRetainedPlayerIds).toContain(incomingPlayerId)
@@ -133,13 +135,13 @@ describe('Club needs assessment', () => {
     const teamId = (season.participantTeamIds ?? base.competitions[season.competitionId]!.participantTeamIds).find((id) => base.teams[id]?.coachId !== undefined)!
     const playerId = bestAt(base, teamId, 'PG')!
     const expiresAtSeasonEnd = createPlayerContract({ id: contractIdFromString(`club-needs-expires-at-season-end:${teamId}`), playerId, teamId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: season.endDate }, compensation: { annualSalary: 1_000_000 } })
-    const world = updateGameWorld(base, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), expiresAtSeasonEnd] })
+    const world = activateNewGameFinance(updateGameWorld(preFinance, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), expiresAtSeasonEnd] }))
     const seasonHorizon = assessClubNeeds(world, teamId).contractRosterPlanning.horizons.find((horizon) => horizon.kind === 'SEASON_END' && horizon.seasonId === season.id)!
     expect(seasonHorizon.unresolvedExpiries.find((expiry) => expiry.contractId === expiresAtSeasonEnd.id)?.annualSalaryAtExpiry).toBe(1_000_000)
     expect(seasonHorizon.contractuallyRetainedPlayerIds).not.toContain(playerId)
 
     const alreadyExpired = createPlayerContract({ id: contractIdFromString(`club-needs-already-expired:${teamId}`), playerId, teamId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -60), expiresOn: base.currentDate }, compensation: { annualSalary: 1_000_000 } })
-    const expiredWorld = updateGameWorld(base, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), alreadyExpired] })
+    const expiredWorld = activateNewGameFinance(updateGameWorld(preFinance, { contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), alreadyExpired] }))
     const expiredProjection = assessClubNeeds(expiredWorld, teamId).contractRosterPlanning
     expect(expiredProjection.horizons.flatMap((horizon) => horizon.contractuallyRetainedPlayerIds)).not.toContain(playerId)
     expect(expiredProjection.horizons.flatMap((horizon) => horizon.unresolvedExpiries).some((expiry) => expiry.contractId === alreadyExpired.id)).toBe(false)

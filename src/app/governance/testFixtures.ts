@@ -1,4 +1,5 @@
-import { createNewGame } from '@/app/game'
+import { activateNewGameFinance, createNewGameBeforeFinance } from '@/app/game'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { addDays, parseGameDate, type GameDate } from '@/domain/date'
 import { createGovernanceDecision, createGovernanceDecisionEvent, createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance'
 import type { ContractNegotiation } from '@/domain/market'
@@ -72,7 +73,10 @@ function userAppointments(coachId: string, on: GameDate) {
 }
 
 export function createGovernanceClubScenario(): GovernanceClubScenario {
-  const base = createNewGame()
+  // The released contract, roster and Governance graph are shaped before Finance activates, so canonical Finance materializes
+  // this exact club. The club then receives real canonical capacity: an approved salary authorization and an executed financing
+  // drawdown (a legacy payroll pool is not an economic authority).
+  const base = createNewGameBeforeFinance()
   const team = getUserTeam(base)!
   const player = base.players[team.rosterPlayerIds[0]!]!
   const contract = Object.values(base.contractsById).find((item) => item.playerId === player.id)!
@@ -88,17 +92,17 @@ export function createGovernanceClubScenario(): GovernanceClubScenario {
     years: 2,
     round: 1,
   }
-  const world = updateGameWorld(base, {
+  const shaped = updateGameWorld(base, {
     negotiations: [negotiation],
     contracts: Object.values(base.contractsById).map((item) => item.id === contract.id ? { ...item, termination: { terminatedOn: base.currentDate, reason: 'released' as const } } : item),
     teams: Object.values(base.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== player.id) } : item),
     lineupsByTeamId: Object.fromEntries(Object.entries(base.lineupsByTeamId).map(([id, lineup]) => [id, clearPlayerFromLineup(lineup, player.id)])),
-    teamFinances: Object.values(base.teamFinancesByTeamId).map((finances) => finances.teamId === team.id ? { ...finances, playerSalaryBudget: 1_000_000_000 } : finances),
     governanceInstitutions: [{ id: INSTITUTION, universe: 'PROFESSIONAL_CLUB' as const, name: 'MX0.7 Club', teamIds: [team.id] }],
     governanceAppointments: userAppointments(base.userCoachId, base.currentDate),
     ...clubGovernanceGraph(),
   })
-  return { world, team, teamId: team.id, institutionId: INSTITUTION, negotiation, playerId: player.id, ownerBodyId: OWNER_BODY, executiveBodyId: EXECUTIVE_BODY, boardBodyId: BOARD_BODY }
+  const world = authorizeTeamSalaryForTest(financingDrawdownForTest(activateNewGameFinance(shaped), team.id, 10_000_000_000, 'mx07'), team.id, { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 })
+  return { world, team: world.teams[team.id]!, teamId: team.id, institutionId: INSTITUTION, negotiation, playerId: player.id, ownerBodyId: OWNER_BODY, executiveBodyId: EXECUTIVE_BODY, boardBodyId: BOARD_BODY }
 }
 
 /** Real canonical proposal: `startUserPlayerContractSigning` creates the club's signing decision. */

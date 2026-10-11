@@ -17,6 +17,7 @@ import { createAcbTestGame as createFullAcbTestGame } from './createAcbTestGame'
 import { advanceGameDay } from './advanceGameDay'
 import { continueGame } from './ContinueFlow'
 import { withShortGameFormat } from './testFixtures'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 
 // ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
 const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
@@ -74,7 +75,10 @@ describe('createAcbTestGame', () => {
   })
 
   it('uses canonical hiring, firing and save/load for an ACB free agent', () => {
-    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    // The bare ACB career carries no opening balance (no source exists); hiring is decided by canonical Finance, so the club
+    // receives real liquidity through an executed financing drawdown before it hires.
+    const created = createAcbTestGame({ userTeamKey: 'caz' })
+    const world = financingDrawdownForTest(created, getUserTeam(created)!.id, 1_000_000_000)
     const candidate = listFreeAgentStaff(world, 'assistantCoach')[0]!
     const opening = createStaffJobOpeningForTeam(world, { teamId: getUserTeam(world)!.id, roleId: 'assistantCoach' })
     const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId: candidate })

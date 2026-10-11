@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { createOrganizationFinancialProfile } from '@/domain/finance'
 import { provisionOrganizationFinanceFoundation } from '@/domain/finance'
-import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { addDays, addYears } from '@/domain/date'
 import { contractIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
@@ -25,7 +25,7 @@ function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?:
   const provisioned = options.funded === false
     ? provisionOrganizationFinanceFoundation(base, team.organizationId, { currencyCode: 'EUR' })
     : authorizeTeamSalaryForTest(
-      fundTeamWithOpeningCapital(base, team.id, { currencyCode: 'EUR', cashMinorUnits: 10_000_000_000 }),
+      financingDrawdownForTest(base, team.id, 10_000_000_000),
       team.id,
       { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 10_000_000_000 },
     )

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game/createNewGame'
-import { authorizeTeamSalaryForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { activateNewGameFinance, createNewGame, createNewGameBeforeFinance } from '@/app/game/createNewGame'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { addYears } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -25,20 +25,20 @@ const ROLE_FOR_KIND: Record<Kind, string> = {
  * the user's team with an advisory holder for `kind`.
  */
 function fixture(kind: Kind, attributes: Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number> = highAttributes, staffSuffix: string = kind) {
-  const base = createNewGame()
+  const base = createNewGameBeforeFinance()
   const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
   const source = Object.values(base.teams).find((item) => item.id !== team.id && item.rosterPlayerIds.length > 5)!
   const playerId = source.rosterPlayerIds[0]!
   const org = organizationIdForTeam(team.id)
   const staffId = staffPersonIdFromString(`ops:${staffSuffix}`)
-  const market = updateGameWorld(base, {
+  const market = activateNewGameFinance(updateGameWorld(base, {
     teams: Object.values(base.teams).map((item) => item.id === source.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== playerId) } : item),
     contracts: Object.values(base.contractsById).filter((item) => item.playerId !== playerId),
-  })
+  }))
   const financed = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(market, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    financingDrawdownForTest(market, team.id, 10_000_000_000),
     team.id,
-    { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+    { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
   )
   const withStaff = updateGameWorld(financed, {
     staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Ops', lastName: 'Staff' }, professional: { attributes } }],
@@ -176,7 +176,7 @@ describe('BasketballOperationsAdvisory', () => {
     // globally top-ranked candidate here is NOT_FOR_SALE (ineligible), but a second, fully-valid
     // candidate exists lower in the need/value ranking, and must still be found and recommended.
     it('finds and uses a valid lower-ranked candidate when the top-ranked candidate is ineligible (NOT_FOR_SALE)', () => {
-      const base = createNewGame()
+      const base = createNewGameBeforeFinance()
       const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
       const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 5).slice(0, 2)
       if (donors.length < 2) return
@@ -184,14 +184,14 @@ describe('BasketballOperationsAdvisory', () => {
       const fallback = donors[1]!.rosterPlayerIds[0]!
       const org = organizationIdForTeam(team.id)
       const staffId = staffPersonIdFromString('ops:eligibility-fallback')
-      const market = updateGameWorld(base, {
+      const market = activateNewGameFinance(updateGameWorld(base, {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== topRanked && id !== fallback) } : item),
         contracts: Object.values(base.contractsById).filter((item) => item.playerId !== topRanked && item.playerId !== fallback),
-      })
+      }))
       const financed = authorizeTeamSalaryForTest(
-        fundTeamWithOpeningCapital(market, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+        financingDrawdownForTest(market, team.id, 10_000_000_000),
         team.id,
-        { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
+        { currencyCode: 'EUR', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
       )
       const withStaff = updateGameWorld(financed, {
         staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Eligibility', lastName: 'Fallback' }, professional: { attributes: highAttributes } }],
@@ -229,7 +229,7 @@ describe('BasketballOperationsAdvisory', () => {
     })
 
     it('roster needs materially affect candidate ranking: a position with a strong need ranks its candidate ahead of an equally/more valuable saturated-position candidate', () => {
-      const base = createNewGame()
+      const base = createNewGameBeforeFinance()
       const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
       // Free two candidates from different rival teams at different positions.
       const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 5).slice(0, 2)
@@ -239,10 +239,10 @@ describe('BasketballOperationsAdvisory', () => {
       const positionA = base.players[candidateA]!.basketball.primaryPosition
       const positionB = base.players[candidateB]!.basketball.primaryPosition
       if (positionA === positionB) return
-      const market = updateGameWorld(base, {
+      const market = activateNewGameFinance(updateGameWorld(base, {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== candidateA && id !== candidateB) } : item),
         contracts: Object.values(base.contractsById).filter((item) => item.playerId !== candidateA && item.playerId !== candidateB),
-      })
+      }))
       const org = organizationIdForTeam(team.id)
       const staffId = staffPersonIdFromString('ops:need-test')
       // Saturate positionA on the user's roster (need = 0), leave positionB scarce (need > 0).
@@ -325,16 +325,16 @@ describe('BasketballOperationsAdvisory', () => {
 
     // Blocker 4: shortlist must be a bounded SHORTLIST, not one playerId.
     it('includes more than one candidate when enough valid candidates exist', () => {
-      const base = createNewGame()
+      const base = createNewGameBeforeFinance()
       const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
       const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 3).slice(0, 5)
       const candidates = donors.map((donor) => donor.rosterPlayerIds[0]!)
       const org = organizationIdForTeam(team.id)
       const staffId = staffPersonIdFromString('ops:shortlist-many')
-      const market = updateGameWorld(base, {
+      const market = activateNewGameFinance(updateGameWorld(base, {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => !candidates.includes(id)) } : item),
         contracts: Object.values(base.contractsById).filter((item) => !candidates.includes(item.playerId)),
-      })
+      }))
       const withStaff = updateGameWorld(market, {
         staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Shortlist', lastName: 'Many' }, professional: { attributes: highAttributes } }],
         teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:shortlist-many'), staffPersonId: staffId, teamId: team.id, role: 'analyticsStaff' as never, assignedOn: market.currentDate }],
@@ -349,16 +349,16 @@ describe('BasketballOperationsAdvisory', () => {
     })
 
     it('never exceeds the bounded maximum shortlist depth', () => {
-      const base = createNewGame()
+      const base = createNewGameBeforeFinance()
       const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
       const donors = Object.values(base.teams).filter((item) => item.id !== team.id)
       const candidates = donors.flatMap((donor) => donor.rosterPlayerIds).slice(0, 20)
       const org = organizationIdForTeam(team.id)
       const staffId = staffPersonIdFromString('ops:shortlist-max')
-      const market = updateGameWorld(base, {
+      const market = activateNewGameFinance(updateGameWorld(base, {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => !candidates.includes(id)) } : item),
         contracts: Object.values(base.contractsById).filter((item) => !candidates.includes(item.playerId)),
-      })
+      }))
       const withStaff = updateGameWorld(market, {
         staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Shortlist', lastName: 'Max' }, professional: { attributes: lowAttributes } }],
         teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:shortlist-max'), staffPersonId: staffId, teamId: team.id, role: 'analyticsStaff' as never, assignedOn: market.currentDate }],
@@ -382,7 +382,7 @@ describe('BasketballOperationsAdvisory', () => {
     })
 
     it('roster need changes shortlist ranking (mirrors recommendSignings need test)', () => {
-      const base = createNewGame()
+      const base = createNewGameBeforeFinance()
       const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
       const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 5).slice(0, 2)
       if (donors.length < 2) return
@@ -391,10 +391,10 @@ describe('BasketballOperationsAdvisory', () => {
       const positionA = base.players[candidateA]!.basketball.primaryPosition
       const positionB = base.players[candidateB]!.basketball.primaryPosition
       if (positionA === positionB) return
-      const market = updateGameWorld(base, {
+      const market = activateNewGameFinance(updateGameWorld(base, {
         teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== candidateA && id !== candidateB) } : item),
         contracts: Object.values(base.contractsById).filter((item) => item.playerId !== candidateA && item.playerId !== candidateB),
-      })
+      }))
       const org = organizationIdForTeam(team.id)
       const staffId = staffPersonIdFromString('ops:shortlist-need-test')
       const saturated = updateGameWorld(market, {

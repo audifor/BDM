@@ -3,6 +3,9 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { createNewGameScenario } from '@/app/game/testFixtures'
+import type { Team } from '@/domain/team'
+import type { PlayerId } from '@/domain/ids'
 import { addDays } from '@/domain/date'
 import { createPlayerContract } from '@/domain/contract'
 import { contractIdFromString } from '@/domain/ids'
@@ -25,16 +28,22 @@ function preparedAiWorld() {
 
 describe('ClubStrategyScreen', () => {
   it('exposes review intent only for the user club when an explicit command is supplied', () => {
-    const initial = createNewGame()
-    const team = Object.values(initial.teams).find((candidate) => candidate.coachId === initial.userCoachId)!
-    const playerId = team.rosterPlayerIds[0]!
-    const position = initial.players[playerId]!.basketball.primaryPosition
-    const contract = createPlayerContract({ id: contractIdFromString(`screen-review:${team.id}`), teamId: team.id, playerId, kind: 'standard', term: { startsOn: addDays(initial.currentDate, -30), expiresOn: addDays(initial.currentDate, 120) }, compensation: { annualSalary: 1_000_000 } })
-    const lineup = initial.lineupsByTeamId[team.id]!
-    const world = updateGameWorld(initial, {
-      contracts: [...Object.values(initial.contractsById).filter((item) => item.playerId !== playerId), contract],
-      lineupsByTeamId: { ...initial.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+    // The review contract is shaped before Finance activates, so Finance materializes it instead of seeing a recognized contract vanish.
+    let team!: Team
+    let playerId!: PlayerId
+    let contract!: ReturnType<typeof createPlayerContract>
+    const world = createNewGameScenario((initial) => {
+      team = Object.values(initial.teams).find((candidate) => candidate.coachId === initial.userCoachId)!
+      playerId = team.rosterPlayerIds[0]!
+      const position = initial.players[playerId]!.basketball.primaryPosition
+      contract = createPlayerContract({ id: contractIdFromString(`screen-review:${team.id}`), teamId: team.id, playerId: playerId, kind: 'standard', term: { startsOn: addDays(initial.currentDate, -30), expiresOn: addDays(initial.currentDate, 120) }, compensation: { annualSalary: 1_000_000 } })
+      const lineup = initial.lineupsByTeamId[team.id]!
+      return updateGameWorld(initial, {
+        contracts: [...Object.values(initial.contractsById).filter((item) => item.playerId !== playerId), contract],
+        lineupsByTeamId: { ...initial.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+      })
     })
+    const initial = world
     const onDecideContractReview = vi.fn()
     render(<ClubStrategyScreen world={world} onDecideContractReview={onDecideContractReview} />)
     const article = screen.getByRole('article', { name: `${team.name} ${team.gender} strategy` })

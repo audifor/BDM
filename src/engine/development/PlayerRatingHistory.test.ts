@@ -95,7 +95,16 @@ describe('applyOffseasonDevelopment rating history', () => {
       expect(history[0]!.stimulusByRating).toBeDefined()
       const before = legacyCanonicalRatingSignals(world.players[playerId]!.basketball.ratings)
       const after = legacyCanonicalRatingSignals(result.world.players[playerId]!.basketball.ratings)
-      expect(Object.keys(history[0]!.deltas).some((key) => before[key as keyof typeof before] !== after[key as keyof typeof after]) || Object.keys(history[0]!.truthDeltas!).length === 0).toBe(true)
+      // The recorded canonical deltas are exactly the projection's movement (a small truth change can leave the rounded
+      // projection unchanged, so an empty `deltas` with non-empty `truthDeltas` is legitimate), and every recorded truth change
+      // matches the persisted ratings before and after the checkpoint.
+      const projected = Object.fromEntries(CANONICAL_RATING_KEYS.filter((key) => after[key] !== before[key]).map((key) => [key, after[key] - before[key]]))
+      expect(history[0]!.deltas).toEqual(projected)
+      const truthBefore = world.players[playerId]!.basketball.ratings
+      const truthAfter = result.world.players[playerId]!.basketball.ratings
+      const changedTruth = PLAYER_TRUTH_RATING_KEYS.filter((key) => truthAfter[key] !== truthBefore[key])
+      expect(Object.keys(history[0]!.truthDeltas!).sort()).toEqual([...changedTruth].sort())
+      for (const key of changedTruth) expect(history[0]!.truthDeltas![key]).toEqual({ before: truthBefore[key], after: truthAfter[key], delta: truthAfter[key] - truthBefore[key] })
     }
   })
 })

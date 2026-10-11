@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString, type TeamId } from '@/domain/ids'
 import { createStaffPoliticalAlliance, createStaffPoliticalFaction, staffPoliticalActionIdFor, staffPoliticalAllianceIdFor, staffPoliticalFactionIdFor } from '@/domain/staffPolitics'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -22,8 +23,10 @@ type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], 
 const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as StaffAttributes
 
 function worldWithHiredStaff() {
-  const base = createNewGame()
-  const teamId = Object.values(base.teams)[0]!.id
+  const created = createNewGame()
+  const teamId = Object.values(created.teams)[0]!.id
+  // Hiring is decided by canonical Finance: the hiring club gets real liquidity through an executed financing drawdown.
+  const base = financingDrawdownForTest(created, teamId, 1_000_000_000)
   const staffId = staffPersonIdFromString('v3-hired-staff')
   const withPerson = updateGameWorld(base, { staffPeople: [...Object.values(base.staffPeopleById), { id: staffId, identity: { firstName: 'Vee', lastName: 'Three' }, professional: { attributes: flatAttributes } }] })
   const withReputation = updateGameWorld(withPerson, { staffReputationProfilesByStaffId: { ...withPerson.staffReputationProfilesByStaffId, [staffId]: createDefaultStaffReputationProfile() } })

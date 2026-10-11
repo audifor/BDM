@@ -8,7 +8,7 @@ import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
 import type { GameWorld } from '@/domain/world'
-import { fundTeamWithOpeningCapital, authorizeTeamSalaryForTest } from '@/domain/finance/financeTestFixture'
+import { financingDrawdownForTest, authorizeTeamSalaryForTest } from '@/domain/finance/financeTestFixture'
 import { formalOfferCounterSignalId, initializeMarketAgents, openNegotiation, progressFormalOfferResponses, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
 /**
@@ -18,7 +18,7 @@ import { formalOfferCounterSignalId, initializeMarketAgents, openNegotiation, pr
 function fundedGame(): GameWorld {
   let world = createNewGame()
   for (const team of Object.values(world.teams).slice(0, 5)) {
-    world = fundTeamWithOpeningCapital(world, team.id, { currencyCode: 'USD', cashMinorUnits: 500_000_000 })
+    world = financingDrawdownForTest(world, team.id, 500_000_000)
   }
   return world
 }
@@ -187,7 +187,7 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     expect(rejected.negotiationsById[setup.contact.id]).toMatchObject({status:'REJECTED',playerResponse:{outcome:'REJECTED',origin:'PLAYER'}})
     expect(rejected.marketSignalsById).toEqual(due.marketSignalsById)
 
-    const funded=authorizeTeamSalaryForTest(fundTeamWithOpeningCapital(opened,setup.team.id,{currencyCode:'USD',cashMinorUnits:500_000_000}),setup.team.id,{currencyCode:'USD',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
+    const funded=authorizeTeamSalaryForTest(financingDrawdownForTest(opened, setup.team.id, 500_000_000, 'signing'),setup.team.id,{currencyCode: 'EUR',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
     const signed=signFreeAgent(funded,setup.team.id,setup.playerId)
     const stale=updateGameWorld(signed,{currentDate:addDays(signed.currentDate,1)})
     const closed=progressFormalOfferResponses(stale)
@@ -203,7 +203,7 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     expect(()=>openNegotiation(pending,openInput(setup))).toThrow(/positive current contact/)
     const refused=updateGameWorld(setup.world,{negotiations:[{...setup.contact,status:'CLOSED',contactResponse:{...setup.contact.contactResponse!,outcome:'NOT_INTERESTED'}} as ContractNegotiation]})
     expect(()=>openNegotiation(refused,openInput(setup))).toThrow(/opening key.*already in use/)
-    const funded=authorizeTeamSalaryForTest(fundTeamWithOpeningCapital(setup.world,setup.team.id,{currencyCode:'USD',cashMinorUnits:500_000_000}),setup.team.id,{currencyCode:'USD',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
+    const funded=authorizeTeamSalaryForTest(financingDrawdownForTest(setup.world, setup.team.id, 500_000_000, 'signing'),setup.team.id,{currencyCode: 'EUR',playerSalaryMinorUnits:2_000_000_000,staffSalaryMinorUnits:1_000_000_000})
     const signed=signFreeAgent(funded,setup.team.id,setup.playerId)
     expect(()=>openNegotiation(signed,openInput(setup))).toThrow(/no longer a free agent/)
     expect(()=>openNegotiation(setup.world,{...openInput(setup),offerResponsibleActor:{kind:'ORGANIZATION'}})).toThrow(/not authorized/)

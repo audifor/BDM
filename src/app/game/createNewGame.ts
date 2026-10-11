@@ -36,8 +36,21 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
   startDate: createGameDate(2032, 10, 1),
 } as const
 
+export type NewGameOptions = { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number; readonly gameBalance?: BdmGameBalancePreset }
+
 /** Creates the fixed, deterministic career used by the first playable prototype. */
-export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset; readonly seed?: number; readonly gameBalance?: BdmGameBalancePreset } = {}): GameWorld {
+export function createNewGame(options: NewGameOptions = {}): GameWorld {
+  return activateNewGameFinance(createNewGameBeforeFinance(options), options)
+}
+
+/**
+ * The generated prototype career before canonical Finance is activated: the sporting world, its contracts, rosters and
+ * planning, with no Finance foundation, authorization or recognized payroll yet. `createNewGame` is exactly
+ * `activateNewGameFinance(createNewGameBeforeFinance(options), options)`; the split lets a caller (tests building a contract
+ * scenario) shape the sporting world first and have Finance materialize that world canonically, instead of rewriting
+ * contracts whose payroll Finance has already recognized.
+ */
+export function createNewGameBeforeFinance(options: NewGameOptions = {}): GameWorld {
   const men = createSingleNewGame(options, 'male')
   const women = namespaceWorld(createSingleNewGame(options.seed === undefined ? {} : { seed: options.seed }, 'female'), 'women-')
   let world = progressAnnualTalentSupply(mergeIndependentWorlds(men, women))
@@ -54,7 +67,11 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     ...cycle,
     institutionalSigningPolicies: Object.values(world.competitions).filter(competition => competition.ecosystemId === cycle.ecosystemId).flatMap(competition => competition.participantTeamIds.map(programTeamId => ({ programTeamId, seasonId: cycle.sourceSeasonId, finalAidSigningDate: cycle.closesOn, provenance: 'INSTITUTIONAL_POLICY' as const }))),
   })) })
-  const planned = initializeAiClubManagementPlanning(ensureInstitutionBenefitsCaps(world))
+  return initializeAiClubManagementPlanning(ensureInstitutionBenefitsCaps(world))
+}
+
+/** Activates canonical Finance (foundation, opening state, current-period authorization) on a pre-Finance career. */
+export function activateNewGameFinance(planned: GameWorld, options: NewGameOptions = {}): GameWorld {
   const explicitCurrencies = prototypeOrganizationCurrencyAuthorities(planned)
   // BDM_GAME_BALANCE_V1 (opt-in): no source in the shipped data carries an opening balance, so the preset supplies a
   // labeled-simulated opening treasury through Finance's own opening-state authority, at activation time.

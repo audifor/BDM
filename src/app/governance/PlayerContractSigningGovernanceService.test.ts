@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { completeAcceptedFreeAgentSigning } from '@/app/marketIntelligence/FreeAgentSigningService'
 import { createNewGame } from '@/app/game'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { clearPlayerFromLineup } from '@/domain/tactics'
@@ -49,10 +49,12 @@ function fixture(kind: 'USER' | 'AI' = 'USER', options: { readonly status?: 'ACC
     { id: `appointment:${kind}:approver`, bodyId: 'body:board', actor: { kind: 'STAFF' as const, id: approverStaffId }, role: 'BOARD_MEMBER' as const, startedOn: base.currentDate },
   ]
   const assignmentId = teamStaffAssignmentIdFromString(`assignment:bs10d-h:${kind.toLowerCase()}:proposer`)
+  // Canonical capacity in the prototype currency (EUR): an executed financing drawdown (the career's opening state is already
+  // settled, so a second opening-capital fact is not applied) and an approved salary authorization.
   const financed = authorizeTeamSalaryForTest(
-    fundTeamWithOpeningCapital(base, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
+    financingDrawdownForTest(base, team.id, 10_000_000_000),
     team.id,
-    { currencyCode: 'USD', playerSalaryMinorUnits: options.playerSalaryMinorUnits ?? 200_000_000_000, staffSalaryMinorUnits: 10_000_000_000 },
+    { currencyCode: 'EUR', playerSalaryMinorUnits: options.playerSalaryMinorUnits ?? 200_000_000_000, staffSalaryMinorUnits: 10_000_000_000 },
   )
   const world = updateGameWorld(financed, {
     negotiations: [negotiation],

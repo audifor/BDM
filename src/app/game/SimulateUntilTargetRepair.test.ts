@@ -3,6 +3,7 @@ import { addDays } from '@/domain/date'
 import { createInjury } from '@/domain/injury'
 import { injuryIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { releasePlayer } from '@/app/market/MarketService'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
@@ -20,8 +21,10 @@ it('repairs the target-date match using legal existing talent before drawing its
   world = updateGameWorld(world, {
     games: Object.values(world.games).map(item => item.id === game.id ? { ...item, date: target } : item.date === world.currentDate ? { ...item, date: addDays(target, 3) } : item),
     injuries: [createInjury({ id: injuryIdFromString('injury:target-date-repair'), playerId: team.rosterPlayerIds[0]!, kind: 'ankleSprain', severity: 'minor', injuredOn: world.currentDate, expectedReturnDate: addDays(target, 7) })],
-    teamFinances: Object.values(world.teamFinancesByTeamId).map(item => item.teamId === team.id ? { ...item, playerSalaryBudget: 100_000_000 } : item),
   })
+  // The repair signs existing legal talent under canonical Finance, so the short-handed club receives real liquidity through an
+  // executed financing drawdown (a legacy payroll pool is not an economic authority).
+  world = financingDrawdownForTest(world, team.id, 1_000_000_000)
   const before = JSON.stringify(world)
   const morning = advanceGameDay(world, () => 15015)
   expect(getAvailablePlayersForCompetition(morning, team.id, game.competitionId, game.seasonId, target)).toHaveLength(4)

@@ -8,6 +8,7 @@ import { createFinancialAccount, createFinancialTransaction } from '@/domain/fin
 import { createPayable } from '@/domain/finance/Treasury'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { assessClubStrategy, reviewClubStrategy } from './ClubStrategyEngine'
+import { financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
 
 describe('Club strategy', () => {
   let base: GameWorld
@@ -41,7 +42,8 @@ describe('Club strategy', () => {
   it('favors development for a young underperforming team, while strong Governance pressure shifts the candidate toward competition', () => {
     const team = Object.values(base.teams).find((candidate) => candidate.coachId !== undefined && candidate.coachId !== base.userCoachId && candidate.rosterPlayerIds.length >= 5)!
     const season = Object.values(base.seasons).find((candidate) => candidate.startDate <= base.currentDate && candidate.endDate >= base.currentDate && (candidate.participantTeamIds ?? base.competitions[candidate.competitionId]!.participantTeamIds).includes(team.id))!
-    const youngAndUnderperforming = youngLosingWorld(base, team.id, season.id)
+    // The premise is a club without a liquidity shortfall (the bare prototype has no opening cash): canonical liquidity first.
+    const youngAndUnderperforming = youngLosingWorld(financingDrawdownForTest(base, team.id, 10_000_000_000), team.id, season.id)
     expect(assessClubStrategy(youngAndUnderperforming, team.id).candidateMode).toBe('DEVELOP')
 
     const institution = createGovernanceInstitution({ id: `strategy-institution:${team.id}`, universe: 'PROFESSIONAL_CLUB', name: 'Club Board', teamIds: [team.id] })
@@ -68,7 +70,8 @@ describe('Club strategy', () => {
   it('supports a strong short-term title window and keeps that accepted direction stable', () => {
     const team = Object.values(base.teams).find((candidate) => candidate.coachId !== undefined && candidate.coachId !== base.userCoachId && candidate.rosterPlayerIds.length >= 5)!
     const season = Object.values(base.seasons).find((candidate) => candidate.startDate <= base.currentDate && candidate.endDate >= base.currentDate && (candidate.participantTeamIds ?? base.competitions[candidate.competitionId]!.participantTeamIds).includes(team.id))!
-    const winningWorld = allWinsWorld(base, team.id, season.id)
+    // The premise is a club without a liquidity shortfall (the bare prototype has no opening cash): canonical liquidity first.
+    const winningWorld = allWinsWorld(financingDrawdownForTest(base, team.id, 10_000_000_000), team.id, season.id)
     expect(assessClubStrategy(winningWorld, team.id).candidateMode).toBe('CONTEND')
     const reviewed = reviewClubStrategy(winningWorld, team.id, { trigger: 'COMPETITION_CHECKPOINT' })
     expect(reviewed.clubStrategicStatesByTeamId[team.id]!.mode).toBe('CONTEND')

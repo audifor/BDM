@@ -4,7 +4,8 @@ import { addDays, addYears } from '@/domain/date'
 import { createAthleticsAidAgreement } from '@/domain/collegeCompensation'
 import { createGame } from '@/domain/game'
 import type { MatchStatLog, PlayerGameStatLine } from '@/domain/stats/MatchStatLog'
-import { updateGameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import type { TeamId } from '@/domain/ids'
 import { chooseAiDraftProspect, createDraftForCompletedSeason, declareDraftEntry, getAiDraftBoard, getAvailableDraftProspects, getCurrentDraftPick, getDraftCandidates, makeDraftSelection, openDraft, withdrawDraftEntry } from '@/engine/draft'
 import { advisePlayerCareerPathway } from './ProfessionalPathwayDecision'
 import { finalizeSeason } from '@/engine/season'
@@ -13,6 +14,13 @@ import { nbaDraftRulesForYear } from '@/domain/draft'
 import { signUndraftedPlayerToNba } from './EcosystemTransitions'
 import { getEligibleScoutingEvaluators, progressScoutingAssignments, requestScouting } from '@/engine/scouting/ScoutingEngine'
 import { estimatePlayerDraftOutlook } from './ProfessionalPathwayDecision'
+import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
+import { authorizeTeamSalaryForTest, financingDrawdownForTest } from '@/domain/finance/financeTestFixture'
+function fundedProfessionalSigning(world: GameWorld, teamId: TeamId): GameWorld {
+  const current = ensureCanonicalFinanceFoundation(world)
+  return authorizeTeamSalaryForTest(financingDrawdownForTest(current, teamId, 100_000_000_000, `pathway:${teamId}`), teamId, { currencyCode: String(current.organizationFinancialProfilesById[current.teams[teamId]!.organizationId]!.baseCurrencyCode), playerSalaryMinorUnits: 1_000_000_000_000, staffSalaryMinorUnits: 100_000_000_000 })
+}
+
 
 describe('game-backed Player Draft decision realism', () => {
   it('lets a strong-context Player return and a weak-context Player stay in the same Draft', () => {
@@ -152,6 +160,9 @@ describe('game-backed Player Draft decision realism', () => {
     expect(getAvailableDraftProspects(world, draft.id)).toHaveLength(0)
     expect(world.draftsById[draft.id]!.entries?.find((entry) => entry.playerId === targetId)?.status).toBe('undrafted')
     const nbaTeam = world.teams[Object.values(world.competitions).find((competition) => competition.ecosystemId === nba.id)!.participantTeamIds[0]!]!
+    // The signing is decided by canonical Finance at the Draft date: the club is funded and authorized exactly as the certified
+    // undrafted-transition fixture does (EcosystemTransitions.test.ts), never through a legacy payroll pool.
+    world = fundedProfessionalSigning(world, nbaTeam.id)
     const signed = signUndraftedPlayerToNba(world, { id: 'transition:misjudgment-undrafted', playerId: targetId, draftId: draft.id, toTeamId: nbaTeam.id })
     expect(signed.players[targetId]!.personId).toBe(personId)
     expect(signed.teams[nbaTeam.id]!.rosterPlayerIds).toContain(targetId)

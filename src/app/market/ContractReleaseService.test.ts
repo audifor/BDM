@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { createNewGame, createNewGameBeforeFinance } from '@/app/game'
 import { addYears } from '@/domain/date'
 import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract'
 import { createOrganizationFinancialProfile, getContractFinancialSchedule } from '@/domain/finance'
@@ -8,7 +8,9 @@ import { getActivePlayerContract, isPlayerFreeAgent, updateGameWorld, type GameW
 import { assessContractRelease, executeContractRelease } from './ContractReleaseService'
 
 function fixture(withFinance = true) {
-  let world = createNewGame()
+  // Without Finance the scenario is a career before canonical Finance activation: no Organization has a currency profile yet
+  // (the shipped prototype currency policy is applied at activation).
+  let world = withFinance ? createNewGame() : createNewGameBeforeFinance()
   const team = Object.values(world.teams)[0]!
   const playerId = team.rosterPlayerIds[0]!
   const contract = getActivePlayerContract(world, playerId)!
