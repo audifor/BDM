@@ -370,3 +370,18 @@
  .po-scv3__right {display:flex;}
  .po-scv3__call-actions {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* V3.4 positional evidence is explicit. Cross-position remains exploratory. */
+.po-scv3__cross-warning {
+  flex:0 0 auto;padding:8px 9px;border:1px solid var(--cs-orange2);
+  border-left:3px solid var(--cs-orange2);border-radius:4px;
+  background:var(--cs-s2);color:var(--cs-text);
+  font:700 11px/1.35 var(--cs-font);
+}
+.po-scv3__evidence-scope {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+.po-scv3__evidence-scope > button {min-width:0;min-height:33px;white-space:normal;}
+.po-scv3__verdict-proof small {font-size:9px;line-height:1.24;}
+.po-scv3__verdict-core > p {font-size:11px;}
+@container player-space (max-width:850px) {
+  .po-scv3__evidence-scope {grid-template-columns:1fr;}
+}
