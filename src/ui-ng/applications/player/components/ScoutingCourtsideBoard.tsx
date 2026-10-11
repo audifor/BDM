@@ -13,7 +13,7 @@ const COMPARE_FAMILIES: readonly RatingCategory[] = [
 ]
 
 type ActionId = 'assign-scout' | 'request-report' | 'watch-next-game' |
-  'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route' | 'development-route'
+  'increase-priority' | 'end-scouting' | 'detailed-report' | 'contract-route' | 'development-route' | 'performance-route'
 
 interface Props {
   readonly world: GameWorld
@@ -142,7 +142,7 @@ export function ScoutingCourtsideBoard({
 }: Props) {
   const [focusRoute, setFocusRoute] = useState<ActionId>('request-report')
   const [intelligenceFocus, setIntelligenceFocus] = useState('shooting')
-  const [bottomTab, setBottomTab] = useState<'reports' | 'games'>('reports')
+  const [bottomTab, setBottomTab] = useState<'reports' | 'sources' | 'games'>('reports')
   const [comparisonId, setComparisonId] = useState<PlayerId | null>(null)
   const [benchmarkMode, setBenchmarkMode] = useState<ScoutingBenchmarkMode>('rating-leader')
   const [family, setFamily] = useState<RatingCategory>('shooting')
@@ -217,10 +217,10 @@ export function ScoutingCourtsideBoard({
         <strong>{verdict.headline}</strong>
         <p>{verdict.meaning}</p>
       </div>
-      <div className="po-scv3__verdict-proof">
-        <div><b>{verdict.comparableCount}<span>/80</span></b><small>COMPARABLE ATTRIBUTES</small></div>
-        <div><b>{verdict.confirmedAdvantageCount}</b><small>SUPPORTED ADVANTAGES</small></div>
-        <div><b>{verdict.confirmedConcernCount}</b><small>SUPPORTED CONCERNS</small></div>
+      <div className="po-scv3__verdict-proof" title="These are comparable individual rating keys, not scouting-domain coverage or confidence.">
+        <div><b>{verdict.comparableCount}<span>/80</span></b><small>INDIVIDUAL RATINGS COMPARED</small></div>
+        <div><b>{verdict.confirmedAdvantageCount}</b><small>{own ? 'RATING ADVANTAGES' : 'BOUNDED ADVANTAGES'}</small></div>
+        <div><b>{verdict.confirmedConcernCount}</b><small>{own ? 'RATING WEAKNESSES' : 'BOUNDED CONCERNS'}</small></div>
       </div>
       <div className="po-scv3__verdict-action">
         <span>{verdict.basis} · {verdict.evidenceCount} filed reports · vs {comparatorName} ({benchmarkMode === 'rating-leader' ? 'highest 80-rating mean, not starter' : benchmarkMode === 'role-peer' ? 'position peer' : 'manual'})</span>
@@ -314,16 +314,24 @@ export function ScoutingCourtsideBoard({
 
       <div className="po-scv3__right">
         <section className="po-scv3__card po-scv3__fit">
-          <div className="po-scv3__card-head"><strong>DECISION SUPPORT</strong><span>{own?'SQUAD PLANNING':'RECRUITMENT CASE'}</span></div>
+          <div className="po-scv3__card-head"><strong>MANAGER CALL</strong><span>{own?'KEEP · DEVELOP · REVIEW':'MONITOR · INVESTIGATE · PURSUE'}</span></div>
           <div className="po-scv3__fit-banner">
             <div><small>TACTICAL READ</small><strong>{scouting.consensus.some(row=>row.tacticalFitLabel!==null) ? 'SCOUT REPORT ON FILE' : 'NOT EVALUATED'}</strong></div>
             <div><small>POTENTIAL</small><strong>{scouting.potentialOutcomes.every(outcome=>outcome.knowledgeState==='unknown')?'UNKNOWN':'SCOUTED RANGES'}</strong></div>
           </div>
-          <h4>{own ? 'ROSTER JUDGMENT' : 'SPORTING CASE'}</h4>
-          <p>{verdict.headline}: {verdict.status === 'insufficient' ? 'More evidence required.' :
-              `${verdict.confirmedAdvantageCount} clear pluses, ${verdict.confirmedConcernCount} clear minuses vs current benchmark.`}</p>
-          <h4>BEFORE THE FINAL CALL</h4>
-          <p>{verdict.nextStep}</p>
+          <div className="po-scv3__call">
+            <strong>{own ? 'KEEP / DEVELOP' : verdict.status === 'supported' ? 'INVESTIGATE A MOVE' : 'MONITOR / SCOUT'}</strong>
+            <p>{verdict.nextStep}</p>
+            <div className="po-scv3__call-actions">
+              <button type="button" onClick={()=>onAction(own ? 'development-route' : verdict.status === 'supported' ? 'contract-route' : 'request-report')}
+                disabled={!own && verdict.status !== 'supported' && requestReason !== null}>
+                {own ? 'DEVELOPMENT ↗' : verdict.status === 'supported' ? 'CONTACT PATHWAYS ↗' : 'REFRESH SCOUTING ↗'}
+              </button>
+              <button type="button" onClick={()=>own ? onAction('performance-route') : setBottomTab('reports')}>
+                {own ? 'PERFORMANCE ↗' : 'VIEW EVIDENCE ↓'}
+              </button>
+            </div>
+          </div>
         </section>
         <section className="po-scv3__card po-scv3__routes">
           <div className="po-scv3__card-head"><strong>ACTION ROUTES</strong><span>{own?'INTERNAL':'TARGET'} · GAMEPLAY</span></div>
@@ -346,20 +354,15 @@ export function ScoutingCourtsideBoard({
             {hasReport && <button type="button" onClick={()=>onAction('detailed-report')}>LATEST FILED REPORT</button>}
           </div>}
         </section>
-        <section className="po-scv3__card po-scv3__source">
-          <div className="po-scv3__card-head"><strong>SOURCE NETWORK</strong><span>{scouting.consensus.length} EVALUATORS</span></div>
-          {scouting.consensus.length===0 ? <p className="po-scv3__empty">No staff report sources recorded.</p> :
-            <div className="po-scv3__source-list">{scouting.consensus.slice(0,4).map(row=><div key={row.id}>
-              <strong>{row.scoutLabel}</strong><span>{row.knowledgeLabel}</span><small>{row.opinionLabel} · {row.dateLabel}</small>
-            </div>)}</div>}
-        </section>
+
       </div>
     </div>
 
     <section className="po-scv3__card po-scv3__timeline">
-      <div className="po-scv3__card-head"><strong>REPORT EVIDENCE</strong>
+      <div className="po-scv3__card-head"><strong>REPORT EVIDENCE & SOURCES</strong>
         <div className="po-scv3__inline-tabs" role="tablist" aria-label="Scouting evidence view">
           <button role="tab" aria-selected={bottomTab==='reports'} onClick={()=>setBottomTab('reports')} type="button">SCOUT REPORTS</button>
+          <button role="tab" aria-selected={bottomTab==='sources'} onClick={()=>setBottomTab('sources')} type="button">EVALUATORS ({scouting.consensus.length})</button>
           <button role="tab" aria-selected={bottomTab==='games'} onClick={()=>setBottomTab('games')} type="button">GAME STATS</button>
         </div>
       </div>
@@ -368,6 +371,11 @@ export function ScoutingCourtsideBoard({
         <div className="po-scv3__timeline-items">{scouting.noteTimeline.slice(0,4).map(note=><div key={note.id}>
           <span>{note.dateLabel}</span><strong>{note.title}</strong><small>{note.detail}</small>
         </div>)}</div>
+      : bottomTab==='sources' ?
+        scouting.consensus.length===0 ? <p className="po-scv3__empty">No staff scouting reports have been filed.</p> :
+        <div className="po-scv3__timeline-items">{scouting.consensus.slice(0,4).map(row=><div key={row.id}>
+          <span>{row.dateLabel}</span><strong>{row.scoutLabel} · {row.knowledgeLabel}</strong><small>{row.opinionLabel}</small>
+        </div>)}{hasReport && <button type="button" onClick={()=>onAction('detailed-report')}>OPEN LATEST REPORT ↗</button>}</div>
       : scouting.observedGames.length===0 ? <p className="po-scv3__empty">No recorded games available for this player.</p> :
         <div className="po-scv3__timeline-items">{scouting.observedGames.slice(0,4).map(game=><div key={game.id}>
           <span>{game.dateLabel}</span><strong>{game.opponent} · {game.competitionLabel}</strong>
