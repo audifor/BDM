@@ -21,6 +21,13 @@ export function PlayerMedicalHistoryBoard({ medical, selectedEventId, onSelectEv
   const recurring = recordedKinds.some(row => row.occurrences > 1)
   const scheduledDays = recordedKinds.reduce((total, row) => total + row.daysLost, 0)
   const totalRecorded = recordedKinds.reduce((total, row) => total + row.occurrences, 0)
+  const activeCase = selectedRow !== undefined && medical.activeInjury?.id === selectedRow.id
+    ? medical.activeInjury : null
+  const reviewContext = activeCase === null ? null
+    : activeCase.daysRemaining === 0 ? 'Return-to-play review due today'
+    : activeCase.daysRemaining < 0
+      ? `Return-to-play review overdue by ${Math.abs(activeCase.daysRemaining)} ${Math.abs(activeCase.daysRemaining) === 1 ? 'day' : 'days'}`
+      : `${activeCase.daysRemaining} ${activeCase.daysRemaining === 1 ? 'day' : 'days'} until scheduled review`
 
   return <div className="po-med-caseboard" data-ng-region="medical-history">
     <section className="po-med-caseboard__ledger" aria-label="Injury ledger">
@@ -72,7 +79,7 @@ export function PlayerMedicalHistoryBoard({ medical, selectedEventId, onSelectEv
       <footer className="po-med-caseboard__case-foot">
         <span>BODY SIDE</span>
         <strong>NOT RECORDED</strong>
-        {detail.daysRemainingLabel !== null && <span>{detail.daysRemainingLabel} until expected return</span>}
+        {reviewContext !== null && <span>{reviewContext}</span>}
       </footer>
     </section>}
     <section className="po-med-caseboard__pattern" data-ng-region="medical-injury-pattern">
