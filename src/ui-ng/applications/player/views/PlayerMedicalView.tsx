@@ -4,6 +4,7 @@ import type { MedicalBodyRegionId } from '@/ui-ng/applications/player/data/build
 import { MedicalBodyMap } from '@/ui-ng/applications/player/components/MedicalBodyMap'
 import { MedicalDetailInspector } from '@/ui-ng/applications/player/components/MedicalDetailInspector'
 import { PlayerMedicalHistoryBoard } from '@/ui-ng/applications/player/components/PlayerMedicalHistoryBoard'
+import { PlayerMedicalRecoverySummary } from '@/ui-ng/applications/player/components/PlayerMedicalRecoverySummary'
 import {
   PlayerMedicalDecisionHero,
   PlayerMedicalDecisionPanel,
@@ -12,7 +13,6 @@ import {
 import {
   LoadManagementPanel,
   PhysicalReadinessPanel,
-  RecoveryTimelinePanel,
 } from '@/ui-ng/applications/player/components/MedicalBoardPanels'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { findMedicalInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
@@ -61,9 +61,7 @@ export function PlayerMedicalView() {
     <aside className="po-med-v3__left" aria-label="Readiness and recorded recovery">
       <PhysicalReadinessPanel meters={medical.readiness.filter(meter =>
         meter.id !== 'injury-risk' && meter.id !== 'recovery')} />
-      {medical.activeInjury !== null && <section className="po-med-v3__recovery">
-        <RecoveryTimelinePanel milestones={medical.recoveryMilestones} />
-      </section>}
+      {medical.activeInjury !== null && <PlayerMedicalRecoverySummary medical={medical} />}
     </aside>
 
     <section className="po-med-v3__center" aria-label="Medical exploration">
@@ -84,7 +82,11 @@ export function PlayerMedicalView() {
         {activeTab === 'body' && <div className="po-med-v3__body">
           <div className="po-med-v3__body-status">
             <span className={medical.bodyRegions.some(r => r.status === 'attention') ? 'is-warning' : 'is-good'}>●</span>
-            {medical.bodyRegions.some(r => r.status === 'attention') ? 'RECORDED INJURY REGIONS' : 'NO RECORDED REGIONAL INJURY'}
+            {medical.activeInjury?.kindLabel === 'Hand injury'
+              ? 'HAND INJURY · SIDE NOT RECORDED'
+              : medical.bodyRegions.some(r => r.status === 'attention')
+                ? 'RECORDED INJURY REGIONS'
+                : 'NO RECORDED REGIONAL INJURY'}
           </div>
           <MedicalBodyMap onSelectRegion={id =>
               setSelectedRegionId(previous => previous === id ? null : id)}
