@@ -96,7 +96,7 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
         ? <><span className="pc-rpg__intel-icon" aria-hidden="true">◇</span>
             <strong>NO VERIFIED MARKET INTELLIGENCE</strong>
             <span className="pc-rpg__intel-explanation">Interest, agent source and terms remain unknown until your club obtains evidence.</span>
-            <button type="button" onClick={onScouting}>START SCOUTING ↗</button></>
+          </>
         : <>
           <div><span>SOURCE</span><strong>{SIGNAL_SOURCE[knowledge.source] ?? knowledge.source}</strong></div>
           <div><span>PLAYER INTEREST</span><strong>{interest}</strong></div>
