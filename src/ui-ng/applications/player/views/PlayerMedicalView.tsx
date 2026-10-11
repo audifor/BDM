@@ -4,6 +4,11 @@ import type { MedicalBodyRegionId } from '@/ui-ng/applications/player/data/build
 import { MedicalBodyMap } from '@/ui-ng/applications/player/components/MedicalBodyMap'
 import { MedicalDetailInspector } from '@/ui-ng/applications/player/components/MedicalDetailInspector'
 import {
+  PlayerMedicalDecisionHero,
+  PlayerMedicalDecisionPanel,
+  PlayerRivalMedicalBoundary,
+} from '@/ui-ng/applications/player/components/PlayerMedicalDecisions'
+import {
   CurrentInjuryPanel,
   InjuryPatternPanel,
   LoadManagementPanel,
@@ -37,13 +42,20 @@ export function PlayerMedicalView() {
 
   if (model === null || medical === undefined) return null
 
+  // The shared workspace projection can contain private World Truth.
+  // Never render it for rivals without a source-backed medical authority.
+  if (model.knowledgeAccess.kind !== 'own-roster') {
+    return <PlayerRivalMedicalBoundary onScouting={() => session.setActiveView('scouting')} />
+  }
+
   const selectedRegion =
     selectedRegionId === null
       ? undefined
       : medical.bodyRegions.find((region) => region.id === selectedRegionId)
 
   return (
-    <div className="po-med-board" data-ng-region="player-medical">
+    <div className="po-med-board po-med-board--v2" data-ng-region="player-medical">
+      <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
       <div className="po-med-col po-med-col--left">
         <PhysicalReadinessPanel meters={medical.readiness} />
         <CurrentInjuryPanel band={medical.availabilityBand} />
@@ -80,25 +92,24 @@ export function PlayerMedicalView() {
       </div>
 
       <div className="po-med-col po-med-col--right">
+        <PlayerMedicalDecisionPanel medical={medical} playerId={model.identity.playerId} />
         <MedicalDetailPanel
           detail={medical.detail}
           regionDetail={selectedRegion?.detail ?? null}
           regionLabel={selectedRegion?.label ?? null}
         />
 
-        <div className="po-med-split po-med-split--history">
-          <MedicalHistoryPanel
-            emptyMessage={medical.historyEmptyMessage}
-            onSelectRow={(id) => setSelectedEventId(id as never)}
-            rows={medical.history}
-            selectedEventId={selectedEventId}
-          />
-
-          <div className="po-med-stack">
-            <InjuryPatternPanel pattern={medical.injuryPattern} />
-            <StaffNotesPanel gaps={staffNoteGaps} />
-          </div>
-        </div>
+        <MedicalHistoryPanel
+          emptyMessage={medical.historyEmptyMessage}
+          onSelectRow={(id) => setSelectedEventId(id as never)}
+          rows={medical.history}
+          selectedEventId={selectedEventId}
+        />
+        <details className="po-med-v2__secondary">
+          <summary>INJURY PATTERN & DATA BOUNDARIES</summary>
+          <InjuryPatternPanel pattern={medical.injuryPattern} />
+          <StaffNotesPanel gaps={staffNoteGaps} />
+        </details>
       </div>
 
       <MedicalFilterStrip
