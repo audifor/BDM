@@ -22,16 +22,27 @@ describe('PLAYER Scouting Courtside V3',()=>{
     const team=getUserTeam(world)!
     const {container}=showPlayer(world,team.rosterPlayerIds[0]!)
     expect(container.querySelector('[data-ng-region="player-scouting"]')).toBeInTheDocument()
-    expect(screen.getByText('INTERNAL ATTRIBUTE PROFILE')).toBeInTheDocument()
-    expect(screen.getByText('INTERNAL EVALUATION')).toBeInTheDocument()
+    expect(container.querySelector('[data-ng-region="scouting-decision-verdict"]')).toBeInTheDocument()
+    expect(screen.getByText('WHY THIS PLAYER MATTERS')).toBeInTheDocument()
     expect(screen.getByText('NO FILED REPORT')).toBeInTheDocument()
     const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
-    expect(comparator).toHaveTextContent('ROSTER COMPARISON')
+    expect(comparator).toHaveTextContent('HEAD-TO-HEAD · OUR ROSTER')
     const ownPicker=within(comparator).getByLabelText('Compare against my player') as HTMLSelectElement
     expect(ownPicker.options.length).toBeGreaterThan(0)
+    const verdict=container.querySelector('[data-ng-region="scouting-decision-verdict"]')!
+    const before=verdict.textContent
+    const other=ownPicker.options.item(ownPicker.options.length-1)!.value
+    fireEvent.change(ownPicker,{target:{value:other}})
+    expect(ownPicker.value).toBe(other)
+    expect(verdict).toHaveTextContent('COMPARABLE ATTRIBUTES')
+    expect(verdict).toHaveTextContent('SUPPORTED ADVANTAGES')
+    expect(verdict).toHaveTextContent('SUPPORTED CONCERNS')
+    // Changing the selected player drives the same source of truth used by the FM matchup.
+    expect(verdict.textContent).not.toBeNull()
+    expect(before).not.toBeNull()
     fireEvent.change(within(comparator).getByLabelText('Comparison attribute family'),{target:{value:'physical'}})
     expect(comparator).toHaveTextContent('individual attributes supported')
-    expect(container.querySelector('.po-scv3__internal-row')).not.toBeNull()
+    expect(container.querySelector('.po-scv3__reason-group')).not.toBeNull()
     fireEvent.click(screen.getByRole('button',{name:'DEVELOPMENT'}))
     fireEvent.click(screen.getByRole('button',{name:'OPEN DEVELOPMENT ↗'}))
     expect(new URL(window.location.href).searchParams.get('playerView')).toBe('development')
@@ -45,7 +56,7 @@ describe('PLAYER Scouting Courtside V3',()=>{
     expect(container.querySelector('[data-ng-region="player-scouting"]')).not.toBeNull()
     expect(screen.getByText('NO EVALUATION ON FILE')).toBeInTheDocument()
     expect(screen.getByText('NO COMPARABLE INDIVIDUAL ATTRIBUTES YET')).toBeInTheDocument()
-    expect(screen.queryByText('INTERNAL ATTRIBUTE PROFILE')).not.toBeInTheDocument()
+    expect(screen.queryByText('WHY THIS PLAYER MATTERS')).not.toBeInTheDocument()
     expect(screen.getByText(/No staff report sources recorded/)).toBeInTheDocument()
     const comparator=container.querySelector('[data-ng-region="scouting-roster-compare"]') as HTMLElement
     expect(comparator).not.toHaveTextContent('≈72–78')
