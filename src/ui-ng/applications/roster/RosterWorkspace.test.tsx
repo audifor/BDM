@@ -358,6 +358,9 @@ describe('WorkspaceHost player navigation', () => {
     await waitFor(() => {
       expect(screen.queryByLabelText('Preset de columnas')).not.toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument()
+    // The player workspace also renders the BS15H talent navigation ("Talent operations"), which has its own Overview entry;
+    // the player's own Overview view tab must still be present exactly once outside it.
+    const playerOverviewTabs = screen.getAllByRole('button', { name: 'Overview' }).filter((button) => button.closest('nav[aria-label="Talent operations"]') === null)
+    expect(playerOverviewTabs).toHaveLength(1)
   })
 })
