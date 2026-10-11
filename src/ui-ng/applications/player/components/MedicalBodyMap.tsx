@@ -73,7 +73,6 @@ export function MedicalBodyMap({
 }) {
   const glowId = useId()
   const byId = new Map(regions.map((region) => [region.id, region]))
-  const attention = regions.filter((region) => region.status === 'attention').length
 
   const columns: readonly { readonly ids: readonly MedicalBodyRegionId[]; readonly side: 'left' | 'right' }[] = [
     { ids: LEFT_ORDER, side: 'left' },
@@ -165,11 +164,6 @@ export function MedicalBodyMap({
         </svg>
       </div>
 
-      <p className="po-med-bodymap__legend">
-        {attention === 0
-          ? 'No injury recorded: no recorded injury maps to any region.'
-          : `${attention} ${attention === 1 ? 'region' : 'regions'} marked from the recorded injuries.`}
-      </p>
     </div>
   )
 }
