@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import '@testing-library/jest-dom/vitest'
 
 import type { PlayerTruthRatingKey } from '@/domain/player'
 import { PlayerWorkspaceProvider, type PlayerWorkspaceContextValue } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
