@@ -109,7 +109,7 @@ describe('Player contract integration', () => {
     expect(screen.getByText(/NO CONTACT HISTORY · Scouting/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /PRIVATE NETWORK/ }))
     expect(screen.getByText(/Indirect information may be unreliable/)).toBeInTheDocument()
-    expect(screen.getByText(/FUTURE RPG ACTION/)).toBeInTheDocument()
+    expect(screen.getByText(/PLANNED RPG FEATURE/)).toBeInTheDocument()
   })
 
   it('protects rival financials, negotiations and role promises from World Truth', () => {
@@ -136,7 +136,7 @@ describe('Player contract integration', () => {
     expect(screen.queryByText(/Financial snapshot/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /AGENT CHANNEL/ }))
     expect(screen.getByText('Intermediary approach')).toBeInTheDocument()
-    expect(screen.getByText(/FUTURE RPG ACTION/)).toBeInTheDocument()
+    expect(screen.getByText(/PLANNED RPG FEATURE/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /CONTACT AGENT NOW/ })).not.toBeInTheDocument()
   })
 })
