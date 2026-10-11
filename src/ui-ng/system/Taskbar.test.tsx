@@ -63,17 +63,40 @@ describe('Grouped entity instances in the taskbar', () => {
     expect(window.location.search).toContain('playerId=player%3Aalpha')
   })
 
-  it('closes all player instances on the dock icon without affecting staff', () => {
+  it('left click activates without closing instances, even when a modal is open; middle click closes the group', () => {
     mountTaskbar()
-    navigateToPlayer('player:alpha' as PlayerId)
-    navigateToPlayer('player:beta' as PlayerId)
-    act(() => navigateToStaff('staff:alpha' as StaffPersonId))
-    fireEvent.click(screen.getByRole('button', { name: /^Player$/ }))
-    expect(screen.queryByRole('menu', { name: 'Instancias de Player' })).not.toBeInTheDocument()
-    fireEvent.pointerEnter(screen.getByRole('button', { name: /^Staff$/ }))
-    expect(screen.getByRole('menu', { name: 'Instancias de Staff' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /^Staff$/ }))
-    expect(screen.queryByRole('menu', { name: 'Instancias de Staff' })).not.toBeInTheDocument()
+    act(() => {
+      navigateToPlayer('player:alpha' as PlayerId)
+      navigateToPlayer('player:beta' as PlayerId)
+      navigateToStaff('staff:alpha' as StaffPersonId)
+    })
+    // The taskbar must never destroy a group because a modal is visible.
+    const modal = document.createElement('div')
+    modal.setAttribute('role', 'dialog')
+    modal.setAttribute('aria-label', 'Player action')
+    document.body.appendChild(modal)
+    try {
+      const playerIcon = screen.getByRole('button', { name: /^Player$/ })
+      fireEvent.click(playerIcon)
+      expect(new URL(window.location.href).searchParams.get('playerId')).toBe('player:beta')
+      fireEvent.pointerEnter(playerIcon)
+      let group = screen.getByRole('menu', { name: 'Instancias de Player' })
+      expect(within(group).getAllByRole('menuitem')).toHaveLength(2)
+      expect(within(group).queryByRole('button', { name: /Cerrar todas/i })).not.toBeInTheDocument()
+      fireEvent.auxClick(playerIcon, { button: 1 })
+      expect(screen.queryByRole('menu', { name: 'Instancias de Player' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^Player$/ })).not.toBeInTheDocument()
+      const staffIcon = screen.getByRole('button', { name: /^Staff$/ })
+      fireEvent.click(staffIcon)
+      fireEvent.pointerEnter(staffIcon)
+      group = screen.getByRole('menu', { name: 'Instancias de Staff' })
+      expect(within(group).getAllByRole('menuitem')).toHaveLength(1)
+      fireEvent.auxClick(staffIcon, { button: 1 })
+      expect(screen.queryByRole('menu', { name: 'Instancias de Staff' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: 'Player action' })).toBeInTheDocument()
+    } finally {
+      modal.remove()
+    }
   })
 
   it('retains distinct staff dossiers, with names and individual actions', () => {
