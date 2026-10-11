@@ -4,16 +4,18 @@ import { tauriWorldDatabaseRepository, type WorldDatabaseRepository } from '@/ta
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
 import { WorldDbSessionV1, type WorldDbSessionAccessV1 } from './WorldDbSession'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
+import { DEFAULT_CAREER_START_DATE } from './WorldDbGameBootstrap'
 import { worldDbDatabasePath, worldDbExpectedSha256, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
-import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
+import { spainAcbCalendarForStartYear, spainAcbCompetitionSeasonId, spainCopaCompetitionSeasonId } from '@/data/worldCompetitionCalendars'
 import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
 import { ensureUserClubBoardState } from '@/engine/board'
 import type { GameDate } from '@/domain/date'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
 export const SPAIN_ACB_COMPETITION_ID = 'competition:ESP:liga-endesa'
-export const SPAIN_ACB_COMPETITION_SEASON_ID = 'edition:ESP:liga-endesa:2025-26'
-export const SPAIN_COPA_COMPETITION_SEASON_ID = 'edition:ESP:copa-del-rey:2025-26'
+/** Legacy constants remain for callers that explicitly request the 2025-26 edition in tests/tools. */
+export const SPAIN_ACB_COMPETITION_SEASON_ID = spainAcbCompetitionSeasonId(2025)
+export const SPAIN_COPA_COMPETITION_SEASON_ID = spainCopaCompetitionSeasonId(2025)
 export const SPAIN_ACB_CODE = 'SPAIN_ACB'
 
 export interface WorldDbSpainTeamOption {
@@ -59,7 +61,7 @@ export async function discoverWorldDbSpainSelection(
   })
   await session.open()
   try {
-    const selection = await readWorldDbSpainSelection(session)
+    const selection = await readWorldDbSpainSelection(session, careerSeasonStartYear(access.careerStartDate))
     session.close()
     return selection
   } catch (error) {
@@ -82,34 +84,37 @@ export async function createWorldDbSpainGame(
   })
   await session.open()
   try {
-    const selection = await readWorldDbSpainSelection(session)
+    const seasonStartYear = careerSeasonStartYear(access.careerStartDate)
+    const selection = await readWorldDbSpainSelection(session, seasonStartYear)
     const chosen = selection.teams.find((team) => team.key === teamId)
     if (chosen === undefined) throw new Error(`Selected Spain ACB team is not in the canonical World DB catalog: ${teamId}`)
-    session.selectCompetitionSeasons([selection.competitionSeasonId, SPAIN_COPA_COMPETITION_SEASON_ID])
+    const cupSeasonId = spainCopaCompetitionSeasonId(seasonStartYear)
+    session.selectCompetitionSeasons([selection.competitionSeasonId, cupSeasonId])
     const world = await session.bootstrapGameWorld({
       source: selection.source,
       ecosystemId: selection.ecosystemId,
       competitionId: selection.competitionId,
       competitionSeasonId: selection.competitionSeasonId,
       teamId: chosen.key,
-    }, spainAcbCalendarForStartYear(2025))
+    }, spainAcbCalendarForStartYear(seasonStartYear))
     // MX0.6 closure: the canonical World DB bootstrap attaches the user coach to the selected club
     // but never created Board truth for it, so the Board surface showed its initialization
     // placeholder in an already-running career. Same canonical initializer the other universes use.
-    return ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
+    return ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(cupSeasonId)))
   } finally {
     session.close()
   }
 }
 
-async function readWorldDbSpainSelection(session: WorldDbSessionV1): Promise<WorldDbSpainSelection> {
+async function readWorldDbSpainSelection(session: WorldDbSessionV1, seasonStartYear: number): Promise<WorldDbSpainSelection> {
   const catalog = await session.discoverSelectionCatalog()
   const ecosystem = catalog.ecosystems.find((row) => row.ecosystemId === SPAIN_ACB_ECOSYSTEM_ID && row.code === SPAIN_ACB_CODE)
   if (ecosystem === undefined) throw new Error('Canonical World DB ecosystem SPAIN_ACB is missing.')
   const competition = catalog.competitionAssignments.find((row) => row.ecosystemId === ecosystem.ecosystemId && row.competitionId === SPAIN_ACB_COMPETITION_ID)
   if (competition === undefined) throw new Error('Canonical World DB Spain ACB competition assignment is missing.')
-  const season = catalog.competitionSeasons.find((row) => row.competitionSeasonId === SPAIN_ACB_COMPETITION_SEASON_ID && row.competitionId === competition.competitionId)
-  if (season === undefined) throw new Error('Canonical World DB Spain ACB 2025-26 season is missing.')
+  const competitionSeasonId = spainAcbCompetitionSeasonId(seasonStartYear)
+  const season = catalog.competitionSeasons.find((row) => row.competitionSeasonId === competitionSeasonId && row.competitionId === competition.competitionId)
+  if (season === undefined) throw new Error(`Canonical World DB Spain ACB ${competitionSeasonId} season is missing.`)
   const memberships = catalog.teamMemberships
     .filter((row) => row.ecosystemId === ecosystem.ecosystemId && row.membershipStatus.toUpperCase() === 'ACTIVE')
     .sort((left, right) => left.teamName.localeCompare(right.teamName) || left.teamId.localeCompare(right.teamId))
@@ -126,6 +131,10 @@ async function readWorldDbSpainSelection(session: WorldDbSessionV1): Promise<Wor
     competitionSeasonId: season.competitionSeasonId,
     teams: memberships.map(teamOption),
   }
+}
+
+function careerSeasonStartYear(careerStartDate: GameDate | undefined): number {
+  return Number((careerStartDate ?? DEFAULT_CAREER_START_DATE).slice(0, 4))
 }
 
 function teamOption(membership: WorldDbSelectionTeamMembershipV1): WorldDbSpainTeamOption {

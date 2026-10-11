@@ -25,7 +25,7 @@ export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
   {
     id: WORLD_DB_SPAIN_UNIVERSE_ID,
     label: 'WORLD DB · SPAIN ACB',
-    description: 'Canonical Spain ACB 2025/26 GameWorld from the read-only DDL-12 World DB.',
+    description: 'Canonical Spain ACB 2026/27 GameWorld from the pinned, read-only World DB snapshot.',
     isTest: false,
     teams: [],
   },

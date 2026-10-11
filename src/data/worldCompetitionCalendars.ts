@@ -28,6 +28,18 @@ export const SPAIN_ACB_2025_26_CALENDAR: CompetitionCalendarPolicy = Object.free
 
 export function spainAcbCalendarForStartYear(startYear: number): CompetitionCalendarPolicy {
   if (!Number.isInteger(startYear) || startYear < 1) throw new RangeError('Season start year must be a positive integer')
+  if (startYear === 2026) {
+    return Object.freeze({
+      seasonWindow: { startDate: parseGameDate('2026-09-26'), endDate: parseGameDate('2027-06-29') },
+      regularSeasonWindow: { startDate: parseGameDate('2026-09-26'), endDate: parseGameDate('2027-05-23') },
+      specialCompetitionWindows: [{ competitionSeasonId: 'edition:ESP:copa-del-rey:2026-27', startDate: parseGameDate('2027-02-18'), endDate: parseGameDate('2027-02-21') }],
+      postseasonWindow: { startDate: parseGameDate('2027-05-25'), endDate: parseGameDate('2027-06-29') },
+      postseasonStageStartDates: {},
+      offseasonWindow: { startDate: parseGameDate('2027-07-01'), endDate: parseGameDate('2027-09-25') },
+      regularSeasonCadence: SPAIN_ACB_2025_26_CALENDAR.regularSeasonCadence,
+      postseasonCadence: SPAIN_ACB_2025_26_CALENDAR.postseasonCadence,
+    })
+  }
   const yearOffset = startYear - 2025
   const shift = (date: GameDate) => addYears(date, yearOffset)
   const base = SPAIN_ACB_2025_26_CALENDAR
@@ -47,7 +59,9 @@ export function spainAcbCalendarForStartYear(startYear: number): CompetitionCale
 export function spainCopaCalendarForStartYear(startYear: number): CompetitionCalendarPolicy {
   const league = spainAcbCalendarForStartYear(startYear)
   const window = league.specialCompetitionWindows[0]!
-  const starts = Object.fromEntries(Object.entries({ QUARTERFINALS: '2026-02-19', SEMIFINALS: '2026-02-21', FINAL: '2026-02-22' }).map(([key, date]) => [key, addYears(parseGameDate(date), startYear - 2025)]))
+  const starts = startYear === 2026
+    ? { QUARTERFINALS: parseGameDate('2027-02-18'), SEMIFINALS: parseGameDate('2027-02-20'), FINAL: parseGameDate('2027-02-21') }
+    : Object.fromEntries(Object.entries({ QUARTERFINALS: '2026-02-19', SEMIFINALS: '2026-02-21', FINAL: '2026-02-22' }).map(([key, date]) => [key, addYears(parseGameDate(date), startYear - 2025)]))
   return Object.freeze({
     seasonWindow: { startDate: window.startDate, endDate: window.endDate },
     regularSeasonWindow: { startDate: window.startDate, endDate: window.endDate },

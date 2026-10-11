@@ -18,6 +18,8 @@ export interface WorldDbGameBootstrapSeasonV1 {
   readonly label: string
   readonly startDate: string
   readonly endDate: string
+  readonly sportingSeasonStartDate?: string | null
+  readonly sportingSeasonEndDate?: string | null
   readonly provenance: 'WORLD_DB' | 'DERIVED_SIMULATION_FROM_B04'
   readonly sourceDates?: {
     readonly capturedAt: string | null
@@ -72,7 +74,7 @@ export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonl
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
 export interface WorldDbGameBootstrapRosterAssignmentV1 { readonly rosterId: string; readonly teamId: string; readonly playerId: string; readonly status: string }
 
-/** Persisted fixtures are optional. Spain 2025-26 currently has none; the app derives B04 games. */
+/** Persisted official fixtures are optional; editions without a complete imported schedule can derive games from B04. */
 export interface WorldDbGameBootstrapMatchV1 { readonly matchId: string; readonly scheduledAt: string | null; readonly playedAt: string | null; readonly status: 'SCHEDULED' | 'COMPLETED' | string; readonly homeTeamId: string; readonly awayTeamId: string; readonly homeScore?: number | null; readonly awayScore?: number | null }
 
 export interface WorldDbGameBootstrapSliceV1 {
@@ -118,6 +120,10 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   for (const field of ['ecosystemId', 'name', 'kind', 'category'] as const) requireText(ecosystem[field], `World DB bootstrap ecosystem ${field}`)
   for (const field of ['competitionId', 'name', 'gender', 'ecosystemId'] as const) requireText(competition[field], `World DB bootstrap competition ${field}`)
   for (const field of ['competitionSeasonId', 'seasonId', 'label', 'startDate', 'endDate', 'provenance'] as const) requireText(season[field], `World DB bootstrap season ${field}`)
+  for (const field of ['sportingSeasonStartDate', 'sportingSeasonEndDate'] as const) {
+    const date = season[field]
+    if (date !== undefined && date !== null) requireText(date, `World DB bootstrap season ${field}`)
+  }
   if (season.sourceDates !== undefined) {
     requireRecord(season.sourceDates, 'World DB bootstrap source dates')
     for (const field of ['capturedAt', 'publicationDate', 'effectiveFrom'] as const) {

@@ -78,7 +78,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
       gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
       basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
       bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
-      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, careerStartDate),
+      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.sportingSeasonStartDate ?? careerStartDate),
     })
   })
   const staffAssignments = slice.staffAssignments.map((assignment) => {
@@ -119,13 +119,34 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const baseWorld = createGameWorld({ currentDate: careerStartDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
-  const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
+  const importedGames = slice.matches.map((match) => materializeMatch(slice, match, regularSeasonNodeKey))
   const games = importedGames.length === generatedGames.length
-    ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
+    ? assertCompleteImportedRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
   const world = createGameWorld({ currentDate: careerStartDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
   const withStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(world)))
   return attachWorldDbCompetitionRuntime(withStaffCareer, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
+}
+
+function assertCompleteImportedRoundRobin(games: readonly Game[], teamCount: number, meetingsPerPair: number): Game[] {
+  const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
+  if (games.length !== expectedGames) throw new RangeError(`Imported World DB schedule requires ${expectedGames} games; found ${games.length}`)
+  const pairs = new Map<string, Game[]>()
+  const teamsByDate = new Map<string, Set<string>>()
+  for (const game of games) {
+    const key = [game.homeTeamId, game.awayTeamId].sort().join(':')
+    pairs.set(key, [...(pairs.get(key) ?? []), game])
+    const participants = teamsByDate.get(game.date) ?? new Set<string>()
+    if (participants.has(game.homeTeamId) || participants.has(game.awayTeamId)) throw new RangeError(`Imported World DB schedule has a team playing twice on ${game.date}`)
+    participants.add(game.homeTeamId)
+    participants.add(game.awayTeamId)
+    teamsByDate.set(game.date, participants)
+  }
+  if (pairs.size !== teamCount * (teamCount - 1) / 2) throw new RangeError('Imported World DB schedule does not cover every team pair')
+  for (const pair of pairs.values()) {
+    if (pair.length !== meetingsPerPair || (meetingsPerPair === 2 && (pair[0]!.homeTeamId !== pair[1]!.awayTeamId || pair[0]!.awayTeamId !== pair[1]!.homeTeamId))) throw new RangeError('Imported World DB schedule has an incomplete or unbalanced matchup')
+  }
+  return [...games]
 }
 
 function requireProfilePerson(person: WorldDbGameBootstrapSliceV1['persons'][number], personId: string): {
@@ -178,4 +199,4 @@ function createPlayerDevelopment(dimensions: WorldDbGameBootstrapSliceV1['player
 function assertSelectionMatchesSlice(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1): void { if (slice.source.databaseId !== selection.source.databaseId || slice.source.schemaId !== selection.source.schemaId) throw new Error('World DB bootstrap slice source identity mismatch'); if (slice.ecosystem.ecosystemId !== selection.ecosystemId || slice.competition.competitionId !== selection.competitionId || slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error('World DB bootstrap selection does not match loaded slice'); if (slice.competition.ecosystemId !== slice.ecosystem.ecosystemId) throw new Error('World DB bootstrap competition ecosystem relation is invalid'); if (!slice.teams.some((team) => team.teamId === selection.teamId)) throw new Error(`World DB bootstrap team is not in ecosystem membership: ${selection.teamId}`); if (new Set(slice.teams.map((team) => team.teamId)).size !== slice.teams.length) throw new Error('World DB bootstrap contains duplicate team IDs'); if (new Set(slice.players.map((player) => player.playerId)).size !== slice.players.length) throw new Error('World DB bootstrap contains duplicate player IDs'); if (activeRosterAssignments(slice).length !== slice.players.length) throw new Error('World DB bootstrap roster assignments and players are not one-to-one'); if (rosterForTeam(activeRosterAssignments(slice), selection.teamId).length < 5) throw new Error(`World DB bootstrap selected team has fewer than five active players: ${selection.teamId}`) }
 function activeRosterAssignments(slice: WorldDbGameBootstrapSliceV1) { return slice.rosterAssignments.filter((assignment) => assignment.status.toUpperCase() === 'ACTIVE') }
 function rosterForTeam(assignments: readonly WorldDbGameBootstrapSliceV1['rosterAssignments'][number][], teamId: string): readonly PlayerId[] { return assignments.filter((assignment) => assignment.teamId === teamId).map((assignment) => playerIdFromString(assignment.playerId)) }
-function materializeMatch(slice: WorldDbGameBootstrapSliceV1, match: WorldDbGameBootstrapSliceV1['matches'][number]) { const status = match.status.toUpperCase() === 'COMPLETED' ? 'completed' : match.status.toUpperCase() === 'SCHEDULED' ? 'scheduled' : (() => { throw new Error(`World DB bootstrap match status is unsupported: ${match.status}`) })(); const dateText = match.scheduledAt ?? match.playedAt; if (dateText === null) throw new Error(`World DB bootstrap match has no date: ${match.matchId}`); return createGame({ id: gameIdFromString(match.matchId), seasonId: seasonIdFromString(slice.season.seasonId), competitionId: competitionIdFromString(slice.competition.competitionId), date: parseGameDate(dateText.slice(0, 10)), homeTeamId: teamIdFromString(match.homeTeamId), awayTeamId: teamIdFromString(match.awayTeamId), status, result: status === 'completed' ? { homeScore: match.homeScore ?? -1, awayScore: match.awayScore ?? -1 } : null, stakes: 'regular' }) }
+function materializeMatch(slice: WorldDbGameBootstrapSliceV1, match: WorldDbGameBootstrapSliceV1['matches'][number], competitionStageKey?: string) { const status = match.status.toUpperCase() === 'COMPLETED' ? 'completed' : match.status.toUpperCase() === 'SCHEDULED' ? 'scheduled' : (() => { throw new Error(`World DB bootstrap match status is unsupported: ${match.status}`) })(); const dateText = match.scheduledAt ?? match.playedAt; if (dateText === null) throw new Error(`World DB bootstrap match has no date: ${match.matchId}`); return createGame({ id: gameIdFromString(match.matchId), seasonId: seasonIdFromString(slice.season.seasonId), competitionId: competitionIdFromString(slice.competition.competitionId), date: parseGameDate(dateText.slice(0, 10)), homeTeamId: teamIdFromString(match.homeTeamId), awayTeamId: teamIdFromString(match.awayTeamId), status, result: status === 'completed' ? { homeScore: match.homeScore ?? -1, awayScore: match.awayScore ?? -1 } : null, stakes: 'regular', ...(competitionStageKey === undefined ? {} : { competitionStageKey }) }) }

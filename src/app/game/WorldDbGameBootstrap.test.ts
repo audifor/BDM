@@ -124,6 +124,24 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
 
   it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(world.organizationKnowledge).toEqual([]); expect(world).not.toHaveProperty('playerKnowledgeById'); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
+  it('accepts a complete imported round robin spread across fixture days and keeps the B04 regular stage', () => {
+    const sourceSlice = slice()
+    const generated = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, SPAIN_ACB_2025_26_CALENDAR, parseGameDate('2025-10-01'))
+    const byRoundDate = new Map<string, typeof generated.games[keyof typeof generated.games][]>()
+    for (const game of Object.values(generated.games)) byRoundDate.set(game.date, [...(byRoundDate.get(game.date) ?? []), game])
+    const matches = [...byRoundDate.values()].flatMap((round) => round.map((game, index) => ({
+      matchId: `match:imported:${game.id}`,
+      scheduledAt: `${index < 4 ? addDays(game.date, 1) : game.date}T18:00:00Z`,
+      playedAt: null,
+      status: 'SCHEDULED',
+      homeTeamId: game.homeTeamId,
+      awayTeamId: game.awayTeamId,
+    })))
+    const imported = bootstrapGameWorldFromWorldDb({ ...sourceSlice, matches }, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, leagueFormat(), SPAIN_ACB_2025_26_CALENDAR, parseGameDate('2025-10-01'))
+    expect(Object.keys(imported.games)).toHaveLength(306)
+    expect(new Set(Object.values(imported.games).map((game) => game.date)).size).toBe(68)
+    expect(Object.values(imported.games).every((game) => game.competitionStageKey === 'REGULAR')).toBe(true)
+  })
   it('starts career in pre-season, advances into the sporting season, and preserves the date through Save/Reload', () => {
     const sourceSlice = slice()
     const season = {
@@ -180,7 +198,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
 
   it('preserves shared organization identity, section records and their IDs through save/load', () => {
     const sourceSlice = slice()
-    const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+    const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, undefined, parseGameDate('2025-10-01'))
     const first = Object.values(world.teams)[0]!
     const second = Object.values(world.teams)[1]!
     expect(first.organizationId).toBe(second.organizationId)
@@ -209,7 +227,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
         { interestId: 'interest:organization', organizationId: targetOrganizationId, investorKind: 'ORGANIZATION' as const, investorId: 'organization:holding', interestType: 'PARTNERSHIP', status: null, openedOn: null, closedOn: null },
       ],
     }
-    const world = bootstrapGameWorldFromWorldDb(interestedSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+    const world = bootstrapGameWorldFromWorldDb(interestedSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, undefined, parseGameDate('2025-10-01'))
     expect(Object.keys(world.organizationInvestorInterestsById)).toEqual(['interest:person', 'interest:organization'])
     expect(world.personsById['person:interested-only' as never]?.profileRefs).toEqual([])
     expect(world.organizationsById['organization:holding' as never]?.legalName).toBe('Holding Organization')
@@ -290,7 +308,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(advanced.currentDate).toBe('2026-03-01')
     expect(advanced.games[marchGame!.id]).toBeDefined()
   })
-  it('is deterministic and preserves every canonical 80/40 truth key and value', () => { const sourceSlice = slice(); const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }; const first = bootstrapGameWorldFromWorldDb(sourceSlice, selection, pin); const second = bootstrapGameWorldFromWorldDb(sourceSlice, selection, pin); expect(JSON.stringify(first)).toBe(JSON.stringify(second)); for (const sourcePlayer of sourceSlice.players) { const player = first.players[sourcePlayer.playerId as never]!; expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS); expect(PLAYER_TRUTH_RATING_KEYS.map((key) => player.basketball.ratings[key])).toEqual(PLAYER_TRUTH_RATING_KEYS.map((key) => sourcePlayer.ratings[key])); expect(Object.keys(player.basketball.tendencies)).toEqual(PLAYER_TRUTH_TENDENCY_KEYS) } })
+  it('is deterministic and preserves every canonical 80/40 truth key and value', () => { const sourceSlice = slice(); const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }; const first = bootstrapGameWorldFromWorldDb(sourceSlice, selection, pin, undefined, undefined, parseGameDate('2025-10-01')); const second = bootstrapGameWorldFromWorldDb(sourceSlice, selection, pin, undefined, undefined, parseGameDate('2025-10-01')); expect(JSON.stringify(first)).toBe(JSON.stringify(second)); for (const sourcePlayer of sourceSlice.players) { const player = first.players[sourcePlayer.playerId as never]!; expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS); expect(PLAYER_TRUTH_RATING_KEYS.map((key) => player.basketball.ratings[key])).toEqual(PLAYER_TRUTH_RATING_KEYS.map((key) => sourcePlayer.ratings[key])); expect(Object.keys(player.basketball.tendencies)).toEqual(PLAYER_TRUTH_TENDENCY_KEYS) } })
   it('rejects a World DB slice with a missing canonical rating', () => { const malformed = slice(); const player = malformed.players[0]!; const { [PLAYER_TRUTH_RATING_KEYS[0]!]: _missing, ...ratings } = player.ratings; expect(() => bootstrapGameWorldFromWorldDb({ ...malformed, players: malformed.players.map((candidate) => candidate.playerId === player.playerId ? { ...candidate, ratings } : candidate) }, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })).toThrow('exactly 80 canonical keys') })
   it('rejects a selected team outside the B02 slice', async () => { const session = openSession(); await session.open(); await expect(session.bootstrapGameWorld({ ...selection, teamId: 'team:ESP:male:missing' })).rejects.toThrow('not in ecosystem') })
 

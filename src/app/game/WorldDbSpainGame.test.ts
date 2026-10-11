@@ -34,6 +34,8 @@ const runtimeBundle: WorldCompetitionRuntimeBundle = {
   competitionFormats: [
     { schemaVersion: '1.0', competitionId: SPAIN_ACB_COMPETITION_ID, competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
     { schemaVersion: '1.0', competitionId: 'competition:ESP:copa-del-rey', competitionSeasonId: SPAIN_COPA_COMPETITION_SEASON_ID, seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
+    { schemaVersion: '1.0', competitionId: SPAIN_ACB_COMPETITION_ID, competitionSeasonId: 'edition:ESP:liga-endesa:2026-27', seasonLabel: '2026-27', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
+    { schemaVersion: '1.0', competitionId: 'competition:ESP:copa-del-rey', competitionSeasonId: 'edition:ESP:copa-del-rey:2026-27', seasonLabel: '2026-27', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
   ],
   initialScoreDocuments: [],
 }
@@ -59,6 +61,8 @@ function catalog(): WorldDbSelectionCatalogV1 {
     competitionSeasons: [
       { competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, competitionId: SPAIN_ACB_COMPETITION_ID, competitionName: 'Liga Endesa', seasonId: 'season:2025_26', editionNumber: 70 },
       { competitionSeasonId: SPAIN_COPA_COMPETITION_SEASON_ID, competitionId: 'competition:ESP:copa-del-rey', competitionName: 'Copa del Rey', seasonId: 'season:2025_26', editionNumber: 1 },
+      { competitionSeasonId: 'edition:ESP:liga-endesa:2026-27', competitionId: SPAIN_ACB_COMPETITION_ID, competitionName: 'Liga Endesa', seasonId: 'season:2026_27', editionNumber: 71 },
+      { competitionSeasonId: 'edition:ESP:copa-del-rey:2026-27', competitionId: 'competition:ESP:copa-del-rey', competitionName: 'Copa del Rey', seasonId: 'season:2026_27', editionNumber: 2 },
     ],
     teamMemberships,
     teamUnitMemberships: [],
@@ -66,7 +70,7 @@ function catalog(): WorldDbSelectionCatalogV1 {
 }
 
 function repository(): WorldDatabaseRepository {
-  const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [SPAIN_ACB_COMPETITION_SEASON_ID, SPAIN_COPA_COMPETITION_SEASON_ID] }
+  const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [SPAIN_ACB_COMPETITION_SEASON_ID, SPAIN_COPA_COMPETITION_SEASON_ID, 'edition:ESP:liga-endesa:2026-27', 'edition:ESP:copa-del-rey:2026-27'] }
   return {
     inspectDatabase: vi.fn(async () => info),
     loadSelectionCatalog: vi.fn(async () => catalog()),
@@ -87,7 +91,7 @@ describe('World DB Spain ACB new-game selection', () => {
 
     expect(result.ecosystemId).toBe(SPAIN_ACB_ECOSYSTEM_ID)
     expect(result.competitionId).toBe(SPAIN_ACB_COMPETITION_ID)
-    expect(result.competitionSeasonId).toBe(SPAIN_ACB_COMPETITION_SEASON_ID)
+    expect(result.competitionSeasonId).toBe('edition:ESP:liga-endesa:2026-27')
     expect(result.teams).toHaveLength(18)
     expect(new Set(result.teams.map((team) => team.key)).size).toBe(18)
     expect(result.teams[0]?.name).toBe('ACB Team 01')
@@ -115,18 +119,18 @@ describe('World DB Spain ACB new-game selection', () => {
 
     const result = await createConfiguredGameAsync({ universeId: WORLD_DB_SPAIN_UNIVERSE_ID, userTeamKey: selectedTeamId }, access)
     expect(Object.values(result.competitions).some((competition) => competition.id === 'competition:ESP:copa-del-rey')).toBe(true)
-    expect(Object.values(result.seasons).some((season) => season.worldCompetitionFormat?.competitionSeasonId === SPAIN_COPA_COMPETITION_SEASON_ID)).toBe(true)
+    expect(Object.values(result.seasons).some((season) => season.worldCompetitionFormat?.competitionSeasonId === 'edition:ESP:copa-del-rey:2026-27')).toBe(true)
     expect(bootstrap).toHaveBeenCalledOnce()
     expect(bootstrap).toHaveBeenCalledWith(
       expect.objectContaining({
         source,
         ecosystemId: SPAIN_ACB_ECOSYSTEM_ID,
         competitionId: SPAIN_ACB_COMPETITION_ID,
-        competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID,
+        competitionSeasonId: 'edition:ESP:liga-endesa:2026-27',
         teamId: selectedTeamId,
       }),
       expect.objectContaining({
-        seasonWindow: expect.objectContaining({ startDate: '2025-10-01', endDate: '2026-06-30' }),
+        seasonWindow: expect.objectContaining({ startDate: '2026-09-26', endDate: '2027-06-29' }),
       }),
     )
   })

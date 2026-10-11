@@ -35,6 +35,8 @@ pub struct WorldDbGameBootstrapSeasonV1 {
     label: String,
     start_date: String,
     end_date: String,
+    sporting_season_start_date: Option<String>,
+    sporting_season_end_date: Option<String>,
     provenance: String,
     source_dates: WorldDbGameBootstrapSourceDatesV1,
 }
@@ -386,30 +388,39 @@ fn query_season(
     connection: &Connection,
     competition_season_id: &str,
 ) -> Result<WorldDbGameBootstrapSeasonV1, String> {
-    let row = connection.query_row("SELECT cs.competition_season_id,cs.season_id,COALESCE(s.label,cs.season_id),cs.start_date,cs.end_date,s.start_date,s.end_date FROM competition_season cs LEFT JOIN season s ON s.season_id=cs.season_id WHERE cs.competition_season_id=?1", [competition_season_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?,row.get::<_, String>(2)?,row.get::<_, Option<String>>(3)?,row.get::<_, Option<String>>(4)?,row.get::<_, Option<String>>(5)?,row.get::<_, Option<String>>(6)?))).map_err(|error| format!("Unable to load World DB bootstrap season {competition_season_id}: {error}"))?;
-    let (id, season_id, label, cs_start, cs_end, season_start, season_end) = row;
-    let (start_date, end_date, provenance) =
-        match (cs_start.or(season_start), cs_end.or(season_end)) {
-            (Some(start), Some(end)) => (start, end, "WORLD_DB".to_owned()),
-            _ => {
-                let (start, end) = derive_season_window(&label)?;
-                (start, end, "DERIVED_SIMULATION_FROM_B04".to_owned())
-            }
-        };
+    let row = connection.query_row("SELECT cs.competition_season_id,cs.season_id,COALESCE(s.label,cs.season_id),cs.start_date,cs.end_date,s.start_date,s.end_date,p.notes FROM competition_season cs LEFT JOIN season s ON s.season_id=cs.season_id LEFT JOIN provenance p ON p.provenance_id=cs.provenance_id WHERE cs.competition_season_id=?1", [competition_season_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?,row.get::<_, String>(2)?,row.get::<_, Option<String>>(3)?,row.get::<_, Option<String>>(4)?,row.get::<_, Option<String>>(5)?,row.get::<_, Option<String>>(6)?,row.get::<_, Option<String>>(7)?))).map_err(|error| format!("Unable to load World DB bootstrap season {competition_season_id}: {error}"))?;
+    let (id, season_id, label, cs_start, cs_end, season_start, season_end, notes) = row;
+    let (start_date, end_date, provenance) = match (
+        cs_start.or(season_start.clone()),
+        cs_end.or(season_end.clone()),
+    ) {
+        (Some(start), Some(end)) => (start, end, "WORLD_DB".to_owned()),
+        _ => {
+            let (start, end) = derive_season_window(&label)?;
+            (start, end, "DERIVED_SIMULATION_FROM_B04".to_owned())
+        }
+    };
     Ok(WorldDbGameBootstrapSeasonV1 {
         competition_season_id: id,
         season_id,
         label,
         start_date,
         end_date,
+        sporting_season_start_date: season_start,
+        sporting_season_end_date: season_end,
         provenance,
-        // DDL-12 provenance has no capture/publication/effective date columns and this snapshot
-        // has no season provenance row, so preserve those facts as unknown instead of deriving them.
         source_dates: WorldDbGameBootstrapSourceDatesV1 {
-            captured_at: None,
-            publication_date: None,
-            effective_from: None,
+            captured_at: provenance_value(&notes, "captured_at"),
+            publication_date: provenance_value(&notes, "publication_date"),
+            effective_from: provenance_value(&notes, "effective_from"),
         },
+    })
+}
+
+fn provenance_value(notes: &Option<String>, key: &str) -> Option<String> {
+    notes.as_deref()?.split(';').find_map(|entry| {
+        let (found, value) = entry.trim().split_once('=')?;
+        (found == key && value != "UNKNOWN").then(|| value.to_owned())
     })
 }
 
@@ -1088,20 +1099,20 @@ mod tests {
     }
 
     #[test]
-    fn production_spain_slice_smoke_is_opt_in_and_read_only() {
+    fn candidate_acb_2026_slice_smoke_is_opt_in_and_read_only() {
         let Some(database_path) = std::env::var_os("BDM_WORLD_DB_PATH") else {
             return;
         };
         let database_path = database_path.to_string_lossy();
         let slice = load_game_bootstrap_slice_v1(
             &database_path,
-            "edition:ESP:liga-endesa:2025-26",
+            "edition:ESP:liga-endesa:2026-27",
             "ecosystem:ESP:acb",
         )
-        .expect("Spain ACB bootstrap slice");
+        .expect("candidate Spain ACB bootstrap slice");
         assert_eq!(slice.teams.len(), 18);
         assert_eq!(slice.players.len(), 270);
-        assert_eq!(slice.staff_profiles.len(), 90);
+        assert!(slice.staff_profiles.len() >= 18);
         assert_eq!(
             slice
                 .staff_assignments
@@ -1111,9 +1122,24 @@ mod tests {
             18
         );
         assert_eq!(slice.roster_assignments.len(), 270);
-        assert!(
-            slice.matches.is_empty(),
-            "this smoke expects B04-derived games for the current DB"
+        assert_eq!(slice.matches.len(), 306);
+        assert_eq!(slice.season.start_date, "2026-09-26");
+        assert_eq!(slice.season.end_date, "2027-06-29");
+        assert_eq!(
+            slice.season.sporting_season_start_date.as_deref(),
+            Some("2026-07-01")
+        );
+        assert_eq!(
+            slice.season.sporting_season_end_date.as_deref(),
+            Some("2027-06-30")
+        );
+        assert_eq!(
+            slice.season.source_dates.publication_date.as_deref(),
+            Some("2026-07-15")
+        );
+        assert_eq!(
+            slice.season.source_dates.effective_from.as_deref(),
+            Some("2026-07-01")
         );
         if let Some(output_path) = std::env::var_os("BDM_WORLD_DB_SLICE_JSON") {
             let json = serde_json::to_vec_pretty(&slice).expect("serialize slice");
