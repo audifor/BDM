@@ -10,10 +10,11 @@ const DIAGNOSIS:Record<RosterLaneDiagnosis,string>={
   overload:'CONCENTRACIÓN ALTA',critical:'CONCENTRACIÓN MUY ALTA',
 }
 
-export function RosterCourtsideBriefing({model,world,teamId}:{
+export function RosterCourtsideBriefing({model,world,teamId,onOpenDepth}:{
   readonly model:RosterBriefingModel
   readonly world:GameWorld
   readonly teamId:TeamId
+  readonly onOpenDepth?:()=>void
 }) {
   const ages=useMemo(()=>{
     const ageBuckets=[0,0,0,0,0]
@@ -29,7 +30,7 @@ export function RosterCourtsideBriefing({model,world,teamId}:{
   return <section className="roster-briefing roster-v4-briefing" data-ng-region="roster-briefing">
     <header className="roster-v4__section-title">
       <div><span>INFORME DE EQUIPO / ANÁLISIS</span><h2>BRIEFING</h2>
-        <p>Diagnóstico basado en el estado actual del equipo. Sin recomendaciones inventadas.</p></div>
+        <p>Lectura de la plantilla, prioridades y equilibrio deportivo.</p></div>
       <strong>{model.rosterCount} jugadores · {model.unassignedCount} sin rol · {model.injuredCount} baja(s)</strong>
     </header>
     <div className="roster-v4-briefing__metrics">
@@ -74,14 +75,14 @@ export function RosterCourtsideBriefing({model,world,teamId}:{
         <small>La ausencia de registro salarial no demuestra que un jugador esté libre; también puede corresponder a otros tipos de vínculo.</small>
       </article>
       <article className="roster-v4-briefing__card roster-v4-briefing__alerts">
-        <h3>ASUNTOS A REVISAR</h3><p>Señales constatables, no órdenes automáticas</p>
+        <h3>ASUNTOS A REVISAR</h3><p>Situaciones detectadas en la plantilla</p>
         {positionAlerts.length>0
           ?positionAlerts.map(lane=><div className="roster-v4-briefing__alert" key={lane.position}>
             <strong>{lane.position}</strong><span>{lane.count} jugador(es) en posición principal · {DIAGNOSIS[lane.diagnosis]}</span>
           </div>)
           :<div className="roster-v4-briefing__alert">Ninguna posición principal por debajo de dos jugadores.</div>}
         {model.injuredCount>0&&<div className="roster-v4-briefing__alert"><strong>MÉDICO</strong><span>{model.injuredCount} lesión(es) actuales. Consultar su ficha antes de decidir minutos.</span></div>}
-        {model.unassignedCount>0&&<div className="roster-v4-briefing__alert"><strong>ROTACIÓN</strong><span>{model.unassignedCount} jugador(es) sin asignación. Revisar PROFUNDIDAD.</span></div>}
+        {model.unassignedCount>0&&<div className="roster-v4-briefing__alert"><strong>ROTACIÓN</strong><span>{model.unassignedCount} jugador(es) sin asignación.</span><button type="button" onClick={onOpenDepth}>VER PROFUNDIDAD ↗</button></div>}
       </article>
     </div>
   </section>
