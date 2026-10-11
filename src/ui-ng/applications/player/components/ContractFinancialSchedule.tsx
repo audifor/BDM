@@ -22,6 +22,7 @@ export function ContractFinancialSchedule({
   }
 
   const maxSalary = Math.max(1, ...rows.map((row) => row.baseSalary.amount))
+  const focusedRow = rows.find(row => row.id === selectedItemId) ?? rows.find(row => row.isCurrent) ?? rows[0]!
   return (
     <section className="pc-schedule" data-ng-region="contract-financial-schedule">
       <header className="pc-panel-head">
@@ -47,6 +48,14 @@ export function ContractFinancialSchedule({
             </button>
           ))}
         </div>
+      </div>
+      <div className="pc-schedule__selected" data-ng-region="contract-selected-season"
+        aria-live="polite">
+        <span className="pc-schedule__selected-title">{focusedRow.seasonLabel}</span>
+        <div><small>BASE</small><strong>{focusedRow.baseSalary.formatted}</strong></div>
+        <div><small>GUARANTEED</small><strong>{focusedRow.guaranteed.formatted}</strong></div>
+        <div><small>CAP HIT</small><strong>{focusedRow.capHit.formatted}</strong></div>
+        <div><small>STATUS</small><strong>{focusedRow.guaranteeState}</strong></div>
       </div>
       <div className="pc-schedule__scroll">
         <NgPrecisionTable
