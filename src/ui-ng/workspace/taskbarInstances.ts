@@ -16,7 +16,7 @@ export interface TaskbarInstance {
 
 const IDENTITY_PARAMS: Partial<Record<WorkspaceAppId, readonly string[]>> = {
   player: ['playerId'],
-  staff: ['staffId', 'staffDept'],
+  staff: ['staffId', 'staffDept', 'teamId'],
   roster: ['teamId'],
   club: ['teamId'],
   competition: ['competitionId'],
@@ -59,15 +59,44 @@ export function taskbarInstanceFromUrl(url: URL): TaskbarInstance | null {
   }
 }
 
+/** Resolve a workspace's implicit current entity before it is recorded in the dock.
+ * This makes the first entry the visible player/team, not an anonymous app shell.
+ * The returned URL can be opened directly to restore the same entity.
+ */
+export function withTaskbarDefaultEntity(
+  url: URL,
+  context: { readonly playerId?: string | null; readonly teamId?: string | null },
+): URL {
+  const resolved = new URL(url.href)
+  const app = parseWorkspaceApp(resolved.searchParams.get('app'))
+  if (app === 'player' && !resolved.searchParams.has('playerId') && context.playerId) {
+    resolved.searchParams.set('playerId', context.playerId)
+  }
+  if ((app === 'roster' || app === 'club' || app === 'staff') &&
+    !resolved.searchParams.has('teamId') &&
+    !resolved.searchParams.has('staffId') &&
+    !resolved.searchParams.has('staffDept') &&
+    context.teamId) {
+    resolved.searchParams.set('teamId', context.teamId)
+  }
+  return resolved
+}
+
 export function rememberTaskbarInstance(
   previous: readonly TaskbarInstance[],
   current: TaskbarInstance | null,
 ): readonly TaskbarInstance[] {
   if (current === null) return previous
-  const index = previous.findIndex(entry => entry.key === current.key)
-  if (index === -1) return [...previous, current]
-  if (previous[index]!.url === current.url) return previous
-  return previous.map(entry => entry.key === current.key ? current : entry)
+  // Never keep a redundant generic app tile alongside actual entity dossiers.
+  // A true generic route is still tracked when that application has no entity.
+  if (current.entityId === null && previous.some(entry =>
+    entry.app === current.app && entry.entityId !== null)) return previous
+  const cleaned = current.entityId === null ? previous : previous.filter(entry =>
+    !(entry.app === current.app && entry.entityId === null))
+  const index = cleaned.findIndex(entry => entry.key === current.key)
+  if (index === -1) return [...cleaned, current]
+  if (cleaned[index]!.url === current.url) return cleaned
+  return cleaned.map(entry => entry.key === current.key ? current : entry)
 }
 
 export function closeTaskbarInstance(
