@@ -90,6 +90,6 @@ describe('Courtside PLAYER Medical decisions',()=>{
     window.history.replaceState({},'','/?ui=ng&app=medical&playerId='+encodeURIComponent(playerId)+'&medicalTab=risk')
     const {container}=render(<NgWorkspaceNavigationProvider><MedicalWorkspace /></NgWorkspaceNavigationProvider>)
     expect(container.querySelector('[data-ng-region="medical-workspace"]')).not.toBeNull()
-    expect(screen.getByRole('tab',{name:/Risk/})).toHaveAttribute('aria-selected','true')
+    expect(screen.getByRole('button',{name:/^Risk/})).toHaveAttribute('aria-current','page')
   })
 })
