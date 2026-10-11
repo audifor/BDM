@@ -53,6 +53,9 @@ jobs:
             src/ui-ng/applications/player/views/PlayerPerformanceCourtside.test.tsx \
             src/ui-ng/applications/player/data/buildPlayerDevelopmentModel.test.ts \
             src/ui-ng/applications/player/views/PlayerDevelopmentCourtside.test.tsx \
+            src/ui-ng/applications/player/views/PlayerCourtsideOverview.fow.test.tsx \
+            src/ui-ng/applications/player/views/PlayerAttributesView.test.tsx \
+            src/ui-ng/applications/player/components/visual/CourtsideFamilyRadar.test.tsx \
             src/ui-ng/system/Taskbar.test.tsx \
             src/ui-ng/workspace/taskbarInstances.test.ts \
             src/ui-ng/workspace/taskbarOpenApps.test.ts \
