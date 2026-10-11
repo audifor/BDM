@@ -104,8 +104,8 @@ export function CurrentInjuryPanel({
 
 /**
  * LOAD MANAGEMENT — two real series per window. Match minutes and programme load are different
- * units, so each bar is normalised to its own busiest window and the trend reads the two together
- * as an index, exactly as the note under the panel says.
+ * units, so each bar is normalised to its own busiest window. They are never
+ * averaged into an invented combined index or risk projection.
  */
 export function LoadManagementPanel({
   note,
@@ -119,9 +119,6 @@ export function LoadManagementPanel({
   const peakMatch = Math.max(1, ...windows.map((window) => window.matchMinutes))
   const peakProgramme = Math.max(1, ...windows.map((window) => window.programmeLoad))
   const share = (value: number, peak: number) => Math.round((value / peak) * 100)
-  const trend = windows.map((window) =>
-    Math.round((share(window.matchMinutes, peakMatch) + share(window.programmeLoad, peakProgramme)) / 2),
-  )
 
   return (
     <section className="po-med-panel po-med-load" data-ng-region="medical-load">
@@ -139,15 +136,11 @@ export function LoadManagementPanel({
           <span aria-hidden className="po-med-load__key" />
           Match load
         </li>
-        <li className="is-trend">
-          <span aria-hidden className="po-med-load__key" />
-          Load trend
-        </li>
       </ul>
 
       <div className="po-med-load__chart">
         <ul className="po-med-load__groups">
-          {windows.map((window, index) => (
+          {windows.map((window) => (
             <li className="po-med-load__group" key={window.id}>
               <span aria-hidden className="po-med-load__bars">
                 <span
@@ -166,11 +159,6 @@ export function LoadManagementPanel({
                 <span>{window.matchMinutes} min</span>
                 <span>{window.programmeLoad} load</span>
               </span>
-              <span
-                aria-hidden
-                className="po-med-load__trend-point"
-                style={{ bottom: `${trend[index] ?? 0}%` }}
-              />
             </li>
           ))}
         </ul>
