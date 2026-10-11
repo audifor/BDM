@@ -10,7 +10,7 @@ import type { WorldDbGameBootstrapSelectionV1, WorldDbGameBootstrapSliceV1 } fro
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
-import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
+import { bootstrapGameWorldFromWorldDb, DEFAULT_CAREER_START_DATE } from './WorldDbGameBootstrap'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { advanceGameDay } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -40,7 +40,7 @@ function slice(): WorldDbGameBootstrapSliceV1 {
   const players = teams.flatMap((team, teamIndex) => ['PG', 'SG', 'SF', 'PF', 'C'].map((position, positionIndex) => ({ playerId: `${team.teamId}:person:${positionIndex}`, personId: `${team.teamId}:person:${positionIndex}`, primaryPosition: position as 'PG' | 'SG' | 'SF' | 'PF' | 'C', secondaryPositions: [], dominantHand: 'RIGHT' as const, ratings: values(PLAYER_TRUTH_RATING_KEYS), tendencies: values(PLAYER_TRUTH_TENDENCY_KEYS), development: ['SHOOTING', 'FINISHING', 'BALL_HANDLING', 'PLAYMAKING', 'OFF_BALL_OFFENSE', 'DEFENSE_REBOUNDING', 'PHYSICAL', 'MENTAL'].map((dimensionCode) => ({ dimensionCode, ceiling: 85 + (teamIndex % 10), growthRate: 50, declineSensitivity: 20 })) })))
   const staffProfiles = teams.map((team) => ({ staffId: `staff:${team.teamId}:head`, personId: `${team.teamId}:head-coach`, attributes: Object.fromEntries(Array.from({ length: 80 }, (_, index) => [`STAFF_ATTRIBUTE_${String(index + 1).padStart(2, '0')}`, 60])), specialismIds: ['TACTICS'] }))
   const persons = [...players.map((player) => ({ personId: player.personId, firstName: player.personId.split(':').at(-2)!, lastName: 'Player', gender: 'male' as const, dateOfBirth: '1998-01-01', nationalityIds: ['place:country:ESP'], physical: { heightCm: 190, weightKg: 90, wingspanCm: 195, standingReachCm: 245 } })), ...staffProfiles.map((staff) => ({ personId: staff.personId, firstName: 'Head', lastName: staff.personId.split(':').at(-2)!, gender: 'male' as const, dateOfBirth: '1980-01-01', nationalityIds: ['place:country:ESP'], physical: { heightCm: 180, weightKg: 80, wingspanCm: 180, standingReachCm: 230 } })), { personId: 'person:owner-only', firstName: 'Owner', lastName: 'Only', nationalityIds: [] }]
-  return { schemaVersion: 1, source, ecosystem: { ecosystemId: selection.ecosystemId, name: 'Spain ACB Ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: selection.competitionId, name: 'Liga Endesa', gender: 'male', ecosystemId: selection.ecosystemId }, season: { competitionSeasonId: selection.competitionSeasonId, seasonId: 'season:2025_26', label: '2025-26', startDate: '2025-10-01', endDate: '2026-06-30', provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries: [{ countryId: 'place:country:ESP', name: 'ESP', code: 'ESP' }], organizations, organizationSections, organizationOwnership: [{ ownershipId: 'ownership:worlddb', organizationId: teams[0]!.organizationId, ownerKind: 'PERSON', ownerId: 'person:owner-only', ownershipPercentage: 25, validFrom: '2025-10-01', validTo: null }], teams, persons, players, staffProfiles, staffAssignments: teams.map((team) => ({ assignmentId: `${team.teamId}:head-assignment`, staffId: `staff:${team.teamId}:head`, teamId: team.teamId, roleCode: 'headCoach', assignedOn: '2025-10-01' })), rosterAssignments: players.map((player) => ({ rosterId: `roster:${player.playerId.split(':').slice(0, 4).join(':')}`, teamId: player.playerId.split(':').slice(0, 4).join(':'), playerId: player.playerId, status: 'ACTIVE' })), matches: [] }
+  return { schemaVersion: 1, source, ecosystem: { ecosystemId: selection.ecosystemId, name: 'Spain ACB Ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: selection.competitionId, name: 'Liga Endesa', gender: 'male', ecosystemId: selection.ecosystemId }, season: { competitionSeasonId: selection.competitionSeasonId, seasonId: 'season:2025_26', label: '2025-26', startDate: '2025-10-01', endDate: '2026-06-30', provenance: 'DERIVED_SIMULATION_FROM_B04', sourceDates: { capturedAt: null, publicationDate: null, effectiveFrom: null } }, countries: [{ countryId: 'place:country:ESP', name: 'ESP', code: 'ESP' }], organizations, organizationSections, organizationOwnership: [{ ownershipId: 'ownership:worlddb', organizationId: teams[0]!.organizationId, ownerKind: 'PERSON', ownerId: 'person:owner-only', ownershipPercentage: 25, validFrom: '2025-10-01', validTo: null }], teams, persons, players, staffProfiles, staffAssignments: teams.map((team) => ({ assignmentId: `${team.teamId}:head-assignment`, staffId: `staff:${team.teamId}:head`, teamId: team.teamId, roleCode: 'headCoach', assignedOn: '2025-10-01' })), rosterAssignments: players.map((player) => ({ rosterId: `roster:${player.playerId.split(':').slice(0, 4).join(':')}`, teamId: player.playerId.split(':').slice(0, 4).join(':'), playerId: player.playerId, status: 'ACTIVE' })), matches: [] }
 }
 function sliceWithAssistantCoach(): WorldDbGameBootstrapSliceV1 {
   const base = slice()
@@ -60,11 +60,11 @@ function sliceWithAssistantCoach(): WorldDbGameBootstrapSliceV1 {
   }
 }
 function worldWithAssistantCoach() {
-  return bootstrapGameWorldFromWorldDb(sliceWithAssistantCoach(), selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+  return bootstrapGameWorldFromWorldDb(sliceWithAssistantCoach(), selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, undefined, parseGameDate('2025-10-01'))
 }
 function catalog(): WorldDbSelectionCatalogV1 { const teams = slice().teams; return { schemaVersion: 1, source, ecosystems: [{ ecosystemId: selection.ecosystemId, code: 'SPAIN_ACB', name: 'Spain ACB Ecosystem', gender: 'M' }], levels: [], units: [], competitionAssignments: [{ assignmentId: 'assignment:liga-endesa', ecosystemId: selection.ecosystemId, competitionId: selection.competitionId, competitionName: 'Liga Endesa', levelId: null, unitId: null, roleType: 'PRIMARY_LEAGUE' }], competitionSeasons: [{ competitionSeasonId: selection.competitionSeasonId, competitionId: selection.competitionId, competitionName: 'Liga Endesa', seasonId: 'season:2025_26', editionNumber: 1 }, { competitionSeasonId: spainCopaCompetitionSeasonId(2025), competitionId: 'competition:ESP:copa-del-rey', competitionName: 'Copa del Rey', seasonId: 'season:2025_26', editionNumber: 1 }], teamMemberships: teams.map((team) => ({ membershipId: `membership:${team.teamId}`, ecosystemId: selection.ecosystemId, teamId: team.teamId, teamName: team.name, levelId: null, unitId: null, membershipStatus: 'ACTIVE', validFrom: null, validTo: null })), teamUnitMemberships: [] } }
 function repository(bootstrapSlice = slice()): WorldDatabaseRepository { const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [selection.competitionSeasonId, spainCopaCompetitionSeasonId(2025)] }; return { inspectDatabase: vi.fn(async () => info), loadSelectionCatalog: vi.fn(async () => catalog()), loadCompetitionSeason: vi.fn(), loadMatchRealizations: vi.fn(), loadGameBootstrapSlice: vi.fn(async () => bootstrapSlice), loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle) } }
-function openSession(repo = repository()): WorldDbSessionV1 { return new WorldDbSessionV1({ repository: repo, databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }) }
+function openSession(repo = repository()): WorldDbSessionV1 { return new WorldDbSessionV1({ repository: repo, databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json', careerStartDate: parseGameDate('2025-10-01') }) }
 
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   it('materializes imported Staff career state and supports delegated team Training planning', () => {
@@ -124,6 +124,42 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
 
   it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(world.organizationKnowledge).toEqual([]); expect(world).not.toHaveProperty('playerKnowledgeById'); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
+  it('starts career in pre-season, advances into the sporting season, and preserves the date through Save/Reload', () => {
+    const sourceSlice = slice()
+    const season = {
+      ...sourceSlice.season,
+      competitionSeasonId: 'edition:ESP:liga-endesa:2026-27',
+      seasonId: 'season:2026_27',
+      label: '2026-27',
+      startDate: '2026-10-01',
+      endDate: '2027-06-30',
+    }
+    const world = bootstrapGameWorldFromWorldDb(
+      { ...sourceSlice, season },
+      { ...selection, competitionSeasonId: season.competitionSeasonId },
+      { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema },
+    )
+
+    expect(world.currentDate).toBe(DEFAULT_CAREER_START_DATE)
+    expect(world.seasons[world.currentSeasonId]?.startDate).toBe('2026-10-01')
+    expect(season.sourceDates).toEqual({ capturedAt: null, publicationDate: null, effectiveFrom: null })
+    expect(Object.values(world.games).every((game) => game.date >= season.startDate && game.date <= season.endDate)).toBe(true)
+
+    const nextDay = advanceGameDay(world)
+    expect(nextDay.currentDate).toBe('2026-07-02')
+    expect(Object.values(nextDay.games).map((game) => game.date)).toEqual(Object.values(world.games).map((game) => game.date))
+
+    const reloaded = deserializeGameWorldV4(serializeGameWorldV4(nextDay, '2026-07-02T00:00:00.000Z'))
+    expect(reloaded.currentDate).toBe('2026-07-02')
+    expect(reloaded.seasons[reloaded.currentSeasonId]?.startDate).toBe(season.startDate)
+  })
+  it('rejects a season that ended before the fixed career start instead of moving its official calendar', () => {
+    expect(() => bootstrapGameWorldFromWorldDb(
+      slice(),
+      selection,
+      { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema },
+    )).toThrow('has already ended before the career start date')
+  })
   it('projects no canonical Place or Facility from the canonical World DB slice', async () => {
     // MX0.6 closure audit: the World DB carries `organization.primary_place_id` and `match.facility_id`
     // references, but the canonical bootstrap projects neither a `places` nor a `facilities` collection
@@ -187,7 +223,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
   it('builds 34 valid ACB rounds through the Season end and keeps them after save/load', () => {
     const sourceSlice = slice()
-    const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, SPAIN_ACB_2025_26_CALENDAR)
+    const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, SPAIN_ACB_2025_26_CALENDAR, parseGameDate('2025-10-01'))
     const games = Object.values(world.games)
     const gamesByDate = new Map<string, typeof games>()
     const gamesByPair = new Map<string, typeof games>()
@@ -224,7 +260,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   it('uses generated fixtures when the real source contains only a partial schedule', () => {
     const sourceSlice = slice()
     const realFixture = { matchId: 'match:official:1', scheduledAt: '2025-11-02T18:00:00Z', playedAt: null, status: 'SCHEDULED', homeTeamId: sourceSlice.teams[0]!.teamId, awayTeamId: sourceSlice.teams[1]!.teamId }
-    const world = bootstrapGameWorldFromWorldDb({ ...sourceSlice, matches: [realFixture] }, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, SPAIN_ACB_2025_26_CALENDAR)
+    const world = bootstrapGameWorldFromWorldDb({ ...sourceSlice, matches: [realFixture] }, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, SPAIN_ACB_2025_26_CALENDAR, parseGameDate('2025-10-01'))
 
     expect(Object.keys(world.games)).toHaveLength(306)
     expect(Object.values(world.games).some((game) => game.id === realFixture.matchId)).toBe(false)
@@ -232,7 +268,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
   it('can advance from February when a later-season game remains scheduled', () => {
     const sourceSlice = slice()
-    const fullWorld = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+    const fullWorld = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, undefined, undefined, parseGameDate('2025-10-01'))
     const marchGame = Object.values(fullWorld.games).find((game) => game.date >= '2026-03-01')!
     const februaryWorld = createGameWorld({
       currentDate: parseGameDate('2026-02-28'),
@@ -261,7 +297,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   it('plays RealWorldSpain through ranked ACB playoffs, crowns a champion and survives save/load', () => {
     const worldCompetitionFormat = leagueFormat()
     const sourceSlice = slice()
-    const baseWorld = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, worldCompetitionFormat, SPAIN_ACB_2025_26_CALENDAR)
+    const baseWorld = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, worldCompetitionFormat, SPAIN_ACB_2025_26_CALENDAR, parseGameDate('2025-10-01'))
     const season = baseWorld.seasons[baseWorld.currentSeasonId]!
     const regularGames = Object.values(baseWorld.games).filter((game) => game.competitionStageKey === 'REGULAR')
     expect(regularGames).toHaveLength(306)
@@ -333,6 +369,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       repository: repository(sourceSlice),
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
+      careerStartDate: parseGameDate('2025-10-01'),
     })
     const leagueSeason = world.seasons[leagueSeasonId]!
     const cupSeasonId = Object.values(world.seasons).find((season) => season.worldCompetitionFormat?.competitionSeasonId === spainCopaCompetitionSeasonId(2025))!.id
@@ -494,6 +531,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       repository: repository(slice()),
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
+      careerStartDate: parseGameDate('2025-10-01'),
     })
     const startDate = initialWorld.currentDate
     const expectedFinalDate = addDays(startDate, 1000)
@@ -557,6 +595,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       repository: repository(slice()),
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
+      careerStartDate: parseGameDate('2025-10-01'),
     })
     expect(initialWorld.currentDate).toBe(startDate)
     const expectedCycleIds = expectedAnnualDevelopmentCycleIds(startDate, targetDate)
@@ -678,6 +717,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       repository: repository(slice()),
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
+      careerStartDate: parseGameDate('2025-10-01'),
     })
     const startedAt = performance.now()
     for (let day = 0; day < dayCount; day += 1) world = advanceGameDay(world)

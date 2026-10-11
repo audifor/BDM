@@ -1,5 +1,7 @@
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde::Serialize;
+use sha2::{Digest, Sha256};
+use std::io::Read;
 use std::path::Path;
 
 const WORLD_DB_SCHEMA_ID: &str = "DDL-PHASE1-A";
@@ -29,6 +31,7 @@ const REQUIRED_TABLES: &[&str] = &[
 pub struct WorldDbDatabaseSourceV1 {
     database_id: String,
     schema_id: String,
+    sha256: String,
 }
 
 #[derive(Serialize)]
@@ -89,9 +92,27 @@ pub fn inspect_database_v1(database_path: &str) -> Result<WorldDbDatabaseInfoV1,
                 .unwrap_or("bdm-world.db")
                 .to_owned(),
             schema_id: WORLD_DB_SCHEMA_ID.to_owned(),
+            sha256: sha256_file(path)?,
         },
         competition_season_ids,
     })
+}
+
+fn sha256_file(path: &Path) -> Result<String, String> {
+    let mut file = std::fs::File::open(path)
+        .map_err(|error| format!("Unable to hash World DB read-only: {error}"))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 1024 * 1024];
+    loop {
+        let bytes_read = file
+            .read(&mut buffer)
+            .map_err(|error| format!("Unable to hash World DB: {error}"))?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 fn table_exists(connection: &Connection, table: &str) -> Result<bool, String> {

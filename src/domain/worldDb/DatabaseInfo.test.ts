@@ -13,6 +13,14 @@ describe('WorldDbDatabaseInfoV1', () => {
     expect(() => assertWorldDbDatabaseInfoV1(value)).not.toThrow()
   })
 
+  it('accepts a physical SHA-256 identity when the native adapter supplies one', () => {
+    expect(() => assertWorldDbDatabaseInfoV1({
+      schemaVersion: 1,
+      source: { databaseId: 'candidate.db', schemaId: 'DDL-PHASE1-A', sha256: 'a'.repeat(64) },
+      competitionSeasonIds: [],
+    })).not.toThrow()
+  })
+
   it('rejects duplicate competition seasons', () => {
     expect(() => assertWorldDbDatabaseInfoV1({
       schemaVersion: 1,

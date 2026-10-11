@@ -4,10 +4,11 @@ import { tauriWorldDatabaseRepository, type WorldDatabaseRepository } from '@/ta
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
 import { WorldDbSessionV1, type WorldDbSessionAccessV1 } from './WorldDbSession'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
-import { worldDbDatabasePath, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
+import { worldDbDatabasePath, worldDbExpectedSha256, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
 import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
 import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
 import { ensureUserClubBoardState } from '@/engine/board'
+import type { GameDate } from '@/domain/date'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
 export const SPAIN_ACB_COMPETITION_ID = 'competition:ESP:liga-endesa'
@@ -32,6 +33,8 @@ export interface WorldDbSpainSelection {
 export interface WorldDbSpainGameAccess {
   readonly databasePath: string
   readonly runtimeBundlePath: string
+  readonly expectedDatabaseSha256?: string
+  readonly careerStartDate?: GameDate
   readonly repository?: WorldDatabaseRepository
 }
 
@@ -40,6 +43,7 @@ export function defaultWorldDbSpainAccess(): WorldDbSessionAccessV1 {
     repository: tauriWorldDatabaseRepository,
     databasePath: worldDbDatabasePath(),
     runtimeBundlePath: worldDbRuntimeBundlePath(),
+    expectedDatabaseSha256: worldDbExpectedSha256(),
   }
 }
 
@@ -50,6 +54,8 @@ export async function discoverWorldDbSpainSelection(
     repository: access.repository ?? tauriWorldDatabaseRepository,
     databasePath: access.databasePath,
     runtimeBundlePath: access.runtimeBundlePath,
+    expectedDatabaseSha256: access.expectedDatabaseSha256,
+    careerStartDate: access.careerStartDate,
   })
   await session.open()
   try {
@@ -71,6 +77,8 @@ export async function createWorldDbSpainGame(
     repository: access.repository ?? tauriWorldDatabaseRepository,
     databasePath: access.databasePath,
     runtimeBundlePath: access.runtimeBundlePath,
+    expectedDatabaseSha256: access.expectedDatabaseSha256,
+    careerStartDate: access.careerStartDate,
   })
   await session.open()
   try {

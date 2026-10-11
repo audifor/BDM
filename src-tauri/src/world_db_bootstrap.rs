@@ -36,6 +36,14 @@ pub struct WorldDbGameBootstrapSeasonV1 {
     start_date: String,
     end_date: String,
     provenance: String,
+    source_dates: WorldDbGameBootstrapSourceDatesV1,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapSourceDatesV1 {
+    captured_at: Option<String>,
+    publication_date: Option<String>,
+    effective_from: Option<String>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -395,6 +403,13 @@ fn query_season(
         start_date,
         end_date,
         provenance,
+        // DDL-12 provenance has no capture/publication/effective date columns and this snapshot
+        // has no season provenance row, so preserve those facts as unknown instead of deriving them.
+        source_dates: WorldDbGameBootstrapSourceDatesV1 {
+            captured_at: None,
+            publication_date: None,
+            effective_from: None,
+        },
     })
 }
 

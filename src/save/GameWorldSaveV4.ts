@@ -95,6 +95,7 @@ export interface WorldDbCompetitionRuntimeSaveV4 {
     readonly contentId: string
     readonly contentHash: string
     readonly worldDbSchema: string
+    readonly databaseSha256?: string
   } | null
   readonly competitionPlanIds: readonly string[]
   readonly competitionSeasonIds: readonly string[]
@@ -1718,7 +1719,9 @@ function parseRuntimeBundlePin(
   const pin = record(value, 'World DB competition runtime bundle pin V4')
   exactKeys(
     pin,
-    ['contentId', 'contentHash', 'worldDbSchema'],
+    pin.databaseSha256 === undefined
+      ? ['contentId', 'contentHash', 'worldDbSchema']
+      : ['contentId', 'contentHash', 'worldDbSchema', 'databaseSha256'],
     'World DB competition runtime bundle pin V4',
   )
   return {
@@ -1728,6 +1731,11 @@ function parseRuntimeBundlePin(
       pin.worldDbSchema,
       'World DB competition runtime bundle worldDbSchema V4',
     ),
+    ...(pin.databaseSha256 === undefined ? {} : {
+      databaseSha256: typeof pin.databaseSha256 === 'string' && /^[a-f0-9]{64}$/.test(pin.databaseSha256)
+        ? pin.databaseSha256
+        : (() => { throw new TypeError('World DB competition runtime databaseSha256 V4 must be a lowercase SHA-256 digest') })(),
+    }),
   }
 }
 

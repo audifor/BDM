@@ -8,6 +8,7 @@ import {
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
+import type { GameDate } from '@/domain/date'
 import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
 import {
   createWorldCompetitionCatalog,
@@ -21,12 +22,14 @@ import {
   loadWorldDbCompetitionPlanningContextsV1,
   loadWorldDbCompetitionRuntimeCatalogV1,
 } from './WorldDbCompetitionContextLoader'
-import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
+import { bootstrapGameWorldFromWorldDb, DEFAULT_CAREER_START_DATE } from './WorldDbGameBootstrap'
 
 export interface WorldDbSessionAccessV1 {
   readonly repository: WorldDatabaseRepository
   readonly databasePath: string
   readonly runtimeBundlePath: string
+  readonly expectedDatabaseSha256?: string
+  readonly careerStartDate?: GameDate
 }
 
 export interface WorldDbSessionSnapshotV1 {
@@ -34,6 +37,7 @@ export interface WorldDbSessionSnapshotV1 {
   readonly runtimeBundlePath: string
   readonly databaseId: string
   readonly schemaId: string
+  readonly databaseSha256?: string
   readonly runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin
   readonly availableCompetitionSeasonIds: readonly string[]
 }
@@ -57,6 +61,8 @@ export class WorldDbSessionV1 {
   private readonly repository: WorldDatabaseRepository
   private readonly databasePath: string
   private readonly runtimeBundlePath: string
+  private readonly expectedDatabaseSha256: string | undefined
+  private readonly careerStartDate: GameDate
   private databaseInfo: WorldDbDatabaseInfoV1 | null = null
   private runtimeBundle: WorldCompetitionRuntimeBundle | null = null
   private catalog: WorldCompetitionCatalog | null = null
@@ -68,6 +74,11 @@ export class WorldDbSessionV1 {
     this.repository = access.repository
     this.databasePath = requirePath(access.databasePath, 'databasePath')
     this.runtimeBundlePath = requirePath(access.runtimeBundlePath, 'runtimeBundlePath')
+    if (access.expectedDatabaseSha256 !== undefined && !/^[a-f0-9]{64}$/.test(access.expectedDatabaseSha256)) {
+      throw new TypeError('expectedDatabaseSha256 must be a lowercase SHA-256 digest')
+    }
+    this.expectedDatabaseSha256 = access.expectedDatabaseSha256
+    this.careerStartDate = access.careerStartDate ?? DEFAULT_CAREER_START_DATE
   }
 
   get isOpen(): boolean {
@@ -85,6 +96,9 @@ export class WorldDbSessionV1 {
       throw new Error(
         `Incompatible World DB schema: database ${databaseInfo.source.schemaId}, runtime ${runtimeBundle.worldDbSchema}`,
       )
+    }
+    if (this.expectedDatabaseSha256 !== undefined && databaseInfo.source.sha256 !== this.expectedDatabaseSha256) {
+      throw new Error(`World DB physical snapshot identity mismatch: expected ${this.expectedDatabaseSha256}, received ${databaseInfo.source.sha256 ?? 'missing SHA-256'}`)
     }
 
     this.databaseInfo = databaseInfo
@@ -118,7 +132,8 @@ export class WorldDbSessionV1 {
       runtimeBundlePath: this.runtimeBundlePath,
       databaseId: info.source.databaseId,
       schemaId: info.source.schemaId,
-      runtimeBundlePin: runtimeBundlePin(bundle),
+      ...(info.source.sha256 === undefined ? {} : { databaseSha256: info.source.sha256 }),
+      runtimeBundlePin: runtimeBundlePin(bundle, info.source.sha256),
       availableCompetitionSeasonIds: Object.freeze([...info.competitionSeasonIds]),
     })
   }
@@ -143,7 +158,7 @@ export class WorldDbSessionV1 {
     const ids = normalizeSelectedSeasonIds(competitionSeasonIds)
     this.assertSeasonSelection(ids)
     return createWorldDbCompetitionRuntime({
-      competitionRuntimeBundle: runtimeBundlePin(this.requireRuntimeBundle()),
+      competitionRuntimeBundle: runtimeBundlePin(this.requireRuntimeBundle(), this.requireDatabaseInfo().source.sha256),
       competitionPlanIds: [],
       competitionSeasonIds: ids,
     })
@@ -160,7 +175,7 @@ export class WorldDbSessionV1 {
     }
     if (slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error(`World DB bootstrap competition season mismatch: expected ${selection.competitionSeasonId}, received ${slice.season.competitionSeasonId}`)
     const format = requireWorldCompetitionFormat(this.requireCatalog(), selection.competitionSeasonId)
-    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format, calendarPolicy)
+    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle(), this.requireDatabaseInfo().source.sha256), format.variants.length === 0 ? undefined : format, calendarPolicy, this.careerStartDate)
   }
 
   /**
@@ -217,6 +232,7 @@ export class WorldDbSessionV1 {
       || pin.contentId !== expected.contentId
       || pin.contentHash !== expected.contentHash
       || pin.worldDbSchema !== expected.worldDbSchema
+      || (pin.databaseSha256 !== undefined && pin.databaseSha256 !== this.requireDatabaseInfo().source.sha256)
     ) {
       throw new Error('World DB session runtime bundle identity does not match the opened session')
     }
@@ -288,11 +304,12 @@ export class WorldDbSessionV1 {
   }
 }
 
-function runtimeBundlePin(bundle: WorldCompetitionRuntimeBundle): WorldDbCompetitionRuntimeBundlePin {
+function runtimeBundlePin(bundle: WorldCompetitionRuntimeBundle, databaseSha256?: string): WorldDbCompetitionRuntimeBundlePin {
   return Object.freeze({
     contentId: bundle.contentId,
     contentHash: bundle.contentHash,
     worldDbSchema: bundle.worldDbSchema,
+    ...(databaseSha256 === undefined ? {} : { databaseSha256 }),
   })
 }
 

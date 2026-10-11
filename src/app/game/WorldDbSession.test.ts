@@ -132,6 +132,22 @@ function world(
 }
 
 describe('WorldDbSessionV1', () => {
+  it('rejects a physical World DB snapshot whose SHA-256 differs from the configured identity', async () => {
+    const identifiedDatabase = {
+      ...databaseInfo,
+      source: { ...databaseInfo.source, sha256: HASH },
+    }
+    const guarded = new WorldDbSessionV1({
+      repository: repository(identifiedDatabase),
+      databasePath: 'C:/BDM_DB/candidate.db',
+      runtimeBundlePath: 'C:/BDM_DB/runtime-bundle.json',
+      expectedDatabaseSha256: 'b'.repeat(64),
+    })
+
+    await expect(guarded.open()).rejects.toThrow('World DB physical snapshot identity mismatch')
+    expect(guarded.isOpen).toBe(false)
+  })
+
   it('opens the external database and exposes non-persisted source identity', async () => {
     const repo = repository()
     const runtime = session(repo)

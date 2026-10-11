@@ -48,7 +48,10 @@ const DEVELOPMENT_MAP: Readonly<Record<string, readonly string[]>> = {
   OFF_BALL_OFFENSE: ['creation'], DEFENSE_REBOUNDING: ['defense', 'rebounding'], PHYSICAL: ['physical'], MENTAL: ['mental'],
 }
 
-export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy): GameWorld {
+/** Career time is deliberately separate from the sporting season and fixture dates. */
+export const DEFAULT_CAREER_START_DATE = parseGameDate('2026-07-01')
+
+export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy, careerStartDate = DEFAULT_CAREER_START_DATE): GameWorld {
   assertWorldDbGameBootstrapSliceV1(slice)
   assertSelectionMatchesSlice(slice, selection)
   if (runtimeBundlePin.worldDbSchema !== slice.source.schemaId) throw new Error('World DB bootstrap runtime schema identity mismatch')
@@ -75,7 +78,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
       gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
       basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
       bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
-      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.startDate),
+      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, careerStartDate),
     })
   })
   const staffAssignments = slice.staffAssignments.map((assignment) => {
@@ -104,17 +107,23 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), organizationId: organizationIdFromString(team.organizationId), organizationSectionId: organizationSectionIdFromString(team.organizationSectionId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
   const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: defaultLeagueCompetitionRules })
   const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }), ...(calendarPolicy === undefined ? {} : { calendarPolicy }) })
+  if (season.endDate < careerStartDate) {
+    throw new Error(`World DB competition season has already ended before the career start date: ${slice.season.competitionSeasonId}`)
+  }
+  if (slice.matches.some((match) => match.status === 'SCHEDULED' && match.scheduledAt !== null && match.scheduledAt.slice(0, 10) < careerStartDate)) {
+    throw new Error(`World DB contains a scheduled match before the career start date: ${slice.season.competitionSeasonId}`)
+  }
   const ecosystem = createSportsEcosystem({ id: ecosystemId, name: slice.ecosystem.name, kind: slice.ecosystem.kind, category: slice.ecosystem.category })
   const organizationOwnership = (slice.organizationOwnership ?? []).map((record) => createOrganizationOwnership({ id: record.ownershipId, organizationId: record.organizationId, owner: record.ownerKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.ownerId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.ownerId) }, ownershipPercentage: record.ownershipPercentage, validFrom: record.validFrom, validTo: record.validTo }))
   const organizationInvestorInterests = (slice.organizationInvestorInterest ?? []).map((record) => createOrganizationInvestorInterest({ id: record.interestId, organizationId: record.organizationId, investor: record.investorKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.investorId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.investorId) }, interestType: record.interestType, status: record.status, openedOn: record.openedOn, closedOn: record.closedOn }))
-  const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const baseWorld = createGameWorld({ currentDate: careerStartDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
   const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
   const games = importedGames.length === generatedGames.length
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
-  const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const world = createGameWorld({ currentDate: careerStartDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
   const withStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(world)))
   return attachWorldDbCompetitionRuntime(withStaffCareer, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
 }

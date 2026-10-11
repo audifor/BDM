@@ -3,6 +3,7 @@ export interface WorldDbDatabaseInfoV1 {
   readonly source: {
     readonly databaseId: string
     readonly schemaId: string
+    readonly sha256?: string
   }
   readonly competitionSeasonIds: readonly string[]
 }
@@ -14,6 +15,9 @@ export function assertWorldDbDatabaseInfoV1(value: unknown): asserts value is Wo
   if (!isRecord(value.source)) throw new TypeError('World DB database source must be an object')
   requireText(value.source.databaseId, 'World DB databaseId')
   requireText(value.source.schemaId, 'World DB schemaId')
+  if (value.source.sha256 !== undefined && (typeof value.source.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.source.sha256))) {
+    throw new TypeError('World DB sha256 must be a lowercase SHA-256 digest')
+  }
   if (!Array.isArray(value.competitionSeasonIds)) {
     throw new TypeError('World DB competitionSeasonIds must be an array')
   }

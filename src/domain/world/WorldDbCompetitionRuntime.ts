@@ -4,6 +4,7 @@ export interface WorldDbCompetitionRuntimeBundlePin {
   readonly contentId: string
   readonly contentHash: string
   readonly worldDbSchema: string
+  readonly databaseSha256?: string
 }
 
 export interface WorldDbCompetitionRuntime {
@@ -83,6 +84,9 @@ function normalizeRuntimeBundlePin(
   }
   if (value.worldDbSchema.length === 0) {
     throw new TypeError('World DB competition runtime bundle worldDbSchema must be non-empty')
+  }
+  if (value.databaseSha256 !== undefined && !/^[a-f0-9]{64}$/.test(value.databaseSha256)) {
+    throw new TypeError('World DB competition runtime databaseSha256 must be a 64-character lowercase SHA-256 digest')
   }
   return Object.freeze({ ...value })
 }

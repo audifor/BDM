@@ -19,6 +19,11 @@ export interface WorldDbGameBootstrapSeasonV1 {
   readonly startDate: string
   readonly endDate: string
   readonly provenance: 'WORLD_DB' | 'DERIVED_SIMULATION_FROM_B04'
+  readonly sourceDates?: {
+    readonly capturedAt: string | null
+    readonly publicationDate: string | null
+    readonly effectiveFrom: string | null
+  }
 }
 export interface WorldDbGameBootstrapOrganizationV1 { readonly organizationId: string; readonly entityId: string; readonly legalName: string | null; readonly foundedYear: number | null; readonly dissolvedYear: number | null; readonly primaryPlaceId: string | null; readonly website: string | null }
 export interface WorldDbGameBootstrapOrganizationSectionV1 { readonly sectionId: string; readonly organizationId: string; readonly sport: string | null; readonly gender: string | null; readonly categoryScope: string | null; readonly canonicalName: string; readonly validFrom: string | null; readonly validTo: string | null }
@@ -113,6 +118,15 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   for (const field of ['ecosystemId', 'name', 'kind', 'category'] as const) requireText(ecosystem[field], `World DB bootstrap ecosystem ${field}`)
   for (const field of ['competitionId', 'name', 'gender', 'ecosystemId'] as const) requireText(competition[field], `World DB bootstrap competition ${field}`)
   for (const field of ['competitionSeasonId', 'seasonId', 'label', 'startDate', 'endDate', 'provenance'] as const) requireText(season[field], `World DB bootstrap season ${field}`)
+  if (season.sourceDates !== undefined) {
+    requireRecord(season.sourceDates, 'World DB bootstrap source dates')
+    for (const field of ['capturedAt', 'publicationDate', 'effectiveFrom'] as const) {
+      const date = season.sourceDates[field]
+      if (date !== null && (typeof date !== 'string' || date.trim().length === 0)) {
+        throw new TypeError(`World DB bootstrap source date ${field} must be a non-empty date or null`)
+      }
+    }
+  }
   assertArray(value.countries, 'countries', (entry) => { for (const field of ['countryId', 'name', 'code'] as const) requireText(entry[field], `World DB bootstrap country ${field}`) }, 'countryId')
   assertArray(value.organizations, 'organizations', (entry) => { for (const field of ['organizationId', 'entityId'] as const) requireText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['legalName', 'primaryPlaceId', 'website'] as const) requireNullableText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['foundedYear', 'dissolvedYear'] as const) requireNullableInteger(entry[field], `World DB bootstrap organization ${field}`) }, 'organizationId')
   assertArray(value.organizationSections, 'organizationSections', (entry) => { for (const field of ['sectionId', 'organizationId', 'canonicalName'] as const) requireText(entry[field], `World DB bootstrap organization section ${field}`); for (const field of ['sport', 'gender', 'categoryScope', 'validFrom', 'validTo'] as const) requireNullableText(entry[field], `World DB bootstrap organization section ${field}`) }, 'sectionId')

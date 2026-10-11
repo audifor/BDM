@@ -144,6 +144,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
         contentId: 'bdm-phase1-competition-runtime-v1',
         contentHash: 'a'.repeat(64),
         worldDbSchema: 'DDL-PHASE1-A',
+        databaseSha256: 'b'.repeat(64),
       },
       competitionPlanIds: ['plan:liga-acb:2032', 'plan:euroleague:2032'],
       competitionSeasonIds: ['competition-season:acb:2032', 'competition-season:euroleague:2032'],
