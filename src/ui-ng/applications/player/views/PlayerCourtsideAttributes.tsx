@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { PlayerTruthRatingKey } from '@/domain/player'
 import { AttributeCategoryProfiles } from '@/ui-ng/applications/player/components/AttributeCategoryProfiles'
 import { AttributeEvolutionChart } from '@/ui-ng/applications/player/components/AttributeEvolutionChart'
-import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/BasketballVisuals'
+import { CourtsideFamilyRadar } from '@/ui-ng/applications/player/components/visual/CourtsideFamilyRadar'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
   comparisonProfile, filterCourtsideRatings, getCategoryComparison,
@@ -217,14 +217,12 @@ export function PlayerCourtsideAttributes() {
               {/* Reference names and swatches now live in the reserved comparison panel.
                   Never mount an extra row above the radar when a reference is enabled. */}
               <div className="pac-profile__radar-wrap">
-                <AttributeRadar
-                  accent="var(--cs-lime)"
+                <CourtsideFamilyRadar
                   axes={radarAxes}
+                  ariaLabel={`Attribute profile radar: ${radarAxes.map(axis => `${axis.label} ${axis.value}`).join(', ')}`}
                   selectedCategory={currentCategory.category}
                   onCategorySelect={selectCategory}
                   comparisonSeries={radarOverlays}
-                  courtsideFraming
-                  showValues
                 />
               </div>
               {baselineProfiles.every((entry) => entry.axes === null) && (
