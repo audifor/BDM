@@ -1318,3 +1318,64 @@
     grid-template-rows:minmax(340px,auto) minmax(260px,auto);
   }
 }
+
+/*
+ * ATTRIBUTES V3.3: exact visual parity with the approved Overview radar.
+ * Both now render CourtsideFamilyRadar and share the same four rings,
+ * polygon geometry, strokes, 8 paired labels/values and viewBox.
+ * Leave the comparative controls and axis interaction in Attributes.
+ */
+.pac-column--center .pac-profile__radar-wrap .po-cs-family-radar {
+  display:block;
+  flex:0 1 auto;
+  width:100%;
+  height:100%;
+  max-width:570px;
+  max-height:390px;
+  min-width:0;
+  min-height:0;
+  box-sizing:border-box;
+  padding:4px 3px;
+  color:var(--cs-text2);
+  overflow:visible;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis {
+  cursor:pointer;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis .po-cs-radar__label {
+  font:700 11px var(--cs-font);
+  fill:var(--cs-text2);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis .po-cs-radar__value {
+  font:700 17px var(--cs-font-display);
+  fill:var(--cs-lime);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis.is-active .po-cs-radar__label,
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible .po-cs-radar__label {
+  fill:var(--cs-text);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible {
+  outline:none;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible .po-cs-radar__label {
+  text-decoration:underline;
+  text-decoration-color:var(--cs-lime);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__comparison {
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+
+@container player-space (max-width:860px) {
+  .pac-column--center .pac-profile__radar-wrap .po-cs-family-radar {
+    max-width:100%;
+    max-height:100%;
+  }
+}
