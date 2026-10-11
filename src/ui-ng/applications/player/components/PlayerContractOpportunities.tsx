@@ -130,8 +130,8 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
           <p>{chosen.consequence}</p>
         </div>
         <div className="pc-rpg__route-state">
-          <span>NOT YET EXECUTABLE</span>
-          <small>FUTURE RPG ACTION · No contact, relationship change or sanction is triggered here.</small>
+          <span>PLANNED RPG FEATURE</span>
+          <small>Preview only. No contact, relationship change or sanction is triggered.</small>
         </div>
       </section>
     </section>
