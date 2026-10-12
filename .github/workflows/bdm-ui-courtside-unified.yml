@@ -94,4 +94,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx vitest run src/ui-ng/applications/staff/StaffWorkspace.test.tsx src/ui-ng/applications/staff/assignments/staffAssignmentsModel.test.ts src/ui-ng/applications/staff/assignments/StaffAssignmentsScreen.test.tsx --maxWorkers=2 --no-file-parallelism
+      - run: npx vitest run src/ui-ng/applications/staff/StaffWorkspace.test.tsx src/ui-ng/applications/staff/assignments/staffAssignmentsModel.test.ts src/ui-ng/applications/staff/buildStaffPersonWorkspaceModel.test.ts src/ui-ng/applications/staff/buildStaffWorkspaceModel.test.ts src/ui-ng/applications/staff/dynamicsTone.test.ts --maxWorkers=2 --no-file-parallelism
