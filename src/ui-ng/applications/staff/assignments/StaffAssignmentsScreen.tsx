@@ -58,6 +58,7 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
   const [selectedKind, setSelectedKind] = useState<ResponsibilityKind | null>(null)
   const [inspectorOpen, setInspectorOpen] = useState(false)
   const [matrixFilter, setMatrixFilter] = useState<MatrixFilter>('none')
+  const [simpleMode,setSimpleMode]=useState(false)
   const [quickAssign, setQuickAssign] = useState<{ readonly kind: ResponsibilityKind; readonly anchor: HTMLElement } | null>(null)
   const [autoAssign, setAutoAssign] = useState<{ readonly scope: StaffAssignmentScope; readonly title: string } | null>(null)
   const [optimizeOpen, setOptimizeOpen] = useState(false)
@@ -176,8 +177,23 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
         <section aria-label="Assignment matrix" className="sa-panel sa-matrix ng-holo-panel">
           <header className="sa-panel__header">
             <h2 className="sa-panel__title">ASSIGNMENT MATRIX</h2>
-            <span className="sa-panel__meta">Click a primary cell to assign</span>
+            <div className="sa-matrix__view-switch" role="group" aria-label="Modo de asignaciones">
+              <button type="button" aria-pressed={simpleMode} onClick={()=>setSimpleMode(true)}>MODO SENCILLO</button>
+              <button type="button" aria-pressed={!simpleMode} onClick={()=>setSimpleMode(false)}>MATRIZ AVANZADA</button>
+            </div>
           </header>
+          {simpleMode ? <div className="cs-staff-simple-assignment" aria-label="Asignaciones sencillas">
+            <p>Elige una tarea y cambia su responsable directamente. Verás el nivel de idoneidad y la carga en el selector.</p>
+            {visibleGroups.map(group=><section key={group.domain}>
+              <h3>{group.label}</h3>
+              {group.rows.map(row=><div className="cs-staff-simple-assignment__row" key={row.kind}>
+                <div><strong>{row.kindLabel}</strong><span>{row.holder?.name??(row.mode==='userControlled'?'Bajo tu control':'Sin responsable de STAFF')}</span></div>
+                <small>{row.statusLabel}</small>
+                <button type="button" disabled={!row.assignable}
+                  onClick={event=>setQuickAssign({kind:row.kind,anchor:event.currentTarget})}>ASIGNAR / CAMBIAR ↗</button>
+              </div>)}
+            </section>)}
+          </div> : <>
           <div className="sa-matrix__head" role="row">
             <span>Responsibility</span>
             <span>Primary</span>
@@ -216,9 +232,10 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
               </div>
             ))}
           </div>
+          </>}
         </section>
 
-        {inspectorOpen && selected !== undefined ? (
+        {!simpleMode && inspectorOpen && selected !== undefined ? (
           <aside aria-label="Assignment inspector" className="sa-panel sa-inspector ng-holo-panel">
             <header className="sa-panel__header">
               <h2 className="sa-panel__title">ASSIGNMENT INSPECTOR</h2>

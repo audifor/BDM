@@ -73,6 +73,29 @@ describe('StaffWorkspace', () => {
     expect(document.querySelector('.staff-workspace-header__actions')).not.toBeNull()
   })
 
+  it('keeps a one-action simplified responsibility selection alongside the advanced matrix',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    fireEvent.click(screen.getByRole('button',{name:'MODO SENCILLO'}))
+    const simple=screen.getByLabelText('Asignaciones sencillas')
+    expect(simple).toBeInTheDocument()
+    const first=simple.querySelector<HTMLButtonElement>('button:not(:disabled)')!
+    expect(first).not.toBeNull()
+    fireEvent.click(first)
+    const candidate=screen.getAllByRole('option')[0]!
+    fireEvent.click(candidate)
+    expect(screen.getByRole('status')).toHaveTextContent('Assignment updated')
+    fireEvent.click(screen.getByRole('button',{name:'MATRIZ AVANZADA'}))
+    expect(screen.getByRole('heading',{name:'ASSIGNMENT MATRIX'})).toBeInTheDocument()
+  })
+
+  it('shows attributable advisory status without inventing recommendations',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
+    expect(screen.getByLabelText('Sala de decisiones del cuerpo técnico')).toBeInTheDocument()
+    expect(screen.getByText('ESPERANDO TU DECISIÓN')).toBeInTheDocument()
+  })
+
   it('assigns a responsibility in two clicks from the matrix quick assign control', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))

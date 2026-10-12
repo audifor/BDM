@@ -45,3 +45,8 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - COMPARATIVA: usa el conjunto de participantes de una edición Season y compara media de idoneidad por equipo solo para el mismo StaffRoleId. Cuando no existe personal de ese puesto se muestra sin datos. Esta métrica no representa rendimiento observado ni simula predicciones.
 - Todas las acciones mutantes se realizan contra el mundo canónico vía `replaceWorld`, y deben probarse en partidas reales antes de certificar el circuito de Save/reload.
 - Próximas subfases necesarias antes de certificar STAFF completo: dossier individual Courtside, dinamicas y asesoría con evidencias y registro longitudinal, experiencias avanzadas de asignación y contratos (despidos/promociones), permanencia Save/Load, valoración visual en oscuro/claro.
+
+### ST-UI 1.1 · Facilidad y RPG basado en hechos
+- ASIGNACIONES conserva su matriz avanzada original y añade **MODO SENCILLO**: tarea → responsable → menú de candidatos canónicos (dos clics desde la tarea). Los modales de Autoassign/Optimizar y sus validaciones no se duplican.
+- ASESORÍA muestra una sala de decisiones con autores reales de `delegationOutcomesById`, datos de origen, estado e historial; no genera opiniones, desacuerdos o impactos ficticios. Reutiliza acciones existentes de aceptar/descartar.
+- Las evoluciones de competencia, sesgos, legado de decisiones y «cerebro de club» multiopinión quedan como extensión posterior no certificada. No afirmar paridad con FM24.
