@@ -253,3 +253,11 @@
  .courtside-staff-screen .cs-staff-candidate__action {grid-column:1/-1}
  .courtside-staff-screen .cs-staff-titlebar {flex-wrap:wrap}
 }
+
+.courtside-staff-screen .cs-staff-department__lead>button {
+  width:fit-content;border:0;background:none;padding:0;text-align:left;
+  color:var(--st-text);font:700 13px var(--st-font);
+}
+.courtside-staff-screen .cs-staff-department__lead>button:hover {
+  color:var(--st-highlight);text-decoration:underline;
+}

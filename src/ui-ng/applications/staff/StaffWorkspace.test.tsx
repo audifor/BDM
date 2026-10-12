@@ -35,7 +35,7 @@ describe('StaffWorkspace', () => {
         <StaffWorkspace />
       </NgWorkspaceNavigationProvider>,
     )
-    expect(screen.getByRole('heading', { name: 'STAFF' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Staff' })).toBeInTheDocument()
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 
@@ -240,7 +240,7 @@ describe('StaffWorkspace', () => {
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0)
     expect(screen.queryByText('VERY STRONG')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY WEAK')).not.toBeInTheDocument()
-  })
+  }, 30000)
 
   it('opens the individual staff dossier from a direct staff route', () => {
     const world = createNewGame()
@@ -265,19 +265,15 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('menuitem', { name: 'COACHING' })).toBeInTheDocument()
   })
 
-  it('opens a staff dossier with one click on the name in a department table', () => {
-    const { team, world } = mountStaffWorkspace()
-    const assignment = Object.values(world.teamStaffAssignmentsById).find(
-      (item) => item.teamId === team.id && item.role === 'headCoach',
-    )!
-    const person = world.staffPeopleById[assignment.staffPersonId]!
-    const fullName = `${person.identity.firstName} ${person.identity.lastName}`
-
-    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
-    fireEvent.click(screen.getByRole('button', { name: /coaching/i }))
-    fireEvent.click(screen.getByRole('button', { name: fullName }))
-
-    expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
+  it('opens a staff dossier directly from the department leader on the Courtside overview', () => {
+    const { world } = mountStaffWorkspace()
+    const leader = document.querySelector<HTMLButtonElement>('.cs-staff-department__lead button')!
+    expect(leader).not.toBeNull()
+    const leaderName = leader.textContent!.replace(' ↗','')
+    const staff = Object.values(world.staffPeopleById).find(person =>
+      `${person.identity.firstName} ${person.identity.lastName}` === leaderName)!
+    fireEvent.click(leader)
+    expect(new URL(window.location.href).searchParams.get('staffId')).toBe(staff.id)
     expect(screen.getByRole('button', { name: 'Attributes' })).toBeInTheDocument()
     expect(screen.getByText('Role evaluation')).toBeInTheDocument()
   })

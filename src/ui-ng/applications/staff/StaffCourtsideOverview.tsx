@@ -3,7 +3,7 @@ import type { GameWorld } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
 import { getTeamStaffPresentation, STAFF_DEPARTMENT_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import { STAFF_DEPARTMENTS, staffRoleDefinition } from '@/domain/staff'
-import { navigateToStaffDepartment } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToStaff, navigateToStaffDepartment } from '@/ui-ng/workspace/workspaceApps'
 
 export function StaffCourtsideOverview({world,teamId,onOpenAssignments,onOpenMarket,onOpenAdvisory,onOpenDynamics}:{
   readonly world:GameWorld;readonly teamId:TeamId
@@ -41,7 +41,7 @@ export function StaffCourtsideOverview({world,teamId,onOpenAssignments,onOpenMar
               <div className="cs-staff-department__top"><h3>{STAFF_DEPARTMENT_LABELS[department]}</h3>
                 <strong>{people.length}<small>empleados</small></strong></div>
               <div className="cs-staff-department__lead">{lead===undefined?
-                <span>Sin responsables registrados</span>:<><strong>{lead.name}</strong><span>{STAFF_ROLE_LABELS[lead.role]}</span></>}</div>
+                <span>Sin responsables registrados</span>:<><button type="button" onClick={()=>navigateToStaff(lead.staffPersonId)}>{lead.name} ↗</button><span>{STAFF_ROLE_LABELS[lead.role]}</span></>}</div>
               <div className="cs-staff-department__facts">
                 <span>{departmentJobs.length>0?`${departmentJobs.length} vacante(s) abierta(s)`:'Sin vacantes abiertas'}</span>
                 <span className={load>0?'is-warning':''}>{load>0?`${load} con sobrecarga`:'Carga sin alertas'}</span>
