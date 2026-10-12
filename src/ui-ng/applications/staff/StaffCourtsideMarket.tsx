@@ -22,7 +22,7 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
   const roles=ASSIGNABLE_STAFF_ROLE_IDS.filter(id=>staffRoleDefinition(id).department===department)
-  const selectedRole=roles.includes(role)?role:roles[0]!
+  const selectedRole=roles.some(id=>id===role)?role:roles[0]!
   const jobs=Object.values(world.staffJobOpeningsById).filter(job=>job.teamId===teamId&&job.status==='open')
   const opening=jobs.find(j=>j.id===selectedOpening)??jobs.find(j=>j.roleId===selectedRole)
   const ranked=useMemo(()=>opening===undefined?[]:rankStaffCandidates(world,opening.id),[world,opening])
@@ -99,7 +99,7 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
                     catch(e){setError(e instanceof Error?e.message:'La oferta no pudo crearse')}
                   }}>PREPARAR OFERTA</button>}
                   {step==='offered'&&offer&&<div className="cs-staff-candidate__offer">
-                    <span>{offer.annualSalary.toLocaleString('es-ES')} / año</span>
+                    <span>{offer.annualSalary===undefined?'Salario no especificado':offer.annualSalary.toLocaleString('es-ES')+' / año'}</span>
                     <button type="button" className="is-accent" onClick={()=>execute(()=>acceptStaffJobOffer(world,offer.id),'Contratación registrada. El empleado ya pertenece al club.')}>CONFIRMAR CONTRATO</button>
                     <button type="button" onClick={()=>execute(()=>withdrawStaffJobOffer(world,offer.id),'Oferta retirada.')}>RETIRAR</button>
                   </div>}

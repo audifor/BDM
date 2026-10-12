@@ -35,3 +35,13 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - Se sustituye el selector nativo de rol de la tabla Courtside por el menú de rotación propio de BDM, conectado a las acciones canónicas. Fuera de la plantilla, o sin control del equipo, la edición está deshabilitada.
 - Editor de columnas superpuesto y fuera del flujo de la tabla para no desplazar filas; preferencias visuales aisladas por versión `courtside-roster-v6-*`.
 - Las ocho vistas ofrecen cada atributo real con etiqueta propia en castellano y columnas configurables; las vistas anteriores y las personalizadas se conservan como posibilidad independiente.
+
+## STAFF Courtside · ST-UI 1 · Primera integración jugable (2026-10-12)
+
+- Rama de trabajo única `feat/bdm-ui-courtside`; nunca fusionar a `main` sin autorización.
+- Portada departamental reconstruida como dirección deportiva: personal contratado, vacantes realmente abiertas, sobrecarga real y solicitudes; no tratar los objetivos cosméticos `UI_ROLE_STAFFING_TARGET` como contratos ni plazas abiertas.
+- Seis pestañas principales: STAFF, ASIGNACIONES, ASESORÍA, DINÁMICAS, MERCADO, COMPARATIVA. Las cuatro últimas pantallas previas de asignaciones, asesoría, dinámicas y ficha de persona se preservan funcionalmente, aunque todavía se debe sustituir el CSS residual NG y rediseñar dossiers/inspector.
+- MERCADO: operaciones de StaffCareerService, con vacante real, candidatos elegibles y filtrados por puesto, identificación, entrevista, oferta y confirmación explícita; se exige disponibilidad económica y elegibilidad del dominio. No se inventan empleados, presupuestos o fichajes.
+- COMPARATIVA: usa el conjunto de participantes de una edición Season y compara media de idoneidad por equipo solo para el mismo StaffRoleId. Cuando no existe personal de ese puesto se muestra sin datos. Esta métrica no representa rendimiento observado ni simula predicciones.
+- Todas las acciones mutantes se realizan contra el mundo canónico vía `replaceWorld`, y deben probarse en partidas reales antes de certificar el circuito de Save/reload.
+- Próximas subfases necesarias antes de certificar STAFF completo: dossier individual Courtside, dinamicas y asesoría con evidencias y registro longitudinal, experiencias avanzadas de asignación y contratos (despidos/promociones), permanencia Save/Load, valoración visual en oscuro/claro.
