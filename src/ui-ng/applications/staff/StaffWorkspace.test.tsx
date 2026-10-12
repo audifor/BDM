@@ -310,16 +310,17 @@ describe('StaffWorkspace', () => {
   it('opens dynamics people from the canonical workspace tabs', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: /^DINÁMICAS/ }))
-    expect(screen.getByRole('button', { name: 'People' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'PERSONAS' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'UNIDADES' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Conflicts' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Career' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CONFLICTOS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CARRERA' })).toBeInTheDocument()
   })
 
   it('renders dynamics states as red-to-green tone dots instead of band text', () => {
     mountStaffWorkspace(advanceGameDay(createNewGame()))
     fireEvent.click(screen.getByRole('button', { name: /^DINÁMICAS/ }))
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0)
+    expect(screen.getByLabelText('Profesionales y estado')).toBeInTheDocument()
     expect(screen.queryByText('VERY SATISFIED')).not.toBeInTheDocument()
     expect(screen.queryByText('EXTREMELY SATISFIED')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY DISSATISFIED')).not.toBeInTheDocument()
@@ -349,8 +350,8 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
     expect(screen.getByRole('heading',{name:'EL PULSO DEL EQUIPO'})).toBeInTheDocument()
-    expect(screen.getByLabelText('Profesionales y estado')).toBeInTheDocument()
     expect(screen.getByRole('group',{name:'Filtrar estado del staff'})).toBeInTheDocument()
+    expect(screen.getByText('Ningún profesional coincide con los filtros actuales.')).toBeInTheDocument()
   })
 
   it('opens the individual staff dossier from a direct staff route', () => {
@@ -369,7 +370,7 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Attributes' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Contract' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'HISTORIAL' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'History' })).toBeInTheDocument()
     expect(screen.getByText('Role evaluation')).toBeInTheDocument()
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Staff' }))
