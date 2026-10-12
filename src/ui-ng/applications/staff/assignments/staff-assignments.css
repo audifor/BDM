@@ -1110,7 +1110,7 @@
 /* ── Container adaptations (the shell owns the real width) ───────────────── */
 
 @container staff-assignments (max-width: 1499px) {
-  .sa-workspace {
+  .sa-workspace:not(.sa-workspace--no-inspector) {
     grid-template-columns: minmax(0, 1fr) minmax(340px, 360px);
   }
 }

@@ -93,6 +93,7 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
     rows.find((row) => row.assignable && row.holder === undefined) ??
     rows[0]
 
+  const inspectorVisible = !simpleMode && inspectorOpen && selected !== undefined
   const quickAssignRow = quickAssign === null ? undefined : model.rowsByKind.get(quickAssign.kind)
 
   const assign = useCallback(
@@ -173,12 +174,12 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
         )}
       </section>
 
-      <div className={inspectorOpen && selected !== undefined ? 'sa-workspace' : 'sa-workspace sa-workspace--no-inspector'}>
+      <div className={inspectorVisible ? 'sa-workspace' : 'sa-workspace sa-workspace--no-inspector'}>
         <section aria-label="Assignment matrix" className={`sa-panel sa-matrix ng-holo-panel${simpleMode?" is-simple":""}`}>
           <header className="sa-panel__header">
             <h2 className="sa-panel__title">GESTIÓN DE RESPONSABILIDADES</h2>
             <div className="sa-matrix__view-switch" role="group" aria-label="Modo de asignaciones">
-              <button type="button" aria-pressed={simpleMode} onClick={()=>setSimpleMode(true)}>MODO SENCILLO</button>
+              <button type="button" aria-pressed={simpleMode} onClick={() => { setSimpleMode(true); setInspectorOpen(false) }}>MODO SENCILLO</button>
               <button type="button" aria-pressed={!simpleMode} onClick={()=>setSimpleMode(false)}>MATRIZ AVANZADA</button>
             </div>
           </header>
@@ -235,7 +236,7 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
           </>}
         </section>
 
-        {!simpleMode && inspectorOpen && selected !== undefined ? (
+        {inspectorVisible ? (
           <aside aria-label="Assignment inspector" className="sa-panel sa-inspector ng-holo-panel">
             <header className="sa-panel__header">
               <h2 className="sa-panel__title">DETALLE DE ASIGNACIÓN</h2>

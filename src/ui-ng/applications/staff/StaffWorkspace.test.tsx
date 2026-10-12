@@ -212,6 +212,31 @@ describe('StaffWorkspace', () => {
     expect(screen.getByText('ASSIGNMENT OPTIONS')).toBeInTheDocument()
   })
 
+  it('restores the full matrix width after switching from an open advanced inspector to simple mode', () => {
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
+    const workspace = document.querySelector('.sa-workspace')!
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
+    expect(workspace).not.toHaveClass('sa-workspace--no-inspector')
+    expect(screen.getByLabelText('Assignment inspector')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'MODO SENCILLO' }))
+    expect(screen.getByLabelText('Asignaciones sencillas')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Assignment inspector')).not.toBeInTheDocument()
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getByRole('button', { name: 'MATRIZ AVANZADA' }))
+    expect(screen.queryByLabelText('Assignment inspector')).not.toBeInTheDocument()
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
+    expect(workspace).not.toHaveClass('sa-workspace--no-inspector')
+    fireEvent.click(screen.getByRole('button', { name: 'Close inspector' }))
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+  })
+
   it('shows the assigned holder in the inspector key matches', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
