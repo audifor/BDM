@@ -11,7 +11,9 @@ import { StaffAssignmentsScreen, type StaffAssignmentPanelRequest } from '@/ui-n
 import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
 import { StaffDepartmentWorkspace } from '@/ui-ng/applications/staff/StaffDepartmentWorkspace'
 import { StaffDynamicsBoard } from '@/ui-ng/applications/staff/StaffDynamicsBoard'
-import { StaffPeopleBoard } from '@/ui-ng/applications/staff/StaffPeopleBoard'
+import { StaffCourtsideOverview } from '@/ui-ng/applications/staff/StaffCourtsideOverview'
+import { StaffCourtsideIntelligence } from '@/ui-ng/applications/staff/StaffCourtsideIntelligence'
+import { StaffCourtsideMarket } from '@/ui-ng/applications/staff/StaffCourtsideMarket'
 import { StaffPersonWorkspace } from '@/ui-ng/applications/staff/StaffPersonWorkspace'
 import { buildStaffWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffWorkspaceModel'
 import {
@@ -28,6 +30,7 @@ import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToStaff, parseWorkspaceStaffId } from '@/ui-ng/workspace/workspaceApps'
 
 import './staff-workspace.css'
+import './courtside-staff.css'
 
 function StaffWorkspaceHeader({
   model,
@@ -110,6 +113,7 @@ function StaffBoardWorkspace() {
   const declineStaffCareerRequest = useGameStore((state) => state.declineStaffCareerRequest)
   const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>('staff')
   const [assignmentPanel, setAssignmentPanel] = useState<StaffAssignmentPanelRequest | null>(null)
+  const replaceWorld = useGameStore((state)=>state.replaceWorld)
   const departmentHover = useStaffDepartmentTabHover(null)
 
   const model = useMemo(() => (world === null ? null : buildStaffWorkspaceModel(world)), [world])
@@ -167,7 +171,7 @@ function StaffBoardWorkspace() {
   }
 
   return (
-    <div className="staff-workspace" data-ng-region="staff-workspace" style={teamStyle}>
+    <div className="staff-workspace courtside-staff-screen" data-ng-region="staff-workspace" style={teamStyle}>
       <ApplicationWorkspace
         tabs={tabsNode}
         tabsHeader={
@@ -202,11 +206,12 @@ function StaffBoardWorkspace() {
         ) : (
           <ScrollRegion className="staff-workspace__scroll">
             {activeTab === 'staff' ? (
-              <StaffPeopleBoard
-                staff={model.staff}
-                teamId={model.teamId}
-                world={world}
-              />
+              <StaffCourtsideOverview world={world} teamId={model.teamId}
+                onOpenAssignments={()=>setActiveTab('assignments')}
+                onOpenMarket={()=>setActiveTab('market')}
+                onOpenAdvisory={()=>setActiveTab('advisory')}
+                onOpenDynamics={()=>setActiveTab('dynamics')}/>
+
             ) : null}
             {activeTab === 'advisory' ? (
               <StaffAdvisoryBoard
@@ -225,6 +230,9 @@ function StaffBoardWorkspace() {
                 world={world}
               />
             ) : null}
+            {activeTab === 'market' ? <StaffCourtsideMarket world={world} teamId={model.teamId}
+              onWorldChange={replaceWorld}/> : null}
+            {activeTab === 'intelligence' ? <StaffCourtsideIntelligence world={world} teamId={model.teamId}/> : null}
           </ScrollRegion>
         )}
       </ApplicationWorkspace>
