@@ -197,10 +197,14 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
 
   // --- MATEMÃTICAS ---
   const getSVGPoint = (e: React.MouseEvent | MouseEvent) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    const CTM = svgRef.current.getScreenCTM();
-    if (!CTM) return { x: 0, y: 0 };
-    return { x: (e.clientX - CTM.e) / CTM.a, y: (e.clientY - CTM.f) / CTM.d };
+    const svg = svgRef.current;
+    const matrix = svg?.getScreenCTM();
+    if (!svg || !matrix) return { x: 0, y: 0 };
+    const point = svg.createSVGPoint();
+    point.x = e.clientX;
+    point.y = e.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    return { x: Math.max(0, Math.min(500, local.x)), y: Math.max(0, Math.min(470, local.y)) };
   };
   const pointsToCurvedPath = (points: Position[]) => { if (points.length < 2) return ''; let d = `M ${points[0].x} ${points[0].y}`; for (let i = 1; i < points.length; i++) d += ` L ${points[i].x} ${points[i].y}`; return d; };
   const pointsToStraightPath = (points: Position[]) => { if (points.length < 2) return ''; const start = points[0]; const end = points[points.length - 1]; return `M ${start.x} ${start.y} L ${end.x} ${end.y}`; };
@@ -279,7 +283,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   };
 
   // --- ACTIONS ---
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.PointerEvent<SVGSVGElement>) => {
     const pos = getSVGPoint(e);
     if (activeTool === 'select') {
         const player = currentFrame.players.find(p => Math.hypot(p.x - pos.x, p.y - pos.y) < 30);
@@ -306,7 +310,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
     }
   };
 
-  const onMouseMove = (e: React.MouseEvent) => {
+  const onMouseMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const pos = getSVGPoint(e);
     if (dragging) {
         if (dragging.type === 'player') {
@@ -334,13 +338,17 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
         setDragging(null); return;
     }
     if (isDrawing) {
-        if (currentPathPoints.length > 1) { 
+        if (currentPathPoints.length > 1) {
+            let finishedPoints = currentPathPoints;
             if (activeTool === 'pass') {
-                const last = currentPathPoints[currentPathPoints.length-1];
-                const target = currentFrame.players.find(p => Math.hypot(p.x - last.x, p.y - last.y) < 30);
-                if (target) { const newPoints = [...currentPathPoints]; newPoints[newPoints.length-1] = {x: target.x, y: target.y}; setCurrentPathPoints(newPoints); }
+                const last = finishedPoints[finishedPoints.length - 1];
+                const receiver = currentFrame.players.find(p => Math.hypot(p.x - last.x, p.y - last.y) < 30);
+                if (receiver) {
+                    finishedPoints = [...finishedPoints];
+                    finishedPoints[finishedPoints.length - 1] = { x: receiver.x, y: receiver.y };
+                }
             }
-            const newPath: ActionPath = { id: Date.now(), type: activeTool as any, points: currentPathPoints, linkedId: drawingLinkedId };
+            const newPath: ActionPath = { id: Date.now(), type: activeTool as ActionPath['type'], points: finishedPoints, linkedId: drawingLinkedId };
             updateFrame({ paths: [...currentFrame.paths, newPath] });
         }
         setIsDrawing(false); setCurrentPathPoints([]); setDrawingLinkedId(undefined);
@@ -363,7 +371,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
     }
   };
 
-  const updateFrame = (newData: Partial<FrameData>) => { const newFrames = [...frames]; newFrames[currentFrameIndex] = { ...currentFrame, ...newData }; setFrames(newFrames); };
+  const updateFrame = (newData: Partial<FrameData>) => {
+    const newFrames = [...frames];
+    newFrames[displayIndex] = { ...currentFrame, ...newData };
+    setFrames(rebuildFramesFrom(newFrames, displayIndex));
+  };
 
   /**
    * Deletes one individual drawn action/step (a path in the RESUMEN list) from the current frame,
@@ -515,7 +527,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
              <svg 
                 ref={svgRef} viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet" className="pcb-tactics-creator__court"
                 style={{maxHeight:'95%', maxWidth:'95%', aspectRatio:'50/47', background: THEME.bg, border:'2px solid #334155', cursor: activeTool==='select'?(dragging?'grabbing':'default'):'crosshair', boxShadow:'0 0 40px rgba(0,0,0,0.5)', touchAction:'none'}}
-                onMouseDown={handleMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onDoubleClick={(e)=>{const p=getSVGPoint(e); const pl=currentFrame.players.find(x=>Math.hypot(x.x-p.x,x.y-p.y)<35); if(pl&&activeTool==='select') updateFrame({ballOwnerId:pl.id})}}
+                onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); handleMouseDown(event); }}
+                 onPointerMove={onMouseMove}
+                 onPointerUp={event => { onMouseUp(); if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+                 onPointerCancel={onMouseUp}
+                 onDoubleClick={(e)=>{const p=getSVGPoint(e); const pl=currentFrame.players.find(x=>Math.hypot(x.x-p.x,x.y-p.y)<35); if(pl&&activeTool==='select') updateFrame({ballOwnerId:pl.id})}}
              >
                 <defs>
                   <marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill={THEME.moveColor} /></marker>

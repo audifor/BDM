@@ -1,0 +1,38 @@
+name: BDM UI Courtside Tactics
+
+on:
+  push:
+    branches:
+      - feat/bdm-ui-courtside
+    paths:
+      - 'src/ui-ng/applications/tactics/**'
+      - 'src/ui/pcb-migrated/tactics/**'
+      - '.github/workflows/bdm-ui-courtside-tactics.yml'
+  workflow_dispatch:
+
+jobs:
+  tactics:
+    name: TACTICS Courtside and canonical regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: TACTICS component and canonical gameplay regressions
+        run: >-
+          npx vitest run
+          src/ui-ng/applications/tactics/TacticsWorkspace.test.tsx
+          src/ui/pcb-migrated/tactics/TacticsPcbPage.issue9.test.ts
+          src/ui/pcb-migrated/tactics/TacticsPcbPage.matchPlan.test.ts
+          src/ui/pcb-migrated/tactics/TacticsPcbPage.canonicalLineup.test.ts
+          src/ui/pcb-migrated/tactics/TacticsPcbPage.realWorld.test.ts
+          src/engine/match-next/matchNextTactics.test.ts
+          --maxWorkers=2 --no-file-parallelism
+      - name: Production build
+        run: npm run build

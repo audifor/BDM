@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import type { GameWorld } from '@/domain/world'
 import { getTeamLineup, getTeamRoster, resolveGameClockRules } from '@/domain/world'
 import { getNextUserGame } from '@/engine/calendar'
@@ -17,11 +17,11 @@ const positions = ['PG', 'SG', 'SF', 'PF', 'C'] as const
 const nameOf = (player: Player) => player.firstName + ' ' + player.lastName
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
-function Card({ title, note, children, className = '' }: { title: string; note?: string; children: React.ReactNode; className?: string }) {
+function Card({ title, note, children, className = '' }: { title: string; note?: string; children: ReactNode; className?: string }) {
   return <section className={'ct-card ' + className}><header className="ct-card__head"><h2>{title}</h2>{note && <span>{note}</span>}</header><div className="ct-card__body">{children}</div></section>
 }
 function Empty({ text }: { text: string }) { return <p className="ct-empty">{text}</p> }
-function StatStrip({ children }: { children: React.ReactNode }) { return <div className="ct-stats" aria-label="Resumen táctico">{children}</div> }
+function StatStrip({ children }: { children: ReactNode }) { return <div className="ct-stats" aria-label="Resumen táctico">{children}</div> }
 function Metric({ label, value, tone = '' }: { label: string; value: string | number; tone?: string }) {
   return <div className="ct-stat"><strong className={tone}>{value}</strong><small>{label}</small></div>
 }
@@ -158,7 +158,7 @@ function RotationsPanel({ world, teamId, onOpenPlayer }: { world: GameWorld; tea
     <div className="ct-columns ct-columns--rotation">
       <Card title="GESTIÓN" note="PRESSETS"><h3 className="ct-subheading">Plan de minutos</h3>{(['Equilibrada','Corta','Profunda'] as const).map(choice => <button className={'ct-list-action'+(preset===choice?' is-selected':'')} type="button" key={choice} onClick={() => choosePreset(choice)}>{choice}<span>↗</span></button>)}<p className="ct-hint">Los minutos se ajustan por jugador y periodo según la duración real de la competición.</p></Card>
       <Card title="CRONOLOGÍA DE MINUTOS" note={valid ? 'LISTA PARA GUARDAR' : 'AJUSTE NECESARIO'}>
-        {!selectedPlayers.length ? <Empty text="Selecciona jugadores para el partido desde Pizarra."/> : <div className="ct-rotation-scroll"><div className="ct-rot-head"><span>JUGADOR</span>{Array.from({ length: periodCount },(_,q)=><b key={q}>{periodCount===2?'H':'Q'}{q+1}</b>)}<span>TOTAL</span></div>{selectedPlayers.map(player => <div className="ct-rot-row" key={player.id}><PlayerButton player={player} onOpen={onOpenPlayer}/>{Array.from({ length: periodCount },(_,q)=><label key={q} className="ct-rot-min"><input aria-label={nameOf(player)+' · periodo '+(q+1)} type="number" min="0" max={periodMinutes} step="1" value={effective[player.id]?.[q] ?? 0} onChange={e => edit(player.id,q,Number(e.target.value))}/><span style={{width: ((effective[player.id]?.[q] ?? 0)/periodMinutes*100)+'%'}}/></label>)}<strong>{(effective[player.id] ?? []).reduce((sum,n)=>sum+n,0)}'</strong></div>)}<div className="ct-rot-footer"><span>MINUTOS</span>{periodTotals.map((v,q)=><b className={v===periodMinutes*5?'ct-green':'ct-orange'} key={q}>{v}/{periodMinutes*5}</b>)}<strong>{total}</strong></div></div>}
+        {!selectedPlayers.length ? <Empty text="Selecciona jugadores para el partido desde Pizarra."/> : <div className="ct-rotation-scroll" style={{ '--ct-periods': periodCount } as CSSProperties}><div className="ct-rot-head"><span>JUGADOR</span>{Array.from({ length: periodCount },(_,q)=><b key={q}>{periodCount===2?'H':'Q'}{q+1}</b>)}<span>TOTAL</span></div>{selectedPlayers.map(player => <div className="ct-rot-row" key={player.id}><PlayerButton player={player} onOpen={onOpenPlayer}/>{Array.from({ length: periodCount },(_,q)=><label key={q} className="ct-rot-min"><input aria-label={nameOf(player)+' · periodo '+(q+1)} type="number" min="0" max={periodMinutes} step="1" value={effective[player.id]?.[q] ?? 0} onChange={e => edit(player.id,q,Number(e.target.value))}/><span style={{width: ((effective[player.id]?.[q] ?? 0)/periodMinutes*100)+'%'}}/></label>)}<strong>{(effective[player.id] ?? []).reduce((sum,n)=>sum+n,0)}'</strong></div>)}<div className="ct-rot-footer"><span>MINUTOS</span>{periodTotals.map((v,q)=><b className={v===periodMinutes*5?'ct-green':'ct-orange'} key={q}>{v}/{periodMinutes*5}</b>)}<strong>{total}</strong></div></div>}
         <p className="ct-hint" role={valid ? 'status' : 'alert'}>{saved ? 'Rotación guardada en la partida.' : valid ? 'Asignación válida. Guarda para aplicar al próximo partido.' : 'Cada periodo debe sumar exactamente cinco jugadores en pista. Corrige las columnas marcadas.'}</p>
       </Card>
       <Card title="ANÁLISIS" note="CARGA"><h3 className="ct-subheading">Minutos por jugador</h3>{selectedPlayers.map(player => <div className="ct-load-row" key={player.id}><span>{player.lastName}</span><div><i style={{width: (((effective[player.id] ?? []).reduce((s,v)=>s+v,0))/(periodCount*periodMinutes)*100)+'%'}}/></div><b>{(effective[player.id] ?? []).reduce((s,v)=>s+v,0)}'</b></div>)}<p className="ct-hint">La carga mostrada representa los minutos planificados, no una predicción de fatiga.</p></Card>
