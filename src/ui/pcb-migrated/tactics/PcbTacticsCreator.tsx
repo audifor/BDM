@@ -412,12 +412,12 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       
       {/* MODALES */}
       {modalMode === 'load' && (
-          <div style={modalOverlay}>
-              <div style={modalContent}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={modalContent}>
                   <h3>Cargar Jugada</h3>
                   <div style={listContainer}>
                       {savedPlays.length === 0 ? <p style={{color:'#94a3b8'}}>No hay jugadas guardadas.</p> : savedPlays.map(play => (
-                          <div key={play.id} onClick={()=>{ setFrames(play.frames); setPlayName(play.name); setCurrentFrameIndex(0); setModalMode('none'); }} style={listItem}>
+                          <div key={play.id} onClick={()=>{ setFrames(play.frames); setPlayName(play.name); setCurrentFrameIndex(0); setModalMode('none'); }} className="pcb-tactics-creator__modal-row" style={listItem}>
                               <div><div style={{color:'white', fontWeight:'bold'}}>{play.name}</div><div style={{color:'#64748b', fontSize:'0.8rem'}}>{play.date}</div></div>
                               <Play size={16} color="#fbbf24"/>
                           </div>
@@ -429,10 +429,10 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       )}
 
       {modalMode === 'createPB' && (
-          <div style={modalOverlay}>
-              <div style={modalContent}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={modalContent}>
                   <h3>Nuevo Playbook</h3>
-                  <input type="text" placeholder="Nombre (ej: Ataque Zona)" value={newPbName} onChange={e=>setNewPbName(e.target.value)} style={inputStyle} />
+                  <input type="text" placeholder="Nombre (ej: Ataque Zona)" value={newPbName} onChange={e=>setNewPbName(e.target.value)} className="pcb-tactics-creator__modal-input" style={inputStyle} />
                   <div style={{display:'flex', gap:10, marginTop:20}}>
                       <button onClick={createPlaybook} style={primaryBtn}>Crear</button>
                       <button onClick={()=>setModalMode('none')} style={closeBtn}>Cancelar</button>
@@ -442,13 +442,13 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       )}
 
       {modalMode === 'editPB' && (
-          <div style={modalOverlay}>
-              <div style={{...modalContent, width: 600}}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={{...modalContent, width: 600}}>
                   <h3>Editar Playbooks</h3>
                   {!selectedPbForEdit ? (
                       <div style={listContainer}>
                           {playbooks.length === 0 ? <p style={{color:'#94a3b8'}}>No tienes playbooks.</p> : playbooks.map(pb => (
-                              <div key={pb.id} onClick={()=>setSelectedPbForEdit(pb)} style={listItem}>
+                              <div key={pb.id} onClick={()=>setSelectedPbForEdit(pb)} className="pcb-tactics-creator__modal-row" style={listItem}>
                                   <div style={{display:'flex', alignItems:'center', gap:10}}><Book size={20} color="#38bdf8"/><div><div style={{color:'white', fontWeight:'bold'}}>{pb.name}</div><div style={{color:'#64748b', fontSize:'0.8rem'}}>{pb.playIds.length} jugadas</div></div></div>
                                   <div style={{display:'flex', gap:10}}>
                                       <button onClick={(e)=>{e.stopPropagation(); deletePlaybook(pb.id)}} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer'}}><Trash2 size={16}/></button>
@@ -461,14 +461,14 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                       <div>
                           <div style={{display:'flex', gap:10, marginBottom:20}}>
                               <button onClick={()=>setSelectedPbForEdit(null)} style={{background:'transparent', border:'none', color:'#fbbf24', cursor:'pointer'}}><SkipBack/></button>
-                              <input type="text" value={selectedPbForEdit.name} onChange={e=>updatePlaybookName(selectedPbForEdit.id, e.target.value)} style={{...inputStyle, flex:1}} />
+                              <input type="text" value={selectedPbForEdit.name} onChange={e=>updatePlaybookName(selectedPbForEdit.id, e.target.value)} className="pcb-tactics-creator__modal-input" style={{...inputStyle, flex:1}} />
                           </div>
                           <div style={{...listContainer, maxHeight:250}}>
                               {selectedPbForEdit.playIds.length === 0 ? <p style={{color:'#94a3b8'}}>Vacío.</p> : selectedPbForEdit.playIds.map(pid => {
                                     const play = savedPlays.find(p => p.id === pid);
                                     if(!play) return null;
                                     return (
-                                        <div key={pid} style={{...listItem, cursor:'default'}}>
+                                        <div key={pid} className="pcb-tactics-creator__modal-row" style={{...listItem, cursor:'default'}}>
                                             <span style={{color:'white'}}>{play.name}</span>
                                             <button onClick={()=>removePlayFromPlaybook(selectedPbForEdit.id, pid)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer'}}><Trash2 size={16}/></button>
                                         </div>
@@ -494,7 +494,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
              <div style={{position:'relative'}}>
                  <button onClick={()=>setShowAddToPbDropdown(!showAddToPbDropdown)} style={{...textBtn, padding:'5px 10px'}}><Book size={16}/> Añadir a...</button>
                  {showAddToPbDropdown && (
-                     <div style={{position:'absolute', top:'100%', right:0, marginTop:5, background:'#1e293b', border:'1px solid #334155', borderRadius:6, width:200, zIndex:100, boxShadow:'0 4px 10px rgba(0,0,0,0.5)'}}>
+                     <div className="pcb-tactics-creator__pb-dropdown" style={{position:'absolute', top:'100%', right:0, marginTop:5, background:'#1e293b', border:'1px solid #334155', borderRadius:6, width:200, zIndex:100, boxShadow:'0 4px 10px rgba(0,0,0,0.5)'}}>
                          {playbooks.length === 0 ? <div style={{padding:10, color:'#94a3b8', fontSize:'0.8rem'}}>No hay playbooks</div> : playbooks.map(pb => (
                                 <div key={pb.id} onClick={()=>addCurrentPlayToPlaybook(pb.id)} style={{padding:'8px 12px', color:'white', cursor:'pointer', borderBottom:'1px solid #334155', fontSize:'0.85rem'}}>{pb.name}</div>
                             ))}
@@ -507,7 +507,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
         </div>
       </div>
 
-      <div style={{flex:1, display:'flex', gap:10, minHeight:0, overflow:'hidden'}}>
+      <div className="pcb-tactics-creator__workarea" style={{flex:1, display:'flex', gap:10, minHeight:0, overflow:'hidden'}}>
           {/* TOOLBAR */}
           <div className="pcb-tactics-creator__tools" style={{width: 70, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', flexDirection:'column', alignItems:'center', padding:'15px 0', gap: 8, overflowY:'auto'}}>
              <ToolBtn icon={<MousePointer2 size={20}/>} label="Select" active={activeTool==='select'} onClick={()=>setActiveTool('select')} />
@@ -567,19 +567,41 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
 
           {/* RESUMEN LATERAL */}
           <div className="pcb-tactics-creator__summary" style={{width: 180, background:'#1e293b', borderLeft:'1px solid #334155', padding:15, overflowY:'auto'}}>
-              <div style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> RESUMEN</div>
-              {currentFrame.paths.length === 0 && <span style={{fontSize:'0.7rem', color:'#64748b'}}>Sin acciones</span>}
-              <div style={{display:'flex', flexDirection:'column', gap:8}}>
+              <div className="pcb-tactics-creator__summary-head" style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> CONTROL DE JUGADA <span>{currentFrame.paths.length} acciones · {frames.length} pasos</span></div>
+              <div className="pcb-tactics-creator__actions">
+                <h3>ACCIONES DEL PASO {displayIndex + 1}</h3>
+                {currentFrame.paths.length === 0 && <p className="pcb-tactics-creator__hint">Selecciona Corte, Pase, Bote o Bloqueo y dibuja sobre la cancha. Las acciones aparecerán aquí para revisarlas y eliminarlas.</p>}
+              <div className="pcb-tactics-creator__action-list" style={{display:'flex', flexDirection:'column', gap:8}}>
                 {currentFrame.paths.map((p) => {
                     const pl = currentFrame.players.find(x=>x.id===p.linkedId);
-                    return (<div key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
+                    return (<div className="pcb-tactics-creator__action" key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
                         <div style={{flex:1}}>
-                            <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
+                            <div className="pcb-tactics-creator__action-owner" style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
                             <div>{p.type.toUpperCase()}</div>
                         </div>
                         <button aria-label={`Eliminar acción ${p.type}`} onClick={() => deleteAction(p.id)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding:0, flexShrink:0}} type="button"><Trash2 size={14}/></button>
                     </div>)
                 })}
+              </div>
+              </div>
+              <div className="pcb-tactics-creator__overview">
+                <h3>SECUENCIA DE LA JUGADA</h3>
+                <p className="pcb-tactics-creator__hint">Selecciona un paso para editar sus trayectorias y posiciones.</p>
+                <div className="pcb-tactics-creator__frame-picker" aria-label="Pasos de la jugada">
+                  {frames.map((frame, index) => <button key={index} type="button"
+                    className={displayIndex === index ? 'is-active' : ''}
+                    aria-pressed={displayIndex === index}
+                    onClick={() => { setIsPlaying(false); setCurrentFrameIndex(index) }}>
+                      <b>PASO {index + 1}</b>
+                      <span>{frame.paths.length} acciones</span>
+                  </button>)}
+                </div>
+                <h3>HERRAMIENTA ACTIVA</h3>
+                <div className="pcb-tactics-creator__tool-detail">
+                  <strong>{{ select:'SELECCIÓN', move:'CORTE', pass:'PASE', dribble:'BOTE', screen:'BLOQUEO', defender:'DEFENSA' }[activeTool]}</strong>
+                  <p>{{ select:'Arrastra una ficha para cambiar su posición. Doble clic sobre una ficha para asignar el balón.', move:'Selecciona un jugador y dibuja su recorrido.', pass:'Dibuja el pase desde el balón hacia un receptor.', dribble:'Dibuja la trayectoria con bote.', screen:'Señala la posición y la dirección del bloqueo.', defender:'Añade defensores para practicar la jugada contra oposición.' }[activeTool]}</p>
+                </div>
+                <button className="pcb-tactics-creator__add-step" type="button" onClick={addFrame}><Plus size={16}/> AÑADIR PASO</button>
               </div>
           </div>
       </div>

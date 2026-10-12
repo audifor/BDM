@@ -76,8 +76,10 @@ function MatchupsPanel({ world, teamId, onOpenPlayer }: { world: GameWorld; team
       <Card title="RIVALES" note={opponent?.name ?? 'Sin próximo rival'}>
         {!opposing.length && <Empty text="No hay un rival programado con jugadores disponibles." />}
         <div className="ct-rival-list">{opposing.map(player => <button key={player.id} type="button" className={'ct-rival' + (chosen?.id === player.id ? ' is-selected' : '')} onClick={() => setChosenId(player.id)}>
-          <span className="ct-pos">{player.basketball.primaryPosition}</span><span className="ct-rival__name">{nameOf(player)}<small>{report?.flaggedPlayerIds.includes(player.id) ? 'Señalado en el scouting' : 'Sin amenaza confirmada'}</small></span>
-          <b>{saved.some(item => item.opponentPlayerId === player.id) ? '✓' : '·'}</b>
+          <span className="ct-pos">{player.basketball.primaryPosition}</span>
+          <span className="ct-rival__name" title={nameOf(player)}>{nameOf(player)}</span>
+          {report?.flaggedPlayerIds.includes(player.id) && <span className="ct-rival__threat" title="Amenaza identificada por scouting">!</span>}
+          <span className="ct-rival__def" title={own.find(p => p.id === saved.find(m => m.opponentPlayerId === player.id)?.ourPlayerId)?.lastName ?? 'Sin defensor asignado'}>{own.find(p => p.id === saved.find(m => m.opponentPlayerId === player.id)?.ourPlayerId)?.lastName ?? 'SIN ASIGNAR'}</span>
         </button>)}</div>
       </Card>
       <Card title="CARA A CARA" note="DUELO DEFENSIVO">

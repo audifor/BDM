@@ -87,6 +87,30 @@ describe('TacticsWorkspace', () => {
     expect(screen.getByText('LIBERTAD CREATIVA')).toBeInTheDocument()
   })
 
+  it('keeps the Designer court operable with a Courtside action and step workspace', () => {
+    mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    expect(screen.getByText('CONTROL DE JUGADA')).toBeInTheDocument()
+    expect(screen.getByText('SECUENCIA DE LA JUGADA')).toBeInTheDocument()
+    expect(screen.getByText('HERRAMIENTA ACTIVA')).toBeInTheDocument()
+    expect(document.querySelector('.pcb-tactics-creator__workarea')).toBeInTheDocument()
+    expect(document.querySelector('.pcb-tactics-creator__court')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'AÑADIR PASO' }))
+    expect(screen.getByRole('button', { name: /PASO 2/ })).toBeInTheDocument()
+    expect(screen.getByText('2 acciones')).not.toBeInTheDocument()
+  })
+
+  it('renders one-line rival rows without repeated empty scouting messages', () => {
+    mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))
+    expect(document.querySelectorAll('.ct-rival small')).toHaveLength(0)
+    expect(screen.queryByText('Sin amenaza confirmada')).not.toBeInTheDocument()
+    for (const row of document.querySelectorAll('.ct-rival')) {
+      expect(row.querySelector('.ct-rival__name')).toBeTruthy()
+      expect(row.querySelector('.ct-rival__def')).toBeTruthy()
+    }
+  })
+
   it('renders Courtside defensive duels without inventing rival ratings', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))
