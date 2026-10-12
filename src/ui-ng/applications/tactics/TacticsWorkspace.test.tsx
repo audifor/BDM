@@ -70,6 +70,23 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.ct-page__head')).toBeNull()
   })
 
+  it('keeps all six offensive settings and the save action accessible on Pizarra', () => {
+    mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'ATAQUE' }))
+    for (const heading of [
+      'SISTEMA (PLAYBOOK)', 'ESPACIADO (SPACING)', 'FRECUENCIA P&R',
+      'VOLUMEN TRIPLES', 'RIESGO EN EL PASE', 'REBOTE OFENSIVO',
+    ]) {
+      expect(screen.getByText(heading)).toBeInTheDocument()
+    }
+    expect(screen.getByRole('button', { name: 'GUARDAR AJUSTES' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'DEFENSA' }))
+    expect(screen.getByText('PROTECCION DE ARO')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'GUARDAR AJUSTES' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'GENERAL' }))
+    expect(screen.getByText('LIBERTAD CREATIVA')).toBeInTheDocument()
+  })
+
   it('renders Courtside defensive duels without inventing rival ratings', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))

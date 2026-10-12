@@ -321,3 +321,105 @@
   .ct-columns--rotation-picker>.ct-card {width:100%}
   .ct-roster-list {max-height:275px}
 }
+
+
+/*
+ * COURTSIDE PIZARRA · full-height controls / zero nested settings scroll.
+ * Constrain only the bench list; the tactical settings must use the rest of
+ * the workspace. On short/narrow windows the outer ScrollRegion takes over.
+ */
+.ct-courtside .ct-page[data-courtside-tactics-screen="board"] {
+  box-sizing:border-box;
+  height:100%;
+  min-height:100%;
+}
+.ct-courtside .ct-page[data-courtside-tactics-screen="board"] .ct-legacy-content {
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+}
+.ct-courtside .ct-page[data-courtside-tactics-screen="board"] .pcb-tactics--ng {
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  height:100%;
+  overflow:visible;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-advanced {
+  grid-template-columns:minmax(245px,.94fr) minmax(440px,1.19fr) minmax(335px,1.05fr);
+  height:100%;
+  min-height:max-content;
+  align-items:stretch;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right {
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right > .tactics-board-panel-body {
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow:visible;
+  gap:clamp(8px,1.1vh,14px);
+  padding:10px;
+  justify-content:flex-start;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right > .tactics-board-panel-body:has(> .tactics-board-control:nth-child(5)) {
+  justify-content:space-between;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right .tactics-board-control {
+  flex:0 0 auto;
+  min-height:0;
+  padding:10px;
+  gap:7px;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right .tactics-board-tabs {
+  flex:0 0 auto;
+  min-height:34px;
+  padding:5px;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right .tactics-board-footer {
+  flex:0 0 auto;
+  margin-top:auto;
+  padding:8px 10px;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-panel-right .tactics-board-save {
+  min-height:30px;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-court {
+  height:100%;
+  min-height:0;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-court-surface {
+  width:min(100%,550px);
+  max-width:550px;
+}
+/* Responsive two-column/stack layouts must grow naturally and never hide controls. */
+@media (max-width:1200px) {
+  .ct-courtside .ct-page[data-courtside-tactics-screen="board"] {height:auto;min-height:100%}
+  .ct-courtside .pcb-tactics--ng .tactics-board-advanced {
+    height:auto;
+    min-height:0;
+    grid-template-columns:minmax(200px,1fr) minmax(350px,1.55fr);
+    align-items:start;
+  }
+  .ct-courtside .pcb-tactics--ng .tactics-board-panel-right {
+    grid-column:1 / -1;
+    height:auto;
+    min-height:0;
+    overflow:visible;
+  }
+  .ct-courtside .pcb-tactics--ng .tactics-board-panel-right > .tactics-board-panel-body {
+    flex:0 0 auto;
+    justify-content:flex-start;
+  }
+}
+@media (max-width:720px) {
+  .ct-courtside .pcb-tactics--ng .tactics-board-advanced {grid-template-columns:minmax(0,1fr)}
+  .ct-courtside .pcb-tactics--ng .tactics-board-panel-right {grid-column:auto}
+  .ct-courtside .pcb-tactics--ng .tactics-board-court {height:auto}
+}
