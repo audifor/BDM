@@ -97,7 +97,7 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.pcb-tactics-creator__court')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'AÑADIR PASO' }))
     expect(screen.getByRole('button', { name: /PASO 2/ })).toBeInTheDocument()
-    expect(screen.getByText('2 acciones')).not.toBeInTheDocument()
+    expect(screen.queryByText('2 acciones')).not.toBeInTheDocument()
   })
 
   it('renders one-line rival rows without repeated empty scouting messages', () => {
