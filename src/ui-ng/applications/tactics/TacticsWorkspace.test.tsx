@@ -43,7 +43,7 @@ describe('TacticsWorkspace', () => {
   it('clones the five canonical tactics surfaces under NG chrome', () => {
     const { team } = mountTacticsWorkspace()
     expect(screen.getByText(team.name, { selector: '.tactics-workspace-header__team' })).toBeInTheDocument()
-    for (const label of ['Pizarra', 'Diseñador', 'Emparejamientos', 'Rotaciones', 'Partido']) {
+    for (const label of ['Pizarra', 'Diseñador', 'Emparejamientos', 'Rotaciones', 'PLAN DE PARTIDO']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
     expect(screen.queryByRole('button', { name: 'Jugadas' })).not.toBeInTheDocument()
@@ -51,22 +51,21 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.pcb-tactics__tabs')).toBeNull()
   })
 
-  it('opens the full PCB Emparejamientos table', () => {
+  it('renders Courtside defensive duels without inventing rival ratings', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))
-    expect(screen.getByRole('heading', { name: 'Matchups Defensivos' })).toBeInTheDocument()
-    for (const column of ['POS', 'JUGADOR RIVAL', 'AMENAZA', 'ALTURA', 'DEFENSOR', 'PRESIÓN', 'P&R', 'DIRECCIÓN']) {
-      expect(screen.getByRole('columnheader', { name: new RegExp(column) })).toBeInTheDocument()
-    }
-    expect(screen.getByRole('button', { name: 'Auto-matchup' })).toBeEnabled()
-    expect(document.querySelector('.pcb-tactics__matchups-table')).toHaveClass('ng-precision-grid')
+    expect(screen.getByRole('heading', { name: 'CARA A CARA' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'ASIGNACIÓN DEFENSIVA' })).toBeInTheDocument()
+    expect(document.querySelector('[data-courtside-tactics-screen="matchups"]')).toBeInTheDocument()
+    expect(screen.queryByText('CONTRASTE ILUSTRATIVO')).not.toBeInTheDocument()
   })
 
-  it('opens the rotation matrix as a Precision Grid', () => {
+  it('renders a Courtside rotation timeline using the real competition rules', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
-    expect(screen.getByRole('heading', { name: 'Matriz de Rotación' })).toBeInTheDocument()
-    expect(document.querySelector('.pcb-tactics__rotation-grid')).toHaveClass('ng-precision-grid')
+    expect(screen.getByRole('heading', { name: 'CRONOLOGÍA DE MINUTOS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'GUARDAR ROTACIÓN' })).toBeInTheDocument()
+    expect(document.querySelector('[data-courtside-tactics-screen="rotations"]')).toBeInTheDocument()
   })
 
   it('opens a player dossier from a Pizarra name', () => {
@@ -76,11 +75,15 @@ describe('TacticsWorkspace', () => {
     expect(new URL(window.location.href).searchParams.get('playerId')).toBe(player.id)
   })
 
-  it('keeps match-plan overrides on the cloned Partido surface', () => {
-    mountTacticsWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
-    expect(screen.getByRole('heading', { name: 'Plan de Partido' })).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Ritmo'), { target: { value: 'Rápido' } })
-    expect(useTacticalPlanStore.getState().plan.pace).toBe(1)
+  it('persists actual P&R coverage, rather than mislabeling paint emphasis as switch', () => {
+    const { world, team } = mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'PLAN DE PARTIDO' }))
+    const coverage = screen.getByLabelText('Cobertura Pick and Roll')
+    fireEvent.change(coverage, { target: { value: 'hedge' } })
+    fireEvent.click(screen.getByRole('button', { name: 'APLICAR AL PARTIDO' }))
+    const next = useGameStore.getState().world!
+    const matching = Object.values(next.gamePlansByKey).find(plan => plan.teamId === team.id)
+    expect(matching?.tacticalOverride?.defense?.pickAndRollCoverage).toBe('hedge')
+    expect(next.currentDate).toBe(world.currentDate)
   })
 })

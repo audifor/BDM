@@ -1,9 +1,11 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
+import { getTeamLineup } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { TacticsPcbPage, TACTICS_PCB_TABS, type TacticsPcbTab } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
+import { CourtsideTacticsPanels } from '@/ui-ng/applications/tactics/CourtsideTacticsPanels'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import {
   buildRosterWorkspaceContext,
@@ -15,6 +17,18 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 
 import './tactics-workspace.css'
+import './courtside-tactics.css'
+
+const CT_PAGE_TITLES: Record<TacticsPcbTab, string> = {
+  board: 'PIZARRA', designer: 'DISEÑADOR', matchups: 'EMPAREJAMIENTOS', rotations: 'ROTACIONES', match: 'PLAN DE PARTIDO',
+}
+const CT_PAGE_DESCRIPTIONS: Record<TacticsPcbTab, string> = {
+  board: 'Organiza el quinteto y define cómo quieres jugar.',
+  designer: 'Dibuja, edita y reproduce jugadas.',
+  matchups: 'Prepara los duelos defensivos contra el próximo rival.',
+  rotations: 'Distribuye los minutos con las reglas de tu competición.',
+  match: 'Prepara y aplica instrucciones reales para el siguiente encuentro.',
+}
 
 function TacticsWorkspaceHeader({
   teamName,
@@ -83,7 +97,7 @@ export function TacticsWorkspace() {
     () =>
       TACTICS_PCB_TABS.map(([id, label]) => ({
         id,
-        label,
+        label: id === 'match' ? 'PLAN DE PARTIDO' : label,
         active: id === activeTab,
       })),
     [activeTab],
@@ -101,7 +115,7 @@ export function TacticsWorkspace() {
   }
 
   return (
-    <div className="tactics-workspace" data-ng-region="tactics-workspace" style={teamStyle}>
+    <div className="tactics-workspace ct-courtside" data-ng-region="tactics-workspace" style={teamStyle}>
       <ApplicationWorkspace
         header={
           <TacticsWorkspaceHeader
@@ -120,7 +134,26 @@ export function TacticsWorkspace() {
         }
       >
         <ScrollRegion className="tactics-workspace__scroll">
-          <TacticsPcbPage
+          <div className="ct-page" data-courtside-tactics-screen={activeTab}>
+            <header className="ct-page__head">
+              <div><span className="ct-page__eyebrow">EQUIPO / TÁCTICAS / COURTSIDE</span>
+                <h1>{CT_PAGE_TITLES[activeTab]}</h1>
+                <p>{CT_PAGE_DESCRIPTIONS[activeTab]}</p></div>
+            </header>
+            {(activeTab === 'board' || activeTab === 'designer') && (
+              <div className="ct-stats" aria-label="Resumen táctico">
+                {activeTab === 'board' ? <>
+                  <div className="ct-stat"><strong className="ct-green">{Object.values(getTeamLineup(world, team.id).starters).filter(Boolean).length}</strong><small>Quinteto inicial</small></div>
+                  <div className="ct-stat"><strong>{Object.values(getTeamLineup(world, team.id).bench).filter(Boolean).length}</strong><small>Banquillo asignado</small></div>
+                  <div className="ct-stat"><strong>CANCHA</strong><small>Ajustes de equipo</small></div>
+                </> : <>
+                  <div className="ct-stat"><strong className="ct-green">{Object.keys(world.savedPlaysById).length}</strong><small>Jugadas guardadas</small></div>
+                  <div className="ct-stat"><strong>{Object.keys(world.playbooksById).length}</strong><small>Playbooks del club</small></div>
+                  <div className="ct-stat"><strong>EDITOR</strong><small>Edición de secuencias</small></div>
+                </>}
+              </div>
+            )}
+            {activeTab === 'board' || activeTab === 'designer' ? <div className="ct-legacy-content"><TacticsPcbPage
             activeTab={activeTab}
             onChange={setPlan}
             onDeleteDesignerPlay={deleteDesignerPlay}
@@ -138,7 +171,15 @@ export function TacticsWorkspace() {
             plan={plan}
             variant="ng"
             world={world}
-          />
+          /></div> : (
+            <CourtsideTacticsPanels
+              tab={activeTab}
+              world={world}
+              teamId={team.id}
+              onOpenPlayer={(playerId) => openEntity({ type: 'player', playerId, section: 'overview' })}
+            />
+          )}
+          </div>
         </ScrollRegion>
       </ApplicationWorkspace>
     </div>
