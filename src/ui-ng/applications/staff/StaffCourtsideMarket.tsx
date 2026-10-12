@@ -42,20 +42,18 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
     catch(e){setError(e instanceof Error?e.message:'No se pudo abrir la vacante.')}
   }
   return <div className="cs-staff-market">
-    <div className="cs-staff-eyebrow">DIRECCIÓN DEPORTIVA / MERCADO PROFESIONAL</div>
-    <div className="cs-staff-titlebar"><div><h1>CONSTRUIR TU EQUIPO</h1>
-      <p>Vacantes, candidatos, entrevistas y ofertas reales; sin fichajes ficticios ni cambios de plantilla fuera del servicio de contratación.</p>
-    </div><button className="cs-staff-primary" type="button" onClick={openVacancy}>+ ABRIR VACANTE</button></div>
-    <div className="cs-staff-kpis">
-      <div><strong>{jobs.length}</strong><span>VACANTES ABIERTAS</span></div>
-      <div><strong>{Object.values(world.staffJobCandidaciesById).filter(c=>jobs.some(j=>j.id===c.jobOpeningId)&&['identified','interviewing','offered'].includes(c.status)).length}</strong><span>CANDIDATURAS EN CURSO</span></div>
-      <div><strong>{Object.values(world.staffJobOffersById).filter(o=>o.teamId===teamId&&o.status==='pending').length}</strong><span>OFERTAS PENDIENTES</span></div>
+    <div className="cs-staff-operational-head">
+      <div className="cs-staff-operational-head__identity">
+        <div className="cs-staff-eyebrow">MERCADO PROFESIONAL / DIRECCIÓN DEPORTIVA</div>
+        <h1>CONSTRUIR TU EQUIPO</h1>
+        <p>Busca especialistas, entrevista y contrata con las reglas reales del club.</p>
+      </div>
+      <button className="cs-staff-primary" type="button" onClick={openVacancy}>+ ABRIR VACANTE</button>
     </div>
     {error&&<p className="cs-staff-message is-error" role="alert">{error}</p>}
     {notice&&<p className="cs-staff-message" role="status">{notice}</p>}
     <div className="cs-staff-market-layout">
       <section className="cs-staff-market-main" aria-label="Mercado de personal">
-        <div className="cs-staff-section-heading"><h2>ENCUENTRA UN ESPECIALISTA</h2><span>Los candidatos dependen del puesto y la vacante.</span></div>
         <div className="cs-staff-filters">
           <label>DEPARTAMENTO<select value={department} aria-label="Departamento de contratación"
             onChange={e=>setDepartment(e.target.value as StaffDepartment)}>
@@ -111,6 +109,11 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
         </>}
       </section>
       <aside className="cs-staff-market-side" aria-label="Vacantes y operaciones">
+        <div className="cs-staff-kpis cs-staff-kpis--side cs-staff-kpis--market">
+      <div><strong>{jobs.length}</strong><span>VACANTES ABIERTAS</span></div>
+      <div><strong>{Object.values(world.staffJobCandidaciesById).filter(c=>jobs.some(j=>j.id===c.jobOpeningId)&&['identified','interviewing','offered'].includes(c.status)).length}</strong><span>CANDIDATURAS EN CURSO</span></div>
+      <div><strong>{Object.values(world.staffJobOffersById).filter(o=>o.teamId===teamId&&o.status==='pending').length}</strong><span>OFERTAS PENDIENTES</span></div>
+    </div>
         <div className="cs-staff-section-heading"><h2>VACANTES EN EL CLUB</h2></div>
         {jobs.length===0?<p className="cs-staff-empty">Aún no hay vacantes abiertas. Los objetivos visuales por puesto no cuentan como vacantes.</p>:null}
         {jobs.map(job=><div className={'cs-staff-job'+(job.id===opening?.id?' is-active':'')} key={job.id}>

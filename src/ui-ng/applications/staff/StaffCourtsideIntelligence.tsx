@@ -49,10 +49,13 @@ export function StaffCourtsideIntelligence({world,teamId}:{readonly world:GameWo
   const mean=rows.length===0?undefined:Math.round(rows.reduce((n,r)=>n+r.score,0)/rows.length)
   const rank=user===undefined?undefined:rows.findIndex(row=>row.teamId===teamId)+1
   return <div className="cs-staff-intelligence">
-    <div className="cs-staff-eyebrow">ANÁLISIS DE LA COMPETICIÓN / PERSONAL TÉCNICO</div>
-    <div className="cs-staff-titlebar"><div><h1>STAFF INTELLIGENCE</h1>
-      <p>Comparación de especialistas con el mismo puesto dentro de la misma competición y edición.</p></div></div>
-    <div className="cs-staff-filters">
+    <div className="cs-staff-operational-head">
+      <div className="cs-staff-operational-head__identity">
+        <div className="cs-staff-eyebrow">ANÁLISIS DE COMPETICIÓN</div>
+        <h1>STAFF INTELLIGENCE</h1>
+        <p>Especialistas del mismo puesto · competición y edición verificadas</p>
+      </div>
+      <div className="cs-staff-filters">
       <label>COMPETICIÓN / EDICIÓN<select aria-label="Competición de comparación" value={context?.id??''}
         onChange={e=>setSelectedContext(e.target.value)}>
         {contexts.map(item=><option value={item.id} key={item.id}>{item.name} · {item.season}</option>)}
@@ -60,17 +63,11 @@ export function StaffCourtsideIntelligence({world,teamId}:{readonly world:GameWo
       <label>ESPECIALIDAD<select aria-label="Rol de comparación" value={role??''} onChange={e=>setSelectedRole(e.target.value as StaffRoleId)}>
         {availableRoles.map(id=><option key={id} value={id}>{STAFF_ROLE_LABELS[id]}</option>)}
       </select></label>
+      </div>
     </div>
     {context===undefined||role===undefined?<section className="cs-staff-empty">
       No existe una edición de competición vinculada al equipo con personal comparable.
     </section>:<>
-      <div className="cs-staff-kpis">
-        <div><strong>{user?.score??'—'}</strong><span>TU CLUB · MEDIA POR EMPLEADO</span></div>
-        <div><strong>{mean??'—'}</strong><span>MEDIA DE EQUIPOS CON ESTE ROL</span></div>
-        <div><strong>{rank===undefined?'—':`${rank}/${rows.length}`}</strong><span>POSICIÓN ENTRE EQUIPOS CON DATOS</span></div>
-        <div><strong>{context.teamIds.length}</strong><span>PARTICIPANTES DE LA EDICIÓN</span></div>
-      </div>
-      {user===undefined&&<p className="cs-staff-empty">Tu club no tiene ningún empleado asignado al puesto seleccionado.</p>}
       <div className="cs-staff-intelligence-grid">
         <section className="cs-staff-rankings"><h2>COMPARACIÓN ENTRE CLUBES</h2>
           {rows.length<2&&<p className="cs-staff-empty">Sin suficientes clubes con personal asignado para establecer una comparación.</p>}
@@ -81,6 +78,12 @@ export function StaffCourtsideIntelligence({world,teamId}:{readonly world:GameWo
           </div>)}
         </section>
         <aside className="cs-staff-rankings__inspect">
+          <div className="cs-staff-kpis cs-staff-kpis--side">
+        <div><strong>{user?.score??'—'}</strong><span>TU CLUB · MEDIA POR EMPLEADO</span></div>
+        <div><strong>{mean??'—'}</strong><span>MEDIA DE EQUIPOS CON ESTE ROL</span></div>
+        <div><strong>{rank===undefined?'—':`${rank}/${rows.length}`}</strong><span>POSICIÓN ENTRE EQUIPOS CON DATOS</span></div>
+        <div><strong>{context.teamIds.length}</strong><span>PARTICIPANTES DE LA EDICIÓN</span></div>
+      </div>
           <h2>TU EQUIPO EN ESTE PUESTO</h2>
           {user===undefined?<p>No hay empleados asignados a este rol.</p>:user.people.map(person=>
             <button type="button" key={person.id} onClick={()=>navigateToStaff(person.id as never)}>

@@ -40,28 +40,6 @@ export function StaffAdvisoryBoard({
 
   return (
     <div className="staff-workspace__stack">
-      <section className="cs-staff-decision-room" aria-label="Sala de decisiones del cuerpo técnico">
-        <div className="cs-staff-eyebrow">EL CRITERIO DE TU EQUIPO / TRAZABILIDAD</div>
-        <div className="cs-staff-section-heading"><h2>SALA DE DECISIONES</h2>
-          <span>Recomendaciones emitidas por empleados reales y resolución registrada.</span></div>
-        <div className="cs-staff-decision-room__kpis">
-          <div><strong>{items.filter(item=>item.status==='PENDING').length}</strong><span>ESPERANDO TU DECISIÓN</span></div>
-          <div><strong>{items.filter(item=>item.status==='INFORMATIONAL').length}</strong><span>INFORMATIVAS</span></div>
-          <div><strong>{items.filter(item=>item.status==='ACCEPTED').length}</strong><span>ACEPTADAS</span></div>
-          <div><strong>{items.filter(item=>item.status==='DISMISSED').length}</strong><span>DESCARTADAS</span></div>
-        </div>
-        <div className="cs-staff-decision-room__voices">
-          {items.length===0?<p>No constan recomendaciones del staff en esta partida todavía. Al producirse, aparecerán aquí con su autor y estado.</p>:
-            items.slice(0,4).map(item=><article key={item.id}>
-              <div><button type="button" onClick={()=>navigateToStaff(item.staffId)}>{item.staffName} ↗</button>
-                <span>{RESPONSIBILITY_DOMAIN_LABELS[item.domain]} · {item.decidedOn}</span></div>
-              <strong>{item.title}</strong><p>{item.summary}</p>
-              <span className="cs-staff-decision-room__status">{item.status==='PENDING'?'PENDIENTE':
-                item.status==='INFORMATIONAL'?'INFORMATIVA':item.status==='ACCEPTED'?'ACEPTADA':'DESCARTADA'}</span>
-            </article>)}
-        </div>
-        <p className="cs-staff-decision-room__note">Se muestran decisiones atribuibles y evidencias registradas. Una recomendación acertada no garantiza un resultado; no se muestra conocimiento oculto ni debates inventados.</p>
-      </section>
       <FilterGroup>
         <button
           aria-pressed={filter === 'open'}
@@ -129,6 +107,28 @@ export function StaffAdvisoryBoard({
           ) : null}
         </div>
       )}
+      <section className="cs-staff-decision-room" aria-label="Sala de decisiones del cuerpo técnico">
+        <div className="cs-staff-eyebrow">EL CRITERIO DE TU EQUIPO / TRAZABILIDAD</div>
+        <div className="cs-staff-section-heading"><h2>SALA DE DECISIONES</h2>
+          <span>Recomendaciones emitidas por empleados reales y resolución registrada.</span></div>
+        <div className="cs-staff-decision-room__kpis">
+          <div><strong>{items.filter(item=>item.status==='PENDING').length}</strong><span>ESPERANDO TU DECISIÓN</span></div>
+          <div><strong>{items.filter(item=>item.status==='INFORMATIONAL').length}</strong><span>INFORMATIVAS</span></div>
+          <div><strong>{items.filter(item=>item.status==='ACCEPTED').length}</strong><span>ACEPTADAS</span></div>
+          <div><strong>{items.filter(item=>item.status==='DISMISSED').length}</strong><span>DESCARTADAS</span></div>
+        </div>
+        <div className="cs-staff-decision-room__voices">
+          {items.length===0?<p>No constan recomendaciones del staff en esta partida todavía. Al producirse, aparecerán aquí con su autor y estado.</p>:
+            items.slice(0,4).map(item=><article key={item.id}>
+              <div><button type="button" onClick={()=>navigateToStaff(item.staffId)}>{item.staffName} ↗</button>
+                <span>{RESPONSIBILITY_DOMAIN_LABELS[item.domain]} · {item.decidedOn}</span></div>
+              <strong>{item.title}</strong><p>{item.summary}</p>
+              <span className="cs-staff-decision-room__status">{item.status==='PENDING'?'PENDIENTE':
+                item.status==='INFORMATIONAL'?'INFORMATIVA':item.status==='ACCEPTED'?'ACEPTADA':'DESCARTADA'}</span>
+            </article>)}
+        </div>
+        <p className="cs-staff-decision-room__note">Se muestran decisiones atribuibles y evidencias registradas. Una recomendación acertada no garantiza un resultado; no se muestra conocimiento oculto ni debates inventados.</p>
+      </section>
       {failureMessage !== undefined ? <p className="staff-workspace__failure">{failureMessage}</p> : null}
     </div>
   )

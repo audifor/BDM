@@ -367,3 +367,133 @@
   .courtside-staff-screen .cs-staff-decision-room__voices {grid-template-columns:1fr}
   .courtside-staff-screen .cs-staff-decision-room__kpis {grid-template-columns:repeat(2,1fr)}
 }
+
+/*
+ * Courtside STAFF V1.2 · above-the-fold composition
+ * ApplicationWorkspace sets its grid rows using vars. The inherited 122px
+ * header reserved ~60px of blank space after the visible 63px header.
+ * Override the GRID row, not merely the header child's visual height.
+ */
+.courtside-staff-screen {
+  --ng-workspace-header-height: 50px;
+  --ng-workspace-tabs-height: 39px;
+}
+.courtside-staff-screen .ng-application-workspace__tabs-header-slot {
+  background:var(--st-bg);border-bottom:1px solid var(--st-border);
+}
+.courtside-staff-screen .staff-workspace-header {
+  height:50px;min-height:0;padding:0 14px;
+  border-bottom:0;gap:10px;
+}
+.courtside-staff-screen .staff-workspace-header__app {
+  font:700 21px/1 var(--st-head);letter-spacing:.035em;
+}
+.courtside-staff-screen .staff-workspace-header__main {gap:10px}
+.courtside-staff-screen .staff-workspace-header__team {font-size:12px}
+.courtside-staff-screen .staff-workspace-header__meta {font-size:11px}
+.courtside-staff-screen .ng-workspace-tabs {height:39px;min-height:39px}
+.courtside-staff-screen .ng-workspace-tabs__tab {height:39px}
+.courtside-staff-screen .staff-workspace__scroll {padding:9px 14px 20px}
+.courtside-staff-screen .cs-staff-eyebrow {
+  font-size:11px;line-height:1.15;margin-bottom:3px;
+}
+.courtside-staff-screen .cs-staff-titlebar {margin-bottom:10px}
+.courtside-staff-screen .cs-staff-titlebar h1 {font-size:30px}
+.courtside-staff-screen .cs-staff-titlebar p {margin-top:3px;font-size:12px}
+.courtside-staff-screen .cs-staff-kpis {gap:8px;margin-bottom:10px}
+.courtside-staff-screen .cs-staff-kpis>button,
+.courtside-staff-screen .cs-staff-kpis>div {border-radius:9px;padding:9px 12px}
+.courtside-staff-screen .cs-staff-kpis strong {font-size:28px}
+.courtside-staff-screen .cs-staff-kpis span {font-size:11px}
+.courtside-staff-screen .cs-staff-section-heading {margin-bottom:7px}
+.courtside-staff-screen .cs-staff-section-heading h2 {font-size:20px}
+.courtside-staff-screen .cs-staff-department {min-height:166px;padding:12px;gap:9px}
+.courtside-staff-screen .cs-staff-department__top h3 {font-size:20px}
+.courtside-staff-screen .cs-staff-agenda {padding:12px;gap:7px}
+.courtside-staff-screen .cs-staff-agenda>button {padding:9px 27px 9px 10px;gap:4px}
+.courtside-staff-screen .cs-staff-agenda>button strong {font-size:15px}
+.courtside-staff-screen .cs-staff-agenda>button span {font-size:11px}
+.courtside-staff-screen .cs-staff-filters {
+  gap:9px;padding:9px;margin:0 0 9px;
+}
+.courtside-staff-screen .cs-staff-filters label {min-width:175px}
+.courtside-staff-screen .cs-staff-filters select,
+.courtside-staff-screen .cs-staff-filters input {min-height:32px;padding:5px 8px}
+.courtside-staff-screen .cs-staff-operational-head {
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;margin:0 0 9px;
+}
+.courtside-staff-screen .cs-staff-operational-head__identity {
+  display:flex;flex-direction:column;gap:0;min-width:0;
+}
+.courtside-staff-screen .cs-staff-operational-head__identity h1 {
+  color:var(--st-text);font:700 31px/1 var(--st-head);
+  letter-spacing:.035em;margin:0;
+}
+.courtside-staff-screen .cs-staff-operational-head__identity p {
+  margin:3px 0 0;font:400 12px/1.3 var(--st-font);color:var(--st-muted);
+}
+.courtside-staff-screen .cs-staff-operational-head>.cs-staff-filters {
+  flex:0 1 auto;background:transparent;border:0;padding:0;margin:0;
+}
+.courtside-staff-screen .cs-staff-operational-head>.cs-staff-filters label {
+  min-width:190px;
+}
+.courtside-staff-screen .cs-staff-operational-head>.cs-staff-filters label:first-child {
+  min-width:210px;
+}
+.courtside-staff-screen .cs-staff-primary {
+  padding:8px 15px;font-size:15px;
+}
+.courtside-staff-screen .cs-staff-rankings,
+.courtside-staff-screen .cs-staff-rankings__inspect,
+.courtside-staff-screen .cs-staff-market-main,
+.courtside-staff-screen .cs-staff-market-side {padding:11px 13px}
+.courtside-staff-screen .cs-staff-rankings h2,
+.courtside-staff-screen .cs-staff-rankings__inspect h2 {
+  font-size:20px;margin:0 0 7px;
+}
+.courtside-staff-screen .cs-staff-kpis--side {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:12px;
+}
+.courtside-staff-screen .cs-staff-kpis--side>div {
+  padding:9px;display:flex;flex-direction:column;align-items:start;gap:2px;
+  min-width:0;
+}
+.courtside-staff-screen .cs-staff-kpis--side strong {font-size:25px}
+.courtside-staff-screen .cs-staff-kpis--side span {font-size:10px;line-height:1.18}
+.courtside-staff-screen .cs-staff-kpis--market>div:last-child {grid-column:1/-1}
+.courtside-staff-screen .cs-staff-rankings__inspect {
+  position:sticky;top:0;align-self:start;
+}
+.courtside-staff-screen .cs-staff-market-main>.cs-staff-filters {
+  padding:0;border:0;background:transparent;justify-content:flex-start;
+}
+.courtside-staff-screen .cs-staff-market-main>.cs-staff-filters label {
+  flex:1;min-width:150px;
+}
+.courtside-staff-screen .cs-staff-market-main>.cs-staff-filters label:last-child {
+  flex:1.6;
+}
+.courtside-staff-screen .cs-staff-decision-room {
+  padding:12px;margin:8px 0 0;
+}
+.courtside-staff-screen .cs-staff-decision-room__kpis {gap:7px;margin-bottom:8px}
+.courtside-staff-screen .cs-staff-decision-room__kpis div {padding:7px}
+.courtside-staff-screen .sa-root {grid-template-rows:52px minmax(0,1fr);gap:8px;padding:7px 12px}
+.courtside-staff-screen .sa-strip {padding:0 9px}
+.courtside-staff-screen .sa-panel__header {min-height:40px}
+@media(max-width:1150px) {
+ .courtside-staff-screen .cs-staff-operational-head {align-items:flex-start}
+ .courtside-staff-screen .cs-staff-operational-head>.cs-staff-filters {width:100%}
+ .courtside-staff-screen .cs-staff-rankings__inspect {position:static}
+}
+@media(max-width:720px) {
+ .courtside-staff-screen .staff-workspace-header__meta {display:none}
+ .courtside-staff-screen .staff-workspace-header__actions {gap:4px}
+ .courtside-staff-screen .staff-workspace-header__actions .sa-action {padding:7px 8px;font-size:12px}
+ .courtside-staff-screen .cs-staff-operational-head>.cs-staff-filters label {min-width:145px}
+}
+
+/* Do not paint the former NG holographic wallpaper behind Courtside panels. */
+.courtside-staff-screen::before {content:none}

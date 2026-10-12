@@ -202,7 +202,7 @@ export function StaffDepartmentWorkspace({
   const departmentHover = useStaffDepartmentTabHover(department)
 
   return (
-    <div className="staff-workspace" data-ng-region="staff-department-workspace">
+    <div className="staff-workspace courtside-staff-screen" data-ng-region="staff-department-workspace">
       <ApplicationWorkspace
         header={<DepartmentHeader department={department} />}
         tabs={
@@ -221,12 +221,12 @@ export function StaffDepartmentWorkspace({
       >
         <ScrollRegion className="staff-workspace__scroll">
           <div className="staff-workspace__stack">
+            <DepartmentPeopleTable onOpenStaff={navigateToStaff} people={model.people} />
             <div className="staff-department-detail__grid">
               <RoleColumn roles={model.roles} />
               <PersonStackedAttributes attributes={model.attributes} people={model.people} />
               <LeagueComparisonColumn comparisons={model.comparisons} />
             </div>
-            <DepartmentPeopleTable onOpenStaff={navigateToStaff} people={model.people} />
           </div>
         </ScrollRegion>
       </ApplicationWorkspace>

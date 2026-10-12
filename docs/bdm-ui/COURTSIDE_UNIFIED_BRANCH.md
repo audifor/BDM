@@ -50,3 +50,12 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - ASIGNACIONES conserva su matriz avanzada original y añade **MODO SENCILLO**: tarea → responsable → menú de candidatos canónicos (dos clics desde la tarea). Los modales de Autoassign/Optimizar y sus validaciones no se duplican.
 - ASESORÍA muestra una sala de decisiones con autores reales de `delegationOutcomesById`, datos de origen, estado e historial; no genera opiniones, desacuerdos o impactos ficticios. Reutiliza acciones existentes de aceptar/descartar.
 - Las evoluciones de competencia, sesgos, legado de decisiones y «cerebro de club» multiopinión quedan como extensión posterior no certificada. No afirmar paridad con FM24.
+
+### ST-UI 1.2 · Compactación transversal / first useful pixel (2026-10-12)
+- Causa raíz: ApplicationWorkspace reservaba `--ng-workspace-header-height:122px` para la segunda fila pese a una cabecera visual de ~63px; se corrige a 50px y tabs a 39px **en STAFF Courtside**, no globalmente.
+- COMPARATIVA: filtros junto al título en una cabecera operacional; ranking visible primero; cuatro estadísticas relegadas a la columna de información del club. Mismos cálculos y mismos datos.
+- MERCADO: botón de vacante en cabecera superior y filtros junto a lista; estadísticas secundarias a la columna lateral; mismo StaffCareerService.
+- ASESORÍA: las recomendaciones accionables aparecen antes de la sala histórica de decisiones.
+- STAFF: portada y departamentos más densos, sin cartelas de altura forzada; ficha de departamento abre primero la tabla de profesionales y después sus cuadros analíticos.
+- ASIGNACIONES: barra de estado reducida, el modo sencillo y la matriz avanzada se mantienen.
+- Se conserva adaptación oscuro/claro mediante tokens Courtside; la aceptación visual real requiere capturas del usuario.

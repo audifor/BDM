@@ -96,6 +96,45 @@ describe('StaffWorkspace', () => {
     expect(screen.getByText('ESPERANDO TU DECISIÓN')).toBeInTheDocument()
   })
 
+  it('prioritizes comparison rankings over secondary summary metrics',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
+    const ranking=screen.getByRole('heading',{name:'COMPARACIÓN ENTRE CLUBES'})
+    const summary=screen.getByText('TU CLUB · MEDIA POR EMPLEADO')
+    expect(ranking.compareDocumentPosition(summary)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const head=document.querySelector('.cs-staff-operational-head')!
+    expect(head.querySelectorAll('select')).toHaveLength(2)
+    expect(head.contains(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'}))).toBe(true)
+  })
+
+  it('keeps hiring search and the real opening action ahead of secondary KPIs',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'MERCADO'}))
+    const search=screen.getByLabelText('Buscar candidato de staff')
+    const metrics=screen.getByText('VACANTES ABIERTAS')
+    expect(search.compareDocumentPosition(metrics)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(document.querySelector('.cs-staff-operational-head')?.contains(
+      screen.getByRole('button',{name:'+ ABRIR VACANTE'}))).toBe(true)
+  })
+
+  it('places actionable advisory controls above the supporting decisions recap',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
+    const control=screen.getByRole('button',{name:'Open'})
+    const recap=screen.getByLabelText('Sala de decisiones del cuerpo técnico')
+    expect(control.compareDocumentPosition(recap)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows department staff list before secondary charts and role descriptions',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getAllByRole('button',{name:'EXPLORAR EQUIPO ↗'})[0]!)
+    const dept=document.querySelector('[data-ng-region="staff-department-workspace"]')
+    expect(dept).toHaveClass('courtside-staff-screen')
+    const table=dept!.querySelector('.staff-workspace__table')!
+    const charts=dept!.querySelector('.staff-department-detail__grid')!
+    expect(table.compareDocumentPosition(charts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('assigns a responsibility in two clicks from the matrix quick assign control', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
