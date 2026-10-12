@@ -51,9 +51,9 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('heading', { name: 'GESTIÓN DE RESPONSABILIDADES' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'STAFF POOL' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'AUTO-ASSIGN' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'OPTIMIZE' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '+ NEW ASSIGNMENT' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'AUTO-ASIGNAR' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'OPTIMIZAR' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ NUEVA ASIGNACIÓN' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Responsibilities' })).not.toBeInTheDocument()
   })
 
@@ -84,8 +84,8 @@ describe('StaffWorkspace', () => {
     expect(document.querySelector('.sa-matrix')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
     expect(document.querySelector('[data-ng-region="staff-workspace"]')).toHaveClass('courtside-staff-screen')
-    fireEvent.click(screen.getByRole('button',{name:'MERCADO'}))
-    expect(screen.getByRole('heading',{name:'CONSTRUIR TU EQUIPO'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
+    expect(screen.getByRole('heading',{name:'CONSTRUYE TU STAFF'})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
     expect(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'})).toBeInTheDocument()
   })
@@ -110,23 +110,29 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
     expect(screen.getByLabelText('Sala de decisiones del cuerpo técnico')).toBeInTheDocument()
-    expect(screen.getByText('ESPERANDO TU DECISIÓN')).toBeInTheDocument()
+    expect(screen.getByText(/PENDIENTES/)).toBeInTheDocument()
   })
 
-  it('prioritizes comparison rankings over secondary summary metrics',()=>{
+  it('starts with a role-by-role club diagnosis and keeps the league ranking on demand',()=>{
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
-    const ranking=screen.getByRole('heading',{name:'COMPARACIÓN ENTRE CLUBES'})
-    const summary=screen.getByText('TU CLUB · MEDIA POR EMPLEADO')
-    expect(ranking.compareDocumentPosition(summary)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('heading',{name:'RADIOGRAFÍA DEL CLUB'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Detalle competitivo del puesto')).toBeInTheDocument()
+    expect(screen.getByLabelText('Radiografía por especialidad')
+      .querySelectorAll('.cs-staff-comparison__role').length).toBeGreaterThan(0)
     const head=document.querySelector('.cs-staff-operational-head')!
-    expect(head.querySelectorAll('select')).toHaveLength(2)
+    expect(head.querySelectorAll('select')).toHaveLength(1)
     expect(head.contains(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'}))).toBe(true)
+    const expand=screen.getByRole('button',{name:/VER CLASIFICACIÓN COMPLETA/})
+    expect(expand).toHaveAttribute('aria-expanded','false')
+    fireEvent.click(expand)
+    expect(screen.getByLabelText('Clasificación completa por especialidad')
+      .querySelectorAll('.cs-staff-comparison__standing-list>div').length).toBeGreaterThan(0)
   })
 
   it('keeps hiring search and the real opening action ahead of secondary KPIs',()=>{
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button',{name:'MERCADO'}))
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
     const search=screen.getByLabelText('Buscar candidato de staff')
     const metrics=screen.getByText('VACANTES ABIERTAS')
     expect(search.compareDocumentPosition(metrics)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -134,12 +140,15 @@ describe('StaffWorkspace', () => {
       screen.getByRole('button',{name:'+ ABRIR VACANTE'}))).toBe(true)
   })
 
-  it('places actionable advisory controls above the supporting decisions recap',()=>{
+  it('shows an actionable Courtside decisions inbox rather than an NG spreadsheet',()=>{
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
-    const control=screen.getByRole('button',{name:'Open'})
-    const recap=screen.getByLabelText('Sala de decisiones del cuerpo técnico')
-    expect(control.compareDocumentPosition(recap)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const room=screen.getByLabelText('Sala de decisiones del cuerpo técnico')
+    expect(room.querySelector('.cs-staff-advisory__filters')).toBeInTheDocument()
+    expect(room.querySelector('.bdm-data-grid')).toBeNull()
+    expect(screen.getByRole('button',{name:/POR DECIDIR/})).toHaveAttribute('aria-pressed','true')
+    fireEvent.click(screen.getByRole('button',{name:/HISTORIAL/}))
+    expect(screen.getByRole('button',{name:/HISTORIAL/})).toHaveAttribute('aria-pressed','true')
   })
 
   it('shows department staff list before secondary charts and role descriptions',()=>{
@@ -161,7 +170,7 @@ describe('StaffWorkspace', () => {
     fireEvent.click(quickAssign)
 
     const popover = screen.getByRole('listbox')
-    expect(popover).toHaveTextContent('ASSIGN RESPONSIBILITY')
+    expect(popover).toHaveTextContent('ASIGNAR RESPONSABLE')
     const option = screen.getAllByRole('option')[0]!
     const holderName = option.querySelector('.sa-candidate__name')!.textContent!
     fireEvent.click(option)
@@ -194,7 +203,7 @@ describe('StaffWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     fireEvent.click(screen.getByRole('button', { name: /APPLY \d+ CHANGES/ }))
 
@@ -206,7 +215,7 @@ describe('StaffWorkspace', () => {
   it('shows the assigned holder in the inspector key matches', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     fireEvent.click(screen.getByRole('button', { name: /APPLY \d+ CHANGES/ }))
 
@@ -224,7 +233,7 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     expect(screen.getByRole('dialog', { name: 'AUTO-ASSIGN STAFF' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     expect(screen.getByText('AUTO-ASSIGN PREVIEW')).toBeInTheDocument()
@@ -279,8 +288,8 @@ describe('StaffWorkspace', () => {
 
   it('opens a real vacancy in the staff market through the canonical service',()=>{
     const {team}=mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button',{name:'MERCADO'}))
-    expect(screen.getByRole('heading',{name:'CONSTRUIR TU EQUIPO'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
+    expect(screen.getByRole('heading',{name:'CONSTRUYE TU STAFF'})).toBeInTheDocument()
     expect(screen.getByText('No hay vacantes abiertas. Los objetivos visuales por puesto no cuentan como vacantes.',{exact:false})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'+ ABRIR VACANTE'}))
     const world=useGameStore.getState().world!
@@ -302,7 +311,7 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: /^DINÁMICAS/ }))
     expect(screen.getByRole('button', { name: 'People' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Units' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'UNIDADES' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Conflicts' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Career' })).toBeInTheDocument()
   })
@@ -315,11 +324,34 @@ describe('StaffWorkspace', () => {
     expect(screen.queryByText('EXTREMELY SATISFIED')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY DISSATISFIED')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Units' }))
+    fireEvent.click(screen.getByRole('button', { name: 'UNIDADES' }))
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0)
     expect(screen.queryByText('VERY STRONG')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY WEAK')).not.toBeInTheDocument()
   }, 30000)
+
+  it('renders compact single-line assignments and a selectable one-row candidate list',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    const first=document.querySelector('.sa-row')!
+    expect(first.querySelector('.sa-row__kind-meta')).toBeNull()
+    const trigger=screen.getAllByTitle('Quick assign')[0]!
+    fireEvent.click(trigger)
+    const popover=screen.getByRole('listbox')
+    expect(popover.querySelector('.sa-candidates .sa-candidate')).toBeInTheDocument()
+    expect(popover.querySelector('.sa-candidate__who')).toBeNull()
+    expect(popover.querySelector('.sa-candidate__fit-value')).toBeInTheDocument()
+    expect(popover.textContent).toContain('DESASIGNAR')
+    expect(popover.textContent).toContain('CANCELAR')
+  })
+
+  it('lets the manager focus on a professional in a small Courtside dynamics list',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
+    expect(screen.getByRole('heading',{name:'EL PULSO DEL EQUIPO'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Profesionales y estado')).toBeInTheDocument()
+    expect(screen.getByRole('group',{name:'Filtrar estado del staff'})).toBeInTheDocument()
+  })
 
   it('opens the individual staff dossier from a direct staff route', () => {
     const world = createNewGame()
@@ -337,7 +369,7 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Attributes' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Contract' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'History' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'HISTORIAL' })).toBeInTheDocument()
     expect(screen.getByText('Role evaluation')).toBeInTheDocument()
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Staff' }))

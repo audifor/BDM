@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import './courtside-staff.css'
 import './courtside-staff-v2.css'
+import './courtside-staff-v3.css'
 
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import type { StaffDepartment, StaffProfessionalAttributeKey } from '@/domain/staff'

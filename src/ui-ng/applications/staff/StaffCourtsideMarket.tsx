@@ -45,7 +45,7 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
     <div className="cs-staff-operational-head">
       <div className="cs-staff-operational-head__identity">
         <div className="cs-staff-eyebrow">MERCADO PROFESIONAL / DIRECCIÓN DEPORTIVA</div>
-        <h1>CONSTRUIR TU EQUIPO</h1>
+        <h1>CONSTRUYE TU STAFF</h1>
         <p>Busca especialistas, entrevista y contrata con las reglas reales del club.</p>
       </div>
       <button className="cs-staff-primary" type="button" onClick={openVacancy}>+ ABRIR VACANTE</button>

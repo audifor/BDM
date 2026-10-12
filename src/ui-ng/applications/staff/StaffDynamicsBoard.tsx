@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { STAFF_HUMAN_STATE_DIMENSIONS } from '@/domain/staffHumanState'
 import { STAFF_UNIT_COHESION_DIMENSIONS } from '@/domain/staffUnitCohesion'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { getStaffPerson, type GameWorld } from '@/domain/world'
@@ -42,7 +41,6 @@ import {
   DYNAMICS_SUBVIEW_LABELS,
   DYNAMICS_SUBVIEWS,
   DYNAMICS_TREND_LABELS,
-  HUMAN_STATE_COLUMN_LABEL,
   UNIT_COHESION_COLUMN_LABEL,
   WORKING_RELATIONSHIP_STATE_LABELS,
   type DynamicsFilter,
@@ -95,8 +93,13 @@ export function StaffDynamicsBoard({
   const [subview, setSubview] = useState<DynamicsSubviewId>('people')
 
   return (
-    <div className="staff-workspace__stack">
-      <FilterGroup>
+    <div className="cs-staff-dynamics">
+      <header className="cs-staff-dynamics__heading">
+        <div className="cs-staff-eyebrow">PERSONAS / CULTURA / TRAYECTORIAS</div>
+        <h1>EL PULSO DEL EQUIPO</h1>
+        <p>Estado profesional, unidades, tensiones y peticiones basadas en hechos del mundo.</p>
+      </header>
+      <nav className="cs-staff-dynamics__tabs" aria-label="Áreas de dinámicas">
         {DYNAMICS_SUBVIEWS.map((id) => (
           <button
             aria-pressed={subview === id}
@@ -108,7 +111,7 @@ export function StaffDynamicsBoard({
             {DYNAMICS_SUBVIEW_LABELS[id]}
           </button>
         ))}
-      </FilterGroup>
+      </nav>
       {subview === 'units' ? (
         <UnitsSubview teamId={teamId} world={world} />
       ) : subview === 'conflicts' ? (
@@ -182,7 +185,7 @@ function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readon
           onClick={() => setHistory(false)}
           type="button"
         >
-          Open
+          ABIERTOS
         </button>
         <button
           aria-pressed={history}
@@ -190,7 +193,7 @@ function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readon
           onClick={() => setHistory(true)}
           type="button"
         >
-          History
+          HISTORIAL
         </button>
       </FilterGroup>
       {items.length === 0 ? (
@@ -282,7 +285,8 @@ function PeopleSubview({
   const [selectedId, setSelectedId] = useState<StaffPersonId | undefined>(undefined)
   const filtered = items.filter((item) => matchesDynamicsFilter(item, filter))
   const selected = filtered.find((item) => item.staffId === selectedId) ?? filtered[0]
-  const rows = filtered.map((row) => ({ ...row, id: row.staffId }))
+  const sorted=[...filtered].sort((a,b)=>Number(b.needsAttention)-Number(a.needsAttention)||
+    a.staffName.localeCompare(b.staffName))
 
   const needAttention = items.filter((item) => item.needsAttention).length
   const highStress = items.filter((item) => item.bands.stress === 'HIGH' || item.bands.stress === 'VERY_HIGH' || item.bands.stress === 'EXTREME').length
@@ -290,102 +294,50 @@ function PeopleSubview({
   const thriving = items.filter((item) => item.interpretedState === 'THRIVING').length
 
   return (
-    <div className="staff-workspace__stack">
-      <div className="staff-workspace__summary">
-        <span>{items.length} staff</span>
-        <span>{needAttention} need attention</span>
-        <span>{highStress} high stress</span>
-        <span>{lowCommitment} low commitment</span>
-        <span>{thriving} thriving</span>
+    <section className="cs-staff-people" aria-label="Estado profesional del equipo">
+      <div className="cs-staff-people__summary">
+        <span><strong>{items.length}</strong> PROFESIONALES</span>
+        <span className={needAttention>0?'is-warning':''}><strong>{needAttention}</strong> REQUIEREN ATENCIÓN</span>
+        <span><strong>{highStress}</strong> ESTRÉS ELEVADO</span>
+        <span><strong>{lowCommitment}</strong> BAJO COMPROMISO</span>
+        <span><strong>{thriving}</strong> FAVORABLE</span>
       </div>
-      <FilterGroup>
-        {DYNAMICS_FILTERS.map((option) => (
-          <button
-            aria-pressed={filter === option}
-            className={`ng-btn ng-btn--toggle${filter === option ? ' is-active' : ''}`}
-            key={option}
-            onClick={() => setFilter(option)}
-            type="button"
-          >
-            {DYNAMICS_FILTER_LABELS[option]}
-          </button>
-        ))}
-      </FilterGroup>
-      {filtered.length === 0 ? (
-        <p className="staff-workspace__empty">No staff match this filter.</p>
-      ) : (
-        <div className="staff-workspace__split">
-          <div className="staff-workspace__panel ng-holo-panel">
-            <NgPrecisionTable
-              className="staff-workspace__table"
-              columns={ngTableColumns(rows, [
-                ngCol(
-                  'name',
-                  'Staff',
-                  (row) => (
-                    <button
-                      className="staff-workspace__link"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        if (onOpenStaff !== undefined) {
-                          onOpenStaff(row.staffId)
-                          return
-                        }
-                        setSelectedId(row.staffId)
-                      }}
-                      type="button"
-                    >
-                      {row.staffName}
-                    </button>
-                  ),
-                  { value: (row) => row.staffName },
-                ),
-                ngCol('role', 'Role', (row) => row.role ?? '—', { value: (row) => row.role ?? '—' }),
-                ngCol(
-                  'state',
-                  'State',
-                  (row) => (
-                    <span className="staff-workspace__tone-cell">
-                      <DynamicsToneDot
-                        label={DYNAMICS_STATE_LABELS[row.interpretedState]}
-                        tone={toneForInterpretedState(row.interpretedState)}
-                      />
-                    </span>
-                  ),
-                  { value: (row) => DYNAMICS_STATE_LABELS[row.interpretedState] },
-                ),
-                ...STAFF_HUMAN_STATE_DIMENSIONS.map((dimension) =>
-                  ngCol<(typeof rows)[number]>(
-                    dimension,
-                    HUMAN_STATE_COLUMN_LABEL[dimension],
-                    (row) => (
-                      <span className="staff-workspace__tone-cell">
-                        <DynamicsToneDot
-                          label={humanStateLabel(row.bands[dimension])}
-                          tone={toneForHumanStateBand(dimension, row.bands[dimension])}
-                        />
-                      </span>
-                    ),
-                    { value: (row) => humanStateLabel(row.bands[dimension]) },
-                  ),
-                ),
-                ngCol('issues', 'Issues', (row) => (row.signalKinds.length > 0 ? String(row.signalKinds.length) : '—'), {
-                  numeric: true,
-                  value: (row) => row.signalKinds.length,
-                }),
-              ])}
-              gridId="ng-staff-dynamics-people"
-              onSelectionChange={(ids) => {
-                if (ids[0]) setSelectedId(ids[0] as StaffPersonId)
-              }}
-              rows={rows}
-              selectedId={selected?.staffId}
-            />
+      <div className="cs-staff-people__filter" role="group" aria-label="Filtrar estado del staff">
+        {DYNAMICS_FILTERS.map(option=><button type="button" key={option}
+          className="cs-staff-people__filter-button" aria-pressed={filter===option}
+          onClick={()=>setFilter(option)}>{DYNAMICS_FILTER_LABELS[option]}</button>)}
+      </div>
+      {sorted.length===0?<p className="cs-staff-empty">
+        Ningún profesional coincide con los filtros actuales.
+      </p>:<div className="cs-staff-people__layout">
+        <div className="cs-staff-people__list" aria-label="Profesionales y estado">
+          <div className="cs-staff-people__columns">
+            <span>PROFESIONAL</span><span>ESTADO</span><span>ESTRÉS</span>
+            <span>SATISFACCIÓN</span><span>SEÑALES</span>
           </div>
-          {selected !== undefined ? <DynamicsInspector staffId={selected.staffId} world={world} /> : null}
+          {sorted.map(row=><button key={row.staffId} type="button"
+            aria-pressed={selected?.staffId===row.staffId}
+            className={'cs-staff-people__row'+(selected?.staffId===row.staffId?' is-selected':'')}
+            onClick={()=>setSelectedId(row.staffId)}>
+            <span className="cs-staff-people__name"><strong>{row.staffName}</strong>
+              <small>{row.role??'Personal técnico'}</small></span>
+            <span><DynamicsToneDot label={DYNAMICS_STATE_LABELS[row.interpretedState]}
+              tone={toneForInterpretedState(row.interpretedState)}/></span>
+            <span><DynamicsToneDot label={humanStateLabel(row.bands.stress)}
+              tone={toneForHumanStateBand('stress',row.bands.stress)}/></span>
+            <span><DynamicsToneDot label={humanStateLabel(row.bands.roleSatisfaction)}
+              tone={toneForHumanStateBand('roleSatisfaction',row.bands.roleSatisfaction)}/></span>
+            <strong className={row.needsAttention?'is-warning':''}>
+              {row.signalKinds.length>0?row.signalKinds.length:'—'}</strong>
+          </button>)}
         </div>
-      )}
-    </div>
+        {selected!==undefined?<div className="cs-staff-people__detail">
+          <DynamicsInspector staffId={selected.staffId} world={world}/>
+          {onOpenStaff&&<button type="button" className="cs-staff-people__profile"
+            onClick={()=>onOpenStaff(selected.staffId)}>VER PERFIL COMPLETO ↗</button>}
+        </div>:null}
+      </div>}
+    </section>
   )
 }
 

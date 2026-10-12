@@ -363,12 +363,8 @@ function AssignmentMatrixRow({
         <button className="sa-row__kind" onClick={onOpenInspector} type="button">
           {row.kindLabel}
         </button>
-        <span className="sa-row__kind-meta">
-          {row.modeLabel}
-          <button aria-label={`Open inspector for ${row.kindLabel}`} className="sa-row__info" onClick={onOpenInspector} type="button">
-            ⓘ
-          </button>
-        </span>
+        <button aria-label={`Open inspector for ${row.kindLabel}`} className="sa-row__info" title={row.modeLabel}
+          onClick={onOpenInspector} type="button">ⓘ</button>
       </span>
       <span className="sa-row__cell sa-row__primary">
         <button
@@ -440,20 +436,46 @@ function AnchoredPopover({
   readonly children: ReactNode
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const [position, setPosition] = useState<{ readonly top: number; readonly left: number } | undefined>(undefined)
+  const [position, setPosition] = useState<{readonly top:number;readonly left:number;readonly maxHeight:number}|undefined>(undefined)
 
   useLayoutEffect(() => {
     const shell = document.querySelector('[data-ng-shell="bdm-os-ng"]') as HTMLElement | null
-    const host = shell ?? document.body
-    const hostRect = shell === null ? { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight } : shell.getBoundingClientRect()
-    const scaleX = shell === null || shell.offsetWidth === 0 ? 1 : hostRect.width / shell.offsetWidth
-    const scaleY = shell === null || shell.offsetHeight === 0 ? 1 : hostRect.height / shell.offsetHeight
-    const anchorRect = anchor.getBoundingClientRect()
-    const width = (panelRef.current?.offsetWidth ?? 320) * scaleX
-    setPosition({
-      top: (anchorRect.bottom - hostRect.top) / scaleY + 4,
-      left: Math.max(4, Math.min(anchorRect.left - hostRect.left, hostRect.width - width - 4)) / scaleX,
-    })
+    const hostRectOf = () => shell?.getBoundingClientRect() ??
+      ({top:0,left:0,right:window.innerWidth,bottom:window.innerHeight,
+        width:window.innerWidth,height:window.innerHeight} as DOMRect)
+    const panel = panelRef.current
+    if(panel===null)return
+    const place=()=>{
+      const hostRect=hostRectOf()
+      const sx=shell&&shell.offsetWidth>0?hostRect.width/shell.offsetWidth:1
+      const sy=shell&&shell.offsetHeight>0?hostRect.height/shell.offsetHeight:1
+      const a=anchor.getBoundingClientRect()
+      const vTop=Math.max(8,hostRect.top+8)
+      const vBottom=Math.min(window.innerHeight-8,hostRect.bottom-8)
+      const vLeft=Math.max(8,hostRect.left+8)
+      const vRight=Math.min(window.innerWidth-8,hostRect.right-8)
+      const panelHeight=Math.min(panel.scrollHeight*sy || 280,460*sy)
+      const belowSpace=Math.max(0,vBottom-a.bottom-7)
+      const aboveSpace=Math.max(0,a.top-vTop-7)
+      const below=belowSpace>=panelHeight || belowSpace>=aboveSpace
+      const available=Math.max(60,below?belowSpace:aboveSpace)
+      const height=Math.min(panelHeight,available)
+      const top=Math.max(vTop,Math.min(vBottom-height,below?a.bottom+7:a.top-7-height))
+      const panelWidth=(panel.offsetWidth||560)*sx
+      const left=Math.max(vLeft,Math.min(a.left,vRight-panelWidth))
+      setPosition({top:(top-hostRect.top)/sy,left:(left-hostRect.left)/sx,
+        maxHeight:Math.max(60,Math.floor(available/sy))})
+    }
+    place()
+    const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(place):null
+    observer?.observe(panel)
+    window.addEventListener('resize',place)
+    window.addEventListener('scroll',place,true)
+    return ()=>{
+      observer?.disconnect()
+      window.removeEventListener('resize',place)
+      window.removeEventListener('scroll',place,true)
+    }
   }, [anchor])
 
   useEffect(() => {
@@ -480,7 +502,7 @@ function AnchoredPopover({
     <div
       className={`ng-holo-float ${className}`}
       ref={panelRef}
-      style={position === undefined ? { visibility: 'hidden', position: 'fixed', top: 0, left: 0 } : { position: 'fixed', top: position.top, left: position.left }}
+      style={position === undefined ? { visibility: 'hidden', position: 'fixed', top: 0, left: 0 } : { position: 'fixed', top: position.top, left: position.left, maxHeight: position.maxHeight }}
     >
       {children}
     </div>,
@@ -536,9 +558,9 @@ function QuickAssignPopover({
         role="listbox"
         tabIndex={-1}
       >
-        <p className="sa-popover__title">ASSIGN RESPONSIBILITY</p>
+        <p className="sa-popover__title">ASIGNAR RESPONSABLE</p>
         <p className="sa-popover__subtitle">{kindLabel}</p>
-        <p className="sa-popover__eyebrow">RECOMMENDED</p>
+        <p className="sa-popover__eyebrow">CANDIDATOS · IDONEIDAD Y CARGA</p>
         <ul className="sa-candidates">
           {(showAll ? candidates : candidates.slice(0, RECOMMENDED_VISIBLE)).map((candidate, index) => (
             <CandidateOption
@@ -553,7 +575,7 @@ function QuickAssignPopover({
         </ul>
         {manager === undefined ? null : (
           <>
-            <p className="sa-popover__eyebrow">MANAGER</p>
+            <p className="sa-popover__eyebrow">CONTROL DEL MÁNAGER</p>
             <ul className="sa-candidates">
               <CandidateOption
                 candidate={manager}
@@ -567,7 +589,7 @@ function QuickAssignPopover({
         )}
         {candidates.length > RECOMMENDED_VISIBLE && !showAll ? (
           <button className="sa-popover__link" onClick={() => setShowAll(true)} type="button">
-            View all staff
+            VER TODOS LOS CANDIDATOS
           </button>
         ) : null}
         {active !== undefined && active.projectedOverloaded ? (
@@ -575,10 +597,10 @@ function QuickAssignPopover({
         ) : null}
         <div className="sa-popover__footer">
           <button className="sa-popover__link" onClick={onUnassign} type="button">
-            Unassign
+            DESASIGNAR
           </button>
           <button className="sa-popover__link" onClick={onClose} type="button">
-            Cancel
+            CANCELAR
           </button>
         </div>
       </div>
@@ -612,21 +634,16 @@ function CandidateOption({
         <span aria-hidden className="sa-avatar sa-avatar--candidate">
           {candidate.initials}
         </span>
-        <span className="sa-candidate__who">
-          <span className="sa-candidate__name">
-            {candidate.isCurrent ? '✓ ' : ''}
-            {candidate.name}
-          </span>
-          <span className="sa-candidate__role">{candidate.roleLabel}</span>
-          <span className="sa-candidate__attrs">
-            {candidate.attributes.map((attribute) => `${attribute.shortLabel} ${attribute.value}`).join(' · ')}
-          </span>
+        <span className="sa-candidate__name" title={candidate.name}>
+          {candidate.isCurrent ? '✓ ' : ''}{candidate.name}
         </span>
-        <span className="sa-candidate__fit">
-          <span className={`sa-candidate__fit-value ng-type-numeric sa-tone-${candidate.tone}`}>{candidate.suitability}</span>
-          <span className={`sa-candidate__band sa-tone-${candidate.tone}`}>{candidate.band}</span>
-          <span className="sa-candidate__load ng-type-numeric">LOAD {candidate.loadLabel}</span>
+        <span className="sa-candidate__role" title={candidate.roleLabel}>{candidate.roleLabel}</span>
+        <span className="sa-candidate__attrs" title={candidate.attributes.map(a=>`${a.shortLabel} ${a.value}`).join(' · ')}>
+          {candidate.attributes.map(a=>`${a.shortLabel} ${a.value}`).join(' · ')}
         </span>
+        <span className={`sa-candidate__fit-value ng-type-numeric sa-tone-${candidate.tone}`}
+          title={`Idoneidad: ${candidate.band}`}>{candidate.suitability}</span>
+        <span className="sa-candidate__load ng-type-numeric" title="Carga estimada">CARGA {candidate.loadLabel}</span>
       </button>
     </li>
   )
@@ -927,7 +944,7 @@ function InspectorAlternatives({
   )
 }
 
-/** Candidate list for the expanded "View all staff" selector. */
+/** Candidate list for the expanded "VER TODOS LOS CANDIDATOS" selector. */
 export function staffAssignmentCandidatesFor(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, currentHolderStaffId: StaffPersonId | undefined): readonly StaffAssignmentCandidate[] {
   return fullCandidateList(world, teamId, kind, currentHolderStaffId)
 }

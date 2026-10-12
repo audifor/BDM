@@ -27,6 +27,7 @@ import '@/ui-ng/applications/player/player-attributes.css'
 import './staff-person.css'
 import './courtside-staff.css'
 import './courtside-staff-v2.css'
+import './courtside-staff-v3.css'
 
 export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPersonId }) {
   const world = useGameStore((state) => state.world)

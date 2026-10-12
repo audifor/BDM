@@ -66,3 +66,12 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - Explicitly applied to STAFF overview, ASIGNACIONES, ASESORÍA, DINÁMICAS, MERCADO, COMPARATIVA, departments and individual STAFF profile (including empty states). All links and operations remain on their existing sources of truth.
 - Assignment summary replaces misleading 'VACANCIES' label by 'SIN RESPONSABLE': responsibility coverage is not a count of open employment jobs. Table columns and inspector heading revised into Spanish to match the rest of the interface.
 - No guarantees of screenshot fidelity or empirical WCAG results from TypeScript/build CI alone. Visual acceptance requires testing the user's actual light/dark screens and the assignment popovers.
+
+### ST-UI V3 · Structural UX and blocked popover (2026-10-12)
+- UI authority: approved Courtside HOME/PLAYER, not inherited NG. `courtside-staff-v3.css` defines STAFF-specific layouts without changing domain model.
+- The quick assignment popover now places itself above or below according to measured free space within the transformed shell, constrains its own height and scrolls its candidate list. Each candidate and each responsibility is a single row (the advanced inspector is still available on demand).
+- ASESORÍA replaces NG spreadsheet with a decision inbox, professional provenance, status, full canonical inspector and real accept/dismiss actions. Empty state uses actual zero records.
+- DINÁMICAS PERSONAS replaces NG spreadsheet with a selectable Courtside-focused people list sorted by needsAttention and backed by canonical human state; other subviews retain functionality and are styled using Courtside theme tokens.
+- COMPARATIVA now leads with actual role-by-role club-versus-league diagnostic and a selected role inspector, rivals, and expandable league rankings; comparisons restricted to current competition edition and same job role.
+- Tabs display **CONSTRUYE TU STAFF** instead of **MERCADO**; route and domain ids remain the same.
+- Pending: visual acceptance across dark/light, scaled shell, various viewport sizes and real game state Save/Load.

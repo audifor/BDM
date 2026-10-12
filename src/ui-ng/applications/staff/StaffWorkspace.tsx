@@ -32,6 +32,7 @@ import { navigateToStaff, parseWorkspaceStaffId } from '@/ui-ng/workspace/worksp
 import './staff-workspace.css'
 import './courtside-staff.css'
 import './courtside-staff-v2.css'
+import './courtside-staff-v3.css'
 
 function StaffWorkspaceHeader({
   model,
@@ -181,13 +182,13 @@ function StaffBoardWorkspace() {
               activeTab === 'assignments' ? (
                 <>
                   <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'autoAssign' })} type="button">
-                    AUTO-ASSIGN
+                    AUTO-ASIGNAR
                   </button>
                   <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'optimize' })} type="button">
-                    OPTIMIZE
+                    OPTIMIZAR
                   </button>
                   <button className="sa-action sa-action--primary" onClick={() => setAssignmentPanel({ kind: 'newAssignment' })} type="button">
-                    + NEW ASSIGNMENT
+                    + NUEVA ASIGNACIÓN
                   </button>
                 </>
               ) : undefined
