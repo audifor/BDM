@@ -51,6 +51,22 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.pcb-tactics__tabs')).toBeNull()
   })
 
+  it('keeps Pizarra and Diseñador immediately below the workspace tabs without duplicate page headers', () => {
+    mountTacticsWorkspace()
+    expect(document.querySelector('.ct-page__head')).toBeNull()
+    expect(screen.queryByLabelText('Resumen táctico')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Tácticas PCB migradas')).toHaveClass('pcb-tactics--ng')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    expect(document.querySelector('.ct-page__head')).toBeNull()
+    expect(screen.queryByLabelText('Resumen táctico')).not.toBeInTheDocument()
+    expect(document.querySelector('.pcb-tactics-creator__court')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))
+    expect(screen.getByLabelText('Resumen táctico')).toBeInTheDocument()
+    expect(document.querySelector('.ct-page__head')).toBeNull()
+  })
+
   it('renders Courtside defensive duels without inventing rival ratings', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))

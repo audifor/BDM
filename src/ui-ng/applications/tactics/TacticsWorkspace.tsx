@@ -1,7 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
-import { getTeamLineup } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { TacticsPcbPage, TACTICS_PCB_TABS, type TacticsPcbTab } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
@@ -134,25 +133,8 @@ export function TacticsWorkspace() {
         }
       >
         <ScrollRegion className="tactics-workspace__scroll">
-          <div className="ct-page" data-courtside-tactics-screen={activeTab}>
-            <header className="ct-page__head">
-              <div><span className="ct-page__eyebrow">EQUIPO / TÁCTICAS / COURTSIDE</span>
-                <h1>{CT_PAGE_TITLES[activeTab]}</h1>
-                <p>{CT_PAGE_DESCRIPTIONS[activeTab]}</p></div>
-            </header>
-            {(activeTab === 'board' || activeTab === 'designer') && (
-              <div className="ct-stats" aria-label="Resumen táctico">
-                {activeTab === 'board' ? <>
-                  <div className="ct-stat"><strong className="ct-green">{Object.values(getTeamLineup(world, team.id).starters).filter(Boolean).length}</strong><small>Quinteto inicial</small></div>
-                  <div className="ct-stat"><strong>{Object.values(getTeamLineup(world, team.id).bench).filter(Boolean).length}</strong><small>Banquillo asignado</small></div>
-                  <div className="ct-stat"><strong>CANCHA</strong><small>Ajustes de equipo</small></div>
-                </> : <>
-                  <div className="ct-stat"><strong className="ct-green">{Object.keys(world.savedPlaysById).length}</strong><small>Jugadas guardadas</small></div>
-                  <div className="ct-stat"><strong>{Object.keys(world.playbooksById).length}</strong><small>Playbooks del club</small></div>
-                  <div className="ct-stat"><strong>EDITOR</strong><small>Edición de secuencias</small></div>
-                </>}
-              </div>
-            )}
+          <div className="ct-page" data-courtside-tactics-screen={activeTab} aria-label={CT_PAGE_DESCRIPTIONS[activeTab]}>
+            <h1 className="ct-page__sr-only">{CT_PAGE_TITLES[activeTab]}</h1>
             {activeTab === 'board' || activeTab === 'designer' ? <div className="ct-legacy-content"><TacticsPcbPage
             activeTab={activeTab}
             onChange={setPlan}
