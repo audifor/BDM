@@ -1,0 +1,489 @@
+/*
+ * STAFF COURTSIDE · VISUAL V2
+ * New visual authority for every STAFF surface (not inherited NG styling).
+ * All data, navigation and commands remain canonical.
+ * Shared genuine dark/light Courtside tokens come from the BDM shell.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .courtside-staff-screen {
+  --st-bg:var(--cs-bg);--st-panel:var(--cs-s1);
+  --st-raised:var(--cs-s2);--st-hover:var(--cs-s3);
+  --st-text:var(--cs-text);--st-muted:var(--cs-text2);
+  --st-faint:var(--cs-text3);--st-accent:var(--cs-orange);
+  --st-highlight:var(--cs-lime);--st-border:var(--cs-line2);
+  --st-softline:var(--cs-line);--st-positive:var(--cs-positive);
+  --st-negative:var(--cs-negative);
+  --st-head:var(--cs-font-display);--st-font:var(--cs-font);
+  --sa-border:var(--cs-line);--sa-border-strong:var(--cs-line2);
+  --sa-row-line:var(--cs-line);--sa-hover:var(--cs-s2);
+  --sa-selected:var(--cs-s3);--sa-action:var(--cs-lime);
+  --sa-action-hover:var(--cs-orange);
+  --ng-font-display:var(--cs-font-display);
+  --ng-font-ui:var(--cs-font);
+  --ng-font-data:var(--cs-font);
+  --ng-border-subtle:var(--cs-line);
+  --ng-border-standard:var(--cs-line2);
+  --ng-text-primary:var(--cs-text);
+  --ng-text-secondary:var(--cs-text2);
+  --ng-text-muted:var(--cs-text3);
+  --ng-cyan:var(--cs-lime);
+  --ng-cyan-bright:var(--cs-lime);
+  --ng-amber:var(--cs-orange);
+  --ng-positive:var(--cs-positive);
+  --ng-negative:var(--cs-negative);
+  color:var(--st-text);background:var(--st-bg);
+  font:400 13px/1.45 var(--st-font);
+  text-rendering:optimizeLegibility;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .courtside-staff-screen {
+  --st-dark-on-accent:#fffdfa;
+  --st-inverse:#fffdfa;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='dark'] .courtside-staff-screen {
+  --st-dark-on-accent:#0c0a14;
+  --st-inverse:#0c0a14;
+}
+.courtside-staff-screen::before,
+.courtside-staff-screen.staff-person::before {content:none!important;display:none!important}
+.courtside-staff-screen :is(.ng-holo-panel,.ng-holo-float) {
+  background:var(--st-panel);color:var(--st-text);
+  border:1px solid var(--st-border);box-shadow:none;
+  border-radius:13px;
+}
+.courtside-staff-screen :is(button,input,select,textarea) {font-family:var(--st-font)}
+.courtside-staff-screen button:not(:disabled) {cursor:pointer}
+.courtside-staff-screen button:disabled {cursor:not-allowed;opacity:.52}
+.courtside-staff-screen :is(button,input,select,textarea):focus-visible {
+  outline:2px solid var(--st-highlight);outline-offset:2px;
+}
+.courtside-staff-screen :is(h1,h2,h3,h4) {
+  font-family:var(--st-head);color:var(--st-text);letter-spacing:.035em;
+}
+.courtside-staff-screen :is(.staff-workspace__group-title,.staff-workspace__inspector-title,
+ .staff-workspace__panel-head h2,.staff-person__panel-head h2,
+ .staff-department-card__title-link) {
+  font:700 21px/1.12 var(--st-head);letter-spacing:.04em;color:var(--st-text);
+}
+.courtside-staff-screen :is(.staff-workspace__eyebrow,.staff-person__panel-head span,
+ .staff-workspace__summary,.sa-inspector__eyebrow) {
+  color:var(--st-accent);font:700 12px/1.2 var(--st-head);letter-spacing:.09em;
+}
+/* Global STAFF navigation: same Player underline/weight/interaction contract. */
+.courtside-staff-screen .ng-workspace-tabs {
+  background:transparent;padding:0;min-height:41px;
+}
+.courtside-staff-screen .ng-workspace-tabs__tab {
+  font:700 16px/1 var(--st-head);letter-spacing:.075em;
+  height:41px;min-height:41px;padding:0 15px;
+  background:transparent;color:var(--st-muted);
+  border:0;border-bottom:3px solid transparent;border-radius:0;
+}
+.courtside-staff-screen .ng-workspace-tabs__tab.is-active {
+  background:transparent;color:var(--st-highlight);border-color:var(--st-highlight);
+}
+.courtside-staff-screen .ng-workspace-tabs__tab:hover {background:transparent;color:var(--st-text)}
+/* Backdrop, headers, explanatory copy share contrast in both real palettes. */
+.courtside-staff-screen :is(.staff-workspace__stack,.staff-workspace__split) {gap:12px}
+.courtside-staff-screen :is(.staff-workspace__panel,.staff-workspace__inspector,
+ .staff-person__panel,.staff-department-detail__panel) {
+  background:var(--st-panel);border:1px solid var(--st-border);
+  border-radius:13px;padding:14px;
+}
+.courtside-staff-screen :is(.staff-workspace__note,.staff-workspace__empty,
+ .staff-person__note,.staff-person__empty-copy,.staff-department-chart__caption,
+ .staff-workspace__card p,.staff-person__bullets,.staff-person__history) {
+  color:var(--st-muted);font:400 12.5px/1.48 var(--st-font);
+}
+.courtside-staff-screen .staff-workspace__card {
+  background:var(--st-raised);border:1px solid var(--st-softline);
+  border-radius:10px;padding:13px;margin:0;
+}
+.courtside-staff-screen :is(.staff-workspace__filters,.staff-workspace__actions) {gap:8px}
+.courtside-staff-screen :is(.staff-workspace__metric dt,.staff-person__metric dt) {
+  font:500 12px var(--st-font);color:var(--st-muted);
+}
+.courtside-staff-screen :is(.staff-workspace__metric dd,.staff-person__metric dd) {
+  font:700 13px var(--st-font);color:var(--st-text);
+}
+.courtside-staff-screen :is(.staff-workspace__metrics,.staff-person__metrics) {gap:6px}
+.courtside-staff-screen :is(.staff-workspace__metric,.staff-person__metric) {
+  min-height:25px;padding:4px 0;border-bottom:1px solid var(--st-softline);
+}
+.courtside-staff-screen :is(.staff-workspace__link,.staff-department-card__title-link) {
+  color:var(--st-text);font:700 13px var(--st-font);text-decoration:none;
+}
+.courtside-staff-screen :is(.staff-workspace__link,.staff-department-card__title-link):hover {color:var(--st-highlight)}
+.courtside-staff-screen :is(.staff-workspace__badge,.staff-workspace__state,
+ .staff-workspace__tone-cell,.staff-workspace__metric.is-current dd) {
+  font:700 12px var(--st-head);
+}
+.courtside-staff-screen :is(.staff-workspace__group-title,.staff-workspace__inspector-title) {
+  margin-bottom:9px;
+}
+/* Courtside action primitives across Assignments/Advisory/Dynamics/Department. */
+.courtside-staff-screen :is(.ng-btn,.sa-action,
+ .sa-group__auto,.sa-quick,.sa-clear-filter,
+ .staff-workspace__filters button,.staff-workspace__actions button) {
+  appearance:none;box-shadow:none;text-shadow:none;text-transform:uppercase;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:32px;height:auto;padding:7px 12px;
+  border-radius:8px;border:1px solid var(--st-border);
+  color:var(--st-text);background:var(--st-raised);
+  font:700 13px/1.15 var(--st-head);letter-spacing:.035em;
+}
+.courtside-staff-screen :is(.ng-btn,.sa-action,.sa-group__auto,
+ .sa-quick,.staff-workspace__filters button):hover:not(:disabled) {
+  background:var(--st-hover);border-color:var(--st-highlight);color:var(--st-highlight);
+}
+.courtside-staff-screen :is(.ng-btn--primary,.sa-action--primary,
+ .ng-btn--toggle.is-active,.sa-mode__option.is-active) {
+  background:var(--st-highlight);color:var(--st-inverse);border-color:var(--st-highlight);
+  box-shadow:none;
+}
+.courtside-staff-screen :is(.ng-btn--primary,.sa-action--primary):hover:not(:disabled) {
+  background:var(--st-highlight);color:var(--st-inverse);
+}
+.courtside-staff-screen .staff-workspace-header__actions .sa-action {
+  padding:8px 14px;min-height:33px;
+}
+.courtside-staff-screen :is(select,input[type='search'],input[type='text'],
+ input[type='number'],.staff-workspace__select) {
+  min-height:34px;background:var(--st-raised);border:1px solid var(--st-border);
+  border-radius:8px;color:var(--st-text);font:500 13px var(--st-font);
+  padding:7px 10px;
+}
+.courtside-staff-screen :is(select,input)::placeholder {color:var(--st-faint)}
+.courtside-staff-screen select option {background:var(--st-panel);color:var(--st-text)}
+.courtside-staff-screen .staff-workspace__filters {align-items:center;padding:2px 0 5px}
+.courtside-staff-screen .staff-workspace__select {width:100%}
+/* Shared staff tables: NG grid is only data logic, not aesthetic authority. */
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid,.ng-precision-grid) {
+  border:1px solid var(--st-softline);border-radius:10px;
+  background:var(--st-panel);color:var(--st-text);font:500 12px var(--st-font);
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) table {
+  border-collapse:collapse;background:var(--st-panel);color:var(--st-text);
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) th {
+  background:var(--st-raised);color:var(--st-muted);
+  font:700 13px/1.2 var(--st-head);letter-spacing:.06em;
+  border-bottom:1px solid var(--st-border);border-right:1px solid var(--st-softline);
+  padding:10px 12px;height:36px;white-space:nowrap;
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) th button {
+  font:700 13px/1.2 var(--st-head);letter-spacing:.04em;
+  color:var(--st-muted);background:transparent;border:0;white-space:nowrap;
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) td {
+  height:38px;padding:8px 12px;vertical-align:middle;
+  font:500 12.5px/1.3 var(--st-font);color:var(--st-text);
+  background:var(--st-panel);border-bottom:1px solid var(--st-softline);
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) tbody tr:hover td {
+  background:var(--st-raised);
+}
+.courtside-staff-screen :is(.staff-workspace__table,.staff-person__table,.bdm-data-grid) tbody tr.is-selected td {
+  background:var(--st-hover);
+}
+.courtside-staff-screen .bdm-data-grid__tools {
+  background:var(--st-raised);color:var(--st-text);border-color:var(--st-border);
+}
+.courtside-staff-screen .bdm-data-grid__tools button {
+  border:1px solid var(--st-border);border-radius:7px;
+  background:var(--st-panel);color:var(--st-text);
+  font:700 12px var(--st-head);padding:6px 9px;
+}
+.courtside-staff-screen .bdm-data-grid__column-manager,
+.courtside-staff-screen .bdm-data-grid__header-menu {
+  background:var(--st-raised);color:var(--st-text);border:1px solid var(--st-border);
+  border-radius:9px;
+}
+.courtside-staff-screen .bdm-data-grid__resize {background:var(--st-softline)}
+/* Department role outlines and bars must read like Courtside, not holo dashboards. */
+.courtside-staff-screen .staff-department-detail__grid {gap:12px}
+.courtside-staff-screen .staff-department-card__role-list {gap:7px}
+.courtside-staff-screen .staff-department-card__role-list li {
+  padding:7px 10px;border-radius:8px;background:var(--st-raised);
+  color:var(--st-muted);font:600 12px var(--st-font);
+}
+.courtside-staff-screen .staff-department-card__role-ratio {
+  color:var(--st-highlight);font:700 18px var(--st-head);
+}
+.courtside-staff-screen .staff-department-chart__track,
+.courtside-staff-screen .staff-department-detail__stack-track {
+  background:var(--st-hover);border-radius:5px;overflow:hidden;
+}
+.courtside-staff-screen .staff-department-chart__range {background:var(--st-highlight)}
+.courtside-staff-screen .staff-department-chart__marker {background:var(--st-accent)}
+.courtside-staff-screen .staff-department-detail__legend {color:var(--st-text)}
+/* Workplace dynamics, conflicts and advisory: readable decisions, not 9px labels. */
+.courtside-staff-screen .staff-workspace__inspector {gap:12px}
+.courtside-staff-screen .staff-workspace__inspector-title {
+  font:700 26px/1.05 var(--st-head);
+}
+.courtside-staff-screen .staff-workspace__list li,
+.courtside-staff-screen .staff-workspace__relationships li {
+  padding:8px 10px;background:var(--st-raised);border-radius:7px;
+  font:500 12.5px var(--st-font);color:var(--st-text);
+}
+.courtside-staff-screen .staff-workspace__summary {gap:14px;align-items:center}
+.courtside-staff-screen .staff-workspace__state {
+  border-radius:7px;padding:4px 7px;font:700 12px var(--st-head);
+}
+.courtside-staff-screen .staff-workspace__state--normal {color:var(--st-positive);border:1px solid var(--st-positive)}
+.courtside-staff-screen .staff-workspace__state--overloaded {color:var(--st-negative);border:1px solid var(--st-negative)}
+.courtside-staff-screen .staff-workspace__state--pressured {color:var(--st-accent);border:1px solid var(--st-accent)}
+/* Assignment board: layout + hierarchy built over real model and action hooks. */
+.courtside-staff-screen .sa-root {
+  grid-template-rows:minmax(62px,auto) minmax(0,1fr);
+  gap:10px;padding:8px 12px 11px;
+}
+.courtside-staff-screen .sa-strip {
+  display:flex;align-items:stretch;gap:10px;
+  min-width:0;padding:7px 10px;border:1px solid var(--st-border);
+  border-radius:12px;background:var(--st-panel);overflow:auto;
+}
+.courtside-staff-screen .sa-kpis {align-items:stretch;gap:3px;flex:none}
+.courtside-staff-screen .sa-kpi {
+  width:auto;min-width:90px;max-width:150px;
+  padding:0 8px;border:0;border-right:1px solid var(--st-softline);
+}
+.courtside-staff-screen .sa-kpi__button {
+  display:flex;gap:2px;flex-direction:column;padding:5px;min-width:85px;
+  background:transparent;border:0;color:var(--st-text);text-align:left;
+}
+.courtside-staff-screen .sa-kpi__value {
+  font:700 26px/1 var(--st-head);color:var(--st-highlight);
+}
+.courtside-staff-screen .sa-kpi.sa-tone-negative .sa-kpi__value {color:var(--st-accent)}
+.courtside-staff-screen .sa-kpi__label {
+  font:700 11px/1.2 var(--st-head);letter-spacing:.07em;color:var(--st-muted);
+}
+.courtside-staff-screen .sa-kpi.is-active {box-shadow:inset 0 -3px var(--st-highlight)}
+.courtside-staff-screen .sa-separator-v {background:var(--st-softline)}
+.courtside-staff-screen .sa-coverage {gap:5px;overflow:visible}
+.courtside-staff-screen .sa-coverage__item {width:auto;min-width:90px;padding:4px 6px;gap:3px}
+.courtside-staff-screen .sa-coverage__label {font:700 11px var(--st-head);color:var(--st-muted)}
+.courtside-staff-screen .sa-coverage__value {font:700 14px var(--st-head);color:var(--st-text)}
+.courtside-staff-screen .sa-coverage__track,
+.courtside-staff-screen .sa-bar {
+  height:6px;border-radius:4px;background:var(--st-hover);
+}
+.courtside-staff-screen .sa-coverage__fill,.courtside-staff-screen .sa-bar__fill {
+  border-radius:4px;background:currentColor;
+}
+.courtside-staff-screen .sa-tone-positive {color:var(--st-highlight)}
+.courtside-staff-screen .sa-tone-warning {color:var(--st-accent)}
+.courtside-staff-screen .sa-tone-negative {color:var(--st-negative)}
+.courtside-staff-screen .sa-tone-info,
+.courtside-staff-screen .sa-tone-cyan {color:var(--st-highlight)}
+.courtside-staff-screen .sa-tone-neutral {color:var(--st-muted)}
+.courtside-staff-screen .sa-workspace {
+  gap:12px;min-height:0;
+  grid-template-columns:minmax(0,1fr) minmax(300px,365px);
+}
+.courtside-staff-screen .sa-workspace--no-inspector {grid-template-columns:minmax(0,1fr)}
+.courtside-staff-screen .sa-panel {
+  background:var(--st-panel);color:var(--st-text);
+  border:1px solid var(--st-border);border-radius:13px;
+  grid-template-rows:48px minmax(0,1fr);overflow:hidden;
+}
+.courtside-staff-screen .sa-matrix {grid-template-rows:48px 37px minmax(0,1fr)}
+.courtside-staff-screen .sa-matrix.is-simple {grid-template-rows:48px minmax(0,1fr)}
+.courtside-staff-screen .sa-matrix.is-simple .cs-staff-simple-assignment {min-height:0;overflow:auto;padding:14px}
+.courtside-staff-screen .sa-panel__header {
+  padding:0 15px;background:var(--st-raised);
+  border-bottom:1px solid var(--st-border);min-height:48px;
+}
+.courtside-staff-screen .sa-panel__title {
+  font:700 22px/1 var(--st-head);letter-spacing:.055em;color:var(--st-text);
+}
+.courtside-staff-screen .sa-matrix__view-switch {gap:7px}
+.courtside-staff-screen .sa-matrix__view-switch button {
+  padding:7px 12px;min-height:31px;background:var(--st-panel);
+  border:1px solid var(--st-border);border-radius:8px;color:var(--st-muted);
+  font:700 13px var(--st-head);letter-spacing:.035em;
+}
+.courtside-staff-screen .sa-matrix__view-switch button[aria-pressed='true'] {
+  background:var(--st-highlight);color:var(--st-inverse);border-color:var(--st-highlight);
+}
+.courtside-staff-screen .sa-matrix__head {
+  min-height:37px;height:37px;background:var(--st-raised);border-bottom:1px solid var(--st-border);
+}
+.courtside-staff-screen .sa-matrix__head>span {
+  padding:11px 12px;color:var(--st-muted);font:700 13px/1 var(--st-head);
+  letter-spacing:.06em;
+}
+.courtside-staff-screen .sa-group__head {
+  background:var(--st-raised);border-top:1px solid var(--st-softline);
+  border-bottom:1px solid var(--st-border);
+}
+.courtside-staff-screen .sa-group__title {
+  font:700 15px/1 var(--st-head);letter-spacing:.055em;color:var(--st-accent);
+}
+.courtside-staff-screen .sa-group__auto {
+  background:var(--st-panel);color:var(--st-highlight);
+  border:1px solid var(--st-border);border-radius:7px;
+  font:700 12px var(--st-head);min-height:26px;padding:4px 10px;
+}
+.courtside-staff-screen .sa-row {
+  min-height:46px;background:var(--st-panel);
+  border-bottom:1px solid var(--st-softline);font:500 12px var(--st-font);
+}
+.courtside-staff-screen .sa-row:hover {background:var(--st-raised)}
+.courtside-staff-screen .sa-row.is-selected {background:var(--st-hover)}
+.courtside-staff-screen .sa-row__cell {padding:7px 11px}
+.courtside-staff-screen .sa-row__kind {
+  color:var(--st-text);font:700 13px/1.28 var(--st-font);
+}
+.courtside-staff-screen .sa-row__kind-meta,
+.courtside-staff-screen .sa-row__person-role,
+.courtside-staff-screen .sa-row__posture {
+  font:500 11px/1.3 var(--st-font);color:var(--st-muted);
+}
+.courtside-staff-screen .sa-row__info {font-size:12px}
+.courtside-staff-screen .sa-row__person-name,
+.courtside-staff-screen .sa-quick__person {font:700 12px var(--st-font);color:var(--st-text)}
+.courtside-staff-screen .sa-quick {
+  display:flex;gap:7px;align-items:center;border:1px solid var(--st-border);
+  background:var(--st-raised);border-radius:7px;min-height:29px;
+  padding:4px 8px;color:var(--st-text);font:700 12px var(--st-font);
+}
+.courtside-staff-screen .sa-quick--empty {color:var(--st-highlight);font:700 13px var(--st-head)}
+.courtside-staff-screen .sa-quick:hover:not(:disabled) {
+  border-color:var(--st-highlight);background:var(--st-hover);
+}
+.courtside-staff-screen .sa-pill {
+  background:var(--st-raised);border:1px solid var(--st-border);
+  color:var(--st-text);padding:4px 9px;border-radius:7px;
+  font:700 11px var(--st-head);letter-spacing:.045em;
+}
+.courtside-staff-screen .sa-pill--warning {color:var(--st-accent)}
+.courtside-staff-screen .sa-pill--negative {color:var(--st-negative)}
+.courtside-staff-screen .sa-pill--positive {color:var(--st-highlight)}
+.courtside-staff-screen .sa-avatar {
+  border:1px solid var(--st-border);border-radius:7px;
+  color:var(--st-accent);background:var(--st-raised);font-family:var(--st-head);
+}
+.courtside-staff-screen .sa-inspector__body {padding:14px;background:var(--st-panel)}
+.courtside-staff-screen .sa-inspector__block {border-bottom:1px solid var(--st-softline);padding-bottom:12px}
+.courtside-staff-screen .sa-inspector__eyebrow {
+  font:700 12px var(--st-head);color:var(--st-accent);
+}
+.courtside-staff-screen .sa-inspector__headline {
+  font:700 24px var(--st-head);color:var(--st-text);
+}
+.courtside-staff-screen .sa-inspector__person-name {font:700 14px var(--st-font);color:var(--st-text)}
+.courtside-staff-screen .sa-ratings__item dt {color:var(--st-muted);font:600 11px var(--st-font)}
+.courtside-staff-screen .sa-ratings__item dd {color:var(--st-text);font:700 12px var(--st-font)}
+.courtside-staff-screen .sa-workload__label {color:var(--st-muted);font:700 12px var(--st-head)}
+.courtside-staff-screen .sa-workload__value {color:var(--st-highlight);font:700 18px var(--st-head)}
+.courtside-staff-screen .sa-mode {gap:7px}
+.courtside-staff-screen .sa-mode__option {
+  border:1px solid var(--st-border);border-radius:8px;
+  background:var(--st-raised);color:var(--st-text);
+  font:700 12px var(--st-head);padding:8px 10px;
+}
+.courtside-staff-screen .sa-mode__option.is-active {
+  background:var(--st-highlight);border-color:var(--st-highlight);color:var(--st-inverse);
+}
+/* Hover-based department selection, legacy portable menu in genuine Courtside palette. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .staff-workspace-header__menu-list {
+  border:1px solid var(--cs-line2);background:var(--cs-s1);
+  box-shadow:0 16px 44px rgba(0,0,0,.28);border-radius:12px;
+  padding:8px;color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .staff-workspace-header__menu-list button {
+  font:700 13px var(--cs-font);color:var(--cs-text);
+  background:transparent;border:0;border-radius:7px;padding:9px 12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .staff-workspace-header__menu-list button:hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .staff-workspace-header__menu-list button.is-active {
+  background:var(--cs-s3);color:var(--cs-lime);
+}
+/* Portalled staff dialogs/popovers are not children of the workspace; style separately. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] :is(.sa-popover,.sa-modal) {
+  background:var(--cs-s1);color:var(--cs-text);border:1px solid var(--cs-line2);
+  border-radius:13px;box-shadow:0 18px 48px rgba(0,0,0,.35);
+  font-family:var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] :is(.sa-popover__title,.sa-modal h2,.sa-inspector__headline) {
+  font:700 23px var(--cs-font-display);color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] :is(.sa-popover__subtitle,.sa-popover__eyebrow,
+ .sa-candidate__role,.sa-candidate__attrs,.sa-inspector__note) {
+  color:var(--cs-text2);font:500 12px/1.4 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-candidate {
+  background:var(--cs-s2);border-color:var(--cs-line);border-radius:9px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-candidate:hover {
+  background:var(--cs-s3);border-color:var(--cs-lime);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-candidate__name {
+  font:700 13px var(--cs-font);color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-candidate__fit-value {font:700 20px var(--cs-font-display);color:var(--cs-lime)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-modal .sa-action,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-popover .sa-action {
+  background:var(--cs-s2);border:1px solid var(--cs-line2);
+  color:var(--cs-text);border-radius:8px;padding:8px 12px;
+  font:700 13px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .sa-modal .sa-action--primary {
+  background:var(--cs-lime);border-color:var(--cs-lime);
+  color:var(--cs-bg);
+}
+/* STAFF person: PLAYER identity treatment plus Courtside in-page UI hierarchy. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .staff-person.courtside-staff-screen {
+  --ng-workspace-header-height:122px;
+  --ng-workspace-tabs-height:42px;
+  --po-font:var(--cs-font);--po-font-display:var(--cs-font-display);
+  --ng-panel-gap:12px;--ng-workspace-padding:14px 16px 22px;
+}
+.staff-person.courtside-staff-screen .staff-person__scroll {padding:14px 16px 22px}
+.staff-person.courtside-staff-screen .po-identity {
+  background:var(--st-panel);color:var(--st-text);
+  border-bottom:1px solid var(--st-border);box-shadow:none;
+}
+.staff-person.courtside-staff-screen :is(.po-identity__firstname,.po-identity__lastname) {
+  font-family:var(--st-head);font-weight:700;
+}
+.staff-person.courtside-staff-screen :is(.po-identity__pos-value,.po-identity__measure-value,
+ .po-identity__section-label) {font-family:var(--st-head)}
+.staff-person.courtside-staff-screen :is(.po-identity__clubline,.po-identity__facts,
+ .po-identity__contract-list) {font-family:var(--st-font)}
+.staff-person.courtside-staff-screen .staff-person__panel-head h2 {
+  font:700 22px var(--st-head);color:var(--st-text);
+}
+.staff-person.courtside-staff-screen .staff-person__overview {gap:12px}
+.staff-person.courtside-staff-screen .staff-person__core,
+.staff-person.courtside-staff-screen .staff-person__deck {gap:12px}
+.staff-person.courtside-staff-screen .staff-person__eval-list {gap:8px}
+.staff-person.courtside-staff-screen .staff-person__eval-list li {
+  font:500 12.5px var(--st-font);padding:3px 0;
+}
+.staff-person.courtside-staff-screen .staff-person__meter {
+  height:7px;border-radius:5px;overflow:hidden;background:var(--st-hover);
+}
+.staff-person.courtside-staff-screen .staff-person__meter span {background:var(--st-highlight)}
+.staff-person.courtside-staff-screen .po-attributes__category {border-radius:10px}
+.staff-person.courtside-staff-screen .po-ratings__header {font-family:var(--st-head)}
+.staff-person.courtside-staff-screen .po-rating-row__label {font:600 12px var(--st-font)}
+.staff-person.courtside-staff-screen .po-rating-row__value {font:700 15px var(--st-head)}
+.staff-person.courtside-staff-screen .staff-person__history li {
+  padding:8px 10px;border:1px solid var(--st-softline);
+  border-radius:8px;background:var(--st-raised);
+}
+/* Never build an impossible horizontal workstation at reduced app window sizes. */
+@media(max-width:1150px) {
+ .courtside-staff-screen .sa-coverage {overflow-x:auto;min-width:0}
+ .courtside-staff-screen .sa-workspace {grid-template-columns:minmax(0,1fr) 300px}
+ .courtside-staff-screen .staff-workspace__split {grid-template-columns:minmax(0,1fr) minmax(240px,300px)}
+}
+@media(max-width:820px) {
+ .courtside-staff-screen .sa-strip {overflow-x:auto}
+ .courtside-staff-screen .sa-workspace {grid-template-columns:minmax(0,1fr)}
+ .courtside-staff-screen .sa-inspector {display:none}
+ .courtside-staff-screen .staff-workspace__split {grid-template-columns:minmax(0,1fr)}
+ .staff-person.courtside-staff-screen .staff-person__deck {grid-template-columns:1fr}
+}

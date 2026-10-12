@@ -59,3 +59,10 @@ Los diseños y las pantallas de Courtside deben continuar en esta misma rama. La
 - STAFF: portada y departamentos más densos, sin cartelas de altura forzada; ficha de departamento abre primero la tabla de profesionales y después sus cuadros analíticos.
 - ASIGNACIONES: barra de estado reducida, el modo sencillo y la matriz avanzada se mantienen.
 - Se conserva adaptación oscuro/claro mediante tokens Courtside; la aceptación visual real requiere capturas del usuario.
+
+### ST-UI 1.3 · Visual authority Courtside across all STAFF screens (2026-10-12)
+- Canonical **visual authority is approved HOME/PLAYER Courtside**. All earlier NG styling is subordinate and may be replaced regardless of prior design decisions; domain game logic and actions are preserved.
+- New `courtside-staff-v2.css` loaded after the old functional layout CSS: palette, display and reading fonts, 13px minimum controls, buttons, toggles, tables, data grids, badges, load/coverage bars, inspectors, staff drawers, contextual menus, role popovers, modal dialogs, market, comparisons, advisory and dynamics. The old NG visual tokens are remapped to the single Courtside dual-theme palette.
+- Explicitly applied to STAFF overview, ASIGNACIONES, ASESORÍA, DINÁMICAS, MERCADO, COMPARATIVA, departments and individual STAFF profile (including empty states). All links and operations remain on their existing sources of truth.
+- Assignment summary replaces misleading 'VACANCIES' label by 'SIN RESPONSABLE': responsibility coverage is not a count of open employment jobs. Table columns and inspector heading revised into Spanish to match the rest of the interface.
+- No guarantees of screenshot fidelity or empirical WCAG results from TypeScript/build CI alone. Visual acceptance requires testing the user's actual light/dark screens and the assignment popovers.

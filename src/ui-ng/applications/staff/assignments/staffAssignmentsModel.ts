@@ -460,7 +460,7 @@ export function buildStaffAssignmentsModel(world: GameWorld, teamId: TeamId): St
       { id: 'assigned', label: 'ASSIGNED', value: assignedStaffCount, tone: 'positive', filters: true },
       { id: 'available', label: 'AVAILABLE', value: staffRows.length - assignedStaffCount, tone: 'info', filters: false },
       { id: 'overloaded', label: 'OVERLOADED', value: overloadedStaffCount, tone: 'warning', filters: true },
-      { id: 'vacancies', label: 'VACANCIES', value: vacancyCount, tone: 'negative', filters: true },
+      { id: 'vacancies', label: 'SIN RESPONSABLE', value: vacancyCount, tone: 'negative', filters: true },
     ],
     coverage: RESPONSIBILITY_DOMAINS.map((domain) => {
       const domainRows = rows.filter((row) => row.domain === domain && row.eligibleParticipant === 'staff')

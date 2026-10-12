@@ -174,9 +174,9 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
       </section>
 
       <div className={inspectorOpen && selected !== undefined ? 'sa-workspace' : 'sa-workspace sa-workspace--no-inspector'}>
-        <section aria-label="Assignment matrix" className="sa-panel sa-matrix ng-holo-panel">
+        <section aria-label="Assignment matrix" className={`sa-panel sa-matrix ng-holo-panel${simpleMode?" is-simple":""}`}>
           <header className="sa-panel__header">
-            <h2 className="sa-panel__title">ASSIGNMENT MATRIX</h2>
+            <h2 className="sa-panel__title">GESTIÓN DE RESPONSABILIDADES</h2>
             <div className="sa-matrix__view-switch" role="group" aria-label="Modo de asignaciones">
               <button type="button" aria-pressed={simpleMode} onClick={()=>setSimpleMode(true)}>MODO SENCILLO</button>
               <button type="button" aria-pressed={!simpleMode} onClick={()=>setSimpleMode(false)}>MATRIZ AVANZADA</button>
@@ -195,12 +195,12 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
             </section>)}
           </div> : <>
           <div className="sa-matrix__head" role="row">
-            <span>Responsibility</span>
-            <span>Primary</span>
-            <span>Backup</span>
-            <span>Load</span>
-            <span>Coverage</span>
-            <span>Status</span>
+            <span>RESPONSABILIDAD</span>
+            <span>RESPONSABLE</span>
+            <span>ALTERNATIVA</span>
+            <span>CARGA</span>
+            <span>IDONEIDAD</span>
+            <span>ESTADO</span>
           </div>
           <div className="sa-matrix__body">
             {visibleGroups.length === 0 ? <p className="sa-empty">No responsibility matches this filter.</p> : null}
@@ -238,7 +238,7 @@ export function StaffAssignmentsScreen({ world, teamId, panelRequest = null, onP
         {!simpleMode && inspectorOpen && selected !== undefined ? (
           <aside aria-label="Assignment inspector" className="sa-panel sa-inspector ng-holo-panel">
             <header className="sa-panel__header">
-              <h2 className="sa-panel__title">ASSIGNMENT INSPECTOR</h2>
+              <h2 className="sa-panel__title">DETALLE DE ASIGNACIÓN</h2>
               <button aria-label="Close inspector" className="sa-icon-button" onClick={() => setInspectorOpen(false)} type="button">
                 ×
               </button>

@@ -31,6 +31,7 @@ import { navigateToStaff, parseWorkspaceStaffId } from '@/ui-ng/workspace/worksp
 
 import './staff-workspace.css'
 import './courtside-staff.css'
+import './courtside-staff-v2.css'
 
 function StaffWorkspaceHeader({
   model,
@@ -48,11 +49,11 @@ function StaffWorkspaceHeader({
         <span className="staff-workspace-header__sep" aria-hidden />
         <span className="staff-workspace-header__team">{model.teamName}</span>
         <span className="staff-workspace-header__meta">
-          <span className="ng-type-numeric">{model.staffCount}</span> staff
+          <span className="ng-type-numeric">{model.staffCount}</span> STAFF
           {' · '}
-          <span className="ng-type-numeric">{model.openAdvisoryCount}</span> advisory
+          <span className="ng-type-numeric">{model.openAdvisoryCount}</span> CONSEJOS
           {' · '}
-          <span className="ng-type-numeric">{model.needsAttentionCount}</span> attention
+          <span className="ng-type-numeric">{model.needsAttentionCount}</span> ALERTAS
         </span>
       </div>
       {actions === undefined ? null : <div className="staff-workspace-header__actions">{actions}</div>}
@@ -161,7 +162,7 @@ function StaffBoardWorkspace() {
 
   if (world === null || model === null) {
     return (
-      <div className="staff-workspace staff-workspace--empty" data-ng-region="staff-workspace">
+      <div className="staff-workspace staff-workspace--empty courtside-staff-screen" data-ng-region="staff-workspace">
         <section className="staff-workspace__empty-state">
           <h1 className="staff-workspace__empty-title">Staff</h1>
           <p className="staff-workspace__empty-message">No team assigned to the user coach.</p>

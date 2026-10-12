@@ -44,12 +44,12 @@ describe('StaffWorkspace', () => {
 
     expect(screen.getByRole('button', { name: 'STAFF' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('heading', { name: 'STAFF ASSIGNMENTS' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT MATRIX' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'GESTIÓN DE RESPONSABILIDADES' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    expect(screen.getByRole('heading', { name: 'ASSIGNMENT MATRIX' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'GESTIÓN DE RESPONSABILIDADES' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'STAFF POOL' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'AUTO-ASSIGN' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'OPTIMIZE' })).toBeInTheDocument()
@@ -73,6 +73,23 @@ describe('StaffWorkspace', () => {
     expect(document.querySelector('.staff-workspace-header__actions')).not.toBeNull()
   })
 
+  it('uses the Courtside presentation across the staff workspace and all its subpages',()=>{
+    mountStaffWorkspace()
+    const root=document.querySelector('[data-ng-region="staff-workspace"]')!
+    expect(root).toHaveClass('courtside-staff-screen')
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'MODO SENCILLO'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'MATRIZ AVANZADA'})).toBeInTheDocument()
+    expect(document.querySelector('.sa-matrix')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
+    expect(document.querySelector('[data-ng-region="staff-workspace"]')).toHaveClass('courtside-staff-screen')
+    fireEvent.click(screen.getByRole('button',{name:'MERCADO'}))
+    expect(screen.getByRole('heading',{name:'CONSTRUIR TU EQUIPO'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
+    expect(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'})).toBeInTheDocument()
+  })
+
   it('keeps a one-action simplified responsibility selection alongside the advanced matrix',()=>{
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
@@ -86,7 +103,7 @@ describe('StaffWorkspace', () => {
     fireEvent.click(candidate)
     expect(screen.getByRole('status')).toHaveTextContent('Assignment updated')
     fireEvent.click(screen.getByRole('button',{name:'MATRIZ AVANZADA'}))
-    expect(screen.getByRole('heading',{name:'ASSIGNMENT MATRIX'})).toBeInTheDocument()
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
   })
 
   it('shows attributable advisory status without inventing recommendations',()=>{
@@ -176,13 +193,13 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     fireEvent.click(screen.getByRole('button', { name: /APPLY \d+ CHANGES/ }))
 
     fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
-    expect(screen.getByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).toBeInTheDocument()
     expect(screen.getByText('ASSIGNMENT OPTIONS')).toBeInTheDocument()
   })
 
@@ -242,7 +259,7 @@ describe('StaffWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     const before = screen.getAllByTitle('Quick assign').length
-    fireEvent.click(screen.getByRole('button', { name: /VACANCIES/ }))
+    fireEvent.click(screen.getByRole('button', { name: /SIN RESPONSABLE/ }))
     expect(screen.getByRole('button', { name: 'CLEAR FILTER' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'CLEAR FILTER' }))
     expect(screen.getAllByTitle('Quick assign')).toHaveLength(before)
@@ -257,7 +274,7 @@ describe('StaffWorkspace', () => {
     expect(screen.getByText((_,node)=>node?.classList.contains('staff-workspace-header__team')===true
       &&node.textContent===team.name)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:/ORGANIZAR EL TRABAJO/}))
-    expect(screen.getByRole('heading',{name:'ASSIGNMENT MATRIX'})).toBeInTheDocument()
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
   })
 
   it('opens a real vacancy in the staff market through the canonical service',()=>{
@@ -313,6 +330,7 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace(world)
 
     expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
+    expect(document.querySelector('[data-ng-region="staff-person"]')).toHaveClass('courtside-staff-screen')
     expect(
       screen.getByRole('heading', { name: `${person.identity.firstName}${person.identity.lastName}` }),
     ).toBeInTheDocument()
