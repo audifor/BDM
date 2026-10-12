@@ -240,3 +240,84 @@
   .ct-courtside .pcb-tactics--ng .pcb-tactics-creator__summary {min-width:115px!important;width:115px!important;padding:8px!important}
   .ct-courtside .pcb-tactics--ng .pcb-tactics-creator__tools {width:54px!important;padding:6px 0!important}
 }
+
+/* TACTICS · Rotaciones V3.1. Direct roster selection and true per-period sliders. */
+.ct-courtside .ct-columns--rotation-picker {
+  grid-template-columns:minmax(245px,24%) minmax(490px,1fr) minmax(180px,19%);
+  align-items:start;gap:9px;
+}
+.ct-roster-search {margin:0 0 9px!important;gap:5px!important}
+.ct-roster-search input {height:32px}
+.ct-roster-list {
+  display:flex;flex-direction:column;gap:3px;
+  max-height:min(53dvh,510px);overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:thin;padding-right:3px;
+}
+.ct-roster-item {
+  display:flex;align-items:center;gap:8px;min-height:34px;width:100%;padding:4px 7px;
+  border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-raised);
+  color:var(--ct-text);font:600 12px var(--ct-font);cursor:pointer;text-align:left;
+}
+.ct-roster-item:hover,.ct-roster-item.is-selected {
+  border-color:var(--ct-accent);background:color-mix(in srgb,var(--ct-accent) 9%,var(--ct-panel));
+}
+.ct-roster-item .ct-pos {font-size:11px;min-width:28px;text-align:center;padding:3px 4px}
+.ct-roster-name {flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-roster-status {flex:0 0 18px;text-align:center;font:800 18px var(--ct-display);color:var(--ct-accent)}
+.ct-rotation-toolbar {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:0 0 8px;border-bottom:1px solid var(--ct-line);flex-wrap:wrap;
+}
+.ct-rotation-toolbar>span {font:700 11px var(--ct-display);color:var(--ct-muted)}
+.ct-rotation-toolbar>div {display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ct-rotation-preset {
+  padding:5px 9px;border:1px solid var(--ct-line);border-radius:5px;
+  background:var(--ct-raised);color:var(--ct-text);cursor:pointer;
+  font:700 12px var(--ct-display);
+}
+.ct-rotation-preset.is-selected {border-color:var(--ct-accent);color:var(--ct-accent)}
+.ct-columns--rotation-picker .ct-rotation-scroll {overflow-x:auto;scrollbar-width:thin;margin-top:8px}
+.ct-columns--rotation-picker :is(.ct-rot-head,.ct-rot-row,.ct-rot-footer) {
+  grid-template-columns:minmax(110px,1.3fr) repeat(var(--ct-periods,4),minmax(76px,1fr)) 48px;
+  min-width:520px;gap:7px;
+}
+.ct-rot-slider {
+  display:flex;flex-direction:column;justify-content:center;align-items:stretch;
+  gap:2px;min-width:0;padding:2px 3px;
+}
+.ct-rot-slider>span {font:800 13px var(--ct-display);color:var(--ct-text);text-align:center}
+.ct-rot-slider input[type="range"] {
+  display:block;width:100%;min-width:0;height:13px;padding:0;margin:0;
+  appearance:none;-webkit-appearance:none;border:0;cursor:ew-resize;
+  background:transparent;accent-color:var(--ct-accent);
+}
+.ct-rot-slider input[type="range"]::-webkit-slider-runnable-track {
+  height:5px;border-radius:6px;
+  background:linear-gradient(to right,var(--ct-accent) 0 var(--ct-fill,0%),var(--ct-line) var(--ct-fill,0%) 100%);
+}
+.ct-rot-slider input[type="range"]::-moz-range-track {height:5px;border-radius:6px;background:var(--ct-line)}
+.ct-rot-slider input[type="range"]::-moz-range-progress {height:5px;border-radius:6px;background:var(--ct-accent)}
+.ct-rot-slider input[type="range"]::-webkit-slider-thumb {
+  appearance:none;-webkit-appearance:none;margin-top:-5px;
+  width:15px;height:15px;border:2px solid var(--ct-panel);
+  border-radius:50%;background:var(--ct-accent);box-shadow:0 0 0 1px var(--ct-line);
+}
+.ct-rot-slider input[type="range"]::-moz-range-thumb {
+  width:13px;height:13px;border:2px solid var(--ct-panel);border-radius:50%;background:var(--ct-accent);
+}
+.ct-rot-slider input[type="range"]:focus-visible {outline:2px solid var(--ct-orange);outline-offset:3px}
+.ct-rot-slider input[type="range"]:disabled {opacity:.45;cursor:not-allowed}
+.ct-columns--rotation-picker .ct-load-row {grid-template-columns:minmax(62px,1fr) minmax(30px,2fr) 35px;gap:5px}
+.ct-columns--rotation-picker .ct-card__body {padding:10px}
+.ct-columns--rotation-picker .ct-rot-row {min-height:43px}
+@media (max-width:1270px) {
+  .ct-courtside .ct-columns--rotation-picker {
+    grid-template-columns:minmax(230px,30%) minmax(480px,1fr);
+  }
+  .ct-columns--rotation-picker>.ct-card:last-child {grid-column:1 / -1}
+}
+@media (max-width:820px) {
+  .ct-courtside .ct-columns--rotation-picker {display:flex;flex-direction:column}
+  .ct-columns--rotation-picker>.ct-card {width:100%}
+  .ct-roster-list {max-height:275px}
+}

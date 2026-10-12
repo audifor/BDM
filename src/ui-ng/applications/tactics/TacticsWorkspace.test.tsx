@@ -5,6 +5,9 @@ import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
+import { getTeamLineup } from '@/domain/world'
+import { getLineupAssignments } from '@/domain/tactics'
+import { rebalanceRotationSlider } from '@/ui-ng/applications/tactics/CourtsideTacticsPanels'
 import { useGameStore } from '@/stores/gameStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
@@ -82,6 +85,60 @@ describe('TacticsWorkspace', () => {
     expect(screen.getByRole('heading', { name: 'CRONOLOGÍA DE MINUTOS' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'GUARDAR ROTACIÓN' })).toBeInTheDocument()
     expect(document.querySelector('[data-courtside-tactics-screen="rotations"]')).toBeInTheDocument()
+  })
+
+  it('lets the coach select the rotation directly, drag minutes and persist a valid plan', () => {
+    const { team } = mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+    expect(screen.getByText(/Convoca jugadores desde la columna izquierda/)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Convocar / }).length).toBeGreaterThan(5)
+
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(screen.getAllByRole('button', { name: /^Convocar / })[0]!)
+    }
+    expect(screen.getAllByRole('slider').length).toBe(20)
+    expect(screen.getAllByRole('slider')[0]!).toBeDisabled()
+    expect(screen.getByText(/Convoca un sexto para poder ajustar/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^Convocar / })[0]!)
+    expect(screen.getAllByRole('slider').length).toBe(24)
+    const slider = screen.getAllByRole('slider')[0] as HTMLInputElement
+    expect(slider).toBeEnabled()
+    const before = Number(slider.value)
+    const changed = before < 10 ? before + 1 : before - 1
+    fireEvent.change(slider, { target: { value: String(changed) } })
+    expect(Number((screen.getAllByRole('slider')[0] as HTMLInputElement).value)).toBe(changed)
+    expect(screen.getByRole('button', { name: 'GUARDAR ROTACIÓN' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'GUARDAR ROTACIÓN' }))
+
+    const current = useGameStore.getState().world!
+    const active = getLineupAssignments(getTeamLineup(current, team.id))
+    expect(active).toHaveLength(6)
+    const saved = current.rotationPlansByTeamId[team.id]?.minutesByPeriod
+    expect(saved).toBeDefined()
+    for (let q = 0; q < 4; q++) {
+      const total = active.reduce((sum, item) => sum + (saved?.[item.playerId]?.[q] ?? 0), 0)
+      expect(total).toBe(50)
+    }
+    expect(screen.getByText('Rotación guardada en la partida.')).toBeInTheDocument()
+    fireEvent.click(screen.getAllByRole('button', { name: /^Retirar / })[0]!)
+    expect(getLineupAssignments(getTeamLineup(useGameStore.getState().world!, team.id))).toHaveLength(5)
+  })
+
+  it('rebalances slider changes without inventing or losing minutes', () => {
+    const before = {
+      PG: [8, 7], SG: [8, 9], SF: [9, 8],
+      PF: [9, 8], C: [8, 9], SIXTH: [8, 9],
+    }
+    const ids = Object.keys(before)
+    const next = rebalanceRotationSlider(before, ids, 'PG', 0, 10, 10)
+    expect(next.PG?.[0]).toBe(10)
+    expect(ids.reduce((sum,id) => sum + (next[id]?.[0] ?? 0), 0)).toBe(50)
+    expect(next.SG?.[1]).toBe(9)
+    expect(before.PG[0]).toBe(8)
+    const decreased = rebalanceRotationSlider(next, ids, 'PG', 0, 4, 10)
+    expect(decreased.PG?.[0]).toBe(4)
+    expect(ids.reduce((sum,id) => sum + (decreased[id]?.[0] ?? 0), 0)).toBe(50)
   })
 
   it('opens a player dossier from a Pizarra name', () => {

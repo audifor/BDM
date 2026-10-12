@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import type { GameWorld } from '@/domain/world'
 import { getTeamLineup, getTeamRoster, resolveGameClockRules } from '@/domain/world'
 import { getNextUserGame } from '@/engine/calendar'
-import { getLineupAssignments, isValidRotationMinutes, type DefensiveMatchupAssignment } from '@/domain/tactics'
+import { getLineupAssignments, getLineupSlotForPlayer, isValidRotationMinutes, LINEUP_SLOTS } from '@/domain/tactics'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { Player } from '@/domain/player'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
@@ -130,38 +130,194 @@ const rotate = (ids: readonly PlayerId[], periods: number, periodMinutes: number
   return result
 }
 
+/**
+ * Reallocate a single regulation period without losing five-player accounting.
+ * The slider the coach moves is authoritative. Other players compensate one minute
+ * at a time, respecting their period caps and preserving the total when it was valid.
+ */
+export function rebalanceRotationSlider(
+  current: Readonly<Record<string, readonly number[]>>,
+  playerIds: readonly string[],
+  playerId: string,
+  period: number,
+  requestedMinutes: number,
+  periodMinutes: number,
+): Record<string, number[]> {
+  const updated = Object.fromEntries(playerIds.map(id => [id, [...(current[id] ?? [])]])) as Record<string, number[]>
+  const currentMinutes = updated[playerId]?.[period] ?? 0
+  const target = Math.round(clamp(requestedMinutes, 0, periodMinutes))
+  const totalBefore = playerIds.reduce((sum, id) => sum + (updated[id]?.[period] ?? 0), 0)
+  if (playerIds.length < 5 || totalBefore !== 5 * periodMinutes) {
+    if (updated[playerId]) updated[playerId][period] = target
+    return updated
+  }
+  const others = playerIds.filter(id => id !== playerId)
+  const minimum = Math.max(0, 5 * periodMinutes - others.length * periodMinutes)
+  const adjustedTarget = clamp(target, minimum, periodMinutes)
+  let remaining = Math.abs(adjustedTarget - currentMinutes)
+  const raisingTarget = adjustedTarget > currentMinutes
+  updated[playerId]![period] = adjustedTarget
+  // Each pass finds the player best placed to absorb one minute of change.
+  while (remaining > 0) {
+    const available = others.filter(id => raisingTarget
+      ? (updated[id]?.[period] ?? 0) > 0
+      : (updated[id]?.[period] ?? 0) < periodMinutes)
+    if (!available.length) break
+    available.sort((a, b) => raisingTarget
+      ? (updated[b]?.[period] ?? 0) - (updated[a]?.[period] ?? 0)
+      : (updated[a]?.[period] ?? 0) - (updated[b]?.[period] ?? 0))
+    const partner = available[0]!
+    updated[partner]![period] += raisingTarget ? -1 : 1
+    remaining -= 1
+  }
+  if (remaining > 0) updated[playerId]![period] += raisingTarget ? -remaining : remaining
+  return updated
+}
+
 function RotationsPanel({ world, teamId, onOpenPlayer }: { world: GameWorld; teamId: TeamId; onOpenPlayer?: (id: PlayerId) => void }) {
   const saveMinutes = useGameStore(state => state.updateRotationMinutes)
-  const { game } = getMatch(world, teamId)
+  const assignSlot = useGameStore(state => state.setLineupSlot)
+  const clearSlot = useGameStore(state => state.clearLineupSlot)
+  const { game, opponent } = getMatch(world, teamId)
   const rules = game === undefined ? undefined : resolveGameClockRules(world, game.competitionId)
   const periodCount = rules?.periodCount ?? 4
   const periodMinutes = (rules?.periodSeconds ?? 600) / 60
   const lineup = getTeamLineup(world, teamId)
   const all = getTeamRoster(world, teamId)
-  const selectedPlayers = getLineupAssignments(lineup).map(item => all.find(p => p.id === item.playerId)).filter((p): p is Player => p !== undefined)
-  const ids = selectedPlayers.map(player => player.id)
-  const stored = world.rotationPlansByTeamId[teamId]?.minutesByPeriod
+  const byId = new Map(all.map(p => [p.id, p]))
+  const assignments = getLineupAssignments(lineup)
+  const selectedPlayers = assignments.map(item => byId.get(item.playerId)).filter((p): p is Player => p !== undefined)
+  const ids = selectedPlayers.map(p => p.id)
+  const selectionKey = ids.join('|') + ':' + periodCount + ':' + periodMinutes
   const [preset, setPreset] = useState<RotationPreset>('Equilibrada')
-  const [draft, setDraft] = useState<Record<string, number[]> | null>(null)
-  const effective = draft ?? (stored ? Object.fromEntries(ids.map(id => [id, Array.from({ length: periodCount }, (_, q) => stored[id]?.[q] ?? 0)])) : rotate(ids, periodCount, periodMinutes, preset))
+  const [draft, setDraft] = useState<{ key: string; minutes: Record<string, number[]> } | null>(null)
   const [saved, setSaved] = useState(false)
-  const valid = selectedPlayers.length >= 5 && isValidRotationMinutes(effective as Record<PlayerId, readonly number[]>, ids, Array.from({ length: periodCount }, () => periodMinutes))
-  const total = selectedPlayers.reduce((sum, p) => sum + (effective[p.id] ?? []).reduce((a,b) => a+b, 0), 0)
-  const periodTotals = Array.from({ length: periodCount }, (_, q) => selectedPlayers.reduce((sum,p) => sum + (effective[p.id]?.[q] ?? 0),0))
-  const edit = (id: PlayerId, q: number, value: number) => {
+  const [query, setQuery] = useState('')
+  const [selectionError, setSelectionError] = useState('')
+  const stored = world.rotationPlansByTeamId[teamId]?.minutesByPeriod
+  const storedSelection = stored && Object.fromEntries(ids.map(id => [id, Array.from({ length: periodCount }, (_, q) => stored[id]?.[q] ?? 0)]))
+  const storedValid = storedSelection !== undefined && stored !== undefined && ids.length >= 5
+    && isValidRotationMinutes(storedSelection as Record<PlayerId, readonly number[]>, ids, Array.from({ length: periodCount }, () => periodMinutes))
+    && ids.every(id => stored[id]?.length === periodCount && stored[id]!.every(v => Number.isFinite(v) && v >= 0 && v <= periodMinutes))
+  const effective = draft?.key === selectionKey ? draft.minutes : storedValid ? storedSelection! : rotate(ids, periodCount, periodMinutes, preset)
+  const periodTotals = Array.from({ length: periodCount }, (_, q) =>
+    selectedPlayers.reduce((sum, p) => sum + (effective[p.id]?.[q] ?? 0), 0))
+  const total = periodTotals.reduce((sum, minutes) => sum + minutes, 0)
+  const valid = selectedPlayers.length >= 5
+    && selectedPlayers.length <= LINEUP_SLOTS.length
+    && periodTotals.every((sum, q) => sum === 5 * periodMinutes
+      && ids.every(id => {
+        const amount = effective[id]?.[q]
+        return amount !== undefined && Number.isFinite(amount) && amount >= 0 && amount <= periodMinutes
+      }))
+    && isValidRotationMinutes(effective as Record<PlayerId, readonly number[]>, ids, Array.from({ length: periodCount }, () => periodMinutes))
+  const inRotation = new Set(ids)
+  const visibleRoster = all.filter(p => (nameOf(p) + ' ' + p.basketball.primaryPosition).toLowerCase().includes(query.trim().toLowerCase()))
+  const togglePlayer = (player: Player) => {
     setSaved(false)
-    setDraft(Object.fromEntries(ids.map(playerId => [playerId, Array.from({ length: periodCount }, (_, j) => playerId === id && j === q ? clamp(value,0,periodMinutes) : effective[playerId]?.[j] ?? 0)])))
+    setSelectionError('')
+    setDraft(null)
+    const assigned = getLineupSlotForPlayer(lineup, player.id)
+    if (assigned !== undefined) {
+      clearSlot(assigned)
+      return
+    }
+    const used = new Set(assignments.map(a => a.slot))
+    // Fill the canonical starting five before the bench, preferring the player's natural position.
+    const chosen = (['PG', 'SG', 'SF', 'PF', 'C'] as const).includes(player.basketball.primaryPosition)
+      && !used.has(player.basketball.primaryPosition)
+      ? player.basketball.primaryPosition
+      : LINEUP_SLOTS.find(slot => !used.has(slot))
+    if (chosen === undefined) {
+      setSelectionError('Hay doce plazas ocupadas. Retira a un convocado antes de añadir otro.')
+      return
+    }
+    assignSlot(chosen, player.id)
   }
-  const choosePreset = (next: RotationPreset) => { setPreset(next); setDraft(rotate(ids, periodCount, periodMinutes, next)); setSaved(false) }
+  const sliderChange = (id: PlayerId, q: number, value: number) => {
+    setSaved(false)
+    setDraft({ key: selectionKey, minutes: rebalanceRotationSlider(effective, ids, id, q, value, periodMinutes) })
+  }
+  const choosePreset = (next: RotationPreset) => {
+    setPreset(next)
+    setDraft({ key: selectionKey, minutes: rotate(ids, periodCount, periodMinutes, next) })
+    setSaved(false)
+  }
   return <>
-    <StatStrip><Metric value={selectedPlayers.length} label="Jugadores en rotación" tone="ct-green"/><Metric value={total + ' / ' + periodCount*periodMinutes*5} label="Minutos asignados"/><Metric value={periodTotals.filter(n => n === 5*periodMinutes).length + ' / ' + periodCount} label="Periodos completos"/><Metric value={periodMinutes + "'"} label="Duración periodo"/><div className="ct-stats__actions"><button type="button" className="ct-primary" disabled={!valid} onClick={() => { saveMinutes(effective as Record<PlayerId, readonly number[]>); setSaved(true) }}>GUARDAR ROTACIÓN</button></div></StatStrip>
-    <div className="ct-columns ct-columns--rotation">
-      <Card title="GESTIÓN" note="PRESSETS"><h3 className="ct-subheading">Plan de minutos</h3>{(['Equilibrada','Corta','Profunda'] as const).map(choice => <button className={'ct-list-action'+(preset===choice?' is-selected':'')} type="button" key={choice} onClick={() => choosePreset(choice)}>{choice}<span>↗</span></button>)}<p className="ct-hint">Los minutos se ajustan por jugador y periodo según la duración real de la competición.</p></Card>
-      <Card title="CRONOLOGÍA DE MINUTOS" note={valid ? 'LISTA PARA GUARDAR' : 'AJUSTE NECESARIO'}>
-        {!selectedPlayers.length ? <Empty text="Selecciona jugadores para el partido desde Pizarra."/> : <div className="ct-rotation-scroll" style={{ '--ct-periods': periodCount } as CSSProperties}><div className="ct-rot-head"><span>JUGADOR</span>{Array.from({ length: periodCount },(_,q)=><b key={q}>{periodCount===2?'H':'Q'}{q+1}</b>)}<span>TOTAL</span></div>{selectedPlayers.map(player => <div className="ct-rot-row" key={player.id}><PlayerButton player={player} onOpen={onOpenPlayer}/>{Array.from({ length: periodCount },(_,q)=><label key={q} className="ct-rot-min"><input aria-label={nameOf(player)+' · periodo '+(q+1)} type="number" min="0" max={periodMinutes} step="1" value={effective[player.id]?.[q] ?? 0} onChange={e => edit(player.id,q,Number(e.target.value))}/><span style={{width: ((effective[player.id]?.[q] ?? 0)/periodMinutes*100)+'%'}}/></label>)}<strong>{(effective[player.id] ?? []).reduce((sum,n)=>sum+n,0)}'</strong></div>)}<div className="ct-rot-footer"><span>MINUTOS</span>{periodTotals.map((v,q)=><b className={v===periodMinutes*5?'ct-green':'ct-orange'} key={q}>{v}/{periodMinutes*5}</b>)}<strong>{total}</strong></div></div>}
-        <p className="ct-hint" role={valid ? 'status' : 'alert'}>{saved ? 'Rotación guardada en la partida.' : valid ? 'Asignación válida. Guarda para aplicar al próximo partido.' : 'Cada periodo debe sumar exactamente cinco jugadores en pista. Corrige las columnas marcadas.'}</p>
+    <StatStrip>
+      <Metric value={selectedPlayers.length + ' / 12'} label="Convocados" tone="ct-green"/>
+      <Metric value={total + ' / ' + periodCount * periodMinutes * 5} label="Minutos asignados"/>
+      <Metric value={periodTotals.filter(v => v === periodMinutes * 5).length + ' / ' + periodCount} label="Periodos completos"/>
+      <Metric value={periodMinutes + "'"} label="Duración periodo"/>
+      <div className="ct-stats__actions"><button className="ct-primary" type="button" disabled={!valid} onClick={() => { saveMinutes(effective as Record<PlayerId, readonly number[]>); setSaved(true) }}>GUARDAR ROTACIÓN</button></div>
+    </StatStrip>
+    <div className="ct-columns ct-columns--rotation ct-columns--rotation-picker">
+      <Card title="CONVOCATORIA" note={selectedPlayers.length + ' / ' + LINEUP_SLOTS.length + ' JUGADORES'}>
+        <label className="ct-field ct-roster-search">Buscar jugador
+          <input aria-label="Buscar jugador para rotación" value={query} onChange={e => setQuery(e.target.value)} placeholder="Nombre o posición"/>
+        </label>
+        <div className="ct-roster-list" aria-label="Selección de jugadores para rotación">
+          {visibleRoster.map(player => <button key={player.id} type="button"
+            className={'ct-roster-item' + (inRotation.has(player.id) ? ' is-selected' : '')}
+            aria-pressed={inRotation.has(player.id)}
+            aria-label={(inRotation.has(player.id) ? 'Retirar ' : 'Convocar ') + nameOf(player)}
+            onClick={() => togglePlayer(player)}>
+            <span className="ct-pos">{player.basketball.primaryPosition}</span>
+            <span className="ct-roster-name">{nameOf(player)}</span>
+            <span className="ct-roster-status">{inRotation.has(player.id) ? '✓' : '+'}</span>
+          </button>)}
+          {visibleRoster.length === 0 && <Empty text="No hay jugadores que coincidan con la búsqueda."/>}
+        </div>
+        {selectionError && <p className="ct-hint" role="alert">{selectionError}</p>}
+        <p className="ct-hint">Selecciona de 5 a 12 jugadores. La convocatoria se sincroniza con Pizarra y Plantilla.</p>
       </Card>
-      <Card title="ANÁLISIS" note="CARGA"><h3 className="ct-subheading">Minutos por jugador</h3>{selectedPlayers.map(player => <div className="ct-load-row" key={player.id}><span>{player.lastName}</span><div><i style={{width: (((effective[player.id] ?? []).reduce((s,v)=>s+v,0))/(periodCount*periodMinutes)*100)+'%'}}/></div><b>{(effective[player.id] ?? []).reduce((s,v)=>s+v,0)}'</b></div>)}<p className="ct-hint">La carga mostrada representa los minutos planificados, no una predicción de fatiga.</p></Card>
+      <Card title="CRONOLOGÍA DE MINUTOS" note={valid ? 'LISTA PARA GUARDAR' : 'AJUSTE NECESARIO'}>
+        <div className="ct-rotation-toolbar">
+          <span>{game ? 'VS ' + (opponent?.name ?? 'RIVAL') : 'PLAN DE EQUIPO'}</span>
+          <div aria-label="Distribución automática">{(['Equilibrada','Corta','Profunda'] as const).map(choice =>
+            <button type="button" key={choice} className={'ct-rotation-preset'+(preset===choice?' is-selected':'')}
+              onClick={() => choosePreset(choice)}>{choice}</button>)}</div>
+        </div>
+        {selectedPlayers.length === 0
+          ? <Empty text="Convoca jugadores desde la columna izquierda para activar los deslizadores de minutos."/>
+          : <div className="ct-rotation-scroll" style={{ '--ct-periods': periodCount } as CSSProperties}>
+            <div className="ct-rot-head"><span>JUGADOR</span>{Array.from({ length: periodCount },(_,q)=><b key={q}>{periodCount===2?'H':'Q'}{q+1}</b>)}<span>TOTAL</span></div>
+            {selectedPlayers.map(player => <div className="ct-rot-row" key={player.id}>
+              <PlayerButton player={player} onOpen={onOpenPlayer}/>
+              {Array.from({ length: periodCount },(_,q) => {
+                const minutes = effective[player.id]?.[q] ?? 0
+                return <label className="ct-rot-slider" key={q}>
+                  <span>{minutes}'</span>
+                  <input type="range" min={ids.length === 5 ? periodMinutes : 0} max={periodMinutes} step="1"
+                    disabled={ids.length <= 5}
+                    value={minutes}
+                    aria-label={nameOf(player) + ' · periodo ' + (q+1)}
+                    style={{ '--ct-fill': (minutes / periodMinutes * 100) + '%' } as CSSProperties}
+                    onChange={e => sliderChange(player.id, q, Number(e.target.value))}/>
+                </label>
+              })}
+              <strong>{(effective[player.id] ?? []).reduce((sum,n)=>sum+n,0)}'</strong>
+            </div>)}
+            <div className="ct-rot-footer"><span>MINUTOS</span>{periodTotals.map((v,q)=><b className={v===periodMinutes*5?'ct-green':'ct-orange'} key={q}>{v}/{periodMinutes*5}</b>)}<strong>{total}</strong></div>
+          </div>}
+        <p className="ct-hint" role={valid || selectedPlayers.length < 5 ? 'status' : 'alert'}>
+          {saved ? 'Rotación guardada en la partida.' :
+            selectedPlayers.length < 5 ? 'Convoca al menos cinco jugadores para distribuir el tiempo.' :
+            selectedPlayers.length === 5 ? 'Los cinco deben jugar todos los minutos. Convoca un sexto para poder ajustar su carga.' :
+            valid ? 'Arrastra los deslizadores. Los minutos se compensan entre jugadores de ese periodo y el total se mantiene válido.' :
+            'Cada periodo debe sumar exactamente cinco jugadores en pista. Elige un preset para equilibrarlo.'}
+        </p>
+      </Card>
+      <Card title="ANÁLISIS" note="CARGA DE MINUTOS">
+        <h3 className="ct-subheading">Reparto total</h3>
+        {selectedPlayers.map(player => <div className="ct-load-row" key={player.id}>
+          <span title={nameOf(player)}>{player.lastName}</span>
+          <div><i style={{width: ((effective[player.id] ?? []).reduce((s,v)=>s+v,0)/(periodCount*periodMinutes)*100)+'%'}}/></div>
+          <b>{(effective[player.id] ?? []).reduce((s,v)=>s+v,0)}'</b>
+        </div>)}
+        {selectedPlayers.length === 0 && <Empty text="Convoca jugadores para ver y comparar su carga."/>}
+        <p className="ct-hint">La carga es el tiempo previsto, no una predicción de fatiga.</p>
+      </Card>
     </div>
   </>
 }
