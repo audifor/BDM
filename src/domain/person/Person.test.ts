@@ -3,6 +3,27 @@ import { countryIdFromString, personIdFromString } from '@/domain/ids'
 import { createPerson } from './Person'
 
 describe('Person', () => {
+  it('keeps birthplace and language identity independently of nationality', () => {
+    const person = createPerson({
+      id: personIdFromString('person:language-test'),
+      firstName: 'Alex',
+      lastName: 'Silva',
+      nationalityIds: [countryIdFromString('country-es')],
+      birthPlaceId: 'place:BR',
+      currentResidencePlaceId: 'place:ESP',
+      namingCultureCode: 'pt-BR',
+      languages: [{ languageCode: 'pt', proficiency: 100, isNative: true }, { languageCode: 'es', proficiency: 83, isNative: false }],
+      physical: { heightCm: 193, wingspanCm: 203 },
+      profileRefs: [],
+    })
+    expect(person.birthPlaceId).toBe('place:BR')
+    expect(person.currentResidencePlaceId).toBe('place:ESP')
+    expect(person.namingCultureCode).toBe('pt-BR')
+    expect(person.languages?.map(value => value.languageCode)).toEqual(['pt', 'es'])
+    expect(person.physical).toEqual({ heightCm: 193, wingspanCm: 203 })
+    expect(() => createPerson({ ...person, languages: [{ languageCode: 'es', proficiency: 101, isNative: false }] })).toThrow(RangeError)
+  })
+
   it('stores shared human identity once while referencing multiple role profiles', () => {
     const person = createPerson({
       id: personIdFromString('person:shared-1'),

@@ -103,10 +103,21 @@ pub struct WorldDbGameBootstrapTeamV1 {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapPersonPhysicalV1 {
-    height_cm: f64,
-    weight_kg: f64,
-    wingspan_cm: f64,
-    standing_reach_cm: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    height_cm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    weight_kg: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    wingspan_cm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    standing_reach_cm: Option<f64>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapPersonLanguageV1 {
+    language_code: String,
+    proficiency: i64,
+    is_native: bool,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -117,6 +128,14 @@ pub struct WorldDbGameBootstrapPersonV1 {
     gender: Option<String>,
     date_of_birth: Option<String>,
     nationality_ids: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    birth_place_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    current_residence_place_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    naming_culture_code: Option<String>,
+    languages: Vec<WorldDbGameBootstrapPersonLanguageV1>,
     #[serde(skip_serializing_if = "Option::is_none")]
     physical: Option<WorldDbGameBootstrapPersonPhysicalV1>,
 }
@@ -671,21 +690,51 @@ fn query_person(
     connection: &Connection,
     person_id: &str,
 ) -> Result<WorldDbGameBootstrapPersonV1, String> {
-    let (sex, date_of_birth) = connection
+    let (sex, date_of_birth, birth_place_id) = connection
         .query_row(
-            "SELECT sex,birth_date FROM person WHERE person_id=?1",
+            "SELECT sex,birth_date,birth_place_id FROM person WHERE person_id=?1",
             [person_id],
             |row| {
                 Ok((
                     row.get::<_, Option<String>>(0)?,
                     row.get::<_, Option<String>>(1)?,
+                    row.get::<_, Option<String>>(2)?,
                 ))
             },
         )
         .map_err(|error| format!("Unable to load World DB person {person_id}: {error}"))?;
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
-    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
+    let current_residence_place_id: Option<String> = connection.query_row(
+        "SELECT place_id FROM person_residence_history WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,valid_from DESC,person_residence_id LIMIT 1",
+        [person_id],
+        |row| row.get(0),
+    ).optional().map_err(|error| format!("Unable to load World DB residence {person_id}: {error}"))?;
+    // Older WorldDB snapshots may not have the optional naming-context extension.
+    let naming_context_exists: bool = connection.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='person_naming_context')",
+        [],
+        |row| row.get::<_, i64>(0),
+    ).map_err(|error| format!("Unable to inspect naming context schema: {error}"))? != 0;
+    let naming_culture_code: Option<String> = if naming_context_exists {
+        connection.query_row(
+            "SELECT naming_culture_code FROM person_naming_context WHERE person_id=?1",
+            [person_id],
+            |row| row.get(0),
+        ).optional().map_err(|error| format!("Unable to read naming culture for {person_id}: {error}"))?
+    } else {
+        None
+    };
+    let mut language_stmt = connection.prepare("SELECT language_code,proficiency,is_native FROM person_language WHERE person_id=?1 ORDER BY language_code").map_err(|error| format!("Unable to query World DB languages {person_id}: {error}"))?;
+    let languages: Vec<WorldDbGameBootstrapPersonLanguageV1> = language_stmt.query_map([person_id], |row| {
+        Ok(WorldDbGameBootstrapPersonLanguageV1 {
+            language_code: row.get(0)?,
+            proficiency: row.get(1)?,
+            is_native: row.get::<_, i64>(2)? != 0,
+        })
+    }).map_err(|error| format!("Unable to read World DB languages {person_id}: {error}"))?
+      .collect::<Result<Vec<_>, _>>().map_err(|error| format!("Unable to decode World DB languages {person_id}: {error}"))?;
+    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| if height_cm.is_none() && weight_kg.is_none() && wingspan_cm.is_none() && standing_reach_cm.is_none() { None } else { Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm, weight_kg, wingspan_cm, standing_reach_cm }) });
     Ok(WorldDbGameBootstrapPersonV1 {
         person_id: person_id.to_owned(),
         first_name,
@@ -695,6 +744,10 @@ fn query_person(
             .map(|value| gender_from_ecosystem(Some(value))),
         date_of_birth,
         nationality_ids: nationalities,
+        birth_place_id,
+        current_residence_place_id,
+        naming_culture_code,
+        languages,
         physical,
     })
 }
@@ -1073,6 +1126,21 @@ mod tests {
         assert!(query_organization_investor_interest(&connection, &[])
             .unwrap()
             .is_empty());
+    }
+
+    #[test]
+    fn partial_physical_serialization_omits_unknown_values() {
+        let physical = WorldDbGameBootstrapPersonPhysicalV1 {
+            height_cm: Some(193.0),
+            weight_kg: None,
+            wingspan_cm: Some(203.0),
+            standing_reach_cm: None,
+        };
+        let value = serde_json::to_value(physical).unwrap();
+        assert_eq!(value["heightCm"], 193.0);
+        assert_eq!(value["wingspanCm"], 203.0);
+        assert!(value.get("weightKg").is_none());
+        assert!(value.get("standingReachCm").is_none());
     }
 
     #[test]
