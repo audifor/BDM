@@ -103,9 +103,13 @@ pub struct WorldDbGameBootstrapTeamV1 {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapPersonPhysicalV1 {
+    #[serde(skip_serializing_if = "Option::is_none")]
     height_cm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     weight_kg: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     wingspan_cm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     standing_reach_cm: Option<f64>,
 }
 #[derive(Serialize)]
