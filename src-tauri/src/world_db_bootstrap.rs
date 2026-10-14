@@ -129,8 +129,11 @@ pub struct WorldDbGameBootstrapPersonV1 {
     date_of_birth: Option<String>,
     nationality_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     birth_place_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     current_residence_place_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     naming_culture_code: Option<String>,
     languages: Vec<WorldDbGameBootstrapPersonLanguageV1>,
     #[serde(skip_serializing_if = "Option::is_none")]
