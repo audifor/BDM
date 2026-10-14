@@ -103,10 +103,10 @@ pub struct WorldDbGameBootstrapTeamV1 {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapPersonPhysicalV1 {
-    height_cm: f64,
-    weight_kg: f64,
-    wingspan_cm: f64,
-    standing_reach_cm: f64,
+    height_cm: Option<f64>,
+    weight_kg: Option<f64>,
+    wingspan_cm: Option<f64>,
+    standing_reach_cm: Option<f64>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -685,7 +685,7 @@ fn query_person(
         .map_err(|error| format!("Unable to load World DB person {person_id}: {error}"))?;
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
-    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
+    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| if height_cm.is_none() && weight_kg.is_none() && wingspan_cm.is_none() && standing_reach_cm.is_none() { None } else { Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm, weight_kg, wingspan_cm, standing_reach_cm }) });
     Ok(WorldDbGameBootstrapPersonV1 {
         person_id: person_id.to_owned(),
         first_name,
