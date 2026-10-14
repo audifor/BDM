@@ -11,12 +11,14 @@ describe('Person', () => {
       nationalityIds: [countryIdFromString('country-es')],
       birthPlaceId: 'place:BR',
       currentResidencePlaceId: 'place:ESP',
+      namingCultureCode: 'pt-BR',
       languages: [{ languageCode: 'pt', proficiency: 100, isNative: true }, { languageCode: 'es', proficiency: 83, isNative: false }],
       physical: { heightCm: 193, wingspanCm: 203 },
       profileRefs: [],
     })
     expect(person.birthPlaceId).toBe('place:BR')
     expect(person.currentResidencePlaceId).toBe('place:ESP')
+    expect(person.namingCultureCode).toBe('pt-BR')
     expect(person.languages?.map(value => value.languageCode)).toEqual(['pt', 'es'])
     expect(person.physical).toEqual({ heightCm: 193, wingspanCm: 203 })
     expect(() => createPerson({ ...person, languages: [{ languageCode: 'es', proficiency: 101, isNative: false }] })).toThrow(RangeError)
