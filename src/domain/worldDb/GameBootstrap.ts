@@ -57,7 +57,7 @@ export interface WorldDbGameBootstrapPersonV1 {
   readonly gender?: 'male' | 'female'
   readonly dateOfBirth?: string
   readonly nationalityIds: readonly string[]
-  readonly physical?: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
+  readonly physical?: { readonly heightCm?: number; readonly weightKg?: number; readonly wingspanCm?: number; readonly standingReachCm?: number }
 }
 export interface WorldDbGameBootstrapDevelopmentDimensionV1 { readonly dimensionCode: string; readonly ceiling: number; readonly growthRate: number; readonly declineSensitivity: number }
 export interface WorldDbGameBootstrapPlayerV1 {
