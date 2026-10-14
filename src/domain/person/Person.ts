@@ -26,6 +26,7 @@ export interface Person {
   readonly dateOfBirth?: GameDate
   readonly nationalityIds: readonly CountryId[]
   readonly birthPlaceId?: string
+  readonly currentResidencePlaceId?: string
   readonly languages?: readonly { readonly languageCode: string; readonly proficiency: number; readonly isNative: boolean }[]
   readonly physical?: PersonPhysicalProfile
   readonly profileRefs: readonly PersonProfileRef[]
@@ -57,6 +58,7 @@ export function createPerson(input: CreatePersonInput): Person {
     ...(input.dateOfBirth === undefined ? {} : { dateOfBirth: parseGameDate(input.dateOfBirth) }),
     nationalityIds: nationalities,
     ...(input.birthPlaceId === undefined ? {} : { birthPlaceId: requireNonEmptyString(input.birthPlaceId, 'Person birthPlaceId') }),
+    ...(input.currentResidencePlaceId === undefined ? {} : { currentResidencePlaceId: requireNonEmptyString(input.currentResidencePlaceId, 'Person currentResidencePlaceId') }),
     ...(input.languages === undefined ? {} : { languages: input.languages.map(language => {
       const code = requireNonEmptyString(language.languageCode, 'Person languageCode')
       if (!Number.isInteger(language.proficiency) || language.proficiency < 0 || language.proficiency > 100) throw new RangeError('Person language proficiency must be 0..100')
