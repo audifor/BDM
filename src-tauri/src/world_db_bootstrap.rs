@@ -130,6 +130,7 @@ pub struct WorldDbGameBootstrapPersonV1 {
     nationality_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     birth_place_id: Option<String>,
+    current_residence_place_id: Option<String>,
     languages: Vec<WorldDbGameBootstrapPersonLanguageV1>,
     #[serde(skip_serializing_if = "Option::is_none")]
     physical: Option<WorldDbGameBootstrapPersonPhysicalV1>,
@@ -700,6 +701,11 @@ fn query_person(
         .map_err(|error| format!("Unable to load World DB person {person_id}: {error}"))?;
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
+    let current_residence_place_id: Option<String> = connection.query_row(
+        "SELECT place_id FROM person_residence_history WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,valid_from DESC,person_residence_id LIMIT 1",
+        [person_id],
+        |row| row.get(0),
+    ).optional().map_err(|error| format!("Unable to load World DB residence {person_id}: {error}"))?;
     let mut language_stmt = connection.prepare("SELECT language_code,proficiency,is_native FROM person_language WHERE person_id=?1 ORDER BY language_code").map_err(|error| format!("Unable to query World DB languages {person_id}: {error}"))?;
     let languages: Vec<WorldDbGameBootstrapPersonLanguageV1> = language_stmt.query_map([person_id], |row| {
         Ok(WorldDbGameBootstrapPersonLanguageV1 {
@@ -720,6 +726,7 @@ fn query_person(
         date_of_birth,
         nationality_ids: nationalities,
         birth_place_id,
+        current_residence_place_id,
         languages,
         physical,
     })
