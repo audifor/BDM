@@ -131,6 +131,7 @@ pub struct WorldDbGameBootstrapPersonV1 {
     #[serde(skip_serializing_if = "Option::is_none")]
     birth_place_id: Option<String>,
     current_residence_place_id: Option<String>,
+    naming_culture_code: Option<String>,
     languages: Vec<WorldDbGameBootstrapPersonLanguageV1>,
     #[serde(skip_serializing_if = "Option::is_none")]
     physical: Option<WorldDbGameBootstrapPersonPhysicalV1>,
@@ -706,6 +707,21 @@ fn query_person(
         [person_id],
         |row| row.get(0),
     ).optional().map_err(|error| format!("Unable to load World DB residence {person_id}: {error}"))?;
+    // Older WorldDB snapshots may not have the optional naming-context extension.
+    let naming_context_exists: bool = connection.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='person_naming_context')",
+        [],
+        |row| row.get::<_, i64>(0),
+    ).map_err(|error| format!("Unable to inspect naming context schema: {error}"))? != 0;
+    let naming_culture_code: Option<String> = if naming_context_exists {
+        connection.query_row(
+            "SELECT naming_culture_code FROM person_naming_context WHERE person_id=?1",
+            [person_id],
+            |row| row.get(0),
+        ).optional().map_err(|error| format!("Unable to read naming culture for {person_id}: {error}"))?
+    } else {
+        None
+    };
     let mut language_stmt = connection.prepare("SELECT language_code,proficiency,is_native FROM person_language WHERE person_id=?1 ORDER BY language_code").map_err(|error| format!("Unable to query World DB languages {person_id}: {error}"))?;
     let languages: Vec<WorldDbGameBootstrapPersonLanguageV1> = language_stmt.query_map([person_id], |row| {
         Ok(WorldDbGameBootstrapPersonLanguageV1 {
@@ -727,6 +743,7 @@ fn query_person(
         nationality_ids: nationalities,
         birth_place_id,
         current_residence_place_id,
+        naming_culture_code,
         languages,
         physical,
     })
