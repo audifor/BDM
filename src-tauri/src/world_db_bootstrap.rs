@@ -1080,6 +1080,21 @@ mod tests {
     }
 
     #[test]
+    fn partial_physical_serialization_omits_unknown_values() {
+        let physical = WorldDbGameBootstrapPersonPhysicalV1 {
+            height_cm: Some(193.0),
+            weight_kg: None,
+            wingspan_cm: Some(203.0),
+            standing_reach_cm: None,
+        };
+        let value = serde_json::to_value(physical).unwrap();
+        assert_eq!(value["heightCm"], 193.0);
+        assert_eq!(value["wingspanCm"], 203.0);
+        assert!(value.get("weightKg").is_none());
+        assert!(value.get("standingReachCm").is_none());
+    }
+
+    #[test]
     fn production_spain_slice_smoke_is_opt_in_and_read_only() {
         let Some(database_path) = std::env::var_os("BDM_WORLD_DB_PATH") else {
             return;
