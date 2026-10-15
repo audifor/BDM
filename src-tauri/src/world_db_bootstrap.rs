@@ -1114,6 +1114,57 @@ mod tests {
     }
 
     #[test]
+    fn person_query_preserves_optional_p0d_provenance_and_legacy_sqlite_compatibility() {
+        let connection = Connection::open_in_memory().expect("test SQLite");
+        connection.execute_batch(
+            "CREATE TABLE person(person_id TEXT PRIMARY KEY,sex TEXT,birth_date TEXT);
+             CREATE TABLE person_name(
+                 person_name_id INTEGER PRIMARY KEY,person_id TEXT,
+                 given_name TEXT,family_name TEXT,is_primary INTEGER,
+                 is_preferred INTEGER,valid_to TEXT
+             );
+             CREATE TABLE person_nationality(
+                 person_nationality_id INTEGER PRIMARY KEY,person_id TEXT,place_id TEXT,
+                 is_primary INTEGER,valid_to TEXT
+             );
+             CREATE TABLE person_physical_snapshot(
+                 physical_snapshot_id INTEGER PRIMARY KEY,person_id TEXT,
+                 height_cm REAL,weight_kg REAL,wingspan_cm REAL,standing_reach_cm REAL,
+                 effective_date TEXT
+             );
+             INSERT INTO person VALUES('test:person','F','2000-01-01');
+             INSERT INTO person_name VALUES(1,'test:person','Ayan','Hassan',1,1,NULL);"
+        ).expect("legacy fixture");
+        let legacy = query_person(&connection, "test:person").expect("legacy person");
+        assert_eq!(legacy.first_name, "Ayan");
+        assert_eq!(legacy.last_name, "Hassan");
+        assert!(legacy.name_component.is_none());
+
+        connection.execute_batch(
+            "CREATE TABLE person_name_component_provenance (
+                 person_id TEXT PRIMARY KEY,
+                 naming_country_code TEXT,given_source_country TEXT,
+                 second_source_country TEXT,second_component_kind TEXT,
+                 verified_father_logical_key TEXT
+             );
+             INSERT INTO person_name_component_provenance VALUES(
+                'test:person','SO','SO','SO',
+                'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME',NULL
+             );"
+        ).expect("p0d source fixture");
+        let p0d = query_person(&connection, "test:person").expect("p0d person");
+        let provenance = p0d.name_component.expect("P0D semantic source");
+        assert_eq!(provenance.naming_country_code, "SO");
+        assert_eq!(provenance.given_source_country, "SO");
+        assert_eq!(provenance.second_source_country, "SO");
+        assert_eq!(
+            provenance.second_component_kind,
+            "PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME"
+        );
+        assert!(provenance.verified_father_logical_key.is_none());
+    }
+
+    #[test]
     fn production_spain_slice_smoke_is_opt_in_and_read_only() {
         let Some(database_path) = std::env::var_os("BDM_WORLD_DB_PATH") else {
             return;
