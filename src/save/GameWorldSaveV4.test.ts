@@ -42,6 +42,33 @@ it('copies Save history records without requiring a collection-sized JSON string
   expect(saved!.payload.staffPeople[0]).not.toBe(Object.values(world.staffPeopleById)[0])
 })
 
+describe('P0D name semantic provenance through Save V4', () => {
+  it('preserves a provisional second component and does not invent a father on reload', () => {
+    const base = createNewGame()
+    const target = Object.values(base.personsById)[0]!
+    const nameComponent = {
+      namingCountryCode: 'ER',
+      givenSourceCountry: 'ER',
+      secondSourceCountry: 'ER',
+      secondComponentKind: 'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME' as const,
+    }
+    const world = updateGameWorld(base, {
+      persons: Object.values(base.personsById).map((person) => person.id === target.id
+        ? createPerson({ ...person, nameComponent })
+        : person),
+    })
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(
+      serializeGameWorldV4(world, savedAt),
+    )) as unknown)
+    expect(restored.personsById[target.id]?.nameComponent).toEqual(nameComponent)
+    expect(restored.personsById[target.id]?.nameComponent?.verifiedFatherLogicalKey).toBeUndefined()
+
+    // Legacy GameWorld saves without nameComponent remain valid.
+    const legacy = deserializeGameWorldV4(serializeGameWorldV4(base, savedAt))
+    expect(legacy.personsById[target.id]?.nameComponent).toBeUndefined()
+  })
+})
+
 describe('BS14B OrganizationKnowledge persistence', () => {
   it('retains current scouting knowledge through Save V4', () => {
     const base = createNewGame()
