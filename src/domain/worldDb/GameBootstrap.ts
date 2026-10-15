@@ -1,4 +1,5 @@
 import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
+import { validateNameComponent, type PersonNameComponentProvenance } from '@/domain/person'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
 
 /** Raw physical source facts. No generated anatomy, entitlement, condition or economy. */
@@ -54,6 +55,7 @@ export interface WorldDbGameBootstrapPersonV1 {
   readonly personId: string
   readonly firstName: string
   readonly lastName: string
+  readonly nameComponent?: PersonNameComponentProvenance
   readonly gender?: 'male' | 'female'
   readonly dateOfBirth?: string
   readonly nationalityIds: readonly string[]
@@ -133,6 +135,12 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   for (const section of value.organizationSections as Record<string, unknown>[]) if (!organizationIds.has(section.organizationId as string)) throw new TypeError(`World DB bootstrap organization section references a missing organization: ${String(section.sectionId)}`)
   for (const team of value.teams as Record<string, unknown>[]) { const section = sectionsById.get(team.organizationSectionId as string); if (!organizationIds.has(team.organizationId as string) || section === undefined || section.organizationId !== team.organizationId) throw new TypeError(`World DB bootstrap team organization relation is invalid: ${String(team.teamId)}`) }
   assertArray(value.persons, 'persons', (entry) => { for (const field of ['personId', 'firstName', 'lastName'] as const) requireText(entry[field], `World DB bootstrap person ${field}`); if (entry.gender !== undefined) requireText(entry.gender, 'World DB bootstrap person gender'); if (entry.dateOfBirth !== undefined) requireText(entry.dateOfBirth, 'World DB bootstrap person dateOfBirth'); if (!Array.isArray(entry.nationalityIds)) throw new TypeError('World DB bootstrap person nationalityIds must be an array'); if (entry.physical !== undefined && !isRecord(entry.physical)) throw new TypeError('World DB bootstrap person physical must be an object') }, 'personId')
+  for (const person of value.persons as Record<string, unknown>[]) {
+    if (person.nameComponent !== undefined) {
+      if (!isRecord(person.nameComponent)) throw new TypeError('World DB person name provenance must be an object')
+      validateNameComponent(person.nameComponent as unknown as PersonNameComponentProvenance)
+    }
+  }
   assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); assertExactKeys(entry.ratings, PLAYER_TRUTH_RATING_KEYS, 'ratings'); assertExactKeys(entry.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'tendencies'); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array') }, 'playerId')
   assertArray(value.staffProfiles, 'staffProfiles', (entry) => { for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`); if (!isRecord(entry.attributes) || !Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete') }, 'staffId')
   const profiledPersonIds = new Set<string>([
