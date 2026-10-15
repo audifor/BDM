@@ -110,10 +110,23 @@ pub struct WorldDbGameBootstrapPersonPhysicalV1 {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapPersonNameComponentV1 {
+    naming_country_code: String,
+    given_source_country: String,
+    second_source_country: String,
+    second_component_kind: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    verified_father_logical_key: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapPersonV1 {
     person_id: String,
     first_name: String,
     last_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name_component: Option<WorldDbGameBootstrapPersonNameComponentV1>,
     gender: Option<String>,
     date_of_birth: Option<String>,
     nationality_ids: Vec<String>,
@@ -684,12 +697,37 @@ fn query_person(
         )
         .map_err(|error| format!("Unable to load World DB person {person_id}: {error}"))?;
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
+    // DDL-GENERATION-02 is optional in existing WorldDBs. A missing table
+    // keeps the exact old bootstrap behavior; a malformed present table fails.
+    let has_name_component = connection.query_row(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='person_name_component_provenance'",
+        [], |_| Ok(())
+    ).optional()
+        .map_err(|error| format!("Unable to inspect WorldDB name-component table: {error}"))?
+        .is_some();
+    let name_component = if has_name_component {
+        connection.query_row(
+            "SELECT naming_country_code, given_source_country, second_source_country,
+                    second_component_kind, verified_father_logical_key
+             FROM person_name_component_provenance WHERE person_id=?1",
+            [person_id],
+            |row| Ok(WorldDbGameBootstrapPersonNameComponentV1 {
+                naming_country_code: row.get(0)?,
+                given_source_country: row.get(1)?,
+                second_source_country: row.get(2)?,
+                second_component_kind: row.get(3)?,
+                verified_father_logical_key: row.get(4)?,
+            }),
+        ).optional()
+            .map_err(|error| format!("Unable to load WorldDB name provenance {person_id}: {error}"))?
+    } else { None };
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
     let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
     Ok(WorldDbGameBootstrapPersonV1 {
         person_id: person_id.to_owned(),
         first_name,
         last_name,
+        name_component,
         gender: sex
             .as_deref()
             .map(|value| gender_from_ecosystem(Some(value))),
