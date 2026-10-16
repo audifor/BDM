@@ -10,7 +10,7 @@ export const MEDICAL_TAB_LABELS: Readonly<Record<MedicalWorkspaceTabId, string>>
   overview: 'Overview',
   injured: 'Injured',
   recovery: 'Recovery',
-  risk: 'Risk & Load',
+  risk: 'Risk',
   history: 'History',
   staff: 'Staff',
 }
