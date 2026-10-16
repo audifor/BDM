@@ -80,15 +80,28 @@ function ReturnToPlayBoard({
     <section className="medical-workspace__panel ng-holo-panel medical-workspace__rtp" aria-label="Return-to-Play review">
       <p className="medical-workspace__eyebrow">RETURN-TO-PLAY REVIEW</p>
       {rows.map((row) => (
-        <article className="medical-workspace__rtp-row" key={row.injuryId}>
-          <div>
-            <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">{row.playerName}</button>
-            <p>{row.injuryLabel} · injured {row.injuredOnLabel} · projected return {row.expectedReturnLabel} · review due {row.reviewDueLabel} · Career Fatigue {row.fatigue}</p>
-            {row.recommendationSummary === undefined ? <p>No current Staff recommendation.</p> : (
-              <p>Advice from {row.staffName} ({row.staffQuality}/100): {row.recommendationSummary}</p>
-            )}
-            {row.reviewHistory.map((review, index) => <p key={`${review.dateLabel}-${index}`}>Prior review {review.dateLabel}: {review.decision} · {review.actorLabel}</p>)}
-            {row.fitnessTestRequired ? <p>Fitness test required · latest result: {row.fitnessTestResult ?? 'not tested'}</p> : <p>Fitness test not required for this injury.</p>}
+        <article className="medical-workspace__rtp-row medical-cs__rtp-card" key={row.injuryId}>
+          <div className="medical-cs__rtp-content">
+            <div className="medical-cs__rtp-heading">
+              <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">{row.playerName}</button>
+              <span>{row.injuryLabel}</span>
+              <b>REVIEW DUE</b>
+            </div>
+            <div className="medical-cs__rtp-timeline" aria-label="Recorded injury review milestones">
+              <div><small>INJURY</small><strong>{row.injuredOnLabel}</strong></div>
+              <div><small>PROJECTED RETURN</small><strong>{row.expectedReturnLabel}</strong></div>
+              <div><small>REVIEW DUE</small><strong>{row.reviewDueLabel}</strong></div>
+              <div><small>FITNESS TEST</small><strong>{row.fitnessTestRequired ? row.fitnessTestResult ?? 'REQUIRED' : 'NOT REQUIRED'}</strong></div>
+            </div>
+            <div className="medical-cs__rtp-meta">
+              <span>CAREER FATIGUE <b>{row.fatigue}/100</b></span>
+              {row.recommendationSummary && <span>STAFF: <b>{row.staffName} · {row.staffQuality}/100</b></span>}
+            </div>
+            {(row.recommendationSummary || row.reviewHistory.length > 0) && <details className="medical-cs__rtp-details">
+              <summary>CLINICAL ADVICE & REVIEW HISTORY</summary>
+              {row.recommendationSummary && <p>{row.recommendationSummary}</p>}
+              {row.reviewHistory.map((review, index) => <p key={index}>{review.dateLabel} · {review.decision} · {review.actorLabel}</p>)}
+            </details>}
           </div>
           <div className="medical-workspace__rtp-actions">
             {row.fitnessTestRequired && !row.canClear ? <button onClick={() => onFitnessTest(row.injuryId)} type="button">RUN FITNESS TEST</button> : null}
@@ -409,33 +422,8 @@ function StaffBoard({
   readonly rows: readonly MedicalStaffRow[]
   readonly onOpenStaff: (staffPersonId: StaffPersonId) => void
 }) {
-  if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No medical staff assigned to this team.</p>
-  }
-
-  return (
-    <>
-    <MedicalStaffVisual rows={rows} onOpenStaff={onOpenStaff} />
-    <div className="medical-workspace__panel ng-holo-panel">
-      <NgPrecisionTable
-        className="medical-workspace__table"
-        columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.staffPersonId })), [
-          ngCol('name', 'Staff', (row) => (
-            <button className="medical-workspace__link" onClick={() => onOpenStaff(row.staffPersonId)} type="button">
-              {row.name}
-            </button>
-          ), { value: (row) => row.name }),
-          ngCol('role', 'Role', (row) => row.roleLabel, { value: (row) => row.roleLabel }),
-          ngCol('proficiency', 'Proficiency', (row) => row.proficiency, { numeric: true, value: (row) => row.proficiency }),
-          ngCol('workload', 'Workload', (row) => row.workloadLabel, { value: (row) => row.workloadLabel }),
-          ngCol('utilization', 'Utilization', (row) => row.utilizationLabel, { value: (row) => row.utilizationLabel }),
-        ])}
-        gridId="ng-medical-staff"
-        rows={rows.map((row) => ({ ...row, id: row.staffPersonId }))}
-      />
-    </div>
-    </>
-  )
+  if (rows.length === 0) return <p className="medical-workspace__empty">No medical staff assigned to this team.</p>
+  return <MedicalStaffVisual rows={rows} onOpenStaff={onOpenStaff} />
 }
 
 export function MedicalWorkspace() {
