@@ -72,7 +72,7 @@ export function TacticsWorkspace() {
   const plan = useTacticalPlanStore((state) => state.plan)
   const setPlan = useTacticalPlanStore((state) => state.setPlan)
   const resetPlan = useTacticalPlanStore((state) => state.reset)
-  const [activeTab, setActiveTab] = useState<TacticsPcbTab>('board')
+  const [activeTab, setActiveTab] = useState<Exclude<TacticsPcbTab, 'designer'>>('board')
   const [boardMode, setBoardMode] = useState<'prepare' | 'design' | 'analyse'>('prepare')
   const { openEntity } = useNgWorkspaceNavigation()
 
@@ -129,7 +129,7 @@ export function TacticsWorkspace() {
         tabs={
           <WorkspaceTabs
             activeTabId={activeTab}
-            onTabSelect={(tabId) => setActiveTab(tabId as TacticsPcbTab)}
+            onTabSelect={(tabId) => setActiveTab(tabId as Exclude<TacticsPcbTab, 'designer'>)}
             tabs={tabs}
           />
         }
