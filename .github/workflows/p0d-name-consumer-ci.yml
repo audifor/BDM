@@ -1,0 +1,45 @@
+name: BDM P0D Name Consumer Focal
+on:
+  push:
+    branches:
+      - feat/p0d-worlddb-name-provenance-consumer
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p0d-typescript:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Canonical Person name semantics
+        run: npx vitest run src/domain/person/Person.test.ts --maxWorkers=1 --no-file-parallelism
+      - name: WorldDB bootstrap provenance -> GameWorld -> Save V4
+        run: npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'preserves source-backed name semantics' --maxWorkers=1 --no-file-parallelism --testTimeout=30000
+      - name: Save V4 P0D provenance and backward compatibility
+        run: npx vitest run src/save/GameWorldSaveV4.test.ts -t 'P0D name semantic provenance' --maxWorkers=1 --no-file-parallelism --testTimeout=30000
+  p0d-rust:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: System dependencies for Tauri
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Check Rust formatting
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+      - name: Check Tauri Rust
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+      - name: Query optional name-component table in Rust SQLite
+        run: cargo test --manifest-path src-tauri/Cargo.toml person_query_preserves_optional_p0d_provenance_and_legacy_sqlite_compatibility
