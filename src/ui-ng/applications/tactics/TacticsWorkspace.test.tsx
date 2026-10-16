@@ -74,6 +74,31 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.ct-page__head')).toBeNull()
   })
 
+  it('opens a Courtside role popover with player-specific fit and real duties', () => {
+    mountTacticsWorkspace()
+    const first = document.querySelector('.tactics-board-player') as HTMLElement
+    expect(first).toBeTruthy()
+    fireEvent.contextMenu(first, {clientX:400, clientY:300})
+    const dialog = screen.getByRole('dialog', {name:'Roles tácticos del jugador'})
+    expect(dialog).toBeInTheDocument()
+    expect(dialog.textContent).toContain('ENCAJE SEGÚN RATINGS REALES')
+    expect(dialog.textContent).toContain('TAREA DEL JUGADOR')
+    expect(dialog.querySelectorAll('.tactics-board-context-item')).toHaveLength(8)
+    expect(dialog.querySelector('.tactics-board-context-bar')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', {name:'Cerrar roles tácticos'}))
+    expect(screen.queryByRole('dialog', {name:'Roles tácticos del jugador'})).not.toBeInTheDocument()
+  })
+
+  it('uses light/dark-adaptive vector colors for all designer movement types', () => {
+    mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
+    const court = document.querySelector('.pcb-tactics-creator__court')!
+    expect(court.querySelector('#arrow-white path')?.getAttribute('fill')).toContain('--ct-draw-cut')
+    expect(court.querySelector('#arrow-blue path')?.getAttribute('fill')).toContain('--ct-draw-dribble')
+    expect(court.querySelector('#arrow-yellow path')?.getAttribute('fill')).toContain('--ct-draw-pass')
+    expect(court.querySelector('g[stroke*="--ct-draw-court"]')).toBeTruthy()
+  })
+
   it('keeps all six offensive settings and the save action accessible on Pizarra', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ATAQUE' }))

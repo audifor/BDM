@@ -254,32 +254,27 @@ const ADJACENT_POSITIONS = {
   C: ["PF"],
 };
 
+/**
+ * Actual position-specific fit using canonical truth ratings projected by
+ * PcbTacticalRatingBridge. No overall-based replacement scores are permitted.
+ * null means there is insufficient role data, not a 70% placeholder.
+ */
 export const calcRoleSuitability = (player, role, position, duty = "Apoyo") => {
-  if (!player || !role) return 0;
+  if (!player || !role || !ROLE_WEIGHTS[role]) return null;
   const attrs = getAttrMap(player);
-  const weights = ROLE_WEIGHTS[role] || {};
-  const baseRole = calcWeightedScore(attrs, weights);
-  const dutyWeights = DUTY_WEIGHTS[duty] || DUTY_WEIGHTS.Apoyo;
-  const dutyScore = calcWeightedScore(attrs, dutyWeights);
+  const baseRole = calcWeightedScore(attrs, ROLE_WEIGHTS[role]);
+  if (baseRole === null) return null;
+  const dutyScore = calcWeightedScore(attrs, DUTY_WEIGHTS[duty] || DUTY_WEIGHTS.Apoyo);
 
-  let base = baseRole !== null ? baseRole : getPlayerOverall(player);
-  const overall = getPlayerOverall(player);
-  let score = base * 0.5 + overall * 0.4 + (dutyScore !== null ? dutyScore : overall) * 0.1;
-
+  let score = baseRole * 0.85 + (dutyScore ?? baseRole) * 0.15;
   const posKey = position ? String(position).toUpperCase() : "";
   const playerPositions = parsePositions(player?.data?.bio?.pos || player?.position || "");
   if (posKey) {
-    let factor = 1;
-    if (playerPositions.includes(posKey)) {
-      factor = 1.2;
-    } else if (playerPositions.some((p) => (ADJACENT_POSITIONS[p] || []).includes(posKey))) {
-      factor = 1.05;
-    }
-    score *= factor;
+    if (playerPositions.includes(posKey)) score *= 1.05;
+    else if (playerPositions.some(p => (ADJACENT_POSITIONS[p] || []).includes(posKey))) score *= 0.96;
+    else score *= 0.85;
   }
-
-  const clamped = Math.max(40, Math.min(97, Math.round(score)));
-  return clamped;
+  return Math.max(0, Math.min(100, Math.round(score)));
 };
 
 

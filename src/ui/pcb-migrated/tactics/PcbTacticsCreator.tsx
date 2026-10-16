@@ -141,12 +141,12 @@ function toLocalPlaybook(playbook: DomainPlaybook): LocalPlaybook {
 // --- TEMA VISUAL ---
 const THEME = {
   bg: '#1e293b',
-  courtLines: '#64748b',
-  moveColor: '#ffffff',
-  passColor: '#fbbf24',
-  dribbleColor: '#38bdf8',
-  screenColor: '#ef4444',
-  defColor: '#ef4444',
+  courtLines: 'var(--ct-draw-court, #64748b)',
+  moveColor: 'var(--ct-draw-cut, #ffffff)',
+  passColor: 'var(--ct-draw-pass, #fbbf24)',
+  dribbleColor: 'var(--ct-draw-dribble, #38bdf8)',
+  screenColor: 'var(--ct-draw-screen, #ef4444)',
+  defColor: 'var(--ct-draw-defense, #ef4444)',
 };
 
 // --- DATOS INICIALES ---
@@ -573,7 +573,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                 <g stroke={THEME.courtLines} strokeWidth="2" fill="none">
                     <rect x="0" y="0" width="500" height="470" /> <rect x="170" y="0" width="160" height="190" />
                     <path d="M 330,190 A 80,80 0 0,1 170,190" /> <path d="M 170,190 A 80,80 0 0,0 330,190" strokeDasharray="10,10" />
-                    <line x1="220" y1="40" x2="280" y2="40" strokeWidth="3" stroke="white"/> <circle cx="250" cy="52.5" r="7.5" stroke="#f97316" strokeWidth="2"/>
+                    <line x1="220" y1="40" x2="280" y2="40" strokeWidth="3" stroke="var(--ct-draw-backboard,#ffffff)"/> <circle cx="250" cy="52.5" r="7.5" stroke="#f97316" strokeWidth="2"/>
                     <path d="M 30,0 L 30,140 A 237.5,237.5 0 0,0 470,140 L 470,0" /> <path d="M 190,470 A 60,60 0 0,1 310,470" />
                 </g>
                 {labMode === 'lab' && labTarget && <g pointerEvents="none" aria-label="Objetivo táctico">
@@ -588,7 +588,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                     else {d=pointsToCurvedPath(path.points); color=THEME.moveColor; marker='url(#arrow-white)';}
                     return <g key={path.id}><path d={d} stroke={color} strokeWidth="3" fill="none" strokeDasharray={dash} markerEnd={marker} strokeLinecap="round" strokeLinejoin="round"/>{extra}</g>
                 })}
-                {isDrawing && currentPathPoints.length > 0 && <path d={activeTool==='pass'?pointsToStraightPath([currentPathPoints[0], currentPathPoints[currentPathPoints.length-1]]) : pointsToCurvedPath(currentPathPoints)} stroke="rgba(255,255,255,0.5)" strokeWidth="3" fill="none" />}
+                {isDrawing && currentPathPoints.length > 0 && <path d={activeTool==='pass'?pointsToStraightPath([currentPathPoints[0], currentPathPoints[currentPathPoints.length-1]]) : pointsToCurvedPath(currentPathPoints)} stroke="var(--ct-draw-preview,rgba(255,255,255,0.6))" strokeWidth="3.5" fill="none" />}
                 {currentFrame.players.map(p => (
                     <g key={p.id} transform={`translate(${p.x},${p.y})`} style={{cursor:'pointer'}}>
                         {labMode === 'lab' && p.id === labSlot && <circle r="26" fill="none" stroke="#18a558" strokeWidth="3"/>}
@@ -597,7 +597,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                           ? `${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.firstName} ${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.lastName} · ${p.role}`
                           : `Ficha ${p.label} · ${p.role} · sin titular asignado`}</title>
                         {currentFrame.ballOwnerId === p.id && <circle r="19" fill="none" stroke={THEME.passColor} strokeWidth="3" opacity="0.8"/>}
-                        <text dy=".35em" textAnchor="middle" fontSize="14" fontWeight="bold" fill={THEME.moveColor} fontFamily="Arial">{p.label}</text>
+                        <text dy=".35em" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#ffffff" fontFamily="Arial">{p.label}</text>
                     </g>
                 ))}
                 {currentFrame.ballOwnerId===null && <circle cx={currentFrame.ballPosition.x} cy={currentFrame.ballPosition.y} r="9" fill={THEME.passColor} stroke="black" strokeWidth="1"/>}

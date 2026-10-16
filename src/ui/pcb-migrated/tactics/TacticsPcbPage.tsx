@@ -12,6 +12,7 @@ import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
 import PcbTacticsBoard from './PcbTacticsBoard'
+import { tacticalAttributesFromPlayerTruth } from './PcbTacticalRatingBridge'
 import DraggableSubnav from '../club/components/DraggableSubnav'
 import { PlayerNameLink } from '@/ui/navigation/PlayerNameLink'
 import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
@@ -43,7 +44,6 @@ function playerRating(player: Player): number {
 }
 function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefined) {
   return players.map((player) => {
-    const signals = boardSummarySignals(player)
     const pos = player.basketball.primaryPosition
     return {
       id: player.id,
@@ -51,7 +51,7 @@ function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefine
       position: pos,
       rating: playerRating(player),
       lineupSlot: lineup === undefined ? undefined : getLineupSlotForPlayer(lineup, player.id),
-      data: { attributes: { finishing: signals.finishing, shooting: signals.shooting, playmaking: signals.playmaking, perimeterDefense: signals.perimeterDefense, interiorDefense: signals.interiorDefense, rebounding: signals.rebounding, athleticism: signals.athleticism }, bio: { pos } },
+      data: { attributes: tacticalAttributesFromPlayerTruth(player), bio: { pos } },
     }
   })
 }
@@ -103,8 +103,13 @@ export function TacticsPcbPage({
     onTabChange?.(next)
     if (activeTab === undefined) setInternalTab(next)
   }
-  const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown>>({})
+  const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown> | undefined>(undefined)
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
+  useEffect(() => {
+    if (!team) { setTacticalRoles(undefined); return }
+    try { setTacticalRoles(JSON.parse(window.localStorage.getItem(`pcbasket.tactics.roles.${team.id}`) ?? '{}')) }
+    catch { setTacticalRoles({}) }
+  }, [team?.id])
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
   const lineup = useMemo(() => (world === undefined || team === undefined ? undefined : getTeamLineup(world, team.id)), [world, team])
   const boardRoster = useMemo(() => toBoardRoster(roster, lineup), [roster, lineup])
@@ -119,7 +124,7 @@ export function TacticsPcbPage({
   const persistedTacticalOverride = useMemo(() => (world === undefined || gamePlanKey === undefined ? undefined : world.gamePlansByKey[gamePlanKey]?.tacticalOverride as MatchTacticalPlan | undefined), [world, gamePlanKey])
   const savedPlays = useMemo(() => (world === undefined ? [] : Object.values(world.savedPlaysById)), [world])
   const playbooks = useMemo(() => (world === undefined ? [] : Object.values(world.playbooksById)), [world])
-  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{(keepDesignerMounted || tab === 'board') && <div className="ct-unified-pane" hidden={tab !== 'board'}><PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} /></div>}{(keepDesignerMounted || tab === 'designer') && <div className="ct-unified-pane" hidden={tab !== 'designer'}><PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={designerPlayerIds} creatorMode={creatorMode}
+  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{(keepDesignerMounted || tab === 'board') && <div className="ct-unified-pane" hidden={tab !== 'board'}><PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); if (team) window.localStorage.setItem(`pcbasket.tactics.roles.${team.id}`, JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} /></div>}{(keepDesignerMounted || tab === 'designer') && <div className="ct-unified-pane" hidden={tab !== 'designer'}><PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={designerPlayerIds} creatorMode={creatorMode}
   onLabSlotAssign={(slot, playerId) => { if (roster.some(player => player.id === playerId)) onLineupSlotChange?.(slot, playerId as PlayerId) }} /></div>}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
 }
 

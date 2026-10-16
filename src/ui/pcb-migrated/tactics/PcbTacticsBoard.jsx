@@ -116,8 +116,7 @@ const calcRating = (player) => {
 
 export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear, onOpenPlayer }) {
   const storagePrefix = `pcbasket.tactics.board.${teamId || "default"}`;
-  const rolesKey = "pcbasket.tactics.roles";
-  const legacyRolesKey = "pcbasket.tactics.board.roles";
+  const rolesKey = `pcbasket.tactics.roles.${teamId || "default"}`;
   const tacticsKey = `${storagePrefix}.config`;
 
   const [starters, setStarters] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
@@ -132,7 +131,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
   const rosterPlayers = useMemo(() => {
     if (!Array.isArray(roster)) return [];
-    const rolesMap = tacticalRoles || readJSON(rolesKey, null) || readJSON(legacyRolesKey, {});
+    const rolesMap = tacticalRoles ?? readJSON(rolesKey, {});
     return roster.map((p) => {
       const saved = rolesMap[p.id] || {};
       const primaryPos = normalizePosition(p.data?.bio?.pos || p.position || "PG");
@@ -150,7 +149,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
         data: p.data,
       };
     });
-  }, [roster, tacticalRoles]);
+  }, [roster, tacticalRoles, rolesKey]);
 
   useEffect(() => {
     const savedTactics = readJSON(tacticsKey, null);
@@ -298,7 +297,11 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   const handleContextMenu = (event, type, id) => {
     event.preventDefault();
     event.stopPropagation();
-    setContextMenu({ x: event.clientX, y: event.clientY, targetType: type, targetId: id });
+    const menuWidth = 320;
+    const menuHeight = 440;
+    const x = Math.max(8, Math.min(event.clientX + 12, window.innerWidth - menuWidth - 8));
+    const y = Math.max(8, Math.min(event.clientY + 8, window.innerHeight - menuHeight - 8));
+    setContextMenu({ x, y, targetType: type, targetId: id });
   };
 
   const updatePlayerRole = (key, value) => {
@@ -360,6 +363,17 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
     const total = filled.reduce((acc, [slot, player]) => acc + (SUITABILITY_MATRIX[player.position]?.[slot] || 0), 0);
     return Math.round(total / 5);
   }, [starters]);
+
+  const contextPlayer = getContextPlayer();
+  const contextPosition = contextMenu?.targetType === "slot"
+    ? contextMenu.targetId : contextPlayer?.position || "PG";
+  const contextDuty = contextPlayer?.selectedDuty || "Apoyo";
+  const rankedContextRoles = (TACTICAL_ROLES_BY_POS[contextPosition] || [])
+    .map(role => ({
+      role,
+      suitability: calcRoleSuitability(contextPlayer, role, contextPosition, contextDuty),
+    }))
+    .sort((a, b) => (b.suitability ?? -1) - (a.suitability ?? -1));
 
   const tabBtnStyle = (isActive) => ({
     flex: 1,
@@ -805,60 +819,53 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       {contextMenu && (
         <div
           className="tactics-board-context"
+          role="dialog"
+          aria-label="Roles tácticos del jugador"
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(event) => event.stopPropagation()}
+          onKeyDown={event => { if (event.key === "Escape") setContextMenu(null) }}
         >
           <div className="tactics-board-context-header">
-            <span>{contextMenu.targetType === "roster" ? "BANQUILLO" : contextMenu.targetType === "unassigned" ? "SIN ASIGNAR" : "PISTA"}</span>
-            <span>{getContextPlayer()?.name}</span>
+            <span>ROL TÁCTICO · {contextPosition}</span>
+            <button className="tactics-board-context-close" aria-label="Cerrar roles tácticos" type="button" onClick={() => setContextMenu(null)}>×</button>
           </div>
+          <div className="tactics-board-context-player">{contextPlayer?.name ?? "Sin jugador"}</div>
           <div className="tactics-board-context-section">
-            <div className="tactics-board-context-label">Rol Tactico</div>
-            {(TACTICAL_ROLES_BY_POS[
-              contextMenu.targetType === "slot" ? contextMenu.targetId : getContextPlayer()?.position || "PG"
-            ] || []).map((role) => {
-              const player = getContextPlayer();
-              const isActive = player?.selectedRole === role;
-              const targetPos =
-                contextMenu.targetType === "slot" ? contextMenu.targetId : getContextPlayer()?.position || "PG";
-              const duty = getContextPlayer()?.selectedDuty || "Apoyo";
-              const suitability = calcRoleSuitability(player, role, targetPos, duty);
-              const suitColor = suitability >= 90 ? "#4ade80" : suitability >= 75 ? "#facc15" : "#fb923c";
-              return (
-                <div
-                  key={role}
-                  className={`tactics-board-context-item ${isActive ? "active" : ""}`}
-                  onClick={() => {
-                    updatePlayerRole("selectedRole", role);
-                    setContextMenu(null);
-                  }}
-                >
-                  <span>{role}</span>
-                  <div className="tactics-board-context-score">
-                    <div className="tactics-board-context-bar">
-                      <div style={{ width: `${suitability}%`, background: suitColor }} />
-                    </div>
-                    <span style={{ color: suitColor }}>{suitability}%</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="tactics-board-context-section">
-            <div className="tactics-board-context-label">Tarea (Duty)</div>
-            {TACTICAL_DUTIES.map((duty) => (
-              <div
-                key={duty}
-                className={`tactics-board-context-item ${getContextPlayer()?.selectedDuty === duty ? "active" : ""}`}
-                onClick={() => {
-                  updatePlayerRole("selectedDuty", duty);
-                  setContextMenu(null);
-                }}
+            <div className="tactics-board-context-label">ENCAJE SEGÚN RATINGS REALES</div>
+            {rankedContextRoles.length ? rankedContextRoles.map(({role,suitability}, index) => (
+              <button type="button"
+                key={role}
+                aria-pressed={contextPlayer?.selectedRole === role}
+                className={`tactics-board-context-item ${contextPlayer?.selectedRole === role ? "active" : ""}`}
+                onClick={() => { updatePlayerRole("selectedRole", role); setContextMenu(null); }}
               >
-                <span>{duty}</span>
-                {getContextPlayer()?.selectedDuty === duty && <Check size={12} />}
-              </div>
-            ))}
+                <span className="tactics-board-context-role">
+                  {role}
+                  {index === 0 && suitability !== null && <small>MEJOR ENCAJE</small>}
+                </span>
+                <span className="tactics-board-context-score">
+                  {suitability !== null ? <>
+                    <span className="tactics-board-context-bar"><i style={{width: `${suitability}%`}}/></span>
+                    <strong>{suitability}%</strong>
+                  </> : <small>Sin evaluación</small>}
+                </span>
+              </button>
+            )) : <p className="tactics-board-context-empty">Sin roles tácticos para esta posición.</p>}
+            <p className="tactics-board-context-note">
+              Encaje estimado con los atributos reales del jugador. No es una probabilidad de éxito.
+            </p>
+          </div>
+          <div className="tactics-board-context-section">
+            <div className="tactics-board-context-label">TAREA DEL JUGADOR</div>
+            <div className="tactics-board-context-duties">
+              {TACTICAL_DUTIES.map(duty => (
+                <button type="button" key={duty}
+                  aria-pressed={contextDuty === duty}
+                  className={`tactics-board-context-item ${contextDuty === duty ? "active" : ""}`}
+                  onClick={() => { updatePlayerRole("selectedDuty", duty); setContextMenu(null); }}
+                >{duty}{contextDuty === duty && <Check size={13}/>}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}
