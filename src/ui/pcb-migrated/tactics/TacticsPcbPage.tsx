@@ -74,6 +74,8 @@ export function TacticsPcbPage({
   activeTab,
   onTabChange,
   onOpenPlayer,
+  keepDesignerMounted = false,
+  creatorMode,
 }: {
   readonly world?: GameWorld
   readonly plan?: MatchTacticalPlan
@@ -92,6 +94,8 @@ export function TacticsPcbPage({
   readonly activeTab?: Tab
   readonly onTabChange?: (tab: Tab) => void
   readonly onOpenPlayer?: (playerId: PlayerId) => void
+  readonly keepDesignerMounted?: boolean
+  readonly creatorMode?: 'edit' | 'lab'
 }) {
   const [internalTab, setInternalTab] = useState<Tab>('board')
   const tab = activeTab ?? internalTab
@@ -104,6 +108,7 @@ export function TacticsPcbPage({
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
   const lineup = useMemo(() => (world === undefined || team === undefined ? undefined : getTeamLineup(world, team.id)), [world, team])
   const boardRoster = useMemo(() => toBoardRoster(roster, lineup), [roster, lineup])
+  const designerPlayerIds = (['PG','SG','SF','PF','C'] as const).map(slot => lineup?.starters[slot] ?? '')
   const nextGame = useMemo(() => (world === undefined ? undefined : getNextUserGame(world)), [world])
   const opponentTeam = useMemo(() => (world === undefined || nextGame === undefined || team === undefined ? undefined : world.teams[nextGame.homeTeamId === team.id ? nextGame.awayTeamId : nextGame.homeTeamId]), [world, nextGame, team])
   const opponentRoster = useMemo(() => (world === undefined || opponentTeam === undefined ? [] : getTeamRoster(world, opponentTeam.id)), [world, opponentTeam])
@@ -114,7 +119,8 @@ export function TacticsPcbPage({
   const persistedTacticalOverride = useMemo(() => (world === undefined || gamePlanKey === undefined ? undefined : world.gamePlansByKey[gamePlanKey]?.tacticalOverride as MatchTacticalPlan | undefined), [world, gamePlanKey])
   const savedPlays = useMemo(() => (world === undefined ? [] : Object.values(world.savedPlaysById)), [world])
   const playbooks = useMemo(() => (world === undefined ? [] : Object.values(world.playbooksById)), [world])
-  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={(['PG','SG','SF','PF','C'] as const).map(slot => lineup?.starters[slot] ?? roster.find(player => player.basketball.primaryPosition === slot)?.id ?? '')} />}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
+  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{(keepDesignerMounted || tab === 'board') && <div className="ct-unified-pane" hidden={tab !== 'board'}><PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} /></div>}{(keepDesignerMounted || tab === 'designer') && <div className="ct-unified-pane" hidden={tab !== 'designer'}><PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={designerPlayerIds} creatorMode={creatorMode}
+  onLabSlotAssign={(slot, playerId) => onLineupSlotChange?.(slot,playerId)} /></div>}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
 }
 
 function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }

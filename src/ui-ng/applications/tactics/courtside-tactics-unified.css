@@ -1,0 +1,204 @@
+/* Courtside TACTICS · unified Pizarra presentation authority.
+   Appended after old NG styles. Never changes engine or local saved game data. */
+.ct-courtside .ct-unified-switch {
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px;
+  border:1px solid var(--ct-line);border-radius:9px;
+  padding:5px 8px;background:var(--ct-panel);min-height:43px;
+}
+.ct-courtside .ct-unified-switch button {
+  min-height:32px;min-width:102px;padding:4px 14px;
+  background:transparent;color:var(--ct-dim);
+  border:1px solid transparent;border-radius:6px;
+  cursor:pointer;font:800 16px var(--ct-display);letter-spacing:.025em;
+}
+.ct-courtside .ct-unified-switch button.is-active {
+  border-color:var(--ct-accent);background:var(--ct-accent);
+  color:var(--ct-bg);
+}
+.ct-courtside .ct-unified-switch button:not(.is-active):hover {color:var(--ct-text);border-color:var(--ct-line)}
+.ct-courtside .ct-unified-switch__context {
+  margin-left:auto;font:700 11px var(--ct-display);letter-spacing:.05em;
+  color:var(--ct-dim);white-space:nowrap;
+}
+.ct-courtside .ct-unified-content,.ct-courtside .ct-unified-content .pcb-tactics--ng {
+  display:block;min-width:0;min-height:0;height:auto!important;
+  width:100%;box-sizing:border-box;
+}
+.ct-courtside .ct-unified-pane[hidden] {display:none!important}
+.ct-courtside .ct-unified-pane:not([hidden]) {display:block;min-width:0;width:100%}
+.ct-courtside .ct-page[data-courtside-tactics-screen="board"],
+.ct-courtside .ct-page[data-courtside-tactics-screen="designer"] {
+  height:auto;min-height:100%;box-sizing:border-box;
+}
+.ct-courtside .ct-unified-content .tactics-board-advanced {
+  min-height:clamp(515px,calc(100dvh - 250px),790px);
+  height:auto;grid-template-columns:minmax(220px,.93fr) minmax(395px,1.3fr) minmax(320px,1.05fr);
+}
+/* Real Courtside roster rows, not hard-coded dark NG rectangles. */
+.ct-courtside .ct-unified-content .tactics-board-panel {
+  background:var(--ct-panel)!important;border:1px solid var(--ct-line);
+  border-radius:9px;box-shadow:none!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-player {
+  display:flex;align-items:center;gap:9px;
+  min-height:40px;margin:0;padding:6px 9px!important;
+  border:1px solid var(--ct-line)!important;border-radius:6px;
+  background:var(--ct-raised)!important;color:var(--ct-text)!important;
+  box-shadow:none!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-player:hover {
+  border-color:var(--ct-accent)!important;
+  background:var(--ct-hover)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-player-pos {
+  display:grid;place-items:center;flex:0 0 30px;
+  width:30px;height:26px;min-width:30px;border-radius:5px;
+  background:color-mix(in srgb,var(--ct-accent) 12%,var(--ct-panel))!important;
+  border:1px solid color-mix(in srgb,var(--ct-accent) 30%,var(--ct-line))!important;
+  color:var(--ct-accent)!important;font:800 12px var(--ct-display);
+}
+.ct-courtside .ct-unified-content .tactics-board-player-info {min-width:0;flex:1}
+.ct-courtside .ct-unified-content .tactics-board-player-name {
+  display:block;min-width:0;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--ct-text)!important;font:700 13px/1.2 var(--ct-font)!important;
+}
+.ct-courtside .ct-unified-content button.tactics-board-player-name {
+  text-align:left;border:0!important;background:transparent!important;
+  border-radius:0!important;padding:0!important;
+}
+.ct-courtside .ct-unified-content button.tactics-board-player-name:hover {color:var(--ct-accent)!important;text-decoration:underline}
+.ct-courtside .ct-unified-content .tactics-board-player-meta {
+  margin-top:3px;color:var(--ct-dim)!important;font:500 11px var(--ct-font)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-player-rating {color:var(--ct-accent)!important;font:800 13px var(--ct-display)}
+.ct-courtside .ct-unified-content .tactics-board-player>svg {flex-shrink:0;stroke:var(--ct-muted)}
+.ct-courtside .ct-unified-content .tactics-board-panel-header {
+  background:var(--ct-raised)!important;color:var(--ct-text)!important;
+  border-bottom:1px solid var(--ct-line)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-panel-title {
+  font:800 15px var(--ct-display)!important;color:var(--ct-text)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-panel-count {
+  font:700 12px var(--ct-font)!important;color:var(--ct-dim)!important;
+}
+/* Flat, legible half-court. Suppress the legacy inset black bevel and cold slate palette. */
+.ct-courtside .ct-unified-content .tactics-board-court-surface {
+  background:var(--ct-raised)!important;
+  border:1px solid var(--ct-line)!important;
+  border-radius:9px!important;box-shadow:none!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-court-svg .court-lines {
+  stroke:color-mix(in srgb,var(--ct-text) 48%,transparent)!important;
+  stroke-width:2!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-court-svg .court-backboard {stroke:var(--ct-text)!important}
+.ct-courtside .ct-unified-content .tactics-board-court-svg .court-rim {stroke:var(--ct-orange)!important}
+.ct-courtside .ct-unified-content .tactics-board-slot-ring {
+  background:var(--ct-panel)!important;border-width:2px;border-radius:50%;
+  box-shadow:0 0 0 2px var(--ct-bg);
+}
+.ct-courtside .ct-unified-content .tactics-board-slot-player {
+  background:var(--ct-panel)!important;
+  border:0!important;box-shadow:none!important;
+  color:var(--ct-text)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-slot-player svg {stroke:var(--ct-text)}
+.ct-courtside .ct-unified-content .tactics-board-slot-label {color:var(--ct-text)!important;font:800 15px var(--ct-display)}
+.ct-courtside .ct-unified-content .tactics-board-slot-info {
+  border:1px solid var(--ct-line)!important;
+  background:var(--ct-panel)!important;color:var(--ct-text)!important;
+  border-radius:6px;box-shadow:none!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-slot-name {color:var(--ct-text)!important;font:700 12px var(--ct-font)}
+.ct-courtside .ct-unified-content .tactics-board-slot-duty {
+  color:var(--ct-dim)!important;background:var(--ct-raised)!important;
+  font:600 11px var(--ct-font)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-slot-rating {color:var(--ct-bg)!important}
+.ct-courtside .ct-unified-content .tactics-board-court-header {color:var(--ct-text)}
+.ct-courtside .ct-unified-content .tactics-board-chip {background:var(--ct-panel)!important;color:var(--ct-text)!important;border-color:var(--ct-line)!important}
+.ct-courtside .ct-unified-content .tactics-board-clear {
+  background:var(--ct-raised)!important;color:var(--ct-text)!important;
+  border:1px solid var(--ct-line)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-tabs {background:var(--ct-raised)!important;border-color:var(--ct-line)!important}
+.ct-courtside .ct-unified-content .tactics-board-tabs button {
+  background:transparent!important;color:var(--ct-dim)!important;border:0!important;
+  border-bottom:2px solid transparent!important;
+  font:800 14px var(--ct-display)!important;min-height:34px;
+}
+.ct-courtside .ct-unified-content .tactics-board-tabs button.is-active {
+  background:var(--ct-panel)!important;color:var(--ct-text)!important;
+  border-bottom-color:var(--ct-accent)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-control {
+  border:1px solid var(--ct-line)!important;border-radius:7px;
+  background:var(--ct-raised)!important;color:var(--ct-text)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-control-title {color:var(--ct-text)!important}
+.ct-courtside .ct-unified-content .tactics-board-btn-group button {
+  color:var(--ct-text)!important;border:1px solid var(--ct-line)!important;
+  background:var(--ct-panel)!important;font:800 13px var(--ct-display)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-btn-group button.active {
+  background:var(--ct-accent)!important;color:var(--ct-bg)!important;
+  border-color:var(--ct-accent)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-control input[type="range"] {
+  accent-color:var(--ct-accent)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-footer {
+  background:var(--ct-panel)!important;border-color:var(--ct-line)!important;
+}
+.ct-courtside .ct-unified-content .tactics-board-save {
+  background:var(--ct-accent)!important;color:var(--ct-bg)!important;
+  border:1px solid var(--ct-accent)!important;
+  font:800 15px var(--ct-display)!important;min-height:36px;
+}
+/* Designer: the same court surface, readable tools and unambiguous icon/label hierarchy. */
+.ct-courtside .ct-unified-content .pcb-tactics-creator__canvas,
+.ct-courtside .ct-unified-content .pcb-tactics-creator__court {
+  background:var(--ct-raised)!important;border-color:var(--ct-line)!important;
+  box-shadow:none!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__court>g:first-of-type {
+  stroke:color-mix(in srgb,var(--ct-text) 48%,transparent)!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__tools {
+  width:84px!important;min-width:84px!important;flex-basis:84px!important;
+  background:var(--ct-panel)!important;gap:7px!important;padding:9px 0!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__tools button:not(:last-child) {
+  width:73px!important;min-height:64px!important;height:64px!important;
+  font:800 13px/1.2 var(--ct-display)!important;
+  color:var(--ct-text)!important;border:1px solid var(--ct-line)!important;
+  background:var(--ct-raised)!important;border-radius:6px;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__tools button[style*="2px solid"] {
+  border-color:var(--ct-accent)!important;color:var(--ct-accent)!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__tools button svg {width:25px;height:25px}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__tools button span {
+  font:800 12px var(--ct-display)!important;color:inherit!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__summary {
+  color:var(--ct-text)!important;background:var(--ct-panel)!important;
+}
+.ct-courtside .ct-unified-content .pcb-tactics-creator__summary-head {
+  color:var(--ct-text)!important;
+}
+.ct-courtside .ct-unified-content .ct-lab-tabs {display:none!important}
+@media(max-width:1230px) {
+  .ct-courtside .ct-unified-content .tactics-board-advanced {
+    grid-template-columns:minmax(215px,.9fr) minmax(335px,1.25fr);
+  }
+  .ct-courtside .ct-unified-content .tactics-board-panel-right {grid-column:1 / -1}
+}
+@media(max-width:760px) {
+  .ct-courtside .ct-unified-switch__context {display:none}
+  .ct-courtside .ct-unified-content .tactics-board-advanced {grid-template-columns:minmax(0,1fr);min-height:0}
+  .ct-courtside .ct-unified-content .tactics-board-panel-right {grid-column:auto}
+  .ct-courtside .ct-unified-content .pcb-tactics-creator__tools {flex-basis:64px!important;min-width:64px!important;width:64px!important}
+  .ct-courtside .ct-unified-content .pcb-tactics-creator__tools button:not(:last-child) {width:54px!important}
+}

@@ -586,9 +586,9 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
       <div className="tactics-board-panel tactics-board-panel-right">
         <div className="tactics-board-tabs">
-          <button onClick={() => setActivePanel("GENERAL")} style={tabBtnStyle(activePanel === "GENERAL")}>GENERAL</button>
-          <button onClick={() => setActivePanel("ATAQUE")} style={tabBtnStyle(activePanel === "ATAQUE")}>ATAQUE</button>
-          <button onClick={() => setActivePanel("DEFENSA")} style={tabBtnStyle(activePanel === "DEFENSA")}>DEFENSA</button>
+          <button className={activePanel === "GENERAL" ? 'is-active' : ''} onClick={() => setActivePanel("GENERAL")} style={tabBtnStyle(activePanel === "GENERAL")}>GENERAL</button>
+          <button className={activePanel === "ATAQUE" ? 'is-active' : ''} onClick={() => setActivePanel("ATAQUE")} style={tabBtnStyle(activePanel === "ATAQUE")}>ATAQUE</button>
+          <button className={activePanel === "DEFENSA" ? 'is-active' : ''} onClick={() => setActivePanel("DEFENSA")} style={tabBtnStyle(activePanel === "DEFENSA")}>DEFENSA</button>
         </div>
         <div className="tactics-board-panel-body">
           {activePanel === "GENERAL" && (

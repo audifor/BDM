@@ -46,8 +46,12 @@ describe('TacticsWorkspace', () => {
   it('clones the five canonical tactics surfaces under NG chrome', () => {
     const { team } = mountTacticsWorkspace()
     expect(screen.getByText(team.name, { selector: '.tactics-workspace-header__team' })).toBeInTheDocument()
-    for (const label of ['Pizarra', 'Diseñador', 'Emparejamientos', 'Rotaciones', 'PLAN DE PARTIDO']) {
+    for (const label of ['Pizarra', 'Emparejamientos', 'Rotaciones', 'PLAN DE PARTIDO']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole('button', { name: 'Diseñador' })).not.toBeInTheDocument()
+    for (const mode of ['PREPARAR','DISEÑAR','ANALIZAR']) {
+      expect(screen.getByRole('button', { name: mode })).toBeInTheDocument()
     }
     expect(screen.queryByRole('button', { name: 'Jugadas' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Tácticas PCB migradas')).toHaveClass('pcb-tactics--ng')
@@ -60,7 +64,7 @@ describe('TacticsWorkspace', () => {
     expect(screen.queryByLabelText('Resumen táctico')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Tácticas PCB migradas')).toHaveClass('pcb-tactics--ng')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
     expect(document.querySelector('.ct-page__head')).toBeNull()
     expect(screen.queryByLabelText('Resumen táctico')).not.toBeInTheDocument()
     expect(document.querySelector('.pcb-tactics-creator__court')).toBeInTheDocument()
@@ -89,7 +93,7 @@ describe('TacticsWorkspace', () => {
 
   it('keeps the Designer court operable with a Courtside action and step workspace', () => {
     mountTacticsWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
     expect(screen.getByText('CONTROL DE JUGADA')).toBeInTheDocument()
     expect(screen.getByText('SECUENCIA DE LA JUGADA')).toBeInTheDocument()
     expect(screen.getByText('HERRAMIENTA ACTIVA')).toBeInTheDocument()
@@ -102,8 +106,8 @@ describe('TacticsWorkspace', () => {
 
   it('uses actual roster information in the Tactical Lab and adds an editable movement to the saved play', () => {
     const { team } = mountTacticsWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
-    fireEvent.click(screen.getByRole('button', { name: 'LABORATORIO' }))
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ANALIZAR' }))
     expect(screen.getByTestId('tactical-lab')).toBeInTheDocument()
     expect(screen.getByLabelText('Jugador del laboratorio')).toBeInTheDocument()
     expect(screen.getByLabelText('Zonas de lanzamiento').querySelectorAll('button')).toHaveLength(9)
@@ -121,6 +125,33 @@ describe('TacticsWorkspace', () => {
     const frames = saved[saved.length - 1]!.frames as Array<{ paths: Array<{ type:string; linkedId?:number }> }>
     expect(frames[0]?.paths[0]).toMatchObject({ type: 'move', linkedId: 2 })
     expect(team.id).toBeTruthy()
+  })
+
+  it('keeps an unsaved play intact when switching between unified Pizarra modes', () => {
+    mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AÑADIR PASO' }))
+    expect(screen.getByRole('button', { name: /PASO 2/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'PREPARAR' }))
+    expect(screen.getByText('SIN ASIGNAR')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'ANALIZAR' }))
+    expect(screen.getByTestId('tactical-lab')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
+    expect(screen.getByRole('button', { name: /PASO 2/ })).toBeInTheDocument()
+  })
+
+  it('assigns a real starting player from Analyse to the shared board lineup', () => {
+    const { team } = mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'ANALIZAR' }))
+    const select = screen.getByLabelText('Jugador del laboratorio') as HTMLSelectElement
+    const value = Array.from(select.options).find(option => option.value !== '')?.value
+    expect(value).toBeTruthy()
+    fireEvent.change(select, {target: {value}})
+    const state = useGameStore.getState().world!
+    expect(getTeamLineup(state, team.id).starters.PG).toBe(value)
+    fireEvent.click(screen.getByRole('button', { name: 'PREPARAR' }))
+    expect(getTeamLineup(useGameStore.getState().world!,team.id).starters.PG).toBe(value)
   })
 
   it('renders one-line rival rows without repeated empty scouting messages', () => {

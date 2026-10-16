@@ -17,6 +17,7 @@ import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 
 import './tactics-workspace.css'
 import './courtside-tactics.css'
+import './courtside-tactics-unified.css'
 
 const CT_PAGE_TITLES: Record<TacticsPcbTab, string> = {
   board: 'PIZARRA', designer: 'DISEÑADOR', matchups: 'EMPAREJAMIENTOS', rotations: 'ROTACIONES', match: 'PLAN DE PARTIDO',
@@ -72,6 +73,7 @@ export function TacticsWorkspace() {
   const setPlan = useTacticalPlanStore((state) => state.setPlan)
   const resetPlan = useTacticalPlanStore((state) => state.reset)
   const [activeTab, setActiveTab] = useState<TacticsPcbTab>('board')
+  const [boardMode, setBoardMode] = useState<'prepare' | 'design' | 'analyse'>('prepare')
   const { openEntity } = useNgWorkspaceNavigation()
 
   const context = useMemo(() => (world === null ? null : buildRosterWorkspaceContext(world)), [world])
@@ -94,7 +96,7 @@ export function TacticsWorkspace() {
   }, [team])
   const tabs = useMemo(
     () =>
-      TACTICS_PCB_TABS.map(([id, label]) => ({
+      TACTICS_PCB_TABS.filter(([id]) => id !== 'designer').map(([id, label]) => ({
         id,
         label: id === 'match' ? 'PLAN DE PARTIDO' : label,
         active: id === activeTab,
@@ -133,10 +135,24 @@ export function TacticsWorkspace() {
         }
       >
         <ScrollRegion className="tactics-workspace__scroll">
-          <div className="ct-page" data-courtside-tactics-screen={activeTab} aria-label={CT_PAGE_DESCRIPTIONS[activeTab]}>
+          <div className="ct-page" data-courtside-tactics-screen={activeTab === 'board' ? boardMode === 'prepare' ? 'board' : 'designer' : activeTab} aria-label={CT_PAGE_DESCRIPTIONS[activeTab]}>
             <h1 className="ct-page__sr-only">{CT_PAGE_TITLES[activeTab]}</h1>
-            {activeTab === 'board' || activeTab === 'designer' ? <div className="ct-legacy-content"><TacticsPcbPage
-            activeTab={activeTab}
+            {activeTab === 'board' ? <>
+              <div className="ct-unified-switch" role="group" aria-label="Modo de Pizarra">
+                {([
+                  ['prepare', 'PREPARAR', 'Quinteto y ajustes del equipo'],
+                  ['design', 'DISEÑAR', 'Dibujar y guardar jugadas'],
+                  ['analyse', 'ANALIZAR', 'Zonas de tiro y movimientos sugeridos'],
+                ] as const).map(([id, label, description]) =>
+                  <button type="button" key={id} className={boardMode === id ? 'is-active' : ''}
+                    aria-pressed={boardMode === id} title={description}
+                    onClick={() => setBoardMode(id)}>{label}</button>)}
+                <span className="ct-unified-switch__context">MISMO QUINTETO · MISMA PARTIDA · JUGADAS EDITABLES</span>
+              </div>
+              <div className="ct-legacy-content ct-unified-content"><TacticsPcbPage
+            activeTab={boardMode === 'prepare' ? 'board' : 'designer'}
+            keepDesignerMounted
+            creatorMode={boardMode === 'analyse' ? 'lab' : 'edit'}
             onChange={setPlan}
             onDeleteDesignerPlay={deleteDesignerPlay}
             onDeleteDesignerPlaybook={deleteDesignerPlaybook}
@@ -147,13 +163,12 @@ export function TacticsWorkspace() {
             onSaveDesignerPlay={saveDesignerPlay}
             onSaveDesignerPlaybook={saveDesignerPlaybook}
             onSaveGamePlanTacticalOverride={updateGamePlanTacticalOverride}
-            onTabChange={setActiveTab}
             onUpdateMatchups={updateGamePlanMatchups}
             onUpdateRotationMinutes={updateRotationMinutes}
             plan={plan}
             variant="ng"
             world={world}
-          /></div> : (
+          /></div></> : (
             <CourtsideTacticsPanels
               tab={activeTab}
               world={world}

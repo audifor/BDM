@@ -48,6 +48,8 @@ interface TacticsCreatorProps {
   labWorld?: GameWorld;
   labRoster?: readonly Player[];
   labDefaultPlayerIds?: readonly string[];
+  creatorMode?: 'edit' | 'lab';
+  onLabSlotAssign?: (slot: 'PG' | 'SG' | 'SF' | 'PF' | 'C', playerId: string) => void;
 }
 
 // --- TIPOS ---
@@ -156,7 +158,7 @@ const INITIAL_PLAYERS = [
   { id: 5, label: '5', role:'C', x: 340, y: 150 },
 ];
 
-export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay, labWorld, labRoster = [], labDefaultPlayerIds = [] }: TacticsCreatorProps) {
+export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay, labWorld, labRoster = [], labDefaultPlayerIds = [], creatorMode, onLabSlotAssign }: TacticsCreatorProps) {
   // ESTADO
   const [playName, setPlayName] = useState("Nueva Jugada");
   const [frames, setFrames] = useState<FrameData[]>([{
@@ -170,7 +172,8 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('select');
-  const [labMode, setLabMode] = useState<'edit' | 'lab'>('edit');
+  const [labMode, setLabMode] = useState<'edit' | 'lab'>(creatorMode ?? 'edit');
+  useEffect(() => { if (creatorMode !== undefined) setLabMode(creatorMode); }, [creatorMode]);
   const [labSlot, setLabSlot] = useState(1);
   const [labZone, setLabZone] = useState<MatchShotZoneId>('CORNER_THREE');
   const [labAssignments, setLabAssignments] = useState<Record<number,string>>({});
@@ -208,7 +211,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   if (!currentFrame) return null;
   const labToken = currentFrame.players.find(p => p.id === labSlot);
   const labTarget = labToken ? tacticalZoneTarget(labZone, labToken) : null;
-  const assignedLabPlayerId = labAssignments[labSlot] ?? labDefaultPlayerIds[labSlot-1] ?? '';
+  const assignedLabPlayerId = (onLabSlotAssign ? labDefaultPlayerIds[labSlot-1] : labAssignments[labSlot] ?? labDefaultPlayerIds[labSlot-1]) ?? '';
 
   // --- MATEMÃTICAS ---
   const getSVGPoint = (e: React.MouseEvent | MouseEvent) => {
@@ -590,6 +593,9 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                     <g key={p.id} transform={`translate(${p.x},${p.y})`} style={{cursor:'pointer'}}>
                         {labMode === 'lab' && p.id === labSlot && <circle r="26" fill="none" stroke="#18a558" strokeWidth="3"/>}
                         <circle r="16" fill={THEME.bg} stroke={THEME.moveColor} strokeWidth="2"/>
+                        <title>{labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])
+                          ? `${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.firstName} ${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.lastName} · ${p.role}`
+                          : `Ficha ${p.label} · ${p.role} · sin titular asignado`}</title>
                         {currentFrame.ballOwnerId === p.id && <circle r="19" fill="none" stroke={THEME.passColor} strokeWidth="3" opacity="0.8"/>}
                         <text dy=".35em" textAnchor="middle" fontSize="14" fontWeight="bold" fill={THEME.moveColor} fontFamily="Arial">{p.label}</text>
                     </g>
@@ -647,7 +653,10 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
               </> : <TacticalLabPanel world={labWorld} roster={labRoster} tokens={currentFrame.players}
                 selectedTokenId={labSlot} onSelectToken={setLabSlot}
                 assignedPlayerId={assignedLabPlayerId}
-                onAssignPlayer={id=>setLabAssignments(previous=>({...previous,[labSlot]:id}))}
+                onAssignPlayer={id=>{
+                  if (onLabSlotAssign && id && labToken) onLabSlotAssign(labToken.role as 'PG' | 'SG' | 'SF' | 'PF' | 'C', id);
+                  else setLabAssignments(previous=>({...previous,[labSlot]:id}));
+                }}
                 selectedZone={labZone} onSelectZone={setLabZone}
                 hasBall={currentFrame.ballOwnerId === labSlot} onApply={applyLabMovement}/>}
           </div>
