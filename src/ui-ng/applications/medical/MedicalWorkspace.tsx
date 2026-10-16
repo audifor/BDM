@@ -29,7 +29,10 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToPlayerMedical, navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
+import { MedicalHistoryVisual, MedicalInjuryVisual, MedicalOverviewVisual, MedicalRecoveryVisual, MedicalRiskScatter, MedicalStaffVisual } from './MedicalCourtsideVisuals'
+
 import './medical-workspace.css'
+import './medical-courtside.css'
 
 function MedicalWorkspaceHeader({ model }: { readonly model: MedicalWorkspaceModel }) {
   return (
@@ -138,40 +141,7 @@ function OverviewBoard({
 }) {
   return (
     <div className="medical-workspace__overview">
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Availability</p>
-        <h3 className="medical-workspace__card-title">Roster status</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Available" value={model.availableCount} />
-          <MetricRow label="Injured" value={model.injuredCount} />
-          <MetricRow label="Roster" value={model.rosterCount} />
-          <MetricRow label="Date" value={model.currentDateLabel} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Load</p>
-        <h3 className="medical-workspace__card-title">Fatigue</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Average" value={model.averageFatigue} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Risk</p>
-        <h3 className="medical-workspace__card-title">Medical risk</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="High" value={model.highRiskCount} />
-          <MetricRow label="Elevated" value={model.elevatedRiskCount} />
-          <MetricRow label="Low" value={model.lowRiskCount} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Department</p>
-        <h3 className="medical-workspace__card-title">Medical staff</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Staff" value={model.medicalStaffCount} />
-          <MetricRow label="Open advisories" value={model.openAdvisoryCount} />
-        </dl>
-      </section>
+      <MedicalOverviewVisual model={model} onOpenPlayer={onOpenPlayer} />
       {model.injured.length === 0 ? (
         <p className="medical-workspace__empty">No active injuries.</p>
       ) : (
@@ -223,6 +193,8 @@ function InjuredBoard({
   const selected = rows.find((row) => row.injuryId === selectedInjuryId) ?? rows[0]
 
   return (
+    <>
+    <MedicalInjuryVisual rows={rows} onOpenPlayer={onOpenPlayer} />
     <div className="medical-workspace__split">
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
@@ -293,6 +265,7 @@ function InjuredBoard({
         </aside>
       )}
     </div>
+    </>
   )
 }
 
@@ -308,6 +281,8 @@ function HistoryBoard({
   }
 
   return (
+    <>
+    <MedicalHistoryVisual rows={rows} />
     <div className="medical-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="medical-workspace__table"
@@ -336,6 +311,7 @@ function HistoryBoard({
         rows={rows.map((row) => ({ ...row, id: row.injuryId }))}
       />
     </div>
+    </>
   )
 }
 
@@ -357,6 +333,8 @@ function RiskBoard({
   const selected = rows.find((row) => row.playerId === selectedPlayerId) ?? rows[0]
 
   return (
+    <>
+    <MedicalRiskScatter rows={rows} onOpenPlayer={onOpenPlayer} />
     <div className="medical-workspace__split">
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
@@ -420,6 +398,7 @@ function RiskBoard({
         </aside>
       )}
     </div>
+    </>
   )
 }
 
@@ -435,6 +414,8 @@ function StaffBoard({
   }
 
   return (
+    <>
+    <MedicalStaffVisual rows={rows} onOpenStaff={onOpenStaff} />
     <div className="medical-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="medical-workspace__table"
@@ -453,6 +434,7 @@ function StaffBoard({
         rows={rows.map((row) => ({ ...row, id: row.staffPersonId }))}
       />
     </div>
+    </>
   )
 }
 
@@ -547,6 +529,22 @@ export function MedicalWorkspace() {
                 onDismiss={(outcomeId) => dismissStaffRecommendation(outcomeId)}
               />
               <OverviewBoard model={model} onOpenPlayer={navigateToPlayerMedical} />
+            </>
+          ) : null}
+          {activeTab === 'recovery' ? (
+            <>
+              <MedicalRecoveryVisual model={model} onOpenPlayer={navigateToPlayerMedical} />
+              <ReturnToPlayBoard
+                rows={model.returnToPlayReviews}
+                onDecision={(injuryId, decision, outcomeId) => reviewReturnToPlay(injuryId, decision, outcomeId)}
+                onFitnessTest={(injuryId) => conductFitnessTest(injuryId)}
+                onOpenPlayer={navigateToPlayerMedical}
+              />
+              <MedicalRecommendationsBoard
+                recommendations={medicalRecommendations}
+                onAccept={(outcomeId) => acceptStaffRecommendation(outcomeId)}
+                onDismiss={(outcomeId) => dismissStaffRecommendation(outcomeId)}
+              />
             </>
           ) : null}
           {activeTab === 'injured' ? (
