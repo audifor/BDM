@@ -103,10 +103,10 @@ export function TacticsPcbPage({
     onTabChange?.(next)
     if (activeTab === undefined) setInternalTab(next)
   }
-  const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown> | undefined>(undefined)
+  const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown>>({})
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
   useEffect(() => {
-    if (!team) { setTacticalRoles(undefined); return }
+    if (!team) { setTacticalRoles({}); return }
     try { setTacticalRoles(JSON.parse(window.localStorage.getItem(`pcbasket.tactics.roles.${team.id}`) ?? '{}')) }
     catch { setTacticalRoles({}) }
   }, [team?.id])
