@@ -1121,6 +1121,40 @@ mod tests {
             .is_empty());
     }
 
+    /// Explicit opt-in P0E integration check using the real persisted SQLite
+    /// clone and JSON manifest produced by the BDM-DB P0E Rust binary.
+    /// This is a direct adapter check, not proof that a playable roster exists.
+    #[test]
+    fn p0e_read_persistent_worlddb_people_via_actual_tauri_person_adapter() {
+        let Ok(db_path) = std::env::var("BDM_P0E_STAGE_DB") else {
+            return; // CI without a local WorldDB copy remains hermetic.
+        };
+        let manifest_path = std::env::var("BDM_P0E_MANIFEST")
+            .expect("BDM_P0E_MANIFEST required when BDM_P0E_STAGE_DB is set");
+        let data = std::fs::read_to_string(&manifest_path)
+            .expect("P0E source-backed PERSON manifest");
+        let manifest: serde_json::Value =
+            serde_json::from_str(&data).expect("valid P0E manifest");
+        assert_eq!(manifest["status"], "PASS_P0E_STANDALONE_PERSON_PERSISTED_CLONE");
+        let persons = manifest["persons"].as_array().expect("P0E person array");
+        assert!(!persons.is_empty(), "P0E manifest must contain real rows");
+        let worlddb = Connection::open_with_flags(db_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .expect("read-only WorldDB P0E clone");
+        for person in persons {
+            let id = person["personId"].as_str().expect("source person id");
+            let loaded = query_person(&worlddb, id).expect("Tauri must read persisted person");
+            let serialized = serde_json::to_value(&loaded).expect("valid bootstrap DTO");
+            assert_eq!(serialized["personId"], id);
+            assert_eq!(serialized["firstName"], person["firstName"]);
+            assert_eq!(serialized["lastName"], person["lastName"]);
+            assert_eq!(serialized["nameComponent"], person["nameComponent"]);
+            assert_eq!(
+                serialized["gender"],
+                if person["sex"] == "MALE" { "male" } else { "female" },
+            );
+        }
+    }
+
     #[test]
     fn person_query_preserves_optional_p0d_provenance_and_legacy_sqlite_compatibility() {
         let connection = Connection::open_in_memory().expect("test SQLite");
