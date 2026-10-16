@@ -165,7 +165,7 @@ try {
         }
         $tsExit = Invoke-P0ENativeLogged -Executable $vitestCmd -Arguments @(
           'run', 'src/app/game/WorldDbGameBootstrap.test.ts',
-          '-t', '"P0E persistent names flow"', '--maxWorkers=1',
+          '-t', 'P0E persistent names flow', '--maxWorkers=1',
           '--no-file-parallelism', '--testTimeout=30000'
         ) -LogFile $tsLog
       } else {
