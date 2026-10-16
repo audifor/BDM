@@ -1131,11 +1131,13 @@ mod tests {
         };
         let manifest_path = std::env::var("BDM_P0E_MANIFEST")
             .expect("BDM_P0E_MANIFEST required when BDM_P0E_STAGE_DB is set");
-        let data = std::fs::read_to_string(&manifest_path)
-            .expect("P0E source-backed PERSON manifest");
-        let manifest: serde_json::Value =
-            serde_json::from_str(&data).expect("valid P0E manifest");
-        assert_eq!(manifest["status"], "PASS_P0E_STANDALONE_PERSON_PERSISTED_CLONE");
+        let data =
+            std::fs::read_to_string(&manifest_path).expect("P0E source-backed PERSON manifest");
+        let manifest: serde_json::Value = serde_json::from_str(&data).expect("valid P0E manifest");
+        assert_eq!(
+            manifest["status"],
+            "PASS_P0E_STANDALONE_PERSON_PERSISTED_CLONE"
+        );
         let persons = manifest["persons"].as_array().expect("P0E person array");
         assert!(!persons.is_empty(), "P0E manifest must contain real rows");
         let worlddb = Connection::open_with_flags(db_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
@@ -1150,7 +1152,11 @@ mod tests {
             assert_eq!(serialized["nameComponent"], person["nameComponent"]);
             assert_eq!(
                 serialized["gender"],
-                if person["sex"] == "MALE" { "male" } else { "female" },
+                if person["sex"] == "MALE" {
+                    "male"
+                } else {
+                    "female"
+                },
             );
         }
     }
