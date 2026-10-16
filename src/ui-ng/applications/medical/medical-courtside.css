@@ -229,3 +229,43 @@
   .medical-cs__panel-head { flex-wrap: wrap; }
   .medical-cs__scatter-legend > small { margin-left: 0; }
 }
+
+/* Decision cards retain the canonical actions but foreground their milestones. */
+.medical-workspace .medical-cs__rtp-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 18px; }
+.medical-cs__rtp-content { min-width: 0; flex: 1; }
+.medical-cs__rtp-heading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.medical-cs__rtp-heading .medical-workspace__link { font: 800 19px var(--med-display); }
+.medical-cs__rtp-heading > span { color: var(--med-muted); font-size: 12px; }
+.medical-cs__rtp-heading > b { padding: 4px 8px; border-radius: 7px; color: var(--med-orange); background: color-mix(in srgb,var(--med-orange) 11%,transparent); font: 800 10px var(--med-display); letter-spacing: .07em; }
+.medical-cs__rtp-timeline { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; }
+.medical-cs__rtp-timeline > div { position: relative; display: grid; gap: 7px; min-width: 0; border-top: 3px solid var(--med-lime); padding-top: 9px; }
+.medical-cs__rtp-timeline > div:nth-child(4) { border-color: var(--med-orange); }
+.medical-cs__rtp-timeline small { color: var(--med-faint); font: 700 10px var(--med-display); letter-spacing: .04em; }
+.medical-cs__rtp-timeline strong { font: 750 14px var(--med-display); color: var(--med-text); }
+.medical-cs__rtp-meta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font: 700 11px var(--med-display); color: var(--med-muted); }
+.medical-cs__rtp-meta b { color: var(--med-text); }
+.medical-cs__rtp-details { margin-top: 12px; color: var(--med-muted); }
+.medical-cs__rtp-details summary { cursor: pointer; font: 700 11px var(--med-display); }
+.medical-workspace .medical-cs__rtp-card .medical-workspace__rtp-actions { max-width: 220px; justify-content: end; }
+.medical-workspace .medical-cs__rtp-card .medical-workspace__rtp-actions button { width: 100%; }
+.medical-workspace .medical-cs__rtp-card .medical-workspace__rtp-actions button:nth-child(2):not(:disabled) {
+  border-color: var(--med-lime); color: var(--med-lime);
+}
+.medical-workspace .medical-workspace__badge--minor,
+.medical-workspace .medical-workspace__badge--low,
+.medical-workspace .medical-workspace__state--recovered { color: var(--med-lime); border-color: color-mix(in srgb,var(--med-lime) 35%,transparent); }
+.medical-workspace .medical-workspace__badge--moderate,
+.medical-workspace .medical-workspace__badge--elevated { color: var(--med-orange); border-color: color-mix(in srgb,var(--med-orange) 35%,transparent); }
+.medical-workspace .medical-workspace__badge--serious,
+.medical-workspace .medical-workspace__badge--high,
+.medical-workspace .medical-workspace__state--active { color: var(--med-negative); border-color: color-mix(in srgb,var(--med-negative) 35%,transparent); }
+.medical-workspace .medical-workspace__badge,
+.medical-workspace .medical-workspace__state { background: var(--med-surface-raised); }
+@media(max-width: 1100px) {
+  .medical-workspace .medical-cs__rtp-card { grid-template-columns: minmax(0,1fr); }
+  .medical-workspace .medical-cs__rtp-card .medical-workspace__rtp-actions { max-width: none; justify-content: start; }
+  .medical-workspace .medical-cs__rtp-card .medical-workspace__rtp-actions button { width: auto; }
+}
+@media(max-width: 650px) {
+  .medical-cs__rtp-timeline { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
