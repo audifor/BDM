@@ -3,14 +3,15 @@ import type { FitnessTestResult, InjurySeverity, RehabilitationMode } from '@/do
 import type { MedicalRiskBand } from '@/engine/injury/MedicalRiskAssessment'
 import type { StaffPresentationItem } from '@/ui/staffPresentation'
 
-export const MEDICAL_WORKSPACE_TABS = ['overview', 'injured', 'history', 'risk', 'staff'] as const
+export const MEDICAL_WORKSPACE_TABS = ['overview', 'injured', 'recovery', 'risk', 'history', 'staff'] as const
 export type MedicalWorkspaceTabId = (typeof MEDICAL_WORKSPACE_TABS)[number]
 
 export const MEDICAL_TAB_LABELS: Readonly<Record<MedicalWorkspaceTabId, string>> = {
   overview: 'Overview',
   injured: 'Injured',
+  recovery: 'Recovery',
+  risk: 'Risk & Load',
   history: 'History',
-  risk: 'Risk',
   staff: 'Staff',
 }
 
