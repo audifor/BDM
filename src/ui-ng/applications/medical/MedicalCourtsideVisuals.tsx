@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from 'react'
 import type { PlayerId, StaffPersonId } from '@/domain/ids'
 import type { MedicalWorkspaceModel, MedicalHistoryRow, MedicalInjuredRow, MedicalRiskRow, MedicalStaffRow } from './medicalWorkspaceModel'
 
@@ -12,7 +13,7 @@ const ratio = (value: number, total: number) => total > 0 ? bounded(value * 100 
 function Panel({ title, meta, children, className = '' }: {
   readonly title: string
   readonly meta?: string
-  readonly children: React.ReactNode
+  readonly children: ReactNode
   readonly className?: string
 }) {
   return <section className={`medical-cs__panel ${className}`}>
@@ -41,7 +42,7 @@ function AvailabilityDonut({ model }: { readonly model: MedicalWorkspaceModel })
     <div className="medical-cs__donut-layout">
       <div className="medical-cs__donut" role="img"
         aria-label={`${model.availableCount} of ${model.rosterCount} players available`}
-        style={{ '--med-share': `${availableRatio}%` } as React.CSSProperties}>
+        style={{ '--med-share': `${availableRatio}%` } as CSSProperties}>
         <div><strong>{Math.round(availableRatio)}<small>%</small></strong><span>AVAILABLE</span></div>
       </div>
       <div className="medical-cs__donut-legend">
@@ -111,7 +112,7 @@ function CaseForecast({ rows, onOpenPlayer }: { readonly rows: readonly MedicalI
   const maxDays = Math.max(1, ...rows.map(row => Math.max(0, row.daysRemaining)))
   return <Panel title="Next medical reviews" meta="SCHEDULED, NOT CLEARANCE" className="medical-cs__case-forecast">
     {rows.length === 0
-      ? <div className="medical-cs__no-data">No active injuries.</div>
+      ? <div className="medical-cs__no-data">No medical reviews scheduled.</div>
       : <div className="medical-cs__case-list">
           {[...rows].sort((a,b) => a.daysRemaining - b.daysRemaining).slice(0, 6).map(row =>
             <button type="button" className="medical-cs__case-row" key={row.injuryId} onClick={() => onOpenPlayer(row.playerId)}>
