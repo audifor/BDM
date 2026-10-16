@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { createGameWorld, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import * as CalendarEngine from '@/engine/calendar'
 import * as PlayerDevelopmentEngine from '@/engine/development'
@@ -1069,4 +1070,54 @@ it('preserves source-backed name semantics from WorldDB slice into Person and Sa
   )) as unknown)
   expect(reloaded.personsById[key]?.nameComponent).toEqual(sourceProvenance)
   expect(reloaded.personsById[key]?.nameComponent?.verifiedFatherLogicalKey).toBeUndefined()
+})
+
+it('P0E persistent names flow through GameWorld and Save V4 using source-backed manifest', () => {
+  // Opt-in: run this with BDM_P0E_MANIFEST pointing to the JSON emitted by
+  // the P0E Rust materializer. This is a GameWorld slice adapter smoke; the
+  // standalone people are NOT yet players/roster members in the real bootstrap.
+  const manifestPath = process.env.BDM_P0E_MANIFEST
+  if (manifestPath === undefined) return
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+    status: string
+    persons: Array<{
+      personId: string
+      country: string
+      sex: 'MALE' | 'FEMALE'
+      firstName: string
+      lastName: string
+      nameComponent: NonNullable<WorldDbGameBootstrapSliceV1['persons'][number]['nameComponent']>
+    }>
+  }
+  expect(manifest.status).toBe('PASS_P0E_STANDALONE_PERSON_PERSISTED_CLONE')
+  expect(manifest.persons.length).toBeGreaterThan(0)
+  const original = slice()
+  const source: WorldDbGameBootstrapSliceV1 = {
+    ...original,
+    persons: [
+      ...original.persons,
+      ...manifest.persons.map((person) => ({
+        personId: person.personId,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        gender: person.sex === 'MALE' ? 'male' as const : 'female' as const,
+        nationalityIds: [],
+        nameComponent: person.nameComponent,
+      })),
+    ],
+  }
+  const world = bootstrapGameWorldFromWorldDb(
+    source, selection,
+    { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema },
+  )
+  const saved = serializeGameWorldV4(world, '2026-10-16T00:00:00Z')
+  const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)) as unknown)
+  for (const p of manifest.persons) {
+    const person = restored.personsById[p.personId as keyof typeof restored.personsById]
+    expect(person).toBeDefined()
+    expect(person.firstName).toBe(p.firstName)
+    expect(person.lastName).toBe(p.lastName)
+    expect(person.nameComponent).toEqual(p.nameComponent)
+    expect(person.nameComponent?.verifiedFatherLogicalKey).toBeUndefined()
+  }
 })

@@ -1,0 +1,57 @@
+name: BDM P0E Persistent Name Bridge
+on:
+  push:
+    branches: [feat/p0e-persistent-name-consumer-smoke]
+    paths:
+      - src-tauri/src/world_db_bootstrap.rs
+      - src/app/game/WorldDbGameBootstrap.test.ts
+      - scripts/BDM_P0E_Comprobar_GameWorld.ps1
+      - .github/workflows/p0e-name-consumer-bridge.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p0e-typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TS typecheck
+        run: npm run typecheck
+      - name: P0D regression with hermetic slice
+        run: npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'preserves source-backed name semantics' --maxWorkers=1 --no-file-parallelism --testTimeout=30000
+      - name: P0E manifest contract compiles (real manifest optional on Windows)
+        run: npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'P0E persistent names flow' --maxWorkers=1 --no-file-parallelism --testTimeout=30000
+  p0e-rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Tauri OS dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Rust formatting
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+      - name: P0E Tauri SQLite adapter contract compiles (external DB optional)
+        run: cargo test --manifest-path src-tauri/Cargo.toml p0e_read_persistent_worlddb_people_via_actual_tauri_person_adapter
+      - name: Regression for P0D SQLite reader
+        run: cargo test --manifest-path src-tauri/Cargo.toml person_query_preserves_optional_p0d_provenance_and_legacy_sqlite_compatibility
+
+  p0e-windows-powershell:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native Cargo-style stderr is not a terminating PS5.1 error
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/BDM_P0E_Comprobar_GameWorld.ps1 -SelfTestNativeStderr
