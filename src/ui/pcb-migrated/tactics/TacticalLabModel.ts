@@ -43,7 +43,7 @@ export function tacticalZoneTarget(zone: MatchShotZoneId, from: LabPosition): La
  * MODELLED/MIXED data may be shown but can never be described as a hot zone.
  */
 export function buildTacticalZoneEvidence(profile: PerformanceShotProfileModel | undefined): readonly TacticalZoneEvidence[] {
-  const provenance = profile?.detailedProvenance ?? 'NONE'
+  const provenance: TacticalZoneEvidence['source'] = profile?.detailedProvenance ?? 'NONE'
   const rows = MATCH_SHOT_ZONE_IDS.map(id => {
     const tally = profile?.detailedZones?.find(zone => zone.id === id)
     const attempts = tally?.attempted ?? 0
