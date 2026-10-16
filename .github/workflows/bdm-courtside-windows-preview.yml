@@ -1,0 +1,63 @@
+name: BDM Courtside Windows Preview
+on:
+  push:
+    branches: [feat/bdm-ui-courtside]
+    paths:
+      - '.github/workflows/bdm-courtside-windows-preview.yml'
+      - 'src-tauri/tauri.courtside-preview.conf.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    name: Windows portable EXE
+    runs-on: windows-latest
+    timeout-minutes: 65
+    steps:
+      - name: Checkout the isolated Courtside branch
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Rust MSVC
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Compile isolated desktop preview without installer
+        run: npm run tauri build -- --no-bundle --config src-tauri/tauri.courtside-preview.conf.json
+      - name: Prepare preview and instructions
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path preview -Force | Out-Null
+          Copy-Item "src-tauri/target/release/bdm.exe" "preview/BDM-Courtside-Preview.exe"
+          @'
+          BDM COURTSIDE PREVIEW
+          ---------------------
+          1. Extract this ZIP to a new folder.
+          2. Double-click BDM-Courtside-Preview.exe (Windows 10/11).
+          3. Create a NEW test save, then open TACTICS.
+          4. Test Pizarra, Diseñador, Emparejamientos, Rotaciones, Plan de partido.
+          5. Do not use your primary saves for testing.
+          This is an unsigned development preview, not a production release.
+          It is intentionally not a Windows installer and does not replace the regular app.
+          If Windows warns about an unsigned file, verify the build's GitHub Actions source before proceeding.
+          '@ | Set-Content -Path "preview/README-PREVIEW.txt" -Encoding utf8
+      - name: Upload downloadable Windows preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: BDM-Courtside-Windows-Preview
+          path: preview/*
+          retention-days: 14
+          if-no-files-found: error
