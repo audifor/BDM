@@ -249,22 +249,30 @@ function InjuredBoard({
         <aside className="medical-workspace__inspector ng-holo-panel" data-ng-region="medical-injured-inspector">
           <p className="medical-workspace__eyebrow">Injury dossier</p>
           <h3 className="medical-workspace__inspector-title">{selected.playerName}</h3>
-          <dl className="medical-workspace__metrics">
-            <MetricRow label="Position" value={<PlayPositionMark position={selected.position} />} />
-            <MetricRow label="Injury" value={selected.injuryLabel} />
-            <MetricRow label="Severity" value={selected.severityLabel} />
-            <MetricRow label="Source" value={selected.sourceLabel} />
-            <MetricRow label="Injured on" value={selected.injuredOnLabel} />
-            <MetricRow label="Expected return" value={selected.expectedReturnLabel} />
-            <MetricRow label="Projected review" value={selected.reviewDueLabel} />
-            <MetricRow label="Medical status" value={selected.lifecycleStatus} />
-            <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
-            <MetricRow label="Career Fatigue" value={selected.fatigue} />
-            <MetricRow label="Days remaining" value={selected.daysRemaining} />
-            <MetricRow label="Duration" value={selected.durationLabel} />
-            <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
-            <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
-          </dl>
+          <div className="medical-cs__injury-facts">
+            <div><small>SEVERITY</small><strong data-severity={selected.severity}>{selected.severityLabel}</strong></div>
+            <div><small>DAYS TO REVIEW</small><strong>{Math.max(0, selected.daysRemaining)}</strong></div>
+            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<small>/100</small></strong></div>
+          </div>
+          <div className="medical-cs__injury-milestones">
+            <div><small>INJURED</small><strong>{selected.injuredOnLabel}</strong></div>
+            <div><small>PROJECTED REVIEW</small><strong>{selected.reviewDueLabel}</strong></div>
+            <div><small>EXPECTED RETURN</small><strong>{selected.expectedReturnLabel}</strong></div>
+          </div>
+          <div className="medical-cs__injury-status">
+            <strong>{selected.lifecycleStatus}</strong><span>{selected.injuryLabel} · {selected.position}</span>
+          </div>
+          <details className="medical-cs__injury-details">
+            <summary>FULL CASE DETAILS</summary>
+            <dl className="medical-workspace__metrics">
+              <MetricRow label="Source" value={selected.sourceLabel} />
+              <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
+              <MetricRow label="Duration" value={selected.durationLabel} />
+              <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
+              <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
+            </dl>
+            {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
+          </details>
           <p>{selected.rehabilitationConsequence}</p>
           <label className="medical-workspace__rehab-control">
             Rehab plan
@@ -274,7 +282,6 @@ function InjuredBoard({
               <option value="ACCELERATED_REHAB">ACCELERATED REHAB</option>
             </select>
           </label>
-          {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
         </aside>
       )}
     </div>
@@ -391,14 +398,14 @@ function RiskBoard({
         <aside className="medical-workspace__inspector ng-holo-panel" data-ng-region="medical-risk-inspector">
           <p className="medical-workspace__eyebrow">Risk assessment</p>
           <h3 className="medical-workspace__inspector-title">{selected.playerName}</h3>
-          <dl className="medical-workspace__metrics">
-            <MetricRow label="Band" value={selected.riskBandLabel} />
-            <MetricRow label="Score" value={selected.riskScore} />
-            <MetricRow label="Fatigue" value={selected.fatigue} />
-            <MetricRow label="Load" value={selected.fatigueLabel} />
-            <MetricRow label="Availability" value={selected.available ? 'Available' : 'Injured'} />
-            {selected.quality === null ? null : <MetricRow label="Advisory quality" value={selected.quality} />}
-          </dl>
+          <div className="medical-cs__risk-inspector">
+            <div><small>INJURY RISK</small><strong>{selected.riskScore}<span>/100 · {selected.riskBandLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.riskBand === 'high' ? 'red' : selected.riskBand === 'elevated' ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.riskScore))}%` }} /></div></div>
+            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<span>/100 · {selected.fatigueLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.fatigue >= 70 ? 'red' : selected.fatigue >= 50 ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.fatigue))}%` }} /></div></div>
+          </div>
+          <div className="medical-cs__risk-inspector-foot">
+            <span>{selected.available ? 'AVAILABLE' : 'UNAVAILABLE'}</span>
+            {selected.quality !== null && <span>ADVISORY QUALITY {selected.quality}/100</span>}
+          </div>
           {selected.reasons.length === 0 ? (
             <p className="medical-workspace__note">No elevated risk factors.</p>
           ) : (
