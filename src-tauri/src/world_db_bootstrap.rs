@@ -706,21 +706,29 @@ fn query_person(
         .map_err(|error| format!("Unable to inspect WorldDB name-component table: {error}"))?
         .is_some();
     let name_component = if has_name_component {
-        connection.query_row(
-            "SELECT naming_country_code, given_source_country, second_source_country,
+        connection
+            .query_row(
+                "SELECT naming_country_code, given_source_country, second_source_country,
                     second_component_kind, verified_father_logical_key
              FROM person_name_component_provenance WHERE person_id=?1",
-            [person_id],
-            |row| Ok(WorldDbGameBootstrapPersonNameComponentV1 {
-                naming_country_code: row.get(0)?,
-                given_source_country: row.get(1)?,
-                second_source_country: row.get(2)?,
-                second_component_kind: row.get(3)?,
-                verified_father_logical_key: row.get(4)?,
-            }),
-        ).optional()
-            .map_err(|error| format!("Unable to load WorldDB name provenance {person_id}: {error}"))?
-    } else { None };
+                [person_id],
+                |row| {
+                    Ok(WorldDbGameBootstrapPersonNameComponentV1 {
+                        naming_country_code: row.get(0)?,
+                        given_source_country: row.get(1)?,
+                        second_source_country: row.get(2)?,
+                        second_component_kind: row.get(3)?,
+                        verified_father_logical_key: row.get(4)?,
+                    })
+                },
+            )
+            .optional()
+            .map_err(|error| {
+                format!("Unable to load WorldDB name provenance {person_id}: {error}")
+            })?
+    } else {
+        None
+    };
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
     let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
     Ok(WorldDbGameBootstrapPersonV1 {
@@ -1116,8 +1124,9 @@ mod tests {
     #[test]
     fn person_query_preserves_optional_p0d_provenance_and_legacy_sqlite_compatibility() {
         let connection = Connection::open_in_memory().expect("test SQLite");
-        connection.execute_batch(
-            "CREATE TABLE person(person_id TEXT PRIMARY KEY,sex TEXT,birth_date TEXT);
+        connection
+            .execute_batch(
+                "CREATE TABLE person(person_id TEXT PRIMARY KEY,sex TEXT,birth_date TEXT);
              CREATE TABLE person_name(
                  person_name_id INTEGER PRIMARY KEY,person_id TEXT,
                  given_name TEXT,family_name TEXT,is_primary INTEGER,
@@ -1133,15 +1142,17 @@ mod tests {
                  effective_date TEXT
              );
              INSERT INTO person VALUES('test:person','F','2000-01-01');
-             INSERT INTO person_name VALUES(1,'test:person','Ayan','Hassan',1,1,NULL);"
-        ).expect("legacy fixture");
+             INSERT INTO person_name VALUES(1,'test:person','Ayan','Hassan',1,1,NULL);",
+            )
+            .expect("legacy fixture");
         let legacy = query_person(&connection, "test:person").expect("legacy person");
         assert_eq!(legacy.first_name, "Ayan");
         assert_eq!(legacy.last_name, "Hassan");
         assert!(legacy.name_component.is_none());
 
-        connection.execute_batch(
-            "CREATE TABLE person_name_component_provenance (
+        connection
+            .execute_batch(
+                "CREATE TABLE person_name_component_provenance (
                  person_id TEXT PRIMARY KEY,
                  naming_country_code TEXT,given_source_country TEXT,
                  second_source_country TEXT,second_component_kind TEXT,
@@ -1150,8 +1161,9 @@ mod tests {
              INSERT INTO person_name_component_provenance VALUES(
                 'test:person','SO','SO','SO',
                 'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME',NULL
-             );"
-        ).expect("p0d source fixture");
+             );",
+            )
+            .expect("p0d source fixture");
         let p0d = query_person(&connection, "test:person").expect("p0d person");
         let provenance = p0d.name_component.expect("P0D semantic source");
         assert_eq!(provenance.naming_country_code, "SO");
