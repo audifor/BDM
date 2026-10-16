@@ -291,3 +291,28 @@
  .medical-workspace .medical-workspace-header { flex-wrap: wrap; }
  .medical-workspace .medical-workspace-header__team { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* Visual dossier inspection, with optional clinical ledger only on demand. */
+.medical-cs__injury-facts { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px; }
+.medical-cs__injury-facts > div { display:grid;gap:6px;min-width:0;padding:10px;border:1px solid var(--med-line-soft);border-radius:10px;background:var(--med-surface-raised); }
+.medical-cs__injury-facts small,.medical-cs__injury-milestones small,.medical-cs__risk-inspector small { color:var(--med-faint);font:700 10px var(--med-display);letter-spacing:.04em; }
+.medical-cs__injury-facts strong { font:800 24px/1 var(--med-display);text-transform:uppercase; }
+.medical-cs__injury-facts strong small { font-size:12px; }
+.medical-cs__injury-facts [data-severity=serious] {color:var(--med-negative);}
+.medical-cs__injury-facts [data-severity=moderate] {color:var(--med-orange);}
+.medical-cs__injury-facts [data-severity=minor] {color:var(--med-lime);}
+.medical-cs__injury-milestones { display:grid;gap:7px; }
+.medical-cs__injury-milestones > div { display:flex;align-items:baseline;justify-content:space-between;gap:7px;border-bottom:1px solid var(--med-line-soft);padding:7px 0; }
+.medical-cs__injury-milestones strong {font:750 13px var(--med-display);}
+.medical-cs__injury-status {display:grid;gap:4px;padding:10px;border-left:3px solid var(--med-orange);background:var(--med-surface-raised);}
+.medical-cs__injury-status strong {font:700 13px var(--med-display);}
+.medical-cs__injury-status span {font-size:11px;color:var(--med-muted);}
+.medical-cs__injury-details {color:var(--med-muted);}
+.medical-cs__injury-details summary {cursor:pointer;font:700 11px var(--med-display);}
+.medical-cs__risk-inspector {display:grid;gap:16px;}
+.medical-cs__risk-inspector > div {display:grid;gap:8px;}
+.medical-cs__risk-inspector strong {display:flex;align-items:baseline;gap:7px;font:800 35px/1 var(--med-display);}
+.medical-cs__risk-inspector strong span {font:600 12px var(--med-display);color:var(--med-muted);}
+.medical-cs__risk-inspector-foot {display:flex;flex-wrap:wrap;gap:8px;}
+.medical-cs__risk-inspector-foot span {padding:5px 8px;border:1px solid var(--med-line);border-radius:6px;font:700 11px var(--med-display);color:var(--med-muted);}
+@media(max-width: 680px) {.medical-cs__injury-facts {grid-template-columns:1fr 1fr;} }
