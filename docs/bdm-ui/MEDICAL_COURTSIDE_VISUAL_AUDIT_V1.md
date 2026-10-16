@@ -35,7 +35,7 @@ Referencia de reglas: `docs/strengthening/BS12C_MEDICAL_RECOVERY_RTP.md` y `docs
 | Overview | `MedicalOverviewVisual` | Donut disponibilidad, composición del riesgo, dispersión riesgo-fatiga, días a revisión | Abrir jugador y acceder a acciones canónicas |
 | Injured | `MedicalInjuryVisual` | Severidad de casos y próximas revisiones | Tabla seleccionable y plan de rehabilitación real |
 | Recovery (nueva) | `MedicalRecoveryVisual` | Revisiones pendientes, casos en recuperación y próximos hitos | Tests, decisiones y recomendaciones reales |
-| Risk & Load | `MedicalRiskScatter` | Fatiga horizontal vs. riesgo vertical por jugador | Seleccionar puntos para abrir dossier; inspección en tabla |
+| Risk | `MedicalRiskScatter` | Fatiga horizontal vs. riesgo vertical por jugador | Seleccionar puntos para abrir dossier; inspección en tabla |
 | History | `MedicalHistoryVisual` | Familias de lesiones y relaciones de recurrencia registradas | Consultar expediente completo existente |
 | Staff | `MedicalStaffVisual` | Competencia por rol, carga/utilización del equipo médico | Abrir ficha del profesional |
 
