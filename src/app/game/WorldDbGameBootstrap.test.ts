@@ -1042,3 +1042,31 @@ function completeGamesWithTrigger(world: ReturnType<typeof bootstrapGameWorldFro
   const prepared = completeGames(world, scheduled.slice(0, -1))
   return applyMatchResult(prepared, { gameId: trigger.id, homeTeamId: trigger.homeTeamId, awayTeamId: trigger.awayTeamId, homeScore: 100, awayScore: 80 })
 }
+
+it('preserves source-backed name semantics from WorldDB slice into Person and Save V4', () => {
+  const base = slice()
+  const sourcePerson = base.persons[0]!
+  const sourceProvenance = {
+    namingCountryCode: 'SO',
+    givenSourceCountry: 'SO',
+    secondSourceCountry: 'SO',
+    secondComponentKind: 'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME' as const,
+  }
+  const withP0D: WorldDbGameBootstrapSliceV1 = {
+    ...base,
+    persons: base.persons.map((person) => person.personId === sourcePerson.personId
+      ? { ...person, nameComponent: sourceProvenance }
+      : person),
+  }
+  const world = bootstrapGameWorldFromWorldDb(
+    withP0D, selection,
+    { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema },
+  )
+  const key = sourcePerson.personId as keyof typeof world.personsById
+  expect(world.personsById[key]?.nameComponent).toEqual(sourceProvenance)
+  const reloaded = deserializeGameWorldV4(JSON.parse(JSON.stringify(
+    serializeGameWorldV4(world, '2026-10-15T00:00:00Z'),
+  )) as unknown)
+  expect(reloaded.personsById[key]?.nameComponent).toEqual(sourceProvenance)
+  expect(reloaded.personsById[key]?.nameComponent?.verifiedFatherLogicalKey).toBeUndefined()
+})

@@ -10,6 +10,21 @@ export interface PersonProfileRef {
   readonly profileId: string
 }
 
+export type PersonNameComponentKind =
+  | 'UNVERIFIED_LEGACY_FAMILY_POOL'
+  | 'LINKED_PATERNAL_GIVEN_NAME'
+  | 'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME'
+
+/** Names retain the semantics of the canonical BDM-DB identity producer.
+ * A provisional second component is not a recorded father or hereditary surname. */
+export interface PersonNameComponentProvenance {
+  readonly namingCountryCode: string
+  readonly givenSourceCountry: string
+  readonly secondSourceCountry: string
+  readonly secondComponentKind: PersonNameComponentKind
+  readonly verifiedFatherLogicalKey?: string
+}
+
 export interface PersonPhysicalProfile {
   readonly heightCm?: number
   readonly weightKg?: number
@@ -22,6 +37,7 @@ export interface Person {
   readonly id: PersonId
   readonly firstName: string
   readonly lastName: string
+  readonly nameComponent?: PersonNameComponentProvenance
   readonly gender?: Gender
   readonly dateOfBirth?: GameDate
   readonly nationalityIds: readonly CountryId[]
@@ -51,6 +67,9 @@ export function createPerson(input: CreatePersonInput): Person {
     id: requireNonEmptyString(input.id, 'Person id') as PersonId,
     firstName: requireNonEmptyString(input.firstName, 'Person first name'),
     lastName: requireNonEmptyString(input.lastName, 'Person last name'),
+    ...(input.nameComponent === undefined ? {} : {
+      nameComponent: validateNameComponent(input.nameComponent),
+    }),
     ...(input.gender === undefined ? {} : { gender: requireGender(input.gender) }),
     ...(input.dateOfBirth === undefined ? {} : { dateOfBirth: parseGameDate(input.dateOfBirth) }),
     nationalityIds: nationalities,
@@ -61,6 +80,26 @@ export function createPerson(input: CreatePersonInput): Person {
 
 export function personIdForProfile(kind: PersonProfileKind, profileId: string): PersonId {
   return `person:${kind}:${requireNonEmptyString(profileId, 'Profile id')}` as PersonId
+}
+
+export function validateNameComponent(input: PersonNameComponentProvenance): PersonNameComponentProvenance {
+  for (const code of [input.namingCountryCode, input.givenSourceCountry, input.secondSourceCountry]) {
+    if (!/^[A-Z]{2}$/.test(code)) throw new RangeError('Person name provenance country code is invalid')
+  }
+  if (!(['UNVERIFIED_LEGACY_FAMILY_POOL', 'LINKED_PATERNAL_GIVEN_NAME', 'PROVISIONAL_UNLINKED_CULTURAL_GIVEN_NAME'] as readonly string[]).includes(input.secondComponentKind)) {
+    throw new RangeError('Person second-name component kind is invalid')
+  }
+  const linked = input.secondComponentKind === 'LINKED_PATERNAL_GIVEN_NAME'
+  if (linked !== (input.verifiedFatherLogicalKey !== undefined)) {
+    throw new RangeError('Verified father must only exist for linked patronymics')
+  }
+  return {
+    namingCountryCode: input.namingCountryCode,
+    givenSourceCountry: input.givenSourceCountry,
+    secondSourceCountry: input.secondSourceCountry,
+    secondComponentKind: input.secondComponentKind,
+    ...(linked ? { verifiedFatherLogicalKey: requireNonEmptyString(input.verifiedFatherLogicalKey!, 'Verified father logical key') } : {}),
+  }
 }
 
 function validatePhysical(input: PersonPhysicalProfile): PersonPhysicalProfile {
