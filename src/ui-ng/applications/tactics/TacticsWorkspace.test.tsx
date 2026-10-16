@@ -109,7 +109,10 @@ describe('TacticsWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'DISEÑAR' }))
     fireEvent.click(screen.getByRole('button', { name: 'ANALIZAR' }))
     expect(screen.getByTestId('tactical-lab')).toBeInTheDocument()
-    expect(screen.getByLabelText('Jugador del laboratorio')).toBeInTheDocument()
+    const playerSelect = screen.getByLabelText('Jugador del laboratorio') as HTMLSelectElement
+    const firstPlayer = Array.from(playerSelect.options).find(option => option.value !== '')?.value
+    expect(firstPlayer).toBeTruthy()
+    fireEvent.change(playerSelect, { target: { value: firstPlayer } })
     expect(screen.getByLabelText('Zonas de lanzamiento').querySelectorAll('button')).toHaveLength(9)
 
     fireEvent.click(screen.getByRole('button', { name: /2 SG/ }))
