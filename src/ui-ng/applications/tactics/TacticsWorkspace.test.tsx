@@ -100,6 +100,29 @@ describe('TacticsWorkspace', () => {
     expect(screen.queryByText('2 acciones')).not.toBeInTheDocument()
   })
 
+  it('uses actual roster information in the Tactical Lab and adds an editable movement to the saved play', () => {
+    const { team } = mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    fireEvent.click(screen.getByRole('button', { name: 'LABORATORIO' }))
+    expect(screen.getByTestId('tactical-lab')).toBeInTheDocument()
+    expect(screen.getByLabelText('Jugador del laboratorio')).toBeInTheDocument()
+    expect(screen.getByLabelText('Zonas de lanzamiento').querySelectorAll('button')).toHaveLength(9)
+
+    fireEvent.click(screen.getByRole('button', { name: /2 SG/ }))
+    expect(screen.getByRole('button', { name: 'AÑADIR CORTE A LA JUGADA' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'AÑADIR CORTE A LA JUGADA' }))
+
+    expect(screen.getByText('ACCIONES DEL PASO 1')).toBeInTheDocument()
+    expect(screen.getByText('MOVE')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    const world = useGameStore.getState().world!
+    const saved = Object.values(world.savedPlaysById)
+    expect(saved.length).toBeGreaterThan(0)
+    const frames = saved[saved.length - 1]!.frames as Array<{ paths: Array<{ type:string; linkedId?:number }> }>
+    expect(frames[0]?.paths[0]).toMatchObject({ type: 'move', linkedId: 2 })
+    expect(team.id).toBeTruthy()
+  })
+
   it('renders one-line rival rows without repeated empty scouting messages', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))

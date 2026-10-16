@@ -28,6 +28,7 @@ jobs:
         run: >-
           npx vitest run
           src/ui-ng/applications/tactics/TacticsWorkspace.test.tsx
+          src/ui/pcb-migrated/tactics/TacticalLabModel.test.ts
           src/ui/pcb-migrated/tactics/TacticsPcbPage.issue9.test.ts
           src/ui/pcb-migrated/tactics/TacticsPcbPage.matchPlan.test.ts
           src/ui/pcb-migrated/tactics/TacticsPcbPage.canonicalLineup.test.ts
