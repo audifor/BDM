@@ -139,6 +139,7 @@ jobs:
             src/ui-ng/applications/club/ClubCourtsideSatellite.test.tsx \
             src/ui-ng/applications/board/BoardWorkspace.production.test.tsx \
             src/ui-ng/applications/board/BoardWorkspace.governance.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.courtside.test.tsx \
             src/ui-ng/applications/finances/FinancesWorkspace.test.tsx \
             src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx \
             --maxWorkers=2 --no-file-parallelism
