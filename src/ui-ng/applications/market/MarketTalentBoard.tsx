@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { isPlayerFreeAgent } from '@/domain/world'
+import { getPlayerContractStatus } from '@/domain/contract'
 import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
 import type { RequestScoutingInput } from '@/app/scouting'
 import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
@@ -19,6 +20,7 @@ interface Props {
   readonly world: GameWorld
   readonly teamId: TeamId
   readonly mode: Mode
+  readonly initialContractFilter?: 'ALL' | 'FREE'
   readonly targets: readonly MarketTarget[]
   readonly onAddTarget: (id: PlayerId) => string | null
   readonly onArchiveTarget: (id: PlayerId) => string | null
@@ -60,7 +62,7 @@ function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWor
   </div>
 }
 
-export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
@@ -69,7 +71,13 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
   const [noteEdit, setNoteEdit] = useState<{ id: PlayerId; text: string } | null>(null)
   const changeTarget = (action: () => string | null) => { const message = action(); setActionError(message) }
   const [position, setPosition] = useState<string>('ALL')
-  const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'FREE' | 'ACTIVE'>('ALL')
+  const [contractStatus, setContractStatus] = useState<'ALL' | 'FREE' | 'ROSTERED' | 'EXPIRING_3' | 'EXPIRING_6' | 'EXPIRING_12'>(initialContractFilter)
+  const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'ACTIVE' | 'UNSCOUTED'>('ALL')
+  const [minimumAge, setMinimumAge] = useState('')
+  const [maximumAge, setMaximumAge] = useState('')
+  const [country, setCountry] = useState('')
+  const [competition, setCompetition] = useState('')
+  const [maximumSalary, setMaximumSalary] = useState('')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
   const model = useMemo(() => buildScoutingWorkspaceModel(world), [world])
   const team = world.teams[teamId]
@@ -77,11 +85,40 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
   // All identities come from the canonical addressable list, never from world.players globally.
   const addressable = model.knowledge.filter((row) => !row.isOwnRoster)
   const savedIds = new Set(targets.map((target) => target.playerId))
+  const activeContracts = useMemo(() => {
+    const contracts = new Map<PlayerId, (typeof world.contractsById)[keyof typeof world.contractsById]>()
+    for (const contract of Object.values(world.contractsById)) if (getPlayerContractStatus(contract, world.currentDate) === 'active') contracts.set(contract.playerId, contract)
+    return contracts
+  }, [world])
+  const salaryKnowledge = useMemo(() => {
+    const results = new Map<PlayerId, number>()
+    const known = world.marketKnowledge.filter((item) => item.organizationId === team.organizationId && item.expectedSalary !== undefined)
+      .sort((a,b) => a.assessedAt.localeCompare(b.assessedAt))
+    for (const item of known) results.set(item.playerId, item.expectedSalary!)
+    return results
+  }, [world, team.organizationId])
+  const expiryHorizon = (months: number) => {
+    const [year, month, day] = world.currentDate.split('-').map(Number)
+    return new Date(Date.UTC(year!, month! - 1 + months, day!)).toISOString().slice(0, 10)
+  }
+  const expiration = contractStatus.startsWith('EXPIRING_') ? expiryHorizon(Number(contractStatus.split('_')[1])) : null
+  const countries = [...new Set(addressable.map((row) => row.countryName).filter((name) => name !== '—'))].sort()
+  const competitions = [...new Set(addressable.map((row) => row.competitionName).filter((name) => name !== '—'))].sort()
   const rows = addressable.filter((row) =>
     (position === 'ALL' || row.position === position) &&
+    (contractStatus === 'ALL' ||
+      contractStatus === 'FREE' && isPlayerFreeAgent(world, row.playerId) ||
+      contractStatus === 'ROSTERED' && !isPlayerFreeAgent(world, row.playerId) ||
+      expiration !== null && activeContracts.get(row.playerId)?.term.expiresOn !== undefined &&
+      activeContracts.get(row.playerId)!.term.expiresOn <= expiration) &&
     (status === 'ALL' || status === 'KNOWN' && hasKnowledge(row) ||
-      status === 'FREE' && isPlayerFreeAgent(world, row.playerId) ||
-      status === 'ACTIVE' && row.activeAssignment !== null) &&
+      status === 'ACTIVE' && row.activeAssignment !== null ||
+      status === 'UNSCOUTED' && !hasKnowledge(row)) &&
+    (minimumAge === '' || row.age >= Number(minimumAge)) &&
+    (maximumAge === '' || row.age <= Number(maximumAge)) &&
+    (country === '' || row.countryName === country) &&
+    (competition === '' || row.competitionName === competition) &&
+    (maximumSalary === '' || (salaryKnowledge.get(row.playerId) !== undefined && salaryKnowledge.get(row.playerId)! <= Number(maximumSalary))) &&
     `${row.name} ${row.clubName} ${row.countryName} ${row.competitionName}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const ordered = [...rows].sort((a, b) =>
     Number(comparisonIds.includes(b.playerId)) - Number(comparisonIds.includes(a.playerId)) ||
