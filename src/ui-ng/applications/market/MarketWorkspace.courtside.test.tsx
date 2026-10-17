@@ -20,6 +20,24 @@ function mount() {
 }
 
 describe('Courtside Market command centre', () => {
+  it('opens without financial budgets or a newly introduced target collection in older world data', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const older = { ...world,
+      teamFinancesByTeamId: Object.fromEntries(
+        Object.entries(world.teamFinancesByTeamId).filter(([id]) => id !== team.id)),
+      marketTargetsById: undefined,
+    } as unknown as typeof world
+    useGameStore.getState().replaceWorld(older)
+    render(<MarketWorkspace />)
+    expect(screen.getByTestId('market-command-centre')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
+    expect(screen.getAllByText('Sin datos financieros')).toHaveLength(2)
+    expect(screen.getByRole('dialog', { name: 'Presupuesto y decisiones de mercado' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Salario anual propuesto'), { target: { value: '20000' } })
+    expect(screen.getByText('Presupuesto de jugadores no disponible.')).toBeInTheDocument()
+  })
+
   it('opens the live organisation overview without displaying hidden player ratings', () => {
     const { world } = mount()
     const team = getUserTeam(world)!
