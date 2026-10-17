@@ -879,37 +879,51 @@ fn query_player_repertoire(
         return Ok(None);
     }
     if table_count != 3 {
-        return Err("WorldDB has a partially installed PLAYER 2.4-D2 repertoire extension".to_owned());
+        return Err(
+            "WorldDB has a partially installed PLAYER 2.4-D2 repertoire extension".to_owned(),
+        );
     }
 
-    let mut traits_query = connection.prepare(
-        "SELECT s.player_trait_code,s.strength,s.started_on,s.repertoire_version,a.person_id
+    let mut traits_query = connection
+        .prepare(
+            "SELECT s.player_trait_code,s.strength,s.started_on,s.repertoire_version,a.person_id
          FROM player_trait_strength_24d s
          LEFT JOIN player_trait_assignment a
            ON a.person_id=s.person_id AND a.player_trait_code=s.player_trait_code
           AND a.started_on=s.started_on
          WHERE s.person_id=?1 ORDER BY s.player_trait_code",
-    ).map_err(|error| format!("WorldDB trait query preparation failed: {error}"))?;
-    let traits = traits_query.query_map([person_id], |row| {
-        Ok((
-            WorldDbContextualTraitV1 {
-                code: row.get(0)?,
-                strength: row.get(1)?,
-                started_on: row.get(2)?,
-            },
-            row.get::<_, String>(3)?,
-            row.get::<_, Option<String>>(4)?,
-        ))
-    }).map_err(|error| format!("WorldDB traits query failed: {error}"))?
-      .collect::<rusqlite::Result<Vec<_>>>()
-      .map_err(|error| format!("WorldDB traits decode failed: {error}"))?;
-    if traits.len() > 40 || traits.iter().any(|(row, version, parent)|
-        version != VERSION || parent.is_none() || row.code.is_empty()
-        || !(0..=100).contains(&row.strength) || row.started_on.is_empty()
-    ) {
+        )
+        .map_err(|error| format!("WorldDB trait query preparation failed: {error}"))?;
+    let traits = traits_query
+        .query_map([person_id], |row| {
+            Ok((
+                WorldDbContextualTraitV1 {
+                    code: row.get(0)?,
+                    strength: row.get(1)?,
+                    started_on: row.get(2)?,
+                },
+                row.get::<_, String>(3)?,
+                row.get::<_, Option<String>>(4)?,
+            ))
+        })
+        .map_err(|error| format!("WorldDB traits query failed: {error}"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("WorldDB traits decode failed: {error}"))?;
+    if traits.len() > 40
+        || traits.iter().any(|(row, version, parent)| {
+            version != VERSION
+                || parent.is_none()
+                || row.code.is_empty()
+                || !(0..=100).contains(&row.strength)
+                || row.started_on.is_empty()
+        })
+    {
         return Err("WorldDB contains unverified or malformed PLAYER contextual traits".to_owned());
     }
-    let contextual_traits = traits.into_iter().map(|(row, _, _)| row).collect::<Vec<_>>();
+    let contextual_traits = traits
+        .into_iter()
+        .map(|(row, _, _)| row)
+        .collect::<Vec<_>>();
 
     let mut moves_query = connection.prepare(
         "SELECT u.move_code,v.value,u.usage_tendency,u.as_of_on,u.repertoire_version,f.move_family
@@ -919,49 +933,72 @@ fn query_player_repertoire(
          LEFT JOIN player_move_family_24d f ON f.move_code=u.move_code
          WHERE u.person_id=?1 ORDER BY u.move_code",
     ).map_err(|error| format!("WorldDB move query preparation failed: {error}"))?;
-    let moves = moves_query.query_map([person_id], |row| {
-        Ok((
-            row.get::<_, String>(0)?,
-            row.get::<_, Option<i64>>(1)?,
-            row.get::<_, i64>(2)?,
-            row.get::<_, String>(3)?,
-            row.get::<_, String>(4)?,
-            row.get::<_, Option<String>>(5)?,
-        ))
-    }).map_err(|error| format!("WorldDB move query failed: {error}"))?
-      .collect::<rusqlite::Result<Vec<_>>>()
-      .map_err(|error| format!("WorldDB move decode failed: {error}"))?;
-    if moves.len() > 60 || moves.iter().any(|(code, proficiency, usage, date, version, family)|
-        code.is_empty() || !proficiency.is_some_and(|score| (0..=100).contains(&score))
-        || !(0..=100).contains(usage) || date.is_empty() || version != VERSION
-        || family.as_deref().is_none_or(str::is_empty)
-    ) {
+    let moves = moves_query
+        .query_map([person_id], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<i64>>(1)?,
+                row.get::<_, i64>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, Option<String>>(5)?,
+            ))
+        })
+        .map_err(|error| format!("WorldDB move query failed: {error}"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("WorldDB move decode failed: {error}"))?;
+    if moves.len() > 60
+        || moves
+            .iter()
+            .any(|(code, proficiency, usage, date, version, family)| {
+                code.is_empty()
+                    || !proficiency.is_some_and(|score| (0..=100).contains(&score))
+                    || !(0..=100).contains(usage)
+                    || date.is_empty()
+                    || version != VERSION
+                    || family.as_deref().is_none_or(str::is_empty)
+            })
+    {
         return Err("WorldDB contains unverified or malformed PLAYER technical moves".to_owned());
     }
-    let technical_moves = moves.into_iter().map(|(code, proficiency, usage_tendency, as_of_on, _, _)| {
-        WorldDbTechnicalMoveV1 { code, proficiency: proficiency.expect("verified"), usage_tendency, as_of_on }
-    }).collect::<Vec<_>>();
+    let technical_moves = moves
+        .into_iter()
+        .map(
+            |(code, proficiency, usage_tendency, as_of_on, _, _)| WorldDbTechnicalMoveV1 {
+                code,
+                proficiency: proficiency.expect("verified"),
+                usage_tendency,
+                as_of_on,
+            },
+        )
+        .collect::<Vec<_>>();
 
     // Only the eight certified PLAYER 2.4-B specialization codes. Unversioned
     // legacy contextual traits must never be relabeled as specialization.
-    let mut specialties_query = connection.prepare(
-        "SELECT player_trait_code,started_on FROM player_trait_assignment
+    let mut specialties_query = connection
+        .prepare(
+            "SELECT player_trait_code,started_on FROM player_trait_assignment
          WHERE person_id=?1 AND player_trait_code IN (
             'SHOOTING_GRAVITY','DEEP_RANGE_HUNTER','RIM_PROTECTION_INSTINCT',
             'GLASS_CLEANING_MOTOR','PLAYMAKING_VISION','PERIMETER_HARASSER',
             'ENDLESS_ENGINE','ABOVE_RIM_FINISHER')
          AND ended_on IS NULL ORDER BY player_trait_code",
-    ).map_err(|error| format!("WorldDB specialty trait query preparation failed: {error}"))?;
-    let basketball_specialization_traits = specialties_query.query_map([person_id], |row| {
-        Ok(WorldDbBasketballSpecializationTraitV1 {
-            code: row.get(0)?,
-            started_on: row.get(1)?,
+        )
+        .map_err(|error| format!("WorldDB specialty trait query preparation failed: {error}"))?;
+    let basketball_specialization_traits = specialties_query
+        .query_map([person_id], |row| {
+            Ok(WorldDbBasketballSpecializationTraitV1 {
+                code: row.get(0)?,
+                started_on: row.get(1)?,
+            })
         })
-    }).map_err(|error| format!("WorldDB specialties query failed: {error}"))?
-      .collect::<rusqlite::Result<Vec<_>>>()
-      .map_err(|error| format!("WorldDB specialties decode failed: {error}"))?;
-    if basketball_specialization_traits.len() > 8 ||
-        basketball_specialization_traits.iter().any(|row| row.started_on.is_empty())
+        .map_err(|error| format!("WorldDB specialties query failed: {error}"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("WorldDB specialties decode failed: {error}"))?;
+    if basketball_specialization_traits.len() > 8
+        || basketball_specialization_traits
+            .iter()
+            .any(|row| row.started_on.is_empty())
     {
         return Err("WorldDB specialization traits are malformed".to_owned());
     }
@@ -1276,12 +1313,15 @@ mod tests {
     #[test]
     fn player_repertoire_requires_complete_optional_ddl12_extension() {
         let connection = Connection::open_in_memory().unwrap();
-        assert!(query_player_repertoire(&connection, "person:player").unwrap().is_none());
+        assert!(query_player_repertoire(&connection, "person:player")
+            .unwrap()
+            .is_none());
         connection.execute_batch(
             "CREATE TABLE player_trait_strength_24d(person_id TEXT,player_trait_code TEXT,started_on TEXT,strength INTEGER,repertoire_version TEXT);",
         ).unwrap();
         assert!(query_player_repertoire(&connection, "person:player")
-            .unwrap_err().contains("partially installed"));
+            .unwrap_err()
+            .contains("partially installed"));
     }
 
     #[test]
@@ -1299,7 +1339,9 @@ mod tests {
              INSERT INTO player_move_usage_24d VALUES ('person:p','STEPBACK',32,'2026-07-01','PLAYER-2.4-D1-40-TRAITS-60-MOVES-V1');
              INSERT INTO player_move_family_24d VALUES ('STEPBACK','SEPARATION');",
         ).unwrap();
-        let profile = query_player_repertoire(&connection, "person:p").unwrap().unwrap();
+        let profile = query_player_repertoire(&connection, "person:p")
+            .unwrap()
+            .unwrap();
         assert_eq!(profile.contextual_traits.len(), 1);
         assert_eq!(profile.contextual_traits[0].code, "HIGH_MOTOR");
         assert_eq!(profile.contextual_traits[0].strength, 86);
@@ -1307,26 +1349,38 @@ mod tests {
         assert_eq!(profile.technical_moves[0].proficiency, 74);
         assert_eq!(profile.technical_moves[0].usage_tendency, 32);
         assert_eq!(profile.basketball_specialization_traits.len(), 1);
-        assert_eq!(profile.basketball_specialization_traits[0].code, "SHOOTING_GRAVITY");
+        assert_eq!(
+            profile.basketball_specialization_traits[0].code,
+            "SHOOTING_GRAVITY"
+        );
         assert!(query_player_repertoire(&connection, "person:other")
-            .unwrap().unwrap().technical_moves.is_empty());
+            .unwrap()
+            .unwrap()
+            .technical_moves
+            .is_empty());
 
-        connection.execute(
-            "UPDATE player_move_usage_24d SET usage_tendency=102 WHERE person_id='person:p'",
-            [],
-        ).unwrap();
+        connection
+            .execute(
+                "UPDATE player_move_usage_24d SET usage_tendency=102 WHERE person_id='person:p'",
+                [],
+            )
+            .unwrap();
         assert!(query_player_repertoire(&connection, "person:p")
-            .unwrap_err().contains("malformed PLAYER technical moves"));
-        connection.execute(
-            "UPDATE player_move_usage_24d SET usage_tendency=32 WHERE person_id='person:p'",
-            [],
-        ).unwrap();
+            .unwrap_err()
+            .contains("malformed PLAYER technical moves"));
+        connection
+            .execute(
+                "UPDATE player_move_usage_24d SET usage_tendency=32 WHERE person_id='person:p'",
+                [],
+            )
+            .unwrap();
         connection.execute(
             "UPDATE player_trait_strength_24d SET repertoire_version='UNKNOWN' WHERE person_id='person:p'",
             [],
         ).unwrap();
         assert!(query_player_repertoire(&connection, "person:p")
-            .unwrap_err().contains("unverified"));
+            .unwrap_err()
+            .contains("unverified"));
     }
 
     #[test]
