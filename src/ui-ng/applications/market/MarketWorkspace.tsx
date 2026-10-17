@@ -162,7 +162,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
       {activeTab === 'planning' ? <MarketPlanningBoard
         world={world}
         teamId={team.id}
-        remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
+        remainingSalaryBudget={remainingSalaryBudget}
         onOpenPlayer={navigateToPlayer}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenTargets={() => setActiveTab('targets')}
