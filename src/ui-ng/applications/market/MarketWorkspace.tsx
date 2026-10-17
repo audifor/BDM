@@ -54,9 +54,13 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   const startFreeAgentSigningGovernance = useGameStore((state) => state.startFreeAgentSigningGovernance)
   const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
   const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
-  const [activeTab, setActiveTab] = useState<MarketTab>(() =>
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('playerId') ? 'free-agents' : 'centre',
-  )
+  const [activeTab, setActiveTab] = useState<MarketTab>(() => {
+    if (typeof window === 'undefined') return 'centre'
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('playerId')) return 'free-agents'
+    const selected = params.get('marketTab')
+    return MARKET_TABS.some((tab) => tab.id === selected) ? selected as MarketTab : 'centre'
+  })
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
