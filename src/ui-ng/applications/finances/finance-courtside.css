@@ -76,3 +76,20 @@
 @media(max-width:1100px) { .cs-club-finances .fc-overview__kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } .cs-club-finances .fc-overview__shortcuts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:740px) { .cs-club-finances .fc-overview__body { grid-template-columns:1fr; } .cs-club-finances .fc-overview__top { align-items:start; } }
 @media(max-width:500px) { .cs-club-finances .ng-canon__scroll { padding:8px; } .cs-club-finances .fc-overview__kpi { min-height:92px;padding:10px; } .cs-club-finances .fc-overview__kpi strong { font-size:20px; } .cs-club-finances .fc-overview__shortcuts { grid-template-columns:1fr 1fr; } .cs-club-finances .fc-subnav { gap:2px; } .cs-club-finances .fc-subnav button { padding:6px 8px; } }
+
+.cs-club-finances .fc-budget-summary { display:grid;gap:11px;background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:11px;padding:12px 15px;margin:0 0 9px; }
+.cs-club-finances .fc-budget-summary__head { display:flex;justify-content:space-between;gap:10px;color:var(--cm-text);font:700 16px var(--cs-font-display); }
+.cs-club-finances .fc-budget-summary__head span { color:var(--cm-muted);font:600 11px var(--cs-font); }
+.cs-club-finances .fc-budget-summary__figures { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px; }
+.cs-club-finances .fc-budget-summary__figures > div { display:grid;gap:5px;min-width:0; }
+.cs-club-finances .fc-budget-summary__figures span { color:var(--cm-muted);font:600 11px var(--cs-font); }
+.cs-club-finances .fc-budget-summary__figures strong { color:var(--cm-text);font:750 clamp(16px,1.7vw,22px)/1.1 var(--cs-font-display);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis; }
+.cs-club-finances .fc-budget-summary .is-over { color:var(--cm-negative); }
+.cs-club-finances .fc-budget-summary__progress { display:flex;align-items:center;gap:12px;border-top:1px solid var(--cm-line);padding-top:9px; }
+.cs-club-finances .fc-budget-summary__progress strong { margin-left:auto;color:var(--cm-lime);font:700 12px var(--cs-font);white-space:nowrap; }
+.cs-club-finances .fc-budget-summary__bar { flex:1;height:8px;max-width:45%;background:var(--cm-s3);overflow:hidden;border-radius:9px; }
+.cs-club-finances .fc-budget-summary__bar span { display:block;background:var(--cm-lime);height:100%;border-radius:9px; }
+.cs-club-finances .fc-budget-summary__bar span.is-over { background:var(--cm-negative); }
+.cs-club-finances .fc-budget-empty { padding:10px 13px;margin-bottom:9px;background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:8px;color:var(--cm-muted);font:600 12px var(--cs-font); }
+@media(max-width:950px) {.cs-club-finances .fc-budget-summary__figures { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:500px) {.cs-club-finances .fc-budget-summary__progress { align-items:stretch;flex-direction:column; }.cs-club-finances .fc-budget-summary__bar { max-width:100%;width:100%; }.cs-club-finances .fc-budget-summary__progress strong { margin-left:0; } }
