@@ -115,6 +115,9 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenFreeAgents={() => setActiveTab('free-agents')}
+        onOpenExplore={() => setActiveTab('explore')}
+        onOpenTargets={() => setActiveTab('targets')}
+        onOpenPlanning={() => setActiveTab('planning')}
         onOpenOperations={() => setActiveTab('operations')}
         onOpenPlayer={navigateToPlayer}
       /> : null}
