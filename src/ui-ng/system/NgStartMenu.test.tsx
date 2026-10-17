@@ -124,7 +124,7 @@ describe('NG start menu', () => {
 
     const teamPanel = dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')
     expect(teamPanel).not.toBeNull()
-    expect(teamPanel?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(8)
+    expect(teamPanel?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(7)
     expect(within(dialog).getByRole('button', { name: 'Roster' })).toBeInTheDocument()
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Talent Operations' }))
