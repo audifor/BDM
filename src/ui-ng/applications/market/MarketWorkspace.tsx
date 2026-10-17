@@ -38,7 +38,7 @@ function marketActorLabel(world: GameWorld, actor: NegotiationResponsibleActor |
   return history?.kind === 'appointment' ? `${name} · ${STAFF_ROLE_LABELS[history.roleId]}` : name
 }
 
-export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: GameWorld } = {}) {
+export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly initialWorld?: GameWorld; readonly onOpenScouting?: () => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const contactFreeAgent = useGameStore((state) => state.contactFreeAgent)
   const submitFreeAgentOffer = useGameStore((state) => state.submitFreeAgentOffer)
@@ -106,7 +106,7 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
         teamId={team.id}
         availableFreeAgents={getFreeAgents(world).length}
         remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
-        onOpenScouting={() => syncWorkspaceAppQuery('scouting', 'push')}
+        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenFreeAgents={() => setActiveTab('free-agents')}
         onOpenOperations={() => setActiveTab('operations')}
         onOpenPlayer={navigateToPlayer}
