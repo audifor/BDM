@@ -300,7 +300,7 @@ function HistoryBoard({
   readonly onOpenPlayer: (playerId: PlayerId) => void
 }) {
   if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No recorded injuries.</p>
+    return <MedicalHistoryVisual rows={rows} />
   }
 
   return (
@@ -531,7 +531,9 @@ export function MedicalWorkspace() {
           ) : null}
           {activeTab === 'recovery' ? (
             <>
-              <MedicalRecoveryVisual model={model} onOpenPlayer={navigateToPlayerMedical} />
+              {model.injured.length === 0
+                ? <MedicalNoInjuries model={model} onOpenPlayer={navigateToPlayerMedical} />
+                : <MedicalRecoveryVisual model={model} onOpenPlayer={navigateToPlayerMedical} />}
               <ReturnToPlayBoard
                 rows={model.returnToPlayReviews}
                 onDecision={(injuryId, decision, outcomeId) => reviewReturnToPlay(injuryId, decision, outcomeId)}
