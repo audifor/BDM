@@ -87,7 +87,7 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
-import { validatePersonalityJournal, type PersonalityHistoryEntry } from '@/domain/personality/ObservedPersonalityEvolution'
+import { OBSERVED_PERSONALITY_RULES, validatePersonalityJournal, type PersonalityHistoryEntry } from '@/domain/personality/ObservedPersonalityEvolution'
 import { createPlayer } from '@/domain/player'
 import { createGovernanceDecisionEvent } from '@/domain/governance'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
@@ -347,6 +347,16 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (envelope.schemaVersion !== 4) throw new Error('Unsupported save version')
   const savedAt = isoTimestamp(envelope.savedAt, 'Save V4 savedAt')
   const payload = record(envelope.payload, 'Save V4 payload')
+  // PR #130 used a different experimental journal, without the committed
+  // morale-event evidence required by the single canonical PERSON writer.
+  // Never silently drop real experience records or invent evidence to migrate.
+  if (Object.prototype.hasOwnProperty.call(payload, 'personalityExperienceHistory')) {
+    const former = payload.personalityExperienceHistory
+    if (!Array.isArray(former)) throw new TypeError('Save V4 experimental personalityExperienceHistory must be an array')
+    if (former.length > 0) {
+      throw new RangeError('Save V4 contains experimental PERSON personalityExperienceHistory; a verified-evidence migration is required before loading')
+    }
+  }
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
   const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
@@ -535,15 +545,34 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   for (const item of personalityHistory) {
     const profile = withPathwayHistory.personalitiesByPersonId[item.personId]
     const morale = withPathwayHistory.moraleByPersonId[item.personId]
-    if (profile === undefined || morale === undefined
-      || !morale.events.some((event) => event.id === item.sourceEventId && event.gameDate === item.occurredOn)) {
+    const evidence = morale?.events.find((event) => event.id === item.sourceEventId && event.gameDate === item.occurredOn)
+    if (profile === undefined || evidence === undefined) {
       throw new TypeError('Save V4 personality history requires a committed matching event and PERSON profile')
+    }
+    const rule = OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === evidence.context.personalityEventKind)
+    if (rule === undefined || rule.dimension !== item.dimensionCode
+      || !(rule.sources as readonly string[]).includes(evidence.source)
+      || !Number.isInteger(evidence.delta) || evidence.delta === 0) {
+      throw new TypeError('Save V4 personality history does not match the canonical observed event kind and source')
+    }
+    const magnitude = Math.ceil(Math.min(100, Math.abs(evidence.delta)) / 40)
+    const calculated = Math.max(0, Math.min(100, item.previousValue + Math.sign(evidence.delta) * magnitude))
+    if (calculated !== item.newValue) {
+      throw new TypeError('Save V4 personality history delta does not match its committed morale evidence')
     }
     ;(indexedHistory[item.personId] ??= []).push(item)
   }
   for (const [id, entries] of Object.entries(indexedHistory)) {
     validatePersonalityJournal(entries, id, withPathwayHistory.currentDate)
-    const latestByDimension = new Map(entries.map((entry) => [entry.dimensionCode, entry.newValue]))
+    const priorByDimension = new Map<string, number>()
+    for (const entry of entries) {
+      const prior = priorByDimension.get(entry.dimensionCode)
+      if (prior !== undefined && prior !== entry.previousValue) {
+        throw new TypeError('Save V4 personality journal breaks its per-dimension chronological chain')
+      }
+      priorByDimension.set(entry.dimensionCode, entry.newValue)
+    }
+    const latestByDimension = priorByDimension
     for (const [dimension, lastValue] of latestByDimension) {
       const savedScore = (withPathwayHistory.personalitiesByPersonId[id]!.values as Readonly<Record<string, number>>)[dimension]
       if (savedScore !== lastValue) {
