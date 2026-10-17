@@ -21,6 +21,8 @@ export interface UserCoachCreationInput {
   readonly dateOfBirth: string
   readonly gender: Gender
   readonly nationalityId?: CountryId
+  /** Country code or name resolved against the actual selected universe; never a fabricated Country. */
+  readonly nationalityCountryCode?: string
   readonly background: UserCoachBackground
   readonly ambition?: UserCoachAmbition
   readonly biography?: string
@@ -50,7 +52,17 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
   if (input.ambition !== undefined && !USER_COACH_AMBITIONS.includes(input.ambition)) throw new RangeError('Invalid coach ambition')
   if (input.biography !== undefined && (typeof input.biography !== 'string' || input.biography.trim().length > 600)) throw new RangeError('Coach biography is too long')
   if (!(['balanced', 'ambitious', 'loyal'] as readonly string[]).includes(input.disposition)) throw new RangeError('Invalid coach disposition')
-  const nationalityId = input.nationalityId ?? coach.nationalityId
+  if (input.nationalityCountryCode !== undefined && input.nationalityId !== undefined) {
+    throw new RangeError('Use nationality ID or country code, not both')
+  }
+  const nationalityLabel = input.nationalityCountryCode?.trim().toLocaleLowerCase()
+  const matchedCountries = nationalityLabel === undefined || nationalityLabel === ''
+    ? []
+    : Object.values(world.countries).filter((country) => country.code.toLocaleLowerCase() === nationalityLabel || country.name.toLocaleLowerCase() === nationalityLabel)
+  if (nationalityLabel !== undefined && nationalityLabel !== '' && matchedCountries.length !== 1) {
+    throw new RangeError(`Coach nationality ${input.nationalityCountryCode} was not found uniquely in this GameWorld; choose a code present in the selected universe`)
+  }
+  const nationalityId: CountryId = matchedCountries[0]?.id ?? input.nationalityId ?? coach.nationalityId
   if (world.countries[nationalityId] === undefined) throw new RangeError('Coach nationality must be a country in the selected world')
 
   // Preserve the same Coach ID, StaffProfile ID and Person ID, hence career, contracts,
