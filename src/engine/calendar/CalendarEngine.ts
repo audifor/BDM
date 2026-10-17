@@ -7,6 +7,7 @@ import { progressFormalOfferResponses, progressNegotiationContactResponses, reco
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/ScheduledTrainingEngine'
 import { progressAiTrainingPlanning } from '@/engine/training/TrainingPlanning'
+import { progressTrainingMentoring } from '@/engine/training/MentoringEngine'
 import { isStaffWeeklyCheckpoint } from '@/engine/staff'
 import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
 import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments, signCommittedRecruit } from '@/engine/recruiting'
@@ -152,8 +153,8 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('TRAINING', current.currentDate, true, (input) => {
       const result = executeScheduledTrainingSessionsWithEvidence(input)
       trainingConflicts = result.matchConflictSessionIds
-      return result.world
-    }, 'Scheduled Training is checked every simulation day; fixture-date conflicts are skipped.', () => trainingConflicts.map((sessionId) => ({
+      return progressTrainingMentoring(result.world)
+    }, 'Scheduled Training executes daily; mentoring progresses at bounded monthly checkpoints.', () => trainingConflicts.map((sessionId) => ({
       code: 'TRAINING_MATCH_CONFLICT',
       message: `Scheduled session ${sessionId} was not executed because a fixture is on that date.`,
       sourceId: sessionId,

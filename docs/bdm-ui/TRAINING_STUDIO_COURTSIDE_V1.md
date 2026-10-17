@@ -15,7 +15,7 @@ Rama: `feat/bdm-ui-courtside`. No modifica `main`.
 
 ## Límites y pasos imprescindibles antes de certificar
 
-- El árbol visual del legado está implementado como registro persistente de vínculos. **No concede todavía cambios de personalidad ni transferencias de rasgos**.
+- El árbol visual del legado está implementado como registro persistente de vínculos. registra ahora interacciones profesionales mensuales y mejoras acotadas de hábitos/persona cuando el mentor tiene suficiente ventaja. No transfiere atributos deportivos ni integra aprendizaje táctico con MatchEngine.
 - Objetivos individuales fijan una meta de dirección, **no alteran** los límites de potencial ni el motor de desarrollo.
 - El generador de temporada es determinista por regla martes/jueves; no optimiza cuantitativamente microciclos ni crea sesiones en días de partido. No programa individual/mentoring automáticamente.
 - Pizarra Viva y Laboratorio requieren integración bidireccional con Playbook y MatchEngine; no se ha fingido esa conexión.
@@ -26,3 +26,7 @@ Rama: `feat/bdm-ui-courtside`. No modifica `main`.
 ## Corrección de información sobre lesiones
 
 El catálogo anterior incluía una anotación obsoleta: el riesgo relativo de lesión **sí** alimenta `trainingInjuryProbability` desde `ScheduledTrainingEngine`. La UI nunca debe convertir `injuryRiskWeight` en probabilidad porcentual de lesión. Se corrigieron comentario y etiqueta de catálogo.
+
+## Mentoring V1 / impacto jugable
+
+`progressTrainingMentoring` se ejecuta dentro de la fase `TRAINING` de `CalendarEngine`. Usa checkpoints de cuatro semanas, solo jugadores del club, relaciones bidireccionales y eventos deterministas. Aporta, como máximo, 1 punto de una dimensión de personalidad por checkpoint cuando existe ventaja suficiente del mentor. Bajo conflicto de temperamentos, registra fricción sin mejora. Los eventos se almacenan en `relationshipsByKey` y bloquean ejecución duplicada el mismo día. Los atributos deportivos y el potencial no se modifican. Falta validación en partidas largas y Save/Load antes del PASS global.
