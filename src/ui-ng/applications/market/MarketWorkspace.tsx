@@ -16,14 +16,19 @@ import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCentre'
+import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
+import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
-type MarketTab = 'centre' | 'free-agents' | 'operations'
+type MarketTab = 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'operations'
 const MARKET_TABS: readonly { readonly id: MarketTab; readonly label: string }[] = [
   { id: 'centre', label: 'Centro de mercado' },
+  { id: 'explore', label: 'Explorar' },
+  { id: 'targets', label: 'Objetivos' },
+  { id: 'planning', label: 'Planificación' },
   { id: 'free-agents', label: 'Agentes libres' },
   { id: 'operations', label: 'Operaciones' },
 ]
@@ -49,6 +54,8 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   const [activeTab, setActiveTab] = useState<MarketTab>(() =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('playerId') ? 'free-agents' : 'centre',
   )
+  const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
+  const toggleComparison = (id: PlayerId) => setComparisonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
   // PLAYER > CONTRACT passes a specific free-agent dossier in the URL.
@@ -110,6 +117,24 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         onOpenFreeAgents={() => setActiveTab('free-agents')}
         onOpenOperations={() => setActiveTab('operations')}
         onOpenPlayer={navigateToPlayer}
+      /> : null}
+      {(activeTab === 'explore' || activeTab === 'targets') ? <MarketTalentBoard
+        world={world}
+        teamId={team.id}
+        mode={activeTab}
+        comparisonIds={comparisonIds}
+        onToggleComparison={toggleComparison}
+        onOpenPlayer={navigateToPlayer}
+        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
+        onOpenOperations={() => setActiveTab('operations')}
+      /> : null}
+      {activeTab === 'planning' ? <MarketPlanningBoard
+        world={world}
+        teamId={team.id}
+        remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
+        onOpenPlayer={navigateToPlayer}
+        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
+        onOpenTargets={() => setActiveTab('targets')}
       /> : null}
       {activeTab === 'free-agents' ? <>
       <div className="ng-canon__toolbar">
