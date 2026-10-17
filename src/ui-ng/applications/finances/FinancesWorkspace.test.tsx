@@ -26,25 +26,42 @@ describe('Finance V2 workspace', () => {
 
   it('shows canonical empty states and keeps salary cap separate', () => {
     render(<FinancesWorkspace world={world} />)
-    expect(screen.getByRole('heading', { name: 'Finance overview' })).toBeInTheDocument()
-    expect(screen.getByText('No Organization finance facts available.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Cash flow' }))
-    expect(screen.getByText('No cash accounts recorded.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Salary cap' }))
+    expect(screen.getByRole('heading', { name: 'Tu dinero, de un vistazo' })).toBeInTheDocument()
+    expect(screen.getByText('No hay datos financieros del club todavía.')).toBeInTheDocument()
+    expect(screen.getByText('Dinero disponible')).toBeInTheDocument()
+    expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Caja', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Movimientos' }))
+    expect(screen.getByText('No recorded cash movements in this period.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Plantilla', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Límite salarial' }))
     expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
-    expect(screen.getByText(/separate from Organization cash/)).toBeInTheDocument()
+  })
+
+
+  it('keeps the high-priority navigation direct without fourteen shell tabs', () => {
+    render(<FinancesWorkspace world={world} />)
+    expect(screen.getByRole('navigation', { name: 'Apartados de finanzas' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Finance AI' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Espacio para fichar/ }))
+    expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Futuro', exact: true }))
+    expect(screen.getByRole('button', { name: 'Previsiones' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Valor del club' })).toBeInTheDocument()
   })
 
   it('requires explicit valuation inputs and distinguishes a missing operating metric', () => {
     render(<FinancesWorkspace world={world} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Valuation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Futuro', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Valor del club' }))
     expect(screen.getByText(/No reporting currency configured/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Filtros y opciones avanzadas'))
     fireEvent.change(screen.getByLabelText('Reporting currency'), { target: { value: 'EUR' } })
     expect(screen.getByText(/No valuation assumptions configured/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Multiple numerator'), { target: { value: '3' } })
     expect(screen.getByText(/no positive operating metric/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Multiple numerator'), { target: { value: '0' } })
-    expect(screen.getByRole('alert')).toHaveTextContent('Invalid valuation multiple')
+    expect(screen.getByRole('alert')).toHaveTextContent('Multiplicador no válido')
   })
 
   it('keeps currencies separate and exposes source references for a recorded cash fact', () => {
