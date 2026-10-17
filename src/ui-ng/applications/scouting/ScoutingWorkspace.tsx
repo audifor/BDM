@@ -17,11 +17,11 @@ import { RequestScoutingModal, ScoutingModalFrame } from '@/ui-ng/applications/s
 import { ScoutingWarRoom } from '@/ui-ng/applications/scouting/ScoutingWarRoom'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
-import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { useOptionalNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import './scouting-workspace.css'
-import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
 type ModalState = { readonly kind: 'request'; readonly playerId: PlayerId; readonly mission?: ScoutingMission } | { readonly kind: 'report'; readonly reportId: string } | { readonly kind: 'cancel'; readonly assignment: ScoutingAssignmentRow } | { readonly kind: 'coverage-add' } | { readonly kind: 'coverage-end'; readonly assignmentId: string }
 const PRIORITIES: readonly ScoutingPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
@@ -252,7 +252,7 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket, em
   const cancelAssignment = useGameStore((state) => state.cancelScoutingAssignment)
   const createCoverage = useGameStore((state) => state.createScoutingTerritoryAssignment)
   const endCoverage = useGameStore((state) => state.endScoutingTerritoryAssignment)
-  const { openEntity } = useNgWorkspaceNavigation()
+  const navigation = useOptionalNgWorkspaceNavigation()
   const [activeTab, setActiveTab] = useState<ScoutingWorkspaceTabId>('centre')
   const [focusPlayerId] = useState(() => typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('focusPlayerId'))
   const [modal, setModal] = useState<ModalState | null>(null)
@@ -262,7 +262,7 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket, em
   const teamStyle = useMemo(() => { if (team === undefined) return undefined; const colors = deriveTeamColors(team.id); return { '--po-team-primary': colors.primary, '--po-team-secondary': colors.secondary, '--po-team-muted': colors.muted } as CSSProperties }, [team])
   const tabs = useMemo(() => SCOUTING_WORKSPACE_TABS.map((id) => ({ id, label: SCOUTING_TAB_LABELS[id], active: id === activeTab })), [activeTab])
   const embeddedTabs: readonly ScoutingWorkspaceTabId[] = ['centre', 'focuses', 'assignments', 'coverage', 'reports']
-  const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? openEntity)({ type: 'player', playerId, section: 'overview' })
+  const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? navigation?.openEntity ?? ((destination: EntityDestination) => navigateToPlayer(destination.playerId)))({ type: 'player', playerId, section: 'overview' })
   if (world === null || model === null || team === undefined) return <div className="scouting-workspace scouting-workspace--empty" data-ng-region="scouting-workspace"><section className="scouting-workspace__empty-state"><h1 className="scouting-workspace__empty-title">Scouting</h1><p className="scouting-workspace__empty-message">No team assigned to the user coach.</p></section></div>
   const content = <>
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
