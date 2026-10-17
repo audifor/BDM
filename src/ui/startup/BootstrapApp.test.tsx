@@ -52,7 +52,7 @@ const teams = Array.from({ length: 18 }, (_, index) => ({
 
 const coachCreation = {
   firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1990-01-01',
-  gender: 'male', background: 'rookie', ambition: 'firstTitle', biography: '', coachingStyle: 'balanced', disposition: 'balanced',
+  gender: 'male', nationalityCountryCode: '', background: 'rookie', ambition: 'firstTitle', biography: '', coachingStyle: 'balanced', disposition: 'balanced',
 } as const
 
 function fillCoachIdentity() {
@@ -133,6 +133,7 @@ describe('New Game World DB Spain ACB flow', () => {
     fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: 'Villalobos' } })
     fireEvent.change(screen.getByLabelText('DATE OF BIRTH'), { target: { value: '1991-06-19' } })
     fireEvent.change(screen.getByLabelText('GENDER'), { target: { value: 'female' } })
+    fireEvent.change(screen.getByLabelText('NATIONALITY (OPTIONAL)'), { target: { value: 'ESP' } })
     fireEvent.change(screen.getByLabelText('BACKGROUND'), { target: { value: 'inDebt' } })
     fireEvent.change(screen.getByLabelText('CAREER AMBITION'), { target: { value: 'financialFreedom' } })
     fireEvent.change(screen.getByLabelText('PERSONAL BACKSTORY (OPTIONAL, MAX 600 CHARACTERS)'), { target: { value: 'Former university student working to pay outstanding family loans.' } })
@@ -148,6 +149,7 @@ describe('New Game World DB Spain ACB flow', () => {
         lastName: 'Villalobos',
         dateOfBirth: '1991-06-19',
         gender: 'female',
+        nationalityCountryCode: 'ESP',
         background: 'inDebt',
         ambition: 'financialFreedom',
         biography: 'Former university student working to pay outstanding family loans.',
