@@ -4,6 +4,7 @@ import { createValidGameWorldInput } from './testFixtures'
 import { createPersonality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { applyPersonalityExperienceToWorld } from './PersonalityExperienceEvents'
+import { applyMoraleEventToWorld } from './MoraleEvents'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
 describe('PERSON50 verified experience journal', () => {
@@ -32,6 +33,26 @@ describe('PERSON50 verified experience journal', () => {
     expect(reloaded.personalityExperienceHistory).toEqual(changed.personalityExperienceHistory)
     expect(reloaded.personalitiesByPersonId[personId]!.values.recognitionNeed).toBe(52)
     expect(reloaded.personalitiesByPersonId[personId]!.values.ambition).toBe(50)
+  })
+  it('uses an observed morale event as evidence only when explicitly annotated', () => {
+    const { world, personId } = setup()
+    const onDate = updateGameWorld(world, { currentDate: '2026-07-01' as typeof world.currentDate })
+    const first = applyMoraleEventToWorld(onDate, {
+      id: 'verified:team:1', personId, source: 'teamEvent', gameDate: onDate.currentDate,
+      delta: 80, context: { observedPersonalityKind: 'TEAMMATE_SUPPORT', observedPersonalityDimension: 'empathy' },
+    })
+    expect(first.personalitiesByPersonId[personId]!.values.empathy).toBe(52)
+    expect(first.personalityExperienceHistory).toHaveLength(1)
+    const duplicate = applyMoraleEventToWorld(first, {
+      id: 'verified:team:1', personId, source: 'teamEvent', gameDate: onDate.currentDate,
+      delta: 80, context: { observedPersonalityKind: 'TEAMMATE_SUPPORT', observedPersonalityDimension: 'empathy' },
+    })
+    expect(duplicate).toBe(first)
+    const legacy = applyMoraleEventToWorld(onDate, {
+      id: 'legacy:team:2', personId, source: 'teamEvent', gameDate: onDate.currentDate, delta: 20, context: {},
+    })
+    expect(legacy.personalityExperienceHistory).toHaveLength(0)
+    expect(legacy.personalitiesByPersonId[personId]!.values.empathy).toBe(50)
   })
   it('does not evolve from time alone, rejects unknown person and future evidence', () => {
     const { world, personId } = setup()
