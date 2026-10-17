@@ -1,3 +1,4 @@
+import { validatePersonalityChanges, type PersonalityChange } from '@/domain/personality/PersonalityExperience'
 import { createInjury } from '@/domain/injury'
 import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from '@/domain/injury/EquippedRehabilitationAct'
 import type { RehabilitationEquipmentEvidence } from '@/domain/facilities/RehabilitationEquipmentEvidence'
@@ -122,6 +123,8 @@ export interface WorldAnnualDevelopmentCycleSaveV4 {
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
+  /** Optional event-sourced 50-PERSON history; absent from legacy V4 saves. */
+  readonly personalityExperienceHistory?: readonly PersonalityChange[]
   /** Minimal accepted club intent and review memory; assessment projections remain derived. */
   readonly clubStrategicStates: readonly ClubStrategicState[]
   /** Minimal per-need AI planning memory; absent in earlier V4 saves. */
@@ -245,6 +248,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       staffCareerRuntime: serializeGameWorldV3(world, value.savedAt).payload.staffCareerRuntime,
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE),
+      personalityExperienceHistory: [],
       clubStrategicStates: [],
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
@@ -287,6 +291,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(
         world.worldAnnualDevelopmentCycle ?? EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
       ),
+      personalityExperienceHistory: validatePersonalityChanges(world.personalityExperienceHistory, world.personalitiesByPersonId),
       clubStrategicStates: Object.values(world.clubStrategicStatesByTeamId),
       gmPlanStates: Object.values(world.gmPlanStatesById),
       contractReviewDecisions: Object.values(world.contractReviewDecisionsById),
@@ -345,6 +350,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const payload = record(envelope.payload, 'Save V4 payload')
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
+  const personalityExperienceHistory = payload.personalityExperienceHistory === undefined ? [] : parsePersonalityExperienceHistory(payload.personalityExperienceHistory)
   const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
   const gmPlanStates = Object.prototype.hasOwnProperty.call(payload, 'gmPlanStates') ? parseGMPlanStates(payload.gmPlanStates) : []
   const contractReviewDecisions = Object.prototype.hasOwnProperty.call(payload, 'contractReviewDecisions') ? parseContractReviewDecisions(payload.contractReviewDecisions) : []
@@ -455,7 +461,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, financialReservations: _financialReservations, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, financingAgreements: _financingAgreements, financingDrawdowns: _financingDrawdowns, capitalContributions: _capitalContributions, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, facilityEconomyRecords: _facilityEconomyRecords, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { personalityExperienceHistory: _personalityExperienceHistory, worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, financialReservations: _financialReservations, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, financingAgreements: _financingAgreements, financingDrawdowns: _financingDrawdowns, capitalContributions: _capitalContributions, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, facilityEconomyRecords: _facilityEconomyRecords, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const { teamPathwayRelations: _pathwayPayload, playerRegistrations: _registrationPayload, ...v3CompatibilityPayload } = compatibilityPayload
   const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
   const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
@@ -524,7 +530,26 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     const history = playerPathwayHistory.find((item) => item.playerId === player.id)?.pathwayHistory
     return history === undefined ? player : createPlayer({ ...player, pathwayHistory: history })
   }) })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPathwayHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withPersonalityHistory = updateGameWorld(withPathwayHistory, {
+    personalityExperienceHistory: validatePersonalityChanges(personalityExperienceHistory, withPathwayHistory.personalitiesByPersonId),
+  })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPersonalityHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+}
+
+function parsePersonalityExperienceHistory(value: unknown): readonly PersonalityChange[] {
+  return rawArray(value, 'Save V4 PERSON experiences').map((raw) => {
+    const event = record(raw, 'Save V4 PERSON experience')
+    exactKeys(event, ['id', 'personId', 'kind', 'occurredOn', 'dimension', 'before', 'after'], 'Save V4 PERSON experience')
+    return {
+      id: nonEmptyText(event.id, 'PERSON event id'),
+      personId: nonEmptyText(event.personId, 'PERSON identity'),
+      kind: nonEmptyText(event.kind, 'PERSON event kind'),
+      occurredOn: parseGameDate(nonEmptyText(event.occurredOn, 'PERSON event date')),
+      dimension: nonEmptyText(event.dimension, 'PERSON personality dimension'),
+      before: integer(event.before, 'PERSON previous score'),
+      after: integer(event.after, 'PERSON new score'),
+    }
+  })
 }
 
 function parsePlayerCareerEnds(value: unknown): readonly { readonly playerId: string; readonly endedOn: string; readonly reason: 'ageLimit' | 'manual' }[] {
