@@ -4,6 +4,9 @@ import { applyUserCoachCreation, type UserCoachCreationInput } from './UserCoach
 import { createConfiguredGame, createConfiguredGameAsync } from './createConfiguredGame'
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { updateGameWorld } from '@/domain/world'
+import { createCoachFinanceProfile } from '@/domain/coachFinances'
+import { getUserCoachAmbitionProgress } from './UserCoachAmbitions'
 
 const created: UserCoachCreationInput = {
   firstName: '  Elena ',
@@ -11,6 +14,8 @@ const created: UserCoachCreationInput = {
   dateOfBirth: '1991-06-19',
   gender: 'female',
   background: 'inDebt',
+  ambition: 'financialFreedom',
+  biography: '  Raised in an indebted family, looking for security.  ',
   disposition: 'ambitious',
   coachingStyle: 'tactician',
 }
@@ -40,6 +45,10 @@ describe('BS19B user-created Coach foundation', () => {
     expect(world.coachFinancesByCoachId[coach.id]!.debts).toEqual(expect.arrayContaining([
       expect.objectContaining({ principalRemaining: 30_000, monthlyPayment: 850, status: 'active' }),
     ]))
+    expect(world.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({
+      background: 'inDebt', ambition: 'financialFreedom', biography: 'Raised in an indebted family, looking for security.',
+    })
+    expect(getUserCoachAmbitionProgress(world)?.completed).toBe(false)
     expect(previousFinance.debts).toHaveLength(0)
     expect(original.coaches[original.userCoachId]!.firstName).toBe('BDM')
   })
@@ -54,6 +63,47 @@ describe('BS19B user-created Coach foundation', () => {
     expect(restored.personalitiesByPersonId[coach.id]!.values.ambition).toBeGreaterThanOrEqual(70)
     expect(restored.coachFinancesByCoachId[coach.id]!.cash).toBe(2_500)
     expect(restored.coachFinancesByCoachId[coach.id]!.debts[0]!.principalRemaining).toBe(30_000)
+    expect(restored.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({
+      background: 'inDebt', ambition: 'financialFreedom', biography: 'Raised in an indebted family, looking for security.',
+    })
+  })
+
+  it('derives the personal money objective from actual cash and settled debt, not a separate score', () => {
+    const initial = applyUserCoachCreation(createAcbTestGame(), created)
+    const coachId = initial.userCoachId
+    const existing = initial.coachFinancesByCoachId[coachId]!
+    const wealthy = updateGameWorld(initial, { coachFinancesByCoachId: {
+      ...initial.coachFinancesByCoachId,
+      [coachId]: createCoachFinanceProfile({
+        ...existing, cash: 1_100_000,
+        debts: existing.debts.map(item => ({ ...item, principalRemaining: 0, status: 'paid' as const })),
+      }),
+    } })
+    expect(getUserCoachAmbitionProgress(wealthy)).toMatchObject({ ambition: 'financialFreedom', completed: true, target: 1_000_000 })
+    expect(getUserCoachAmbitionProgress(initial)?.completed).toBe(false)
+  })
+
+  it.each([
+    ['academyCoach', 'playerDevelopment'],
+    ['videoAnalyst', 'analysis'],
+    ['formerAssistant', 'coaching'],
+  ] as const)('origin %s changes live Staff attributes and persists in CoachRpg', (background, key) => {
+    const world = createAcbTestGame()
+    const coachId = world.userCoachId
+    const staffId = world.coaches[coachId]!.staffProfileId
+    const oldValue = world.staffPeopleById[staffId]!.professional.attributes[key]
+    const next = applyUserCoachCreation(world, { ...created, background, ambition: 'talentDeveloper' })
+    expect(next.staffPeopleById[staffId]!.professional.attributes[key]).toBeGreaterThan(oldValue)
+    expect(next.coachRpgProfilesByCoachId[coachId]!.creatorOrigin?.ambition).toBe('talentDeveloper')
+    expect(getUserCoachAmbitionProgress(next)).toMatchObject({ metric: 'playerDevelopmentEvents', completed: false })
+  })
+
+  it('rejects corrupt origin/ambition and cannot run the career creator a second time', () => {
+    const initial = createAcbTestGame()
+    expect(() => applyUserCoachCreation(initial, { ...created, ambition: 'unknown' as never })).toThrow(/ambition/)
+    expect(() => applyUserCoachCreation(initial, { ...created, biography: 'x'.repeat(601) })).toThrow(/biography/)
+    const createdWorld = applyUserCoachCreation(initial, created)
+    expect(() => applyUserCoachCreation(createdWorld, created)).toThrow(/already initialized/)
   })
 
   it('preserves the source identity if no creation request was supplied', () => {
