@@ -1,0 +1,23 @@
+name: Compatibility Relationship Bridge CI
+on:
+  push:
+    branches:
+      - feat/relationship-compatibility-event-bridge-v1
+permissions:
+  contents: read
+jobs:
+  bridge:
+    name: Compatibility bridge targeted gate
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Pair interaction and relationship regression
+        run: npm test -- src/domain/world/CompatibilityInteractionBridge.test.ts src/domain/world/RelationshipEvents.test.ts src/save/RelationshipPersistence.test.ts
