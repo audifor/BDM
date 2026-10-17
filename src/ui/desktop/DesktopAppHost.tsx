@@ -27,6 +27,8 @@ import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcb
 import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
 import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
+import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
+import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
 export interface DesktopAppActions {
   readonly submitTransferNotice?: (playerId: PlayerId) => string | null
@@ -64,6 +66,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'coach') return <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
   if (key === 'market') return <MarketWorkspace initialWorld={world} />
+  if (key === 'scouting') return <NgWorkspaceNavigationProvider><ScoutingWorkspace initialWorld={world} /></NgWorkspaceNavigationProvider>
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
   if (key === 'coach-finances') return <CoachFinancesScreen world={world} onLifestyle={actions.setCoachLifestyle ?? (() => undefined)} />
