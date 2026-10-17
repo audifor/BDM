@@ -9,7 +9,7 @@ import { createDefaultCoachReputationProfile } from '@/domain/coachReputation'
 import { createStaffPerson } from '@/domain/staff'
 import { createStaffContract, staffContractIdFromString } from '@/domain/staffContract'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createUserCoachRookieProfessionalProfile } from '@/engine/world/CoachProfessionalProfileGenerator'
 import { acceptCoachJobOffer, applyUserCoachForJob, fireCoachFromTeam, getOpenCoachJobs } from '@/app/coachCareer'
 import { applyUserCoachCreation, type UserCoachCreationInput } from './UserCoachCreator'
@@ -89,7 +89,9 @@ export function appointCreatedUserCoachToWorldDbClub(world: GameWorld, teamId: T
   const offer = Object.values(candidacy.world.coachJobOffersById).find((item) =>
     item.jobOpeningId === opening.id && item.coachId === id && item.status === 'pending')
   if (offer === undefined || offer.annualSalary === undefined) throw new Error('WorldDB new manager did not receive a valid offer')
-  const hired = acceptCoachJobOffer(candidacy.world, offer.id)
+  // The chosen club is contracted during NEW GAME, so an already-accepted offer must not
+  // appear as a pending action the first time the player opens the Inbox.
+  const hired = archiveInboxItem(acceptCoachJobOffer(candidacy.world, offer.id), `inbox:career-offer:${offer.id}:${id}`)
 
   // CoachCareer owns the appointment; StaffCareer mirrors it, retaining a single source
   // of professional salary through the same active StaffContract already used by payroll.
