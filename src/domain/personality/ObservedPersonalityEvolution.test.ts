@@ -75,6 +75,20 @@ describe('PERSON 23I real event journal through BDM', () => {
     expect(deserializeGameWorldV4({ ...save, payload: legacyPayload }).personalityHistoryByPersonId).toEqual({})
   })
 
+  it('does not silently discard populated alternate experimental Save V4 journals', () => {
+    const world = createNewGame()
+    const save = serializeGameWorldV4(world, '2032-10-01T00:00:00.000Z')
+    const empty = { ...save, payload: { ...save.payload, personalityExperienceHistory: [] } }
+    expect(deserializeGameWorldV4(empty).personalityHistoryByPersonId).toEqual({})
+    const populated = { ...save, payload: { ...save.payload, personalityExperienceHistory: [{
+      id: 'legacy-experimental:1', personId: Object.keys(world.personalitiesByPersonId)[0],
+      kind: 'COACH_PRAISE', occurredOn: world.currentDate, dimension: 'recognitionNeed', before: 50, after: 51,
+    }] } }
+    expect(() => deserializeGameWorldV4(populated)).toThrow('verified-evidence migration')
+    expect(() => deserializeGameWorldV4({ ...save, payload: { ...save.payload, personalityExperienceHistory: 'invalid' } }))
+      .toThrow('must be an array')
+  })
+
   it('rejects tampered journals that lack an actual source, duplicate an ID, or change a score', () => {
     const base = createNewGame()
     const player = Object.values(base.players)[0]!
