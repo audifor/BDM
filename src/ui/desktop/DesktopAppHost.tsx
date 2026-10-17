@@ -27,7 +27,6 @@ import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcb
 import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
 import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
-import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { WorkspaceErrorBoundary } from '@/ui-ng/workspace/WorkspaceErrorBoundary'
 
