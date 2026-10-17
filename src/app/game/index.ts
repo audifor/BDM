@@ -14,6 +14,7 @@ export {
 export { activateNewGameFinance, createNewGame, createNewGameBeforeFinance, PROTOTYPE_GAME_CONFIGURATION, type NewGameOptions } from './createNewGame'
 export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTestGame'
 export { createConfiguredGame, createConfiguredGameAsync } from './createConfiguredGame'
+export { applyUserCoachCreation, type UserCoachCreationInput, type UserCoachBackground, type UserCoachDisposition } from './UserCoachCreator'
 export { NEW_GAME_UNIVERSES, NCAA_SIMULATED_UNIVERSE_ID, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
 export { createNcaaSimulatedGame } from './createNcaaSimulatedGame'
 export {
