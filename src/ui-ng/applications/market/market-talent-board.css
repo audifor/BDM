@@ -111,3 +111,13 @@
 .market-talent__card-actions button {flex:1 1 auto;padding:6px 9px!important;font-size:12px!important;}
 @media(max-width:1100px){.market-talent__saved-row{grid-template-columns:minmax(140px,1fr) 80px minmax(110px,1fr);}.market-talent__saved-buttons{grid-column:1/-1;justify-content:flex-start}.market-talent__saved-history{grid-column:1/-1;}}
 @media(max-width:700px){.market-talent__saved-head span{display:none}.market-talent__saved-row{grid-template-columns:minmax(0,1fr) 75px}.market-talent__saved-report{grid-column:1/-1}}
+
+
+.market-talent__lens {display:grid;gap:4px;border-top:1px solid var(--market-line-soft);padding:8px 0;}
+.market-talent__lens>small {font-size:10px;color:var(--market-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.market-talent__lens>div {display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;font:700 11px var(--market-display);}
+.market-talent__lens strong {color:var(--cs-positive,var(--ng-positive));}
+.market-talent__lens b {color:var(--cs-negative,var(--ng-negative));}
+.market-talent__lens span {color:var(--market-muted);}
+.market-talent__price {display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:10px!important;}
+.market-talent__price small {color:var(--market-muted);}
