@@ -2,6 +2,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { calculateStaffWorkload } from '@/domain/world'
 import { getRecruitmentFocusCandidates } from '@/app/scouting'
+import { staffRoleDefinition } from '@/domain/staff'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
 import { navigateToMarketTab } from '@/ui-ng/workspace/workspaceApps'
 import { navigateToStaff, navigateToStaffDepartment, navigateToStaffMarket } from '@/ui-ng/workspace/workspaceApps'
@@ -32,7 +33,7 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
     .filter((item) => item.organizationId === organizationId)
     .sort((a, b) => b.discoveredAt.localeCompare(a.discoveredAt)).slice(0, 5)
   const scouts = Object.values(world.teamStaffAssignmentsById)
-    .filter((item) => item.teamId === teamId && ['headScout', 'regionalScout', 'internationalScout', 'collegeScout', 'proScout'].includes(item.role)
+    .filter((item) => item.teamId === teamId && staffRoleDefinition(item.role).department === 'scouting'
       && world.staffEmploymentByStaffId[item.staffPersonId]?.status === 'employed')
   const overloaded = scouts.filter((item) => calculateStaffWorkload(world, item.staffPersonId).overloaded)
   const staleKnowledge = model.knowledge.filter((item) => {
