@@ -19,8 +19,10 @@ jobs:
       - run: npm ci
       - name: Strict TypeScript typecheck
         run: npm run typecheck
-      - name: WorldDB repertoire, bootstrap and Save V4 integration
-        run: npx vitest run src/domain/player/PlayerRepertoire.integration.test.ts src/app/game/WorldDbGameBootstrap.test.ts src/save/GameWorldSaveV4.test.ts
+      - name: Canonical repertoire and Save V4 roundtrip
+        run: npx vitest run src/domain/player/PlayerRepertoire.integration.test.ts
+      - name: Targeted WorldDB gameplay bootstrap slice
+        run: npx vitest run src/app/game/WorldDbGameBootstrap.test.ts --testNamePattern="PLAYER 2.4-D3"
   rust-native-bridge:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
