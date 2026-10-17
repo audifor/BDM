@@ -9,7 +9,7 @@ interface Props {
   readonly teamId: TeamId
   readonly targetCount: number
   readonly availableFreeAgents: number
-  readonly remainingSalaryBudget: number
+  readonly remainingSalaryBudget: number | null
   readonly onOpenScouting: () => void
   readonly onOpenFreeAgents: () => void
   readonly onOpenExplore: () => void
@@ -63,7 +63,7 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
         <div><span>Focos activos</span><strong>{focuses.length}</strong><small>Focos de reclutamiento</small></div>
         <div><span>Jugadores conocidos</span><strong>{known.length}</strong><small>Expedientes</small></div>
         <div><span>Agentes libres</span><strong>{availableFreeAgents}</strong><small>Disponibles</small></div>
-        <div><span>Presupuesto restante</span><strong className="market-cs__money">{formatMoney(remainingSalaryBudget)}</strong><small>Disponible para salarios</small></div>
+        <div><span>Presupuesto restante</span><strong className="market-cs__money">{remainingSalaryBudget === null ? '—' : formatMoney(remainingSalaryBudget)}</strong><small>Disponible para salarios</small></div>
       </div>
       <div className="market-cs__columns">
         <section className="market-cs__panel">
