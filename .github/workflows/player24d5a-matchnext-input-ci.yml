@@ -1,0 +1,23 @@
+name: PLAYER 2.4-D5A Match Next Repertoire Input
+on:
+  push:
+    branches:
+      - feat/player24d5a-matchnext-technique-data-input
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  data-only-invariance:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Match Next D5A event and score invariance
+        run: npx vitest run src/app/matchNext/MatchNextRepertoireInput.test.ts src/engine/repertoire/RepertoireAdvice.test.ts

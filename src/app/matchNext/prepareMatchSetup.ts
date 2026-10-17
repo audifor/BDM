@@ -41,6 +41,7 @@ function setupFromOptions(world: GameWorld, game: Game, options: PreparedMatchOp
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
       dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
+      ...(world.playerRepertoireByPlayerId[profile.playerId] === undefined ? {} : { repertoire: world.playerRepertoireByPlayerId[profile.playerId] }),
     })),
     ...options.playerProfiles.away.map((profile) => ({
       playerId: profile.playerId, teamId: awayTeamId, primaryPosition: profile.primaryPosition,
@@ -49,6 +50,7 @@ function setupFromOptions(world: GameWorld, game: Game, options: PreparedMatchOp
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
       dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
+      ...(world.playerRepertoireByPlayerId[profile.playerId] === undefined ? {} : { repertoire: world.playerRepertoireByPlayerId[profile.playerId] }),
     })),
   ]
   const resolvedTacticalPlans = options.tacticalPlans ?? {
