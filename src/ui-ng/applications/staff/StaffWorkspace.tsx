@@ -113,7 +113,16 @@ function StaffBoardWorkspace() {
   const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
   const grantStaffCareerRequest = useGameStore((state) => state.grantStaffCareerRequest)
   const declineStaffCareerRequest = useGameStore((state) => state.declineStaffCareerRequest)
-  const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>('staff')
+  const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('staffTab') === 'market' ? 'market' : 'staff')
+  useEffect(() => {
+    const readTab = () => {
+      if (new URLSearchParams(window.location.search).get('staffTab') === 'market') setActiveTab('market')
+    }
+    window.addEventListener('bdm-ng-nav', readTab)
+    window.addEventListener('popstate', readTab)
+    return () => { window.removeEventListener('bdm-ng-nav', readTab); window.removeEventListener('popstate', readTab) }
+  }, [])
   const [assignmentPanel, setAssignmentPanel] = useState<StaffAssignmentPanelRequest | null>(null)
   const replaceWorld = useGameStore((state)=>state.replaceWorld)
   const departmentHover = useStaffDepartmentTabHover(null)
