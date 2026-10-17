@@ -200,7 +200,7 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
     rosterCount: rosterIds.length,
     availableCount: rosterIds.filter((playerId) => isPlayerAvailable(world, playerId)).length,
     injuredCount: injured.length,
-    averageFatigue: rosterIds.length === 0 ? 0 : Math.round(fatigueTotal / rosterIds.length),
+    averageFatigue: rosterIds.length === 0 ? 0 : Math.round((fatigueTotal / rosterIds.length) * 10) / 10,
     highRiskCount: risk.filter((row) => row.riskBand === 'high').length,
     elevatedRiskCount: risk.filter((row) => row.riskBand === 'elevated').length,
     lowRiskCount: risk.filter((row) => row.riskBand === 'low').length,
