@@ -20,7 +20,7 @@ describe('PERSON 23I real event journal through BDM', () => {
     expect(OBSERVED_PERSONALITY_RULES).toHaveLength(76)
     expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.kind)).size).toBe(76)
     expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.code)).size).toBe(76)
-    expect(OBSERVED_PERSONALITY_RULES.some((entry) => entry.kind === 'TEAM_SCOUTING_REPORT')).toBe(false)
+    expect(OBSERVED_PERSONALITY_RULES.map((entry) => String(entry.kind))).not.toContain('TEAM_SCOUTING_REPORT')
     expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'PROFESSIONAL_REVIEW'))
       .toMatchObject({ dimension: 'conscientiousness', minAge: 18, sources: ['professionalInteraction'] })
     expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'RECOMMENDATION_ACCEPTED'))
