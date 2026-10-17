@@ -545,7 +545,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     validatePersonalityJournal(entries, id, withPathwayHistory.currentDate)
     const latestByDimension = new Map(entries.map((entry) => [entry.dimensionCode, entry.newValue]))
     for (const [dimension, lastValue] of latestByDimension) {
-      if (withPathwayHistory.personalitiesByPersonId[id]!.values[dimension as keyof typeof withPathwayHistory.personalitiesByPersonId[typeof id]['values']] !== lastValue) {
+      const savedScore = (withPathwayHistory.personalitiesByPersonId[id]!.values as Readonly<Record<string, number>>)[dimension]
+      if (savedScore !== lastValue) {
         throw new TypeError('Save V4 personality journal last value disagrees with canonical PERSON score')
       }
     }
