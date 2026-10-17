@@ -13,6 +13,7 @@ import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationH
 import { buildScoutingReportDetail, buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 import { SCOUTING_TAB_LABELS, SCOUTING_WORKSPACE_TABS, scoutingPriorityLabel, type ScoutingAssignmentRow, type ScoutingKnowledgeRow, type ScoutingOppositionRow, type ScoutingReportRow, type ScoutingWorkspaceModel, type ScoutingWorkspaceTabId } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import { RequestScoutingModal, ScoutingModalFrame } from '@/ui-ng/applications/scouting/ScoutingModals'
+import { ScoutingWarRoom } from '@/ui-ng/applications/scouting/ScoutingWarRoom'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -206,28 +207,6 @@ function ScoutWorkloadBoard({ world, teamId }: { readonly world: GameWorld; read
   })}</div></section>
 }
 
-function ScoutingCentreBoard({ world, teamId, model, onOpenPlayer, onOpenReport, onOpenFocuses }: { readonly world: GameWorld; readonly teamId: string; readonly model: ScoutingWorkspaceModel; readonly onOpenPlayer: (id: PlayerId) => void; readonly onOpenReport: (id: string) => void; readonly onOpenFocuses: () => void }) {
-  const team = world.teams[teamId as never]!
-  const focuses = Object.values(world.scoutingRecruitmentFocusesById).filter((item) => item.requestingTeamId === team.id)
-  const activeFocuses = focuses.filter((item) => item.status === 'ACTIVE')
-  const discoveries = Object.values(world.organizationPlayerAwarenessById).filter((item) => item.organizationId === team.organizationId).sort((a, b) => b.discoveredAt.localeCompare(a.discoveredAt)).slice(0, 5)
-  const reports = model.reports.slice(0, 5)
-  const matches = activeFocuses.flatMap((focus) => getRecruitmentFocusCandidates(world, focus.id).filter((candidate) => candidate.fit === 'ESTIMATED' && candidate.confidence >= 60).map((candidate) => ({ focus, candidate }))).slice(0, 5)
-  const scoutingRoles = new Set(['headScout', 'regionalScout', 'internationalScout', 'collegeScout', 'proScout'])
-  const scoutIds = new Set(Object.values(world.teamStaffAssignmentsById).filter((item) => item.teamId === team.id && scoutingRoles.has(item.role)).map((item) => item.staffPersonId))
-  const overloaded = [...scoutIds].map((id) => ({ id, workload: calculateStaffWorkload(world, id) })).filter((item) => item.workload.overloaded)
-  const stale = model.knowledge.filter((item) => Number.parseInt(item.freshnessLabel, 10) < 50).slice(0, 5)
-  return <section className="scouting-board ng-holo-panel"><header className="scouting-section-head"><div><h2>Scouting Centre</h2><p>{activeFocuses.length} active focuses · {model.knownSubjectCount} known Players · {model.openAssignmentCount} open Player assignments · {overloaded.length} overloaded staff</p></div><button className="ng-btn ng-btn--primary" onClick={onOpenFocuses} type="button">Recruitment Focuses</button></header>
-    <div className="scouting-workspace__list">
-      <article className="scouting-workspace__panel"><h3>New discoveries</h3>{discoveries.length ? discoveries.map((item) => { const player = world.players[item.playerId]; const scout = world.staffPeopleById[item.discoveredByStaffId]; return <p key={item.id}><button className="scouting-workspace__link" onClick={() => onOpenPlayer(item.playerId)} type="button">{player ? `${player.firstName} ${player.lastName}` : 'Player'}</button> · {item.discoveredAt} · {scout ? `${scout.identity.firstName} ${scout.identity.lastName}` : 'Scout'}</p> }) : <p>No new discoveries yet.</p>}</article>
-      <article className="scouting-workspace__panel"><h3>Completed reports</h3>{reports.length ? reports.map((item) => <p key={item.id}><button className="scouting-workspace__link" onClick={() => onOpenReport(item.id)} type="button">{item.playerName}</button> · {item.missionLabel} · {item.createdLabel}</p>) : <p>No reports completed yet.</p>}</article>
-      <article className="scouting-workspace__panel"><h3>Focus progress & strong matches</h3>{activeFocuses.length ? activeFocuses.map((focus) => <p key={focus.id}><strong>{focus.name}</strong> · {getRecruitmentFocusCandidates(world, focus.id).length} candidates · {focus.daysActive} days active</p>) : <p>No active Recruitment Focuses.</p>}{matches.map(({ focus, candidate }) => <p key={`${focus.id}:${candidate.playerId}`}>Match: <button className="scouting-workspace__link" onClick={() => onOpenPlayer(candidate.playerId)} type="button">{candidate.name}</button> · {focus.name} · {candidate.confidence}% confidence</p>)}</article>
-      <article className="scouting-workspace__panel"><h3>Attention needed</h3>{overloaded.map(({ id, workload }) => { const staff = world.staffPeopleById[id]; return <p key={id}>{staff ? `${staff.identity.firstName} ${staff.identity.lastName}` : 'Staff'} is overloaded · {workload.totalCapacityUsed}/{workload.capacityLimit}</p> })}{stale.map((item) => <p key={item.playerId}>Stale knowledge: <button className="scouting-workspace__link" onClick={() => onOpenPlayer(item.playerId)} type="button">{item.name}</button> · {item.freshnessLabel}</p>)}{overloaded.length === 0 && stale.length === 0 ? <p>No workload or stale knowledge issues detected.</p> : null}</article>
-      <article className="scouting-workspace__panel"><h3>Scout recommendations</h3><p>Recommendations are surfaced only when recorded by canonical scouting reports. Open Reports to review staff findings.</p></article>
-    </div>
-  </section>
-}
-
 function keyOfTerritory(territory: ScoutingTerritory): string { return territory.kind === 'COUNTRY' ? `COUNTRY:${territory.countryId}` : `COMPETITION:${territory.competitionId}` }
 function numberValue(value: string): number | undefined { return value.trim() === '' ? undefined : Number(value) }
 
@@ -272,7 +251,7 @@ export function ScoutingWorkspace() {
   const createCoverage = useGameStore((state) => state.createScoutingTerritoryAssignment)
   const endCoverage = useGameStore((state) => state.endScoutingTerritoryAssignment)
   const { openEntity } = useNgWorkspaceNavigation()
-  const [activeTab, setActiveTab] = useState<ScoutingWorkspaceTabId>('knowledge')
+  const [activeTab, setActiveTab] = useState<ScoutingWorkspaceTabId>('centre')
   const [focusPlayerId] = useState(() => typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('focusPlayerId'))
   const [modal, setModal] = useState<ModalState | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -287,7 +266,7 @@ export function ScoutingWorkspace() {
       <ScrollRegion className="scouting-workspace__scroll">
         <TalentOperationsNav current="scouting" />
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
-        {activeTab === 'centre' ? <ScoutingCentreBoard world={world} teamId={team.id} model={model} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} /> : null}
+        {activeTab === 'centre' ? <ScoutingWarRoom world={world} teamId={team.id} model={model} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} onOpenAssignments={() => setActiveTab('assignments')} onOpenCoverage={() => setActiveTab('coverage')} onOpenKnowledge={() => setActiveTab('knowledge')} onOpenReports={() => setActiveTab('reports')} /> : null}
         {activeTab === 'search' ? <PlayerSearchBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onMessage={setMessage} /> : null}
         {activeTab === 'focuses' ? <RecruitmentFocusBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id, mission: 'FULL_REPORT' })} onMessage={setMessage} /> : null}
         {activeTab === 'knowledge' ? <KnowledgeBoard model={model} initialQuery={focusPlayerId && world.players[focusPlayerId as keyof typeof world.players] ? `${world.players[focusPlayerId as keyof typeof world.players]!.firstName} ${world.players[focusPlayerId as keyof typeof world.players]!.lastName}` : ''} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id })} onManage={() => setActiveTab('assignments')} /> : null}
