@@ -32,7 +32,7 @@ describe('Finance V2 workspace', () => {
     expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Caja' }))
     fireEvent.click(screen.getByRole('button', { name: 'Movimientos' }))
-    expect(screen.getByText('No recorded cash movements in this period.')).toBeInTheDocument()
+    expect(screen.getByText('Aún no hay movimientos de caja en este periodo.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Plantilla' }))
     fireEvent.click(screen.getByRole('button', { name: 'Límite salarial' }))
     expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
