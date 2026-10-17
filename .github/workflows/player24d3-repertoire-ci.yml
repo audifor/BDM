@@ -1,0 +1,39 @@
+name: PLAYER 2.4-D3 Canonical Repertoire Bridge
+on:
+  push:
+    branches:
+      - feat/player24d3-repertoire-bootstrap-savev4
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  types-and-v4:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Strict TypeScript typecheck
+        run: npm run typecheck
+      - name: WorldDB repertoire, bootstrap and Save V4 integration
+        run: npx vitest run src/domain/player/PlayerRepertoire.integration.test.ts src/app/game/WorldDbGameBootstrap.test.ts src/save/GameWorldSaveV4.test.ts
+  rust-native-bridge:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install Tauri system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Rust format
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+      - name: Native WorldDB PLAYER repertoire SQLite tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml player_repertoire --lib
