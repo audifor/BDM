@@ -2,11 +2,13 @@ name: BDM Courtside Windows Preview
 on:
   push:
     branches: [feat/bdm-ui-courtside]
-    paths:
-      - '.github/workflows/bdm-courtside-windows-preview.yml'
-      - 'src-tauri/tauri.courtside-preview.conf.json'
-      - 'src/ui-ng/applications/medical/**'
   workflow_dispatch:
+
+# The preview must always follow the latest Courtside commit. A partial
+# paths filter made Finance changes invisible in the downloadable EXE.
+concurrency:
+  group: bdm-courtside-preview-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -46,17 +48,26 @@ jobs:
           @'
           BDM COURTSIDE PREVIEW
           ---------------------
-          1. Extract this ZIP to a new folder.
+          1. Extract this ZIP to a NEW folder, not over an earlier preview.
           2. Double-click BDM-Courtside-Preview.exe (Windows 10/11).
-          3. Create a NEW test save, then open MEDICAL.
-          4. Check Overview charts and Injury-free squad monitor, then Injured,
-             Recovery, Risk, History and Staff. Test light and dark modes.
-          5. Tactics preview is also included in the same branch.
-          6. Do not use your primary saves for testing.
+          3. Create a NEW test save.
+          4. Open Inicio > Gestion del club > Finances.
+          5. Verify five primary tabs: Resumen, Caja, Presupuesto, Plantilla, Futuro.
+          6. In Resumen, look for "Tu dinero, de un vistazo".
+          7. In Presupuesto, review spending vs plan. Test light and dark themes.
+          8. Also verify Medical, Training, Tactics and the other Courtside apps.
+          Do not use primary saves for testing.
           This is an unsigned development preview, not a production release.
-          It is intentionally not a Windows installer and does not replace the regular app.
-          If Windows warns about an unsigned file, verify the build's GitHub Actions source before proceeding.
+          Old downloaded EXE files do not automatically update.
+          Verify the exact commit in BUILD-INFO.txt against this GitHub Actions run.
           '@ | Set-Content -Path "preview/README-PREVIEW.txt" -Encoding utf8
+          @"
+          BDM COURTSIDE
+          GitHub commit: ${{ github.sha }}
+          GitHub run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Source branch: ${{ github.ref_name }}
+          Frontend modules: Finance, Board, Club, Medical, Training, Staff, Coach, Roster
+          "@ | Set-Content -Path "preview/BUILD-INFO.txt" -Encoding utf8
       - name: Upload downloadable Windows preview
         uses: actions/upload-artifact@v4
         with:
