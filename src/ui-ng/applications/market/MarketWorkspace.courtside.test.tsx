@@ -44,6 +44,23 @@ describe('Courtside Market command centre', () => {
     expect(new URLSearchParams(window.location.search).get('app')).toBe('scouting')
   })
 
+  it('opens an evidence-aware explorer and its temporary decision board', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Explorar jugadores' }))
+    expect(screen.getByTestId('market-explore')).toBeInTheDocument()
+    expect(screen.getByLabelText('Candidatos de mercado')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
+    expect(screen.getByTestId('market-targets')).toBeInTheDocument()
+  })
+
+  it('uses contract planning horizons and never invented future contracts', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Planificación' }))
+    expect(screen.getByTestId('market-planning')).toBeInTheDocument()
+    expect(screen.getByLabelText('Horizonte de plantilla')).toBeInTheDocument()
+    expect(screen.getByText('Mapa de profundidad')).toBeInTheDocument()
+  })
+
   it('still deep-links to a free-agent dossier when a player id is provided', () => {
     window.history.replaceState({}, '', '/?ui=ng&app=market&playerId=free-agent-target')
     mount()
