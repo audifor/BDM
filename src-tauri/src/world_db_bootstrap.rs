@@ -712,8 +712,14 @@ fn query_person_runtime_personality(
     person_id: &str,
 ) -> Result<Option<BTreeMap<String, u8>>, String> {
     const RUNTIME_KEYS: [&str; 8] = [
-        "ambition", "professionalism", "loyalty", "resilience",
-        "temperament", "teamOrientation", "adaptability", "competitiveness",
+        "ambition",
+        "professionalism",
+        "loyalty",
+        "resilience",
+        "temperament",
+        "teamOrientation",
+        "adaptability",
+        "competitiveness",
     ];
     const SEMANTIC_KEYS: [&str; 50] = [
         "ambition",
@@ -788,11 +794,16 @@ fn query_person_runtime_personality(
         .map_err(|e| format!("World DB personality read failed for {person_id}: {e}"))?;
     let mut values = BTreeMap::new();
     for row in rows {
-        let (code, raw) = row.map_err(|e| format!("World DB personality invalid for {person_id}: {e}"))?;
+        let (code, raw) =
+            row.map_err(|e| format!("World DB personality invalid for {person_id}: {e}"))?;
         if SEMANTIC_KEYS.contains(&code.as_str()) {
-            let value = u8::try_from(raw).map_err(|_| format!("World DB personality {code} invalid for {person_id}: {raw}"))?;
+            let value = u8::try_from(raw).map_err(|_| {
+                format!("World DB personality {code} invalid for {person_id}: {raw}")
+            })?;
             if value > 100 {
-                return Err(format!("World DB personality {code} out of 0..100 for {person_id}"));
+                return Err(format!(
+                    "World DB personality {code} out of 0..100 for {person_id}"
+                ));
             }
             values.insert(code, value);
         }
@@ -801,10 +812,19 @@ fn query_person_runtime_personality(
         return Ok(None);
     }
     if !RUNTIME_KEYS.iter().all(|key| values.contains_key(*key)) {
-        return Err(format!("World DB PERSON {person_id} has partial BDM runtime personality: {}/8", RUNTIME_KEYS.iter().filter(|key| values.contains_key(**key)).count()));
+        return Err(format!(
+            "World DB PERSON {person_id} has partial BDM runtime personality: {}/8",
+            RUNTIME_KEYS
+                .iter()
+                .filter(|key| values.contains_key(**key))
+                .count()
+        ));
     }
     if values.len() != 8 && values.len() != SEMANTIC_KEYS.len() {
-        return Err(format!("World DB PERSON {person_id} has partial semantic personality: {}/50", values.len()));
+        return Err(format!(
+            "World DB PERSON {person_id} has partial semantic personality: {}/50",
+            values.len()
+        ));
     }
     Ok(Some(values))
 }
@@ -1244,13 +1264,16 @@ mod tests {
             "humor",
         ];
         for (i, dimension) in codes.iter().enumerate() {
-            connection.execute(
-                "INSERT INTO person_personality_value VALUES (?1,?2,?3)",
-                rusqlite::params!["person:complete", dimension, ((i * 13 + 21) % 101) as i64],
-            ).unwrap();
+            connection
+                .execute(
+                    "INSERT INTO person_personality_value VALUES (?1,?2,?3)",
+                    rusqlite::params!["person:complete", dimension, ((i * 13 + 21) % 101) as i64],
+                )
+                .unwrap();
         }
         let values = query_person_runtime_personality(&connection, "person:complete")
-            .unwrap().unwrap();
+            .unwrap()
+            .unwrap();
         assert_eq!(values.len(), 50);
         assert_eq!(values["ambition"], 21);
         assert_eq!(values["humor"], ((49 * 13 + 21) % 101) as u8);
@@ -1258,8 +1281,11 @@ mod tests {
             "DELETE FROM person_personality_value WHERE person_id='person:complete' AND dimension_code='humor'",
             [],
         ).unwrap();
-        assert!(query_person_runtime_personality(&connection, "person:complete")
-            .unwrap_err().contains("partial semantic personality"));
+        assert!(
+            query_person_runtime_personality(&connection, "person:complete")
+                .unwrap_err()
+                .contains("partial semantic personality")
+        );
     }
 
     #[test]
