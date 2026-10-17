@@ -4,6 +4,22 @@ Fecha: 2026-10-17.
 Estado: **VISIÓN / REQUISITOS DE PRODUCTO PROPUESTOS, NO IMPLEMENTADOS**.
 Directriz del propietario: el RPG y la vida del entrenador controlado por el usuario son el **factor diferencial** de BDM. La prioridad no es únicamente la reacción de Staff.
 
+## Directriz del propietario posterior al cuestionario de 100 respuestas
+
+**Canon corregido:** BDM es **simulador de entrenador con RPG (objetivo 80% baloncesto / 20% RPG)**, no un simulador vital predominante. La vida personal profunda debe ser **jugable a voluntad**, con desencadenantes y consecuencias reales, sin quitar protagonismo a la gestión deportiva.
+
+- Creador **sin editor de rostro obligatorio**; DOB, origen (incluidas deudas o desventajas), traits, atributos, personalidad, filosofía amplia, metas y trasfondo libre/guiado.
+- Modos alternativos de configurar personalidad y atributos: dilemas o personalización directa; creación libre o bajo presupuesto.
+- Creador ofrece **«experiencia basket» / «experiencia rpg»** para intensidad/presentación.
+- Patrimonio, deuda, inversiones y negocios se gestionan activamente; posibilidad de actuar legalmente, de modo *shady* e incluso infringir reglas, con causalidad, conocimiento, reputación, riesgo e investigación.
+- Mundo con vida propia, relaciones y memorias duraderas, conversaciones seleccionadas **y texto libre**, información parcial, consecuencias futuras **no anunciadas**.
+- Familia/amistades reales en el mundo cuando proceda; vida/tiempo/calendario personal y decisiones activas. Retiro, mortalidad y sucesión jugable.
+- `POR ACLARAR`: preguntas 3 (realismo vs excepcionalidad), 41 (alcance de vida extradeportiva) y 88 (distribución de la UX RPG). No elegirlas de oficio.
+- `PARCIAL`: detalle de familia, roles múltiples, etapa inicial de asistente (sin gameplay actual), selecciones nacionales (futuro).
+- **Bases no sustituibles:** Human RPG Engine `HRPG1–HRPG18`, B11 Personal/RPG Economy 21–23 y PERSON50/75 traits/75 eventos, conforme al [registro reconciliado de respuestas](BS19_RPG_OWNER_DECISIONS_AND_RECONCILIATION_20261017.md).
+
+La construcción de BS19 debe conectar las autoridades existentes antes de desarrollar contenido adicional; BS19B Coach Creator sigue como primera fase funcional, pero su diseño debe reflejar estas decisiones.
+
 ## 0. Definición canónica
 
 **BDM no es solo dirigir un equipo de baloncesto. Es vivir la vida y la trayectoria profesional de un entrenador creado por el jugador dentro de un universo de baloncesto persistente.**
