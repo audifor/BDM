@@ -44,7 +44,8 @@ describe('Market objectives are canonical and save-backed', () => {
     expect(() => setMarketTargetNote(current, team.id, playerId, 'x'.repeat(501))).toThrow()
     const envelope = serializeGameWorldV4(current, '2026-10-17T12:00:00.000Z')
     const tampered = structuredClone(envelope)
-    ;(tampered.payload.marketTargets as unknown[]).push(tampered.payload.marketTargets[0])
+    const rawTargets = tampered.payload.marketTargets as unknown[]
+    rawTargets.push(rawTargets[0])
     expect(() => deserializeGameWorldV4(tampered)).toThrow(/Duplicate market targets/)
   })
 })
