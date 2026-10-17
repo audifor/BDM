@@ -52,14 +52,14 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'equipo',
     label: 'Equipo',
-    description: 'Plantilla, jugador, staff, scouting, tácticas, entrenamiento y medical',
-    appIds: ['roster', 'player', 'staff', 'scouting', 'tactics', 'training', 'medical'],
+    description: 'Plantilla, jugador, staff, tácticas, entrenamiento y medical',
+    appIds: ['roster', 'player', 'staff', 'tactics', 'training', 'medical'],
   },
   {
     id: 'talent',
     label: 'Talent Operations',
-    description: 'Scouting, recruiting, Transfer Portal and Draft pathways',
-    appIds: ['talent', 'scouting', 'recruiting', 'portal', 'draft'],
+    description: 'Recruiting, Transfer Portal and Draft pathways',
+    appIds: ['talent', 'recruiting', 'portal', 'draft'],
   },
   {
     id: 'partidos',
@@ -70,8 +70,8 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'mercado',
     label: 'Mercado',
-    description: 'Agentes libres, draft y trades',
-    appIds: ['market', 'draft', 'trades'],
+    description: 'Inteligencia deportiva, scouting, agentes libres, draft y trades',
+    appIds: ['market', 'scouting', 'draft', 'trades'],
   },
   {
     id: 'club',
