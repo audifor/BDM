@@ -95,3 +95,25 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx vitest run src/ui-ng/applications/staff/StaffWorkspace.test.tsx src/ui-ng/applications/staff/assignments/staffAssignmentsModel.test.ts src/ui-ng/applications/staff/buildStaffPersonWorkspaceModel.test.ts src/ui-ng/applications/staff/buildStaffWorkspaceModel.test.ts src/ui-ng/applications/staff/dynamicsTone.test.ts --maxWorkers=2 --no-file-parallelism
+
+  market-scouting:
+    name: Market and Scouting runtime regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/market/MarketWorkspace.courtside.test.tsx \
+            src/ui-ng/applications/scouting/ScoutingWorkspace.test.tsx \
+            src/app/market/MarketTargetService.test.ts \
+            src/ui-ng/system/startMenuCatalog.courtside.test.ts \
+            src/ui/desktop/DesktopNavigation.test.ts \
+            --maxWorkers=2 --no-file-parallelism
