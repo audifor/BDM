@@ -772,3 +772,45 @@
 ) tbody tr:is(.is-selected, .is-current, .is-active, .is-focused) td {
   background: color-mix(in srgb, var(--grid-cyan) 6%, transparent) !important;
 }
+
+/*
+ * Courtside theme-aware precision grids.
+ * The NG base palette above uses light ink on dark graphite. That is unreadable
+ * on Courtside Light. Fix the shared token authority rather than patching only
+ * the Medical table, so Staff, Competition and other NG grids inherit it too.
+ * These overrides apply only under the Courtside shell, not Legacy / standard NG.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] {
+  --grid-text-strong: var(--cs-text);
+  --grid-text: var(--cs-text);
+  --grid-text-header: var(--cs-text2);
+  --grid-text-muted: var(--cs-text3);
+  --grid-border: var(--cs-line2);
+  --grid-border-subtle: var(--cs-line);
+  --grid-border-cell: var(--cs-line);
+  --grid-row-hover: color-mix(in srgb, var(--cs-lime) 9%, transparent);
+  --grid-cyan: var(--cs-lime);
+  --grid-cyan-bright: var(--cs-lime);
+  --grid-amber: var(--cs-orange);
+  --grid-green: var(--cs-positive);
+  --grid-green-bright: var(--cs-positive);
+  --grid-red: var(--cs-negative);
+}
+
+/* Respect light/dark text and preserve differentiated row-selection contrast.
+ * BDMDataGrid marks rows .is-selected and aria-selected, not only :active. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-data-grid--ng tbody tr:is(.is-selected, .is-focused, [aria-selected='true']) td {
+  color: var(--cs-text) !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-data-grid--ng :is(th, td) {
+  opacity: 1;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-data-grid--ng th button {
+  color: inherit !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-data-grid--ng :is(button.medical-workspace__link,button.staff-workspace__link) {
+  color: var(--cs-text) !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-data-grid--ng :is(button.medical-workspace__link,button.staff-workspace__link):hover {
+  color: var(--cs-lime) !important;
+}
