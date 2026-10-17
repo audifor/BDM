@@ -124,17 +124,21 @@ describe('NG start menu', () => {
 
     const teamPanel = dialog.querySelector('.ng-start-menu__category[data-category="equipo"]')
     expect(teamPanel).not.toBeNull()
-    expect(teamPanel?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(7)
+    expect(teamPanel?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(6)
     expect(within(dialog).getByRole('button', { name: 'Roster' })).toBeInTheDocument()
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Talent Operations' }))
     expect(within(nav).getByRole('button', { name: 'Talent Operations' })).toHaveAttribute('aria-pressed','true')
     const talent = dialog.querySelector('.ng-start-menu__category[data-category="talent"]')
     expect(talent).not.toBeNull()
-    expect(talent?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(2)
+    expect(talent?.querySelectorAll('.ng-start-menu__category-apps .ng-start-menu__tile')).toHaveLength(1)
     expect(within(dialog).queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Scouting' })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Scouting' })).not.toBeInTheDocument()
     expect(dialog.querySelectorAll('.ng-start-menu__categories > .ng-start-menu__category')).toHaveLength(1)
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Mercado' }))
+    expect(dialog.querySelector('.ng-start-menu__category[data-category="mercado"]')).not.toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Scouting' })).toBeInTheDocument()
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Partidos y competición' }))
     expect(dialog.querySelector('.ng-start-menu__category[data-category="partidos"]')).not.toBeNull()
