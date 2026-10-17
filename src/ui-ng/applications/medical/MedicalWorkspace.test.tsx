@@ -229,6 +229,12 @@ describe('MedicalWorkspace', () => {
     expect(screen.getByRole('heading', { name: 'NO ACTIVE INJURIES' })).toBeInTheDocument()
     expect(screen.getByText('Squad medical monitor')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /^Open medical profile for / }).length).toBe(team.rosterPlayerIds.length)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recovery' }))
+    expect(document.querySelector('[data-ng-region="medical-healthy-injuries"]')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(document.querySelector('[data-ng-region="medical-history-visual"]')).not.toBeNull()
+    expect(screen.getByText('No recorded history.')).toBeInTheDocument()
   })
 
 })
