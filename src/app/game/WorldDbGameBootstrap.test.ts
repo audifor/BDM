@@ -139,13 +139,14 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       userTeamKey: selection.teamId,
       userCoachCreation: {
         firstName: 'Lucía', lastName: 'Núñez', gender: 'female', dateOfBirth: '1992-09-13',
-        background: 'rookie', disposition: 'loyal', coachingStyle: 'developer',
+        background: 'rookie', ambition: 'talentDeveloper', biography: 'Former youth academy coach.', disposition: 'loyal', coachingStyle: 'developer',
       },
     }, access)
     const coach = world.coaches[world.userCoachId]!
     expect(coach.firstName).toBe('Lucía')
     expect(coach.lastName).toBe('Núñez')
     expect(world.personsById[coach.personId]?.dateOfBirth).toBe('1992-09-13')
+    expect(world.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({ background: 'rookie', ambition: 'talentDeveloper', biography: 'Former youth academy coach.' })
     expect(world.teams[selection.teamId as never]?.coachId).toBe(coach.id)
     expect(Object.values(world.coaches).some(item => item.id !== coach.id && item.firstName === 'Head')).toBe(true)
     expect(world.boardStatesByTeamId[selection.teamId as never]).toBeDefined()
@@ -165,7 +166,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const personForOwner = initial.personsById['person:owner-only' as never]
     const world = appointCreatedUserCoachToWorldDbClub(initial, selection.teamId as never, {
       firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25',
-      gender: 'female', background: 'inDebt', disposition: 'ambitious', coachingStyle: 'tactician',
+      gender: 'female', background: 'inDebt', ambition: 'financialFreedom', biography: 'A fictional, self-created background.', disposition: 'ambitious', coachingStyle: 'tactician',
     })
     const coach = world.coaches[world.userCoachId]!
     expect(coach.id).not.toBe(oldCoach.id)
@@ -202,6 +203,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(restored.personsById[coach.personId].dateOfBirth).toBe('1993-04-25')
     expect(restored.staffPeopleById[coach.staffProfileId].id).toBe(coach.staffProfileId)
     expect(restored.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
+    expect(restored.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({ background: 'inDebt', ambition: 'financialFreedom', biography: 'A fictional, self-created background.' })
   }, 120_000)
 
   it('V2 differential: Medical review is a coherent required stop, with only the explicit fixture decision executed', async () => {
