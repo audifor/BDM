@@ -193,8 +193,9 @@ export function syncWorkspaceAppQuery(
   if (app === 'home') {
     url.searchParams.delete('app')
   } else {
-    url.searchParams.set('app', app)
+    url.searchParams.set('app', app === 'scouting' ? 'market' : app)
   }
+  if (app === 'scouting') url.searchParams.set('marketTab', 'scouting')
   url.searchParams.delete('staffId')
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
@@ -211,7 +212,7 @@ export function syncWorkspaceAppQuery(
   if (context.requestId !== undefined && context.requestId !== '') {
     url.searchParams.set('requestId', context.requestId)
   }
-  if (app !== 'market') url.searchParams.delete('marketTab')
+  if (app !== 'market' && app !== 'scouting') url.searchParams.delete('marketTab')
   if (app !== 'recruiting') url.searchParams.delete('focusPlayerId')
   applyHistory(url, method)
   notifyNgNavigation()
@@ -330,14 +331,16 @@ export function syncStaffViewQuery(view: StaffPersonViewId) {
 
 /** Open staff hiring directly with the chosen canonical department. */
 /** Deep-link into one Market tab, preserving the NG app shell and taskbar. */
-export function navigateToMarketTab(tab: 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'operations') {
+export function navigateToMarketTab(tab: 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'scouting' | 'operations') {
   const url = new URL(window.location.href)
   clearEntityQuery(url)
   url.searchParams.delete('staffDept')
   url.searchParams.delete('staffTab')
   url.searchParams.delete('staffMarketDept')
   url.searchParams.set('app', 'market')
-  url.searchParams.set('marketTab', tab)
+  url.searchParams.set('marketTab', tab === 'centre' ? 'explore' : tab === 'planning' ? 'targets' : tab === 'free-agents' ? 'explore' : tab)
+  if (tab === 'free-agents') url.searchParams.set('marketContract', 'FREE')
+  else url.searchParams.delete('marketContract')
   applyHistory(url, 'push')
   notifyNgNavigation()
 }
