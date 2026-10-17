@@ -9,7 +9,7 @@ Fecha: 2026-10-17. Repositorio: `audifor/BDM`. Base auditada: `main` en `ceaa455
 
 Governance V2 no debe reconstruirse. BG1-BG8F ya implementa y certifica la base canonica institucional. MX0.7 proyecta una parte a Board. BS17E/F acredita decisiones de Facilities con Finance, Board e IA en partidas configuradas. No existe un programa BS18 formalmente implementado y certificado como tal en esta base. Una certificacion de BG8F no implica paridad de gameplay, cobertura universal ni Courtside.
 
-Esta auditoria es **solo lectura de codigo, tests y certificaciones existentes**. No se han ejecutado Vitest, typecheck, build ni pruebas interactivas en esta revision. Las certificaciones historicas se citan como evidencia historica, no como ejecuciones nuevas.
+La auditoria inicial fue **solo lectura de codigo, tests y certificaciones existentes**. Despues de la auditoria, la misma rama recibio un parche focal BS18-P0 de solicitudes (ver seguimiento). Las certificaciones historicas se citan como evidencia historica, no como ejecuciones nuevas.
 
 ## Matriz de reutilizacion y diferencias
 
@@ -66,3 +66,16 @@ Estas condiciones son un **gate de cierre**, no autorizacion para construir sist
 - [Game balance institutional foundation](https://github.com/audifor/BDM/blob/ceaa45529ce23c4e94bbc2cef17d9d0d987552b6/src/app/gameBalance/GameBalanceBootstrap.ts#L219-L291)
 - [BS17 global completion](https://github.com/audifor/BDM/blob/ceaa45529ce23c4e94bbc2cef17d9d0d987552b6/docs/strengthening/BS17_GLOBAL_COMPLETION_CERTIFICATION.md)
 - [BS final publication](https://github.com/audifor/BDM/blob/ceaa45529ce23c4e94bbc2cef17d9d0d987552b6/docs/strengthening/BS_FINAL_MAIN_PUBLICATION.md)
+
+## Seguimiento de implementacion BS18-P0 (2026-10-17)
+
+**Estado: IMPLEMENTADO EN RAMA / PENDIENTE DE CI. NO CERTIFICADO.** Pull request draft: [#141](https://github.com/audifor/BDM/pull/141).
+
+- `src/app/governance/ClubGovernanceRequestResponse.ts` responde solo a solicitudes `ACTOR/COACH` del usuario, en el club real de ese entrenador. Eventos: `ACKNOWLEDGED`, `ACCEPTED`, `DECLINED`. No genera `FULFILLED`, compromisos, dinero, votos ni resoluciones de reuniones.
+- `BoardGovernanceReadModel` presenta la disponibilidad real de las acciones y conserva la historia; Board NG muestra los controles solo donde estan permitidos.
+- `gameStore` aplica el resultado al mismo `GameWorld`, sin segundo almacenamiento.
+- Test focal de app: permisos negativos, transiciones, doble ejecucion, orden el mismo dia, recarga Save V4. Test de UI: botones, historial, atencion y enlaces profundos.
+- La fase `GOVERNANCE` del Calendar permanece deliberadamente inactiva. La UI Courtside no se ha modificado. Ninguna implementacion del generador WorldDB V2 se ha cambiado.
+- La comprobacion CI del PR tiene que finalizar antes de considerar este P0 aceptado. Los tests no se han ejecutado localmente desde este entorno; no equivale a `PASS`.
+
+**Restante para BS18:** Meetings / acciones institucionales adicionales solo cuando el producto tenga reglas autorizadas; integracion Courtside pantalla real; QA y continuidad de la capa jugable. Mantener el programa global en `PARTIAL` hasta prueba de cada ruta.
