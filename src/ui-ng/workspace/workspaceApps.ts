@@ -327,6 +327,18 @@ export function syncStaffViewQuery(view: StaffPersonViewId) {
   notifyNgNavigation()
 }
 
+/** Open staff hiring directly with the chosen canonical department. */
+export function navigateToStaffMarket(department: StaffDepartment = 'scouting') {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.delete('staffDept')
+  url.searchParams.set('app', 'staff')
+  url.searchParams.set('staffTab', 'market')
+  url.searchParams.set('staffMarketDept', department)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
 export function navigateToStaffDepartment(department: StaffDepartment | null) {
   const url = new URL(window.location.href)
   url.searchParams.set('app', 'staff')
