@@ -240,7 +240,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
             </div></details></article>
           )
         })}
-      </section> : null>
+      </section> : null}
     </NgHoloShell>
   )
 }
