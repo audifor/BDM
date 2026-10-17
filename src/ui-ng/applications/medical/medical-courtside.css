@@ -2,6 +2,10 @@
  * Use the approved Courtside design tokens for both light and dark palettes.
  * Medical charts never override the canonical simulation model. */
 .medical-workspace {
+  /* ApplicationWorkspace uses these to size its grid rows. Reducing inner
+     padding alone leaves the empty grid tracks seen above the tabs. */
+  --ng-workspace-header-height: 52px;
+  --ng-workspace-tabs-height: 38px;
   --med-bg: var(--cs-bg, var(--ng-bg-workspace));
   --med-surface: var(--cs-s1, var(--ng-bg-panel-primary));
   --med-surface-raised: var(--cs-s2, var(--ng-bg-panel-secondary));
@@ -81,7 +85,7 @@
 .medical-workspace .medical-workspace__split { margin-top: 10px; }
 .medical-workspace .medical-workspace__table { max-width: 100%; }
 .medical-workspace .medical-workspace__table tbody tr:hover { background: var(--med-surface-raised); }
-.medical-workspace .medical-workspace__scroll { padding: 12px 16px 24px; }
+.medical-workspace .medical-workspace__scroll { padding: 8px 10px 14px; }
 .medical-cs__overview,
 .medical-cs__section-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; min-width: 0; }
 .medical-cs__overview { grid-template-columns: 1.02fr 1fr 1.55fr 1.15fr; align-items: stretch; }
@@ -90,7 +94,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 210px;
+  min-height: 170px;
   border: 1px solid var(--med-line);
   border-radius: 16px;
   background: var(--med-surface);
@@ -156,8 +160,8 @@
 .medical-cs__meter-fill[data-tone=red] { background: var(--med-negative); }
 .medical-cs__meter-fill[data-tone=muted] { background: var(--med-faint); }
 .medical-cs__risk-footer + .medical-cs__meter { margin: 0 15px; }
-.medical-cs__scatter-wrapper { flex: 1; min-height: 175px; padding: 8px 13px 0; }
-.medical-cs__scatter { width: 100%; height: 100%; min-height: 175px; max-height: 262px; overflow: visible; }
+.medical-cs__scatter-wrapper { flex: 1 1 0; height: 144px; min-height: 0; padding: 5px 12px 0; }
+.medical-cs__scatter { display: block; width: 100%; height: 100%; min-height: 0; max-height: 205px; overflow: visible; }
 .medical-cs__gridline { stroke: var(--med-line-soft); stroke-width: 1; }
 .medical-cs__axis-line { stroke: var(--med-muted); stroke-width: 1.2; }
 .medical-cs__axis { fill: var(--med-faint); font: 10px var(--med-body); }
@@ -271,16 +275,16 @@
 }
 
 /* Shell/header/tab parity with the approved Courtside Roster and Staff language. */
-.medical-workspace .ng-application-workspace__header-slot { background: var(--med-bg); padding: 0 14px; border-bottom: 1px solid var(--med-line); }
-.medical-workspace .medical-workspace-header { min-height: 66px; height: auto; padding: 9px 4px; gap: 14px; }
-.medical-workspace .medical-workspace-header__app { font: 700 32px/1 var(--med-display); letter-spacing: .02em; color: var(--med-text); }
+.medical-workspace .ng-application-workspace__header-slot { background: var(--med-bg); padding: 0 12px; border-bottom: 1px solid var(--med-line); }
+.medical-workspace .medical-workspace-header { height: 52px; min-height: 0; padding: 0 2px; gap: 10px; }
+.medical-workspace .medical-workspace-header__app { font: 700 26px/1 var(--med-display); letter-spacing: .02em; color: var(--med-text); }
 .medical-workspace .medical-workspace-header__sep { opacity: .6; }
-.medical-workspace .medical-workspace-header__team { font: 500 13px/1.3 var(--med-body); color: var(--med-muted); }
-.medical-workspace .medical-workspace-header__meta { font: 600 12px/1.3 var(--med-body); color: var(--med-faint); }
-.medical-workspace .ng-application-workspace__tabs-slot { padding: 0 16px; background: var(--med-bg); border-bottom: 1px solid var(--med-line); }
-.medical-workspace .ng-workspace-tabs { min-height: 41px; padding: 0; background: transparent; }
+.medical-workspace .medical-workspace-header__team { font: 500 12px/1.1 var(--med-body); color: var(--med-muted); }
+.medical-workspace .medical-workspace-header__meta { font: 600 11px/1.1 var(--med-body); color: var(--med-faint); }
+.medical-workspace .ng-application-workspace__tabs-slot { padding: 0 12px; background: var(--med-bg); border-bottom: 1px solid var(--med-line); }
+.medical-workspace .ng-workspace-tabs { min-height: 38px; height: 38px; padding: 0; background: transparent; }
 .medical-workspace .ng-workspace-tabs__list { display: flex; gap: 8px; min-width: 0; overflow-x: auto; }
-.medical-workspace .ng-workspace-tabs__tab { height: 41px; min-height: 41px; padding: 0 15px; border: 0; border-radius: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--med-muted); font: 700 16px/1 var(--med-display); letter-spacing: .07em; }
+.medical-workspace .ng-workspace-tabs__tab { height: 38px; min-height: 38px; padding: 0 12px; border: 0; border-radius: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--med-muted); font: 700 14px/1 var(--med-display); letter-spacing: .07em; }
 .medical-workspace .ng-workspace-tabs__tab:hover { color: var(--med-text); }
 .medical-workspace .ng-workspace-tabs__tab.is-active { color: var(--med-lime); background: transparent; border-bottom-color: var(--med-lime); }
 .medical-workspace .ng-workspace-tabs__tab:focus-visible { outline: 2px solid var(--med-lime); outline-offset: -2px; }
@@ -318,23 +322,35 @@
 @media(max-width: 680px) {.medical-cs__injury-facts {grid-template-columns:1fr 1fr;} }
 
 
-/* Injury-free match days are meaningful medical states, never blank workspaces. */
+/* Dense single-line cards: position, name, status, fatigue, risk. */
 .medical-cs__squad-monitor { grid-column: 1 / -1; min-height: 0; }
-.medical-cs__squad-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:13px 14px; }
-.medical-cs__squad-player { background:var(--med-surface-raised);border:1px solid var(--med-line-soft);border-radius:11px;padding:9px 11px;display:grid;gap:8px;min-width:0;text-align:left;color:var(--med-text);cursor:pointer; }
-.medical-cs__squad-player:hover,.medical-cs__squad-player:focus-visible { border-color:var(--med-lime);outline-offset:1px; }
-.medical-cs__squad-person { display:flex;align-items:center;gap:8px;min-width:0; }
-.medical-cs__squad-person strong {font:700 13px/1.15 var(--med-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.medical-cs__squad-position {flex:0 0 auto;font:700 10px/1 var(--med-display);color:var(--med-orange);border:1px solid var(--med-line);padding:4px;border-radius:5px; }
-.medical-cs__squad-status {margin-left:auto;font:750 10px var(--med-display);letter-spacing:.03em;color:var(--med-lime);flex:none;}
-.medical-cs__squad-status[data-band=elevated]{color:var(--med-orange);}
-.medical-cs__squad-status[data-band=high],
-.medical-cs__squad-status[data-band=unavailable]{color:var(--med-negative);}
-.medical-cs__squad-bars {display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.medical-cs__squad-bars > div {min-width:0;display:grid;grid-template-columns:43px minmax(0,1fr) 23px;align-items:center;gap:5px;}
-.medical-cs__squad-bars small {font:700 9px var(--med-display);color:var(--med-faint);}
-.medical-cs__squad-bars b {font:750 14px var(--med-display);text-align:right;}
-.medical-cs__healthy-state {display:grid;gap:13px;min-width:0;}
+.medical-cs__squad-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; padding: 9px 12px; }
+.medical-cs__squad-player {
+  display: grid;
+  grid-template-columns: 24px minmax(0,1fr) auto minmax(91px,104px) minmax(91px,104px);
+  align-items: center;
+  column-gap: 7px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 9px;
+  border: 1px solid var(--med-line-soft);
+  border-radius: 9px;
+  background: var(--med-surface-raised);
+  color: var(--med-text);
+  cursor: pointer;
+  text-align: left;
+}
+.medical-cs__squad-player:hover,.medical-cs__squad-player:focus-visible {border-color:var(--med-lime);outline-offset:1px;}
+.medical-cs__squad-position { font: 700 10px/1 var(--med-display); color: var(--med-orange); border: 1px solid var(--med-line); padding: 4px 2px; border-radius: 5px; text-align: center; }
+.medical-cs__squad-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:700 11px/1.2 var(--med-body); }
+.medical-cs__squad-status { font:750 10px/1 var(--med-display); white-space:nowrap; color:var(--med-lime); }
+.medical-cs__squad-status[data-band=elevated] {color:var(--med-orange);}
+.medical-cs__squad-status[data-band=high],.medical-cs__squad-status[data-band=unavailable] {color:var(--med-negative);}
+.medical-cs__squad-metric {display:flex;gap:4px;align-items:center;min-width:0;}
+.medical-cs__squad-metric small {flex:none; font:700 9px/1 var(--med-display);color:var(--med-faint);}
+.medical-cs__squad-metric .medical-cs__meter {flex:1 1 12px;min-width:9px;height:5px;}
+.medical-cs__squad-metric b { flex:0 0 28px; text-align:right; font:750 12px/1 var(--med-display); font-variant-numeric:tabular-nums; }
+.medical-cs__healthy-state {display:grid;gap:9px;min-width:0;}
 .medical-cs__healthy-banner {display:flex;align-items:center;gap:22px;padding:22px 24px;min-width:0;border:1px solid var(--med-line);border-radius:16px;background:var(--med-surface);color:var(--med-text);}
 .medical-cs__healthy-symbol {width:66px;height:66px;flex:none;display:grid;place-items:center;border:2px solid var(--med-lime);border-radius:50%;color:var(--med-lime);font:800 36px var(--med-display);background:color-mix(in srgb,var(--med-lime) 7%,var(--med-surface));}
 .medical-cs__healthy-banner > div:nth-child(2) {flex:1;min-width:0;}
@@ -346,6 +362,38 @@
 .medical-cs__healthy-counts strong {font:800 34px/1 var(--med-display);color:var(--med-text);}
 .medical-cs__healthy-counts strong small {font-size:13px;color:var(--med-muted);}
 .medical-cs__healthy-counts span {max-width:115px;color:var(--med-faint);font:700 10px var(--med-display);letter-spacing:.04em;}
-@media(max-width:1250px) {.medical-cs__squad-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.medical-cs__healthy-counts{gap:10px;}}
-@media(max-width:780px) {.medical-cs__healthy-banner{flex-wrap:wrap;}.medical-cs__healthy-counts{width:100%;justify-content:space-between;}.medical-cs__healthy-symbol{width:45px;height:45px;font-size:25px;}}
-@media(max-width:610px) {.medical-cs__squad-grid{grid-template-columns:minmax(0,1fr);}.medical-cs__healthy-counts{flex-wrap:wrap;}.medical-cs__squad-bars{gap:8px;}}
+
+
+
+
+/* Keep the first row compact and make the Risk tab's scatter proportionate. */
+.medical-cs__overview { gap: 9px; }
+.medical-cs__overview > .medical-cs__panel { height: 218px; min-height: 0; }
+.medical-cs__overview .medical-cs__donut { width: min(120px,44%); }
+.medical-cs__overview .medical-cs__donut-layout { gap: 10px; padding: 9px 12px; }
+.medical-cs__overview .medical-cs__risk-bands { padding-bottom: 6px; }
+.medical-cs__overview .medical-cs__stacked { margin-top: 12px; }
+.medical-cs__overview .medical-cs__annotation { padding-top: 4px; padding-bottom: 7px; }
+.medical-workspace__scroll > .medical-cs__scatter-panel { height: 258px; min-height:0; }
+.medical-workspace__scroll > .medical-cs__scatter-panel .medical-cs__scatter-wrapper {height:170px;}
+.medical-workspace__overview { gap: 9px; }
+.medical-workspace .medical-workspace__split { margin-top:8px; }
+@media (max-width: 1540px) {
+  .medical-cs__squad-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width: 1050px) {
+  .medical-cs__squad-grid {grid-template-columns:1fr;}
+  .medical-cs__overview > .medical-cs__panel { height: auto; min-height:200px; }
+}
+@media (max-width:780px) {
+  .medical-cs__healthy-banner { flex-wrap:wrap; }
+  .medical-cs__healthy-counts { width:100%;justify-content:space-between; }
+  .medical-cs__healthy-symbol {width:45px;height:45px;font-size:25px;}
+}
+@media (max-width:610px) {
+  .medical-cs__healthy-counts {flex-wrap:wrap;}
+  .medical-cs__squad-player {grid-template-columns:24px minmax(65px,1fr) auto;row-gap:7px;}
+  .medical-cs__squad-metric {grid-row:2;grid-column:span 1;}
+  .medical-cs__squad-metric:nth-last-child(2) {grid-column:2;}
+  .medical-cs__squad-metric:last-child {grid-column:3;}
+}
