@@ -105,3 +105,7 @@
 .market-cs__compact-head button {border:1px solid var(--market-line);border-radius:99px;color:var(--market-text);background:var(--market-surface);padding:6px 12px;font:700 13px var(--market-display);}
 .market-cs__quick-links {margin-top:0;}
 .market-cs__metrics {margin-top:0;}
+
+.market-cs__feed-tabs{display:flex;gap:4px;border:1px solid var(--market-line);border-radius:99px;padding:3px;}
+.market-cs__feed-tabs button{background:none;border:0;color:var(--market-muted);font:700 12px var(--market-display);padding:5px 9px;border-radius:99px;}
+.market-cs__feed-tabs button[aria-pressed='true']{background:var(--market-surface-alt);color:var(--market-text);}
