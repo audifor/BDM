@@ -22,3 +22,7 @@ Rama: `feat/bdm-ui-courtside`. No modifica `main`.
 - Faltan typecheck/build/Vitest desde una instalación local del repositorio, ejecución real Save/Load, revisión de temas y captura visual. Este commit **no** equivale a certificación.
 - La lógica antigua de Training y Mentoring no se elimina, para conservar comportamiento NG/Legacy y compatibilidad; el acceso canónico se unifica en Training Studio.
 - Verificar estilos heredados al abrir el panel avanzado y las prioridades de densidad en diferentes resoluciones.
+
+## Corrección de información sobre lesiones
+
+El catálogo anterior incluía una anotación obsoleta: el riesgo relativo de lesión **sí** alimenta `trainingInjuryProbability` desde `ScheduledTrainingEngine`. La UI nunca debe convertir `injuryRiskWeight` en probabilidad porcentual de lesión. Se corrigieron comentario y etiqueta de catálogo.

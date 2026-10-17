@@ -1674,7 +1674,7 @@ function EffectProfilePreview({ definition }: { readonly definition: TrainingDef
       <span>Carga/fatiga: {effects.fatigueMultiplier.toFixed(2)}×</span>
       {effects.moraleDelta !== 0 && <span>Moral: {effects.moraleDelta > 0 ? "+" : ""}{effects.moraleDelta}</span>}
       {effects.cohesionDelta !== 0 && <span>Cohesión de equipo: {effects.cohesionDelta > 0 ? "+" : ""}{effects.cohesionDelta}</span>}
-      <span>Riesgo de lesión (metadato, no aplicado por el motor): {effects.injuryRiskWeight.toFixed(2)}×</span>
+      <span>Factor de riesgo relativo de lesión (motor canónico): {effects.injuryRiskWeight.toFixed(2)}×</span>
     </div>
   );
 }
