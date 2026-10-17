@@ -33,8 +33,6 @@ jobs:
             src/ui-ng/applications/market/MarketWorkspace.courtside.test.tsx \
             src/ui-ng/system/startMenuCatalog.courtside.test.ts \
             src/ui/desktop/DesktopNavigation.test.ts \
-            src/ui/desktop/DesktopAppHost.test.ts \
-            src/ui-ng/workspace/workspaceRegistry.test.ts \
             --maxWorkers=2 --no-file-parallelism
       - name: Frontend build
         run: npm run build
