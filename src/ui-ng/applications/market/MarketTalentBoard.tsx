@@ -85,18 +85,18 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   // All identities come from the canonical addressable list, never from world.players globally.
   const addressable = model.knowledge.filter((row) => !row.isOwnRoster)
   const savedIds = new Set(targets.map((target) => target.playerId))
-  const activeContracts = useMemo(() => {
+  const activeContracts = (() => {
     const contracts = new Map<PlayerId, (typeof world.contractsById)[keyof typeof world.contractsById]>()
     for (const contract of Object.values(world.contractsById)) if (getPlayerContractStatus(contract, world.currentDate) === 'active') contracts.set(contract.playerId, contract)
     return contracts
-  }, [world])
-  const salaryKnowledge = useMemo(() => {
+  })()
+  const salaryKnowledge = (() => {
     const results = new Map<PlayerId, number>()
     const known = world.marketKnowledge.filter((item) => item.organizationId === team.organizationId && item.expectedSalary !== undefined)
       .sort((a,b) => a.assessedAt.localeCompare(b.assessedAt))
     for (const item of known) results.set(item.playerId, item.expectedSalary!)
     return results
-  }, [world, team.organizationId])
+  })()
   const expiryHorizon = (months: number) => {
     const [year, month, day] = world.currentDate.split('-').map(Number)
     return new Date(Date.UTC(year!, month! - 1 + months, day!)).toISOString().slice(0, 10)
