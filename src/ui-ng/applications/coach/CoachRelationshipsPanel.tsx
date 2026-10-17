@@ -1,3 +1,4 @@
+import { getRelationshipDimensions } from '@/domain/relationships'
 import { useMemo, useState } from 'react'
 import { getRelationshipBandForPeople, type GameWorld } from '@/domain/world'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
@@ -25,6 +26,9 @@ export function CoachRelationshipsPanel({ world, relationships }: { readonly wor
       id: item.sourceId + ':' + item.targetId + ':' + index,
       name: person.name, kind: person.kind, value: item.value,
       band: getRelationshipBandForPeople(world, item.sourceId, item.targetId),
+      lastContact: item.events.at(-1)?.gameDate ?? 'No recorded date',
+      trust: item.dimensions === undefined ? null : getRelationshipDimensions(item).trust,
+      support: item.dimensions === undefined ? null : getRelationshipDimensions(item).perceivedSupport,
     }
   }), [relationships, world])
   const visible = rows.filter((item) => (filter === 'all' || item.kind === filter)
@@ -34,8 +38,21 @@ export function CoachRelationshipsPanel({ world, relationships }: { readonly wor
     ngCol('person', 'Person', (row) => row.name, { value: (row) => row.name }),
     ngCol('kind', 'Role', (row) => row.kind, { value: (row) => row.kind }),
     ngCol('band', 'Relationship', (row) => row.band, { value: (row) => row.band }),
+    ngCol('trust', 'Trust', (row) => row.trust ?? '—', { numeric: true, value: (row) => row.trust ?? -101 }),
+    ngCol('support', 'Support', (row) => row.support ?? '—', { numeric: true, value: (row) => row.support ?? -101 }),
+    ngCol('lastContact', 'Last event', (row) => row.lastContact, { value: (row) => row.lastContact }),
     ngCol('value', 'Value', (row) => row.value, { numeric: true, value: (row) => row.value }),
   ])
+  const userCoach = world.coaches[world.userCoachId]
+  const assignment = userCoach === undefined ? undefined : Object.values(world.teamStaffAssignmentsById).find(
+    (item) => item.staffPersonId === userCoach.staffProfileId && item.role === 'headCoach',
+  )
+  const team = assignment === undefined ? undefined : world.teams[assignment.teamId]
+  const teamPlayers = team?.rosterPlayerIds.slice(0, 12).map((id) => world.players[id]).filter((item) => item !== undefined) ?? []
+  const teamStaff = assignment === undefined ? [] : Object.values(world.teamStaffAssignmentsById)
+    .filter((item) => item.teamId === assignment.teamId && item.staffPersonId !== userCoach?.staffProfileId)
+    .slice(0, 6).map((item) => ({ assignment: item, person: world.staffPeopleById[item.staffPersonId] }))
+    .filter((item) => item.person !== undefined)
   return <section className="coach-relations">
     <header className="coach-relations__header">
       <div><small>YOUR NETWORK</small><h2>Relationships <span>{relationships.length}</span></h2>
@@ -55,5 +72,19 @@ export function CoachRelationshipsPanel({ world, relationships }: { readonly wor
       {visible.length > 0 ? <NgPrecisionTable className="ng-canon__table" columns={columns} gridId="ng-coach-relationships" rows={visible} />
         : <p className="coach-relations__empty">{relationships.length === 0 ? 'No materialized relationships.' : 'No matching relationships.'}</p>}
     </div>
+
+    {rows.length === 0 && team && <section className="coach-relations__circle">
+      <header><div><small>CURRENT CLUB</small><h3>{team.name} · People in your environment</h3></div>
+        <p>Real squad and staff members. No relationship value is assigned until an interaction is recorded.</p></header>
+      <div className="coach-relations__circle-grid">
+        <div><h4>Squad · {team.rosterPlayerIds.length}</h4>
+          {teamPlayers.map((player) => <div key={player.id}><span>{player.firstName} {player.lastName}</span><small>No recorded relationship</small></div>)}
+        </div>
+        <div><h4>Staff</h4>
+          {teamStaff.length === 0 ? <p>No additional staff are assigned.</p> : teamStaff.map(({ assignment: item, person }) =>
+            <div key={item.id}><span>{person.identity.firstName} {person.identity.lastName}</span><small>{item.role}</small></div>)}
+        </div>
+      </div>
+    </section>}
   </section>
 }

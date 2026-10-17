@@ -314,3 +314,30 @@
 }
 /* Override the Overview's white-only identity text in the light Courtside theme. */
 .coach-courtside-ng .co-identity__name {color:var(--coach-text)}
+
+/* Factual squad circle: potential contacts are not invented relationships. */
+.coach-relations__circle {
+  margin-top:0;padding:12px 14px;border:1px solid var(--coach-line2);
+  border-radius:12px;background:var(--coach-panel);color:var(--coach-text);
+}
+.coach-relations__circle>header {
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--coach-line);
+}
+.coach-relations__circle>header small {color:var(--coach-orange);font:800 11px var(--coach-head);letter-spacing:.075em}
+.coach-relations__circle h3 {margin:3px 0 0;color:var(--coach-text);font:800 20px var(--coach-head);text-transform:uppercase}
+.coach-relations__circle>header p {max-width:380px;margin:0;color:var(--coach-muted);font:500 11px/1.4 var(--coach-font)}
+.coach-relations__circle-grid {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px}
+.coach-relations__circle-grid>div {min-width:0}
+.coach-relations__circle h4 {margin:0 0 7px;color:var(--coach-lime);font:800 14px var(--coach-head);text-transform:uppercase}
+.coach-relations__circle-grid>div>div {
+  display:flex;align-items:center;justify-content:space-between;gap:9px;min-width:0;
+  padding:7px 9px;border-bottom:1px solid var(--coach-line);
+}
+.coach-relations__circle-grid>div>div:nth-of-type(odd){background:var(--coach-raised)}
+.coach-relations__circle-grid>div>div span {color:var(--coach-text);font:650 12px var(--coach-font)}
+.coach-relations__circle-grid>div>div small {color:var(--coach-muted);font:500 10px var(--coach-font);text-align:right}
+.coach-relations__circle-grid p {margin:0;color:var(--coach-muted);font-size:12px}
+@container bdm-workspace (max-width:750px) {
+  .coach-relations__circle-grid{grid-template-columns:1fr}
+}
