@@ -1,0 +1,27 @@
+name: PERSON 50 Verified Contracts CI
+on:
+  push:
+    branches:
+      - feat/person-50-verified-contract-signings
+  pull_request:
+    paths:
+      - 'src/app/contractRetention/**'
+      - 'src/app/marketIntelligence/FreeAgentSigningService*'
+      - '.github/workflows/person-50-contract-signings-ci.yml'
+permissions:
+  contents: read
+jobs:
+  verified-signings:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Strict TypeScript
+        run: npm run typecheck
+      - name: Signing, personality, staff and Save V4
+        run: npx vitest run src/app/contractRetention/RetentionSigningService.test.ts src/app/marketIntelligence/FreeAgentSigningService.test.ts src/engine/staff/StaffPersonalityEvidence.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
