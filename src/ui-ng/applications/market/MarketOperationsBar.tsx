@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { GameWorld } from '@/domain/world'
 import { calculateStaffWorkload, getTeamFinancialSnapshot, getTeamStaffPayroll, canTeamAffordAdditionalSalary } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
-import { staffRoleDefinition } from '@/domain/staff'
+import { isScoutingStaffRole } from '@/ui-ng/applications/market/isScoutingStaffRole'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToStaff, navigateToStaffDepartment, navigateToStaffMarket } from '@/ui-ng/workspace/workspaceApps'
@@ -23,7 +23,7 @@ export function MarketOperationsBar({ world, teamId, onOpenScouting, onOpenFreeA
   const playerBudget = budgets?.playerSalaryBudget === undefined ? null : getTeamFinancialSnapshot(world, teamId)
   const staffBudget = budgets?.staffSalaryBudget === undefined ? null : getTeamStaffPayroll(world, teamId)
   const staff = Object.values(world.teamStaffAssignmentsById)
-    .filter((item) => item.teamId === teamId && staffRoleDefinition(item.role).department === 'scouting' &&
+    .filter((item) => item.teamId === teamId && isScoutingStaffRole(item.role) &&
       world.staffEmploymentByStaffId[item.staffPersonId]?.status === 'employed')
     .filter((item, index, arr) => arr.findIndex((candidate) => candidate.staffPersonId === item.staffPersonId) === index)
   const proposed = salary.trim() === '' ? null : Number(salary)
