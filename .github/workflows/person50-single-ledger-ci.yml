@@ -1,0 +1,29 @@
+name: PERSON 50 Single Ledger Convergence CI
+on:
+  push:
+    branches:
+      - feat/person50-single-ledger-76-contract-staff
+  pull_request:
+    paths:
+      - 'src/domain/personality/**'
+      - 'src/app/staffHumanState/**'
+      - 'src/app/contractRetention/**'
+      - 'src/app/marketIntelligence/FreeAgentSigningService*'
+      - '.github/workflows/person50-single-ledger-ci.yml'
+permissions:
+  contents: read
+jobs:
+  canonical-journal:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: E2E canonical events, relationships, staff decisions, contract signings and Save V4
+        run: npx vitest run src/domain/personality/ObservedPersonalityEvolution.test.ts src/engine/staff/StaffPersonalityEvidence.test.ts src/app/staffHumanState/StaffHumanState.integration.test.ts src/app/contractRetention/RetentionSigningService.test.ts src/app/marketIntelligence/FreeAgentSigningService.test.ts src/domain/personality/SemanticPersonalityEffects.test.ts
