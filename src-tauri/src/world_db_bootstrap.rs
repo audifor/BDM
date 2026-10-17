@@ -119,6 +119,8 @@ pub struct WorldDbGameBootstrapPersonV1 {
     nationality_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     physical: Option<WorldDbGameBootstrapPersonPhysicalV1>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    personality: Option<BTreeMap<String, u8>>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -686,6 +688,7 @@ fn query_person(
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
     let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
+    let personality = query_person_runtime_personality(connection, person_id)?;
     Ok(WorldDbGameBootstrapPersonV1 {
         person_id: person_id.to_owned(),
         first_name,
@@ -696,7 +699,60 @@ fn query_person(
         date_of_birth,
         nationality_ids: nationalities,
         physical,
+        personality,
     })
+}
+
+
+/// Opt-in native WorldDB PERSON -> eight-key BDM runtime projection.
+/// A legacy DB with no table or old P_01..P_50 keys keeps its normal
+/// in-game fallback. A partial *semantic* profile is an error, never silently
+/// completed with pseudo-random values.
+fn query_person_runtime_personality(
+    connection: &Connection,
+    person_id: &str,
+) -> Result<Option<BTreeMap<String, u8>>, String> {
+    const KEYS: [&str; 8] = [
+        "ambition", "professionalism", "loyalty", "resilience",
+        "temperament", "teamOrientation", "adaptability", "competitiveness",
+    ];
+    let exists: Option<i64> = connection
+        .query_row(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='person_personality_value'",
+            [],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("World DB personality table inspection failed: {e}"))?;
+    if exists.is_none() {
+        return Ok(None);
+    }
+    let mut statement = connection
+        .prepare("SELECT dimension_code,value FROM person_personality_value WHERE person_id=?1")
+        .map_err(|e| format!("World DB personality query failed for {person_id}: {e}"))?;
+    let rows = statement
+        .query_map([person_id], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        })
+        .map_err(|e| format!("World DB personality read failed for {person_id}: {e}"))?;
+    let mut values = BTreeMap::new();
+    for row in rows {
+        let (code, raw) = row.map_err(|e| format!("World DB personality invalid for {person_id}: {e}"))?;
+        if KEYS.contains(&code.as_str()) {
+            let value = u8::try_from(raw).map_err(|_| format!("World DB personality {code} invalid for {person_id}: {raw}"))?;
+            if value > 100 {
+                return Err(format!("World DB personality {code} out of 0..100 for {person_id}"));
+            }
+            values.insert(code, value);
+        }
+    }
+    if values.is_empty() {
+        return Ok(None);
+    }
+    if values.len() != KEYS.len() {
+        return Err(format!("World DB PERSON {person_id} has partial BDM runtime personality: {}/8", values.len()));
+    }
+    Ok(Some(values))
 }
 
 fn query_player(
