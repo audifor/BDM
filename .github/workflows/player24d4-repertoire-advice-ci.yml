@@ -1,0 +1,23 @@
+name: PLAYER 2.4-D4 Scouting and Training Advice
+on:
+  push:
+    branches:
+      - feat/player24d4-scout-training-repertoire-advice
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  typecheck-and-focal:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Strict typecheck
+        run: npm run typecheck
+      - name: Focal repertoire, legacy, Scouting and Training integration
+        run: npx vitest run src/engine/repertoire/RepertoireAdvice.test.ts src/domain/player/PlayerRepertoire.integration.test.ts src/engine/scouting/ScoutingEngine.test.ts src/engine/training/TrainingPlanning.test.ts
