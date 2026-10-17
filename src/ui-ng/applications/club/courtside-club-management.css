@@ -360,3 +360,27 @@
   .cs-club-finances .cs-finance-jump {align-items:stretch;flex-direction:column}
   .cs-club-finances .cs-finance-jump small {text-align:left}
 }
+
+
+/* Compliance completes the Club institutional destinations. */
+.cs-club-enforcement .cs-enforcement__summary {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-bottom:9px;
+}
+.cs-club-enforcement .cs-enforcement__stat {
+  display:flex;flex-direction:column;gap:6px;
+  border:1px solid var(--cm-line2);background:var(--cm-panel);
+  border-radius:11px;padding:11px 14px;min-height:75px;
+}
+.cs-club-enforcement .cs-enforcement__stat span {
+  color:var(--cm-muted);font:700 11px var(--cs-font-display);letter-spacing:.06em;
+}
+.cs-club-enforcement .cs-enforcement__stat strong {
+  color:var(--cm-lime);font:700 30px/1 var(--cs-font-display);
+}
+.cs-club-enforcement .cs-enforcement__stat:last-child strong {
+  color:var(--cm-orange);
+}
+@media(max-width:670px) {
+  .cs-club-enforcement .cs-enforcement__summary {grid-template-columns:1fr}
+}
