@@ -5,7 +5,8 @@ import { isPlayerFreeAgent } from '@/domain/world'
 import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
 import type { RequestScoutingInput } from '@/app/scouting'
 import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
-import { marketTargetId, type MarketTarget, type MarketTargetPriority } from '@/domain/market/MarketTarget'
+import type { MarketTarget, MarketTargetPriority } from '@/domain/market/MarketTarget'
+import { formatMoney } from '@/ui/formatters'
 import { buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/buildScoutingRosterComparison'
 import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
@@ -40,6 +41,22 @@ function hasKnowledge(row: ScoutingKnowledgeRow) { return row.knownRatingCount >
 function playerName(world: GameWorld, playerId: PlayerId): string {
   const player = world.players[playerId]
   return player === undefined ? 'Jugador' : `${player.firstName} ${player.lastName}`
+}
+
+function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWorld; readonly playerId: PlayerId }) {
+  const benchmark = scoutingRosterBenchmarks(world, playerId)
+  if (benchmark.rolePeer === null || benchmark.position === null) return <div className="market-talent__lens"><small>Sin referencia de la misma posición</small></div>
+  const reference = world.players[benchmark.rolePeer]
+  if (reference === undefined) return null
+  const keys = new Set(positionEvidenceKeys(benchmark.position))
+  const comparable = buildScoutingRosterComparison(world, playerId, benchmark.rolePeer)
+    .filter((row) => keys.has(row.id) && row.low !== null && row.high !== null)
+  const advantage = comparable.filter((row) => row.low! > row.own).length
+  const concern = comparable.filter((row) => row.high! < row.own).length
+  return <div className="market-talent__lens">
+    <small>Vs. {reference.firstName} {reference.lastName} · {benchmark.position}</small>
+    <div><strong>{advantage} superiores</strong><b>{concern} inferiores</b><span>{comparable.length} comparables</span></div>
+  </div>
 }
 
 export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, onArchiveTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
@@ -189,6 +206,10 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
         <div className="market-talent__compare-cards">{compared.map((row) => <article key={row.playerId}>
           <div><b>{row.position}</b><button aria-label={'Quitar ' + row.name} onClick={() => onToggleComparison(row.playerId)} type="button">×</button></div>
           <h4>{row.name}</h4><p>{row.clubName}</p>
+          <MarketTargetPositionLens world={world} playerId={row.playerId} />
+          {(() => { const knowledge = world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId && entry.playerId === row.playerId && entry.expectedSalary !== undefined)
+            .sort((a,b) => b.assessedAt.localeCompare(a.assessedAt))[0]
+            return knowledge === undefined ? null : <p className="market-talent__price">Salario esperado · {formatMoney(knowledge.expectedSalary!)} <small>({Math.round(knowledge.confidence * 100)}% · {knowledge.assessedAt})</small></p> })()}
           <dl><div><dt>Cobertura</dt><dd>{row.coverageLabel}</dd></div><div><dt>Confianza</dt><dd>{row.confidenceLabel}</dd></div><div><dt>Frescura</dt><dd>{row.freshnessLabel}</dd></div><div><dt>Desacuerdo</dt><dd>{row.disagreement === 'HIGH' ? 'Alto' : row.disagreement === 'MODERATE' ? 'Medio' : 'Bajo'}</dd></div></dl>
           <div className="market-talent__card-actions"><button className="market-cs__secondary" onClick={() => setScoutingTarget(row.playerId)} type="button" disabled={row.activeAssignment !== null}>Informar</button>
           {isPlayerFreeAgent(world,row.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(row.playerId)} type="button">Contactar</button> : null}
