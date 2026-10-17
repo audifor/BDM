@@ -6,7 +6,7 @@ import { STAFF_DEPARTMENT_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentati
 import { createStaffJobOpeningForTeam, closeStaffJobOpening, identifyStaffCandidate, startStaffInterview,
   completeStaffInterview, createStaffJobOffer, acceptStaffJobOffer, withdrawStaffJobOffer,
   rankStaffCandidates, getStaffMarketRole } from '@/app/staffCareer'
-import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToStaff, syncWorkspaceAppQuery, navigateToStaffDepartment } from '@/ui-ng/workspace/workspaceApps'
 
 type MarketStep='idle'|'identified'|'interviewing'|'completed'|'offered'|'hired'
 function name(world:GameWorld,id:StaffPersonId):string {
@@ -15,7 +15,10 @@ function name(world:GameWorld,id:StaffPersonId):string {
 export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
   readonly world:GameWorld;readonly teamId:TeamId;readonly onWorldChange:(next:GameWorld)=>void
 }){
-  const [department,setDepartment]=useState<StaffDepartment>('coaching')
+  const [department,setDepartment]=useState<StaffDepartment>(() => {
+    const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('staffMarketDept')
+    return value !== null && (STAFF_DEPARTMENTS as readonly string[]).includes(value) ? value as StaffDepartment : 'coaching'
+  })
   const [role,setRole]=useState<StaffRoleId>('assistantCoach')
   const [search,setSearch]=useState('')
   const [selectedOpening,setSelectedOpening]=useState('')
@@ -48,7 +51,11 @@ export function StaffCourtsideMarket({world,teamId,onWorldChange}:{
         <h1>CONSTRUYE TU STAFF</h1>
         <p>Busca especialistas, entrevista y contrata con las reglas reales del club.</p>
       </div>
-      <button className="cs-staff-primary" type="button" onClick={openVacancy}>+ ABRIR VACANTE</button>
+      <div className="cs-staff-market-quicklinks">
+        <button type="button" onClick={() => navigateToStaffDepartment('scouting')}>Mi scouting</button>
+        <button type="button" onClick={() => syncWorkspaceAppQuery('scouting', 'push')}>Misiones</button>
+        <button className="cs-staff-primary" type="button" onClick={openVacancy}>+ ABRIR VACANTE</button>
+      </div>
     </div>
     {error&&<p className="cs-staff-message is-error" role="alert">{error}</p>}
     {notice&&<p className="cs-staff-message" role="status">{notice}</p>}
