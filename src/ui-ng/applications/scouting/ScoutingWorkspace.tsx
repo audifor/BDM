@@ -21,13 +21,13 @@ import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigatio
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import './scouting-workspace.css'
-import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
+import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
 type ModalState = { readonly kind: 'request'; readonly playerId: PlayerId; readonly mission?: ScoutingMission } | { readonly kind: 'report'; readonly reportId: string } | { readonly kind: 'cancel'; readonly assignment: ScoutingAssignmentRow } | { readonly kind: 'coverage-add' } | { readonly kind: 'coverage-end'; readonly assignmentId: string }
 const PRIORITIES: readonly ScoutingPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
 
-function ScoutingWorkspaceHeader({ model }: { readonly model: ScoutingWorkspaceModel }) {
-  return <header className="scouting-workspace-header" data-ng-region="scouting-workspace-header"><div className="scouting-workspace-header__main"><span className="scouting-workspace-header__app">Scouting</span><span className="scouting-workspace-header__sep" aria-hidden /><span className="scouting-workspace-header__team">{model.teamName}</span><span className="scouting-workspace-header__meta"><span className="ng-type-numeric">{model.knownSubjectCount}</span> known · <span className="ng-type-numeric">{model.openAssignmentCount}</span> open · <span className="ng-type-numeric">{model.reportCount}</span> reports · <span className="ng-type-numeric">{model.territoryCount}</span> territories</span></div></header>
+function ScoutingWorkspaceHeader({ model, onOpenMarket }: { readonly model: ScoutingWorkspaceModel; readonly onOpenMarket: () => void }) {
+  return <header className="scouting-workspace-header" data-ng-region="scouting-workspace-header"><div className="scouting-workspace-header__main"><span className="scouting-workspace-header__app">Scouting</span><span className="scouting-workspace-header__sep" aria-hidden /><span className="scouting-workspace-header__team">{model.teamName}</span><span className="scouting-workspace-header__meta"><span className="ng-type-numeric">{model.knownSubjectCount}</span> known · <span className="ng-type-numeric">{model.openAssignmentCount}</span> open · <span className="ng-type-numeric">{model.reportCount}</span> reports · <span className="ng-type-numeric">{model.territoryCount}</span> territories</span></div><button className="scouting-workspace-header__back" onClick={onOpenMarket} type="button">← Mercado</button></header>
 }
 
 function knowledgeLabel(row: ScoutingKnowledgeRow): string {
@@ -244,7 +244,7 @@ function priorityAfter(priority: ScoutingPriority): ScoutingPriority {
   return PRIORITIES[Math.min(PRIORITIES.length - 1, PRIORITIES.indexOf(priority) + 1)]!
 }
 
-export function ScoutingWorkspace({ initialWorld, onOpenEntity }: { readonly initialWorld?: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void } = {}) {
+export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket }: { readonly initialWorld?: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void; readonly onOpenMarket?: () => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const setPriority = useGameStore((state) => state.updateScoutingAssignmentPriority)
@@ -263,9 +263,8 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity }: { readonly ini
   const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? openEntity)({ type: 'player', playerId, section: 'overview' })
   if (world === null || model === null || team === undefined) return <div className="scouting-workspace scouting-workspace--empty" data-ng-region="scouting-workspace"><section className="scouting-workspace__empty-state"><h1 className="scouting-workspace__empty-title">Scouting</h1><p className="scouting-workspace__empty-message">No team assigned to the user coach.</p></section></div>
   return <div className="scouting-workspace" data-ng-region="scouting-workspace" style={teamStyle}>
-    <ApplicationWorkspace header={<ScoutingWorkspaceHeader model={model} />} tabs={<WorkspaceTabs activeTabId={activeTab} onTabSelect={(id) => setActiveTab(id as ScoutingWorkspaceTabId)} tabs={tabs} />}>
+    <ApplicationWorkspace header={<ScoutingWorkspaceHeader model={model} onOpenMarket={onOpenMarket ?? (() => syncWorkspaceAppQuery('market', 'push'))} />} tabs={<WorkspaceTabs activeTabId={activeTab} onTabSelect={(id) => setActiveTab(id as ScoutingWorkspaceTabId)} tabs={tabs} />}>
       <ScrollRegion className="scouting-workspace__scroll">
-        <TalentOperationsNav current="scouting" />
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
         {activeTab === 'centre' ? <ScoutingWarRoom world={world} teamId={team.id} model={model} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} onOpenAssignments={() => setActiveTab('assignments')} onOpenCoverage={() => setActiveTab('coverage')} onOpenKnowledge={() => setActiveTab('knowledge')} onOpenReports={() => setActiveTab('reports')} /> : null}
         {activeTab === 'search' ? <PlayerSearchBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onMessage={setMessage} /> : null}
