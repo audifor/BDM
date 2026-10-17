@@ -9,9 +9,9 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CountryId } from '@/domain/ids'
 import type { Gender } from '@/domain/primitives'
 
-/** BS19B P0. The player edits the already allocated manager's canonical Person/StaffProfile.
- * No historical WorldDB person is changed: this command is only permitted for generated universes
- * and the synthetic ACB test manager; that gate is enforced by createConfiguredGame. */
+/** BS19B P0. Edits only the selected manager's canonical Person/StaffProfile.
+ * Imported historical WorldDB coaches cannot be edited. Newly created WorldDB coaches have
+ * their own BS19B IDs and may be customized without overwriting source records. */
 export type UserCoachBackground = 'rookie' | 'formerPlayer' | 'inDebt'
 export type UserCoachDisposition = 'balanced' | 'ambitious' | 'loyal'
 
@@ -29,8 +29,8 @@ export interface UserCoachCreationInput {
 export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreationInput): GameWorld {
   const coach = world.coaches[world.userCoachId]
   if (coach === undefined) throw new RangeError('Player-controlled head coach does not exist')
-  if (String(coach.id).startsWith('worlddb:') || world.worldDbCompetitionRuntime?.competitionRuntimeBundle != null) {
-    throw new RangeError('Custom Coach Creator cannot modify sourced World DB managers; use an authorized career appointment')
+  if (String(coach.id).startsWith('worlddb:') || (world.worldDbCompetitionRuntime?.competitionRuntimeBundle != null && !String(coach.id).startsWith('bs19b:user:'))) {
+    throw new RangeError('Custom Coach Creator cannot modify a sourced World DB manager; create a new PERSON with a career appointment')
   }
   const staff = world.staffPeopleById[coach.staffProfileId]
   if (staff?.personId !== coach.personId || staff.marketRole !== 'headCoach') {
