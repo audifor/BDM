@@ -50,6 +50,16 @@ const teams = Array.from({ length: 18 }, (_, index) => ({
   code: `team:ESP:${String(index + 1).padStart(3, '0')}`,
 }))
 
+const coachCreation = {
+  firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1990-01-01',
+  gender: 'male', background: 'rookie', coachingStyle: 'balanced', disposition: 'balanced',
+} as const
+
+function fillCoachIdentity() {
+  fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: coachCreation.firstName } })
+  fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: coachCreation.lastName } })
+}
+
 describe('New Game World DB Spain ACB flow', () => {
   beforeEach(() => {
     mocks.createConfiguredGameAsync.mockReset()
@@ -76,11 +86,13 @@ describe('New Game World DB Spain ACB flow', () => {
 
     const selectedTeam = teams[7]!
     fireEvent.change(teamSelect, { target: { value: selectedTeam.key } })
+    fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
 
     await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
       universeId: 'worldDbSpain',
       userTeamKey: selectedTeam.key,
+      userCoachCreation: coachCreation,
     }))
     expect(screen.getByRole('status').textContent).toBe('Cargando World Database...')
     expect(screen.getByRole('button', { name: 'STARTING CAREER...' }).hasAttribute('disabled')).toBe(true)
@@ -99,12 +111,14 @@ describe('New Game World DB Spain ACB flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
     const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS')
     fireEvent.change(teamSelect, { target: { value: teams[0]!.key } })
+    fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
 
     await waitFor(() => expect(screen.getByText('World DB not found')).toBeTruthy())
     expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
       universeId: 'worldDbSpain',
       userTeamKey: teams[0]!.key,
+      userCoachCreation: coachCreation,
     })
     expect(mocks.replaceWorld).not.toHaveBeenCalled()
   })
