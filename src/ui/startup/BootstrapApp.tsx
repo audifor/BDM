@@ -83,7 +83,9 @@ function StartScreen({
   const [lastName, setLastName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('1990-01-01')
   const [coachGender, setCoachGender] = useState<'male' | 'female'>('male')
-  const [background, setBackground] = useState<'rookie' | 'formerPlayer' | 'inDebt'>('rookie')
+  const [background, setBackground] = useState<'rookie' | 'formerPlayer' | 'inDebt' | 'academyCoach' | 'videoAnalyst' | 'formerAssistant'>('rookie')
+  const [ambition, setAmbition] = useState<'firstTitle' | 'talentDeveloper' | 'eliteReputation' | 'financialFreedom'>('firstTitle')
+  const [biography, setBiography] = useState('')
   const [coachingStyle, setCoachingStyle] = useState<'blank' | 'balanced' | 'tactician' | 'developer' | 'motivator' | 'analyst'>('balanced')
   const [disposition, setDisposition] = useState<'balanced' | 'ambitious' | 'loyal'>('balanced')
   const [worldDbTeams, setWorldDbTeams] = useState<readonly WorldDbSpainTeamOption[]>([])
@@ -208,6 +210,9 @@ function StartScreen({
                   <option value="rookie">New coach</option>
                   <option value="formerPlayer">Former player · practical experience</option>
                   <option value="inDebt">In debt · financial pressure</option>
+                  <option value="academyCoach">Academy coach · youth training</option>
+                  <option value="videoAnalyst">Video analyst · technical scouting</option>
+                  <option value="formerAssistant">Former assistant · bench experience</option>
                 </select>
               </label>
               <label className="bdm-start-field">
@@ -222,6 +227,15 @@ function StartScreen({
                 </select>
               </label>
               <label className="bdm-start-field">
+                <span>CAREER AMBITION</span>
+                <select disabled={isStarting} value={ambition} onChange={(event) => setAmbition(event.target.value as typeof ambition)}>
+                  <option value="firstTitle">Win my first title</option>
+                  <option value="talentDeveloper">Develop players</option>
+                  <option value="eliteReputation">Become an elite coach</option>
+                  <option value="financialFreedom">Achieve financial independence</option>
+                </select>
+              </label>
+              <label className="bdm-start-field">
                 <span>PERSONALITY</span>
                 <select disabled={isStarting} value={disposition} onChange={(event) => setDisposition(event.target.value as typeof disposition)}>
                   <option value="balanced">Balanced</option>
@@ -230,13 +244,17 @@ function StartScreen({
                 </select>
               </label>
             </div>
-            <p className="bdm-coach-creator__note">Your identity, professional strengths, personality and opening finances are saved in the world. Nationality defaults to the club's country in WorldDB. The sourced incumbent remains a separate PERSON. Full PERSON50 and Basket/RPG intensity settings will follow.</p>
+            <label className="bdm-start-field">
+              <span>PERSONAL BACKSTORY (OPTIONAL, MAX 600 CHARACTERS)</span>
+              <textarea disabled={isStarting} maxLength={600} rows={2} value={biography} onChange={(event) => setBiography(event.target.value)} />
+            </label>
+            <p className="bdm-coach-creator__note">Your chosen background influences real coaching attributes or finances. Your ambition and fictional story persist in your Coach RPG profile. The historical WorldDB people stay unchanged.</p>
           </section>
         ) : null}
         <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
-          ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, background, coachingStyle, disposition } } : {}),
+          ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>
         {message !== null && <p className="bdm-start-message">{message}</p>}
       </section>
