@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { FinanceCourtsideOverview } from './FinanceCourtsideOverview'
+import { FinanceCourtsideBudget } from './FinanceCourtsideBudget'
 import { financeTableLabel, financeColumnLabel, financeEmptyLabel, financeValueLabel } from './financeCourtsideLabels'
 import { buildFinanceWorkspaceSection, type FinanceSection, type FinanceTable, type FinanceTab } from './financeWorkspaceModel'
 import './finance-workspace.css'
@@ -94,7 +95,7 @@ export function FinancesWorkspace({ world: suppliedWorld }: { readonly world?: G
       </details>
       {enteredCurrency && !reportingCurrency && <p className="finance-workspace__input-error" role="alert">Introduce una moneda de tres letras.</p>}
       {tab === 'valuation' && numerator !== '' && !validMultiple && <p className="finance-workspace__input-error" role="alert">Multiplicador no válido. Usa enteros positivos.</p>}
-      {tab === 'cap' ? <SalaryCapSection world={world} teamId={team.id} /> : section && <FinanceSectionView section={section} tab={tab} filter={filter} />}
+      {tab === 'cap' ? <SalaryCapSection world={world} teamId={team.id} /> : <>{tab === 'budget' && <FinanceCourtsideBudget world={world} organizationId={organizationId} />}{section && <FinanceSectionView section={section} tab={tab} filter={filter} />}</>}
     </>}
   </NgHoloShell>
 }
