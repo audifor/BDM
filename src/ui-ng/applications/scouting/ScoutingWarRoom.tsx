@@ -13,6 +13,7 @@ interface Props {
   readonly world: GameWorld
   readonly teamId: TeamId
   readonly model: ScoutingWorkspaceModel
+  readonly embedded?: boolean
   readonly onOpenPlayer: (id: PlayerId) => void
   readonly onOpenReport: (id: string) => void
   readonly onOpenFocuses: () => void
@@ -22,7 +23,7 @@ interface Props {
   readonly onOpenReports: () => void
 }
 
-export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenReport, onOpenFocuses, onOpenAssignments, onOpenCoverage, onOpenKnowledge, onOpenReports }: Props) {
+export function ScoutingWarRoom({ world, teamId, model, embedded = false, onOpenPlayer, onOpenReport, onOpenFocuses, onOpenAssignments, onOpenCoverage, onOpenKnowledge, onOpenReports }: Props) {
   const team = world.teams[teamId]
   if (team === undefined) return null
   const organizationId = team.organizationId
@@ -53,8 +54,8 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
       : world.competitions[territory.competitionId]?.name ?? territory.competitionId
 
   return <div className="scouting-war" data-testid="scouting-war-room">
-    <MarketOperationsBar world={world} teamId={teamId} onOpenScouting={onOpenAssignments}
-      onOpenFreeAgents={() => navigateToMarketTab('free-agents')} />
+    {embedded ? null : <MarketOperationsBar world={world} teamId={teamId} onOpenScouting={onOpenAssignments}
+      onOpenFreeAgents={() => navigateToMarketTab('free-agents')} />}
     <div className="scouting-war__compact-head"><strong>SCOUTING</strong><span>{scouts.length} scouts · {active} misiones activas · {coverage.length} territorios</span>
       <button onClick={onOpenFocuses} type="button">+ Crear foco</button>
       <button onClick={onOpenCoverage} type="button">Territorios</button>
