@@ -40,7 +40,6 @@ export const START_MENU_RAIL_APPS: readonly WorkspaceAppId[] = [
   'schedule',
   'match',
   'market',
-  'scouting',
   'tactics',
   'training',
   'medical',
@@ -70,8 +69,8 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'mercado',
     label: 'Mercado',
-    description: 'Inteligencia deportiva, scouting, agentes libres, draft y trades',
-    appIds: ['market', 'scouting', 'draft', 'trades'],
+    description: 'Búsqueda, objetivos, scouting y operaciones',
+    appIds: ['market', 'draft', 'trades'],
   },
   {
     id: 'club',
