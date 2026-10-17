@@ -29,7 +29,7 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToPlayerMedical, navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
-import { MedicalHistoryVisual, MedicalInjuryVisual, MedicalOverviewVisual, MedicalRecoveryVisual, MedicalRiskScatter, MedicalStaffVisual } from './MedicalCourtsideVisuals'
+import { MedicalHistoryVisual, MedicalInjuryVisual, MedicalNoInjuries, MedicalOverviewVisual, MedicalRecoveryVisual, MedicalRiskScatter, MedicalSquadMonitor, MedicalStaffVisual } from './MedicalCourtsideVisuals'
 
 import './medical-workspace.css'
 import './medical-courtside.css'
@@ -155,6 +155,7 @@ function OverviewBoard({
   return (
     <div className="medical-workspace__overview">
       <MedicalOverviewVisual model={model} onOpenPlayer={onOpenPlayer} />
+      <MedicalSquadMonitor rows={model.risk} onOpenPlayer={onOpenPlayer} />
       {model.injured.length === 0 ? (
         <p className="medical-workspace__empty">No active injuries.</p>
       ) : (
@@ -188,19 +189,21 @@ function OverviewBoard({
 
 function InjuredBoard({
   rows,
+  model,
   selectedInjuryId,
   onSelectInjury,
   onOpenPlayer,
   onSetRehabilitationPlan,
 }: {
   readonly rows: readonly MedicalInjuredRow[]
+  readonly model: MedicalWorkspaceModel
   readonly selectedInjuryId: InjuryId | undefined
   readonly onSelectInjury: (injuryId: InjuryId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
   readonly onSetRehabilitationPlan: (injuryId: InjuryId, mode: RehabilitationMode) => void
 }) {
   if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No active injuries.</p>
+    return <MedicalNoInjuries model={model} onOpenPlayer={onOpenPlayer} />
   }
 
   const selected = rows.find((row) => row.injuryId === selectedInjuryId) ?? rows[0]
@@ -544,6 +547,7 @@ export function MedicalWorkspace() {
           ) : null}
           {activeTab === 'injured' ? (
             <InjuredBoard
+              model={model}
               onOpenPlayer={navigateToPlayerMedical}
               onSelectInjury={setSelectedInjuryId}
               onSetRehabilitationPlan={(injuryId, mode) => setRehabilitationPlan(injuryId, mode)}
