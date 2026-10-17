@@ -1,0 +1,22 @@
+name: Staff Observed PERSON Evolution CI
+on:
+  push:
+    branches:
+      - feat/staff-observed-personality-events-v1
+permissions:
+  contents: read
+jobs:
+  staff-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Staff single, batch, PERSON journal and Save V4 regression
+        run: npx vitest run src/engine/staff/StaffPersonalityEvidence.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
