@@ -33,6 +33,8 @@ function playerName(world: GameWorld, playerId: PlayerId): string {
 
 export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations }: Props) {
   const [query, setQuery] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerQuery, setPickerQuery] = useState('')
   const [position, setPosition] = useState<string>('ALL')
   const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'FREE' | 'ACTIVE'>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
@@ -61,14 +63,24 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
   const compared = comparisonIds.map((id) => addressable.find((row) => row.playerId === id)).filter((row): row is ScoutingKnowledgeRow => row !== undefined)
   const activeReports = selected === null ? [] : model.reports.filter((report) => report.playerId === selected.playerId).slice(0, 3)
   return <div className="market-talent" data-testid={mode === 'explore' ? 'market-explore' : 'market-targets'}>
-    <div className="market-talent__intro">
-      <div><span className="market-cs__kicker">{mode === 'targets' ? 'OBJETIVOS' : 'JUGADORES'}</span>
-        <h2>{mode === 'targets' ? 'Objetivos de mercado' : 'Explorar jugadores'}</h2>
-        <p>{mode === 'targets' ? 'Compara hasta tres jugadores.' :
-          'Jugadores conocidos por el club.'}</p>
-      </div><button className="market-cs__secondary" onClick={onOpenScouting} type="button">Ir a Scouting →</button>
+    <div className="market-talent__compact-head"><strong>{mode === 'targets' ? 'OBJETIVOS · ' + compared.length + '/3' : 'EXPLORAR JUGADORES · ' + ordered.length}</strong>
+      {mode === 'targets' ? <button className="market-cs__primary" onClick={() => setPickerOpen(true)} type="button">+ Añadir objetivo</button> : null}
+      <button className="market-cs__secondary" onClick={onOpenScouting} type="button">Scouting →</button>
     </div>
-    <div className="market-talent__toolbar">
+    {mode === 'targets' && pickerOpen ? <div className="market-target-picker__overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false) }}>
+      <section className="market-target-picker" role="dialog" aria-modal="true" aria-label="Añadir objetivos">
+        <header><h3>Añadir objetivo</h3><button onClick={() => setPickerOpen(false)} aria-label="Cerrar selector" type="button">×</button></header>
+        <input aria-label="Buscar jugador para objetivo" placeholder="Buscar jugador, club o país" value={pickerQuery} onChange={(event) => setPickerQuery(event.target.value)} />
+        <div className="market-target-picker__list">
+          {addressable.filter((row) => (row.name + ' ' + row.clubName + ' ' + row.countryName).toLocaleLowerCase().includes(pickerQuery.toLocaleLowerCase())).slice(0, 60).map((row) =>
+            <div key={row.playerId}><span><b>{row.name}</b><small>{row.position} · {row.clubName} · {STATES[row.knowledgeState]}</small></span>
+              <button disabled={!comparisonIds.includes(row.playerId) && compared.length >= 3} onClick={() => onToggleComparison(row.playerId)} type="button">
+                {comparisonIds.includes(row.playerId) ? 'Quitar' : 'Añadir'}
+              </button></div>)}
+        </div>
+      </section>
+    </div> : null}
+    {mode === 'explore' ? <><div className="market-talent__toolbar">
       <label>Buscar<input aria-label="Buscar objetivos" placeholder="Nombre, país, liga o club" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <label>Posición<select aria-label="Posición de objetivos" value={position} onChange={(event) => setPosition(event.target.value)}>{POSITIONS.map((p) => <option value={p} key={p}>{p === 'ALL' ? 'Todas' : p}</option>)}</select></label>
       <label>Situación<select aria-label="Situación de objetivos" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="ALL">Todos</option><option value="KNOWN">Con informes</option><option value="FREE">Agentes libres</option><option value="ACTIVE">En observación</option></select></label>
@@ -109,8 +121,8 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
           <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Abrir ficha completa</button><button className="market-cs__secondary" onClick={onOpenScouting} type="button">Gestionar observación</button></div>
         </>}
       </aside>
-    </div>
-    <section className="market-talent__comparison">
+    </div></> : null}
+    {mode === 'targets' ? <section className="market-talent__comparison">
       <header><div><span className="market-cs__kicker">COMPARACIÓN · HASTA 3 JUGADORES</span><h3>Comparación de jugadores</h3></div><small>Hasta 3 jugadores</small></header>
       {compared.length === 0 ? <div className="market-talent__empty">Selecciona jugadores con +.</div> :
         <div className="market-talent__compare-cards">{compared.map((row) => <article key={row.playerId}>
@@ -120,6 +132,6 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
           <button className="market-cs__secondary" onClick={() => { setSelectedId(row.playerId); onOpenPlayer(row.playerId) }} type="button">Examinar jugador</button>
         </article>)}</div>}
       {compared.length > 0 ? <div className="market-talent__compare-footer"><span>Los atributos no observados aparecen como «?».</span><button className="market-cs__secondary" onClick={onOpenOperations} type="button">Consultar operaciones →</button></div> : null}
-    </section>
+    </section> : null}
   </div>
 }
