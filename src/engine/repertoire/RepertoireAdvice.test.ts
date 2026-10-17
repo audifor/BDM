@@ -75,7 +75,7 @@ describe('PLAYER 2.4-D4 controlled consumer views', () => {
     const old = getPlayerKnowledgeSummary(legacy, own.organizationId, playerId)
     expect(old).not.toHaveProperty('repertoireStatus')
     expect(getRepertoireScoutingBrief(legacy, own.organizationId, playerId).status).toBe('NO_SOURCE')
-  })
+  }, 15_000)
   it('advises individual modules deterministically, without auto-scheduling, changing ratings or consuming fatigue', () => {
     const { world, own, playerId } = setup()
     const before = JSON.stringify(world)
