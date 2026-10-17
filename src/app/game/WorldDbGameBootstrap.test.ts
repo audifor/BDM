@@ -1,3 +1,4 @@
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
 import { createGameWorld, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
@@ -1093,5 +1094,38 @@ describe('WorldDB canonical PERSON personality bootstrapping', () => {
       ),
     }
     expect(() => bootstrapGameWorldFromWorldDb(partial, selection, pin)).toThrow('temperament')
+  })
+})
+
+describe('WorldDB full 50-dimension PERSON runtime and Save V4', () => {
+  const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }
+  it('carries every named value through WorldDB bootstrap and Save V4', () => {
+    const source = slice()
+    const player = source.players[0]!
+    const scores = Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key, index) =>
+      [key, (index * 13 + 21) % 101])) as unknown as NonNullable<WorldDbGameBootstrapSliceV1['persons'][number]['personality']>
+    const input = {
+      ...source,
+      persons: source.persons.map((person) => person.personId === player.personId
+        ? { ...person, personality: scores } : person),
+    }
+    const world = bootstrapGameWorldFromWorldDb(input, selection, pin)
+    const before = world.personalitiesByPersonId[player.playerId]!
+    expect(Object.keys(before.values)).toHaveLength(50)
+    for (const key of SEMANTIC_PERSONALITY_DIMENSIONS) expect(before.values[key]).toBe(scores[key])
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z'))
+    expect(loaded.personalitiesByPersonId[player.playerId]!.values).toEqual(before.values)
+  })
+  it('rejects 49 values rather than silently inventing one', () => {
+    const base = slice()
+    const player = base.players[0]!
+    const values = Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) => [key, 50])) as Record<string, number>
+    delete values.humor
+    const input = {
+      ...base,
+      persons: base.persons.map((person) => person.personId === player.personId
+        ? { ...person, personality: values as never } : person),
+    }
+    expect(() => bootstrapGameWorldFromWorldDb(input, selection, pin)).toThrow('exactly 8 legacy or 50 semantic')
   })
 })
