@@ -13,20 +13,21 @@ import { getUserTeam } from '@/engine/calendar'
 import { evaluateRenewalRecommendation, getBoardSummary } from '@/engine/board'
 import { useGameStore } from '@/stores/gameStore'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
-import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
+import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
+import { BoardCourtsideSections } from './BoardCourtsideSections'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import '@/ui-ng/applications/club/courtside-club-management.css'
 
 const BOARD_TABS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'mandate', label: 'Mandate' },
+  { id: 'institution', label: 'Boardroom' },
+  { id: 'requests', label: 'Requests' },
+  { id: 'resources', label: 'Resources' },
   { id: 'governance', label: 'Governance' },
   { id: 'history', label: 'History' },
 ] as const
 type BoardTabId = (typeof BOARD_TABS)[number]['id']
-
-function profileLabel(value: number): string {
-  return value >= 70 ? 'High' : value >= 45 ? 'Medium' : 'Low'
-}
 
 interface GovernanceNotice {
   readonly tone: 'APPLIED' | 'BLOCKED'
@@ -113,80 +114,17 @@ export function BoardWorkspace() {
         </p>
       )}
 
-      {tab === 'overview' ? (
-        <>
-          <div className="ng-canon__overview">
-            <section className="ng-canon__card ng-holo-panel">
-              <p className="ng-canon__eyebrow">Confidence</p>
-              <h3 className="ng-canon__title">{summary.state.confidence}</h3>
-              <dl className="ng-canon__metrics">
-                <NgMetric label="Job security" value={summary.jobSecurity} />
-                <NgMetric label="Renewal" value={renewal} />
-                <NgMetric label="Ambition" value={profileLabel(summary.state.profile.ambition)} />
-                <NgMetric label="Patience" value={profileLabel(summary.state.profile.patience)} />
-                <NgMetric label="Stability" value={profileLabel(summary.state.profile.stability)} />
-              </dl>
-            </section>
-            <section className="ng-canon__card ng-holo-panel">
-              <p className="ng-canon__eyebrow">Expectation</p>
-              <h3 className="ng-canon__title">Mandate</h3>
-              <p className="ng-canon__note">{summary.state.expectation.summary}</p>
-              <dl className="ng-canon__metrics">
-                <NgMetric label="Objectives" value={summary.state.objectives.length} />
-                <NgMetric label="Baseline position" value={summary.state.expectation.baselinePosition} />
-              </dl>
-            </section>
-            <section className="ng-canon__card ng-holo-panel" data-ng-region="board-governance-attention">
-              <p className="ng-canon__eyebrow">Governance attention</p>
-              <dl className="ng-canon__metrics">
-                <NgMetric label="Pending decisions" value={governance.pendingDecisions.length} />
-                <NgMetric label="Awaiting your decision" value={actionableDecisions.length} />
-                <NgMetric label="Requests addressed to you" value={governance.attentionRequests.length} />
-                <NgMetric label="History entries" value={governance.history.length} />
-              </dl>
-              {governance.institutionIds.length === 0 ? (
-                <p className="ng-canon__note" data-ng-region="board-governance-unavailable">
-                  No canonical Governance institution is recorded for this club, so nothing can be decided here yet.
-                </p>
-              ) : null}
-            </section>
-          </div>
-          <div className="ng-canon__split" style={{ marginTop: 'var(--ng-spacing-12)' }}>
-            <div className="ng-canon__panel ng-holo-panel" data-ng-region="board-objectives">
-              <p className="ng-canon__eyebrow">Objectives</p>
-              {summary.state.objectives.length === 0 ? (
-                <p className="ng-canon__empty">No board objectives recorded.</p>
-              ) : (
-                <NgPrecisionTable
-                  className="ng-canon__table"
-                  columns={ngTableColumns(summary.state.objectives, [
-                    ngCol('label', 'Objective', (item) => item.label, { value: (item) => item.label }),
-                    ngCol('priority', 'Priority', (item) => item.priority, { value: (item) => item.priority }),
-                    ngCol('horizon', 'Horizon', (item) => item.horizon, { value: (item) => item.horizon }),
-                    ngCol('outcome', 'Outcome', (item) => item.outcome, { value: (item) => item.outcome }),
-                  ])}
-                  gridId="ng-board-objectives"
-                  rows={summary.state.objectives}
-                />
-              )}
-            </div>
-            <aside className="ng-canon__inspector ng-holo-panel">
-              <p className="ng-canon__eyebrow">Reasons</p>
-              {summary.state.reasons.length === 0 ? (
-                <p className="ng-canon__empty">The project has just begun.</p>
-              ) : (
-                <ul className="ng-canon__list">
-                  {summary.state.reasons.map((item) => (
-                    <li key={item.id}>
-                      {item.delta >= 0 ? '+' : ''}
-                      {item.delta} · {item.detail}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </aside>
-          </div>
-        </>
+      {(['overview', 'mandate', 'institution', 'requests', 'resources'] as const).includes(tab as 'overview') ? (
+        <BoardCourtsideSections
+          tab={tab as 'overview' | 'mandate' | 'institution' | 'requests' | 'resources'}
+          world={world}
+          teamId={team.id}
+          state={summary.state}
+          governance={governance}
+          jobSecurity={summary.jobSecurity}
+          renewal={renewal}
+          onSelectTab={setTab}
+        />
       ) : null}
 
       {tab === 'governance' ? (
@@ -200,7 +138,19 @@ export function BoardWorkspace() {
       ) : null}
 
       {tab === 'history' ? (
-        <div className="ng-canon__panel ng-holo-panel" data-ng-region="board-governance-history">
+        <div className="cs-board-v3">
+          <section className="cs-board-v3__panel" data-ng-region="board-confidence-history">
+            <h2>Confianza: historial de cambios</h2>
+            {summary.state.reasons.length === 0 ? <p className="cs-board-v3__empty">No hay cambios documentados en la confianza.</p> : (
+              <div className="cs-board-v3__table-wrap"><table className="cs-board-v3__table">
+                <thead><tr><th>Fecha</th><th>Motivo</th><th>Impacto</th></tr></thead>
+                <tbody>{[...summary.state.reasons].reverse().map((reason) =>
+                  <tr key={reason.id}><td>{reason.date}</td><td>{reason.detail}</td><td>{reason.delta > 0 ? '+' : ''}{reason.delta}</td></tr>
+                )}</tbody>
+              </table></div>
+            )}
+          </section>
+          <div className="ng-canon__panel ng-holo-panel" data-ng-region="board-governance-history">
           <p className="ng-canon__eyebrow">Governance history</p>
           {governance.history.length === 0 ? (
             <p className="ng-canon__empty">No governance decision or request has been recorded yet.</p>
@@ -218,6 +168,7 @@ export function BoardWorkspace() {
               rows={governance.history.map((row) => ({ ...row, id: row.historyId }))}
             />
           )}
+        </div>
         </div>
       ) : null}
     </NgHoloShell>
