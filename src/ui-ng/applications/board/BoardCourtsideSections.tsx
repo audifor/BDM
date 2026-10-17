@@ -78,6 +78,15 @@ export function BoardCourtsideSections(props: Props) {
       const participants = Object.values(world.governanceMeetingParticipantsById).filter((item) => item.meetingId === meeting.id)
       return { ...meeting, status: deriveGovernanceMeetingStatus(events), scheduledFor: deriveGovernanceMeetingScheduledFor(events), items, participants, events }
     }).sort((a, b) => (a.scheduledFor ?? a.createdOn).localeCompare(b.scheduledFor ?? b.createdOn))
+  const bodyIds = new Set(governance.bodies.map((body) => body.bodyId))
+  const activeAuthority = Object.values(world.governanceAuthorityGrantsById).filter((grant) =>
+    bodyIds.has(grant.fromBodyId) && bodyIds.has(grant.toBodyId) &&
+    grant.grantedOn <= world.currentDate && (grant.revokedOn === undefined || grant.revokedOn > world.currentDate))
+  const externalRelationships = Object.values(world.governanceExternalRelationshipsById).filter((relationship) =>
+    (relationship.institutionId !== undefined && institutionIds.has(relationship.institutionId)) ||
+    (relationship.bodyId !== undefined && bodyIds.has(relationship.bodyId)))
+    .filter((relationship) => relationship.startedOn <= world.currentDate &&
+      (relationship.endedOn === undefined || relationship.endedOn >= world.currentDate))
   const commitments = Object.values(world.governanceCommitmentsById).filter((item) => institutionIds.has(item.institutionId))
     .map((item) => {
       const events = Object.values(world.governanceCommitmentEventsById).filter((event) => event.commitmentId === item.id)
@@ -191,6 +200,20 @@ export function BoardCourtsideSections(props: Props) {
           </div>
           {latestEvaluation ? latestEvaluation.factors.map((factor) => <div className="cs-board-v3__line" key={factor.id}><span>{readable(factor.kind)}</span><span>{factor.status === 'PRESENT' ? Math.round((factor.normalizedValue ?? 0) * 100) + '%' : 'No evaluable'}</span></div>) : <Empty>No se ha registrado ninguna evaluación institucional del entrenador.</Empty>}
           <p className="cs-board-v3__footnote">Esta evaluación no se deduce del medidor Board. Se muestran únicamente factores y resoluciones persistidos.</p>
+        </Panel>
+      </div>
+      <div className="cs-board-v3__columns">
+        <Panel label="Mapa de autoridad">
+          {activeAuthority.length ? <div className="cs-board-v3__table-wrap"><table className="cs-board-v3__table"><thead><tr><th>De</th><th>Hacia</th><th>Competencia</th></tr></thead><tbody>
+            {activeAuthority.map((grant) => <tr key={grant.id}><td>{world.governanceBodiesById[grant.fromBodyId]?.name ?? grant.fromBodyId}</td><td>{world.governanceBodiesById[grant.toBodyId]?.name ?? grant.toBodyId}</td><td>{readable(grant.decision)}</td></tr>)}
+          </tbody></table></div> : <Empty>No hay delegaciones formales activas registradas.</Empty>}
+          <p className="cs-board-v3__footnote">Los permisos efectivos de cada asunto se resuelven en Governance. Este mapa no otorga nuevos permisos.</p>
+        </Panel>
+        <Panel label="Relaciones externas">
+          {externalRelationships.length ? externalRelationships.map((item) => <div className="cs-board-v3__line" key={item.id}>
+            <span><b>{readable(item.relationshipType)}</b><small>{readable(item.externalRef.kind)}</small></span><span>{item.externalRef.id}</span>
+          </div>) : <Empty>Sin relaciones institucionales externas activas registradas.</Empty>}
+          <p className="cs-board-v3__footnote">NCAA, NBA/WNBA, clubes y federaciones muestran únicamente las relaciones de su propio universo.</p>
         </Panel>
       </div>
       <Panel label="Reuniones del consejo">
