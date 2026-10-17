@@ -218,4 +218,17 @@ describe('MedicalWorkspace', () => {
     expect(screen.getByText('Medical department capability')).toBeInTheDocument()
   })
 
+  it('keeps the Courtside medical monitor visible for a healthy roster and does not show empty Injured', () => {
+    const { team } = mountMedicalWorkspace()
+    expect(document.querySelector('[data-ng-region="medical-courtside-dashboard"]')).not.toBeNull()
+    expect(screen.getByText('Squad medical monitor')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Open medical profile for / }).length).toBe(team.rosterPlayerIds.length)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Injured' }))
+    expect(document.querySelector('[data-ng-region="medical-healthy-injuries"]')).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'NO ACTIVE INJURIES' })).toBeInTheDocument()
+    expect(screen.getByText('Squad medical monitor')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Open medical profile for / }).length).toBe(team.rosterPlayerIds.length)
+  })
+
 })
