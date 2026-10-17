@@ -22,3 +22,7 @@
 .bdm-coach-creator__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .bdm-coach-creator__note { color:#a9b7c4; font-size:11px; line-height:1.5; margin:0; }
 @media (max-width:500px) { .bdm-coach-creator__grid { grid-template-columns:1fr; } }
+
+/* BDM game bootstrap creator, separate from Courtside feature screens. */
+.bdm-coach-creator textarea { width:100%; box-sizing:border-box; background:#142431; color:#e5edf5; border:1px solid #435767; border-radius:5px; padding:9px 10px; font:inherit; resize:vertical; min-height:54px; }
+.bdm-coach-creator textarea:focus-visible { outline:2px solid #dcb568; outline-offset:2px; }
