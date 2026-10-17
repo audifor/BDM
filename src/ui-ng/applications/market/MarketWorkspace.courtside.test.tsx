@@ -78,6 +78,25 @@ describe('Courtside Market command centre', () => {
     expect(screen.getByLabelText('Buscar jugador para objetivo')).toBeInTheDocument()
   })
 
+  it('adds a persistent objective and allows user-controlled priority changes', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
+    fireEvent.click(screen.getByRole('button', { name: '+ Añadir objetivo' }))
+    const add = screen.getAllByRole('button', { name: 'Añadir' })[0]
+    expect(add).toBeDefined()
+    fireEvent.click(add!)
+    const world = useGameStore.getState().world!
+    expect(Object.values(world.marketTargetsById)).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar selector' }))
+    const stored = screen.getByRole('region', { name: 'Objetivos guardados' })
+    expect(stored).toBeInTheDocument()
+    const priority = screen.getAllByLabelText(/^Prioridad /)[0]!
+    fireEvent.change(priority, { target: { value: 'HIGH' } })
+    expect(Object.values(useGameStore.getState().world!.marketTargetsById)[0]!.priority).toBe('HIGH')
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar' }))
+    expect(screen.getByText('Hasta tres jugadores')).toBeInTheDocument()
+  })
+
   it('still deep-links to a free-agent dossier when a player id is provided', () => {
     window.history.replaceState({}, '', '/?ui=ng&app=market&playerId=free-agent-target')
     mount()
