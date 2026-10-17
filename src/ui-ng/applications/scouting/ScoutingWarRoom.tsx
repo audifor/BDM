@@ -51,9 +51,9 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
   return <div className="scouting-war" data-testid="scouting-war-room">
     <section className="scouting-war__intro">
       <div>
-        <span className="scouting-war__eyebrow">DEPARTAMENTO DE INTELIGENCIA · {world.currentDate}</span>
-        <h2>TU RED. TU INFORMACIÓN. TUS DECISIONES.</h2>
-        <p>Explora donde aún no conoces, profundiza cuando las evidencias lo justifican y protege a tus scouts de la sobrecarga.</p>
+        <span className="scouting-war__eyebrow">SCOUTING · {world.currentDate}</span>
+        <h2>Departamento de scouting</h2>
+        <p>Territorios, misiones, informes y carga de trabajo.</p>
       </div>
       <div className="scouting-war__intro-actions">
         <button className="scouting-war__primary" onClick={onOpenFocuses} type="button">Nuevo foco de búsqueda</button>
@@ -69,7 +69,7 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
     </div>
     <div className="scouting-war__layout">
       <section className="scouting-war__panel scouting-war__panel--wide">
-        <header><div><span className="scouting-war__eyebrow">RED DE EXPLORACIÓN</span><h3>Operaciones abiertas</h3></div><button onClick={onOpenCoverage} type="button">Editar red →</button></header>
+        <header><div><span className="scouting-war__eyebrow">COBERTURA</span><h3>Operaciones abiertas</h3></div><button onClick={onOpenCoverage} type="button">Editar red →</button></header>
         <div className="scouting-war__network">
           <div className="scouting-war__rings" aria-label={coverage.length + ' territorios activos'}>
             <div className="scouting-war__ring scouting-war__ring--one" />
@@ -79,13 +79,13 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
           </div>
           <div className="scouting-war__territories">
             <h4>Territorios en observación</h4>
-            {coverage.length === 0 ? <p>No hay cobertura activa. Puedes iniciar una operación por país o competición.</p> : coverage.slice(0, 5).map((item) => <div key={item.id}><span className="scouting-war__signal" /><strong>{coverageLabel(item.territory)}</strong><small>ACTIVO</small></div>)}
+            {coverage.length === 0 ? <p>Sin cobertura activa.</p> : coverage.slice(0, 5).map((item) => <div key={item.id}><span className="scouting-war__signal" /><strong>{coverageLabel(item.territory)}</strong><small>ACTIVO</small></div>)}
             {coverage.length > 5 ? <p>{coverage.length - 5} territorios adicionales</p> : null}
           </div>
         </div>
       </section>
       <section className="scouting-war__panel">
-        <header><div><span className="scouting-war__eyebrow">CENTRO DE OPERACIONES</span><h3>Estado de las misiones</h3></div><button onClick={onOpenAssignments} type="button">Gestionar →</button></header>
+        <header><div><span className="scouting-war__eyebrow">MISIONES</span><h3>Estado de las misiones</h3></div><button onClick={onOpenAssignments} type="button">Gestionar →</button></header>
         <div className="scouting-war__mission-bar" aria-label={queued + ' en cola, ' + active + ' activas, ' + completed + ' completadas'}>
           <span style={{ width: (100 * queued / visibleTotal) + '%' }} data-state="queued" />
           <span style={{ width: (100 * active / visibleTotal) + '%' }} data-state="active" />
@@ -97,9 +97,9 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
     </div>
     <div className="scouting-war__layout scouting-war__layout--triple">
       <section className="scouting-war__panel">
-        <header><div><span className="scouting-war__eyebrow">BRIEFS ABIERTOS</span><h3>Objetivos de búsqueda</h3></div><button onClick={onOpenFocuses} type="button">Ver focos →</button></header>
+        <header><div><span className="scouting-war__eyebrow">FOCOS ACTIVOS</span><h3>Objetivos de búsqueda</h3></div><button onClick={onOpenFocuses} type="button">Ver focos →</button></header>
         <div className="scouting-war__feed">
-          {focuses.length === 0 ? <p>Sin focos activos. Define un perfil para activar el trabajo de la red.</p> :
+          {focuses.length === 0 ? <p>Sin focos activos.</p> :
             focuses.slice(0, 4).map((focus) => {
               const candidates = getRecruitmentFocusCandidates(world, focus.id)
               return <div key={focus.id}><strong>{focus.name}</strong><span>{focus.positions.join(' · ')} · {candidates.length} candidatos encontrados · {focus.daysActive} días</span></div>
@@ -107,25 +107,25 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
         </div>
       </section>
       <section className="scouting-war__panel">
-        <header><div><span className="scouting-war__eyebrow">ÚLTIMAS SEÑALES</span><h3>Descubrimientos e informes</h3></div><button onClick={onOpenReports} type="button">Ver informes →</button></header>
+        <header><div><span className="scouting-war__eyebrow">INFORMES</span><h3>Descubrimientos e informes</h3></div><button onClick={onOpenReports} type="button">Ver informes →</button></header>
         <div className="scouting-war__feed">
           {model.reports.slice(0, 3).map((report) => <div key={report.id}><button onClick={() => onOpenReport(report.id)} type="button">{report.playerName}</button><span>Informe · {report.missionLabel} · {report.createdLabel}</span></div>)}
           {discoveries.slice(0, 2).map((item) => {
             const player = world.players[item.playerId]
             return player === undefined ? null : <div key={item.id}><button onClick={() => onOpenPlayer(item.playerId)} type="button">{player.firstName} {player.lastName}</button><span>Identidad descubierta · {item.discoveredAt}</span></div>
           })}
-          {model.reports.length === 0 && discoveries.length === 0 ? <p>Sin señales registradas todavía. Las futuras observaciones aparecerán aquí.</p> : null}
+          {model.reports.length === 0 && discoveries.length === 0 ? <p>Sin informes ni descubrimientos registrados.</p> : null}
         </div>
       </section>
       <section className="scouting-war__panel">
-        <header><div><span className="scouting-war__eyebrow">NECESITA ATENCIÓN</span><h3>Decisiones pendientes</h3></div></header>
+        <header><div><span className="scouting-war__eyebrow">PENDIENTES</span><h3>Alertas</h3></div></header>
         <div className="scouting-war__feed">
           {overloaded.map((item) => {
             const staff = world.staffPeopleById[item.staffPersonId]
             return <div key={item.staffPersonId}><strong>{staff?.identity.firstName} {staff?.identity.lastName}</strong><span>Scout sobrecargado</span><button onClick={onOpenAssignments} type="button">Reasignar prioridades →</button></div>
           })}
           {staleKnowledge.map((item) => <div key={item.playerId}><button onClick={() => onOpenPlayer(item.playerId)} type="button">{item.name}</button><span>Conocimiento desactualizado · frescura {item.freshnessLabel}</span></div>)}
-          {overloaded.length === 0 && staleKnowledge.length === 0 ? <p>No se detectan scouts sobrecargados ni expedientes desactualizados en esta vista.</p> : null}
+          {overloaded.length === 0 && staleKnowledge.length === 0 ? <p>Sin alertas de carga ni actualización.</p> : null}
         </div>
       </section>
     </div>
