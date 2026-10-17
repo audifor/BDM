@@ -9,6 +9,7 @@ import { formatMoney } from '@/ui/formatters'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { buildFinanceWorkspaceSection, FINANCE_TABS, type FinanceSection, type FinanceTab } from './financeWorkspaceModel'
 import './finance-workspace.css'
+import '@/ui-ng/applications/club/courtside-club-management.css'
 
 const tabs = FINANCE_TABS.map(([id, label]) => ({ id, label }))
 
@@ -42,10 +43,19 @@ export function FinancesWorkspace({ world: suppliedWorld }: { readonly world?: G
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [world, organizationId, tab, reportingCurrency, scenario, method, numerator, denominator])
 
-  if (!world) return <NgHoloShell appLabel="Finances" empty emptyMessage="No career loaded." region="finances-workspace" />
-  if (!team || !organizationId) return <NgHoloShell appLabel="Finances" empty emptyMessage="No Organization is assigned to this team." region="finances-workspace" />
+  if (!world) return <NgHoloShell appLabel="Finances" empty emptyMessage="No career loaded." region="finances-workspace" className="cs-club-management cs-club-finances" />
+  if (!team || !organizationId) return <NgHoloShell appLabel="Finances" empty emptyMessage="No Organization is assigned to this team." region="finances-workspace" className="cs-club-management cs-club-finances" />
 
-  return <NgHoloShell appLabel="Finances" title={team.name} meta={`As of ${world.currentDate}`} teamId={team.id} region="finances-workspace" className="finance-workspace" tabs={tabs} activeTabId={tab} onTabSelect={(id) => setTab(id as FinanceTab)}>
+  return <NgHoloShell appLabel="Finances" title={team.name} meta={`As of ${world.currentDate}`} teamId={team.id} region="finances-workspace" className="finance-workspace cs-club-management cs-club-finances" tabs={tabs} activeTabId={tab} onTabSelect={(id) => setTab(id as FinanceTab)}>
+    <div className="cs-finance-jump">
+      <label>
+        ÁREA FINANCIERA
+        <select aria-label="Ir a área financiera" value={tab} onChange={(event) => setTab(event.target.value as FinanceTab)}>
+          {tabs.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+        </select>
+      </label>
+      <small>La tesorería, el presupuesto y el límite salarial son magnitudes distintas.</small>
+    </div>
     {tab !== 'cap' && <div className="finance-workspace__controls">
       <label>Reporting currency <input aria-label="Reporting currency" maxLength={3} onChange={(event) => setCurrency(event.target.value)} placeholder={profileCurrency ?? 'e.g. EUR'} value={currency} /></label>
       <label>Filter facts <input aria-label="Filter facts" onChange={(event) => setFilter(event.target.value)} placeholder="Currency, category, team, source…" value={filter} /></label>
