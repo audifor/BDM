@@ -88,7 +88,7 @@ describe('MX0.7 club Governance read boundary', () => {
         overdue: false,
         origin: 'STANDALONE',
         addressedToUser: true,
-        responseCommandAvailable: false,
+        responseCommandAvailable: true,
       }),
     ])
     expect(governanceRequestById(model, issued.requestId)?.dueOn).toBe(issued.dueOn)
