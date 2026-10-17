@@ -4,13 +4,25 @@ Fecha de auditoría: 2026-10-17.
 Base revisada: `audifor/BDM` `main` (`ceaa45529ce23c4e94bbc2cef17d9d0d987552b6`) y PRs existentes indicadas abajo.
 Estado: **AUDITADO / ROADMAP PROPUESTO**. Sin implementación BS19 nueva y sin certificación funcional BS19.
 
-## 1. Objetivo de producto
+## 1. Objetivo de producto (corregido por directriz del propietario, 17-10-2026)
 
-Que las personas reales de BDM (jugadores, staff, entrenador, y cuando existan actores canónicos, agentes y directivos) perciban hechos comprobables, tengan intereses y memoria propios, reaccionen de forma coherente y tomen o provoquen decisiones con consecuencias persistidas y comprensibles. No basta con ver un número en pantalla.
+**El protagonista es el entrenador creado por el jugador.** BS19 no es solo un motor de reacción del staff: es el **Basketball Life RPG**, una simulación de vida, identidad y trayectoria del entrenador en un universo de baloncesto persistente.
 
-Contrato de experiencia por caso: **hecho fuente -> perspectiva/estado del actor -> señal visible o decisión AI -> opción/acción autorizada -> consecuencia canónica -> historial/Save -> observación posterior**.
+Nuevo requisito que invalida el orden original: **crear a tu coach desde cero antes de empezar la carrera** y conservar su identidad PERSON en el tiempo. Vida profesional, relaciones, economía personal, reputación, compromisos, decisiones y recuerdos con consecuencias reales, mientras los demás actores y las competiciones siguen viviendo.
 
-**No pertenece a BS19**: narrativas editoriales procedurales y arcos de prensa amplios (BS20), nueva base de datos de personalidades, sistemas duplicados, creación arbitraria de amistades/conflictos sin causa, sustitución de Governance (BS18), reescritura de Courtside, MatchEngine o WorldDB/generadores. La prioridad paralela WorldDB V2 y generadores se mantiene.
+Auditoría de ausencia en `main`:
+- `src/ui/startup/BootstrapApp.tsx`: solo recoge universo y equipo; no nombre, DOB ni trasfondo del entrenador.
+- `src/app/game/NewGameUniverseCatalog.ts`: preset RPG opcional, ningún `UserCoachCreationDraft`.
+- `src/app/game/createConfiguredGame.ts`: preset conectado solo a algunas rutas y no expuesto al usuario en startup.
+- `src/engine/world/WorldGenerator.ts`: `userCoachId = coaches[0].id` y nombre generado.
+- `src/domain/coach/Coach.ts`: Coach es la fachada existente de PERSON + StaffProfile; se debe reutilizar.
+- `src/domain/coachFinances/CoachFinances.ts`: dinero/estilo de vida reutilizables, sin nueva economía paralela.
+
+**Documento rector actualizado:** [BS19_PRODUCT_VISION_COACH_CREATOR_LIFE_SIM.md](BS19_PRODUCT_VISION_COACH_CREATOR_LIFE_SIM.md).
+
+Contrato experiencial: **hecho/contexto simulado real -> perspectiva y situación -> elección del protagonista -> acción autorizada -> efecto canónico -> memoria/relación/carrera/economía -> consecuencias posteriores**. No se limita a eventos de staff. Se permiten acontecimientos emergentes generados prospectivamente por reglas del mundo; nunca historias presentadas sin su correspondiente evento persistido.
+
+**Límite:** no replicar Los Sims completo, no sistema de microtareas, no nuevo framework transversal abstracto, no duplicar PERSON/Coach RPG/Governance/Finance, no interferir con el desarrollo paralelo WorldDB V2 y generadores. BS20 sigue siendo responsable de enriquecimiento narrativo y medios, no de las consecuencias canónicas.
 
 ## 2. Reuse-first: autoridades existentes
 
@@ -43,31 +55,28 @@ Evidencia de inventarios: `docs/strengthening/BDM_MASTER_CAPABILITY_REGISTRY.md`
 
 BS18 [#141](https://github.com/audifor/BDM/pull/141) también está **open/draft**. Las respuestas Board de BS18 no son presupuesto de BS19 ni deben reimplementarse.
 
-## 3. Plan incremental BS19 (no repetir bases)
+## 3. Plan incremental BS19 revisado (protagonista primero)
 
-| Fase | Entregable acotado | Evidencia de PASS |
+| Fase | Entregable y prioridad | Criterio de prueba |
 |---|---|---|
-| **BS19A** | Reuse audit, mapa de autoridad y hechos/capacidades utilizables. Clasificar PRs PERSON 50 y duplicidades. | Documento y matriz revisables. Solo documentación. |
-| **BS19B** | Un circuito vertical de decisión humana **ya existente**: solicitud profesional o conflicto real del staff -> causa visible -> opciones habilitadas -> autoridad existente -> impacto en Human State, Relationship/Memory y carrera cuando corresponda. | E2E usuario y AI por separado, cero eventos inventados, idempotencia, permisos, Save/reload; sin éxito simulado |
-| **BS19C** | Convergencia PERSON 50 y eventos observados: una identidad y un escritor de evolución, catálogo/proveniencia, compatibilidad relacional y Save V4 sin bifurcar autoridad. | Paridad de perfiles 8/50, fuente real, pruebas de replay/dedupe, ausencia de cambios cuando falta evidencia |
-| **BS19D** | Extender gradualmente la misma experiencia al jugador y entrenador: promesas de rol y tiempo **observado**, renovaciones firmadas, elecciones de carrera, dinámicas del grupo. Agentes/directivos solo con fuente e interfaces de autoridad comprobadas. | E2E por hecho, sin atribuir intenciones con información omnisciente ni fabricar acciones |
-| **BS19E** | AI actor/club: percepción parcial, reacción, elección y resultado con límites de jurisdicción, cadencia y costes. | Determinismo, no decisiones a espaldas del usuario en acciones reservadas, trazabilidad y límites por tick |
-| **BS19F** | Manifestación Courtside en pantallas/flows ya existentes, densidad y escaso scroll; señales accionables y explicación corta de causa/efecto, sin duplicar secciones. | Validación visual claro/oscuro y UX de acciones; parity con NG y aprobación de interfaz |
-| **BS19G** | Certificación transversal, Save V4, replay, cambios de equipo, temporadas y regresiones. | Tests focales y globales, evidencia de largo plazo, PASS/PARTIAL explícito por área |
+| **BS19A** | Auditoría y visión **Basketball Life RPG**; ausencia del creador demostrada. | Auditoría documentada, ningún PASS funcional. |
+| **BS19B** | **PRIMERA FASE EJECUTABLE: Coach Creator**. Identidad, DOB, nacionalidad, trasfondo, filosofía, meta, punto de partida, incorporación válida a GameWorld y Save V4. | Person/StaffProfile/Coach canónicos sin duplicados; UI de creación real, inicio en mundo y reload con identidad exacta. |
+| **BS19C** | Primer **bucle jugable de vida del entrenador**: situación, decisión, consecuencia, memoria y seguimiento. Reutilizar Staff Career Requests, Coach Career, reputación, moral, relaciones y otras autoridades existentes. | Dos opciones provocan consecuencias diferentes y comprobadas en la vida del protagonista; persistencia y vista Courtside. |
+| **BS19D** | Convergencia PERSON 50/50 + relaciones/experiencias verificadas; consecuencias humanas en players/staff. | Autoridad reconciliada entre PRs divergentes, evidencia por fuente, idempotencia y Save V4. |
+| **BS19E** | Vida profesional y personal relevante: empleo/desempleo, oportunidades, cambio de ciudad cuando modelado, condiciones financieras/estilo de vida, redes y legado. | Continuar partida sin empleo y recuperar carrera, elecciones humanas con efecto significativo. |
+| **BS19F** | Agentes/personas que actúan fuera del control del usuario, historias emergentes causales, ritmo de vida y largo plazo. | Comportamiento plausible y trazado, sin revelar conocimiento privado ni intervención continua del usuario. |
+| **BS19G** | Manifestación completa y consistente en Courtside, bajo UX NG. | Identidad, acciones, plazos, situación y evolución visibles con densidad FM y sin scroll excesivo. |
+| **BS19H** | Certificación global de carrera vital y simulación a largo plazo. | Save V4, identidad persistente, regresiones, determinismo, múltiples clubes y años, UX aprobada. |
 
-Orden táctico: comenzar BS19B reutilizando el flujo del staff que ya existe en main; no incorporar primero ramas PERSON 50 divergentes. BS19C requiere reconciliar antes las autoridades de evolución. BS19F sigue la rama Courtside y su política de 1:1 sin crear mocks de gameplay.
+**Orden obligatorio:** BS19B Coach Creator precede al piloto anterior de solicitudes del staff. Ese circuito, que ya existe, pasa a ser un caso de BS19C y NO define el alcance completo del RPG.
 
-## 4. Contrato del primer circuito BS19B
+## 4. Primer episodio funcional integrado en BS19C
 
-**Caso piloto: solicitud formal de un miembro de staff.** Ya existen en `src/app/staffCareerAutonomy/StaffCareerAutonomyService.ts` las operaciones `grantStaffCareerRequest`, `declineStaffCareerRequest`, `withdrawStaffCareerRequest`. También hay un `getOpenStaffCareerRequestsPresentation` y Staff Dynamics.
+Caso reutilizable: solicitud del staff. `src/app/staffCareerAutonomy/StaffCareerAutonomyService.ts` ya expone `grantStaffCareerRequest`, `declineStaffCareerRequest` y `withdrawStaffCareerRequest`; `StaffScreen.tsx` ya ofrece botones.
 
-Exigir por cada caso:
-1. Solicitud `OPEN` con identidad/empleo/fecha, responsable y fuente probada.
-2. Vista compacta que muestre qué pide, quién, por qué existe y opciones válidas. No duplicar la bandeja si la actual sirve.
-3. Conceder / rechazar llama **solo** a las mutaciones de aplicación ya autorizadas. `CONTRACT_DISCUSSION` no fingirá firma ni nueva negociación.
-4. Comparar antes/después: status de solicitud, cambios en responsabilidad/rol/carrera, cambios reales en relaciones/memoria y Staff Human State solo cuando el sistema fuente los produzca.
-5. Guardado/recarga, idempotencia, derechos del usuario, vida posterior del actor y trazas `sourceId`.
-6. Si el flujo ya cumple todo, registrar PASS de reutilización y **no implementar** otro flujo; mover la prioridad a la brecha demostrada.
+Se debe conectar la perspectiva del **Coach creado**: vínculo con quien lo solicita, circunstancias, decisión que el usuario realmente tiene autoridad para tomar, consecuencia y memoria posterior. El episodio es una muestra del motor de vida, no su sustituto.
+
+El bucle principal debe permitir continuar la trayectoria más allá del club inicial, incluso tras despido/desempleo, sin reiniciar personalidad, reputación, dinero o relaciones. `CONTRACT_DISCUSSION` no debe fingir acuerdos ejecutados.
 
 ## 5. Gates de seguridad y producto
 
@@ -84,6 +93,6 @@ Exigir por cada caso:
 
 ## 6. Estado y siguiente acción
 
-**BS19A: ROADMAP DOCUMENTADO, AUDITORÍA DE REUTILIZACIÓN INICIAL.** Queda por ejecutar inspección precisa de los wiring/acciones del circuito piloto, para decidir si BS19B es reparación o certificación de una capacidad ya existente. Nada en este documento afirma implementación BS19, typecheck, CI, integración o paridad UI.
+**BS19A: ROADMAP DOCUMENTADO, AUDITORÍA DE REUTILIZACIÓN INICIAL.** El diagnóstico ya ha confirmado que no existe un creador real de protagonista en el inicio de carrera; se ha redactado su visión/contrato en el documento rector. Queda diseño técnico detallado e implementación de BS19B. Nada en este documento afirma implementación BS19, typecheck, CI, integración o paridad UI.
 
-El siguiente cambio ejecutable debe ser pequeño, focal y verificable sobre el circuito piloto, solo cuando se confirme la brecha concreta en código y tests.
+La siguiente fase ejecutable **es BS19B Coach Creator**, respetando la identidad Person/StaffProfile/Coach, las rutas de inicio, WorldDB de solo lectura y Save V4. El piloto de staff queda en BS19C. No se ha implementado aún código jugable BS19.
