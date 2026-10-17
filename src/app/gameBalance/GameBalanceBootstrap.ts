@@ -224,11 +224,16 @@ export function applyGameBalanceBootstrap(world: GameWorld): GameWorld {
   const participation: NonNullable<Parameters<typeof updateGameWorld>[1]['governanceDecisionParticipationGrants']>[number][] = []
   const budgets: ReturnType<typeof createFinancialBudget>[] = []
   const budgetLines: ReturnType<typeof createBudgetLine>[] = []
+  // The same organization may operate multiple sections/teams. All org-level records
+  // are created once; individual teams receive distinct facility usage rights.
+  const visitedOrganizations = new Set<string>()
 
   for (const team of Object.values(world.teams).sort((a, b) => a.id.localeCompare(b.id))) {
     const organizationId = String(team.organizationId)
     const scale = scales.get(organizationId)
-    if (scale === undefined) continue
+    if (scale === undefined || visitedOrganizations.has(organizationId)) continue
+    visitedOrganizations.add(organizationId)
+    const linkedTeams = Object.values(world.teams).filter((candidate) => candidate.organizationId === team.organizationId).sort((a, b) => a.id.localeCompare(b.id))
     const market = GAME_BALANCE_MARKETS[scale.kind]
     const alreadyInstitution = Object.values(world.governanceInstitutionsById).some((item) => item.teamIds.includes(team.id))
     const documentedFacility = hasDocumentedFacility(world, organizationId)
@@ -253,14 +258,19 @@ export function applyGameBalanceBootstrap(world: GameWorld): GameWorld {
       }
       ownerships.push(createFacilityOwnershipInterest({ id: gameBalanceId('ownership', organizationId), facilityId, owner: { kind: 'ORGANIZATION', organizationId: team.organizationId }, ownershipPercentage: 100, validFrom: '2000-01-01' }))
       for (const purpose of ['TRAINING', 'MEDICAL'] as const) {
-        usageRights.push(createFacilityUsageRight({ id: gameBalanceId('usage', organizationId, purpose.toLowerCase()), facilityId, componentIds: null, organizationId: team.organizationId, teamId: team.id, purpose, exclusivity: 'SHARED', validFrom: '2000-01-01' }))
+        for (const [index, linkedTeam] of linkedTeams.entries()) {
+          usageRights.push(createFacilityUsageRight({
+            id: index === 0 ? gameBalanceId('usage', organizationId, purpose.toLowerCase()) : gameBalanceId('usage', organizationId, purpose.toLowerCase(), String(linkedTeam.id)),
+            facilityId, componentIds: null, organizationId: team.organizationId, teamId: linkedTeam.id, purpose, exclusivity: 'SHARED', validFrom: '2000-01-01',
+          }))
+        }
       }
     }
 
     if (!alreadyInstitution) {
       const shape = governanceShape(scale.kind, team.gender)
       const institutionId = gameBalanceInstitutionId(organizationId)
-      institutions.push({ id: institutionId, universe: shape.universe, name: `${team.name} institution (simulated)`, teamIds: [team.id] })
+      institutions.push({ id: institutionId, universe: shape.universe, name: `${team.name} institution (simulated)`, teamIds: linkedTeams.map((linkedTeam) => linkedTeam.id) })
       profiles.push(createGovernanceUniverseProfile({
         id: gameBalanceId('profile', organizationId), institutionId, kind: shape.profileKind, ownershipModel: shape.ownershipModel, expectedBodyKinds: shape.bodies,
         apexAuthorityBodyId: gameBalanceBodyId(organizationId, shape.apex), executiveAuthorityBodyId: gameBalanceBodyId(organizationId, shape.operator), externalOversight: false,

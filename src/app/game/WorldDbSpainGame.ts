@@ -12,6 +12,9 @@ import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/a
 import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { ensureUserClubBoardState } from '@/engine/board'
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
+import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment'
+import type { UserCoachCreationInput } from './UserCoachCreator'
+import { teamIdFromString } from '@/domain/ids'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
 export const SPAIN_ACB_COMPETITION_ID = 'competition:ESP:liga-endesa'
@@ -70,6 +73,7 @@ export async function createWorldDbSpainGame(
   teamId: string,
   access: WorldDbSpainGameAccess = defaultWorldDbSpainAccess(),
   gameBalance?: BdmGameBalancePreset,
+  userCoachCreation?: UserCoachCreationInput,
 ): Promise<GameWorld> {
   if (typeof teamId !== 'string' || teamId.trim().length === 0) throw new Error('Select a Spain ACB team before starting the career.')
   const session = new WorldDbSessionV1({
@@ -95,7 +99,8 @@ export async function createWorldDbSpainGame(
     // placeholder in an already-running career. Same canonical initializer the other universes use.
     // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the shipped
     // Spain universe assigns the approved annual renewal policy to its clubs, explicitly and only here.
-    const prepared = ensureUserClubBoardState(attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
+    const appointed = userCoachCreation === undefined ? world : appointCreatedUserCoachToWorldDbClub(world, teamIdFromString(chosen.key), userCoachCreation)
+    const prepared = ensureUserClubBoardState(attachWorldDbSpainCup(appointed, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID)))
     // BDM_GAME_BALANCE_V1: World DB carries no opening balance (audited in FinanceOpeningState), so the preset supplies a
     // labeled-simulated opening treasury at activation and the generic simulated facility/governance bootstrap afterwards. It
     // never overwrites a documented fact: organizations with documented facilities or institutions are left untouched.

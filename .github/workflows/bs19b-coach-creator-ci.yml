@@ -1,0 +1,31 @@
+name: BS19B Coach Creator CI
+
+on:
+  push:
+    branches:
+      - feat/bs19b-user-coach-creator-p0-20261017
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  creator:
+    name: Coach Creator typecheck and focal tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Coach Creator tests
+        run: npm test -- src/app/game/UserCoachCreator.test.ts src/ui/startup/BootstrapApp.test.tsx
+
+      - name: World DB actual Coach appointment contract test
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t BS19B

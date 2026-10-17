@@ -1,4 +1,5 @@
 import type { CoachRpgPreset } from '@/domain/coachRpg'
+import type { UserCoachCreationInput } from './UserCoachCreator'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 
 export const WORLD_DB_SPAIN_UNIVERSE_ID = 'worldDbSpain' as const
@@ -10,6 +11,7 @@ export interface NewGameConfiguration {
   readonly universeId?: NewGameUniverseId
   readonly userTeamKey?: string
   readonly coachRpgPreset?: CoachRpgPreset
+  readonly userCoachCreation?: UserCoachCreationInput
 }
 
 export interface NewGameTeamOption { readonly key: string; readonly name: string; readonly code: string }

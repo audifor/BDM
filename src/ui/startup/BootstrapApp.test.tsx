@@ -50,6 +50,16 @@ const teams = Array.from({ length: 18 }, (_, index) => ({
   code: `team:ESP:${String(index + 1).padStart(3, '0')}`,
 }))
 
+const coachCreation = {
+  firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1990-01-01',
+  gender: 'male', nationalityCountryCode: '', background: 'rookie', ambition: 'firstTitle', biography: '', coachingStyle: 'balanced', disposition: 'balanced',
+} as const
+
+function fillCoachIdentity() {
+  fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: coachCreation.firstName } })
+  fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: coachCreation.lastName } })
+}
+
 describe('New Game World DB Spain ACB flow', () => {
   beforeEach(() => {
     mocks.createConfiguredGameAsync.mockReset()
@@ -76,11 +86,13 @@ describe('New Game World DB Spain ACB flow', () => {
 
     const selectedTeam = teams[7]!
     fireEvent.change(teamSelect, { target: { value: selectedTeam.key } })
+    fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
 
     await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
       universeId: 'worldDbSpain',
       userTeamKey: selectedTeam.key,
+      userCoachCreation: coachCreation,
     }))
     expect(screen.getByRole('status').textContent).toBe('Cargando World Database...')
     expect(screen.getByRole('button', { name: 'STARTING CAREER...' }).hasAttribute('disabled')).toBe(true)
@@ -99,13 +111,53 @@ describe('New Game World DB Spain ACB flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
     const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS')
     fireEvent.change(teamSelect, { target: { value: teams[0]!.key } })
+    fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
 
     await waitFor(() => expect(screen.getByText('World DB not found')).toBeTruthy())
     expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
       universeId: 'worldDbSpain',
       userTeamKey: teams[0]!.key,
+      userCoachCreation: coachCreation,
     })
     expect(mocks.replaceWorld).not.toHaveBeenCalled()
   })
+  it('requires a coach identity and forwards a real creator payload for the synthetic ACB game', async () => {
+    mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'created-coach-world' })
+    render(<BootstrapApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'acb-2026-27' } })
+    expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
+
+    fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: 'Elena' } })
+    fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: 'Villalobos' } })
+    fireEvent.change(screen.getByLabelText('DATE OF BIRTH'), { target: { value: '1991-06-19' } })
+    fireEvent.change(screen.getByLabelText('GENDER'), { target: { value: 'female' } })
+    fireEvent.change(screen.getByLabelText('NATIONALITY (OPTIONAL)'), { target: { value: 'ESP' } })
+    fireEvent.change(screen.getByLabelText('BACKGROUND'), { target: { value: 'inDebt' } })
+    fireEvent.change(screen.getByLabelText('CAREER AMBITION'), { target: { value: 'financialFreedom' } })
+    fireEvent.change(screen.getByLabelText('PERSONAL BACKSTORY (OPTIONAL, MAX 600 CHARACTERS)'), { target: { value: 'Former university student working to pay outstanding family loans.' } })
+    fireEvent.change(screen.getByLabelText('COACHING STYLE'), { target: { value: 'tactician' } })
+    fireEvent.change(screen.getByLabelText('PERSONALITY'), { target: { value: 'ambitious' } })
+    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
+
+    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
+      universeId: 'acb-2026-27',
+      userTeamKey: expect.any(String),
+      userCoachCreation: {
+        firstName: 'Elena',
+        lastName: 'Villalobos',
+        dateOfBirth: '1991-06-19',
+        gender: 'female',
+        nationalityCountryCode: 'ESP',
+        background: 'inDebt',
+        ambition: 'financialFreedom',
+        biography: 'Former university student working to pay outstanding family loans.',
+        coachingStyle: 'tactician',
+        disposition: 'ambitious',
+      },
+    }))
+    expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: 'created-coach-world' })
+  })
+
 })
