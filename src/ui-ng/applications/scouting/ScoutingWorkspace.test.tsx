@@ -75,6 +75,7 @@ describe('ScoutingWorkspace', () => {
 
   it('queues a quick-look assignment from the knowledge board', () => {
     mountScoutingWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
     fireEvent.click(screen.getAllByRole('button', { name: 'Request scouting' })[0]!)
     expect(screen.getByRole('option', { name: 'Full report' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Skill evaluation' })).toBeInTheDocument()
