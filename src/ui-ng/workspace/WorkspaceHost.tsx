@@ -17,7 +17,6 @@ import { MatchWorkspace } from '@/ui-ng/applications/match/MatchWorkspace'
 import { MediaWorkspace } from '@/ui-ng/applications/media/MediaWorkspace'
 import { MedicalWorkspace } from '@/ui-ng/applications/medical/MedicalWorkspace'
 import { MemoriesWorkspace } from '@/ui-ng/applications/memories/MemoriesWorkspace'
-import { MentoringWorkspace } from '@/ui-ng/applications/mentoring/MentoringWorkspace'
 import { NarrativesWorkspace } from '@/ui-ng/applications/narratives/NarrativesWorkspace'
 import { NilWorkspace } from '@/ui-ng/applications/nil/NilWorkspace'
 import { PlayerWorkspace } from '@/ui-ng/applications/player/PlayerWorkspace'
@@ -30,7 +29,7 @@ import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
 import { TalentOperationsWorkspace } from '@/ui-ng/applications/talent/TalentOperationsWorkspace'
 import { TransferPortalWorkspace } from '@/ui-ng/applications/talent/TransferPortalWorkspace'
-import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
+import { TrainingStudioWorkspace } from '@/ui-ng/applications/training/TrainingStudioWorkspace'
 
 import { useGameStore } from '@/stores/gameStore'
 import { resolveGameCapabilities } from '@/ui/gameContext'
@@ -56,8 +55,8 @@ export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType
   staff: StaffWorkspace,
   scouting: ScoutingWorkspace,
   tactics: TacticsWorkspace,
-  training: TrainingWorkspace,
-  mentoring: MentoringWorkspace,
+  training: TrainingStudioWorkspace,
+  mentoring: () => <TrainingStudioWorkspace initialTab="mentoring" />,
   medical: MedicalWorkspace,
   schedule: ScheduleWorkspace,
   competition: CompetitionWorkspace,

@@ -43,7 +43,6 @@ export const START_MENU_RAIL_APPS: readonly WorkspaceAppId[] = [
   'scouting',
   'tactics',
   'training',
-  'mentoring',
   'medical',
   'coach',
   'recruiting',
@@ -53,8 +52,8 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'equipo',
     label: 'Equipo',
-    description: 'Plantilla, jugador, staff, scouting, tácticas, entrenamiento, mentoring y medical',
-    appIds: ['roster', 'player', 'staff', 'scouting', 'tactics', 'training', 'mentoring', 'medical'],
+    description: 'Plantilla, jugador, staff, scouting, tácticas, entrenamiento y medical',
+    appIds: ['roster', 'player', 'staff', 'scouting', 'tactics', 'training', 'medical'],
   },
   {
     id: 'talent',

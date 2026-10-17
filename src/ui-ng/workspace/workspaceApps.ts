@@ -55,7 +55,6 @@ export const WORKSPACE_TASKBAR_APPS: readonly WorkspaceTaskbarApp[] = [
   { id: 'scouting', label: 'Scouting' },
   { id: 'tactics', label: 'Tactics' },
   { id: 'training', label: 'Training' },
-  { id: 'mentoring', label: 'Mentoring' },
   { id: 'medical', label: 'Medical' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'competition', label: 'Competition' },
