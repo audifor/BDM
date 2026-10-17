@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { getCashAccountBalances, getExpenseRecognitionsBetween, getFinanceProposals, getFinancialHealthSnapshot, getRevenueRecognitionsBetween } from '@/domain/finance'
 import type { GameWorld } from '@/domain/world'
-import { financeMoney } from './financeWorkspaceModel'
 
 type FinanceDestination = 'cash' | 'budget' | 'payroll' | 'forecast' | 'debt' | 'ai' | 'cap'
 
@@ -17,9 +16,9 @@ export function FinanceCourtsideOverview({ world, organizationId, currency, onNa
   const startsOn = `${world.currentDate.slice(0, 4)}-01-01`
   const health = getFinancialHealthSnapshot(world, organizationId, world.currentDate, startsOn)
   const availableCurrencies = health.byCurrency.map((entry) => entry.currencyCode)
-  const activeCurrency = (chosenCurrency && availableCurrencies.includes(chosenCurrency)) ? chosenCurrency : (currency && availableCurrencies.includes(currency) ? currency : availableCurrencies[0])
+  const activeCurrency = (chosenCurrency && availableCurrencies.some((code) => code === chosenCurrency)) ? chosenCurrency : (currency && availableCurrencies.some((code) => code === currency) ? currency : availableCurrencies[0])
   const summary = health.byCurrency.find((entry) => entry.currencyCode === activeCurrency)
-  const money = (value: number) => summary ? financeMoney(value, summary.currencyCode) : 'Sin datos'
+  const money = (value: number) => { if (!summary) return 'Sin datos'; const formatter = new Intl.NumberFormat('es-ES', { style: 'currency', currency: summary.currencyCode, maximumFractionDigits: 0 }); const minorDigits = new Intl.NumberFormat('es-ES', { style: 'currency', currency: summary.currencyCode }).resolvedOptions().maximumFractionDigits ?? 2; return formatter.format(value / 10 ** minorDigits) }
   const cashRecorded = !!summary && getCashAccountBalances(world, organizationId, world.currentDate).some((item) => item.currencyCode === summary.currencyCode)
   const incomeRecorded = !!summary && getRevenueRecognitionsBetween(world, organizationId, startsOn, world.currentDate).some((item) => item.amount.currencyCode === summary.currencyCode)
   const costsRecorded = !!summary && getExpenseRecognitionsBetween(world, organizationId, startsOn, world.currentDate).some((item) => item.amount.currencyCode === summary.currencyCode)
@@ -80,7 +79,7 @@ export function FinanceCourtsideOverview({ world, organizationId, currency, onNa
     </div>
     <div className="fc-overview__shortcuts">
       <button type="button" onClick={() => onNavigate('budget')}><span>Presupuesto</span><strong>Controlar gastos ›</strong></button>
-      <button type="button" onClick={() => onNavigate('cap')}><span>Límite salarial</span><strong>Espacio para fichar ›</strong></button>
+      <button type="button" onClick={() => onNavigate('cap')}><span>Límite salarial</span><strong>Ver restricciones ›</strong></button>
       <button type="button" onClick={() => onNavigate('forecast')}><span>Previsión</span><strong>Probar escenarios ›</strong></button>
       <button type="button" onClick={() => onNavigate('ai')}><span>Recomendaciones</span><strong>{proposals.length ? `${proposals.length} pendientes ›` : 'Ver decisiones ›'}</strong></button>
     </div>
