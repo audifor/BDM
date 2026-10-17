@@ -36,6 +36,8 @@ import { resolveGameCapabilities } from '@/ui/gameContext'
 import { isWorkspaceApplicable } from '@/ui-ng/system/startMenuCatalog'
 import { NgSectionUnavailable } from '@/ui-ng/workspace/NgSectionUnavailable'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { WorkspaceErrorBoundary } from '@/ui-ng/workspace/WorkspaceErrorBoundary'
+import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 import type { WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
 import './workspace.css'
@@ -91,7 +93,9 @@ export function WorkspaceHost() {
 
   return (
     <main className="ng-workspace-host" data-ng-region="workspace-host">
-      {unavailable ? <NgSectionUnavailable app={app} /> : <Workspace />}
+      <WorkspaceErrorBoundary key={app} app={app} onReturnHome={() => syncWorkspaceAppQuery('home', 'push')}>
+        {unavailable ? <NgSectionUnavailable app={app} /> : <Workspace />}
+      </WorkspaceErrorBoundary>
     </main>
   )
 }
