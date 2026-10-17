@@ -37,6 +37,7 @@ import type {
   OrganizationSectionId,
 } from '@/domain/ids'
 import type { Player } from '@/domain/player'
+import { createPlayerRepertoire, type PlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
@@ -321,6 +322,8 @@ export interface GameWorld {
    * without a recorded transition are absent from the map.
    */
   readonly playerRatingHistoryByPlayerId: Readonly<Record<string, PlayerRatingHistory>>
+  /** Opt-in WorldDB source facts, never inferred from legacy Player.traitIds. */
+  readonly playerRepertoireByPlayerId: Readonly<Record<string, PlayerRepertoire>>
   readonly careerFatigueByPlayerId: Readonly<Record<string, number>>
   readonly teamCohesionByTeamId: Readonly<Record<string, number>>
   readonly promotionRelegationResolutionsById: Readonly<Record<string, PromotionRelegationResolution>>
@@ -603,6 +606,7 @@ export interface CreateGameWorldInput {
   developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
   developmentStimulusEvents?: readonly DevelopmentStimulusEvent[]
   playerRatingHistoryByPlayerId?: Readonly<Record<string, PlayerRatingHistory>>
+  playerRepertoireByPlayerId?: Readonly<Record<string, PlayerRepertoire>>
   careerFatigueByPlayerId?: Readonly<Record<string, number>>
   teamCohesionByTeamId?: Readonly<Record<string, number>>
   promotionRelegationResolutions?: readonly PromotionRelegationResolution[]
@@ -927,6 +931,12 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     userTrainingModulesById: Object.freeze(Object.fromEntries(Object.entries(input.userTrainingModulesById ?? {}).map(([id, module]) => [id, createUserTrainingModule(module)]))),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
     developmentStimulusEventsById: indexById((input.developmentStimulusEvents ?? []).map(createDevelopmentStimulusEvent), 'Development stimulus event'),
+    playerRepertoireByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.playerRepertoireByPlayerId ?? {}).map(([playerId, source]) => {
+      if (!input.players.some((player) => player.id === playerId)) throw new GameWorldValidationError(`Repertoire refers to unknown PLAYER: ${playerId}`)
+      const profile = createPlayerRepertoire(source)
+      if (profile.playerId !== playerId) throw new GameWorldValidationError('Repertoire PLAYER identity mismatch')
+      return [playerId, profile]
+    }))),
     playerRatingHistoryByPlayerId: Object.freeze(Object.fromEntries(input.players.flatMap((player) => {
       const history = input.playerRatingHistoryByPlayerId?.[player.id]
       return history === undefined || history.length === 0 ? [] : [[player.id, Object.freeze(history.map(createPlayerSeasonRatingChange))]]
@@ -1182,6 +1192,19 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     assertTrainingSessionsAppendOnly(world.scheduledTrainingSessionsById, proposed)
     const change = scheduledTrainingSessionMapMetadata.get(proposed)
     if (change) for (const transaction of worldValidationTransactions) transaction.scheduledChanges.set(change.revision, change)
+  }
+  if (remainingPatch.playerRepertoireByPlayerId !== undefined) {
+    const proposed = remainingPatch.playerRepertoireByPlayerId as Readonly<Record<string, PlayerRepertoire>>
+    const validated = Object.fromEntries(Object.entries(proposed).map(([playerId, source]) => {
+      if (world.players[playerId as PlayerId] === undefined) throw new GameWorldValidationError(`Repertoire refers to unknown PLAYER: ${playerId}`)
+      const value = createPlayerRepertoire(source)
+      if (value.playerId !== playerId) throw new GameWorldValidationError('Repertoire PLAYER identity mismatch')
+      const previous = world.playerRepertoireByPlayerId[playerId]
+      if (previous !== undefined && JSON.stringify(previous) !== JSON.stringify(value)) throw new GameWorldValidationError(`Repertoire must not overwrite previously imported source facts for ${playerId}`)
+      return [playerId, value]
+    }))
+    for (const playerId of Object.keys(world.playerRepertoireByPlayerId)) if (validated[playerId] === undefined) throw new GameWorldValidationError(`Repertoire cannot remove source facts for ${playerId}`)
+    remainingPatch.playerRepertoireByPlayerId = Object.freeze(validated)
   }
   if (remainingPatch.playerRatingHistoryByPlayerId !== undefined) assertRatingHistoryAppendOnly(world.playerRatingHistoryByPlayerId, remainingPatch.playerRatingHistoryByPlayerId as Readonly<Record<string, PlayerRatingHistory>>)
 

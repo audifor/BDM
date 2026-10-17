@@ -2,6 +2,7 @@ import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
 import { PERSONALITY_DIMENSIONS, type Personality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
+import { createPlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 
 /** Raw physical source facts. No generated anatomy, entitlement, condition or economy. */
 export interface WorldDbPhysicalContentV1 {
@@ -73,6 +74,13 @@ export interface WorldDbGameBootstrapPlayerV1 {
   readonly ratings: Readonly<Record<string, number>>
   readonly tendencies: Readonly<Record<string, number>>
   readonly development: readonly WorldDbGameBootstrapDevelopmentDimensionV1[]
+  /** Missing in pre-2.4-D2 databases; no inferred traits or moves. */
+  readonly repertoire?: {
+    readonly version: string
+    readonly contextualTraits: readonly { readonly code: string; readonly strength: number; readonly startedOn: string }[]
+    readonly technicalMoves: readonly { readonly code: string; readonly proficiency: number; readonly usageTendency: number; readonly asOfOn: string }[]
+    readonly basketballSpecializationTraits: readonly { readonly code: string; readonly startedOn: string }[]
+  }
 }
 export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes: Readonly<Record<string, number>>; readonly specialismIds: readonly string[] }
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
@@ -137,7 +145,7 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   for (const section of value.organizationSections as Record<string, unknown>[]) if (!organizationIds.has(section.organizationId as string)) throw new TypeError(`World DB bootstrap organization section references a missing organization: ${String(section.sectionId)}`)
   for (const team of value.teams as Record<string, unknown>[]) { const section = sectionsById.get(team.organizationSectionId as string); if (!organizationIds.has(team.organizationId as string) || section === undefined || section.organizationId !== team.organizationId) throw new TypeError(`World DB bootstrap team organization relation is invalid: ${String(team.teamId)}`) }
   assertArray(value.persons, 'persons', (entry) => { for (const field of ['personId', 'firstName', 'lastName'] as const) requireText(entry[field], `World DB bootstrap person ${field}`); if (entry.gender !== undefined) requireText(entry.gender, 'World DB bootstrap person gender'); if (entry.dateOfBirth !== undefined) requireText(entry.dateOfBirth, 'World DB bootstrap person dateOfBirth'); if (!Array.isArray(entry.nationalityIds)) throw new TypeError('World DB bootstrap person nationalityIds must be an array'); if (entry.physical !== undefined && !isRecord(entry.physical)) throw new TypeError('World DB bootstrap person physical must be an object'); if (entry.personality !== undefined) { if (!isRecord(entry.personality)) throw new TypeError('World DB bootstrap personality must be an object'); const keys = Object.keys(entry.personality); const expected = keys.length === PERSONALITY_DIMENSIONS.length ? PERSONALITY_DIMENSIONS : SEMANTIC_PERSONALITY_DIMENSIONS; if (keys.length !== expected.length || keys.some((k) => !(expected as readonly string[]).includes(k))) throw new TypeError('World DB bootstrap personality must have exactly 8 legacy or 50 semantic dimensions'); for (const key of expected) { const n = entry.personality[key]; if (!Number.isInteger(n) || (n as number) < 0 || (n as number) > 100) throw new TypeError(`World DB bootstrap personality ${key} must be 0..100`) } } }, 'personId')
-  assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); assertExactKeys(entry.ratings, PLAYER_TRUTH_RATING_KEYS, 'ratings'); assertExactKeys(entry.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'tendencies'); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array') }, 'playerId')
+  assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); assertExactKeys(entry.ratings, PLAYER_TRUTH_RATING_KEYS, 'ratings'); assertExactKeys(entry.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'tendencies'); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array'); if (entry.repertoire !== undefined) { const profile = createPlayerRepertoire({ ...objectForRepertoire(entry.repertoire), playerId: entry.playerId }); for (const item of [...profile.contextualTraits, ...profile.technicalMoves, ...profile.basketballSpecializationTraits]) { const eventDate = 'asOfOn' in item ? item.asOfOn : item.startedOn; if (eventDate > String(season.startDate)) throw new TypeError('World DB player repertoire contains future-dated evidence') } } }, 'playerId')
   assertArray(value.staffProfiles, 'staffProfiles', (entry) => { for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`); if (!isRecord(entry.attributes) || !Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete') }, 'staffId')
   const profiledPersonIds = new Set<string>([
     ...((value.players as Record<string, unknown>[]).map((entry) => entry.personId as string)),
@@ -166,6 +174,7 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
 }
 
 function assertArray(value: unknown, label: string, assertEntry: (entry: Record<string, unknown>) => void, idField: string | undefined): void { if (!Array.isArray(value)) throw new TypeError(`World DB bootstrap ${label} must be an array`); const ids = new Set<string>(); for (const item of value) { if (!isRecord(item)) throw new TypeError(`World DB bootstrap ${label} entries must be objects`); assertEntry(item); if (idField !== undefined) { const id = item[idField]; if (typeof id !== 'string') throw new TypeError(`World DB bootstrap ${label} ID must be a string`); if (ids.has(id)) throw new TypeError(`World DB bootstrap ${label} must not contain duplicate IDs`); ids.add(id) } } }
+function objectForRepertoire(value: unknown): Record<string, unknown> { if (!isRecord(value)) throw new TypeError('World DB player repertoire must be an object'); return value }
 function requireSource(value: unknown): asserts value is WorldDbDatabaseInfoV1['source'] { if (!isRecord(value)) throw new TypeError('World DB bootstrap source must be an object'); requireText(value.databaseId, 'World DB bootstrap databaseId'); requireText(value.schemaId, 'World DB bootstrap schemaId') }
 function requireNullableText(value: unknown, label: string): void { if (value !== null && typeof value !== 'string') throw new TypeError(`${label} must be a string or null`) }
 function requireNullableInteger(value: unknown, label: string): void { if (value !== null && (typeof value !== 'number' || !Number.isInteger(value))) throw new TypeError(`${label} must be an integer or null`) }
