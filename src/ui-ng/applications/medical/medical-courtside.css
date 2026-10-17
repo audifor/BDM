@@ -316,3 +316,36 @@
 .medical-cs__risk-inspector-foot {display:flex;flex-wrap:wrap;gap:8px;}
 .medical-cs__risk-inspector-foot span {padding:5px 8px;border:1px solid var(--med-line);border-radius:6px;font:700 11px var(--med-display);color:var(--med-muted);}
 @media(max-width: 680px) {.medical-cs__injury-facts {grid-template-columns:1fr 1fr;} }
+
+
+/* Injury-free match days are meaningful medical states, never blank workspaces. */
+.medical-cs__squad-monitor { grid-column: 1 / -1; min-height: 0; }
+.medical-cs__squad-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:13px 14px; }
+.medical-cs__squad-player { background:var(--med-surface-raised);border:1px solid var(--med-line-soft);border-radius:11px;padding:9px 11px;display:grid;gap:8px;min-width:0;text-align:left;color:var(--med-text);cursor:pointer; }
+.medical-cs__squad-player:hover,.medical-cs__squad-player:focus-visible { border-color:var(--med-lime);outline-offset:1px; }
+.medical-cs__squad-person { display:flex;align-items:center;gap:8px;min-width:0; }
+.medical-cs__squad-person strong {font:700 13px/1.15 var(--med-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.medical-cs__squad-position {flex:0 0 auto;font:700 10px/1 var(--med-display);color:var(--med-orange);border:1px solid var(--med-line);padding:4px;border-radius:5px; }
+.medical-cs__squad-status {margin-left:auto;font:750 10px var(--med-display);letter-spacing:.03em;color:var(--med-lime);flex:none;}
+.medical-cs__squad-status[data-band=elevated]{color:var(--med-orange);}
+.medical-cs__squad-status[data-band=high],
+.medical-cs__squad-status[data-band=unavailable]{color:var(--med-negative);}
+.medical-cs__squad-bars {display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.medical-cs__squad-bars > div {min-width:0;display:grid;grid-template-columns:43px minmax(0,1fr) 23px;align-items:center;gap:5px;}
+.medical-cs__squad-bars small {font:700 9px var(--med-display);color:var(--med-faint);}
+.medical-cs__squad-bars b {font:750 14px var(--med-display);text-align:right;}
+.medical-cs__healthy-state {display:grid;gap:13px;min-width:0;}
+.medical-cs__healthy-banner {display:flex;align-items:center;gap:22px;padding:22px 24px;min-width:0;border:1px solid var(--med-line);border-radius:16px;background:var(--med-surface);color:var(--med-text);}
+.medical-cs__healthy-symbol {width:66px;height:66px;flex:none;display:grid;place-items:center;border:2px solid var(--med-lime);border-radius:50%;color:var(--med-lime);font:800 36px var(--med-display);background:color-mix(in srgb,var(--med-lime) 7%,var(--med-surface));}
+.medical-cs__healthy-banner > div:nth-child(2) {flex:1;min-width:0;}
+.medical-cs__healthy-banner > div:nth-child(2)>span {color:var(--med-lime);font:800 10px var(--med-display);letter-spacing:.1em;}
+.medical-cs__healthy-banner h2 {margin:5px 0 5px;font:800 clamp(25px,3vw,38px)/1 var(--med-display);}
+.medical-cs__healthy-banner p {margin:0;max-width:640px;color:var(--med-muted);font:400 12px/1.35 var(--med-body);}
+.medical-cs__healthy-counts {display:flex;gap:24px;flex:0 0 auto;}
+.medical-cs__healthy-counts>div {display:grid;gap:5px;border-left:1px solid var(--med-line);padding-left:15px;}
+.medical-cs__healthy-counts strong {font:800 34px/1 var(--med-display);color:var(--med-text);}
+.medical-cs__healthy-counts strong small {font-size:13px;color:var(--med-muted);}
+.medical-cs__healthy-counts span {max-width:115px;color:var(--med-faint);font:700 10px var(--med-display);letter-spacing:.04em;}
+@media(max-width:1250px) {.medical-cs__squad-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.medical-cs__healthy-counts{gap:10px;}}
+@media(max-width:780px) {.medical-cs__healthy-banner{flex-wrap:wrap;}.medical-cs__healthy-counts{width:100%;justify-content:space-between;}.medical-cs__healthy-symbol{width:45px;height:45px;font-size:25px;}}
+@media(max-width:610px) {.medical-cs__squad-grid{grid-template-columns:minmax(0,1fr);}.medical-cs__healthy-counts{flex-wrap:wrap;}.medical-cs__squad-bars{gap:8px;}}
