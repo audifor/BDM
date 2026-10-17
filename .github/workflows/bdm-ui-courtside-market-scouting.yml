@@ -31,6 +31,7 @@ jobs:
           npx vitest run \
             src/ui-ng/applications/scouting/ScoutingWorkspace.test.tsx \
             src/ui-ng/applications/market/MarketWorkspace.courtside.test.tsx \
+            src/app/market/MarketTargetService.test.ts \
             src/ui-ng/system/startMenuCatalog.courtside.test.ts \
             src/ui/desktop/DesktopNavigation.test.ts \
             --maxWorkers=2 --no-file-parallelism
