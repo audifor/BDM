@@ -1,7 +1,7 @@
 # BS19 · Registro de decisiones del propietario y conciliación con RPG previo
 
 **Fecha:** 2026-10-17 · **Fuente:** respuestas del propietario a las preguntas 1–100 del cuestionario BS19, contrastadas con el trabajo anterior BDM y BDM-DB.
-**Estado:** `DECIDIDO` donde la respuesta es inequívoca; `POR ACLARAR` solo en 3, 41, 88; `PARCIAL` en puntos que él mismo ha condicionado. El estado de producto **NO** significa implementación.
+**Estado:** `DECIDIDO` donde la respuesta es inequívoca, incluidas 3, 41 y 88 confirmadas posteriormente; `PARCIAL` en puntos que él mismo ha condicionado. El estado de producto **NO** significa implementación.
 **Objetivo de esta hoja:** impedir que se pierda el RPG diseñado con anterioridad, o que una nueva encuesta sustituya el canon HRPG y B11 ya discutido.
 
 ## A. Identidad del producto · DECIDIDO
@@ -10,7 +10,7 @@
 - Lo excepcional debe provocar “esto es lo que me faltaba” respecto a Football Manager (4).
 - Mundo abierto con triggers orgánicos, partidas irrepetibles (5–6, 80), libertad para crear un alter ego distinto y ser un gran entrenador con carácter conflictivo (7–8).
 - Fracaso sin cierre automático de la partida (9); acciones ilegales como dirección diferencial explícita (10).
-- Dramatización y grado de realismo **POR ACLARAR (3)**; nunca atribuir guiones aleatorios o dramas artificiales sin aprobación.
+- **P3 = B, DECIDIDO: realismo con dramatización.** Los hechos deben tener causas, actores, oportunidad y consecuencias verosímiles; puede haber excepcionalidad narrativa moderada sin forzar crisis, conspiraciones o delitos cada semana. La simulación sigue gobernando hechos y evidencias.
 
 ## B. Coach Creator · DECIDIDO / POR FASEAR
 
@@ -36,7 +36,7 @@
 
 ## D. Vida personal y patrimonial · DECIDIDO salvo 41
 
-- **Hasta dónde llega la simulación fuera del baloncesto: POR ACLARAR (41)**.
+- **P41 = B, DECIDIDO: vida personal gestionable.** El usuario dirige activamente agenda, relaciones, hogar/residencia, patrimonio, inversiones, negocios, estudios, aficiones, compromisos y decisiones vitales con consecuencias. No exige microgestión de rutinas triviales ni carga de eventos diarios. Dejar ampliación futura de profundidad sin alterar identidad o partida guardada.
 - Pareja, hijos y familia deben existir, **profundidad PARCIAL** (42); amistades no deportivas y consecuencias (43).
 - Ciudad/residencia, vivienda, cambio de país, idioma/cultura conforme a atributos (44–45).
 - Aficiones, estudios, descanso, formación, actividad social y agenda integrada con disponibilidad y exclusión de compromisos (46, 85–86).
@@ -60,7 +60,7 @@
 - **Ocultar las consecuencias futuras**; resultados de elecciones pueden ser irreversibles, diferidos o sin respuesta; ignorar tiene efecto, sin revelación de resultados de antemano (75–80).
 - Solo protagonista bajo control humano, IA autónoma con objetivos y vidas tan profundas como los demás entrenadores; el mundo continúa fuera de cámara (81–84).
 - Calendario personal deportivo y extradeportivo; restricciones de tiempo y delegación (85–87).
-- **Localización de la interfaz RPG POR ACLARAR (88)**. Coach + Home + Inbox + calendario y acciones contextuales existen como opciones; evitar secciones duplicadas.
+- **P88 = B, DECIDIDO: Coach con subsección «Vida».** Coach conserva identidad/carrera/desarrollo, y la subsección Vida reúne contexto personal, agenda y puntos de acceso a relaciones, hogar y patrimonio. Home, Inbox y calendario son puertas contextuales, no duplicados de los sistemas canónicos. Mantener Courtside 1:1 y navegación NG.
 - Mostrar **percepción legible**, no números de personalidad/relaciones (89). Esto no elimina las puntuaciones internas de PERSON50.
 - Envejecer cambia oportunidades, capacidades, prioridades y circunstancias (91).
 
@@ -135,10 +135,26 @@ Norma previamente aprobada: **REALIDAD != CONOCIMIENTO != NARRACIÓN**. Cada hec
 
 Estos son **temas a reubicar frente a la especificación ya aprobada, no 12 subsistemas nuevos sin auditoría**.
 
-## J. Tres preguntas que sí debe contestar el propietario después de una aclaración
+## J. Cierre de las preguntas 3, 41 y 88 · DECIDIDO
 
-- **P3 Realismo/dosis de dramatización:** elegir entre estricta frecuencia realista o causalidad realista + excepcionalidad dramática ocasional. **No convertir 'ilegal' en modo cartoon.**
-- **P41 Límite vida personal:** decidir si se gestiona a nivel de relaciones/agenda/economía con decisiones de impacto, o también rutinas y microgestión doméstica continua. Sabemos que desea dirigir su vida, no llevar 20 % como simulación pasiva.
-- **P88 Distribución UI:** Coach como hub con Vida/Red/Carrera/Patrimonio y Home/Inbox/Calendar como disparadores; alternativa app independiente; alternativa panel contextual. Debe respetar Courtside, la estructura Coach e Inbox ya trabajadas, y evitar scroll/duplicación.
+Respuestas explícitas del propietario el 17/10/2026:
 
-**Q61 no es una duda abierta**: el propietario ha solicitado verificar antecedentes y su respuesta es inequívocamente sí. Ya figura en las bases humanas/económicas/políticas y existe estructura técnica Board/Governance/Ownership. La **profundidad humana integral** con personas propietarias específicas todavía necesita conexión en runtime.
+| Pregunta | Valor elegido | Definición canónica |
+|---|---|---|
+| **3** | **B — Realismo con dramatización** | Los acontecimientos pueden ser extraordinarios, pero tienen causalidad, frecuencia razonable, evidencia y consecuencias. No guiones ni escándalos recurrentes obligatorios. |
+| **41** | **B — Vida gestionable** | El jugador gestiona activamente relaciones, patrimonio, vivienda, agenda, tiempo, oportunidades y compromisos personales; evita simulación doméstica microscópica obligatoria. |
+| **88** | **B — Coach con subsección Vida** | Coach es el hub del protagonista, con **Vida** como subsección dedicada. Home, Inbox y calendario muestran o abren sucesos relevantes. Sin módulo RPG paralelo ni duplicar Finanzas/Relaciones. |
+
+### Regla transversal aprobada: profundidad ampliable, no techo definitivo
+
+La opción **B** es el **alcance inicial y equilibrio de producto**, nunca un límite rígido o irreversible. El jugador podrá beneficiarse de mayor profundidad cuando se desarrolle, manteniendo su entrenador y partida. En concreto:
+
+1. Construir primero las capacidades jugables de **Vida gestionable**. Más adelante se pueden añadir subactividades opcionales en familia, propiedades, negocios, agenda, salud, redes sociales y política **sobre las mismas entidades PERSON, CoachFinances, Career, Memory, Relationships y Governance**, no mediante identidades paralelas.
+2. Conservar la elección del creador «experiencia basket» / «experiencia RPG» como **preferencia de intensidad y participación** (avisos, decisiones, frecuencia de exposición, detalle de interacción), no como interruptor que destruya el estado del mundo o prive a los NPC de personalidad.
+3. Si futuras ampliaciones aumentan profundidad, introducir controles granulares y opcionales por ámbito, sin imponer microgestión obligatoria ni mover el ratio 80/20 para jugadores que prefieran gestión deportiva.
+4. Añadir nuevas pestañas o paneles **dentro de Coach > Vida** solo si aportan acciones y contenido únicos. Conservar las rutas y decisiones en Home/Inbox/Calendario y los responsables canónicos de Patrimonio/Relaciones.
+5. Compatibilidad: ampliaciones aditivas con **Save V4/versión vigente y migraciones** que preserven ID del protagonista, historia, dinero, vínculos y acontecimientos. Una preferencia nueva tendrá valor por defecto para partidas antiguas; una nueva actividad no modifica retrospectivamente lo sucedido.
+6. **Más dramatización futura**, si se aprueba, no significa crear hechos falsos, romper la causalidad o forzar conflictos. Extender variedad, sensibilidad a contexto y cadenas de acontecimientos según reglas, con equilibrio verificable.
+7. Todo esto es **política de arquitectura y roadmap**, no una afirmación de que pueda alterarse hoy en una versión jugable. Implementación, QA, UX y persistencia se certificarán fase a fase.
+
+**No quedan preguntas pendientes de las tres aclaraciones; sí quedan otros alcances de diseño marcados PARCIAL en los apartados anteriores.**
