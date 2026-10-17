@@ -93,3 +93,24 @@ La navegación bajo Mercado no elimina las ventanas independientes ni Talent Ope
 - P1: certificar contraste real en tema claro y oscuro, altura de cabeceras, density, sin exceso de scroll y modal legible.
 - P1: comprobar tipos, suite focal, build y persistencia V4.
 - P2: diseñar y aprobar las nuevas interfaces de objetivos, red territorial real y mesa de decisión antes de ampliar motores.
+
+
+## Entrega incremental V2: flujo jugable y persistencia
+
+- Cabeceras hero eliminadas para reducir scroll. Mercado y Scouting conservan cabecera canónica de app, pestañas y barra inferior.
+- Barra operativa muestra margen de nóminas de jugadores y staff desde `getTeamFinancialSnapshot` y `getTeamStaffPayroll`. Popup de propuesta salarial valida `canTeamAffordAdditionalSalary`. **No hay presupuesto independiente de scouting**, por lo que no se presenta una cifra ficticia.
+- Personal de scouting accesible desde Mercado, Scouting y Staff > Construye tu staff; se incluye el registro completo de roles de scouting, perfiles y capacidad.
+- Los objetivos de jugadores son registros **persistentes dentro de GameWorld** (`marketTargetsById`) con prioridad, nota y secuencia de cambios. Su transporte Save V4 es opcional y retrocompatible: los saves antiguos cargan lista vacía.
+- Agregar a Objetivos requiere ser identidad externa disponible para la red de scouting. No incorpora PlayerTruth ni calificaciones ocultas.
+- Se pueden comparar hasta tres objetivos a la vez sin limitar la cantidad de objetivos guardados. Un informe posicional muestra solo diferencias apoyadas en rangos de atributos conocidos.
+- Expediente: solicitud canónica de scouting mediante `requestScoutingAssignment` y `RequestScoutingModal`; opciones de contacto solo para agentes libres, bajo flujo de ofertas y gobierno existente. No se agregan fichajes de jugadores con contrato sin operación canónica.
+- Información reciente muestra informes o `marketSignalsById` de la organización con fecha y fuente.
+- Historial de objetivos guarda actos explícitos del usuario (añadir, prioridad, nota, archivar y restaurar). No debe confundirse con rendimiento futuro, predicciones ni memoria retrospectiva de observaciones.
+
+### Cobertura de pruebas y pendientes
+
+- Validar typecheck y build del head actual con `.github/workflows/bdm-ui-courtside-market-scouting.yml`.
+- Pruebas focales de UI, FOW, historial de objetivos, save/reload V4, rechazo de payload duplicado y retrocompatibilidad con Save V4 anterior.
+- Pendiente smoke visual real en ventanas BDM, claro y oscuro, y validación cruzada NG/desktop.
+- Pendiente: historial retrospectivo con snapshots de evidencias; trayectos y costes territoriales si el motor cuenta con autoridad; valoración real de transferencias entre clubes; costes operativos de scouting por centro de coste; planificación 24 meses con universo multitemporada configurado.
+- No fusionar ni declarar paridad total hasta certificar visual y funcionalmente estas puertas.
