@@ -21,6 +21,7 @@ import { useOptionalNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceN
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import './scouting-workspace.css'
+import './scouting-courtside-embedded.css'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
 type ModalState = { readonly kind: 'request'; readonly playerId: PlayerId; readonly mission?: ScoutingMission } | { readonly kind: 'report'; readonly reportId: string } | { readonly kind: 'cancel'; readonly assignment: ScoutingAssignmentRow } | { readonly kind: 'coverage-add' } | { readonly kind: 'coverage-end'; readonly assignmentId: string }
