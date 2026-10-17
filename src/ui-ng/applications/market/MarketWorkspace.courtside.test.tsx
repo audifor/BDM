@@ -40,13 +40,13 @@ describe('Courtside Market command centre', () => {
 
   it('opens the canonical scouting workspace from the market hub', () => {
     mount()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Abrir Scouting' })[0]!)
+    fireEvent.click(screen.getByRole('button', { name: 'Scouting →' }))
     expect(new URLSearchParams(window.location.search).get('app')).toBe('scouting')
   })
 
   it('opens an evidence-aware explorer and its temporary decision board', () => {
     mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Explorar jugadores' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Explorar →' }))
     expect(screen.getByTestId('market-explore')).toBeInTheDocument()
     expect(screen.getByLabelText('Candidatos de mercado')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
@@ -59,6 +59,23 @@ describe('Courtside Market command centre', () => {
     expect(screen.getByTestId('market-planning')).toBeInTheDocument()
     expect(screen.getByLabelText('Horizonte de plantilla')).toBeInTheDocument()
     expect(screen.getByText('Mapa de profundidad')).toBeInTheDocument()
+  })
+
+  it('opens real player and staff budgets with a salary-affordability check', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
+    expect(screen.getByRole('dialog', { name: 'Presupuesto y decisiones de mercado' })).toBeInTheDocument()
+    expect(screen.getByText('SALARIOS STAFF')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Salario anual propuesto'), { target: { value: '0' } })
+    expect(screen.getByText('Dentro del margen salarial')).toBeInTheDocument()
+  })
+
+  it('adds market candidates through a compact target selection dialog', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
+    fireEvent.click(screen.getByRole('button', { name: '+ Añadir objetivo' }))
+    expect(screen.getByRole('dialog', { name: 'Añadir objetivos' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Buscar jugador para objetivo')).toBeInTheDocument()
   })
 
   it('still deep-links to a free-agent dossier when a player id is provided', () => {
