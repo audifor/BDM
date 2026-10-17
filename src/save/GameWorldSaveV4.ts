@@ -79,6 +79,7 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
+import { createTrainingStudioPlan, type TrainingStudioPlan } from '@/domain/training/TrainingStudioPlan'
 import { createPlayer } from '@/domain/player'
 import { createGovernanceDecisionEvent } from '@/domain/governance'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
@@ -208,6 +209,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   /** Additive pre-college provenance; absent in older V4 saves. */
   readonly playerPathwayHistory?: readonly { readonly playerId: string; readonly pathwayHistory: readonly import('@/domain/player').PlayerPathwayRecord[] }[]
   /** Additive BS15I career-end records; absent in older V4 saves. */
+  /** Save V4 additive training-periodization plans, absent on legacy saves. */
+  readonly trainingStudioPlans?: readonly TrainingStudioPlan[]
   readonly playerCareerEnds?: readonly { readonly playerId: string; readonly endedOn: string; readonly reason: 'ageLimit' | 'manual' }[]
 }
 
@@ -315,6 +318,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       playerPathwayHistory: Object.values(world.players).flatMap((player) => player.pathwayHistory?.length ? [{ playerId: player.id, pathwayHistory: player.pathwayHistory }] : []),
       teamPathwayRelations: Object.values(world.teamPathwayRelationsById),
       playerRegistrations: Object.values(world.playerRegistrationsById),
+      trainingStudioPlans: Object.values(world.trainingStudioPlansByTeamId),
       playerCareerEnds: Object.values(world.players).flatMap((player) => player.careerEnd === undefined ? [] : [{ playerId: player.id, ...player.careerEnd }]),
     }),
   })
@@ -373,6 +377,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const places = Object.prototype.hasOwnProperty.call(payload, 'places') ? parsePlaces(payload.places) : []
   const talentCohorts = Object.prototype.hasOwnProperty.call(payload, 'talentCohorts') ? parseTalentCohorts(payload.talentCohorts) : []
   const talentMaterializations = Object.prototype.hasOwnProperty.call(payload, 'talentMaterializations') ? parseTalentMaterializations(payload.talentMaterializations) : []
+  const trainingStudioPlans = Object.prototype.hasOwnProperty.call(payload, 'trainingStudioPlans')
+    ? rawArray(payload.trainingStudioPlans, 'Training Studio plans').map(item => createTrainingStudioPlan(record(item, 'Training Studio plan') as unknown as TrainingStudioPlan)) : []
   const playerCareerEnds = Object.prototype.hasOwnProperty.call(payload, 'playerCareerEnds') ? parsePlayerCareerEnds(payload.playerCareerEnds) : []
   const teamPathwayRelations = Object.prototype.hasOwnProperty.call(payload, 'teamPathwayRelations') ? rawArray(payload.teamPathwayRelations, 'Save V4 team pathways').map((item) => createTeamPathwayRelation(record(item, 'Save V4 team pathway') as unknown as TeamPathwayRelation)) : []
   const playerRegistrations = Object.prototype.hasOwnProperty.call(payload, 'playerRegistrations') ? rawArray(payload.playerRegistrations, 'Save V4 player registrations').map((item) => createPlayerRegistration(record(item, 'Save V4 player registration') as unknown as PlayerRegistration)) : []
@@ -433,7 +439,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { trainingStudioPlans: _trainingStudioPlans, worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, playerPathwayHistory: _playerPathwayHistory, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _organizationLifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const { teamPathwayRelations: _pathwayPayload, playerRegistrations: _registrationPayload, ...v3CompatibilityPayload } = compatibilityPayload
   const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
   const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
@@ -490,7 +496,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     const history = playerPathwayHistory.find((item) => item.playerId === player.id)?.pathwayHistory
     return history === undefined ? player : createPlayer({ ...player, pathwayHistory: history })
   }) })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPathwayHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withTrainingStudio = trainingStudioPlans.length === 0 ? withPathwayHistory : updateGameWorld(withPathwayHistory, { trainingStudioPlansByTeamId: Object.fromEntries(trainingStudioPlans.map(plan => [plan.teamId, plan])) })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withTrainingStudio, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 function parsePlayerCareerEnds(value: unknown): readonly { readonly playerId: string; readonly endedOn: string; readonly reason: 'ageLimit' | 'manual' }[] {
