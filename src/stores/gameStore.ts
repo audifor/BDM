@@ -92,6 +92,9 @@ import { executeFacilityMaintenanceUiCommand, type FacilityMaintenanceCommandRes
 import {
   executeClubGovernanceDecision,
   recordClubGovernanceDecisionEvent,
+  respondToClubGovernanceRequest,
+  type ClubGovernanceRequestResponse,
+  type ClubGovernanceRequestResponseResult,
   type GovernanceCommandResult,
   type GovernanceDecisionEventChoice,
 } from '@/app/governance'
@@ -237,6 +240,7 @@ interface GameStore {
   executeFacilityMaintenance(command: FacilityMaintenanceUiCommand): FacilityMaintenanceCommandResult
   recordGovernanceDecisionEvent(decisionId: string, kind: GovernanceDecisionEventChoice, bodyId: string): GovernanceCommandResult
   executeGovernanceDecision(decisionId: string, executorBodyId: string): GovernanceCommandResult
+  respondGovernanceRequest(requestId: string, kind: ClubGovernanceRequestResponse): ClubGovernanceRequestResponseResult
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
   resetGame(): void
@@ -507,6 +511,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyClubGovernanceCommand(get, set, (world, teamId) => recordClubGovernanceDecisionEvent(world, { teamId, decisionId, kind, bodyId }), decisionId),
   executeGovernanceDecision: (decisionId, executorBodyId) =>
     applyClubGovernanceCommand(get, set, (world, teamId) => executeClubGovernanceDecision(world, { teamId, decisionId, executorBodyId }), decisionId),
+  respondGovernanceRequest: (requestId, kind) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['UNKNOWN_TEAM'] }
+    const result = respondToClubGovernanceRequest(world, { teamId: team.id, requestId, kind })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
   grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
