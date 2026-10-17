@@ -5,7 +5,7 @@ import { updateGameWorld } from '@/domain/world'
 import { createMatchState } from '@/engine/match-next'
 import { createMatchEnginePort } from './MatchEnginePortFactory'
 
-describe('PLAYER 2.4-D5A Match Next technical facts, data-only', () => {
+describe('PLAYER 2.4-D5B Match Next technical facts and legacy compatibility', () => {
   function setup() {
     const world = createNewGame()
     const game = Object.values(world.games).find(game => game.status === 'scheduled')!
@@ -34,7 +34,13 @@ describe('PLAYER 2.4-D5A Match Next technical facts, data-only', () => {
     expect(after.players.filter(player => player.repertoire !== undefined)).toHaveLength(1)
     expect(after.players.map(({ repertoire: _repertoire, ...legacy }) => legacy))
       .toEqual(before.players)
-    expect(createMatchState(after)).toEqual(createMatchState(before))
+    const base = createMatchState(before)
+    const withData = createMatchState(after)
+    const { players: basePlayers, ...baseRuntime } = base
+    const { players: dataPlayers, ...dataRuntime } = withData
+    expect(dataRuntime).toEqual(baseRuntime)
+    expect(dataPlayers.map(({ repertoire: _repertoire, ...player }) => player)).toEqual(basePlayers)
+    expect(dataPlayers.find(player => player.playerId === playerId)?.repertoire).toEqual(repertoire)
   }, 20_000)
 
   it('rejects mismatched player keys and corrupted source metrics before Match Next starts', () => {
@@ -57,7 +63,7 @@ describe('PLAYER 2.4-D5A Match Next technical facts, data-only', () => {
     }))).toThrow(/Unsupported WorldDB Player repertoire version/)
   }, 20_000)
 
-  it('preserves score, event stream and FULL/FAST parity when repertoire is data-only', () => {
+  it('keeps legacy behavior deterministic and FULL/FAST equivalent with an optional active move', () => {
     const { before, after, port } = setup()
     const shortened = (source: typeof before) => ({
       ...source,
@@ -68,8 +74,8 @@ describe('PLAYER 2.4-D5A Match Next technical facts, data-only', () => {
     const fastLegacy = port.simulate(legacy, 'FAST')
     const fastEnhanced = port.simulate(enhanced, 'FAST')
     const fullEnhanced = port.simulate(enhanced, 'FULL')
-    expect(fastEnhanced.score).toEqual(fastLegacy.score)
-    expect(fastEnhanced.events).toEqual(fastLegacy.events)
+    expect(port.simulate(legacy, 'FAST').events).toEqual(fastLegacy.events)
+    expect(port.simulate(enhanced, 'FAST').events).toEqual(fastEnhanced.events)
     expect(fullEnhanced.events).toEqual(fastEnhanced.events)
     expect(fullEnhanced.playerStats).toEqual(fastEnhanced.playerStats)
   }, 40_000)
