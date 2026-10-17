@@ -6,6 +6,7 @@ import './market-command-centre.css'
 interface Props {
   readonly world: GameWorld
   readonly teamId: TeamId
+  readonly targetCount: number
   readonly availableFreeAgents: number
   readonly remainingSalaryBudget: number
   readonly onOpenScouting: () => void
@@ -17,7 +18,7 @@ interface Props {
   readonly onOpenPlayer: (playerId: PlayerId) => void
 }
 
-export function MarketCommandCentre({ world, teamId, availableFreeAgents, remainingSalaryBudget, onOpenScouting, onOpenFreeAgents, onOpenExplore, onOpenTargets, onOpenPlanning, onOpenOperations, onOpenPlayer }: Props) {
+export function MarketCommandCentre({ world, teamId, availableFreeAgents, remainingSalaryBudget, targetCount, onOpenScouting, onOpenFreeAgents, onOpenExplore, onOpenTargets, onOpenPlanning, onOpenOperations, onOpenPlayer }: Props) {
   const team = world.teams[teamId]
   if (team === undefined) return null
   const organizationId = team.organizationId
@@ -52,7 +53,7 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
       : { headline: 'Focos activos', explanation: 'Consulta candidatos y cobertura.', action: onOpenScouting, label: 'Revisar candidatos' }
   return (
     <div className="market-cs" data-testid="market-command-centre">
-      <div className="market-cs__compact-head"><strong>RESUMEN</strong><span>{coverage.length} territorios · {reports.length} informes recientes · {negotiations.length} operaciones</span><button type="button" onClick={onOpenScouting}>Scouting →</button><button type="button" onClick={onOpenExplore}>Explorar →</button><button type="button" onClick={onOpenTargets}>Objetivos →</button></div>
+      <div className="market-cs__compact-head"><strong>RESUMEN</strong><span>{targetCount} objetivos · {coverage.length} territorios · {negotiations.length} operaciones</span><button type="button" onClick={onOpenScouting}>Scouting →</button><button type="button" onClick={onOpenExplore}>Explorar →</button><button type="button" onClick={onOpenTargets}>Objetivos →</button></div>
       <div className="market-cs__quick-links"><button onClick={onOpenPlanning} type="button">Planificar próxima temporada →</button><button onClick={onOpenFreeAgents} type="button">Consultar agentes libres →</button><button onClick={onOpenOperations} type="button">Seguir operaciones →</button></div>
       <div className="market-cs__metrics">
         <div><span>Focos activos</span><strong>{focuses.length}</strong><small>Focos de reclutamiento</small></div>
