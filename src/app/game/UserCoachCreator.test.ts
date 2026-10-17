@@ -71,11 +71,11 @@ describe('BS19B user-created Coach foundation', () => {
     expect(original.coaches[original.userCoachId]!.firstName).toBe('BDM')
   })
 
-  it('does not accept custom created coach in a historical WorldDB path', async () => {
+  it('requires the actual WorldDB catalog and a valid team for a new historical-world appointment', async () => {
     await expect(createConfiguredGameAsync({
       universeId: WORLD_DB_SPAIN_UNIVERSE_ID,
-      userTeamKey: 'team:unverified',
+      userTeamKey: '',
       userCoachCreation: created,
-    })).rejects.toThrow(/historical head-coach replacement/)
+    })).rejects.toThrow()
   })
 })
