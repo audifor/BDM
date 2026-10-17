@@ -1,6 +1,57 @@
+import type { ReactNode } from 'react'
 import type { GameWorld } from '@/domain/world'
+import { formatPrototypeDate } from '@/ui/formatters'
+
+function LegacyPanel({ title, children }: { readonly title: string; readonly children: ReactNode }) {
+  return <section className="coach-courtside__panel"><header className="coach-courtside__panel-header"><h2>{title}</h2></header><div className="coach-courtside__panel-body">{children}</div></section>
+}
 
 export function LegacyScreen({ world }: { readonly world: GameWorld }) {
-  const coachId=world.userCoachId, legacy=world.coachLegacyByCoachId[coachId], achievements=Object.values(world.coachAchievementsById).filter(item=>item.coachId===coachId), tenures=Object.values(world.coachTenuresById).filter(item=>item.coachId===coachId).sort((a,b)=>a.startedOn.localeCompare(b.startedOn)), clubs=Object.values(world.coachTeamLegacyByKey).filter(item=>item.coachId===coachId)
-  return <section className="screen"><div className="page-heading"><div><p className="eyebrow">CAREER</p><h1>Legacy</h1></div></div><section className="content-panel"><h2>Historical standing</h2><p><strong>REPUTATION</strong> is current prestige. <strong>LEGACY</strong> is lasting historical importance.</p><p>{legacy?.status ?? 'unproven'} · Hall: {legacy?.hallStatus ?? 'not eligible'} · {tenures.reduce((sum,item)=>sum+(item.seasonsManaged??0),0)} seasons coached · {clubs.length} clubs · {achievements.filter(item=>item.type==='championship').length} championships · {achievements.filter(item=>item.type==='promotion').length} promotions · {achievements.filter(item=>item.type==='dynasty').length} dynasties</p></section><section className="content-panel"><h2>Honours</h2>{achievements.length===0?<p>No historical achievements yet.</p>:<ul>{achievements.map(item=><li key={item.id}>{item.type} · {world.teams[item.teamId!]?.name ?? 'Career'} · {world.competitions[item.competitionId!]?.name ?? 'Competition'} · {item.seasonId}</li>)}</ul>}</section><section className="content-panel"><h2>Career timeline</h2>{tenures.length===0?<p>No tenures recorded.</p>:<ul>{tenures.map(item=><li key={item.id}>{world.teams[item.teamId]?.name ?? item.teamId} · {item.startedOn} – {item.endedOn ?? 'present'} · {item.seasonsManaged??0} seasons</li>)}</ul>}</section><section className="content-panel"><h2>Legacy by club</h2>{clubs.length===0?<p>No club legacy yet.</p>:<ul>{clubs.map(item=>{const honours=achievements.filter(achievement=>achievement.teamId===item.teamId);return <li key={`${item.coachId}:${item.teamId}`}><strong>{world.teams[item.teamId]?.name ?? item.teamId}</strong> · {item.status} · {item.tenureIds.length} tenures · {item.legacyValue} legacy · {honours.filter(achievement=>achievement.type==='championship').length} championships · {honours.filter(achievement=>achievement.type==='promotion').length} promotions · {(item.milestoneKeys??[]).join(', ') || 'No recognitions yet'}</li>})}</ul>}</section><section className="content-panel"><h2>Hall & recognitions</h2><p>{legacy?.hallStatus === 'inducted' ? 'Inducted: this recognition is permanent.' : legacy?.hallStatus === 'candidate' ? 'Hall candidate.' : 'Not yet a Hall candidate.'}</p>{(legacy?.milestoneKeys??[]).length>0&&<ul>{legacy!.milestoneKeys!.map(item=><li key={item}>{item}</li>)}</ul>}</section></section>
+  const id = world.userCoachId
+  const legacy = world.coachLegacyByCoachId[id]
+  const achievements = Object.values(world.coachAchievementsById).filter((item) => item.coachId === id)
+  const tenures = Object.values(world.coachTenuresById).filter((item) => item.coachId === id).sort((a, b) => b.startedOn.localeCompare(a.startedOn))
+  const clubs = Object.values(world.coachTeamLegacyByKey).filter((item) => item.coachId === id)
+  const count = (type: string) => achievements.filter((item) => item.type === type).length
+  const metrics = [
+    { label: 'Seasons coached', value: tenures.reduce((sum, item) => sum + (item.seasonsManaged ?? 0), 0) },
+    { label: 'Clubs', value: clubs.length }, { label: 'Championships', value: count('championship') },
+    { label: 'Promotions', value: count('promotion') }, { label: 'Dynasties', value: count('dynasty') },
+  ]
+  return <div className="coach-courtside__stack coach-courtside__legacy">
+    <LegacyPanel title="HISTORICAL STANDING">
+      <div className="coach-courtside__legacy-standing">
+        <div><small>LEGACY STATUS</small><strong>{legacy?.status ?? 'unproven'}</strong></div>
+        <div><small>HALL STATUS</small><strong>{legacy?.hallStatus ?? 'not eligible'}</strong></div>
+        <p>Reputation reflects your current standing. Legacy measures your lasting impact across your career.</p>
+      </div>
+      <div className="coach-courtside__legacy-metrics">{metrics.map((metric) => <div key={metric.label}><strong>{metric.value}</strong><small>{metric.label}</small></div>)}</div>
+    </LegacyPanel>
+    <div className="coach-courtside__development-grid">
+      <LegacyPanel title="HONOURS">
+        {achievements.length === 0 ? <p className="coach-courtside__empty">No historical achievements yet.</p> :
+          <div className="coach-courtside__legacy-list">{achievements.map((item) => <div key={item.id}>
+            <strong>{item.type}</strong><span>{world.teams[item.teamId!]?.name ?? 'Career'} · {world.competitions[item.competitionId!]?.name ?? 'Competition'}</span><small>{item.seasonId}</small>
+          </div>)}</div>}
+      </LegacyPanel>
+      <LegacyPanel title="CAREER TIMELINE">
+        {tenures.length === 0 ? <p className="coach-courtside__empty">No tenures recorded.</p> :
+          <div className="coach-courtside__legacy-list">{tenures.map((item) => <div key={item.id}>
+            <strong>{world.teams[item.teamId]?.name ?? item.teamId}</strong><span>{formatPrototypeDate(item.startedOn)} · {item.endedOn ? formatPrototypeDate(item.endedOn) : 'Present'}</span><small>{item.seasonsManaged ?? 0} seasons</small>
+          </div>)}</div>}
+      </LegacyPanel>
+    </div>
+    <LegacyPanel title="LEGACY BY CLUB">
+      {clubs.length === 0 ? <p className="coach-courtside__empty">No club legacy yet.</p> :
+        <div className="coach-courtside__table-scroll"><table className="coach-courtside__table"><thead><tr><th>CLUB</th><th>STATUS</th><th>LEGACY</th><th>TENURES</th><th>HONOURS</th></tr></thead><tbody>
+          {clubs.map((item) => { const honours = achievements.filter((entry) => entry.teamId === item.teamId); return <tr key={item.coachId + ':' + item.teamId}>
+            <td><strong>{world.teams[item.teamId]?.name ?? item.teamId}</strong></td><td>{item.status}</td><td>{item.legacyValue}</td><td>{item.tenureIds.length}</td>
+            <td>{honours.filter((entry) => entry.type === 'championship').length} titles · {honours.filter((entry) => entry.type === 'promotion').length} promotions</td>
+          </tr> })}</tbody></table></div>}
+    </LegacyPanel>
+    <LegacyPanel title="HALL & RECOGNITIONS">
+      <p className="coach-courtside__legacy-hall">{legacy?.hallStatus === 'inducted' ? 'Inducted: permanent recognition.' : legacy?.hallStatus === 'candidate' ? 'Hall candidate.' : 'Not yet a Hall candidate.'}</p>
+      {(legacy?.milestoneKeys ?? []).length > 0 && <div className="coach-courtside__legacy-milestones">{legacy!.milestoneKeys!.map((item) => <span className="coach-courtside__pill" key={item}>{item}</span>)}</div>}
+    </LegacyPanel>
+  </div>
 }
