@@ -14,11 +14,20 @@ Directriz del propietario: el RPG y la vida del entrenador controlado por el usu
 - Patrimonio, deuda, inversiones y negocios se gestionan activamente; posibilidad de actuar legalmente, de modo *shady* e incluso infringir reglas, con causalidad, conocimiento, reputación, riesgo e investigación.
 - Mundo con vida propia, relaciones y memorias duraderas, conversaciones seleccionadas **y texto libre**, información parcial, consecuencias futuras **no anunciadas**.
 - Familia/amistades reales en el mundo cuando proceda; vida/tiempo/calendario personal y decisiones activas. Retiro, mortalidad y sucesión jugable.
-- `POR ACLARAR`: preguntas 3 (realismo vs excepcionalidad), 41 (alcance de vida extradeportiva) y 88 (distribución de la UX RPG). No elegirlas de oficio.
+- **DECIDIDO P3 = B:** **realismo con dramatización**. Causas y efectos de mundo creíbles con situaciones excepcionales ocasionales, nunca tensión artificial programada.
+- **DECIDIDO P41 = B:** **vida gestionable**. Agenda, compromisos, hogar, contactos, relaciones, patrimonio, inversiones, actividades y tiempo controlables por el jugador, sin obligar a gestionar rutinas insignificantes.
+- **DECIDIDO P88 = B:** **Coach con subsección «Vida»**. Allí se concentra la vida personal; Home/Inbox/Calendario lanzan y enlazan acontecimientos. No duplicar aplicaciones de Finanzas, Relaciones ni Carrera.
+- **REGLA DE PRODUCTO:** B indica la **primera profundidad implementable, no un límite de por vida**. Permitir futura ampliación modular y opcional de Vida y del drama contextual, con controles de intensidad, coherencia del 80/20 por defecto y compatibilidad de Save y de la identidad/personas y consecuencias preexistentes.
 - `PARCIAL`: detalle de familia, roles múltiples, etapa inicial de asistente (sin gameplay actual), selecciones nacionales (futuro).
 - **Bases no sustituibles:** Human RPG Engine `HRPG1–HRPG18`, B11 Personal/RPG Economy 21–23 y PERSON50/75 traits/75 eventos, conforme al [registro reconciliado de respuestas](BS19_RPG_OWNER_DECISIONS_AND_RECONCILIATION_20261017.md).
 
 La construcción de BS19 debe conectar las autoridades existentes antes de desarrollar contenido adicional; BS19B Coach Creator sigue como primera fase funcional, pero su diseño debe reflejar estas decisiones.
+
+## Política aprobada de profundidad evolutiva
+
+Las opciones B/B/B de 17-10-2026 (P3, P41, P88) son el **punto de arranque**, no máximos obligatorios. Diseñar un Coach > Vida expandible: agendas, vínculos y finanzas como módulos conectados a las autoridades existentes, con acciones contextuales desde Home, Inbox y calendario. Ampliaciones futuras pueden profundizar relaciones familiares, compra/gestión de inmuebles, negocios, política o actividades personales sin sustituir el protagonista, reescribir historia ni mover de sitio el RPG ya jugable.
+
+Los modos de intensidad «experiencia basket» y «experiencia rpg» ajustarán **exposición y control de eventos**, no la verdad del GameWorld. La simulación de personajes y la causalidad permanecen. Evolución aditiva y testada de Save, default compatible para saves legacy, capacidades extra opcionales y ningún scroll/menú innecesario. La ampliación futura requiere desarrollo y certificación; no afirmar soporte en la build actual.
 
 ## 0. Definición canónica
 
