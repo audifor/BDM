@@ -1274,6 +1274,62 @@ mod tests {
     use super::*;
 
     #[test]
+    fn player_repertoire_requires_complete_optional_ddl12_extension() {
+        let connection = Connection::open_in_memory().unwrap();
+        assert!(query_player_repertoire(&connection, "person:player").unwrap().is_none());
+        connection.execute_batch(
+            "CREATE TABLE player_trait_strength_24d(person_id TEXT,player_trait_code TEXT,started_on TEXT,strength INTEGER,repertoire_version TEXT);",
+        ).unwrap();
+        assert!(query_player_repertoire(&connection, "person:player")
+            .unwrap_err().contains("partially installed"));
+    }
+
+    #[test]
+    fn player_repertoire_reads_only_verified_strength_move_usage_and_eight_specialties() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection.execute_batch(
+            "CREATE TABLE player_trait_strength_24d(person_id TEXT,player_trait_code TEXT,started_on TEXT,strength INTEGER,repertoire_version TEXT);
+             CREATE TABLE player_trait_assignment(person_id TEXT,player_trait_code TEXT,started_on TEXT,ended_on TEXT);
+             CREATE TABLE player_move_usage_24d(person_id TEXT,move_code TEXT,usage_tendency INTEGER,as_of_on TEXT,repertoire_version TEXT);
+             CREATE TABLE player_move_value(person_id TEXT,move_code TEXT,value INTEGER);
+             CREATE TABLE player_move_family_24d(move_code TEXT,move_family TEXT);
+             INSERT INTO player_trait_assignment VALUES ('person:p','HIGH_MOTOR','2026-07-01',NULL),('person:p','SHOOTING_GRAVITY','2026-07-01',NULL);
+             INSERT INTO player_trait_strength_24d VALUES ('person:p','HIGH_MOTOR','2026-07-01',86,'PLAYER-2.4-D1-40-TRAITS-60-MOVES-V1');
+             INSERT INTO player_move_value VALUES ('person:p','STEPBACK',74);
+             INSERT INTO player_move_usage_24d VALUES ('person:p','STEPBACK',32,'2026-07-01','PLAYER-2.4-D1-40-TRAITS-60-MOVES-V1');
+             INSERT INTO player_move_family_24d VALUES ('STEPBACK','SEPARATION');",
+        ).unwrap();
+        let profile = query_player_repertoire(&connection, "person:p").unwrap().unwrap();
+        assert_eq!(profile.contextual_traits.len(), 1);
+        assert_eq!(profile.contextual_traits[0].code, "HIGH_MOTOR");
+        assert_eq!(profile.contextual_traits[0].strength, 86);
+        assert_eq!(profile.technical_moves.len(), 1);
+        assert_eq!(profile.technical_moves[0].proficiency, 74);
+        assert_eq!(profile.technical_moves[0].usage_tendency, 32);
+        assert_eq!(profile.basketball_specialization_traits.len(), 1);
+        assert_eq!(profile.basketball_specialization_traits[0].code, "SHOOTING_GRAVITY");
+        assert!(query_player_repertoire(&connection, "person:other")
+            .unwrap().unwrap().technical_moves.is_empty());
+
+        connection.execute(
+            "UPDATE player_move_usage_24d SET usage_tendency=102 WHERE person_id='person:p'",
+            [],
+        ).unwrap();
+        assert!(query_player_repertoire(&connection, "person:p")
+            .unwrap_err().contains("malformed PLAYER technical moves"));
+        connection.execute(
+            "UPDATE player_move_usage_24d SET usage_tendency=32 WHERE person_id='person:p'",
+            [],
+        ).unwrap();
+        connection.execute(
+            "UPDATE player_trait_strength_24d SET repertoire_version='UNKNOWN' WHERE person_id='person:p'",
+            [],
+        ).unwrap();
+        assert!(query_player_repertoire(&connection, "person:p")
+            .unwrap_err().contains("unverified"));
+    }
+
+    #[test]
     fn bootstrap_projection_reads_canonical_organization_ids_and_records() {
         let connection = Connection::open_in_memory().expect("in-memory SQLite");
         connection.execute_batch(
