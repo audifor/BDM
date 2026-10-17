@@ -83,6 +83,7 @@ function StartScreen({
   const [lastName, setLastName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('1990-01-01')
   const [coachGender, setCoachGender] = useState<'male' | 'female'>('male')
+  const [nationalityCountryCode, setNationalityCountryCode] = useState('')
   const [background, setBackground] = useState<'rookie' | 'formerPlayer' | 'inDebt' | 'academyCoach' | 'videoAnalyst' | 'formerAssistant'>('rookie')
   const [ambition, setAmbition] = useState<'firstTitle' | 'talentDeveloper' | 'eliteReputation' | 'financialFreedom'>('firstTitle')
   const [biography, setBiography] = useState('')
@@ -205,6 +206,10 @@ function StartScreen({
                 </select>
               </label>
               <label className="bdm-start-field">
+                <span>NATIONALITY (OPTIONAL)</span>
+                <input disabled={isStarting} maxLength={64} placeholder="Country name / database code, e.g. ESP" value={nationalityCountryCode} onChange={(event) => setNationalityCountryCode(event.target.value)} />
+              </label>
+              <label className="bdm-start-field">
                 <span>BACKGROUND</span>
                 <select disabled={isStarting} value={background} onChange={(event) => setBackground(event.target.value as typeof background)}>
                   <option value="rookie">New coach</option>
@@ -248,13 +253,13 @@ function StartScreen({
               <span>PERSONAL BACKSTORY (OPTIONAL, MAX 600 CHARACTERS)</span>
               <textarea disabled={isStarting} maxLength={600} rows={2} value={biography} onChange={(event) => setBiography(event.target.value)} />
             </label>
-            <p className="bdm-coach-creator__note">Your chosen background influences real coaching attributes or finances. Your ambition and fictional story persist in your Coach RPG profile. The historical WorldDB people stay unchanged.</p>
+            <p className="bdm-coach-creator__note">Your nationality must exist in the selected world (leave blank for the club country). Your background affects real coaching attributes or finances; ambitions and fictional stories survive saves. Imported historical people stay unchanged.</p>
           </section>
         ) : null}
         <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
-          ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, background, ambition, biography, coachingStyle, disposition } } : {}),
+          ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, nationalityCountryCode, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>
         {message !== null && <p className="bdm-start-message">{message}</p>}
       </section>
