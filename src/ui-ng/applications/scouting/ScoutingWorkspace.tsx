@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { PlayerId, StaffPersonId } from '@/domain/ids'
+import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import type { ScoutingMission, ScoutingPriority, ScoutingTerritory } from '@/domain/scouting'
 import type { BasketballPosition } from '@/domain/primitives'
 import { calculateAge } from '@/domain/player'
@@ -243,7 +244,7 @@ function priorityAfter(priority: ScoutingPriority): ScoutingPriority {
   return PRIORITIES[Math.min(PRIORITIES.length - 1, PRIORITIES.indexOf(priority) + 1)]!
 }
 
-export function ScoutingWorkspace({ initialWorld }: { readonly initialWorld?: GameWorld } = {}) {
+export function ScoutingWorkspace({ initialWorld, onOpenEntity }: { readonly initialWorld?: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const setPriority = useGameStore((state) => state.updateScoutingAssignmentPriority)
@@ -259,7 +260,7 @@ export function ScoutingWorkspace({ initialWorld }: { readonly initialWorld?: Ga
   const team = useMemo(() => world === null ? undefined : getUserTeam(world), [world])
   const teamStyle = useMemo(() => { if (team === undefined) return undefined; const colors = deriveTeamColors(team.id); return { '--po-team-primary': colors.primary, '--po-team-secondary': colors.secondary, '--po-team-muted': colors.muted } as CSSProperties }, [team])
   const tabs = useMemo(() => SCOUTING_WORKSPACE_TABS.map((id) => ({ id, label: SCOUTING_TAB_LABELS[id], active: id === activeTab })), [activeTab])
-  const openPlayer = (playerId: PlayerId) => openEntity({ type: 'player', playerId, section: 'overview' })
+  const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? openEntity)({ type: 'player', playerId, section: 'overview' })
   if (world === null || model === null || team === undefined) return <div className="scouting-workspace scouting-workspace--empty" data-ng-region="scouting-workspace"><section className="scouting-workspace__empty-state"><h1 className="scouting-workspace__empty-title">Scouting</h1><p className="scouting-workspace__empty-message">No team assigned to the user coach.</p></section></div>
   return <div className="scouting-workspace" data-ng-region="scouting-workspace" style={teamStyle}>
     <ApplicationWorkspace header={<ScoutingWorkspaceHeader model={model} />} tabs={<WorkspaceTabs activeTabId={activeTab} onTabSelect={(id) => setActiveTab(id as ScoutingWorkspaceTabId)} tabs={tabs} />}>
