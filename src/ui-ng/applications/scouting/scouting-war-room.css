@@ -89,3 +89,7 @@
 .scouting-war__feed span, .scouting-war__feed p { color: var(--scout-muted); font-size: 11px; margin: 0; line-height: 1.4; }
 @media (max-width: 1100px) { .scouting-war__layout { grid-template-columns: minmax(0,1fr); } .scouting-war__layout--triple { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 780px) { .scouting-war__intro { align-items: stretch; flex-direction: column; padding: 15px; } .scouting-war__intro-actions { flex-direction: row; flex-wrap: wrap; } .scouting-war__kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } .scouting-war__network { grid-template-columns: minmax(0,1fr); } .scouting-war__rings { display: none; } .scouting-war__layout--triple { grid-template-columns: minmax(0,1fr); } }
+
+.scouting-workspace-header__back { margin-left: auto; min-height: 29px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--scout-line); background: var(--scout-surface-alt); color: var(--scout-text); font: 720 11px var(--scout-display); cursor: pointer; white-space: nowrap; }
+.scouting-workspace-header__back:hover { border-color: var(--scout-accent); color: var(--scout-accent); }
+@media (max-width: 800px) { .scouting-workspace-header__meta { display: none; } }
