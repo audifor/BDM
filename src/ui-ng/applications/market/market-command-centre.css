@@ -93,3 +93,7 @@
 .market-cs__empty { color: var(--market-muted); font-size: 12px; line-height: 1.45; }
 @media (max-width: 1100px) { .market-cs__orbit { flex-basis: 155px; width:155px; } .market-cs__orbit-ring--outer { width:145px; } .market-cs__orbit-ring--inner { width:115px; } .market-cs__columns { grid-template-columns: minmax(0,1fr); } }
 @media (max-width: 740px) { .market-cs__hero { padding: 16px; min-height: unset; } .market-cs__orbit { display: none; } .market-cs__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .market-cs__pipeline { grid-template-columns: repeat(2,minmax(0,1fr)); } .market-cs__columns--bottom { grid-template-columns: minmax(0,1fr); } }
+
+.market-cs__quick-links {display:flex;flex-wrap:wrap;gap:8px;}
+.market-cs__quick-links button {padding:9px 11px;border:1px solid var(--market-line);border-radius:8px;background:var(--market-surface);color:var(--market-text);font:700 11px var(--market-display);}
+.market-cs__quick-links button:hover {border-color:var(--market-accent);color:var(--market-accent);}
