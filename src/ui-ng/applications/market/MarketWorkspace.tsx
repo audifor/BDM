@@ -105,7 +105,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
   const selectedIntentPlanId = selectedId === undefined ? undefined : Object.values(world.negotiationsById).find((item) => item.teamId === team.id && item.playerId === selectedId)?.sourcePlanId
   const offers = assessRoutedFreeAgentOfferIntelligence(world, team.id, selectedId, selectedIntentPlanId)
   const selected = agents.find((player) => player.id === selectedId)
-  const negotiations = Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => b.startedOn.localeCompare(a.startedOn) || a.id.localeCompare(b.id))
+  const negotiations = Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => (b.startedOn ?? '').localeCompare(a.startedOn ?? '') || a.id.localeCompare(b.id))
   const visibleNegotiations = negotiations.filter((item) => operationFilter === 'ALL' || (operationFilter === 'CLOSED' ? ['SIGNED', 'WITHDRAWN', 'REJECTED', 'EXPIRED', 'DECLINED'].includes(item.status) : !['SIGNED', 'WITHDRAWN', 'REJECTED', 'EXPIRED', 'DECLINED'].includes(item.status)))
   const evaluate = (player: Player, dimension: string) =>
     formatRatingEvaluation(
