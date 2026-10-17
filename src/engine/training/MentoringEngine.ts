@@ -2,7 +2,6 @@ import { createPersonality, type PersonalityDimension } from '@/domain/personali
 import { relationshipKey } from '@/domain/relationships'
 import { applyRelationshipEventsToWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { DirectedRelationshipEvent } from '@/domain/world/RelationshipEvents'
-import type { PlayerId } from '@/domain/ids'
 
 const MS_DAY = 86400000
 /** Monthly checkpoint; idempotent through factual RelationshipProfile.events in Save V4. */

@@ -6,6 +6,8 @@ on:
       - 'src/ui-ng/applications/training/**'
       - 'src/domain/training/**'
       - 'src/domain/world/GameWorld.ts'
+      - 'src/engine/training/**'
+      - 'src/engine/calendar/CalendarEngine.ts'
       - 'src/save/GameWorldSaveV4.ts'
       - 'src/save/TrainingStudioPersistence.test.ts'
       - 'src/ui-ng/workspace/WorkspaceHost.tsx'
@@ -25,5 +27,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npx vitest run src/domain/training/TrainingStudioPlan.test.ts src/save/TrainingStudioPersistence.test.ts src/ui-ng/applications/training/TrainingStudioWorkspace.test.tsx
+      - run: npx vitest run src/domain/training/TrainingStudioPlan.test.ts src/engine/training/MentoringEngine.test.ts src/save/TrainingStudioPersistence.test.ts src/ui-ng/applications/training/TrainingStudioWorkspace.test.tsx
       - run: npm run build
