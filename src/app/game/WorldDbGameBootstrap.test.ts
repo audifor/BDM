@@ -183,6 +183,11 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(world.coachCareerHistoryByCoachId[coach.id]?.at(-1)?.kind).toBe('appointment')
     expect(world.staffCareerHistoryByStaffId[coach.staffProfileId]?.at(-1)?.kind).toBe('appointment')
     expect(world.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
+    // BS19C: the same sourced WorldDB appointment exposes a causal personal dilemma
+    // only because this fictional coach was explicitly created with starting debt.
+    expect(Object.values(world.inboxItemsById).filter(item => item.context.lifeScenario === 'openingDebt')).toEqual([
+      expect.objectContaining({ coachId: coach.id, status: 'unread' }),
+    ])
     expect(Object.values(world.staffContractsById).filter(x => x.staffId === coach.staffProfileId && !x.termination)).toHaveLength(1)
 
     expect(world.coaches[oldCoach.id]).toEqual(oldCoach)
