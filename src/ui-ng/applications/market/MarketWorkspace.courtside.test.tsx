@@ -30,7 +30,7 @@ describe('Courtside Market command centre', () => {
     } as unknown as typeof world
     useGameStore.getState().replaceWorld(older)
     render(<MarketWorkspace />)
-    expect(screen.getByTestId('market-command-centre')).toBeInTheDocument()
+    expect(screen.getByTestId('market-explore')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
     expect(screen.getAllByText('Sin datos financieros')).toHaveLength(2)
     expect(screen.getByRole('dialog', { name: 'Presupuesto y decisiones de mercado' })).toBeInTheDocument()
@@ -42,41 +42,42 @@ describe('Courtside Market command centre', () => {
     const { world } = mount()
     const team = getUserTeam(world)!
     const rosterPlayer = world.players[team.rosterPlayerIds[0]!]!
-    expect(screen.getByTestId('market-command-centre')).toBeInTheDocument()
-    expect(screen.getByText('Actividad de mercado')).toBeInTheDocument()
+    expect(screen.getByTestId('market-explore')).toBeInTheDocument()
+    expect(screen.getByLabelText('Contrato')).toBeInTheDocument()
     expect(document.body.textContent).not.toContain(JSON.stringify(rosterPlayer.basketball.ratings))
   })
 
-  it('preserves the free-agent search and negotiation actions in dedicated tabs', () => {
+  it('uses exactly four primary tabs, with free agents as a contract filter', () => {
     mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Agentes libres' }))
-    expect(screen.getByLabelText('Search free agents')).toBeInTheDocument()
-    expect(screen.getByLabelText('Filter market by position')).toBeInTheDocument()
+    const tabs = screen.getByRole('navigation', { name: /tabs/i })
+    expect(tabs).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Agentes libres' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Planificación' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Contrato'), { target: { value: 'FREE' } })
+    expect(screen.getByLabelText('Contrato')).toHaveValue('FREE')
+    expect(screen.getByRole('option', { name: 'Vence en 6 meses' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Operaciones' }))
     expect(screen.getByRole('region', { name: 'Free-agent negotiations' })).toBeInTheDocument()
   })
 
-  it('opens the canonical scouting workspace from the market hub', () => {
+  it('opens scouting inside Market without a second application shell', () => {
     mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Scouting →' }))
-    expect(new URLSearchParams(window.location.search).get('app')).toBe('scouting')
+    fireEvent.click(screen.getByRole('button', { name: 'Scouting' }))
+    expect(screen.getByTestId('scouting-war-room')).toBeInTheDocument()
+    expect(new URLSearchParams(window.location.search).get('app')).toBe('market')
+    expect(screen.getByRole('navigation', { name: 'Gestión de scouting' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Focos' }))
+    expect(screen.getByRole('heading', { name: 'Focos de reclutamiento' })).toBeInTheDocument()
   })
 
-  it('opens an evidence-aware explorer and its temporary decision board', () => {
+  it('keeps recruitment targets and canonical contract horizons in one tab', () => {
     mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Explorar →' }))
-    expect(screen.getByTestId('market-explore')).toBeInTheDocument()
     expect(screen.getByLabelText('Candidatos de mercado')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
     expect(screen.getByTestId('market-targets')).toBeInTheDocument()
-  })
-
-  it('uses contract planning horizons and never invented future contracts', () => {
-    mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Planificación' }))
+    fireEvent.click(screen.getByText('Planificación de plantilla y contratos'))
     expect(screen.getByTestId('market-planning')).toBeInTheDocument()
     expect(screen.getByLabelText('Horizonte de plantilla')).toBeInTheDocument()
-    expect(screen.getByText('Mapa de profundidad')).toBeInTheDocument()
   })
 
   it('opens real player and staff budgets with a salary-affordability check', () => {
@@ -120,6 +121,6 @@ describe('Courtside Market command centre', () => {
   it('still deep-links to a free-agent dossier when a player id is provided', () => {
     window.history.replaceState({}, '', '/?ui=ng&app=market&playerId=free-agent-target')
     mount()
-    expect(screen.getByLabelText('Search free agents')).toBeInTheDocument()
+    expect(screen.getByTestId('market-explore')).toBeInTheDocument()
   })
 })
