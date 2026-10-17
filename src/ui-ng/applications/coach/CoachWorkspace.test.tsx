@@ -44,8 +44,8 @@ describe('CoachWorkspace', () => {
     const { container } = render(<CoachWorkspace />)
     expect(container.querySelector('.coach-courtside-ng')).toBeInTheDocument()
     for (const name of ['Overview', 'Opportunities', 'Career', 'Reputation', 'Relationships', 'Development', 'Legacy']) {
-      fireEvent.click(screen.getByRole('button', { name, exact: true }))
-      expect(screen.getByRole('button', { name, exact: true })).toHaveClass('is-active')
+      fireEvent.click(screen.getByRole('button', { name: new RegExp('^' + name + '$') }))
+      expect(screen.getByRole('button', { name: new RegExp('^' + name + '$') })).toHaveClass('is-active')
     }
   })
 
@@ -59,7 +59,7 @@ describe('CoachWorkspace', () => {
     })
     useGameStore.setState({ world: linked })
     render(<CoachWorkspace />)
-    fireEvent.click(screen.getByRole('button', { name: 'Relationships', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: /^Relationships$/ }))
     expect(screen.getByText(player.firstName + ' ' + player.lastName)).toBeInTheDocument()
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search coach relationships' }), { target: { value: 'no-matching-person-zz' } })
     expect(screen.getByText('No matching relationships.')).toBeInTheDocument()

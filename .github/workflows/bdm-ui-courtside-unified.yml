@@ -142,3 +142,28 @@ jobs:
             src/ui-ng/applications/finances/FinancesWorkspace.test.tsx \
             src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx \
             --maxWorkers=2 --no-file-parallelism
+
+  coach:
+    name: Coach Courtside all seven tabs
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/coach/CoachWorkspace.test.tsx \
+            src/ui-ng/applications/coach/CoachOverviewScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachOpportunitiesScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachReputationScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachDevelopmentWorkspace.test.tsx \
+            src/ui-ng/applications/coach/CoachLegacyScreen.test.tsx \
+            src/ui/screens/CoachScreen.test.ts \
+            src/ui/screens/CoachScreen.courtside.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
