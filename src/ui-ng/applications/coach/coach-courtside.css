@@ -1,0 +1,314 @@
+/* Coach Courtside V3. Scoped to the active NG career app. All data and commands
+   remain delegated to the existing Coach screens and canonical domain services. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .coach-courtside-ng {
+  --coach-bg:var(--cs-bg);
+  --coach-panel:var(--cs-s1);
+  --coach-raised:var(--cs-s2);
+  --coach-hover:var(--cs-s3);
+  --coach-line:var(--cs-line);
+  --coach-line2:var(--cs-line2);
+  --coach-text:var(--cs-text);
+  --coach-muted:var(--cs-text2);
+  --coach-faint:var(--cs-text3);
+  --coach-orange:var(--cs-orange);
+  --coach-lime:var(--cs-lime);
+  --coach-positive:var(--cs-positive);
+  --coach-negative:var(--cs-negative);
+  --coach-head:var(--cs-font-display);
+  --coach-font:var(--cs-font);
+  --ng-font-ui:var(--cs-font);
+  --ng-font-display:var(--cs-font-display);
+  --ng-font-data:var(--cs-font);
+  --ng-font-grid:var(--cs-font);
+  --ng-text-primary:var(--cs-text);
+  --ng-text-secondary:var(--cs-text2);
+  --ng-text-muted:var(--cs-text2);
+  --ng-text-faint:var(--cs-text3);
+  --ng-cyan:var(--cs-lime);
+  --ng-cyan-bright:var(--cs-lime);
+  --ng-amber:var(--cs-orange);
+  --ng-amber-bright:var(--cs-orange);
+  --ng-positive:var(--cs-positive);
+  --ng-negative:var(--cs-negative);
+  --ng-border-standard:var(--cs-line2);
+  --ng-border-subtle:var(--cs-line);
+  --bdm-border-default:var(--cs-line2);
+  --bdm-border-subtle:var(--cs-line);
+  --bdm-bg-workspace:var(--cs-bg);
+  --bdm-surface-1:var(--cs-s1);
+  --bdm-surface-2:var(--cs-s2);
+  --bdm-surface-3:var(--cs-s3);
+  --ng-workspace-header-height:60px;
+  --ng-workspace-tabs-height:41px;
+  --ng-workspace-padding:12px;
+  --ng-precision-row-h:31px;
+  --ng-precision-header-h:31px;
+  background:var(--coach-bg);
+  color:var(--coach-text);
+  font:400 13px/1.34 var(--coach-font);
+}
+.coach-courtside-ng *,
+.coach-courtside-ng *::before,
+.coach-courtside-ng *::after {box-sizing:border-box}
+.coach-courtside-ng::before {background:none}
+.coach-courtside-ng button,
+.coach-courtside-ng input,
+.coach-courtside-ng select {font-family:var(--coach-font)}
+.coach-courtside-ng :is(button,input,select):focus-visible {
+  outline:2px solid var(--coach-orange);outline-offset:2px;
+}
+.coach-courtside-ng .ng-application-workspace__header-slot {
+  padding:0 18px;background:var(--coach-bg);
+  border-bottom:1px solid var(--coach-line);
+}
+.coach-courtside-ng .ng-canon-header {
+  height:60px;min-height:60px;gap:8px;padding:0;
+}
+.coach-courtside-ng .ng-canon-header__app {
+  color:var(--coach-orange);
+  font:800 20px/1 var(--coach-head);letter-spacing:.075em;
+}
+.coach-courtside-ng .ng-canon-header__team {
+  overflow:hidden;min-width:0;text-overflow:ellipsis;white-space:nowrap;
+  font:800 23px/1 var(--coach-head);letter-spacing:.03em;color:var(--coach-text);
+}
+.coach-courtside-ng .ng-canon-header__meta {
+  color:var(--coach-muted);
+  font:600 12px/1.2 var(--coach-font);letter-spacing:0;
+}
+.coach-courtside-ng .ng-canon-header__sep {background:var(--coach-line2)}
+.coach-courtside-ng .ng-application-workspace__tabs-slot {
+  height:41px;min-height:41px;padding:0 16px;
+  background:var(--coach-bg);border-bottom:1px solid var(--coach-line2);
+}
+.coach-courtside-ng .ng-workspace-tabs {
+  height:41px;min-height:41px;padding:0;
+  background:transparent;border:0;
+}
+.coach-courtside-ng .ng-workspace-tabs__list {
+  height:100%;min-width:0;gap:6px;overflow-x:auto;scrollbar-width:thin;
+}
+.coach-courtside-ng .ng-workspace-tabs__tab {
+  height:40px;min-height:40px;padding:0 12px;
+  border:0;border-bottom:3px solid transparent;border-radius:0;
+  background:transparent;color:var(--coach-muted);
+  font:800 15px/1 var(--coach-head);letter-spacing:.055em;white-space:nowrap;
+  transition:color 120ms ease,border-color 120ms ease;
+}
+.coach-courtside-ng .ng-workspace-tabs__tab.is-active {
+  border-bottom-color:var(--coach-lime);background:transparent;
+  color:var(--coach-lime);box-shadow:none;
+}
+.coach-courtside-ng .ng-workspace-tabs__tab:hover:not(.is-active) {
+  color:var(--coach-text);background:transparent;
+}
+.coach-courtside-ng .ng-application-workspace__body-slot {
+  min-height:0;height:100%;background:var(--coach-bg);
+}
+.coach-courtside-ng .ng-canon__scroll {
+  min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;
+  padding:11px 15px 15px;scrollbar-color:var(--coach-line2) transparent;
+}
+.coach-courtside-ng :is(.co-overview,.cop-screen,.cc-career,.cr-reputation,.ld-legacy,.ng-coach-dev,.coach-relations) {
+  color:var(--coach-text);min-width:0;max-width:1740px;margin:0 auto;
+  font-family:var(--coach-font);font-variant-numeric:tabular-nums;
+}
+/* Rebind the semantic colors used by all six existing specialist boards.
+   Avoid synthetic values: every chart, bar, row and historical metric survives. */
+.coach-courtside-ng .co-overview {
+  --co-cyan:var(--coach-lime);--co-gold:var(--coach-orange);
+  --co-gold-bright:var(--coach-orange);--co-label:var(--coach-muted);
+  --co-value:var(--coach-text);--co-heading:var(--coach-text);
+  --co-divider:var(--coach-line);--co-panel-edge:var(--coach-line2);
+  --co-panel-edge-hover:var(--coach-lime);
+  --co-gap:9px;--co-pad:11px;--co-core-h:332px;
+  --co-card-h:202px;--co-timeline-h:133px;
+  --co-tick-cyan:transparent;--co-tick-gold:transparent;
+  --co-panel-shadow:none;--co-panel-glow-hover:none;
+}
+.coach-courtside-ng .cop-screen {
+  --cop-cyan:var(--coach-lime);--cop-cyan-bright:var(--coach-lime);
+  --cop-gold:var(--coach-orange);--cop-gold-bright:var(--coach-orange);
+  --cop-heading:var(--coach-text);--cop-value:var(--coach-text);
+  --cop-label:var(--coach-muted);--cop-divider:var(--coach-line);
+  --cop-track:var(--coach-raised);--cop-gap:9px;--cop-pad:11px;
+  --cop-top-h:252px;--cop-board-h:330px;--cop-timeline-h:108px;
+}
+.coach-courtside-ng .cc-career {
+  --cc-cyan:var(--coach-lime);--cc-gold:var(--coach-orange);
+  --cc-gold-bright:var(--coach-orange);--cc-label:var(--coach-muted);
+  --cc-value:var(--coach-text);--cc-heading:var(--coach-text);
+  --cc-divider:var(--coach-line);--cc-track:var(--coach-raised);
+  gap:9px;grid-template-rows:minmax(380px,1.14fr) minmax(192px,.94fr) auto auto;
+}
+.coach-courtside-ng .cr-reputation {
+  --cr-cyan:var(--coach-lime);--cr-gold:var(--coach-orange);
+  --cr-label:var(--coach-muted);--cr-value:var(--coach-text);
+  --cr-heading:var(--coach-text);--cr-divider:var(--coach-line);
+  --cr-track:var(--coach-raised);--cr-gap:9px;--cr-pad:11px;
+  --cr-row-1:302px;--cr-row-2:239px;--cr-row-3:173px;
+}
+.coach-courtside-ng .ld-legacy {
+  --ld-cyan:var(--coach-lime);--ld-gold:var(--coach-orange);
+  --ld-gold-bright:var(--coach-orange);--ld-label:var(--coach-muted);
+  --ld-value:var(--coach-text);--ld-heading:var(--coach-text);
+  --ld-divider:var(--coach-line);--ld-track:var(--coach-raised);
+  --ld-gap:9px;--ld-pad:11px;--ld-row-1:322px;
+  --ld-row-2:327px;--ld-timeline:148px;
+}
+.coach-courtside-ng .ng-coach-dev {
+  --ng-coach-legendary:var(--coach-orange);
+  grid-template-columns:minmax(0,1.25fr) minmax(310px,.85fr);
+  gap:10px;align-items:start;
+}
+/* The shared Holo shell enforces transparent panels with !important.
+   Coach opts into the approved solid Courtside cards and radius. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .coach-courtside-ng :is(
+  .ng-holo-panel,.co-panel,.cop-panel,.cc-panel,.cr-panel,.ld-panel,
+  .ng-coach-dev__panel,.coach-relations__panel
+) {
+  border:1px solid var(--coach-line2);
+  border-radius:12px;
+  color:var(--coach-text);
+  background:var(--coach-panel) !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+.coach-courtside-ng .co-panel::before,
+.coach-courtside-ng .co-panel::after {display:none}
+.coach-courtside-ng :is(
+  .co-panel__head,.cop-panel__head,.cc-panel__head,
+  .ng-coach-dev__panel-head,.ld-panel__head
+) {border-bottom-color:var(--coach-line)}
+.coach-courtside-ng :is(.co-panel__title,.cop-panel__title,.cc-panel__title,.cr-panel__title,.ld-panel__title,.ng-coach-dev__panel-title) {
+  font-family:var(--coach-head);font-weight:800;letter-spacing:.055em;
+  color:var(--coach-text);
+}
+.coach-courtside-ng :is(.co-panel__head,.cop-panel__head,.ng-coach-dev__panel-head) {
+  min-height:32px;
+}
+.coach-courtside-ng :is(
+  .co-panel__subtitle,.cc-meta,.ng-coach-dev__panel-subtitle,
+  .co-block__title,.cc-hlabel,.ld-kicker
+) {color:var(--coach-muted)}
+.coach-courtside-ng :is(.co-link,.cop-link,.cc-link,.cr-link,.ld-link) {
+  font-family:var(--coach-head);color:var(--coach-lime);
+}
+.coach-courtside-ng :is(.co-link,.cop-link,.cc-link,.cr-link,.ld-link):hover:not(:disabled) {
+  color:var(--coach-orange);
+}
+.coach-courtside-ng :is(.cop-action,.ng-coach-dev__cta,.cc-nav,.ld-filter,.cop-filter,.cr-filter) {
+  border-color:var(--coach-line2);border-radius:7px;
+  font-family:var(--coach-font);
+}
+.coach-courtside-ng .ng-coach-dev__cta:not(:disabled) {
+  background:var(--coach-orange);color:var(--coach-bg);
+  font-weight:800;
+}
+.bdm-os-ng[data-bdm-courtside-theme='light'] .coach-courtside-ng .ng-coach-dev__cta:not(:disabled) {
+  color:#fffaf2;
+}
+.coach-courtside-ng :is(.co-overview,.cop-screen,.cc-career,.cr-reputation,.ld-legacy) .ng-precision-grid,
+.coach-courtside-ng .coach-relations .ng-precision-grid {
+  border-color:var(--coach-line2);background:var(--coach-panel);
+  color:var(--coach-text);
+}
+.coach-courtside-ng :is(.ng-precision-grid,.bdm-data-grid) {
+  --grid-bg-frame:var(--coach-panel);
+  --grid-bg-header:var(--coach-raised);
+  --grid-bg-toolbar:var(--coach-panel);
+  --grid-row-bg:var(--coach-panel);
+  --grid-row-hover:var(--coach-hover);
+  --grid-border:var(--coach-line2);
+  --grid-border-subtle:var(--coach-line);
+  --grid-border-cell:var(--coach-line);
+  --grid-text-strong:var(--coach-text);
+  --grid-text:var(--coach-muted);
+  --grid-text-header:var(--coach-muted);
+  --grid-text-muted:var(--coach-faint);
+  --grid-cyan:var(--coach-lime);
+  --grid-amber:var(--coach-orange);
+  --grid-green:var(--coach-positive);
+  --grid-red:var(--coach-negative);
+  --grid-row-h:31px;
+  --grid-toolbar-h:32px;
+}
+.coach-courtside-ng .ng-coach-dev__skill:nth-child(odd),
+.coach-courtside-ng .ng-coach-dev__perk:nth-child(odd) {
+  background:var(--coach-raised);
+}
+.coach-courtside-ng .ng-coach-dev__skill,
+.coach-courtside-ng .ng-coach-dev__perk {
+  border-bottom:1px solid var(--coach-line);
+}
+/* Relationships: turn the unframed table into a proper searchable career workspace. */
+.coach-relations {display:grid;gap:10px;align-content:start}
+.coach-relations__header {
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  min-height:83px;padding:12px 16px;border:1px solid var(--coach-line2);
+  border-radius:12px;background:var(--coach-panel);
+}
+.coach-relations__header small {
+  color:var(--coach-orange);
+  font:800 11px/1.2 var(--coach-head);letter-spacing:.12em;
+}
+.coach-relations__header h2 {
+  margin:2px 0 4px;color:var(--coach-text);
+  font:800 25px/1 var(--coach-head);letter-spacing:.025em;text-transform:uppercase;
+}
+.coach-relations__header h2 span {color:var(--coach-lime);font-size:18px}
+.coach-relations__header p {margin:0;color:var(--coach-muted);font-size:11px}
+.coach-relations__controls {display:flex;align-items:end;flex-wrap:wrap;gap:8px}
+.coach-relations__search {display:grid;gap:4px;color:var(--coach-muted);font-size:10px}
+.coach-relations__search input {
+  width:205px;max-width:100%;min-height:32px;padding:6px 9px;
+  border:1px solid var(--coach-line2);border-radius:7px;
+  background:var(--coach-raised);color:var(--coach-text);font:500 12px var(--coach-font);
+}
+.coach-relations__search input::placeholder {color:var(--coach-faint)}
+.coach-relations__filters {display:flex;flex-wrap:wrap;gap:4px}
+.coach-relations__filters button {
+  min-height:32px;padding:6px 10px;border:1px solid var(--coach-line2);
+  border-radius:7px;background:var(--coach-raised);color:var(--coach-muted);
+  font:800 12px var(--coach-head);text-transform:capitalize;cursor:pointer;
+}
+.coach-relations__filters button[aria-pressed='true'] {
+  border-color:var(--coach-lime);background:var(--coach-hover);color:var(--coach-lime);
+}
+.coach-relations__panel {min-width:0;padding:8px;overflow:auto}
+.coach-relations__empty {margin:0;padding:17px;color:var(--coach-muted);font-size:12px}
+@container bdm-workspace (max-width:1050px) {
+  .coach-courtside-ng .cc-row--top {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .coach-courtside-ng .cc-row--top > :last-child {grid-column:1 / -1}
+  .coach-courtside-ng .cop-row--top {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .coach-courtside-ng .co-overview__core {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .coach-courtside-ng .co-overview__core > :last-child {grid-column:1 / -1}
+}
+@container bdm-workspace (max-width:760px) {
+  .coach-courtside-ng .ng-canon-header__meta {display:none}
+  .coach-courtside-ng :is(.cc-row,.cop-row--top,.cop-row--board,.cr-row--1,.cr-row--2,.ld-row,.co-overview__core) {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .coach-courtside-ng .cc-row--top > :last-child,
+  .coach-courtside-ng .co-overview__core > :last-child {grid-column:auto}
+  .coach-courtside-ng :is(.co-overview__core > .co-panel,.cop-row--top > .cop-panel) {
+    height:auto;min-height:210px;
+  }
+  .coach-courtside-ng .cc-career {grid-template-rows:auto;min-height:0}
+  .coach-courtside-ng .cr-reputation,
+  .coach-courtside-ng .ld-legacy {grid-template-rows:auto}
+  .coach-courtside-ng .ng-coach-dev {grid-template-columns:minmax(0,1fr)}
+  .coach-courtside-ng .coach-relations__controls {width:100%}
+}
+@media (max-width:640px) {
+  .coach-courtside-ng .ng-canon-header__team {font-size:19px}
+  .coach-courtside-ng .ng-canon__scroll {padding:8px}
+  .coach-courtside-ng .ng-workspace-tabs__tab {font-size:13px;padding:0 9px}
+  .coach-relations__search,.coach-relations__search input {width:100%}
+  .coach-relations__controls {display:grid;grid-template-columns:1fr;width:100%}
+}
+@media (prefers-reduced-motion:reduce) {
+  .coach-courtside-ng *, .coach-courtside-ng *::before,.coach-courtside-ng *::after {
+    transition:none!important;animation:none!important;
+  }
+}
