@@ -23,7 +23,7 @@ describe('Tauri Desktop Market and Scouting activation', () => {
       const world = createNewGame()
       useGameStore.getState().replaceWorld(world)
       render(<DesktopAppHost appId={appId} world={world} actions={actions} />)
-      expect(screen.getByTestId(appId === 'market' ? 'market-command-centre' : 'scouting-war-room')).toBeInTheDocument()
+      expect(screen.getByTestId(appId === 'market' ? 'market-explore' : 'scouting-war-room')).toBeInTheDocument()
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 
@@ -38,7 +38,7 @@ describe('Tauri Desktop Market and Scouting activation', () => {
       } as GameWorld
       useGameStore.getState().replaceWorld(partial)
       render(<DesktopAppHost appId={appId} world={partial} actions={actions} />)
-      expect(screen.getByTestId(appId === 'market' ? 'market-command-centre' : 'scouting-war-room')).toBeInTheDocument()
+      expect(screen.getByTestId(appId === 'market' ? 'market-explore' : 'scouting-war-room')).toBeInTheDocument()
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
   }
