@@ -93,6 +93,8 @@ describe('Courtside Market command centre', () => {
     const priority = screen.getAllByLabelText(/^Prioridad /)[0]!
     fireEvent.change(priority, { target: { value: 'HIGH' } })
     expect(Object.values(useGameStore.getState().world!.marketTargetsById)[0]!.priority).toBe('HIGH')
+    fireEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+    expect(Object.values(useGameStore.getState().world!.marketTargetsById)[0]!.knowledgeSnapshots).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: 'Comparar' }))
     expect(screen.getByText('Hasta tres jugadores')).toBeInTheDocument()
   })
