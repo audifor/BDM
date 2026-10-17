@@ -50,3 +50,6 @@
 .market-workspace .market-target-views button {font:700 13px var(--cs-font-display);padding:7px 13px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--cs-text2);}
 .market-workspace .market-target-views button[aria-pressed="true"] {background:var(--cs-orange);color:#18120d;border-color:var(--cs-orange);}
 .market-workspace .market-target-views button:hover:not([aria-pressed="true"]) {background:var(--cs-s2);color:var(--cs-text);}
+
+.market-workspace .market-talent__load-more {display:block;width:100%;padding:11px;border:0;border-top:1px solid var(--cs-line2);background:var(--cs-s2);color:var(--cs-orange);font:700 12px var(--cs-font-display);text-align:center;}
+.market-workspace .market-talent__load-more:hover {background:var(--cs-s3);}
