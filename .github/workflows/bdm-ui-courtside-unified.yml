@@ -116,4 +116,6 @@ jobs:
             src/app/market/MarketTargetService.test.ts \
             src/ui-ng/system/startMenuCatalog.courtside.test.ts \
             src/ui/desktop/DesktopNavigation.test.ts \
+            src/ui/desktop/MarketScoutingDesktopSmoke.test.tsx \
+            src/ui-ng/workspace/WorkspaceErrorBoundary.test.tsx \
             --maxWorkers=2 --no-file-parallelism
