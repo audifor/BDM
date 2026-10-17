@@ -75,7 +75,7 @@ describe('Courtside Market command centre', () => {
     expect(screen.getByLabelText('Candidatos de mercado')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Objetivos' }))
     expect(screen.getByTestId('market-targets')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Planificación de plantilla y contratos'))
+    fireEvent.click(screen.getByRole('button', { name: 'Planificación' }))
     expect(screen.getByTestId('market-planning')).toBeInTheDocument()
     expect(screen.getByLabelText('Horizonte de plantilla')).toBeInTheDocument()
   })
