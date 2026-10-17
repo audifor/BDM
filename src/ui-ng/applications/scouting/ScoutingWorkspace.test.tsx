@@ -42,6 +42,8 @@ describe('ScoutingWorkspace', () => {
     const { team, world } = mountScoutingWorkspace()
     const player = world.players[team.rosterPlayerIds[0]!]!
 
+    expect(screen.getByTestId('scouting-war-room')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
     expect(screen.getByText((_, element) => element?.classList.contains('scouting-workspace-header__team') === true && element.textContent === team.name)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: `${player.firstName} ${player.lastName}` }).length).toBeGreaterThan(0)
     expect(document.body.textContent).not.toContain(JSON.stringify(player.basketball.ratings))
@@ -49,6 +51,7 @@ describe('ScoutingWorkspace', () => {
 
   it('renders the Courtside request structure and synchronizes mission, target, scout and priority', () => {
     mountScoutingWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
     fireEvent.click(screen.getAllByRole('button', { name: 'Request scouting' })[0]!)
     const dialog = screen.getByRole('dialog', { name: 'REQUEST SCOUTING' })
     expect(dialog).toHaveClass('scouting-modal--courtside-request')
