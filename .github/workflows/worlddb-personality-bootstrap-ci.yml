@@ -23,7 +23,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Focused WorldDB and relationship tests
-        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts src/domain/world/CompatibilityInteractionBridge.test.ts
+        run: |
+          npm test -- src/domain/personality/SemanticPersonalityEffects.test.ts src/domain/world/CompatibilityInteractionBridge.test.ts
+          npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'WorldDB canonical PERSON personality bootstrapping|WorldDB full 50-dimension PERSON runtime and Save V4'
 
   personality-native:
     name: WorldDB PERSON native Rust
