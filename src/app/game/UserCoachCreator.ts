@@ -71,14 +71,26 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
     staffPeople: Object.values(world.staffPeopleById).map((entry) => entry.id === staff.id ? updatedStaff : entry),
   })
 
-  // These are the eight existing runtime dimensions. PERSON50 must be carried forward
-  // by its canonical bridge later, never replaced by a parallel personality.
-  const personality = next.personalitiesByPersonId[coach.id]
-  if (personality !== undefined && input.disposition !== 'balanced') {
+  // Coach and headCoach StaffProfile project the same canonical PERSON. Generated universes
+  // may seed the two role aliases independently: the creator aligns both to one profile.
+  // Preserve any extended PERSON50 keys if the canonical bridge has already supplied them.
+  const coachPersonality = next.personalitiesByPersonId[coach.id]
+  const staffPersonality = next.personalitiesByPersonId[staff.id]
+  const personality = staffPersonality !== undefined && Object.keys(staffPersonality.values).length > Object.keys(coachPersonality?.values ?? {}).length
+    ? staffPersonality
+    : coachPersonality
+  if (personality !== undefined) {
     const values = input.disposition === 'ambitious'
       ? { ...personality.values, ambition: Math.max(70, personality.values.ambition), loyalty: Math.min(55, personality.values.loyalty) }
-      : { ...personality.values, loyalty: Math.max(70, personality.values.loyalty), ambition: Math.min(55, personality.values.ambition) }
-    next = updateGameWorld(next, { personalitiesByPersonId: { ...next.personalitiesByPersonId, [coach.id]: createPersonality({ values }) } })
+      : input.disposition === 'loyal'
+        ? { ...personality.values, loyalty: Math.max(70, personality.values.loyalty), ambition: Math.min(55, personality.values.ambition) }
+        : personality.values
+    const createdPersonality = createPersonality({ values })
+    next = updateGameWorld(next, { personalitiesByPersonId: {
+      ...next.personalitiesByPersonId,
+      [coach.id]: createdPersonality,
+      [staff.id]: createdPersonality,
+    } })
   }
 
   // A voluntarily chosen indebted origin is a source-backed fictional starting condition,
