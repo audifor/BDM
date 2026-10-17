@@ -56,6 +56,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('playerId') ? 'free-agents' : 'centre',
   )
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
+  const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const toggleComparison = (id: PlayerId) => setComparisonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
@@ -134,6 +135,8 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         onOpenPlayer={navigateToPlayer}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenOperations={() => setActiveTab('operations')}
+        onRequestScouting={requestScoutingAssignment}
+        onOpenFreeAgent={(playerId) => { setSelectedId(playerId); setPosition('ALL'); setQuery(''); setActiveTab('free-agents') }}
       /> : null}
       {activeTab === 'planning' ? <MarketPlanningBoard
         world={world}
