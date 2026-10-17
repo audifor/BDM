@@ -74,6 +74,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
     return id ? id as PlayerId : undefined
   })
   const [revisions, setRevisions] = useState<Record<string, { salary: string; years: string }>>({})
+  const [operationFilter, setOperationFilter] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL')
   const team = world === null ? undefined : getUserTeam(world)
 
   const agents = useMemo(() => {
@@ -100,6 +101,8 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   const selectedIntentPlanId = selectedId === undefined ? undefined : Object.values(world.negotiationsById).find((item) => item.teamId === team.id && item.playerId === selectedId)?.sourcePlanId
   const offers = assessRoutedFreeAgentOfferIntelligence(world, team.id, selectedId, selectedIntentPlanId)
   const selected = agents.find((player) => player.id === selectedId)
+  const negotiations = Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => b.startedOn.localeCompare(a.startedOn) || a.id.localeCompare(b.id))
+  const visibleNegotiations = negotiations.filter((item) => operationFilter === 'ALL' || (operationFilter === 'CLOSED' ? ['SIGNED', 'WITHDRAWN', 'REJECTED', 'EXPIRED', 'DECLINED'].includes(item.status) : !['SIGNED', 'WITHDRAWN', 'REJECTED', 'EXPIRED', 'DECLINED'].includes(item.status)))
   const evaluate = (player: Player, dimension: string) =>
     formatRatingEvaluation(
       getOrganizationRatingEvaluation({
@@ -168,7 +171,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         onOpenTargets={() => setActiveTab('targets')}
       /> : null}
       {activeTab === 'free-agents' ? <>
-      <div className="ng-canon__toolbar">
+      <div className="ng-canon__toolbar market-section-toolbar">
         <input aria-label="Search free agents" onChange={(event) => setQuery(event.target.value)} placeholder="Search players" value={query} />
         <select aria-label="Filter market by position" onChange={(event) => setPosition(event.target.value as PositionFilter)} value={position}>
           {(['ALL', 'PG', 'SG', 'SF', 'PF', 'C'] as const).map((value) => (
@@ -178,8 +181,8 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
           ))}
         </select>
       </div>
-      <div className="ng-canon__split">
-        <div className="ng-canon__panel ng-holo-panel">
+      <div className="ng-canon__split market-free-agent-layout">
+        <div className="ng-canon__panel ng-holo-panel market-free-agent-results">
           {agents.length === 0 ? (
             <p className="ng-canon__empty">No available players.</p>
           ) : (
@@ -213,7 +216,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
             />
           )}
         </div>
-        <aside className="ng-canon__inspector ng-holo-panel">
+        <aside className="ng-canon__inspector ng-holo-panel market-free-agent-inspector">
           {selected === undefined ? (
             <p className="ng-canon__empty">Select a free agent to inspect known information and current acquisition readiness.</p>
           ) : (
@@ -242,11 +245,11 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         </aside>
       </div>
       </> : null}
-      {activeTab === 'operations' ? <section aria-label="Free-agent negotiations" className="ng-canon__panel ng-holo-panel">
-        <h3>Acquisition activity</h3>
-        {Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => a.id.localeCompare(b.id)).length === 0 ? (
-          <p className="ng-canon__empty">No player contacts or negotiations yet.</p>
-        ) : Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => a.id.localeCompare(b.id)).map((negotiation) => {
+      {activeTab === 'operations' ? <section aria-label="Free-agent negotiations" className="market-negotiations">
+        <header className="market-negotiations__head"><strong>OPERACIONES</strong><span>{negotiations.length} registradas</span><select aria-label="Filtrar operaciones" value={operationFilter} onChange={(event) => setOperationFilter(event.target.value as typeof operationFilter)}><option value="ALL">Todas</option><option value="ACTIVE">En curso</option><option value="CLOSED">Cerradas</option></select></header>
+        {visibleNegotiations.length === 0 ? (
+          <p className="ng-canon__empty">Sin operaciones en este filtro.</p>
+        ) : visibleNegotiations.map((negotiation) => {
           const player = world.players[negotiation.playerId]
           const offer = assessRoutedFreeAgentOfferIntelligence(world, team.id, negotiation.playerId, negotiation.sourcePlanId)
             .find((item) => item.sourceProposalId === negotiation.sourceProposalId)
@@ -266,8 +269,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
           const approverBodyIds = decision === undefined ? [] : signing.requiredApproverBodyIds.filter((bodyId) => signingAppointments.some((appointment) => appointment.bodyId === bodyId))
           const approved = new Set(signing.approvedBodyIds)
           return (
-            <article key={negotiation.id} className="ng-canon__panel" data-negotiation-id={negotiation.id}>
-              <h4>{player === undefined ? negotiation.playerId : `${player.firstName} ${player.lastName}`}</h4>
+            <article key={negotiation.id} className="market-negotiations__entry" data-negotiation-id={negotiation.id}><details className="market-negotiations__details"><summary><span className="market-negotiations__person">{player === undefined ? negotiation.playerId : `${player.firstName} ${player.lastName}`}</span><span className="market-negotiations__state">{negotiation.status}</span><span className="market-negotiations__sum">{negotiation.salary === undefined ? "Sin oferta" : `${formatMoney(negotiation.salary)} / ${negotiation.years} años`}</span><span className="market-negotiations__date">{negotiation.startedOn}</span><span className="market-negotiations__chevron">▾</span></summary><div className="market-negotiations__body">
               <p>Contact: {negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
               {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn) !== undefined && <p>Contact handled by: {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn)}</p>}
               {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn) !== undefined && <p>Offer submitted by: {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn)}</p>}
@@ -307,10 +309,10 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
               )}
               {negotiation.status === 'SIGNED' && <p>Signed · Contract {negotiation.signedContractId}</p>}
               {!isPlayerFreeAgent(world, negotiation.playerId) && negotiation.status !== 'SIGNED' && <p>Signing blocker: Player is no longer a free agent.</p>}
-            </article>
+            </div></details></article>
           )
         })}
-      </section> : null}
+      </section> : null>
     </NgHoloShell>
   )
 }
