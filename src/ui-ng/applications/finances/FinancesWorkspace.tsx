@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { FinanceCourtsideOverview } from './FinanceCourtsideOverview'
+import { financeTableLabel, financeColumnLabel, financeEmptyLabel, financeValueLabel } from './financeCourtsideLabels'
 import { buildFinanceWorkspaceSection, type FinanceSection, type FinanceTable, type FinanceTab } from './financeWorkspaceModel'
 import './finance-workspace.css'
 import '@/ui-ng/applications/club/courtside-club-management.css'
@@ -122,8 +123,8 @@ function FinanceSectionView({ section, tab, filter }: { readonly section: Financ
 function FinanceTableView({ table, term }: { readonly table: FinanceTable; readonly term: string }) {
   const rows = term ? table.rows.filter((item) => [...item.cells, item.provenance ?? '', ...(item.references ?? [])].some((value) => value.toLocaleLowerCase().includes(term))) : table.rows
   return <section className="finance-workspace__table-panel">
-    <div className="fc-table-header"><h3>{table.title}</h3><span>{rows.length}</span></div>
-    {rows.length === 0 ? <p className="finance-workspace__empty">{term && table.rows.length ? 'Sin coincidencias.' : table.empty}</p> : <div className="finance-workspace__table-scroll"><table><thead><tr>{table.columns.map((column) => <th key={column} scope="col">{column}</th>)}<th scope="col">Origen</th></tr></thead><tbody>{rows.map((item) => <tr key={item.id}>{item.cells.map((cell, index) => <td key={index}>{cell}</td>)}<td>{item.provenance || item.references?.length ? <details className="fc-row-trace"><summary aria-label="Ver origen del registro">Ver</summary>{item.provenance && <p>{item.provenance}</p>}{item.references?.length ? <ul>{item.references.map((reference) => <li key={reference}>{reference}</li>)}</ul> : null}</details> : '·'}</td></tr>)}</tbody></table></div>}
+    <div className="fc-table-header"><h3>{financeTableLabel(table.title)}</h3><span>{rows.length}</span></div>
+    {rows.length === 0 ? <p className="finance-workspace__empty">{term && table.rows.length ? 'Sin coincidencias.' : financeEmptyLabel(table.empty)}</p> : <div className="finance-workspace__table-scroll"><table><thead><tr>{table.columns.map((column) => <th key={column} scope="col">{financeColumnLabel(column)}</th>)}<th scope="col">Origen</th></tr></thead><tbody>{rows.map((item) => <tr key={item.id}>{item.cells.map((cell, index) => <td key={index}>{financeValueLabel(cell, table.columns[index] ?? '')}</td>)}<td>{item.provenance || item.references?.length ? <details className="fc-row-trace"><summary aria-label="Ver origen del registro">Ver</summary>{item.provenance && <p>{item.provenance}</p>}{item.references?.length ? <ul>{item.references.map((reference) => <li key={reference}>{reference}</li>)}</ul> : null}</details> : '·'}</td></tr>)}</tbody></table></div>}
   </section>
 }
 
