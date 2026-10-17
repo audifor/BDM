@@ -2,7 +2,7 @@ import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
 import { PERSONALITY_DIMENSIONS, type Personality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
-import { createPlayerRepertoire, type PlayerRepertoire } from '@/domain/player/PlayerRepertoire'
+import { createPlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 
 /** Raw physical source facts. No generated anatomy, entitlement, condition or economy. */
 export interface WorldDbPhysicalContentV1 {
@@ -75,7 +75,12 @@ export interface WorldDbGameBootstrapPlayerV1 {
   readonly tendencies: Readonly<Record<string, number>>
   readonly development: readonly WorldDbGameBootstrapDevelopmentDimensionV1[]
   /** Missing in pre-2.4-D2 databases; no inferred traits or moves. */
-  readonly repertoire?: Omit<PlayerRepertoire, 'playerId'>
+  readonly repertoire?: {
+    readonly version: string
+    readonly contextualTraits: readonly { readonly code: string; readonly strength: number; readonly startedOn: string }[]
+    readonly technicalMoves: readonly { readonly code: string; readonly proficiency: number; readonly usageTendency: number; readonly asOfOn: string }[]
+    readonly basketballSpecializationTraits: readonly { readonly code: string; readonly startedOn: string }[]
+  }
 }
 export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes: Readonly<Record<string, number>>; readonly specialismIds: readonly string[] }
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
