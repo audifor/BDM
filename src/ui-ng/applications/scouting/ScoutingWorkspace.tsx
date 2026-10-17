@@ -245,7 +245,7 @@ function priorityAfter(priority: ScoutingPriority): ScoutingPriority {
   return PRIORITIES[Math.min(PRIORITIES.length - 1, PRIORITIES.indexOf(priority) + 1)]!
 }
 
-export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket }: { readonly initialWorld?: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void; readonly onOpenMarket?: () => void } = {}) {
+export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket, embedded = false, onOpenSearch }: { readonly initialWorld?: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void; readonly onOpenMarket?: () => void; readonly embedded?: boolean; readonly onOpenSearch?: () => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const setPriority = useGameStore((state) => state.updateScoutingAssignmentPriority)
@@ -261,22 +261,30 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket }: 
   const team = useMemo(() => world === null ? undefined : getUserTeam(world), [world])
   const teamStyle = useMemo(() => { if (team === undefined) return undefined; const colors = deriveTeamColors(team.id); return { '--po-team-primary': colors.primary, '--po-team-secondary': colors.secondary, '--po-team-muted': colors.muted } as CSSProperties }, [team])
   const tabs = useMemo(() => SCOUTING_WORKSPACE_TABS.map((id) => ({ id, label: SCOUTING_TAB_LABELS[id], active: id === activeTab })), [activeTab])
+  const embeddedTabs: readonly ScoutingWorkspaceTabId[] = ['centre', 'focuses', 'assignments', 'coverage', 'reports']
   const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? openEntity)({ type: 'player', playerId, section: 'overview' })
   if (world === null || model === null || team === undefined) return <div className="scouting-workspace scouting-workspace--empty" data-ng-region="scouting-workspace"><section className="scouting-workspace__empty-state"><h1 className="scouting-workspace__empty-title">Scouting</h1><p className="scouting-workspace__empty-message">No team assigned to the user coach.</p></section></div>
-  return <div className="scouting-workspace" data-ng-region="scouting-workspace" style={teamStyle}>
-    <ApplicationWorkspace header={<ScoutingWorkspaceHeader model={model} onOpenMarket={onOpenMarket ?? (() => syncWorkspaceAppQuery('market', 'push'))} />} tabs={<WorkspaceTabs activeTabId={activeTab} onTabSelect={(id) => setActiveTab(id as ScoutingWorkspaceTabId)} tabs={tabs} />}>
-      <ScrollRegion className="scouting-workspace__scroll">
+  const content = <>
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
-        {activeTab === 'centre' ? <ScoutingWarRoom world={world} teamId={team.id} model={model} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} onOpenAssignments={() => setActiveTab('assignments')} onOpenCoverage={() => setActiveTab('coverage')} onOpenKnowledge={() => setActiveTab('knowledge')} onOpenReports={() => setActiveTab('reports')} /> : null}
+        {activeTab === 'centre' ? <ScoutingWarRoom world={world} teamId={team.id} model={model} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} onOpenAssignments={() => setActiveTab('assignments')} onOpenCoverage={() => setActiveTab('coverage')} onOpenKnowledge={() => embedded ? onOpenSearch?.() : setActiveTab('knowledge')} onOpenReports={() => setActiveTab('reports')} /> : null}
         {activeTab === 'search' ? <PlayerSearchBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onMessage={setMessage} /> : null}
         {activeTab === 'focuses' ? <RecruitmentFocusBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id, mission: 'FULL_REPORT' })} onMessage={setMessage} /> : null}
         {activeTab === 'knowledge' ? <KnowledgeBoard model={model} initialQuery={focusPlayerId && world.players[focusPlayerId as keyof typeof world.players] ? `${world.players[focusPlayerId as keyof typeof world.players]!.firstName} ${world.players[focusPlayerId as keyof typeof world.players]!.lastName}` : ''} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id })} onManage={() => setActiveTab('assignments')} /> : null}
         {activeTab === 'assignments' ? <><AssignmentBoard onOpenPlayer={openPlayer} rows={model.assignments} onCancel={(row) => setModal({ kind: 'cancel', assignment: row })} onPriority={(row, priority) => { const error = setPriority(row.id, priority); setMessage(error ?? `${row.playerName} priority changed to ${scoutingPriorityLabel(priority)}.`) }} /><details className="scouting-embedded-detail"><summary>Carga del equipo de scouting</summary><ScoutWorkloadBoard world={world} teamId={team.id} /></details><details className="scouting-embedded-detail"><summary>Cobertura territorial</summary><CoverageBoard world={world} teamId={team.id} model={model} onAdd={() => setModal({ kind: 'coverage-add' })} onEnd={(assignmentId) => setModal({ kind: 'coverage-end', assignmentId })} /></details></> : null}
-        {activeTab === 'reports' ? <ReportBoard rows={model.reports} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} /> : null}
+        {activeTab === 'reports' ? <><ReportBoard rows={model.reports} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} />{embedded ? <details className="scouting-embedded-detail"><summary>Informes de rivales</summary><OppositionBoard rows={model.opposition} onOpenPlayer={openPlayer} /></details> : null}</> : null}
         {activeTab === 'coverage' ? <CoverageBoard world={world} teamId={team.id} model={model} onAdd={() => setModal({ kind: 'coverage-add' })} onEnd={(assignmentId) => setModal({ kind: 'coverage-end', assignmentId })} /> : null}
         {activeTab === 'opposition' ? <OppositionBoard onOpenPlayer={openPlayer} rows={model.opposition} /> : null}
-      </ScrollRegion>
-    </ApplicationWorkspace>
+  </>
+  return <div className={embedded ? 'scouting-workspace scouting-workspace--embedded' : 'scouting-workspace'} data-ng-region="scouting-workspace" style={teamStyle}>
+    {embedded ? <>
+      <nav className="scouting-embedded-nav" aria-label="Gestión de scouting">
+        {embeddedTabs.map((id) => <button type="button" key={id} aria-pressed={activeTab === id} onClick={() => setActiveTab(id)}>{({ centre: 'Equipo', focuses: 'Focos', assignments: 'Misiones', coverage: 'Territorios', reports: 'Informes' } as const)[id as typeof embeddedTabs[number]]}</button>)}
+      </nav>
+      <div className="scouting-workspace__embedded-body">{content}</div>
+    </> : <ApplicationWorkspace header={<ScoutingWorkspaceHeader model={model} onOpenMarket={onOpenMarket ?? (() => syncWorkspaceAppQuery('market', 'push'))} />} tabs={<WorkspaceTabs activeTabId={activeTab} onTabSelect={(id) => setActiveTab(id as ScoutingWorkspaceTabId)} tabs={tabs} />}>
+      <ScrollRegion className="scouting-workspace__scroll">{content}</ScrollRegion>
+    </ApplicationWorkspace>}
+
     {modal?.kind === 'request' ? <RequestScoutingModal world={world} teamId={team.id} playerId={modal.playerId} initialMission={modal.mission} onClose={() => setModal(null)} onSubmit={(input) => { const error = requestScoutingAssignment(input); if (error === null) setMessage('Scouting report requested. Assignment and Scout are shown in the Focus candidate list.'); return error }} /> : null}
     {modal?.kind === 'report' ? <ReportDetailModal world={world} reportId={modal.reportId} onClose={() => setModal(null)} /> : null}
     {modal?.kind === 'cancel' ? <ScoutingModalFrame title="Cancel scouting assignment?" onClose={() => setModal(null)} footer={<><button className="ng-btn ng-btn--ghost" onClick={() => setModal(null)} type="button">Keep assignment</button><button className="ng-btn ng-btn--danger" onClick={() => { const error = cancelAssignment(modal.assignment.id); setMessage(error ?? `${modal.assignment.playerName} assignment cancelled.`); setModal(null) }} type="button">Cancel assignment</button></>}><p>{modal.assignment.playerName} · {modal.assignment.missionLabel} · {modal.assignment.evaluatorName}</p><p>Cancellation preserves the assignment history and any completed report or knowledge.</p></ScoutingModalFrame> : null}
