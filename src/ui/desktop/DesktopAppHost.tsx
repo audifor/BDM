@@ -69,8 +69,8 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'market') return <WorkspaceErrorBoundary app="Mercado" onReturnHome={() => actions.openApp('bdm')}>
     <MarketWorkspace initialWorld={world} onOpenScouting={() => actions.openApp('scouting')} />
   </WorkspaceErrorBoundary>
-  if (key === 'scouting') return <WorkspaceErrorBoundary app="Scouting" onReturnHome={() => actions.openApp('bdm')}>
-    <NgWorkspaceNavigationProvider><ScoutingWorkspace initialWorld={world} onOpenEntity={actions.openEntity} onOpenMarket={() => actions.openApp('market')} /></NgWorkspaceNavigationProvider>
+  if (key === 'scouting') return <WorkspaceErrorBoundary app="Mercado" onReturnHome={() => actions.openApp('bdm')}>
+    <MarketWorkspace initialWorld={world} initialTab="scouting" />
   </WorkspaceErrorBoundary>
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
