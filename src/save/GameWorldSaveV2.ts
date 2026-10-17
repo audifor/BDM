@@ -5,6 +5,7 @@ import { parseGameDate } from '@/domain/date'
 import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, createPlayer, type Player, type PlayerRatings, type PlayerTendencies } from '@/domain/player'
 import { DEVELOPMENT_DOMAINS, createDevelopmentProfile, type PlayerDevelopmentProfile } from '@/domain/player/PlayerDevelopmentProfile'
 import { PERSONALITY_DIMENSIONS } from '@/domain/personality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { ratingKeyFromKnowledgeDimension } from '@/domain/player/PlayerTruthCatalog'
 import { createEvaluatorProfile, createOrganizationPlayerAwareness, createScoutingRecruitmentFocus, createScoutingTerritoryAssignment, EVIDENCE_SOURCES, SCOUTING_MISSIONS, type Evidence, type EvaluatorProfile, type EvaluatorReport, type OrganizationPlayerAwareness, type ScoutingAssignment, type ScoutingRecruitmentFocus, type ScoutingTerritory, type ScoutingTerritoryAssignment } from '@/domain/scouting'
 import type { OrganizationEvaluationPolicy } from '@/domain/intelligence'
@@ -99,8 +100,8 @@ export function parsePlayerV2(value: unknown, _referenceDate: import('@/domain/d
 export function parsePersonalityV2(value: unknown): void {
   const entry = record(value, 'Personality V2'); assertExactKeys(entry, ['coachId', 'profile'], 'Personality V2')
   text(entry.coachId, 'Personality V2 person id'); const profile = record(entry.profile, 'Personality V2 profile'); assertExactKeys(profile, ['values'], 'Personality V2 profile')
-  const values = record(profile.values, 'Personality V2 values'); assertExactKeys(values, PERSONALITY_DIMENSIONS, 'Personality V2 values')
-  for (const key of PERSONALITY_DIMENSIONS) { const item = finite(values[key], `Personality ${key}`); if (!Number.isInteger(item) || item < 0 || item > 100) throw new RangeError(`Personality ${key} is invalid`) }
+  const values = record(profile.values, 'Personality V2 values'); const expected = Object.keys(values).length === PERSONALITY_DIMENSIONS.length ? PERSONALITY_DIMENSIONS : SEMANTIC_PERSONALITY_DIMENSIONS; assertExactKeys(values, expected, 'Personality V2 values')
+  for (const key of expected) { const item = finite(values[key], `Personality ${key}`); if (!Number.isInteger(item) || item < 0 || item > 100) throw new RangeError(`Personality ${key} is invalid`) }
 }
 
 export function parseDevelopmentStimulusV2(value: unknown): void {

@@ -1,3 +1,4 @@
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
 import { createGameWorld, updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
@@ -1042,3 +1043,89 @@ function completeGamesWithTrigger(world: ReturnType<typeof bootstrapGameWorldFro
   const prepared = completeGames(world, scheduled.slice(0, -1))
   return applyMatchResult(prepared, { gameId: trigger.id, homeTeamId: trigger.homeTeamId, awayTeamId: trigger.awayTeamId, homeScore: 100, awayScore: 80 })
 }
+
+describe('WorldDB canonical PERSON personality bootstrapping', () => {
+  const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }
+  const scores = {
+    ambition: 93, professionalism: 84, loyalty: 61, resilience: 72,
+    temperament: 58, teamOrientation: 88, adaptability: 77, competitiveness: 95,
+  }
+  it('imports eight real PERSON scores, retains fallback for legacy people, and survives Save V4', () => {
+    const sourceSlice = slice()
+    const player = sourceSlice.players[0]!
+    const staff = sourceSlice.staffProfiles[0]!
+    const imported = {
+      ...sourceSlice,
+      persons: sourceSlice.persons.map((person) =>
+        person.personId === player.personId || person.personId === staff.personId
+          ? { ...person, personality: scores }
+          : person,
+      ),
+    }
+    const world = bootstrapGameWorldFromWorldDb(imported, selection, pin)
+    expect(world.personalitiesByPersonId[player.playerId]!.values).toEqual(scores)
+    expect(world.personalitiesByPersonId[staff.staffId]!.values).toEqual(scores)
+    expect(world.personalitiesByPersonId[world.userCoachId]!.values).toEqual(scores)
+    const legacy = sourceSlice.players[1]!
+    const original = bootstrapGameWorldFromWorldDb(sourceSlice, selection, pin)
+    expect(world.personalitiesByPersonId[legacy.playerId]).toEqual(original.personalitiesByPersonId[legacy.playerId])
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z'))
+    expect(loaded.personalitiesByPersonId[player.playerId]!.values).toEqual(scores)
+    expect(loaded.personalitiesByPersonId[staff.staffId]!.values).toEqual(scores)
+  })
+  it('rejects partial and out-of-range canonical snapshots rather than silently mixing scores', () => {
+    const sourceSlice = slice()
+    const player = sourceSlice.players[0]!
+    const invalid = {
+      ...sourceSlice,
+      persons: sourceSlice.persons.map((person) =>
+        person.personId === player.personId
+          ? { ...person, personality: { ...scores, competitiveness: 101 } }
+          : person,
+      ),
+    }
+    expect(() => bootstrapGameWorldFromWorldDb(invalid, selection, pin)).toThrow('competitiveness')
+    const partial = {
+      ...sourceSlice,
+      persons: sourceSlice.persons.map((person) =>
+        person.personId === player.personId
+          ? { ...person, personality: { ...scores, temperament: undefined } as never }
+          : person,
+      ),
+    }
+    expect(() => bootstrapGameWorldFromWorldDb(partial, selection, pin)).toThrow('temperament')
+  })
+})
+
+describe('WorldDB full 50-dimension PERSON runtime and Save V4', () => {
+  const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }
+  it('carries every named value through WorldDB bootstrap and Save V4', () => {
+    const source = slice()
+    const player = source.players[0]!
+    const scores = Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key, index) =>
+      [key, (index * 13 + 21) % 101])) as unknown as NonNullable<WorldDbGameBootstrapSliceV1['persons'][number]['personality']>
+    const input = {
+      ...source,
+      persons: source.persons.map((person) => person.personId === player.personId
+        ? { ...person, personality: scores } : person),
+    }
+    const world = bootstrapGameWorldFromWorldDb(input, selection, pin)
+    const before = world.personalitiesByPersonId[player.playerId]!
+    expect(Object.keys(before.values)).toHaveLength(50)
+    for (const key of SEMANTIC_PERSONALITY_DIMENSIONS) expect(before.values[key]).toBe(scores[key])
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2025-10-01T00:00:00.000Z'))
+    expect(loaded.personalitiesByPersonId[player.playerId]!.values).toEqual(before.values)
+  })
+  it('rejects 49 values rather than silently inventing one', () => {
+    const base = slice()
+    const player = base.players[0]!
+    const values = Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) => [key, 50])) as Record<string, number>
+    delete values.humor
+    const input = {
+      ...base,
+      persons: base.persons.map((person) => person.personId === player.personId
+        ? { ...person, personality: values as never } : person),
+    }
+    expect(() => bootstrapGameWorldFromWorldDb(input, selection, pin)).toThrow('exactly 8 legacy or 50 semantic')
+  })
+})
