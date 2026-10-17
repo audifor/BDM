@@ -64,6 +64,7 @@ function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWor
 
 export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
+  const [visibleLimit, setVisibleLimit] = useState(120)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
   const [scoutingTarget, setScoutingTarget] = useState<PlayerId | null>(null)
@@ -194,7 +195,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
       <section className="market-talent__catalog" aria-label="Candidatos de mercado">
         <div className="market-talent__tablehead"><span>Jugador</span><span>Perfil</span><span>Conocimiento</span><span>Mesa</span></div>
         {ordered.length === 0 ? <div className="market-talent__empty">Tu red no conoce jugadores que coincidan con estos filtros. Inicia un foco de scouting.</div> :
-          ordered.slice(0, 120).map((row) => <div className={'market-talent__candidate' + (selected?.playerId === row.playerId ? ' is-selected' : '')} key={row.playerId}>
+          ordered.slice(0, visibleLimit).map((row) => <div className={'market-talent__candidate' + (selected?.playerId === row.playerId ? ' is-selected' : '')} key={row.playerId}>
             <button className="market-talent__player" onClick={() => setSelectedId(row.playerId)} type="button"><strong>{row.name}</strong><small>{row.clubName} · {row.countryName}</small></button>
             <div><b>{row.position}</b><small>{row.age} años</small></div>
             <div><span className="market-talent__knowledge">{STATES[row.knowledgeState]}</span><small>Confianza: {row.confidenceLabel}</small></div>
@@ -203,6 +204,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
               aria-label={(savedIds.has(row.playerId) ? 'Archivar ' : 'Añadir objetivo ') + row.name}
               onClick={() => changeTarget(() => savedIds.has(row.playerId) ? onArchiveTarget(row.playerId) : onAddTarget(row.playerId))} type="button">{savedIds.has(row.playerId) ? '✓' : '+'}</button>
           </div>)}
+        {ordered.length > visibleLimit ? <button className="market-talent__load-more" onClick={() => setVisibleLimit((limit) => limit + 120)} type="button">Mostrar más · {visibleLimit} de {ordered.length}</button> : null}
       </section>
       <aside className="market-talent__inspector" aria-label="Expediente de scouting">
         {selected === null ? <div className="market-talent__empty">Selecciona un jugador para consultar sus evidencias.</div> : <>
