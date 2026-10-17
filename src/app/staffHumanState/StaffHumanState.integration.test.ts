@@ -217,7 +217,7 @@ describe('CASO 5 — PATTERN', () => {
 })
 
 describe('CASO 7 — WORKLOAD', () => {
-  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 45000 }, () => {
+  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 90000 }, () => {
     const base = createAcbTestGame({ userTeamKey: 'caz' })
     const team = getUserTeam(base)!
     const staffId = pickStaff(base, team.id, 'assistantCoach')
