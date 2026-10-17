@@ -119,3 +119,26 @@ jobs:
             src/ui/desktop/MarketScoutingDesktopSmoke.test.tsx \
             src/ui-ng/workspace/WorkspaceErrorBoundary.test.tsx \
             --maxWorkers=2 --no-file-parallelism
+
+  club-and-institutions:
+    name: Club Courtside, Board, Finance and Facilities
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/club/ClubWorkspace.test.tsx \
+            src/ui-ng/applications/club/ClubCourtsideSatellite.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.production.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.governance.test.tsx \
+            src/ui-ng/applications/finances/FinancesWorkspace.test.tsx \
+            src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
