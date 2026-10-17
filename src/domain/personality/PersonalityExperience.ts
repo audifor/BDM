@@ -1,5 +1,5 @@
 import { createPersonality, hasFullSemanticPersonality, type Personality } from './Personality'
-import { SEMANTIC_PERSONALITY_DIMENSIONS } from './SemanticPersonality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS, type SemanticPersonalityDimension } from './SemanticPersonality'
 
 /** One verified gameplay occurrence. No RNG and no fabricated historical events. */
 export interface PersonalityExperience {
@@ -61,7 +61,7 @@ export function applyPersonalityExperience(
   }
   const last = [...history].reverse().find((entry) => entry.personId === experience.personId)
   if (last !== undefined && last.occurredOn > experience.occurredOn) throw new RangeError('Observed PERSON experience is out of order')
-  const previous = personality.values[experience.dimension]!
+  const previous = personality.values[experience.dimension as SemanticPersonalityDimension]!
   const next = Math.max(0, Math.min(100, previous + experience.valence * Math.ceil(experience.intensity / 40)))
   const entry: PersonalityChange = {
     id: experience.id, personId: experience.personId, kind: experience.kind,
