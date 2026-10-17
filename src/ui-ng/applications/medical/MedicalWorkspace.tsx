@@ -29,7 +29,10 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToPlayerMedical, navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
+import { MedicalHistoryVisual, MedicalInjuryVisual, MedicalNoInjuries, MedicalOverviewVisual, MedicalRecoveryVisual, MedicalRiskScatter, MedicalSquadMonitor, MedicalStaffVisual } from './MedicalCourtsideVisuals'
+
 import './medical-workspace.css'
+import './medical-courtside.css'
 
 function MedicalWorkspaceHeader({ model }: { readonly model: MedicalWorkspaceModel }) {
   return (
@@ -77,15 +80,28 @@ function ReturnToPlayBoard({
     <section className="medical-workspace__panel ng-holo-panel medical-workspace__rtp" aria-label="Return-to-Play review">
       <p className="medical-workspace__eyebrow">RETURN-TO-PLAY REVIEW</p>
       {rows.map((row) => (
-        <article className="medical-workspace__rtp-row" key={row.injuryId}>
-          <div>
-            <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">{row.playerName}</button>
-            <p>{row.injuryLabel} · injured {row.injuredOnLabel} · projected return {row.expectedReturnLabel} · review due {row.reviewDueLabel} · Career Fatigue {row.fatigue}</p>
-            {row.recommendationSummary === undefined ? <p>No current Staff recommendation.</p> : (
-              <p>Advice from {row.staffName} ({row.staffQuality}/100): {row.recommendationSummary}</p>
-            )}
-            {row.reviewHistory.map((review, index) => <p key={`${review.dateLabel}-${index}`}>Prior review {review.dateLabel}: {review.decision} · {review.actorLabel}</p>)}
-            {row.fitnessTestRequired ? <p>Fitness test required · latest result: {row.fitnessTestResult ?? 'not tested'}</p> : <p>Fitness test not required for this injury.</p>}
+        <article className="medical-workspace__rtp-row medical-cs__rtp-card" key={row.injuryId}>
+          <div className="medical-cs__rtp-content">
+            <div className="medical-cs__rtp-heading">
+              <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">{row.playerName}</button>
+              <span>{row.injuryLabel}</span>
+              <b>REVIEW DUE</b>
+            </div>
+            <div className="medical-cs__rtp-timeline" aria-label="Recorded injury review milestones">
+              <div><small>INJURY</small><strong>{row.injuredOnLabel}</strong></div>
+              <div><small>PROJECTED RETURN</small><strong>{row.expectedReturnLabel}</strong></div>
+              <div><small>REVIEW DUE</small><strong>{row.reviewDueLabel}</strong></div>
+              <div><small>FITNESS TEST</small><strong>{row.fitnessTestRequired ? row.fitnessTestResult ?? 'REQUIRED' : 'NOT REQUIRED'}</strong></div>
+            </div>
+            <div className="medical-cs__rtp-meta">
+              <span>CAREER FATIGUE <b>{row.fatigue}/100</b></span>
+              {row.recommendationSummary && <span>STAFF: <b>{row.staffName} · {row.staffQuality}/100</b></span>}
+            </div>
+            {(row.recommendationSummary || row.reviewHistory.length > 0) && <details className="medical-cs__rtp-details">
+              <summary>CLINICAL ADVICE & REVIEW HISTORY</summary>
+              {row.recommendationSummary && <p>{row.recommendationSummary}</p>}
+              {row.reviewHistory.map((review, index) => <p key={index}>{review.dateLabel} · {review.decision} · {review.actorLabel}</p>)}
+            </details>}
           </div>
           <div className="medical-workspace__rtp-actions">
             {row.fitnessTestRequired && !row.canClear ? <button onClick={() => onFitnessTest(row.injuryId)} type="button">RUN FITNESS TEST</button> : null}
@@ -138,40 +154,8 @@ function OverviewBoard({
 }) {
   return (
     <div className="medical-workspace__overview">
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Availability</p>
-        <h3 className="medical-workspace__card-title">Roster status</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Available" value={model.availableCount} />
-          <MetricRow label="Injured" value={model.injuredCount} />
-          <MetricRow label="Roster" value={model.rosterCount} />
-          <MetricRow label="Date" value={model.currentDateLabel} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Load</p>
-        <h3 className="medical-workspace__card-title">Fatigue</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Average" value={model.averageFatigue} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Risk</p>
-        <h3 className="medical-workspace__card-title">Medical risk</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="High" value={model.highRiskCount} />
-          <MetricRow label="Elevated" value={model.elevatedRiskCount} />
-          <MetricRow label="Low" value={model.lowRiskCount} />
-        </dl>
-      </section>
-      <section className="medical-workspace__card ng-holo-panel">
-        <p className="medical-workspace__eyebrow">Department</p>
-        <h3 className="medical-workspace__card-title">Medical staff</h3>
-        <dl className="medical-workspace__metrics">
-          <MetricRow label="Staff" value={model.medicalStaffCount} />
-          <MetricRow label="Open advisories" value={model.openAdvisoryCount} />
-        </dl>
-      </section>
+      <MedicalOverviewVisual model={model} onOpenPlayer={onOpenPlayer} />
+      <MedicalSquadMonitor rows={model.risk} onOpenPlayer={onOpenPlayer} />
       {model.injured.length === 0 ? (
         <p className="medical-workspace__empty">No active injuries.</p>
       ) : (
@@ -205,24 +189,28 @@ function OverviewBoard({
 
 function InjuredBoard({
   rows,
+  model,
   selectedInjuryId,
   onSelectInjury,
   onOpenPlayer,
   onSetRehabilitationPlan,
 }: {
   readonly rows: readonly MedicalInjuredRow[]
+  readonly model: MedicalWorkspaceModel
   readonly selectedInjuryId: InjuryId | undefined
   readonly onSelectInjury: (injuryId: InjuryId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
   readonly onSetRehabilitationPlan: (injuryId: InjuryId, mode: RehabilitationMode) => void
 }) {
   if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No active injuries.</p>
+    return <MedicalNoInjuries model={model} onOpenPlayer={onOpenPlayer} />
   }
 
   const selected = rows.find((row) => row.injuryId === selectedInjuryId) ?? rows[0]
 
   return (
+    <>
+    <MedicalInjuryVisual rows={rows} onOpenPlayer={onOpenPlayer} />
     <div className="medical-workspace__split">
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
@@ -264,22 +252,30 @@ function InjuredBoard({
         <aside className="medical-workspace__inspector ng-holo-panel" data-ng-region="medical-injured-inspector">
           <p className="medical-workspace__eyebrow">Injury dossier</p>
           <h3 className="medical-workspace__inspector-title">{selected.playerName}</h3>
-          <dl className="medical-workspace__metrics">
-            <MetricRow label="Position" value={<PlayPositionMark position={selected.position} />} />
-            <MetricRow label="Injury" value={selected.injuryLabel} />
-            <MetricRow label="Severity" value={selected.severityLabel} />
-            <MetricRow label="Source" value={selected.sourceLabel} />
-            <MetricRow label="Injured on" value={selected.injuredOnLabel} />
-            <MetricRow label="Expected return" value={selected.expectedReturnLabel} />
-            <MetricRow label="Projected review" value={selected.reviewDueLabel} />
-            <MetricRow label="Medical status" value={selected.lifecycleStatus} />
-            <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
-            <MetricRow label="Career Fatigue" value={selected.fatigue} />
-            <MetricRow label="Days remaining" value={selected.daysRemaining} />
-            <MetricRow label="Duration" value={selected.durationLabel} />
-            <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
-            <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
-          </dl>
+          <div className="medical-cs__injury-facts">
+            <div><small>SEVERITY</small><strong data-severity={selected.severity}>{selected.severityLabel}</strong></div>
+            <div><small>DAYS TO REVIEW</small><strong>{Math.max(0, selected.daysRemaining)}</strong></div>
+            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<small>/100</small></strong></div>
+          </div>
+          <div className="medical-cs__injury-milestones">
+            <div><small>INJURED</small><strong>{selected.injuredOnLabel}</strong></div>
+            <div><small>PROJECTED REVIEW</small><strong>{selected.reviewDueLabel}</strong></div>
+            <div><small>EXPECTED RETURN</small><strong>{selected.expectedReturnLabel}</strong></div>
+          </div>
+          <div className="medical-cs__injury-status">
+            <strong>{selected.lifecycleStatus}</strong><span>{selected.injuryLabel} · {selected.position}</span>
+          </div>
+          <details className="medical-cs__injury-details">
+            <summary>FULL CASE DETAILS</summary>
+            <dl className="medical-workspace__metrics">
+              <MetricRow label="Source" value={selected.sourceLabel} />
+              <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
+              <MetricRow label="Duration" value={selected.durationLabel} />
+              <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
+              <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
+            </dl>
+            {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
+          </details>
           <p>{selected.rehabilitationConsequence}</p>
           <label className="medical-workspace__rehab-control">
             Rehab plan
@@ -289,10 +285,10 @@ function InjuredBoard({
               <option value="ACCELERATED_REHAB">ACCELERATED REHAB</option>
             </select>
           </label>
-          {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
         </aside>
       )}
     </div>
+    </>
   )
 }
 
@@ -304,10 +300,12 @@ function HistoryBoard({
   readonly onOpenPlayer: (playerId: PlayerId) => void
 }) {
   if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No recorded injuries.</p>
+    return <MedicalHistoryVisual rows={rows} />
   }
 
   return (
+    <>
+    <MedicalHistoryVisual rows={rows} />
     <div className="medical-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="medical-workspace__table"
@@ -336,6 +334,7 @@ function HistoryBoard({
         rows={rows.map((row) => ({ ...row, id: row.injuryId }))}
       />
     </div>
+    </>
   )
 }
 
@@ -357,6 +356,8 @@ function RiskBoard({
   const selected = rows.find((row) => row.playerId === selectedPlayerId) ?? rows[0]
 
   return (
+    <>
+    <MedicalRiskScatter rows={rows} onOpenPlayer={onOpenPlayer} />
     <div className="medical-workspace__split">
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
@@ -400,14 +401,14 @@ function RiskBoard({
         <aside className="medical-workspace__inspector ng-holo-panel" data-ng-region="medical-risk-inspector">
           <p className="medical-workspace__eyebrow">Risk assessment</p>
           <h3 className="medical-workspace__inspector-title">{selected.playerName}</h3>
-          <dl className="medical-workspace__metrics">
-            <MetricRow label="Band" value={selected.riskBandLabel} />
-            <MetricRow label="Score" value={selected.riskScore} />
-            <MetricRow label="Fatigue" value={selected.fatigue} />
-            <MetricRow label="Load" value={selected.fatigueLabel} />
-            <MetricRow label="Availability" value={selected.available ? 'Available' : 'Injured'} />
-            {selected.quality === null ? null : <MetricRow label="Advisory quality" value={selected.quality} />}
-          </dl>
+          <div className="medical-cs__risk-inspector">
+            <div><small>INJURY RISK</small><strong>{selected.riskScore}<span>/100 · {selected.riskBandLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.riskBand === 'high' ? 'red' : selected.riskBand === 'elevated' ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.riskScore))}%` }} /></div></div>
+            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<span>/100 · {selected.fatigueLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.fatigue >= 70 ? 'red' : selected.fatigue >= 50 ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.fatigue))}%` }} /></div></div>
+          </div>
+          <div className="medical-cs__risk-inspector-foot">
+            <span>{selected.available ? 'AVAILABLE' : 'UNAVAILABLE'}</span>
+            {selected.quality !== null && <span>ADVISORY QUALITY {selected.quality}/100</span>}
+          </div>
           {selected.reasons.length === 0 ? (
             <p className="medical-workspace__note">No elevated risk factors.</p>
           ) : (
@@ -420,6 +421,7 @@ function RiskBoard({
         </aside>
       )}
     </div>
+    </>
   )
 }
 
@@ -430,30 +432,8 @@ function StaffBoard({
   readonly rows: readonly MedicalStaffRow[]
   readonly onOpenStaff: (staffPersonId: StaffPersonId) => void
 }) {
-  if (rows.length === 0) {
-    return <p className="medical-workspace__empty">No medical staff assigned to this team.</p>
-  }
-
-  return (
-    <div className="medical-workspace__panel ng-holo-panel">
-      <NgPrecisionTable
-        className="medical-workspace__table"
-        columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.staffPersonId })), [
-          ngCol('name', 'Staff', (row) => (
-            <button className="medical-workspace__link" onClick={() => onOpenStaff(row.staffPersonId)} type="button">
-              {row.name}
-            </button>
-          ), { value: (row) => row.name }),
-          ngCol('role', 'Role', (row) => row.roleLabel, { value: (row) => row.roleLabel }),
-          ngCol('proficiency', 'Proficiency', (row) => row.proficiency, { numeric: true, value: (row) => row.proficiency }),
-          ngCol('workload', 'Workload', (row) => row.workloadLabel, { value: (row) => row.workloadLabel }),
-          ngCol('utilization', 'Utilization', (row) => row.utilizationLabel, { value: (row) => row.utilizationLabel }),
-        ])}
-        gridId="ng-medical-staff"
-        rows={rows.map((row) => ({ ...row, id: row.staffPersonId }))}
-      />
-    </div>
-  )
+  if (rows.length === 0) return <p className="medical-workspace__empty">No medical staff assigned to this team.</p>
+  return <MedicalStaffVisual rows={rows} onOpenStaff={onOpenStaff} />
 }
 
 export function MedicalWorkspace() {
@@ -549,8 +529,27 @@ export function MedicalWorkspace() {
               <OverviewBoard model={model} onOpenPlayer={navigateToPlayerMedical} />
             </>
           ) : null}
+          {activeTab === 'recovery' ? (
+            <>
+              {model.injured.length === 0
+                ? <MedicalNoInjuries model={model} onOpenPlayer={navigateToPlayerMedical} />
+                : <MedicalRecoveryVisual model={model} onOpenPlayer={navigateToPlayerMedical} />}
+              <ReturnToPlayBoard
+                rows={model.returnToPlayReviews}
+                onDecision={(injuryId, decision, outcomeId) => reviewReturnToPlay(injuryId, decision, outcomeId)}
+                onFitnessTest={(injuryId) => conductFitnessTest(injuryId)}
+                onOpenPlayer={navigateToPlayerMedical}
+              />
+              <MedicalRecommendationsBoard
+                recommendations={medicalRecommendations}
+                onAccept={(outcomeId) => acceptStaffRecommendation(outcomeId)}
+                onDismiss={(outcomeId) => dismissStaffRecommendation(outcomeId)}
+              />
+            </>
+          ) : null}
           {activeTab === 'injured' ? (
             <InjuredBoard
+              model={model}
               onOpenPlayer={navigateToPlayerMedical}
               onSelectInjury={setSelectedInjuryId}
               onSetRehabilitationPlan={(injuryId, mode) => setRehabilitationPlan(injuryId, mode)}

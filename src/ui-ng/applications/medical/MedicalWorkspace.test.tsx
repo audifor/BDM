@@ -178,4 +178,63 @@ describe('MedicalWorkspace', () => {
     expect(updated.injuriesById[injury.id]?.returnToPlay?.clearedOn).toBeUndefined()
     expect(updated.delegationOutcomesById[outcome.id]?.applied).toBe(true)
   })
+
+  it('shows the Courtside availability, risk and review graphics using the current world', () => {
+    const { world } = withInjury(createNewGame())
+    mountMedicalWorkspace(world)
+
+    expect(document.querySelector('[data-ng-region="medical-courtside-dashboard"]')).not.toBeNull()
+    expect(screen.getByText('Squad availability')).toBeInTheDocument()
+    expect(screen.getByText('Injury risk profile')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /players available/ })).toBeInTheDocument()
+    expect(screen.getByText('Next medical reviews')).toBeInTheDocument()
+  })
+
+  it('has a dedicated recovery section backed by the same canonical review commands', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const injury = createInjury({
+      id: injuryIdFromString('injury-medical-courtside-review'), playerId,
+      kind: 'kneeSprain', severity: 'serious',
+      injuredOn: addDays(base.currentDate, -30), expectedReturnDate: base.currentDate,
+    })
+    mountMedicalWorkspace(updateGameWorld(base, { injuries: [injury] }))
+    fireEvent.click(screen.getByRole('button', { name: 'Recovery' }))
+    expect(document.querySelector('[data-ng-region="medical-recovery-visual"]')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'RUN FITNESS TEST' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'RUN FITNESS TEST' }))
+    expect(useGameStore.getState().world!.injuriesById[injury.id]?.fitnessTests).toHaveLength(1)
+  })
+
+  it('visualizes injury history and medical staff from recorded data', () => {
+    const { world } = withInjury(createNewGame())
+    mountMedicalWorkspace(world)
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(document.querySelector('[data-ng-region="medical-history-visual"]')).not.toBeNull()
+    expect(screen.getByText('Recorded injury families')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
+    expect(document.querySelector('[data-ng-region="medical-staff-visual"]')).not.toBeNull()
+    expect(screen.getByText('Medical department capability')).toBeInTheDocument()
+  })
+
+  it('keeps the Courtside medical monitor visible for a healthy roster and does not show empty Injured', () => {
+    const { team } = mountMedicalWorkspace()
+    expect(document.querySelector('[data-ng-region="medical-courtside-dashboard"]')).not.toBeNull()
+    expect(screen.getByText('Squad medical monitor')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Open medical profile for / }).length).toBe(team.rosterPlayerIds.length)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Injured' }))
+    expect(document.querySelector('[data-ng-region="medical-healthy-injuries"]')).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'NO ACTIVE INJURIES' })).toBeInTheDocument()
+    expect(screen.getByText('Squad medical monitor')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Open medical profile for / }).length).toBe(team.rosterPlayerIds.length)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recovery' }))
+    expect(document.querySelector('[data-ng-region="medical-healthy-injuries"]')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(document.querySelector('[data-ng-region="medical-history-visual"]')).not.toBeNull()
+    expect(screen.getByText('No recorded history.')).toBeInTheDocument()
+  })
+
 })

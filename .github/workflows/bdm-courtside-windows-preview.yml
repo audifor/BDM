@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/bdm-courtside-windows-preview.yml'
       - 'src-tauri/tauri.courtside-preview.conf.json'
+      - 'src/ui-ng/applications/medical/**'
   workflow_dispatch:
 
 permissions:
@@ -47,9 +48,11 @@ jobs:
           ---------------------
           1. Extract this ZIP to a new folder.
           2. Double-click BDM-Courtside-Preview.exe (Windows 10/11).
-          3. Create a NEW test save, then open TACTICS.
-          4. Test Pizarra, Diseñador, Emparejamientos, Rotaciones, Plan de partido.
-          5. Do not use your primary saves for testing.
+          3. Create a NEW test save, then open MEDICAL.
+          4. Check Overview charts and Injury-free squad monitor, then Injured,
+             Recovery, Risk, History and Staff. Test light and dark modes.
+          5. Tactics preview is also included in the same branch.
+          6. Do not use your primary saves for testing.
           This is an unsigned development preview, not a production release.
           It is intentionally not a Windows installer and does not replace the regular app.
           If Windows warns about an unsigned file, verify the build's GitHub Actions source before proceeding.
