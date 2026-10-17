@@ -1,7 +1,7 @@
 import { addYears, compareGameDates, parseGameDate } from '@/domain/date'
 import { createCoach } from '@/domain/coach'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
-import { applyCoachRpgPreset, type CoachRpgPreset } from '@/domain/coachRpg'
+import { applyCoachRpgPreset, createCoachRpgProfile, USER_COACH_AMBITIONS, USER_COACH_BACKGROUNDS, type CoachRpgPreset, type UserCoachAmbition, type UserCoachBackground } from '@/domain/coachRpg'
 import { createPersonality } from '@/domain/personality'
 import { createPerson } from '@/domain/person'
 import { createStaffPerson, createStaffProfessionalProfile } from '@/domain/staff'
@@ -12,7 +12,7 @@ import type { Gender } from '@/domain/primitives'
 /** BS19B P0. Edits only the selected manager's canonical Person/StaffProfile.
  * Imported historical WorldDB coaches cannot be edited. Newly created WorldDB coaches have
  * their own BS19B IDs and may be customized without overwriting source records. */
-export type UserCoachBackground = 'rookie' | 'formerPlayer' | 'inDebt'
+export type { UserCoachBackground, UserCoachAmbition } from '@/domain/coachRpg'
 export type UserCoachDisposition = 'balanced' | 'ambitious' | 'loyal'
 
 export interface UserCoachCreationInput {
@@ -22,6 +22,8 @@ export interface UserCoachCreationInput {
   readonly gender: Gender
   readonly nationalityId?: CountryId
   readonly background: UserCoachBackground
+  readonly ambition?: UserCoachAmbition
+  readonly biography?: string
   readonly disposition: UserCoachDisposition
   readonly coachingStyle: CoachRpgPreset
 }
@@ -44,7 +46,9 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
     throw new RangeError('New head coach must be between 18 and 99 years old at the beginning of the career')
   }
   if (input.gender !== 'male' && input.gender !== 'female') throw new RangeError('Invalid coach gender')
-  if (!(['rookie', 'formerPlayer', 'inDebt'] as readonly string[]).includes(input.background)) throw new RangeError('Invalid coach background')
+  if (!USER_COACH_BACKGROUNDS.includes(input.background)) throw new RangeError('Invalid coach background')
+  if (input.ambition !== undefined && !USER_COACH_AMBITIONS.includes(input.ambition)) throw new RangeError('Invalid coach ambition')
+  if (input.biography !== undefined && (typeof input.biography !== 'string' || input.biography.trim().length > 600)) throw new RangeError('Coach biography is too long')
   if (!(['balanced', 'ambitious', 'loyal'] as readonly string[]).includes(input.disposition)) throw new RangeError('Invalid coach disposition')
   const nationalityId = input.nationalityId ?? coach.nationalityId
   if (world.countries[nationalityId] === undefined) throw new RangeError('Coach nationality must be a country in the selected world')
@@ -53,14 +57,18 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
   // relations and every other reference continue to address the same human actor.
   const updatedCoach = createCoach({ ...coach, firstName, lastName, gender: input.gender, nationalityId })
   const baseProfile = applyCoachRpgPreset(staff.professional, input.coachingStyle)
-  const adjusted = input.background === 'formerPlayer'
-    ? createStaffProfessionalProfile({ ...baseProfile, attributes: {
-        ...baseProfile.attributes,
-        coaching: Math.min(100, baseProfile.attributes.coaching + 2),
-        leadership: Math.min(100, baseProfile.attributes.leadership + 3),
-        motivation: Math.min(100, baseProfile.attributes.motivation + 3),
-      } })
-    : baseProfile
+  const backgroundBonuses: Readonly<Record<UserCoachBackground, Readonly<Partial<Record<keyof typeof baseProfile.attributes, number>>>>> = {
+    rookie: {},
+    formerPlayer: { coaching: 2, leadership: 3, motivation: 3 },
+    inDebt: {},
+    academyCoach: { playerDevelopment: 5, coaching: 3, communication: 2 },
+    videoAnalyst: { analysis: 5, tacticalKnowledge: 4, talentEvaluation: 2 },
+    formerAssistant: { coaching: 4, adaptability: 3, leadership: 2 },
+  }
+  const bonuses = backgroundBonuses[input.background]
+  const adjusted = createStaffProfessionalProfile({ attributes: Object.fromEntries(
+    Object.entries(baseProfile.attributes).map(([key, value]) => [key, Math.min(100, value + (bonuses[key as keyof typeof bonuses] ?? 0))]),
+  ) as typeof baseProfile.attributes })
   const updatedStaff = createStaffPerson({ ...staff, identity: { ...staff.identity, firstName, lastName, dateOfBirth: dob, nationality: nationalityId }, professional: adjusted })
   const person = world.personsById[coach.personId]
   if (person === undefined) throw new RangeError('Player-controlled Coach is missing its canonical Person')
@@ -92,6 +100,20 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
       [staff.id]: createdPersonality,
     } })
   }
+
+  // A single CoachRpg profile owns the creator's narrative and ambition. The same data is
+  // restored by the existing Save V4 path, and remains separate from sourced WorldDB history.
+  const rpg = next.coachRpgProfilesByCoachId[coach.id]
+  if (rpg === undefined) throw new RangeError('Coach RPG profile is unavailable')
+  if (rpg.creatorOrigin !== undefined) throw new RangeError('Coach creator has already initialized this career')
+  next = updateGameWorld(next, { coachRpgProfilesByCoachId: {
+    ...next.coachRpgProfilesByCoachId,
+    [coach.id]: createCoachRpgProfile({ ...rpg, creatorOrigin: {
+      background: input.background,
+      ambition: input.ambition ?? 'firstTitle',
+      ...(input.biography === undefined ? {} : { biography: input.biography }),
+    } }),
+  } })
 
   // A voluntarily chosen indebted origin is a source-backed fictional starting condition,
   // not a loan fabricated against someone imported from a historical WorldDB snapshot.
