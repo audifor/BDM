@@ -18,6 +18,8 @@ export interface TrainingMesocycle {
   readonly endDate: string
   readonly objective: string
   readonly moduleId: string
+  /** Optional reference to a saved Tactics Designer play. Tactical match effects are not inferred. */
+  readonly playId?: string
   readonly intensity: StudioIntensity
 }
 export interface TrainingIndividualGoal {
@@ -59,7 +61,7 @@ export function createTrainingStudioPlan(value: TrainingStudioPlan): TrainingStu
     dates(block, 'Mesocycle')
     const parent = value.macrocycles.find(phase => phase.id === block.macrocycleId)
     if (!parent || block.startDate < parent.startDate || block.endDate > parent.endDate) throw new RangeError('Mesocycle outside macrocycle')
-    if (!block.name.trim() || !block.moduleId.trim() || !['light','normal','high'].includes(block.intensity)) throw new RangeError('Invalid mesocycle')
+    if ((block.playId !== undefined && !block.playId.trim()) || !block.name.trim() || !block.moduleId.trim() || !['light','normal','high'].includes(block.intensity)) throw new RangeError('Invalid mesocycle')
   }
   for (const goal of value.individualGoals) {
     if (!goal.playerId.trim() || !goal.targetRating.trim() || !iso(goal.targetDate) || !Number.isFinite(goal.targetValue) || goal.targetValue < 0 || goal.targetValue > 100) throw new RangeError('Invalid individual development goal')

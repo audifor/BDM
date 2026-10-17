@@ -30,3 +30,7 @@ El catálogo anterior incluía una anotación obsoleta: el riesgo relativo de le
 ## Mentoring V1 / impacto jugable
 
 `progressTrainingMentoring` se ejecuta dentro de la fase `TRAINING` de `CalendarEngine`. Usa checkpoints de cuatro semanas, solo jugadores del club, relaciones bidireccionales y eventos deterministas. Aporta, como máximo, 1 punto de una dimensión de personalidad por checkpoint cuando existe ventaja suficiente del mentor. Bajo conflicto de temperamentos, registra fricción sin mejora. Los eventos se almacenan en `relationshipsByKey` y bloquean ejecución duplicada el mismo día. Los atributos deportivos y el potencial no se modifican. Falta validación en partidas largas y Save/Load antes del PASS global.
+
+## Conexión de planificación con la Pizarra
+
+Los mesociclos pueden asociar por ID una jugada real guardada desde Tactics Designer. El vínculo se guarda en el mismo Save V4. Se puede abrir la Pizarra y seleccionar la jugada desde el editor de mesociclos. El laboratorio muestra factores reales de estímulo, fatiga y carga para un ejercicio, nunca predicciones ni porcentajes de lesión. **El vínculo de jugada no modifica todavía la familiaridad del MatchEngine; requiere certificación del puente Tactics/MatchEngine antes de activarlo.**
