@@ -15,6 +15,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import '@/ui-ng/applications/club/courtside-club-management.css'
 
 const BOARD_TABS = [
   { id: 'overview', label: 'Overview' },
@@ -54,13 +55,13 @@ export function BoardWorkspace() {
   )
 
   if (world === null) {
-    return <NgHoloShell appLabel="Board" empty emptyMessage="No career loaded." region="board-workspace" />
+    return <NgHoloShell appLabel="Board" empty emptyMessage="No career loaded." className="cs-club-management cs-club-board" region="board-workspace" />
   }
   if (team === undefined || governance === null) {
-    return <NgHoloShell appLabel="Board" empty emptyMessage="No team assigned to the user coach." region="board-workspace" />
+    return <NgHoloShell appLabel="Board" empty emptyMessage="No team assigned to the user coach." className="cs-club-management cs-club-board" region="board-workspace" />
   }
   if (summary === undefined) {
-    return <NgHoloShell appLabel="Board" empty emptyMessage="The board will initialize when this project starts." region="board-workspace" teamId={team.id} />
+    return <NgHoloShell appLabel="Board" empty emptyMessage="The board will initialize when this project starts." className="cs-club-management cs-club-board" region="board-workspace" teamId={team.id} />
   }
 
   const renewal = evaluateRenewalRecommendation(summary.state)
@@ -101,6 +102,7 @@ export function BoardWorkspace() {
       }
       onTabSelect={(id) => setTab(id as BoardTabId)}
       region="board-workspace"
+      className="cs-club-management cs-club-board"
       tabs={BOARD_TABS}
       teamId={team.id}
       title={team.name}
@@ -236,7 +238,7 @@ function GovernancePanel({
   readonly selectedRequestId: string | undefined
 }) {
   return (
-    <>
+    <div className="cs-board__governance-layout">
       <div className="ng-canon__panel ng-holo-panel" data-ng-region="board-governance-queue">
         <p className="ng-canon__eyebrow">Pending matters</p>
         {governance.decisions.length === 0 ? (
@@ -269,7 +271,7 @@ function GovernancePanel({
           </ul>
         )}
       </div>
-    </>
+    </div>
   )
 }
 
