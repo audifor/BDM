@@ -262,8 +262,8 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket, em
   const team = useMemo(() => world === null ? undefined : getUserTeam(world), [world])
   const teamStyle = useMemo(() => { if (team === undefined) return undefined; const colors = deriveTeamColors(team.id); return { '--po-team-primary': colors.primary, '--po-team-secondary': colors.secondary, '--po-team-muted': colors.muted } as CSSProperties }, [team])
   const tabs = useMemo(() => SCOUTING_WORKSPACE_TABS.map((id) => ({ id, label: SCOUTING_TAB_LABELS[id], active: id === activeTab })), [activeTab])
-  const embeddedTabs: readonly ScoutingWorkspaceTabId[] = ['centre', 'focuses', 'assignments', 'coverage', 'reports']
-  const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? navigation?.openEntity ?? ((destination: EntityDestination) => navigateToPlayer(destination.playerId)))({ type: 'player', playerId, section: 'overview' })
+  const embeddedTabs = ['centre', 'focuses', 'assignments', 'coverage', 'reports'] as const satisfies readonly ScoutingWorkspaceTabId[]
+  const openPlayer = (playerId: PlayerId) => (onOpenEntity ?? navigation?.openEntity ?? ((destination: EntityDestination) => { if (destination.type === 'player') navigateToPlayer(destination.playerId) }))({ type: 'player', playerId, section: 'overview' })
   if (world === null || model === null || team === undefined) return <div className="scouting-workspace scouting-workspace--empty" data-ng-region="scouting-workspace"><section className="scouting-workspace__empty-state"><h1 className="scouting-workspace__empty-title">Scouting</h1><p className="scouting-workspace__empty-message">No team assigned to the user coach.</p></section></div>
   const content = <>
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
