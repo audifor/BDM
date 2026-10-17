@@ -19,7 +19,7 @@ import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCe
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
-import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
+import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, reviewMarketTarget, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
 import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
@@ -151,6 +151,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         targets={targets}
         onAddTarget={(playerId) => applyTargetChange(() => addMarketTarget(world, team.id, playerId))}
         onArchiveTarget={(playerId) => applyTargetChange(() => archiveMarketTarget(world, team.id, playerId))}
+        onReviewTarget={(playerId) => applyTargetChange(() => reviewMarketTarget(world, team.id, playerId))}
         onTargetPriority={(playerId, priority: MarketTargetPriority) => applyTargetChange(() => setMarketTargetPriority(world, team.id, playerId, priority))}
         onTargetNote={(playerId, note) => applyTargetChange(() => setMarketTargetNote(world, team.id, playerId, note))}
         onRequestScouting={requestScoutingAssignment}
