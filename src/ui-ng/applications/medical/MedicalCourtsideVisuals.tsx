@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { PlayerId, StaffPersonId } from '@/domain/ids'
+import { formatMedicalOneDecimal } from './formatMedicalOneDecimal'
 import type { MedicalWorkspaceModel, MedicalHistoryRow, MedicalInjuredRow, MedicalRiskRow, MedicalStaffRow } from './medicalWorkspaceModel'
 
 /**
@@ -31,7 +32,7 @@ function Meter({ value, max = 100, tone = 'lime', label }: {
   readonly tone?: 'lime' | 'orange' | 'red' | 'muted'
   readonly label: string
 }) {
-  return <div className="medical-cs__meter" role="img" aria-label={`${label}: ${value} of ${max}`}>
+  return <div className="medical-cs__meter" role="img" aria-label={`${label}: ${formatMedicalOneDecimal(value)} of ${max}`}>
     <span className="medical-cs__meter-fill" data-tone={tone} style={{ width: `${ratio(value, max)}%` }} />
   </div>
 }
@@ -69,7 +70,7 @@ function RiskBands({ model }: { readonly model: MedicalWorkspaceModel }) {
     <div className="medical-cs__risk-bands">
       {bands.map(band => <div key={band.id}><span className={`medical-cs__dot is-${band.id}`} /> <b>{band.count}</b><small>{band.title}</small></div>)}
     </div>
-    <div className="medical-cs__risk-footer"><span>AVERAGE FATIGUE</span><strong>{model.averageFatigue}<small>/100</small></strong></div>
+    <div className="medical-cs__risk-footer"><span>AVERAGE FATIGUE</span><strong>{formatMedicalOneDecimal(model.averageFatigue)}<small>/100</small></strong></div>
     <Meter value={model.averageFatigue} label="Average squad career fatigue" tone={model.averageFatigue >= 70 ? 'red' : model.averageFatigue >= 50 ? 'orange' : 'lime'} />
     <small className="medical-cs__annotation">Current engine assessment, not a future injury probability.</small>
   </Panel>
@@ -93,11 +94,11 @@ export function MedicalRiskScatter({ rows, onOpenPlayer }: {
           <line x1="44" y1="12" x2="44" y2="202" className="medical-cs__axis-line" />
           <line x1="44" y1="202" x2="474" y2="202" className="medical-cs__axis-line" />
           {rows.map(row => <g key={row.playerId} className="medical-cs__plot-point"
-            role="button" tabIndex={0} aria-label={`Open ${row.playerName}: fatigue ${row.fatigue}, risk ${row.riskScore}`}
+            role="button" tabIndex={0} aria-label={`Open ${row.playerName}: fatigue ${formatMedicalOneDecimal(row.fatigue)}, risk ${formatMedicalOneDecimal(row.riskScore)}`}
             onClick={() => onOpenPlayer(row.playerId)}
             onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpenPlayer(row.playerId) } }}>
             <circle cx={44 + bounded(row.fatigue) * 4.3} cy={202 - bounded(row.riskScore) * 1.9} r="7.5" data-band={row.riskBand}/>
-            <title>{`${row.playerName}: fatigue ${row.fatigue}, risk ${row.riskScore} (${row.riskBandLabel})`}</title>
+            <title>{`${row.playerName}: fatigue ${formatMedicalOneDecimal(row.fatigue)}, risk ${formatMedicalOneDecimal(row.riskScore)} (${row.riskBandLabel})`}</title>
           </g>)}
           <text x="259" y="235" textAnchor="middle" className="medical-cs__axis-title">CAREER FATIGUE</text>
           <text transform="translate(10 106) rotate(-90)" textAnchor="middle" className="medical-cs__axis-title">INJURY RISK</text>
@@ -141,20 +142,22 @@ export function MedicalSquadMonitor({ rows, onOpenPlayer }: {
       ? <div className="medical-cs__no-data">No medical assessments recorded for this roster.</div>
       : <div className="medical-cs__squad-grid">
         {ordered.map(row => <button type="button" key={row.playerId} className="medical-cs__squad-player" onClick={() => onOpenPlayer(row.playerId)}
-          aria-label={`Open medical profile for ${row.playerName}: fatigue ${row.fatigue}, risk ${row.riskScore}`}>
-          <div className="medical-cs__squad-person">
-            <span className="medical-cs__squad-position">{row.position}</span>
-            <strong>{row.playerName}</strong>
-            <span className="medical-cs__squad-status" data-band={row.available ? row.riskBand : 'unavailable'}>
-              {row.available ? row.riskBandLabel.toUpperCase() : 'UNAVAILABLE'}
-            </span>
-          </div>
-          <div className="medical-cs__squad-bars">
-            <div><small>FATIGUE</small><Meter value={row.fatigue} label={`${row.playerName} fatigue`}
-              tone={row.fatigue >= 70 ? 'red' : row.fatigue >= 50 ? 'orange' : 'lime'} /><b>{row.fatigue}</b></div>
-            <div><small>RISK</small><Meter value={row.riskScore} label={`${row.playerName} injury risk score`}
-              tone={row.riskBand === 'high' ? 'red' : row.riskBand === 'elevated' ? 'orange' : 'lime'} /><b>{row.riskScore}</b></div>
-          </div>
+          aria-label={`Open medical profile for ${row.playerName}: fatigue ${formatMedicalOneDecimal(row.fatigue)}, risk ${formatMedicalOneDecimal(row.riskScore)}`}>
+          <span className="medical-cs__squad-position">{row.position}</span>
+          <strong className="medical-cs__squad-name" title={row.playerName}>{row.playerName}</strong>
+          <span className="medical-cs__squad-status" data-band={row.available ? row.riskBand : 'unavailable'}>
+            {row.available ? row.riskBandLabel.toUpperCase() : 'UNAVAILABLE'}
+          </span>
+          <span className="medical-cs__squad-metric"><small>FAT</small>
+            <Meter value={row.fatigue} label={`${row.playerName} fatigue`}
+              tone={row.fatigue >= 70 ? 'red' : row.fatigue >= 50 ? 'orange' : 'lime'} />
+            <b>{formatMedicalOneDecimal(row.fatigue)}</b>
+          </span>
+          <span className="medical-cs__squad-metric"><small>RISK</small>
+            <Meter value={row.riskScore} label={`${row.playerName} injury risk score`}
+              tone={row.riskBand === 'high' ? 'red' : row.riskBand === 'elevated' ? 'orange' : 'lime'} />
+            <b>{formatMedicalOneDecimal(row.riskScore)}</b>
+          </span>
         </button>)}
       </div>}
     <small className="medical-cs__annotation">These are current engine assessments. The risk score is not a percentage probability of injury. Select any player to open their medical file.</small>
