@@ -38,6 +38,13 @@ describe('ScoutingWorkspace', () => {
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 
+  it('returns to Mercado through the compact header rather than a Talent navigation strip', () => {
+    mountScoutingWorkspace()
+    expect(screen.queryByRole('navigation', { name: 'Talent operations' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '← Mercado' }))
+    expect(new URLSearchParams(window.location.search).get('app')).toBe('market')
+  })
+
   it('renders organization knowledge from the live world without leaking hidden ratings', () => {
     const { team, world } = mountScoutingWorkspace()
     const player = world.players[team.rosterPlayerIds[0]!]!
