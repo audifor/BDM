@@ -66,7 +66,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'coach') return <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
   if (key === 'market') return <MarketWorkspace initialWorld={world} onOpenScouting={() => actions.openApp('scouting')} />
-  if (key === 'scouting') return <NgWorkspaceNavigationProvider><ScoutingWorkspace initialWorld={world} onOpenEntity={actions.openEntity} /></NgWorkspaceNavigationProvider>
+  if (key === 'scouting') return <NgWorkspaceNavigationProvider><ScoutingWorkspace initialWorld={world} onOpenEntity={actions.openEntity} onOpenMarket={() => actions.openApp('market')} /></NgWorkspaceNavigationProvider>
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
   if (key === 'coach-finances') return <CoachFinancesScreen world={world} onLifestyle={actions.setCoachLifestyle ?? (() => undefined)} />
