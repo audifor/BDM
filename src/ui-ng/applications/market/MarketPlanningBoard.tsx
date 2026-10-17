@@ -32,13 +32,9 @@ export function MarketPlanningBoard({ world, teamId, remainingSalaryBudget, onOp
     return { position, current: currentIds.length, retained: retained.length, atRisk: riskPositions.has(position), focuses: focuses.filter((focus) => focus.positions.includes(position)).length }
   })
   return <div className="market-plan" data-testid="market-planning">
-    <div className="market-plan__header">
-      <div><span className="market-cs__kicker">MERCADO · CONTRATOS</span><h2>Planificación de plantilla</h2>
-        <p>Contratos, vencimientos y continuidad por posición.</p></div>
-      <label>Horizonte<select aria-label="Horizonte de plantilla" value={selected.id} onChange={(event) => setHorizonId(event.target.value)}>
-        {planning.horizons.map((item) => <option key={item.id} value={item.id}>{item.kind === 'AS_OF_DATE' ? 'Hoy' : item.kind === 'SEASON_END' ? 'Final de temporada' : 'Final de próxima temporada'} · {item.date}</option>)}
-      </select></label>
-    </div>
+    <div className="market-plan__compact-head"><strong>PLANIFICACIÓN DE PLANTILLA</strong><label>Horizonte<select aria-label="Horizonte de plantilla" value={selected.id} onChange={(event) => setHorizonId(event.target.value)}>
+      {planning.horizons.map((item) => <option key={item.id} value={item.id}>{item.kind === 'AS_OF_DATE' ? 'Hoy' : item.kind === 'SEASON_END' ? 'Final de temporada' : 'Final de próxima temporada'} · {item.date}</option>)}
+    </select></label></div>
     <div className="market-plan__stats">
       <div><small>Jugadores actuales</small><strong>{planning.currentRosterCount}</strong><span>Plantilla hoy</span></div>
       <div><small>Contratos vigentes en horizonte</small><strong>{selected.contractuallyRetainedPlayerIds.length}</strong><span>{selected.date}</span></div>
