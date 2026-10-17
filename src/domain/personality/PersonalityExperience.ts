@@ -1,3 +1,4 @@
+import { OBSERVED_PERSON_EVENT_DIMENSIONS } from './ObservedPersonalityEventCatalog'
 import { createPersonality, hasFullSemanticPersonality, type Personality } from './Personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS, type SemanticPersonalityDimension } from './SemanticPersonality'
 
@@ -56,6 +57,10 @@ export function applyPersonalityExperience(
     || !SEMANTIC_PERSONALITY_DIMENSIONS.some((dim) => dim === experience.dimension)
     || !Number.isInteger(experience.intensity) || experience.intensity < 1 || experience.intensity > 100
     || (experience.valence !== 1 && experience.valence !== -1)) throw new RangeError('Invalid observed PERSON experience')
+  const actualDimension = (OBSERVED_PERSON_EVENT_DIMENSIONS as Readonly<Record<string, string>>)[experience.kind]
+  if (actualDimension === undefined || actualDimension !== experience.dimension) {
+    throw new RangeError('Observed PERSON event kind and dimension do not match canonical catalog')
+  }
   if (history.some((entry) => entry.id === experience.id && entry.personId === experience.personId)) {
     return { personality, history }
   }
