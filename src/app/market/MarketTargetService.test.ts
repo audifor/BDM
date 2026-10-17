@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { getAddressableScoutingPlayerIds } from '@/app/scouting'
-import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
+import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, reviewMarketTarget, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
 import { marketTargetId } from '@/domain/market/MarketTarget'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
@@ -19,8 +19,12 @@ describe('Market objectives are canonical and save-backed', () => {
     let current = addMarketTarget(world, team.id, playerId)
     current = setMarketTargetPriority(current, team.id, playerId, 'HIGH')
     current = setMarketTargetNote(current, team.id, playerId, 'Seguir rendimiento durante la temporada')
+    current = reviewMarketTarget(current, team.id, playerId)
     const target = current.marketTargetsById[marketTargetId(team.id, playerId)]!
-    expect(target.history.map((item) => item.kind)).toEqual(['ADDED','PRIORITY_CHANGED','NOTE_UPDATED'])
+    expect(target.history.map((item) => item.kind)).toEqual(['ADDED','PRIORITY_CHANGED','NOTE_UPDATED','KNOWLEDGE_REVIEWED'])
+    expect(target.knowledgeSnapshots).toHaveLength(2)
+    expect(target.knowledgeSnapshots?.[0]?.date).toBe(world.currentDate)
+    expect(target.knowledgeSnapshots?.[0]?.knownRatingCount).toBeGreaterThanOrEqual(0)
     expect(target.priority).toBe('HIGH')
     const saved = serializeGameWorldV4(current, '2026-10-17T12:00:00.000Z')
     const loaded = deserializeGameWorldV4(saved)
