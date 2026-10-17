@@ -3,6 +3,7 @@ import type { MatchNextPlayerProfile } from '../setup'
 import type { MatchPlayerState, MatchState } from '../state'
 import { MOVEMENT_URGENCY_FACTORS, type MovementIntent } from './MovementIntent'
 import { tuning } from '../tuning'
+import { CROSSOVER_RULES_D5B } from '../actions/TechniqueExecution'
 
 export const MOVEMENT_DT_SECONDS = 0.1
 export const TARGET_ARRIVAL_TOLERANCE_METERS = 0.15
@@ -27,7 +28,19 @@ export function integrateMatchPlayers(state: MatchState): readonly MatchPlayerSt
     const basket = state.offensiveStructure?.attackingBasket ?? state.defensiveStructure?.defendedBasket ?? state.court.baskets.left
     // BT6.7: a man dribbling the ball does not run as fast as he sprints without it; how much he keeps is his handle.
     const dribbling = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === player.playerId && state.ball.dribble === 'live'
-    const profile = dribbling ? { ...player.kinematics, maxSpeedMps: player.kinematics.maxSpeedMps * dribbleSpeedFactor(player) } : player.kinematics
+    const handlingProfile = dribbling ? { ...player.kinematics, maxSpeedMps: player.kinematics.maxSpeedMps * dribbleSpeedFactor(player) } : player.kinematics
+    // Only a successfully executed, physically contested crossover produces
+    // this bounded short-lived defender footwork effect. Legacy unchanged.
+    const crossoverFootwork = player.techniqueBalanceUntilT !== undefined && state.t < player.techniqueBalanceUntilT
+    const profile = crossoverFootwork
+      ? {
+          ...handlingProfile,
+          maxSpeedMps: handlingProfile.maxSpeedMps * CROSSOVER_RULES_D5B.defenderSpeedFactor,
+          accelerationMps2: handlingProfile.accelerationMps2 * CROSSOVER_RULES_D5B.defenderAccelerationFactor,
+          ...(handlingProfile.lateralGripMps2 === undefined ? {}
+            : { lateralGripMps2: handlingProfile.lateralGripMps2 * CROSSOVER_RULES_D5B.defenderAccelerationFactor }),
+        }
+      : handlingProfile
     const result = stepPlayerKinematics(player, profile, intent, state.ball.position, basket, others, state.court)
     return { ...player, position: result.position, velocity: result.velocity, facing: result.facing }
   })
