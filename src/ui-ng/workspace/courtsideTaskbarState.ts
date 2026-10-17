@@ -8,6 +8,8 @@ export const COURTSIDE_ORDER_STORAGE_KEY = 'bdm-courtside-order-v1'
 export function validTaskbarApps(input: unknown): WorkspaceAppId[] {
   if (!Array.isArray(input)) return []
   const allowed = new Set<string>(WORKSPACE_APP_IDS)
+  // Scouting now lives inside Mercado, so ignore old persisted pins.
+  allowed.delete('scouting')
   return [...new Set(input.filter((id): id is WorkspaceAppId => typeof id === 'string' && allowed.has(id)))]
 }
 
