@@ -14,12 +14,19 @@ import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import type { NegotiationResponsibleActor } from '@/domain/market'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
-import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
+import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCentre'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
+type MarketTab = 'centre' | 'free-agents' | 'operations'
+const MARKET_TABS: readonly { readonly id: MarketTab; readonly label: string }[] = [
+  { id: 'centre', label: 'Centro de mercado' },
+  { id: 'free-agents', label: 'Agentes libres' },
+  { id: 'operations', label: 'Operaciones' },
+]
 
 function marketActorLabel(world: GameWorld, actor: NegotiationResponsibleActor | undefined, date: string | undefined): string | undefined {
   if (actor === undefined) return undefined
@@ -39,6 +46,9 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
   const startFreeAgentSigningGovernance = useGameStore((state) => state.startFreeAgentSigningGovernance)
   const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
   const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
+  const [activeTab, setActiveTab] = useState<MarketTab>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('playerId') ? 'free-agents' : 'centre',
+  )
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
   // PLAYER > CONTRACT passes a specific free-agent dossier in the URL.
@@ -85,8 +95,23 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
       meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} remaining`}
       region="market-workspace"
       teamId={team.id}
-      title="Free agents"
+      title="Centro de mercado"
+      className="market-workspace"
+      tabs={MARKET_TABS}
+      activeTabId={activeTab}
+      onTabSelect={(id) => setActiveTab(id as MarketTab)}
     >
+      {activeTab === 'centre' ? <MarketCommandCentre
+        world={world}
+        teamId={team.id}
+        availableFreeAgents={getFreeAgents(world).length}
+        remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
+        onOpenScouting={() => syncWorkspaceAppQuery('scouting', 'push')}
+        onOpenFreeAgents={() => setActiveTab('free-agents')}
+        onOpenOperations={() => setActiveTab('operations')}
+        onOpenPlayer={navigateToPlayer}
+      /> : null}
+      {activeTab === 'free-agents' ? <>
       <div className="ng-canon__toolbar">
         <input aria-label="Search free agents" onChange={(event) => setQuery(event.target.value)} placeholder="Search players" value={query} />
         <select aria-label="Filter market by position" onChange={(event) => setPosition(event.target.value as PositionFilter)} value={position}>
@@ -160,7 +185,8 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
           )}
         </aside>
       </div>
-      <section aria-label="Free-agent negotiations" className="ng-canon__panel ng-holo-panel">
+      </> : null}
+      {activeTab === 'operations' ? <section aria-label="Free-agent negotiations" className="ng-canon__panel ng-holo-panel">
         <h3>Acquisition activity</h3>
         {Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => a.id.localeCompare(b.id)).length === 0 ? (
           <p className="ng-canon__empty">No player contacts or negotiations yet.</p>
@@ -228,7 +254,7 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
             </article>
           )
         })}
-      </section>
+      </section> : null}
     </NgHoloShell>
   )
 }
