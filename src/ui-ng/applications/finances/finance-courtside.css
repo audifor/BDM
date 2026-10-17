@@ -1,0 +1,78 @@
+
+/* Finance Courtside: hierarchy, density, palettes and typography follow the shared Courtside shell. */
+.cs-club-finances .ng-canon__scroll { padding: 8px 13px 15px; }
+.cs-club-finances .fc-subnav { display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:0 0 9px;padding:0 0 8px;border-bottom:1px solid var(--cm-line); }
+.cs-club-finances .fc-subnav button { border:1px solid transparent;background:transparent;color:var(--cm-muted);padding:6px 13px;border-radius:7px;font:700 12px/1.2 var(--cs-font);min-height:30px; }
+.cs-club-finances .fc-subnav button:hover { color:var(--cm-text);background:var(--cm-s2); }
+.cs-club-finances .fc-subnav button.is-active { background:var(--cm-s2);color:var(--cm-lime);border-color:var(--cm-line2); }
+.cs-club-finances .fc-overview { display:grid;gap:9px;min-width:0; }
+.cs-club-finances .fc-overview__top { display:flex;justify-content:space-between;align-items:end;gap:9px;min-height:40px; }
+.cs-club-finances .fc-overview__eyebrow { color:var(--cm-orange);font:800 10px/1.2 var(--cs-font);letter-spacing:.12em; }
+.cs-club-finances .fc-overview h2 { margin:3px 0 0;color:var(--cm-text);font:700 24px/1 var(--cs-font-display);letter-spacing:.025em; }
+.cs-club-finances .fc-overview__currency-label { padding:5px 9px;color:var(--cm-muted);border:1px solid var(--cm-line2);border-radius:7px;font:700 12px var(--cs-font); }
+.cs-club-finances .fc-overview__currencies { display:flex;gap:4px; }
+.cs-club-finances .fc-overview__currencies button { min-width:43px;padding:5px;border-radius:7px;border:1px solid var(--cm-line2);background:var(--cm-panel);color:var(--cm-muted); }
+.cs-club-finances .fc-overview__currencies button.is-active { color:var(--cm-lime);background:var(--cm-s2);border-color:var(--cm-lime); }
+.cs-club-finances .fc-overview__kpis { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px; }
+.cs-club-finances .fc-overview__kpi { display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:112px;gap:7px;padding:13px 16px;background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:11px; }
+.cs-club-finances .fc-overview__kpi.is-primary { border-top:3px solid var(--cm-lime);padding-top:11px; }
+.cs-club-finances .fc-overview__kpi > span { color:var(--cm-muted);font:700 11px/1.2 var(--cs-font); }
+.cs-club-finances .fc-overview__kpi > strong { color:var(--cm-text);font:750 clamp(20px,2vw,31px)/1.05 var(--cs-font-display);font-variant-numeric:tabular-nums;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.cs-club-finances .fc-overview__kpi.is-primary > strong { color:var(--cm-lime); }
+.cs-club-finances .fc-overview__kpi.is-negative > strong { color:var(--cm-negative); }
+.cs-club-finances .fc-overview__kpi small { color:var(--cm-faint);font:500 10px/1.2 var(--cs-font); }
+.cs-club-finances .fc-overview__no-data { background:var(--cm-s2);border:1px solid var(--cm-line);padding:9px 12px;border-radius:8px;color:var(--cm-muted); }
+.cs-club-finances .fc-overview__body { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch; }
+.cs-club-finances .fc-overview__panel { min-width:0;display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:11px; }
+.cs-club-finances .fc-overview__panel-heading { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+.cs-club-finances .fc-overview__panel h3 { font:700 18px/1.05 var(--cs-font-display);letter-spacing:.03em;margin:0;color:var(--cm-text); }
+.cs-club-finances .fc-overview__panel-heading button { color:var(--cm-orange);background:none;border:0;font:700 11px var(--cs-font);padding:5px 0;white-space:nowrap; }
+.cs-club-finances .fc-overview__panel-heading button:hover { color:var(--cm-lime); }
+.cs-club-finances .fc-overview__projected { display:flex;align-items:baseline;justify-content:space-between;gap:8px; }
+.cs-club-finances .fc-overview__projected span { color:var(--cm-muted);font-size:12px; }
+.cs-club-finances .fc-overview__projected strong { font:800 clamp(20px,2.1vw,30px) var(--cs-font-display);color:var(--cm-lime);font-variant-numeric:tabular-nums; }
+.cs-club-finances .fc-overview__projected strong.is-negative { color:var(--cm-negative); }
+.cs-club-finances .fc-overview__warning { border-left:3px solid var(--cm-negative);color:var(--cm-negative);background:var(--cm-s2);padding:6px 9px;font-size:12px; }
+.cs-club-finances .fc-overview__muted { color:var(--cm-faint);font-size:11px; }
+.cs-club-finances .fc-overview__inline { display:flex;align-items:center;gap:10px;padding-top:9px;margin-top:auto;border-top:1px solid var(--cm-line); }
+.cs-club-finances .fc-overview__inline span { color:var(--cm-muted);font-size:11px; }
+.cs-club-finances .fc-overview__inline strong { margin-left:auto;color:var(--cm-text);font:700 15px var(--cs-font-display);font-variant-numeric:tabular-nums; }
+.cs-club-finances .fc-overview__inline button { color:var(--cm-orange);background:var(--cm-s2);border:1px solid var(--cm-line2);border-radius:5px;min-width:24px;min-height:23px; }
+.cs-club-finances .fc-overview__bars { display:grid;gap:9px;flex:1; }
+.cs-club-finances .fc-overview__bar-item > div:first-child { display:flex;justify-content:space-between;gap:7px;margin-bottom:5px;font-size:12px;color:var(--cm-muted); }
+.cs-club-finances .fc-overview__bar-item strong { font-variant-numeric:tabular-nums;color:var(--cm-text); }
+.cs-club-finances .fc-overview__track { height:8px;overflow:hidden;border-radius:10px;background:var(--cm-s3); }
+.cs-club-finances .fc-overview__track span { display:block;height:100%;border-radius:10px; }
+.cs-club-finances .fc-overview__track span.is-income { background:var(--cm-lime); }
+.cs-club-finances .fc-overview__track span.is-expense { background:var(--cm-orange); }
+.cs-club-finances .fc-overview__shortcuts { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px; }
+.cs-club-finances .fc-overview__shortcuts button { text-align:left;display:flex;flex-direction:column;gap:5px;min-height:63px;justify-content:center;padding:10px 13px;background:var(--cm-s2);border:1px solid var(--cm-line2);border-radius:9px; }
+.cs-club-finances .fc-overview__shortcuts button:hover { background:var(--cm-s3);border-color:var(--cm-orange); }
+.cs-club-finances .fc-overview__shortcuts span { color:var(--cm-muted);font:600 11px var(--cs-font); }
+.cs-club-finances .fc-overview__shortcuts strong { color:var(--cm-text);font:700 13px var(--cs-font-display); }
+.cs-club-finances .fc-options { background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:8px;margin:0 0 8px; }
+.cs-club-finances .fc-options summary { padding:8px 12px;font:600 11px var(--cs-font);color:var(--cm-muted);cursor:pointer; }
+.cs-club-finances .fc-options[open] > summary { border-bottom:1px solid var(--cm-line); }
+.cs-club-finances .fc-options .finance-workspace__controls { border:0;background:transparent;margin:0;padding:9px 12px; }
+.cs-club-finances .fc-context-controls { display:flex;flex-wrap:wrap;align-items:end;gap:9px;background:var(--cm-panel);border:1px solid var(--cm-line2);border-radius:9px;margin-bottom:8px;padding:8px 11px; }
+.cs-club-finances .fc-context-controls label { display:grid;gap:4px;color:var(--cm-muted);font-size:11px; }
+.cs-club-finances .fc-context-controls input,.cs-club-finances .fc-context-controls select { min-width:110px;max-width:190px;color:var(--cm-text);background:var(--cm-s2);border:1px solid var(--cm-line2);padding:5px 9px;min-height:32px;border-radius:7px; }
+.cs-club-finances .fc-section-header { display:flex;align-items:baseline;gap:12px;justify-content:space-between; }
+.cs-club-finances .fc-section-header span { color:var(--cm-faint);font-size:11px; }
+.cs-club-finances .fc-table-header { display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px; }
+.cs-club-finances .fc-table-header h3 { margin:0;font:700 17px var(--cs-font-display); }
+.cs-club-finances .fc-table-header span { color:var(--cm-faint);font-variant-numeric:tabular-nums; }
+.cs-club-finances .finance-workspace__metric { min-height:72px;padding:11px; }
+.cs-club-finances .finance-workspace__metric dd { font-size:22px; }
+.cs-club-finances .fc-extra { padding:10px 12px;border:1px solid var(--cm-line2);border-radius:9px;background:var(--cm-panel); }
+.cs-club-finances .fc-extra > summary { font:700 12px var(--cs-font);color:var(--cm-orange);cursor:pointer; }
+.cs-club-finances .fc-extra[open] > summary { padding-bottom:10px; }
+.cs-club-finances .fc-extra__tables { display:grid;gap:8px; }
+.cs-club-finances .fc-row-trace summary { color:var(--cm-orange);font-size:11px;cursor:pointer; }
+.cs-club-finances .fc-row-trace p,.cs-club-finances .fc-row-trace li { color:var(--cm-muted);font-size:11px;overflow-wrap:anywhere; }
+.cs-club-finances .finance-workspace__table-panel { padding:11px 12px; }
+.cs-club-finances .finance-workspace__table-panel th:last-child,.cs-club-finances .finance-workspace__table-panel td:last-child { width:50px; }
+.cs-club-finances .finance-workspace__table-panel tbody tr:nth-child(even) { background:var(--cm-s2); }
+@media(max-width:1100px) { .cs-club-finances .fc-overview__kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } .cs-club-finances .fc-overview__shortcuts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:740px) { .cs-club-finances .fc-overview__body { grid-template-columns:1fr; } .cs-club-finances .fc-overview__top { align-items:start; } }
+@media(max-width:500px) { .cs-club-finances .ng-canon__scroll { padding:8px; } .cs-club-finances .fc-overview__kpi { min-height:92px;padding:10px; } .cs-club-finances .fc-overview__kpi strong { font-size:20px; } .cs-club-finances .fc-overview__shortcuts { grid-template-columns:1fr 1fr; } .cs-club-finances .fc-subnav { gap:2px; } .cs-club-finances .fc-subnav button { padding:6px 8px; } }
