@@ -12,6 +12,7 @@ import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
 import { resolvePlayerContractSigningGovernance } from '@/app/marketIntelligence/FreeAgentSigningService'
 import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
+import { applyObservedPlayerSigning } from './ObservedPlayerContractSigning'
 
 export type RetentionSigningStatus = 'SIGNED' | 'ALREADY_SIGNED' | 'NOT_ACCEPTED' | 'INTEGRITY_INVALID' | 'PREDECESSOR_CHANGED' | 'SUCCESSOR_EXISTS' | 'RULES_UNAVAILABLE' | 'SERVICE_TIME_UNKNOWN' | 'ILLEGAL_COMPENSATION' | 'UNSUPPORTED_BINDING_TERM' | 'GOVERNANCE_REQUIRED' | 'GOVERNANCE_PENDING' | 'GOVERNANCE_DENIED' | 'FINANCE_REJECTED' | 'NO_AUTHORITY' | 'UNKNOWN'
 
@@ -151,7 +152,8 @@ export function executeAcceptedRetentionAgreement(world: GameWorld, negotiationI
     return result('FINANCE_REJECTED', world, negotiation.id, 'CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE', predecessor.id, undefined, decision.id, 'VALID', 'REJECTED')
   }
   const next = reviewClubManagementPlanning(governanceWorld, team.id, 'MATERIAL_ROSTER_CHANGE').world
-  return result('SIGNED', next, negotiation.id, undefined, predecessor.id, contract.id, decision.id, 'VALID', 'ADMISSIBLE', 'CREATED')
+  const withExperience = applyObservedPlayerSigning(next, { kind: 'RETENTION', negotiationId: negotiation.id, playerId: player.id, contractId: contract.id })
+  return result('SIGNED', withExperience, negotiation.id, undefined, predecessor.id, contract.id, decision.id, 'VALID', 'ADMISSIBLE', 'CREATED')
 }
 
 function createRetentionAgentFeeCommitment(world: GameWorld, teamId: TeamId, playerId: string, negotiationId: string, amount: number, effectiveOn: GameWorld['currentDate']): ReturnType<typeof createFinancialCommitment> | null {

@@ -14,6 +14,8 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { completeAcceptedFreeAgentSigning, completeAiAcceptedFreeAgentSignings } from './FreeAgentSigningService'
+import { createPersonality } from '@/domain/personality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 
 function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?: NegotiationRole; readonly agentFee?: number; readonly teamId?: string } = {}, options: { readonly funded?: boolean } = {}) {
   const base = createNewGame()
@@ -87,6 +89,33 @@ function withGovernance(world: ReturnType<typeof createNewGame>, negotiation: Co
 }
 
 describe('completeAcceptedFreeAgentSigning', () => {
+  it('PERSON 50 observes an executed free agent contract, never an offer or approval alone', () => {
+    const setup = fixture()
+    const playerId = setup.player.id
+    const personality = createPersonality({ values: Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) => [key, 50])) as never })
+    const world = updateGameWorld(setup.world, {
+      personalitiesByPersonId: { ...setup.world.personalitiesByPersonId, [playerId]: personality },
+    })
+    const approved = withGovernance(world, setup.negotiation, true)
+    expect(approved.personalityHistoryByPersonId[playerId]).toBeUndefined()
+    const signed = completeAcceptedFreeAgentSigning(approved, {
+      teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId!,
+    })
+    expect(signed.status).toBe('SIGNED')
+    const journal = signed.world.personalityHistoryByPersonId[playerId]!
+    expect(journal).toHaveLength(1)
+    expect(journal[0]).toMatchObject({ personId: playerId, occurredOn: approved.currentDate, dimensionCode: 'contractualCommitment', previousValue: 50, newValue: 51 })
+    const morale = signed.world.moraleByPersonId[playerId]!.events.find((item) => item.id === journal[0]!.sourceEventId)
+    expect(morale?.context).toMatchObject({ personalityEventKind: 'NEW_CONTRACT_SIGNED', signingKind: 'FREE_AGENT', contractId: signed.contractId })
+    const retry = completeAcceptedFreeAgentSigning(signed.world, {
+      teamId: setup.team.id, negotiationId: setup.negotiation.id, expectedProposalId: setup.negotiation.sourceProposalId!,
+    })
+    expect(retry.status).toBe('ALREADY_SIGNED')
+    expect(retry.world).toBe(signed.world)
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(signed.world, '2032-10-01T00:00:00.000Z'))
+    expect(loaded.personalityHistoryByPersonId[playerId]).toEqual(journal)
+  })
+
   it('accepts only the canonical ACCEPTED negotiation', () => {
     const { world, team, negotiation } = fixture({ status: 'OPEN' })
     const result = completeAcceptedFreeAgentSigning(world, { teamId: team.id, negotiationId: negotiation.id, expectedProposalId: negotiation.sourceProposalId! })
