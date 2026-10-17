@@ -91,6 +91,11 @@ describe('Finance V2 workspace', () => {
     expect(view.tables[0]!.rows[0]!.references).toEqual([budget.id, line.id])
     expect(buildFinanceWorkspaceSection(planned, organizationId, 'revenue').tables[2]!.columns).toContain('Forecast')
     expect(buildFinanceWorkspaceSection(planned, organizationId, 'costs').tables[3]!.columns).toContain('Committed')
+    render(<FinancesWorkspace world={planned} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Presupuesto' }))
+    expect(screen.getByRole('region', { name: 'Estado del presupuesto de gastos' })).toBeInTheDocument()
+    expect(screen.getByText('Gasto presupuestado')).toBeInTheDocument()
+    expect(screen.getByText('Gasto previsto')).toBeInTheDocument()
   })
 
   it('exposes settlement and source distinctions in revenue, costs, payroll and competition', () => {
