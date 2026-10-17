@@ -9,7 +9,7 @@ import './market-planning-board.css'
 interface Props {
   readonly world: GameWorld
   readonly teamId: TeamId
-  readonly remainingSalaryBudget: number
+  readonly remainingSalaryBudget: number | null
   readonly onOpenPlayer: (playerId: PlayerId) => void
   readonly onOpenScouting: () => void
   readonly onOpenTargets: () => void
@@ -39,7 +39,7 @@ export function MarketPlanningBoard({ world, teamId, remainingSalaryBudget, onOp
       <div><small>Jugadores actuales</small><strong>{planning.currentRosterCount}</strong><span>Plantilla hoy</span></div>
       <div><small>Contratos vigentes en horizonte</small><strong>{selected.contractuallyRetainedPlayerIds.length}</strong><span>{selected.date}</span></div>
       <div><small>Vencimientos sin sucesor</small><strong>{contracts.length}</strong><span>Hasta el horizonte elegido</span></div>
-      <div><small>Margen salarial actual</small><strong className="market-plan__money">{formatMoney(remainingSalaryBudget)}</strong><span>Margen actual</span></div>
+      <div><small>Margen salarial actual</small><strong className="market-plan__money">{remainingSalaryBudget === null ? '—' : formatMoney(remainingSalaryBudget)}</strong><span>Margen actual</span></div>
     </div>
     <div className="market-plan__grid">
       <section className="market-plan__panel">
