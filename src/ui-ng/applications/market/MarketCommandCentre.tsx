@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { formatMoney } from '@/ui/formatters'
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function MarketCommandCentre({ world, teamId, availableFreeAgents, remainingSalaryBudget, targetCount, onOpenScouting, onOpenFreeAgents, onOpenExplore, onOpenTargets, onOpenPlanning, onOpenOperations, onOpenPlayer }: Props) {
+  const [feed, setFeed] = useState<'reports' | 'signals'>('reports')
   const team = world.teams[teamId]
   if (team === undefined) return null
   const organizationId = team.organizationId
@@ -33,6 +35,8 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
     .filter((item) => item.organizationId === organizationId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3)
   const negotiations = Object.values(world.negotiationsById).filter((item) => item.teamId === teamId)
+  const signals = Object.values(world.marketSignalsById).filter((item) => item.organizationId === organizationId)
+    .sort((a,b) => b.occurredOn.localeCompare(a.occurredOn) || b.id.localeCompare(a.id)).slice(0, 5)
   const coverage = Object.values(world.scoutingTerritoryAssignmentsById)
     .filter((item) => item.organizationId === organizationId && item.status === 'ACTIVE')
   const pipeline = [
@@ -91,9 +95,16 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
             <div className="market-cs__compact-list">{focuses.slice(0, 4).map((focus) => <div key={focus.id}><strong>{focus.name}</strong><span>{focus.positions.join(' · ')} · {focus.daysActive} días</span></div>)}</div>}
         </section>
         <section className="market-cs__panel">
-          <header><div><span className="market-cs__kicker">INFORMES</span><h3>Últimos informes</h3></div><button onClick={onOpenScouting} type="button">Ver todos →</button></header>
-          {lastReports.length === 0 ? <p className="market-cs__empty">Sin informes registrados.</p> :
-            <div className="market-cs__compact-list">{lastReports.map((report) => <div key={report.id}><button onClick={() => onOpenPlayer(report.playerId)} type="button">{report.name}</button><span>{report.date}</span></div>)}</div>}
+          <header><div><span className="market-cs__kicker">INFORMACIÓN RECIENTE</span><h3>{feed === 'reports' ? 'Últimos informes' : 'Señales de mercado'}</h3></div>
+            <div className="market-cs__feed-tabs"><button aria-pressed={feed === 'reports'} onClick={() => setFeed('reports')} type="button">Informes</button><button aria-pressed={feed === 'signals'} onClick={() => setFeed('signals')} type="button">Señales</button></div>
+          </header>
+          {feed === 'reports' ? lastReports.length === 0 ? <p className="market-cs__empty">Sin informes registrados.</p> :
+            <div className="market-cs__compact-list">{lastReports.map((report) => <div key={report.id}><button onClick={() => onOpenPlayer(report.playerId)} type="button">{report.name}</button><span>{report.date}</span></div>)}</div>
+          : signals.length === 0 ? <p className="market-cs__empty">Sin señales registradas.</p> :
+            <div className="market-cs__compact-list">{signals.map((signal) => {const player = world.players[signal.playerId];return <div key={signal.id}>
+              <button onClick={() => onOpenPlayer(signal.playerId)} type="button">{player?.firstName ?? 'Jugador'} {player?.lastName ?? ''}</button>
+              <span>{signal.source === 'AGENT' ? 'Agente' : signal.source === 'CLUB_CONTACT' ? 'Contacto' : 'Medios'} · {signal.occurredOn}</span>
+            </div>})}</div>}
         </section>
       </div>
     </div>
