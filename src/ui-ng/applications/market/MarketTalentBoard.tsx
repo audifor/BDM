@@ -4,7 +4,7 @@ import type { GameWorld } from '@/domain/world'
 import { isPlayerFreeAgent } from '@/domain/world'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
-import type { RequestScoutingInput } from '@/app/scouting'
+import { searchAddressableScoutingPlayers, type RequestScoutingInput } from '@/app/scouting'
 import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 import type { MarketTarget, MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { formatMoney } from '@/ui/formatters'
@@ -78,6 +78,10 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const [country, setCountry] = useState('')
   const [competition, setCompetition] = useState('')
   const [maximumSalary, setMaximumSalary] = useState('')
+  const [evaluationDimension, setEvaluationDimension] = useState<'finishing' | 'shooting' | 'creation' | 'perimeterDefense' | 'interiorDefense' | 'rebounding' | 'physical'>('rebounding')
+  const [minimumCurrent, setMinimumCurrent] = useState('')
+  const [minimumPotential, setMinimumPotential] = useState('')
+  const [club, setClub] = useState('')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
   const model = useMemo(() => buildScoutingWorkspaceModel(world), [world])
   const team = world.teams[teamId]
@@ -104,6 +108,10 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const expiration = contractStatus.startsWith('EXPIRING_') ? expiryHorizon(Number(contractStatus.split('_')[1])) : null
   const countries = [...new Set(addressable.map((row) => row.countryName).filter((name) => name !== '—'))].sort()
   const competitions = [...new Set(addressable.map((row) => row.competitionName).filter((name) => name !== '—'))].sort()
+  const clubs = [...new Set(addressable.map((row) => row.clubName).filter((name) => name !== '—'))].sort()
+  const ratingFiltered = minimumCurrent !== '' || minimumPotential !== '' ? new Set(searchAddressableScoutingPlayers(world, teamId, { evaluationDimension,
+    ...(minimumCurrent === '' ? {} : { minimumCurrentLevel: Number(minimumCurrent) }),
+    ...(minimumPotential === '' ? {} : { minimumPotentialLevel: Number(minimumPotential) }) })) : null
   const rows = addressable.filter((row) =>
     (position === 'ALL' || row.position === position) &&
     (contractStatus === 'ALL' ||
@@ -118,6 +126,8 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
     (maximumAge === '' || row.age <= Number(maximumAge)) &&
     (country === '' || row.countryName === country) &&
     (competition === '' || row.competitionName === competition) &&
+    (club === '' || row.clubName === club) &&
+    (ratingFiltered === null || ratingFiltered.has(row.playerId)) &&
     (maximumSalary === '' || (salaryKnowledge.get(row.playerId) !== undefined && salaryKnowledge.get(row.playerId)! <= Number(maximumSalary))) &&
     `${row.name} ${row.clubName} ${row.countryName} ${row.competitionName}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const ordered = [...rows].sort((a, b) =>
@@ -167,6 +177,14 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
           <label>Edad máxima<input aria-label="Edad máxima" type="number" min="0" value={maximumAge} onChange={(event) => setMaximumAge(event.target.value)} /></label>
           <label>País<select aria-label="País" value={country} onChange={(event) => setCountry(event.target.value)}><option value="">Todos</option>{countries.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Competición<select aria-label="Competición" value={competition} onChange={(event) => setCompetition(event.target.value)}><option value="">Todas</option>{competitions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Club<select aria-label="Club" value={club} onChange={(event) => setClub(event.target.value)}><option value="">Todos</option>{clubs.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Atributo observado<select aria-label="Atributo observado" value={evaluationDimension} onChange={(event) => setEvaluationDimension(event.target.value as typeof evaluationDimension)}>
+            <option value="finishing">Finalización</option><option value="shooting">Tiro</option><option value="creation">Creación</option>
+            <option value="perimeterDefense">Defensa exterior</option><option value="interiorDefense">Defensa interior</option>
+            <option value="rebounding">Rebote</option><option value="physical">Físico</option>
+          </select></label>
+          <label>Valoración conocida mínima<input aria-label="Valoración conocida mínima" type="number" min="0" max="100" value={minimumCurrent} placeholder="Cualquiera" onChange={(event) => setMinimumCurrent(event.target.value)} /></label>
+          <label>Potencial conocido mínimo<input aria-label="Potencial conocido mínimo" type="number" min="0" max="100" value={minimumPotential} placeholder="Cualquiera" onChange={(event) => setMinimumPotential(event.target.value)} /></label>
           <label>Salario esperado máximo<input aria-label="Salario esperado máximo" type="number" min="0" step="1000" value={maximumSalary} placeholder="Solo valores conocidos" onChange={(event) => setMaximumSalary(event.target.value)} /></label>
         </div>
       </details>
