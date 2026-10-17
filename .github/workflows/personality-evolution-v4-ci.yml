@@ -1,0 +1,24 @@
+name: PERSON Experience Journal Save V4
+on:
+  push:
+    branches:
+      - feat/personality-experience-journal-save-v4
+permissions:
+  contents: read
+jobs:
+  journal:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Strict typecheck
+        run: npm run typecheck
+      - name: Personality evidence and regression
+        run: |
+          npx vitest run src/domain/personality/ObservedPersonalityEvolution.test.ts src/domain/personality/SemanticPersonalityEffects.test.ts src/domain/world/SemanticRelationshipAutoBridge.test.ts src/domain/world/CompatibilityInteractionBridge.test.ts src/save/MoralePersistence.test.ts src/save/RelationshipPersistence.test.ts
+          npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'WorldDB canonical PERSON personality bootstrapping|WorldDB full 50-dimension PERSON runtime and Save V4'
