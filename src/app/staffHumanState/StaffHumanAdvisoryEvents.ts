@@ -1,4 +1,5 @@
-import type { GameWorld } from '@/domain/world'
+import { applyMoraleEventToWorld, type GameWorld } from '@/domain/world'
+import { hasFullSemanticPersonality } from '@/domain/personality'
 import type { DelegationOutcome, ResponsibilityKind } from '@/domain/responsibility'
 import { createStaffHumanEvent, SYSTEMIC_ATTRIBUTION, type StaffHumanEventAttribution } from '@/domain/staffHumanState'
 import { applyStaffHumanEvent } from '@/engine/staff/StaffHumanReactionEngine'
@@ -38,7 +39,32 @@ function emitAdvisoryEvent(world: GameWorld, outcome: DelegationOutcome, kind: '
     attribution,
     payload: { responsibilityKind: outcome.kind, qualityScore: outcome.qualityScore },
   })
-  return applyStaffHumanEvent(world, context, event).world
+  const result = applyStaffHumanEvent(world, context, event)
+  // Only a truly recorded, new StaffHumanReactionRecord can generate PERSON
+  // evidence. A repeated advisory, informational dismissal or legacy 8-score
+  // profile must leave the existing game behavior untouched.
+  if (result.reaction === undefined) return result.world
+  const staff = result.world.staffPeopleById[outcome.staffId]
+  const personality = result.world.personalitiesByPersonId[outcome.staffId]
+  if (staff === undefined || personality === undefined || !hasFullSemanticPersonality(personality)) return result.world
+  const root = staff.personId === undefined ? undefined : result.world.personsById[staff.personId]
+  if ((root?.dateOfBirth ?? staff.identity.dateOfBirth) === undefined) return result.world
+  if (result.world.moraleByPersonId[outcome.staffId] === undefined) return result.world
+  const rejected = kind === 'actionableRecommendationRejected' || kind === 'importantRecommendationRejected'
+  return applyMoraleEventToWorld(result.world, {
+    id: `person:observed-advisory:${result.reaction.id}`,
+    personId: outcome.staffId,
+    gameDate: event.occurredOn,
+    source: 'professionalInteraction',
+    delta: rejected ? -4 : 4,
+    context: {
+      observedEventKind: rejected ? 'RECOMMENDATION_REJECTED' : 'RECOMMENDATION_ACCEPTED',
+      personalityValence: rejected ? -1 : 1,
+      personalityIntensity: importance === 'IMPORTANT' ? 80 : 40,
+      sourceEventId,
+      staffHumanReactionId: result.reaction.id,
+    },
+  })
 }
 
 function mostRecentContextFor(world: GameWorld, staffId: string) {

@@ -1,6 +1,5 @@
-/** Exact 75 evidenced-event definitions mirrored from BDM-DB PERSON-23H.
- * This catalog NEVER asserts that an event happened. Callers need the actual
- * game event ID, date, type, valence and intensity.
+/** Exact 75 evidenced-event definitions from BDM-DB PERSON 2.3-J.
+ * Actual observed source ID/date are required; no random history.
  */
 export const OBSERVED_PERSONALITY_EVENTS = [
   {
@@ -754,13 +753,14 @@ export const OBSERVED_PERSONALITY_EVENTS = [
     ]
   },
   {
-    "code": "LIFE_TEAM_SCOUTING_REPORT",
-    "kind": "TEAM_SCOUTING_REPORT",
-    "family": "DEVELOPMENT",
-    "dimension": "accountability",
-    "minOnsetAge": 15,
+    "code": "LIFE_RECOMMENDATION_ACCEPTED",
+    "kind": "RECOMMENDATION_ACCEPTED",
+    "family": "TEAM",
+    "dimension": "recognitionNeed",
+    "minOnsetAge": 18,
     "sources": [
-      "developmentEvent"
+      "teamEvent",
+      "professionalInteraction"
     ]
   },
   {
@@ -774,13 +774,14 @@ export const OBSERVED_PERSONALITY_EVENTS = [
     ]
   },
   {
-    "code": "LIFE_PROFESSIONAL_REVIEW",
-    "kind": "PROFESSIONAL_REVIEW",
-    "family": "DEVELOPMENT",
-    "dimension": "conscientiousness",
-    "minOnsetAge": 15,
+    "code": "LIFE_RECOMMENDATION_REJECTED",
+    "kind": "RECOMMENDATION_REJECTED",
+    "family": "TEAM",
+    "dimension": "frustrationTolerance",
+    "minOnsetAge": 18,
     "sources": [
-      "developmentEvent"
+      "teamEvent",
+      "professionalInteraction"
     ]
   }
 ] as const

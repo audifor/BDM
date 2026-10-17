@@ -1,0 +1,24 @@
+name: PERSON 50 Staff Advisory Live CI
+on:
+  push:
+    branches:
+      - feat/person-50-staff-advisory-lived-events
+permissions:
+  contents: read
+jobs:
+  advisory:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Verified actionable advisory accept/reject and Save V4
+        run: |
+          npx vitest run src/app/staffHumanState/StaffHumanState.integration.test.ts -t 'PERSON 50 confirmed advisory decisions'
+          npx vitest run src/domain/world/ObservedPersonalitySaveV4.test.ts src/domain/world/SemanticRelationshipAutoBridge.test.ts
