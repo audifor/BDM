@@ -62,10 +62,10 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
   const activeReports = selected === null ? [] : model.reports.filter((report) => report.playerId === selected.playerId).slice(0, 3)
   return <div className="market-talent" data-testid={mode === 'explore' ? 'market-explore' : 'market-targets'}>
     <div className="market-talent__intro">
-      <div><span className="market-cs__kicker">{mode === 'targets' ? 'MESA DE DECISIONES' : 'INTELIGENCIA DE MERCADO'}</span>
-        <h2>{mode === 'targets' ? 'Construye tu lista de objetivos' : 'Explora lo que tu club puede conocer'}</h2>
-        <p>{mode === 'targets' ? 'Selecciona hasta tres jugadores y contrasta sus evidencias. La selección es temporal y no modifica tu partida.' :
-          'Las identidades disponibles dependen del conocimiento público y los descubrimientos de tu red de scouting.'}</p>
+      <div><span className="market-cs__kicker">{mode === 'targets' ? 'OBJETIVOS' : 'JUGADORES'}</span>
+        <h2>{mode === 'targets' ? 'Objetivos de mercado' : 'Explorar jugadores'}</h2>
+        <p>{mode === 'targets' ? 'Compara hasta tres jugadores.' :
+          'Jugadores conocidos por el club.'}</p>
       </div><button className="market-cs__secondary" onClick={onOpenScouting} type="button">Ir a Scouting →</button>
     </div>
     <div className="market-talent__toolbar">
@@ -91,18 +91,18 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
       </section>
       <aside className="market-talent__inspector" aria-label="Expediente de scouting">
         {selected === null ? <div className="market-talent__empty">Selecciona un jugador para consultar sus evidencias.</div> : <>
-          <div className="market-talent__inspector-top"><span className="market-cs__kicker">EXPEDIENTE VIVO · CONOCIMIENTO ACTUAL</span><span className="market-talent__quality">{selected.knowledgeState === 'UNKNOWN' ? 'SIN EVIDENCIA' : 'EVIDENCIA DISPONIBLE'}</span></div>
+          <div className="market-talent__inspector-top"><span className="market-cs__kicker">EXPEDIENTE · INFORMES</span><span className="market-talent__quality">{selected.knowledgeState === 'UNKNOWN' ? 'SIN EVIDENCIA' : 'EVIDENCIA DISPONIBLE'}</span></div>
           <h3>{selected.name}</h3><p className="market-talent__bio">{selected.position} · {selected.age} años · {selected.clubName}</p>
           <div className="market-talent__gauges">
             <div><small>Cobertura</small><strong>{selected.coverageLabel}</strong><div><span style={{ width: `${pct(selected.coverageLabel) ?? 0}%` }} /></div></div>
             <div><small>Confianza</small><strong>{selected.confidenceLabel}</strong><div><span style={{ width: `${pct(selected.confidenceLabel) ?? 0}%` }} /></div></div>
             <div><small>Frescura</small><strong>{selected.freshnessLabel}</strong><div><span style={{ width: `${pct(selected.freshnessLabel) ?? 0}%` }} /></div></div>
           </div>
-          <div className="market-talent__notice"><b>Desacuerdo entre evaluadores:</b> {selected.disagreement === 'HIGH' ? 'Alto. Conviene segunda opinión.' : selected.disagreement === 'MODERATE' ? 'Moderado.' : 'Bajo o no detectado.'}</div>
+          <div className="market-talent__notice"><b>Desacuerdo entre evaluadores:</b> {selected.disagreement === 'HIGH' ? 'Alto.' : selected.disagreement === 'MODERATE' ? 'Moderado.' : 'Bajo o no detectado.'}</div>
           <div className="market-talent__subheading"><strong>Comparación posicional</strong><small>{ownPeerName ?? 'Sin par de misma posición'}</small></div>
           {visibleRatings.length > 0 ? <div className="market-talent__ratings"><div className="market-talent__ratings-head"><span>Atributo</span><span>Objetivo</span><span>Tu jugador</span></div>
             {visibleRatings.map((rating) => <div key={rating.id}><span>{rating.label}</span><strong>{rating.subject === null ? '?' : `${rating.subject} [${rating.low}–${rating.high}]`}</strong><b>{rating.own}</b></div>)}
-          </div> : <p className="market-talent__empty">No hay jugador comparable de la misma posición. No se calcula una ventaja artificial.</p>}
+          </div> : <p className="market-talent__empty">Sin jugador comparable de la misma posición.</p>}
           <div className="market-talent__subheading"><strong>Informes registrados</strong><small>{activeReports.length} mostrados</small></div>
           {activeReports.length === 0 ? <p className="market-talent__empty">Sin informes registrados para este jugador.</p> :
             <div className="market-talent__reports">{activeReports.map((report) => <div key={report.id}><b>{report.missionLabel}</b><span>{report.evaluatorName} · {report.createdLabel}</span><small>Confianza {report.confidenceLabel}</small></div>)}</div>}
@@ -111,15 +111,15 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
       </aside>
     </div>
     <section className="market-talent__comparison">
-      <header><div><span className="market-cs__kicker">MESA DE DECISIONES · HASTA 3 JUGADORES</span><h3>Comparación de oportunidades</h3></div><small>Selección temporal, no guardada</small></header>
-      {compared.length === 0 ? <div className="market-talent__empty">Usa el símbolo + de cualquier jugador para incorporarlo a la mesa.</div> :
+      <header><div><span className="market-cs__kicker">COMPARACIÓN · HASTA 3 JUGADORES</span><h3>Comparación de jugadores</h3></div><small>Hasta 3 jugadores</small></header>
+      {compared.length === 0 ? <div className="market-talent__empty">Selecciona jugadores con +.</div> :
         <div className="market-talent__compare-cards">{compared.map((row) => <article key={row.playerId}>
           <div><b>{row.position}</b><button aria-label={'Quitar ' + row.name} onClick={() => onToggleComparison(row.playerId)} type="button">×</button></div>
           <h4>{row.name}</h4><p>{row.clubName}</p>
           <dl><div><dt>Cobertura</dt><dd>{row.coverageLabel}</dd></div><div><dt>Confianza</dt><dd>{row.confidenceLabel}</dd></div><div><dt>Frescura</dt><dd>{row.freshnessLabel}</dd></div><div><dt>Desacuerdo</dt><dd>{row.disagreement === 'HIGH' ? 'Alto' : row.disagreement === 'MODERATE' ? 'Medio' : 'Bajo'}</dd></div></dl>
           <button className="market-cs__secondary" onClick={() => { setSelectedId(row.playerId); onOpenPlayer(row.playerId) }} type="button">Examinar jugador</button>
         </article>)}</div>}
-      {compared.length > 0 ? <div className="market-talent__compare-footer"><span>Los desconocidos se mantienen como «?». No hay clasificación de calidad sin evidencia suficiente.</span><button className="market-cs__secondary" onClick={onOpenOperations} type="button">Consultar operaciones →</button></div> : null}
+      {compared.length > 0 ? <div className="market-talent__compare-footer"><span>Los atributos no observados aparecen como «?».</span><button className="market-cs__secondary" onClick={onOpenOperations} type="button">Consultar operaciones →</button></div> : null}
     </section>
   </div>
 }
