@@ -569,7 +569,8 @@ function parseMarketTargets(value: unknown): readonly MarketTarget[] {
   if (!Array.isArray(value)) throw new TypeError('Save V4 marketTargets must be an array')
   const targets = value.map((entry) => {
     const target = record(entry, 'Market target')
-    exactKeys(target, ['id', 'teamId', 'playerId', 'priority', 'status', 'note', 'createdOn', 'reviewedOn', 'history'], 'Market target')
+    const targetKeys = ['id', 'teamId', 'playerId', 'priority', 'status', 'note', 'createdOn', 'reviewedOn', 'history']
+    exactKeys(target, target.knowledgeSnapshots === undefined ? targetKeys : [...targetKeys, 'knowledgeSnapshots'], 'Market target')
     if (!Array.isArray(target.history)) throw new TypeError('Market target history must be an array')
     const history = target.history.map((raw: unknown) => {
       const event = record(raw, 'Market target history event')
@@ -579,6 +580,24 @@ function parseMarketTargets(value: unknown): readonly MarketTarget[] {
         kind: nonEmptyText(event.kind, 'Market target event type') as MarketTarget['history'][number]['kind'],
         ...(event.detail === undefined ? {} : { detail: String(event.detail) }) }
     })
+    const snapshots = target.knowledgeSnapshots === undefined ? [] : (() => {
+      if (!Array.isArray(target.knowledgeSnapshots)) throw new TypeError('Market target knowledge snapshots must be an array')
+      return target.knowledgeSnapshots.map((value: unknown) => {
+        const snapshot = record(value, 'Market target knowledge snapshot')
+        const keys = ['date', 'coverage', 'confidence', 'freshness', 'knownRatingCount', 'knownDomains', 'reportCount',
+          ...(snapshot.expectedSalary === undefined ? [] : ['expectedSalary']),
+          ...(snapshot.expectedSalaryConfidence === undefined ? [] : ['expectedSalaryConfidence'])]
+        exactKeys(snapshot, keys, 'Market target knowledge snapshot')
+        if (!Array.isArray(snapshot.knownDomains) || snapshot.knownDomains.some((domain: unknown) => typeof domain !== 'string')) throw new TypeError('Invalid market target domain list')
+        const fraction = (input: unknown): number | null => input === null ? null : Number(input)
+        return { date: parseGameDate(nonEmptyText(snapshot.date, 'Market target snapshot date')),
+          coverage: fraction(snapshot.coverage), confidence: fraction(snapshot.confidence), freshness: fraction(snapshot.freshness),
+          knownRatingCount: Number(snapshot.knownRatingCount), reportCount: Number(snapshot.reportCount),
+          knownDomains: snapshot.knownDomains as string[],
+          ...(snapshot.expectedSalary === undefined ? {} : { expectedSalary: Number(snapshot.expectedSalary) }),
+          ...(snapshot.expectedSalaryConfidence === undefined ? {} : { expectedSalaryConfidence: Number(snapshot.expectedSalaryConfidence) }) }
+      })
+    })()
     return createMarketTarget({ id: nonEmptyText(target.id, 'Market target id'),
       teamId: teamIdFromString(nonEmptyText(target.teamId, 'Market target team')),
       playerId: playerIdFromString(nonEmptyText(target.playerId, 'Market target player')),
@@ -587,7 +606,7 @@ function parseMarketTargets(value: unknown): readonly MarketTarget[] {
       note: String(target.note ?? ''),
       createdOn: parseGameDate(nonEmptyText(target.createdOn, 'Market target createdOn')),
       reviewedOn: parseGameDate(nonEmptyText(target.reviewedOn, 'Market target reviewedOn')),
-      history })
+      history, knowledgeSnapshots: snapshots })
   })
   if (new Set(targets.map((target) => target.id)).size !== targets.length) throw new TypeError('Duplicate market targets in save')
   return Object.freeze(targets)
