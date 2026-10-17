@@ -89,7 +89,9 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
     return <NgHoloShell appLabel="Market" empty region="market-workspace" />
   }
 
-  const finances = getTeamFinancialSnapshot(world, team.id)
+  const finances = world.teamFinancesByTeamId[team.id]?.playerSalaryBudget === undefined
+    ? null : getTeamFinancialSnapshot(world, team.id)
+  const remainingSalaryBudget = finances?.remainingPlayerSalaryBudget ?? null
   const targets = getMarketTargetsForTeam(world, team.id)
   const applyTargetChange = (update: () => GameWorld): string | null => {
     try { const next = update(); if (next !== world) replaceWorld(next); return null }
@@ -113,7 +115,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   return (
     <NgHoloShell
       appLabel="Market"
-      meta={`${agents.length} available · ${formatMoney(finances.remainingPlayerSalaryBudget)} remaining`}
+      meta={`${agents.length} available · ${remainingSalaryBudget === null ? 'presupuesto no disponible' : formatMoney(remainingSalaryBudget)} remaining`}
       region="market-workspace"
       teamId={team.id}
       title="Centro de mercado"
@@ -129,7 +131,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         world={world}
         teamId={team.id}
         availableFreeAgents={getFreeAgents(world).length}
-        remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
+        remainingSalaryBudget={remainingSalaryBudget}
         targetCount={targets.length}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenFreeAgents={() => setActiveTab('free-agents')}
