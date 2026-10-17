@@ -3,20 +3,13 @@ import type { PlayerId } from '@/domain/ids'
 import { emitEvent } from '../events'
 import { draw } from '../rng'
 import type { MatchState } from '../state'
+import { CROSSOVER_RULES_D5B } from './TechniqueRules'
 
 /** PLAYER 2.4-D5B gate: a feint is genuinely attempted on a live DRIVE near an
  * on-ball defender, not invented from an arbitrary box-score drive event.
  * Usage controls attempts; proficiency and defense control execution outcome.
  * No repertoire means exactly the legacy RNG and movement flow.
  */
-export const CROSSOVER_RULES_D5B = Object.freeze({
-  minimumDefenderGapMeters: 0.6,
-  maximumDefenderGapMeters: 2.2,
-  maximumFootworkTicks: 6,
-  defenderSpeedFactor: 0.83,
-  defenderAccelerationFactor: 0.83,
-})
-
 export function attemptCrossoverOnDrive(
   state: MatchState,
   playerId: PlayerId,
