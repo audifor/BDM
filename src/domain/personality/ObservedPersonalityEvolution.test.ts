@@ -3,7 +3,7 @@ import { createNewGame } from '@/app/game'
 import { addYears, type GameDate } from '@/domain/date'
 import { createPersonality, generatePersonality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
-import { evolvePersonalityFromMoraleEvidence, validatePersonalityJournal } from '@/domain/personality/ObservedPersonalityEvolution'
+import { OBSERVED_PERSONALITY_RULES, evolvePersonalityFromMoraleEvidence, validatePersonalityJournal } from '@/domain/personality/ObservedPersonalityEvolution'
 import { applyMoraleEventToWorld, updateGameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
@@ -16,6 +16,27 @@ const event = (personId: string, date: GameDate, id: string, kind = 'COACH_PRAIS
 })
 
 describe('PERSON 23I real event journal through BDM', () => {
+  it('matches the 76-kind PERSON 23K dictionary without dropping professional or advisory facts', () => {
+    expect(OBSERVED_PERSONALITY_RULES).toHaveLength(76)
+    expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.kind)).size).toBe(76)
+    expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.code)).size).toBe(76)
+    expect(OBSERVED_PERSONALITY_RULES.some((entry) => entry.kind === 'TEAM_SCOUTING_REPORT')).toBe(false)
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'PROFESSIONAL_REVIEW'))
+      .toMatchObject({ dimension: 'conscientiousness', minAge: 18, sources: ['professionalInteraction'] })
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'RECOMMENDATION_ACCEPTED'))
+      .toMatchObject({ dimension: 'recognitionNeed', minAge: 18 })
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'RECOMMENDATION_REJECTED'))
+      .toMatchObject({ dimension: 'frustrationTolerance', minAge: 18 })
+  })
+
+  it('rejects a source outside the canonical event family without changing personality', () => {
+    const personality = make50()
+    const mismatch = { ...event('person:test', '2026-10-01' as GameDate, 'event:bad-source', 'NEW_CONTRACT_SIGNED'), source: 'matchResult' as const }
+    expect(() => evolvePersonalityFromMoraleEvidence(personality, 'person:test', '1990-01-01', [], mismatch))
+      .toThrow('cannot come from')
+    expect(personality.values.contractualCommitment).toBe(50)
+  })
+
   it('changes exactly one score only when an observed event has been committed', () => {
     const base = createNewGame()
     const player = Object.values(base.players)[0]!
