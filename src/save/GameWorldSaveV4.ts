@@ -347,6 +347,16 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (envelope.schemaVersion !== 4) throw new Error('Unsupported save version')
   const savedAt = isoTimestamp(envelope.savedAt, 'Save V4 savedAt')
   const payload = record(envelope.payload, 'Save V4 payload')
+  // PR #130 used a different experimental journal, without the committed
+  // morale-event evidence required by the single canonical PERSON writer.
+  // Never silently drop real experience records or invent evidence to migrate.
+  if (Object.prototype.hasOwnProperty.call(payload, 'personalityExperienceHistory')) {
+    const former = payload.personalityExperienceHistory
+    if (!Array.isArray(former)) throw new TypeError('Save V4 experimental personalityExperienceHistory must be an array')
+    if (former.length > 0) {
+      throw new RangeError('Save V4 contains experimental PERSON personalityExperienceHistory; a verified-evidence migration is required before loading')
+    }
+  }
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
   const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
