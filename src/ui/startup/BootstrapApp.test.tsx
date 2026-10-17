@@ -112,7 +112,7 @@ describe('New Game World DB Spain ACB flow', () => {
     mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'created-coach-world' })
     render(<BootstrapApp />)
     fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'acb2026' } })
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'acb-2026-27' } })
     expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
 
     fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: 'Elena' } })
@@ -125,7 +125,7 @@ describe('New Game World DB Spain ACB flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
 
     await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
-      universeId: 'acb2026',
+      universeId: 'acb-2026-27',
       userTeamKey: expect.any(String),
       userCoachCreation: {
         firstName: 'Elena',
