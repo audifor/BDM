@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { parseGameDate } from '@/domain/date'
-import type { PlayerId } from '@/domain/ids'
 import { createPlayerRepertoire, WORLDDB_PLAYER_REPERTOIRE_VERSION } from '@/domain/player/PlayerRepertoire'
 import { updateGameWorld } from '@/domain/world'
 import { trainingDefinitionById } from '@/domain/training'
@@ -98,8 +97,24 @@ describe('PLAYER 2.4-D4 controlled consumer views', () => {
       ...repertoire,
       technicalMoves: [{ code: 'HOOK_SHOT', proficiency: 20, usageTendency: 75, asOfOn: '2032-10-01' }],
     })
-    const withPost = updateGameWorld(world, { playerRepertoireByPlayerId: { ...world.playerRepertoireByPlayerId, [playerId]: positionsOnly } } )
-    // GameWorld's source immutability is active: once imported, source changes fail closed.
-    expect(withPost).toBeDefined()
+    // GameWorld's source immutability is active: changing imported facts fails closed.
+    expect(() => updateGameWorld(world, { playerRepertoireByPlayerId: { ...world.playerRepertoireByPlayerId, [playerId]: positionsOnly } })).toThrow(/must not overwrite/)
+    const fresh = createNewGame()
+    const guard = Object.values(fresh.players).find(player => player.basketball.primaryPosition === 'PG')!
+    const team = Object.values(fresh.teams).find(item => item.rosterPlayerIds.includes(guard.id))!
+    const withPost = updateGameWorld(fresh, {
+      currentDate: MONDAY, games: [],
+      playerRepertoireByPlayerId: { [guard.id]: createPlayerRepertoire({ ...positionsOnly, playerId: guard.id }) },
+    })
+    expect(recommendRepertoireTraining(withPost, team.id, MONDAY).some(item => item.moveCode === 'HOOK_SHOT')).toBe(false)
+    const future = createPlayerRepertoire({
+      ...repertoire,
+      technicalMoves: [{ code: 'CROSSOVER', proficiency: 20, usageTendency: 90, asOfOn: '2035-01-01' }],
+    })
+    const withFuture = updateGameWorld(fresh, {
+      currentDate: MONDAY, games: [],
+      playerRepertoireByPlayerId: { [guard.id]: createPlayerRepertoire({ ...future, playerId: guard.id }) },
+    })
+    expect(recommendRepertoireTraining(withFuture, team.id, MONDAY)).toEqual([])
   })
 })
