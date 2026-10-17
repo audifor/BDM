@@ -7,7 +7,6 @@ import { NCAA_SIMULATED_UNIVERSE_ID, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameCon
 import { createWorldDbSpainGame, type WorldDbSpainGameAccess } from './WorldDbSpainGame'
 import { createNcaaSimulatedGame } from './createNcaaSimulatedGame'
 import { applyUserCoachCreation } from './UserCoachCreator'
-import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment'
 
 export function createConfiguredGame(options: NewGameConfiguration = {}): GameWorld {
   const universeId = options.universeId ?? 'prototype'
