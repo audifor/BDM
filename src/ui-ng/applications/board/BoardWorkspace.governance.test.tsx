@@ -144,7 +144,7 @@ describe('MX0.7 Board governance surface', () => {
     expect(screen.getByRole('button', { name: 'Decline request' })).toBeInTheDocument()
   })
 
-  it('deep links a governance request and keeps it read-only', () => {
+  it('deep links an actionable governance request', () => {
     const scenario = createGovernanceClubScenario()
     const issued = withIssuedGovernanceRequest({ ...scenario, world: withProposedSigning(scenario) })
     mountBoard(issued.world, `&requestId=${encodeURIComponent(issued.requestId)}`)
