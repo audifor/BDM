@@ -341,6 +341,8 @@ export function navigateToMarketTab(tab: 'centre' | 'explore' | 'targets' | 'pla
   url.searchParams.set('marketTab', tab === 'centre' ? 'explore' : tab === 'planning' ? 'targets' : tab === 'free-agents' ? 'explore' : tab)
   if (tab === 'free-agents') url.searchParams.set('marketContract', 'FREE')
   else url.searchParams.delete('marketContract')
+  if (tab === 'planning') url.searchParams.set('marketTargetsView', 'planning')
+  else url.searchParams.delete('marketTargetsView')
   applyHistory(url, 'push')
   notifyNgNavigation()
 }
