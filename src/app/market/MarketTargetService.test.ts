@@ -38,6 +38,13 @@ describe('Market objectives are canonical and save-backed', () => {
     const absent = Object.keys(world.players).find((id) => !getAddressableScoutingPlayerIds(world, team.id).includes(id as never))
     if (absent) expect(() => addMarketTarget(world, team.id, absent as never)).toThrow(/not an external addressable/)
   })
+  it('loads earlier Save V4 payloads without target collections as an empty shortlist', () => {
+    const { world, team } = fixture()
+    const envelope = structuredClone(serializeGameWorldV4(world, '2026-10-17T12:00:00.000Z'))
+    delete (envelope.payload as { marketTargets?: unknown }).marketTargets
+    const restored = deserializeGameWorldV4(envelope)
+    expect(getMarketTargetsForTeam(restored, team.id)).toEqual([])
+  })
   it('enforces note size and rejects duplicate save records', () => {
     const { world, team, playerId } = fixture()
     const current = addMarketTarget(world, team.id, playerId)
