@@ -6,7 +6,7 @@ import { createMarketTarget, marketTargetId, type MarketTarget, type MarketTarge
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
 
 export function getMarketTargetsForTeam(world: GameWorld, teamId: TeamId, includeArchived = false): readonly MarketTarget[] {
-  return Object.values(world.marketTargetsById)
+  return Object.values(world.marketTargetsById ?? {})
     .filter((target) => target.teamId === teamId && (includeArchived || target.status === 'ACTIVE'))
     .sort((a, b) => ({ HIGH: 0, NORMAL: 1, LOW: 2 })[a.priority] - ({ HIGH: 0, NORMAL: 1, LOW: 2 })[b.priority] ||
       a.createdOn.localeCompare(b.createdOn) || a.playerId.localeCompare(b.playerId))
