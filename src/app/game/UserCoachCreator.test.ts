@@ -98,6 +98,19 @@ describe('BS19B user-created Coach foundation', () => {
     expect(getUserCoachAmbitionProgress(next)).toMatchObject({ metric: 'playerDevelopmentEvents', completed: false })
   })
 
+  it('resolves nationality by actual country code or name across Coach, PERSON and Staff, rejecting missing codes', () => {
+    const initial = createAcbTestGame()
+    const coachId = initial.userCoachId
+    const world = applyUserCoachCreation(initial, { ...created, nationalityCountryCode: 'ESP' })
+    const coach = world.coaches[coachId]!
+    expect(world.countries[coach.nationalityId]?.name).toBe('Spain')
+    expect(world.personsById[coach.personId]!.nationalityIds).toEqual([coach.nationalityId])
+    expect(world.staffPeopleById[coach.staffProfileId]!.identity.nationality).toBe(coach.nationalityId)
+    const byName = applyUserCoachCreation(initial, { ...created, nationalityCountryCode: 'spain' })
+    expect(byName.coaches[coachId]?.nationalityId).toBe(coach.nationalityId)
+    expect(() => applyUserCoachCreation(initial, { ...created, nationalityCountryCode: 'FRA' })).toThrow(/not found uniquely/)
+  })
+
   it('rejects corrupt origin/ambition and cannot run the career creator a second time', () => {
     const initial = createAcbTestGame()
     expect(() => applyUserCoachCreation(initial, { ...created, ambition: 'unknown' as never })).toThrow(/ambition/)
