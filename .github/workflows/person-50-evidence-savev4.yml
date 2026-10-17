@@ -1,0 +1,22 @@
+name: PERSON 50 Evidence Save V4
+on:
+  push:
+    branches:
+      - feat/person-50-evidence-journal-savev4
+permissions:
+  contents: read
+jobs:
+  personality:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: PERSON evidence and Save V4
+        run: npx vitest run src/domain/world/PersonalityExperienceEvents.test.ts src/domain/world/SemanticRelationshipAutoBridge.test.ts src/domain/personality/SemanticPersonalityEffects.test.ts
