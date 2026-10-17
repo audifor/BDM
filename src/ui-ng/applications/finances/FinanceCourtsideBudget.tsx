@@ -15,7 +15,7 @@ export function FinanceCourtsideBudget({ world, organizationId }: { readonly wor
   const forecast = total('forecastMinorUnits')
   const minorDigits = new Intl.NumberFormat('es-ES', { style: 'currency', currency: budget.currencyCode }).resolvedOptions().maximumFractionDigits ?? 2
   const format = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: budget.currencyCode, maximumFractionDigits: 0 }).format(value / 10 ** minorDigits)
-  const fill = limit ? Math.max(0, Math.min(100, (forecast / limit) * 100)) : 0
+  const fill = limit ? Math.max(0, Math.min(100, (forecast / limit) * 100)) : forecast > 0 ? 100 : 0
   const over = forecast > limit
 
   return <section className="fc-budget-summary" aria-label="Estado del presupuesto de gastos">
