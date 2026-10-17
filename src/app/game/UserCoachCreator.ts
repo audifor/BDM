@@ -8,6 +8,7 @@ import { createStaffPerson, createStaffProfessionalProfile } from '@/domain/staf
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CountryId } from '@/domain/ids'
 import type { Gender } from '@/domain/primitives'
+import { queueOpeningDebtDecision } from '@/app/coachLife/CoachLifeDecision'
 
 /** BS19B P0. Edits only the selected manager's canonical Person/StaffProfile.
  * Imported historical WorldDB coaches cannot be edited. Newly created WorldDB coaches have
@@ -150,5 +151,5 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
       }),
     } })
   }
-  return next
+  return queueOpeningDebtDecision(next, coach.id)
 }

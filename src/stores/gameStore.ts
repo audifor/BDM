@@ -64,6 +64,7 @@ import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKin
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
+import { decideOpeningDebt, getPendingOpeningDebtDecision, type OpeningDebtChoice, type OpeningDebtDecisionResult } from '@/app/coachLife'
 import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
@@ -166,6 +167,7 @@ interface GameStore {
   declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
+  decideUserCoachOpeningDebt(choice: OpeningDebtChoice): OpeningDebtDecisionResult
   acceptUserCoachOffer(offerId: string): void
   declineUserCoachOffer(offerId: string): void
   applyUserCoachForJob(openingId: string): void
@@ -511,6 +513,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
+  decideUserCoachOpeningDebt: (choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = decideOpeningDebt(world, choice)
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),
   declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
@@ -684,6 +693,7 @@ export function selectUserCoachPendingOffers(world: GameWorld | null) { return w
 export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
 /** Derived selector; relationship profiles remain exclusively in GameWorld. */
 export function selectUserCoachRelationships(world: GameWorld | null) { return world === null ? [] : getRelationshipsForPerson(world, world.userCoachId) }
+export function selectUserPendingOpeningDebt(world: GameWorld | null) { return world === null ? null : getPendingOpeningDebtDecision(world) }
 export function selectUserInbox(world:GameWorld|null){return world===null?[]:getInboxItemsForCoach(world,world.userCoachId)}
 export function selectUnreadInboxCount(world:GameWorld|null){return world===null?0:getUnreadInboxCount(world,world.userCoachId)}
 export function selectRecentNews(world:GameWorld|null,limit=5){return world===null?[]:getNewsFeed(world).slice(0,limit)}
