@@ -1,4 +1,5 @@
-import { applyRelationshipEventToWorld, type GameWorld } from '@/domain/world'
+import { applyRelationshipEventToWorld } from './RelationshipEvents'
+import type { GameWorld } from './GameWorld'
 import type { RelationshipEvent, RelationshipPersonId } from '@/domain/relationships'
 
 /** Read-only pair prognosis produced by WorldDB PERSON-23D.
