@@ -54,6 +54,15 @@ describe('PERSON50 verified experience journal', () => {
     expect(legacy.personalityExperienceHistory).toHaveLength(0)
     expect(legacy.personalitiesByPersonId[personId]!.values.empathy).toBe(50)
   })
+  it('rejects evidence whose kind and dimension contradict the 75 canonical event rules', () => {
+    const { world, personId } = setup()
+    const atDate = updateGameWorld(world, { currentDate: '2026-07-01' as typeof world.currentDate })
+    expect(() => applyPersonalityExperienceToWorld(atDate, {
+      id: 'false:evidence', personId, kind: 'COACH_PRAISE',
+      dimension: 'temperament', occurredOn: '2026-07-01',
+      valence: 1, intensity: 50,
+    })).toThrow('do not match canonical catalog')
+  })
   it('does not evolve from time alone, rejects unknown person and future evidence', () => {
     const { world, personId } = setup()
     expect(world.personalityExperienceHistory).toHaveLength(0)
