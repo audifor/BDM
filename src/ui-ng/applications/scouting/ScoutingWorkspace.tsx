@@ -269,10 +269,19 @@ export function ScoutingWorkspace({ initialWorld, onOpenEntity, onOpenMarket, em
         {message ? <p className="scouting-workspace__feedback" role="status">{message}<button onClick={() => setMessage(null)} type="button">Dismiss</button></p> : null}
         {activeTab === 'centre' ? <ScoutingWarRoom world={world} teamId={team.id} model={model} embedded={embedded} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} onOpenFocuses={() => setActiveTab('focuses')} onOpenAssignments={() => setActiveTab('assignments')} onOpenCoverage={() => setActiveTab('coverage')} onOpenKnowledge={() => embedded ? onOpenSearch?.() : setActiveTab('knowledge')} onOpenReports={() => setActiveTab('reports')} /> : null}
         {activeTab === 'search' ? <PlayerSearchBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onMessage={setMessage} /> : null}
-        {activeTab === 'focuses' ? <RecruitmentFocusBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id, mission: 'FULL_REPORT' })} onMessage={setMessage} /> : null}
+        {activeTab === 'focuses' ? <>
+          <RecruitmentFocusBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id, mission: 'FULL_REPORT' })} onMessage={setMessage} />
+          {embedded ? <details className="scouting-embedded-detail"><summary>Crear foco desde búsqueda avanzada</summary><PlayerSearchBoard world={world} teamId={team.id} onOpenPlayer={openPlayer} onMessage={setMessage} /></details> : null}
+        </> : null}
         {activeTab === 'knowledge' ? <KnowledgeBoard model={model} initialQuery={focusPlayerId && world.players[focusPlayerId as keyof typeof world.players] ? `${world.players[focusPlayerId as keyof typeof world.players]!.firstName} ${world.players[focusPlayerId as keyof typeof world.players]!.lastName}` : ''} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id })} onManage={() => setActiveTab('assignments')} /> : null}
         {activeTab === 'assignments' ? <><AssignmentBoard onOpenPlayer={openPlayer} rows={model.assignments} onCancel={(row) => setModal({ kind: 'cancel', assignment: row })} onPriority={(row, priority) => { const error = setPriority(row.id, priority); setMessage(error ?? `${row.playerName} priority changed to ${scoutingPriorityLabel(priority)}.`) }} /><details className="scouting-embedded-detail"><summary>Carga del equipo de scouting</summary><ScoutWorkloadBoard world={world} teamId={team.id} /></details><details className="scouting-embedded-detail"><summary>Cobertura territorial</summary><CoverageBoard world={world} teamId={team.id} model={model} onAdd={() => setModal({ kind: 'coverage-add' })} onEnd={(assignmentId) => setModal({ kind: 'coverage-end', assignmentId })} /></details></> : null}
-        {activeTab === 'reports' ? <><ReportBoard rows={model.reports} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} />{embedded ? <details className="scouting-embedded-detail"><summary>Informes de rivales</summary><OppositionBoard rows={model.opposition} onOpenPlayer={openPlayer} /></details> : null}</> : null}
+        {activeTab === 'reports' ? <>
+          <ReportBoard rows={model.reports} onOpenPlayer={openPlayer} onOpenReport={(reportId) => setModal({ kind: 'report', reportId })} />
+          {embedded ? <>
+            <details className="scouting-embedded-detail"><summary>Conocimiento detallado y nuevas observaciones</summary><KnowledgeBoard model={model} onOpenPlayer={openPlayer} onRequest={(id) => setModal({ kind: 'request', playerId: id })} onManage={() => setActiveTab('assignments')} /></details>
+            <details className="scouting-embedded-detail"><summary>Informes de rivales</summary><OppositionBoard rows={model.opposition} onOpenPlayer={openPlayer} /></details>
+          </> : null}
+        </> : null}
         {activeTab === 'coverage' ? <CoverageBoard world={world} teamId={team.id} model={model} onAdd={() => setModal({ kind: 'coverage-add' })} onEnd={(assignmentId) => setModal({ kind: 'coverage-end', assignmentId })} /> : null}
         {activeTab === 'opposition' ? <OppositionBoard onOpenPlayer={openPlayer} rows={model.opposition} /> : null}
   </>
