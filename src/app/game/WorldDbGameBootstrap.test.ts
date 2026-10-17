@@ -12,6 +12,7 @@ import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
+import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { advanceGameDay, type WorldDayAdvanceResult } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -129,6 +130,56 @@ function reportWorldDbStop(label: string, initial: GameWorld, target: string, re
 }
 
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+
+  it('BS19B creates a distinct head coach, keeps historical PERSON intact and round-trips Save V4', () => {
+    const initial = worldWithAssistantCoach()
+    const oldCoach = initial.coaches[initial.userCoachId]!
+    const oldPerson = initial.personsById[oldCoach.personId]!
+    const oldStaff = initial.staffPeopleById[oldCoach.staffProfileId]!
+    const oldStaffAssignment = Object.values(initial.teamStaffAssignmentsById).find(x => x.staffPersonId === oldStaff.id)
+    const otherPeopleCount = Object.keys(initial.personsById).length
+    const personForOwner = initial.personsById['person:owner-only' as never]
+    const world = appointCreatedUserCoachToWorldDbClub(initial, selection.teamId as never, {
+      firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25',
+      gender: 'female', background: 'inDebt', disposition: 'ambitious', coachingStyle: 'tactician',
+    })
+    const coach = world.coaches[world.userCoachId]!
+    expect(coach.id).not.toBe(oldCoach.id)
+    expect(coach.personId).not.toBe(oldCoach.personId)
+    expect(coach.staffProfileId).not.toBe(oldCoach.staffProfileId)
+    expect(coach.firstName).toBe('Elena')
+    expect(world.personsById[coach.personId]).toMatchObject({
+      firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25', gender: 'female',
+    })
+    expect(world.teams[selection.teamId as never]?.coachId).toBe(coach.id)
+    expect(world.staffPeopleById[coach.staffProfileId]?.identity.firstName).toBe('Elena')
+    expect(world.staffEmploymentByStaffId[coach.staffProfileId]?.status).toBe('employed')
+    expect(world.coachEmploymentByCoachId[coach.id]?.status).toBe('employed')
+    expect(world.coachCareerHistoryByCoachId[coach.id]?.at(-1)?.kind).toBe('appointment')
+    expect(world.staffCareerHistoryByStaffId[coach.staffProfileId]?.at(-1)?.kind).toBe('appointment')
+    expect(world.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
+    expect(Object.values(world.staffContractsById).filter(x => x.staffId === coach.staffProfileId && !x.termination)).toHaveLength(1)
+
+    expect(world.coaches[oldCoach.id]).toEqual(oldCoach)
+    expect(world.personsById[oldPerson.id]).toEqual(oldPerson)
+    expect(world.staffPeopleById[oldStaff.id]).toEqual(oldStaff)
+    expect(world.staffEmploymentByStaffId[oldStaff.id]?.status).toBe('unemployed')
+    expect(world.coachEmploymentByCoachId[oldCoach.id]?.status).toBe('unemployed')
+    expect(Object.values(world.teamStaffAssignmentsById).some(a => a.id === oldStaffAssignment?.id)).toBe(false)
+    expect(Object.values(world.staffContractsById).filter(x => x.staffId === oldStaff.id).every(x => x.termination !== undefined)).toBe(true)
+    expect(world.personsById['person:owner-only' as never]).toEqual(personForOwner)
+    expect(Object.keys(world.personsById)).toHaveLength(otherPeopleCount + 1)
+    expect(world.coachJobOffersById[Object.keys(world.coachJobOffersById)[0] as never]?.status).toBe('accepted')
+
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(world, '2026-10-17T21:00:00.000Z'))
+    expect(restored.userCoachId).toBe(world.userCoachId)
+    expect(restored.coaches[oldCoach.id]).toEqual(oldCoach)
+    expect(restored.personsById[oldPerson.id]).toEqual(oldPerson)
+    expect(restored.personsById[coach.personId].dateOfBirth).toBe('1993-04-25')
+    expect(restored.staffPeopleById[coach.staffProfileId].id).toBe(coach.staffProfileId)
+    expect(restored.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
+  }, 120_000)
+
   it('V2 differential: Medical review is a coherent required stop, with only the explicit fixture decision executed', async () => {
     const initial = await createWorldDbSpainGame(selection.teamId, { repository: repository(slice()), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' })
     const team = Object.values(initial.teams).find(item => item.coachId === initial.userCoachId)!
