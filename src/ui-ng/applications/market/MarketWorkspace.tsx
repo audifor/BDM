@@ -24,6 +24,7 @@ import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import './market-courtside-v3.css'
+import './market-unified-navigation.css'
 
 type MarketTab = 'explore' | 'targets' | 'scouting' | 'operations'
 const MARKET_TABS: readonly { readonly id: MarketTab; readonly label: string }[] = [
