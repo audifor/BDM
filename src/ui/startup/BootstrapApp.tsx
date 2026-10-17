@@ -126,7 +126,7 @@ function StartScreen({
 
   const availableTeams = universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
   const worldDbReady = universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
-  const coachCreatorSupported = universeId !== WORLD_DB_SPAIN_UNIVERSE_ID
+  const coachCreatorSupported = true
   const coachIdentityReady = !coachCreatorSupported || (firstName.trim().length > 0 && lastName.trim().length > 0 && dateOfBirth.length === 10)
 
   if (!setupOpen) {
@@ -230,11 +230,9 @@ function StartScreen({
                 </select>
               </label>
             </div>
-            <p className="bdm-coach-creator__note">Your identity, professional strengths, personality and opening finances are saved in the world. Nationality follows the available country in this development universe. The full PERSON50 creator and Basket/RPG experience settings will follow separately.</p>
+            <p className="bdm-coach-creator__note">Your identity, professional strengths, personality and opening finances are saved in the world. Nationality defaults to the club's country in WorldDB. The sourced incumbent remains a separate PERSON. Full PERSON50 and Basket/RPG intensity settings will follow.</p>
           </section>
-        ) : (
-          <p className="bdm-coach-creator__note" role="note">World DB uses its sourced head coach for now. Creating a different coach here requires a safe career appointment, without overwriting historical identities.</p>
-        )}
+        ) : null}
         <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
