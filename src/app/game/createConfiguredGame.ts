@@ -7,6 +7,7 @@ import { NCAA_SIMULATED_UNIVERSE_ID, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameCon
 import { createWorldDbSpainGame, type WorldDbSpainGameAccess } from './WorldDbSpainGame'
 import { createNcaaSimulatedGame } from './createNcaaSimulatedGame'
 import { applyUserCoachCreation } from './UserCoachCreator'
+import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment'
 
 export function createConfiguredGame(options: NewGameConfiguration = {}): GameWorld {
   const universeId = options.universeId ?? 'prototype'
@@ -24,8 +25,7 @@ export async function createConfiguredGameAsync(
   access?: WorldDbSpainGameAccess,
 ): Promise<GameWorld> {
   if (options.universeId === WORLD_DB_SPAIN_UNIVERSE_ID) {
-    if (options.userCoachCreation !== undefined) throw new RangeError('Custom Coach Creator is not yet available on World DB: historical head-coach replacement requires an authorized career transition')
-    return createWorldDbSpainGame(options.userTeamKey ?? '', access, BDM_GAME_BALANCE_V1)
+    return createWorldDbSpainGame(options.userTeamKey ?? '', access, BDM_GAME_BALANCE_V1, options.userCoachCreation)
   }
   return createConfiguredGame(options)
 }
