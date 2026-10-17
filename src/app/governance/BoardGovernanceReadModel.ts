@@ -79,7 +79,7 @@ export interface GovernanceRequestRow {
   readonly issuerLabel: string
   readonly recipientLabel: string
   readonly addressedToUser: boolean
-  /** Canonical response command existence: today the domain records request events but exposes no app command, so this is always false (BS gap). */
+  /** Only a live request directly addressed to the user coach has a supported response command. */
   readonly responseCommandAvailable: boolean
   readonly events: readonly GovernanceRequestEventRow[]
 }
@@ -259,12 +259,13 @@ export function buildClubGovernanceModel(world: GameWorld, teamId: TeamId): Club
       const events = Object.values(world.governanceRequestEventsById).filter((event) => event.requestId === request.id)
       const issued = sortGovernanceRequestEvents(events)[0]
       const recipientIsUser = request.recipient.kind === 'ACTOR' && request.recipient.actor.kind === 'COACH' && request.recipient.actor.id === world.userCoachId
+      const requestStatus = deriveGovernanceRequestStatus(events)
       return Object.freeze({
         requestId: request.id,
         institutionId: request.institutionId,
         category: request.category,
         summary: request.summary,
-        status: deriveGovernanceRequestStatus(events),
+        status: requestStatus,
         issuedOn: issued?.effectiveOn ?? null,
         dueOn: request.dueOn ?? null,
         overdue: isGovernanceRequestOverdue(request, events, asOf),
@@ -272,8 +273,8 @@ export function buildClubGovernanceModel(world: GameWorld, teamId: TeamId): Club
         issuerLabel: governancePartyLabel(world, request.issuer),
         recipientLabel: governancePartyLabel(world, request.recipient),
         addressedToUser: recipientIsUser,
-        // The domain records request events, but no application command records one today.
-        responseCommandAvailable: false,
+        // Acknowledging, accepting or declining preserves the canonical event lifecycle.
+        responseCommandAvailable: recipientIsUser && (requestStatus === 'ISSUED' || requestStatus === 'ACKNOWLEDGED'),
         events: Object.freeze(
           [...sortGovernanceRequestEvents(events)].map((event) => Object.freeze({ eventId: event.id, kind: event.kind, effectiveOn: event.effectiveOn, actorLabel: governancePartyLabel(world, event.actor) })),
         ),
