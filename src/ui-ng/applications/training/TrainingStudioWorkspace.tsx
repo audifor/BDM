@@ -1,8 +1,8 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { getUserTeam } from '@/engine/calendar'
 import { buildTrainingPlanningContext, canTeamTrainOnDate, nextEligibleTrainingDate } from '@/engine/training'
 import { getCareerFatigueForPlayer, getTeamRoster } from '@/domain/world'
-import { createEntityId } from '@/domain/ids'
+import { createEntityId, type PlayerId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
 import { TRAINING_CATALOG, type TrainingIntensity } from '@/domain/training'
 import { emptyTrainingStudioPlan, putTrainingStudioPlan, type TrainingStudioPlan, type TrainingMacrocycle, type TrainingMesocycle } from '@/domain/training/TrainingStudioPlan'
@@ -31,7 +31,7 @@ const baseMacro = (date:string):TrainingMacrocycle => ({id:'macro:'+createEntity
 const baseMeso = (macro:TrainingMacrocycle):TrainingMesocycle => ({id:'meso:'+createEntityId(),macrocycleId:macro.id,name:'Nuevo bloque',startDate:macro.startDate,endDate:plus(macro.startDate,Math.min(27,Math.floor((at(macro.endDate).getTime()-at(macro.startDate).getTime())/DAY_MS))),objective:'Trabajo técnico-táctico',moduleId:'offensiveSystem',intensity:'normal'})
 const RATING_OPTIONS=BASKETBALL_RATING_KEYS
 function mark(value:number, max=100){return <div className="cts-meter"><i style={{width:String(Math.max(0,Math.min(100,value/max*100)))+'%'}} /></div>}
-function SectionTitle({eyebrow,heading,children}:{eyebrow:string;heading:string;children?:React.ReactNode}){return <div className="cts-titlebar"><div><div className="cts-eyebrow">{eyebrow}</div><h2>{heading}</h2></div><div className="cts-title-actions">{children}</div></div>}
+function SectionTitle({eyebrow,heading,children}:{eyebrow:string;heading:string;children?:ReactNode}){return <div className="cts-titlebar"><div><div className="cts-eyebrow">{eyebrow}</div><h2>{heading}</h2></div><div className="cts-title-actions">{children}</div></div>}
 export function TrainingStudioWorkspace({initialTab='planner'}:{initialTab?:Section}) {
  const world = useGameStore(state=>state.world)
  const [tab,setTab]=useState<Section>(initialTab)
@@ -39,7 +39,7 @@ export function TrainingStudioWorkspace({initialTab='planner'}:{initialTab?:Sect
  const [anchor,setAnchor]=useState<string|null>(null)
  const [message,setMessage]=useState('')
  const [advanced,setAdvanced]=useState<TrainingPcbTab|null>(null)
- const [chosenModule,setChosenModule]=useState('offensiveSystem')
+ const [chosenModule,setChosenModule]=useState('threePoint')
  const [intensity,setIntensity]=useState<TrainingIntensity>('normal')
  const [chosenPlayer,setChosenPlayer]=useState('')
  const [chosenRating,setChosenRating]=useState<string>('threePointShooting')
@@ -47,6 +47,8 @@ export function TrainingStudioWorkspace({initialTab='planner'}:{initialTab?:Sect
  const [chosenMentee,setChosenMentee]=useState('')
  const [chosenFocus,setChosenFocus]=useState('Profesionalidad')
  const [chosenDate,setChosenDate]=useState('')
+ const [targetValue,setTargetValue]=useState(75)
+ const [targetDate,setTargetDate]=useState('')
  const {openEntity}=useNgWorkspaceNavigation()
  const team=world===null?undefined:getUserTeam(world)
  const teamId=team?.id
@@ -89,7 +91,7 @@ export function TrainingStudioWorkspace({initialTab='planner'}:{initialTab?:Sect
    }
    setMessage(String(count)+' sesiones generadas. Las existentes se han conservado.')
  },'Plan aplicado')
- const openPlayer=(id:string)=>openEntity({type:'player',playerId:id as Parameters<typeof openEntity>[0] extends {playerId:infer P}?P:never,section:'overview'})
+ const openPlayer=(id:string)=>openEntity({type:'player',playerId:id as PlayerId,section:'overview'})
  if(!world||!team||!plan) return <div className="cts-studio cts-studio--empty">Training Studio necesita una partida con club asignado.</div>
  const activeSessions=(day:string)=>sessions.filter(s=>s.date===day)
  const activePhase=plan.macrocycles.find(m=>m.startDate<=date&&m.endDate>=date)
@@ -131,7 +133,7 @@ export function TrainingStudioWorkspace({initialTab='planner'}:{initialTab?:Sect
    </>}
    {tab==='development'&&<>
     <SectionTitle eyebrow="DE LA PROMESA A LA LEYENDA" heading="DESARROLLO A LARGO PLAZO"><button onClick={()=>setAdvanced('personal')}>ENTRENAMIENTO INDIVIDUAL ↗</button></SectionTitle>
-    <div className="cts-panel"><h3>NUEVO OBJETIVO PERSONAL</h3><div className="cts-fields"><label>Jugador<select value={chosenPlayer} onChange={e=>setChosenPlayer(e.target.value)}><option value="">Elegir</option>{roster.map(p=><option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}</select></label><label>Atributo<select value={chosenRating} onChange={e=>setChosenRating(e.target.value)}>{RATING_OPTIONS.map(k=><option key={k} value={k}>{ATTRIBUTE_LABELS[k]??k}</option>)}</select></label><label>Meta<input id="cts-target" type="number" min="0" max="100" defaultValue="75"/></label><label>Fecha objetivo<input id="cts-target-date" type="date" defaultValue={plus(world.currentDate,120)} /></label><button className="cts-primary" disabled={!chosenPlayer} onClick={()=>{const score=Number((document.getElementById('cts-target') as HTMLInputElement)?.value);const targetDate=(document.getElementById('cts-target-date') as HTMLInputElement)?.value;save({...plan,individualGoals:[...plan.individualGoals.filter(g=>!(g.playerId===chosenPlayer&&g.targetRating===chosenRating)),{playerId:chosenPlayer,targetRating:chosenRating,targetValue:score,targetDate,note:'Objetivo del entrenador'}]},'Objetivo guardado')}}>AÑADIR OBJETIVO</button></div></div>
+    <div className="cts-panel"><h3>NUEVO OBJETIVO PERSONAL</h3><div className="cts-fields"><label>Jugador<select value={chosenPlayer} onChange={e=>setChosenPlayer(e.target.value)}><option value="">Elegir</option>{roster.map(p=><option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}</select></label><label>Atributo<select value={chosenRating} onChange={e=>setChosenRating(e.target.value)}>{RATING_OPTIONS.map(k=><option key={k} value={k}>{ATTRIBUTE_LABELS[k]??k}</option>)}</select></label><label>Meta<input type="number" min="0" max="100" value={targetValue} onChange={e=>setTargetValue(Number(e.target.value))}/></label><label>Fecha objetivo<input type="date" value={targetDate||plus(world.currentDate,120)} onChange={e=>setTargetDate(e.target.value)} /></label><button className="cts-primary" disabled={!chosenPlayer} onClick={()=>save({...plan,individualGoals:[...plan.individualGoals.filter(g=>!(g.playerId===chosenPlayer&&g.targetRating===chosenRating)),{playerId:chosenPlayer,targetRating:chosenRating,targetValue,targetDate:targetDate||plus(world.currentDate,120),note:'Objetivo del entrenador'}]},'Objetivo guardado')}>AÑADIR OBJETIVO</button></div></div>
     <div className="cts-goals">{plan.individualGoals.length===0?<div className="cts-panel cts-empty">Todavía no hay objetivos. Cada jugador puede tener metas técnicas y físicas persistentes.</div>:plan.individualGoals.map((goal,i)=>{const p=world.players[goal.playerId as keyof typeof world.players];const current=p?.basketball.ratings[goal.targetRating as keyof typeof p.basketball.ratings]??0;return <div className="cts-panel cts-goal" key={goal.playerId+goal.targetRating}><button onClick={()=>openPlayer(goal.playerId)}><strong>{playerName(goal.playerId)}</strong></button><span>{ATTRIBUTE_LABELS[goal.targetRating as keyof typeof ATTRIBUTE_LABELS]??goal.targetRating}</span><div>{mark(Number(current))}<small>{Number(current).toFixed(0)} actual / {goal.targetValue} objetivo</small></div><span>{fmt(goal.targetDate)}</span><button title="Eliminar objetivo" onClick={()=>save({...plan,individualGoals:plan.individualGoals.filter((_,j)=>j!==i)})}>×</button></div>})}</div>
     <div className="cts-panel"><h3>PROGRESO REAL</h3><p>Los objetivos son decisiones de gestión. Los cambios efectivos de atributos siguen siendo responsabilidad exclusiva del desarrollo canónico del jugador.</p></div>
    </>}
