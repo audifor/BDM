@@ -67,7 +67,7 @@ export function BoardCourtsideSections(props: Props) {
     .filter((item) => managerPeriodIds.has(item.evaluationPeriodId))
     .sort((a, b) => b.evaluatedOn.localeCompare(a.evaluatedOn) || a.id.localeCompare(b.id))
   const latestEvaluation = evaluations[0]
-  const evaluationByObjective = new Map(evaluations.flatMap((evaluation) => evaluation.objectiveEvaluations.map((item) => [item.objectiveId, item] as const)))
+  const evaluationByObjective = new Map([...evaluations].reverse().flatMap((evaluation) => evaluation.objectiveEvaluations.map((item) => [item.objectiveId, item] as const)))
   const transitions = Object.values(world.governanceJobSecurityTransitionsById)
     .filter((item) => institutionIds.has(item.institutionId) && item.managerId === world.userCoachId)
     .sort((a, b) => b.effectiveOn.localeCompare(a.effectiveOn))
