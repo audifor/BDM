@@ -54,7 +54,7 @@ describe('BS18-P0 canonical governance request responses', () => {
     const input = { teamId: scenario.teamId, requestId, kind: 'ACCEPTED' as const }
     const otherTeam = Object.values(world.teams).find((team) => team.id !== scenario.teamId)!
     expect(respondToClubGovernanceRequest(world, { ...input, teamId: otherTeam.id })).toMatchObject({
-      status: 'BLOCKED', world, reasons: ['NOT_CLUB_REQUEST'],
+      status: 'BLOCKED', world, reasons: ['NOT_USER_TEAM'],
     })
     expect(respondToClubGovernanceRequest(world, { ...input, teamId: 'missing-team' as never })).toMatchObject({
       status: 'BLOCKED', world, reasons: ['UNKNOWN_TEAM'],
