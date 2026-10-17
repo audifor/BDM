@@ -29,7 +29,7 @@ export interface UserCoachCreationInput {
 export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreationInput): GameWorld {
   const coach = world.coaches[world.userCoachId]
   if (coach === undefined) throw new RangeError('Player-controlled head coach does not exist')
-  if (String(coach.id).startsWith('worlddb:') || world.worldDbCompetitionRuntime.competitionRuntimeBundle !== null) {
+  if (String(coach.id).startsWith('worlddb:') || world.worldDbCompetitionRuntime?.competitionRuntimeBundle != null) {
     throw new RangeError('Custom Coach Creator cannot modify sourced World DB managers; use an authorized career appointment')
   }
   const staff = world.staffPeopleById[coach.staffProfileId]
