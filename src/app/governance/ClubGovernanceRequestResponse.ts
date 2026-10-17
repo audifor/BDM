@@ -18,6 +18,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 export type ClubGovernanceRequestResponse = 'ACKNOWLEDGED' | 'ACCEPTED' | 'DECLINED'
 export type ClubGovernanceRequestResponseReason =
   | 'UNKNOWN_TEAM'
+  | 'NOT_USER_TEAM'
   | 'REQUEST_NOT_FOUND'
   | 'NOT_CLUB_REQUEST'
   | 'NOT_REQUEST_RECIPIENT'
@@ -48,6 +49,7 @@ export function respondToClubGovernanceRequest(
   input: { readonly teamId: TeamId; readonly requestId: string; readonly kind: ClubGovernanceRequestResponse },
 ): ClubGovernanceRequestResponseResult {
   if (world.teams[input.teamId] === undefined) return blocked(world, input.requestId, 'UNKNOWN_TEAM')
+  if (world.teams[input.teamId]!.coachId !== world.userCoachId) return blocked(world, input.requestId, 'NOT_USER_TEAM')
 
   const request = world.governanceRequestsById[input.requestId]
   if (request === undefined) return blocked(world, input.requestId, 'REQUEST_NOT_FOUND')
