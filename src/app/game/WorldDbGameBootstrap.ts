@@ -110,7 +110,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     const scores = personById.get(personId)?.personality
     if (scores !== undefined) importedPersonalities[profileId] = createPersonality({ values: scores })
   }
-  for (const player of players) project(player.id, player.personId)
+  for (const player of slice.players) project(player.playerId, player.personId)
   for (const staffPerson of staff) if (staffPerson.personId !== undefined) project(staffPerson.id, staffPerson.personId)
   project(coach.id, selectedHeadCoachStaff.personId)
   const playerPersonIds = new Set(slice.players.map((player) => player.personId))
