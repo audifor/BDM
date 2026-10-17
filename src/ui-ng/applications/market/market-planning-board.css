@@ -34,3 +34,9 @@
 .market-plan__actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:17px;}
 @media(max-width:1040px) {.market-plan__grid {grid-template-columns:minmax(0,1fr);}}
 @media(max-width:760px) {.market-plan__header {flex-direction:column;align-items:stretch}.market-plan__stats {grid-template-columns:repeat(2,minmax(0,1fr));}.market-plan__positions-head,.market-plan__position {gap:5px;grid-template-columns:.5fr .4fr .85fr .5fr 1fr;font-size:10px;padding:9px 4px;}}
+
+
+.market-plan__compact-head {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.market-plan__compact-head strong {font:700 15px var(--market-display);}
+.market-plan__compact-head label {display:flex;align-items:center;gap:9px;color:var(--market-muted);font-size:11px;}
+.market-plan__compact-head select {border:1px solid var(--market-line);padding:7px;border-radius:8px;background:var(--market-surface-alt);color:var(--market-text);}
