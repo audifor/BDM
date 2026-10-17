@@ -61,6 +61,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
     return MARKET_TABS.some((tab) => tab.id === selected) ? selected as MarketTab : initialTab
   })
   const [searchPreset, setSearchPreset] = useState<'ALL' | 'FREE'>(() => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('marketTab') === 'free-agents' || new URLSearchParams(window.location.search).get('marketContract') === 'FREE') ? 'FREE' : 'ALL')
+  const [targetsView, setTargetsView] = useState<'tracking' | 'planning'>('tracking')
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
@@ -134,7 +135,8 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
       <MarketOperationsBar world={world} teamId={team.id}
         onOpenScouting={() => setActiveTab('scouting')}
         onOpenFreeAgents={() => { setSearchPreset('FREE'); setActiveTab('explore') }} />
-      {activeTab === 'explore' || activeTab === 'targets' ? <MarketTalentBoard
+      {activeTab === 'targets' ? <nav className="market-target-views" aria-label="Vistas de objetivos"><button type="button" aria-pressed={targetsView === 'tracking'} onClick={() => setTargetsView('tracking')}>Seguimiento</button><button type="button" aria-pressed={targetsView === 'planning'} onClick={() => setTargetsView('planning')}>Planificación</button></nav> : null}
+      {(activeTab === 'explore' || activeTab === 'targets' && targetsView === 'tracking') ? <MarketTalentBoard
         key={activeTab === 'explore' ? searchPreset : 'targets'}
         world={world} teamId={team.id} mode={activeTab}
         initialContractFilter={activeTab === 'explore' ? searchPreset : 'ALL'}
@@ -151,11 +153,9 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
         onRequestScouting={requestScoutingAssignment}
         onOpenFreeAgent={(id) => setSelectedId(id)}
       /> : null}
-      {activeTab === 'targets' ? <details className="market-plan-toggle" data-testid="market-planning-toggle"><summary>Planificación de plantilla y contratos</summary>
-        <MarketPlanningBoard world={world} teamId={team.id}
-          remainingSalaryBudget={remainingSalaryBudget} onOpenPlayer={navigateToPlayer}
-          onOpenScouting={() => setActiveTab('scouting')} onOpenTargets={() => setActiveTab('targets')} />
-      </details> : null}
+      {activeTab === 'targets' && targetsView === 'planning' ? <MarketPlanningBoard world={world} teamId={team.id}
+        remainingSalaryBudget={remainingSalaryBudget} onOpenPlayer={navigateToPlayer}
+        onOpenScouting={() => setActiveTab('scouting')} onOpenTargets={() => setTargetsView('tracking')} /> : null}
       {activeTab === 'scouting' ? <ScoutingWorkspace embedded initialWorld={world} onOpenSearch={() => { setSearchPreset('ALL'); setActiveTab('explore') }} /> : null}
       {selected !== undefined ? <div className="market-contact-overlay" onMouseDown={(event) => { if (event.currentTarget === event.target) setSelectedId(undefined) }}>
         <section role="dialog" aria-modal="true" aria-label="Contacto con agente libre" className="market-contact-modal">
