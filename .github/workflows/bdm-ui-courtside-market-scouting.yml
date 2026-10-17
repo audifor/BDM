@@ -1,0 +1,40 @@
+name: Courtside Scouting + Market validation
+on:
+  push:
+    branches:
+      - feat/courtside-scouting-market-v1
+  pull_request:
+    branches:
+      - feat/bdm-ui-courtside
+permissions:
+  contents: read
+concurrency:
+  group: courtside-scouting-market-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  market-scouting:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Focused UI and navigation regression tests
+        run: |
+          npx vitest run \
+            src/ui-ng/applications/scouting/ScoutingWorkspace.test.tsx \
+            src/ui-ng/applications/market/MarketWorkspace.courtside.test.tsx \
+            src/ui-ng/system/startMenuCatalog.courtside.test.ts \
+            src/ui/desktop/DesktopNavigation.test.ts \
+            src/ui/desktop/DesktopAppHost.test.ts \
+            src/ui-ng/workspace/workspaceRegistry.test.ts \
+            --maxWorkers=2 --no-file-parallelism
+      - name: Frontend build
+        run: npm run build
