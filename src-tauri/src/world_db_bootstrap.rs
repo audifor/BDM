@@ -130,14 +130,14 @@ pub struct WorldDbGameBootstrapDevelopmentDimensionV1 {
     growth_rate: f64,
     decline_sensitivity: f64,
 }
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbContextualTraitV1 {
     code: String,
     strength: i64,
     started_on: String,
 }
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbTechnicalMoveV1 {
     code: String,
@@ -145,13 +145,13 @@ pub struct WorldDbTechnicalMoveV1 {
     usage_tendency: i64,
     as_of_on: String,
 }
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbBasketballSpecializationTraitV1 {
     code: String,
     started_on: String,
 }
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbPlayerRepertoireV1 {
     version: String,
