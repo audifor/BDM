@@ -19,6 +19,7 @@ export function attemptCrossoverOnDrive(
   if (state.ball.kind !== 'HELD' || state.ball.ownerPlayerId !== playerId || state.ball.dribble !== 'live') return state
   const drive = state.actions.find((action) => action.id === actionId)
   if (drive?.kind !== 'DRIVE' || drive.playerId !== playerId || drive.status !== 'ACTIVE') return state
+  if (state.events.some((event) => event.type === 'techniqueAttempted' && event.actionId === actionId)) return state
   const driver = state.players.find((player) => player.playerId === playerId && player.active)
   const move = driver?.repertoire?.technicalMoves.find((entry) => entry.code === 'CROSSOVER')
   if (!driver || !move || move.usageTendency <= 0) return state
