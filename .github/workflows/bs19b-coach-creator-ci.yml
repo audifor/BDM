@@ -26,3 +26,6 @@ jobs:
         run: npm run typecheck
       - name: Coach Creator tests
         run: npm test -- src/app/game/UserCoachCreator.test.ts src/ui/startup/BootstrapApp.test.tsx
+
+      - name: World DB actual Coach appointment contract test
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t BS19B
