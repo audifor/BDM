@@ -3,7 +3,6 @@ import { getEligibleCoachJobs } from '@/app/coachCareer'
 import { COACH_REPUTATION_DIMENSIONS, getCoachReputationBand, getRecentCoachReputationEvents } from '@/domain/coachReputation'
 import { getRelationshipsForPerson, type GameWorld } from '@/domain/world'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { COACH_PERK_CATALOG, COACH_SKILL_CATALOG } from '@/engine/coach'
 import { coachReputationEventLabel, coachReputationSourceLabel } from '@/ui/coachReputationPresentation'
 import { formatPrototypeDate } from '@/ui/formatters'
 
@@ -40,6 +39,15 @@ function Metric({ label, value, muted }: { readonly label: string; readonly valu
 function Empty({ children }: { readonly children: ReactNode }) {
   return <p className="coach-truth__empty">{children}</p>
 }
+function linkedPersonName(world: GameWorld, id: string) {
+  const player = world.players[id as keyof typeof world.players]
+  if (player) return player.firstName + ' ' + player.lastName
+  const coach = world.coaches[id as keyof typeof world.coaches]
+  if (coach) return coach.firstName + ' ' + coach.lastName
+  const staff = world.staffPeopleById[id as keyof typeof world.staffPeopleById]
+  if (staff) return staff.identity.firstName + ' ' + staff.identity.lastName
+  return id
+}
 function coachTeam(world: GameWorld) {
   const employment = world.coachEmploymentByCoachId[world.userCoachId]
   return employment?.teamId ? world.teams[employment.teamId] : undefined
@@ -72,7 +80,6 @@ function Overview({ world, onNavigate }: { readonly world: GameWorld; readonly o
   const reputation = world.coachReputationProfilesByCoachId[coach.id]
   const professional = world.staffPeopleById[coach.staffProfileId]?.professional
   const employment = world.coachEmploymentByCoachId[coach.id]
-  const finance = world.coachFinancesByCoachId[coach.id]
   const legacy = world.coachLegacyByCoachId[coach.id]
   const matches = completedRecord(world, team?.id)
   const relationships = getRelationshipsForPerson(world, coach.id)
@@ -93,7 +100,7 @@ function Overview({ world, onNavigate }: { readonly world: GameWorld; readonly o
         </div>
         <div className="coach-truth__stats">
           <Metric label="Competitive record" value={matches.played ? matches.won + 'W / ' + matches.lost + 'L' : 'No completed games'} />
-          <Metric label="Annual salary" value={finance ? money(finance.annualSalary) : 'Not recorded'} />
+          <Metric label="Reputation events" value={reputation?.events.length ?? 0} />
           <Metric label="Career legacy" value={legacy?.status ?? 'Not established'} />
         </div>
       </Panel>
@@ -127,7 +134,7 @@ function Overview({ world, onNavigate }: { readonly world: GameWorld; readonly o
       <Panel title="RELATIONSHIPS" hint="Only materialized connections" action={<Nav tab="relationships" onNavigate={onNavigate}>Network</Nav>}>
         <div className="coach-truth__stats"><Metric label="Recorded relationships" value={relationships.length} /></div>
         {relationships.length === 0 ? <Empty>Interactions will appear here when they are recorded by the simulation.</Empty> : <div className="coach-truth__compact-list">
-          {relationships.slice(0, 4).map((item) => <div key={item.sourceId + item.targetId}><span>{item.sourceId === coach.id ? item.targetId : item.sourceId}</span><strong>{item.value > 0 ? '+' : ''}{item.value}</strong></div>)}</div>}
+          {relationships.slice(0, 4).map((item) => <div key={item.sourceId + item.targetId}><span>{linkedPersonName(world, item.sourceId === coach.id ? item.targetId : item.sourceId)}</span><strong>{item.value > 0 ? '+' : ''}{item.value}</strong></div>)}</div>}
       </Panel>
       <Panel title="CAREER MARKET" hint="Openings and decisions" action={<Nav tab="opportunities" onNavigate={onNavigate}>Market</Nav>}>
         <div className="coach-truth__stats">
@@ -198,7 +205,7 @@ function Career({ world, onNavigate }: { readonly world: GameWorld; readonly onN
     <div className="coach-truth__stats coach-truth__stats--full">
       <Metric label="Current club" value={team?.name ?? 'Unemployed'} />
       <Metric label="Appointed" value={employment?.startedOn ? date(employment.startedOn) : 'Not employed'} />
-      <Metric label="Current match record" value={record.won + '–' + record.lost} />
+      <Metric label="Current team record" value={record.won + '–' + record.lost} />
       <Metric label="Completed games" value={record.played} />
     </div>
     <Panel title="CAREER TRAJECTORY" hint="Real results from completed matches">

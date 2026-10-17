@@ -66,4 +66,15 @@ describe('CoachWorkspace', () => {
     expect(screen.getByText('No matching relationships.')).toBeInTheDocument()
   })
 
+  it('shows factual Coach tabs without illustrative values in the active NG interface', () => {
+    useGameStore.setState({ world: createNewGame() })
+    const { container } = render(<CoachWorkspace />)
+    const tabs = within(screen.getByRole('navigation', { name: 'Workspace tabs' }))
+    for (const name of ['Overview', 'Reputation', 'Opportunities', 'Career', 'Legacy']) {
+      fireEvent.click(tabs.getByRole('button', { name }))
+      expect(container.querySelector('[data-coach-truth]')).toBeInTheDocument()
+      expect(container.textContent).not.toMatch(/\bmock\b/i)
+    }
+  })
+
 })
