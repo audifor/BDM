@@ -104,6 +104,29 @@ describe('PERSON 23I real event journal through BDM', () => {
     expect(() => deserializeGameWorldV4(saveWith([record, record]))).toThrow()
   })
 
+  it('rejects plausible but falsified event dimensions, magnitudes and history chains', () => {
+    const base = createNewGame()
+    const player = Object.values(base.players)[0]!
+    const world = updateGameWorld(base, {
+      personalitiesByPersonId: { ...base.personalitiesByPersonId, [player.id]: make50() },
+    })
+    const once = applyMoraleEventToWorld(world, event(player.id, world.currentDate, 'evidence:strict:1'))
+    const twice = applyMoraleEventToWorld(once, event(player.id, world.currentDate, 'evidence:strict:2'))
+    const save = serializeGameWorldV4(twice, '2032-10-01T00:00:00.000Z')
+    const [first, second] = save.payload.personalityHistory!
+    expect(first).toBeDefined()
+    expect(second).toBeDefined()
+    const changed = (entries: unknown) => ({ ...save, payload: { ...save.payload, personalityHistory: entries } })
+    expect(() => deserializeGameWorldV4(changed([{ ...first, dimensionCode: 'teamOrientation' }, second])))
+      .toThrow('canonical observed event kind')
+    expect(() => deserializeGameWorldV4(changed([{ ...first, newValue: first!.newValue - 1 }, second])))
+      .toThrow('delta does not match')
+    expect(() => deserializeGameWorldV4(changed([first, {
+      ...second, previousValue: second!.previousValue - 1, newValue: second!.newValue - 1,
+    }])))
+      .toThrow('chronological chain')
+  })
+
   it('does not change legacy profiles or untagged morale events', () => {
     const world = createNewGame()
     const player = Object.values(world.players)[0]!
