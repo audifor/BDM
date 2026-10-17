@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { assessPlayerContractSigningReadiness } from '@/app/governance'
 import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence'
@@ -15,25 +15,21 @@ import type { NegotiationResponsibleActor } from '@/domain/market'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
-import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCentre'
+import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
 import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, reviewMarketTarget, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
 import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
-import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import './market-courtside-v3.css'
 
-type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
-type MarketTab = 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'operations'
+type MarketTab = 'explore' | 'targets' | 'scouting' | 'operations'
 const MARKET_TABS: readonly { readonly id: MarketTab; readonly label: string }[] = [
-  { id: 'centre', label: 'Centro de mercado' },
-  { id: 'explore', label: 'Explorar' },
+  { id: 'explore', label: 'Buscar jugadores' },
   { id: 'targets', label: 'Objetivos' },
-  { id: 'planning', label: 'Planificación' },
-  { id: 'free-agents', label: 'Agentes libres' },
+  { id: 'scouting', label: 'Scouting' },
   { id: 'operations', label: 'Operaciones' },
 ]
 
@@ -47,7 +43,7 @@ function marketActorLabel(world: GameWorld, actor: NegotiationResponsibleActor |
   return history?.kind === 'appointment' ? `${name} · ${STAFF_ROLE_LABELS[history.roleId]}` : name
 }
 
-export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly initialWorld?: GameWorld; readonly onOpenScouting?: () => void } = {}) {
+export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { readonly initialWorld?: GameWorld; readonly initialTab?: MarketTab; readonly onOpenScouting?: () => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const contactFreeAgent = useGameStore((state) => state.contactFreeAgent)
   const submitFreeAgentOffer = useGameStore((state) => state.submitFreeAgentOffer)
@@ -56,18 +52,18 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
   const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
   const [activeTab, setActiveTab] = useState<MarketTab>(() => {
-    if (typeof window === 'undefined') return 'centre'
+    if (typeof window === 'undefined') return initialTab
     const params = new URLSearchParams(window.location.search)
-    if (params.has('playerId')) return 'free-agents'
     const selected = params.get('marketTab')
-    return MARKET_TABS.some((tab) => tab.id === selected) ? selected as MarketTab : 'centre'
+    if (selected === 'free-agents' || selected === 'centre') return 'explore'
+    if (selected === 'planning') return 'targets'
+    return MARKET_TABS.some((tab) => tab.id === selected) ? selected as MarketTab : initialTab
   })
+  const [searchPreset, setSearchPreset] = useState<'ALL' | 'FREE'>(() => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('marketTab') === 'free-agents' || new URLSearchParams(window.location.search).get('marketContract') === 'FREE') ? 'FREE' : 'ALL')
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
   const toggleComparison = (id: PlayerId) => setComparisonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current)
-  const [query, setQuery] = useState('')
-  const [position, setPosition] = useState<PositionFilter>('ALL')
   // PLAYER > CONTRACT passes a specific free-agent dossier in the URL.
   // Selection is only shown if the player is really present in the free-agent list.
   const [selectedId, setSelectedId] = useState<PlayerId | undefined>(() => {
@@ -78,14 +74,20 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   const [operationFilter, setOperationFilter] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL')
   const team = world === null ? undefined : getUserTeam(world)
 
-  const agents = useMemo(() => {
-    if (world === null) return []
-    return getFreeAgents(world).filter(
-      (player) =>
-        (position === 'ALL' || player.basketball.primaryPosition === position) &&
-        `${player.firstName} ${player.lastName}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
-    )
-  }, [position, query, world])
+  const agents = useMemo(() => world === null ? [] : getFreeAgents(world), [world])
+  useEffect(() => {
+    const sync = () => {
+      const params = new URLSearchParams(window.location.search)
+      const next = params.get('marketTab')
+      if (next === 'free-agents') { setSearchPreset('FREE'); setActiveTab('explore') }
+      else if (next === 'planning') setActiveTab('targets')
+      else if (next === 'centre') setActiveTab('explore')
+      else if (MARKET_TABS.some((tab) => tab.id === next)) setActiveTab(next as MarketTab)
+    }
+    window.addEventListener('bdm-ng-nav', sync)
+    window.addEventListener('popstate', sync)
+    return () => { window.removeEventListener('bdm-ng-nav', sync); window.removeEventListener('popstate', sync) }
+  }, [])
 
   if (world === null || team === undefined) {
     return <NgHoloShell appLabel="Market" empty region="market-workspace" />
@@ -118,134 +120,58 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
 
   return (
     <NgHoloShell
-      appLabel="Market"
-      meta={`${agents.length} available · ${remainingSalaryBudget === null ? 'presupuesto no disponible' : formatMoney(remainingSalaryBudget)} remaining`}
+      appLabel="Mercado"
+      meta={`${agents.length} libres · ${targets.length} objetivos · ${remainingSalaryBudget === null ? "sin presupuesto" : formatMoney(remainingSalaryBudget)} disponibles`}
       region="market-workspace"
       teamId={team.id}
-      title="Centro de mercado"
+      title="Mercado"
       className="market-workspace"
       tabs={MARKET_TABS}
       activeTabId={activeTab}
       onTabSelect={(id) => setActiveTab(id as MarketTab)}
     >
       <MarketOperationsBar world={world} teamId={team.id}
-        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
-        onOpenFreeAgents={() => setActiveTab('free-agents')} />
-      {activeTab === 'centre' ? <MarketCommandCentre
-        world={world}
-        teamId={team.id}
-        availableFreeAgents={getFreeAgents(world).length}
-        remainingSalaryBudget={remainingSalaryBudget}
-        targetCount={targets.length}
-        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
-        onOpenFreeAgents={() => setActiveTab('free-agents')}
-        onOpenExplore={() => setActiveTab('explore')}
-        onOpenTargets={() => setActiveTab('targets')}
-        onOpenPlanning={() => setActiveTab('planning')}
-        onOpenOperations={() => setActiveTab('operations')}
+        onOpenScouting={() => setActiveTab('scouting')}
+        onOpenFreeAgents={() => { setSearchPreset('FREE'); setActiveTab('explore') }} />
+      {activeTab === 'explore' || activeTab === 'targets' ? <MarketTalentBoard
+        key={activeTab === 'explore' ? searchPreset : 'targets'}
+        world={world} teamId={team.id} mode={activeTab}
+        initialContractFilter={activeTab === 'explore' ? searchPreset : 'ALL'}
+        comparisonIds={comparisonIds} onToggleComparison={toggleComparison}
         onOpenPlayer={navigateToPlayer}
-      /> : null}
-      {(activeTab === 'explore' || activeTab === 'targets') ? <MarketTalentBoard
-        world={world}
-        teamId={team.id}
-        mode={activeTab}
-        comparisonIds={comparisonIds}
-        onToggleComparison={toggleComparison}
-        onOpenPlayer={navigateToPlayer}
-        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
+        onOpenScouting={() => setActiveTab('scouting')}
         onOpenOperations={() => setActiveTab('operations')}
         targets={targets}
-        onAddTarget={(playerId) => applyTargetChange(() => addMarketTarget(world, team.id, playerId))}
-        onArchiveTarget={(playerId) => applyTargetChange(() => archiveMarketTarget(world, team.id, playerId))}
-        onReviewTarget={(playerId) => applyTargetChange(() => reviewMarketTarget(world, team.id, playerId))}
-        onTargetPriority={(playerId, priority: MarketTargetPriority) => applyTargetChange(() => setMarketTargetPriority(world, team.id, playerId, priority))}
-        onTargetNote={(playerId, note) => applyTargetChange(() => setMarketTargetNote(world, team.id, playerId, note))}
+        onAddTarget={(id) => applyTargetChange(() => addMarketTarget(world, team.id, id))}
+        onArchiveTarget={(id) => applyTargetChange(() => archiveMarketTarget(world, team.id, id))}
+        onReviewTarget={(id) => applyTargetChange(() => reviewMarketTarget(world, team.id, id))}
+        onTargetPriority={(id, priority: MarketTargetPriority) => applyTargetChange(() => setMarketTargetPriority(world, team.id, id, priority))}
+        onTargetNote={(id, note) => applyTargetChange(() => setMarketTargetNote(world, team.id, id, note))}
         onRequestScouting={requestScoutingAssignment}
-        onOpenFreeAgent={(playerId) => { setSelectedId(playerId); setPosition('ALL'); setQuery(''); setActiveTab('free-agents') }}
+        onOpenFreeAgent={(id) => setSelectedId(id)}
       /> : null}
-      {activeTab === 'planning' ? <MarketPlanningBoard
-        world={world}
-        teamId={team.id}
-        remainingSalaryBudget={remainingSalaryBudget}
-        onOpenPlayer={navigateToPlayer}
-        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
-        onOpenTargets={() => setActiveTab('targets')}
-      /> : null}
-      {activeTab === 'free-agents' ? <>
-      <div className="ng-canon__toolbar market-section-toolbar">
-        <input aria-label="Search free agents" onChange={(event) => setQuery(event.target.value)} placeholder="Search players" value={query} />
-        <select aria-label="Filter market by position" onChange={(event) => setPosition(event.target.value as PositionFilter)} value={position}>
-          {(['ALL', 'PG', 'SG', 'SF', 'PF', 'C'] as const).map((value) => (
-            <option key={value} value={value}>
-              {value === 'ALL' ? 'All positions' : value}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="ng-canon__split market-free-agent-layout">
-        <div className="ng-canon__panel ng-holo-panel market-free-agent-results">
-          {agents.length === 0 ? (
-            <p className="ng-canon__empty">No available players.</p>
-          ) : (
-            <NgPrecisionTable
-              className="ng-canon__table"
-              columns={ngTableColumns(agents, [
-                ngCol('player', 'Player', (player) => (
-                  <button
-                    className="ng-canon__link"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      navigateToPlayer(player.id)
-                    }}
-                    type="button"
-                  >
-                    {player.firstName} {player.lastName}
-                  </button>
-                ), { value: (player) => `${player.firstName} ${player.lastName}` }),
-                ngCol('pos', 'Pos', (player) => <PlayPositionMark position={player.basketball.primaryPosition} />, {
-                  value: (player) => player.basketball.primaryPosition,
-                }),
-                ngCol('age', 'Age', (player) => getPlayerAge(world, player.id), {
-                  numeric: true,
-                  value: (player) => getPlayerAge(world, player.id) ?? 0,
-                }),
-              ])}
-              gridId="ng-market-free-agents"
-              onSelectionChange={(ids) => setSelectedId(ids[0] as PlayerId | undefined)}
-              rows={agents}
-              selectedId={selectedId}
-            />
-          )}
-        </div>
-        <aside className="ng-canon__inspector ng-holo-panel market-free-agent-inspector">
-          {selected === undefined ? (
-            <p className="ng-canon__empty">Select a free agent to inspect known information and current acquisition readiness.</p>
-          ) : (
-            <>
-              <p className="ng-canon__eyebrow">Player inspector</p>
-              <h3 className="ng-canon__title">
-                {selected.firstName} {selected.lastName}
-              </h3>
-              <dl className="ng-canon__metrics">
-                <NgMetric label="Position" value={<PlayPositionMark position={selected.basketball.primaryPosition} />} />
-                <NgMetric label="Age" value={getPlayerAge(world, selected.id)} />
-                <NgMetric label="Knowledge" value={getOrganizationKnowledge(world, team.organizationId, selected.id) === undefined ? 'Unknown' : 'Scouted'} />
-                <NgMetric label="Finishing" value={evaluate(selected, 'finishing')} />
-                <NgMetric label="Shooting" value={evaluate(selected, 'shooting')} />
-                <NgMetric label="Creation" value={evaluate(selected, 'creation')} />
-              </dl>
-              <FreeAgentOfferActions
-                offer={offers.find((item) => item.playerId === selected.id)}
-                onContact={() => {
-                  const offer = offers.find((item) => item.playerId === selected.id)
-                  if (offer !== undefined) contactFreeAgent(team.id, selected.id, offer.sourceProposalId)
-                }}
-              />
-            </>
-          )}
-        </aside>
-      </div>
-      </> : null}
+      {activeTab === 'targets' ? <details className="market-plan-toggle" data-testid="market-planning-toggle"><summary>Planificación de plantilla y contratos</summary>
+        <MarketPlanningBoard world={world} teamId={team.id}
+          remainingSalaryBudget={remainingSalaryBudget} onOpenPlayer={navigateToPlayer}
+          onOpenScouting={() => setActiveTab('scouting')} onOpenTargets={() => setActiveTab('targets')} />
+      </details> : null}
+      {activeTab === 'scouting' ? <ScoutingWorkspace embedded initialWorld={world} onOpenSearch={() => { setSearchPreset('ALL'); setActiveTab('explore') }} /> : null}
+      {selected !== undefined ? <div className="market-contact-overlay" onMouseDown={(event) => { if (event.currentTarget === event.target) setSelectedId(undefined) }}>
+        <section role="dialog" aria-modal="true" aria-label="Contacto con agente libre" className="market-contact-modal">
+          <header><div><span>AGENTE LIBRE</span><h2>{selected.firstName} {selected.lastName}</h2></div><button type="button" aria-label="Cerrar contacto" onClick={() => setSelectedId(undefined)}>×</button></header>
+          <dl className="ng-canon__metrics">
+            <NgMetric label="Posición" value={<PlayPositionMark position={selected.basketball.primaryPosition} />} />
+            <NgMetric label="Edad" value={getPlayerAge(world, selected.id)} />
+            <NgMetric label="Conocimiento" value={getOrganizationKnowledge(world, team.organizationId, selected.id) === undefined ? 'Desconocido' : 'Evaluado'} />
+            <NgMetric label="Finalización" value={evaluate(selected, 'finishing')} />
+            <NgMetric label="Tiro" value={evaluate(selected, 'shooting')} />
+            <NgMetric label="Creación" value={evaluate(selected, 'creation')} />
+          </dl>
+          <FreeAgentOfferActions offer={offers.find((item) => item.playerId === selected.id)}
+            onContact={() => { const offer = offers.find((item) => item.playerId === selected.id)
+              if (offer !== undefined) { contactFreeAgent(team.id, selected.id, offer.sourceProposalId); setSelectedId(undefined); setActiveTab('operations') } }} />
+        </section>
+      </div> : null}
       {activeTab === 'operations' ? <section aria-label="Free-agent negotiations" className="market-negotiations">
         <header className="market-negotiations__head"><strong>OPERACIONES</strong><span>{negotiations.length} registradas</span><select aria-label="Filtrar operaciones" value={operationFilter} onChange={(event) => setOperationFilter(event.target.value as typeof operationFilter)}><option value="ALL">Todas</option><option value="ACTIVE">En curso</option><option value="CLOSED">Cerradas</option></select></header>
         {visibleNegotiations.length === 0 ? (
