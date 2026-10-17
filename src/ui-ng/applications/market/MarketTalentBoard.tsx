@@ -22,6 +22,7 @@ interface Props {
   readonly targets: readonly MarketTarget[]
   readonly onAddTarget: (id: PlayerId) => string | null
   readonly onArchiveTarget: (id: PlayerId) => string | null
+  readonly onReviewTarget: (id: PlayerId) => string | null
   readonly onTargetPriority: (id: PlayerId, priority: MarketTargetPriority) => string | null
   readonly onTargetNote: (id: PlayerId, note: string) => string | null
   readonly comparisonIds: readonly PlayerId[]
@@ -59,7 +60,7 @@ function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWor
   </div>
 }
 
-export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, onArchiveTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
@@ -178,10 +179,11 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
             <button type="button" disabled={!isComparing && comparisonIds.length >= 3} onClick={() => onToggleComparison(target.playerId)}>{isComparing ? 'Quitar comparación' : 'Comparar'}</button>
             <button type="button" disabled={assignments.length > 0} onClick={() => setScoutingTarget(target.playerId)}>Informe</button>
             {isPlayerFreeAgent(world, target.playerId) ? <button type="button" onClick={() => onOpenFreeAgent(target.playerId)}>Contactar</button> : null}
+            <button type="button" onClick={() => changeTarget(() => onReviewTarget(target.playerId))}>Actualizar</button>
             <button type="button" onClick={() => setNoteEdit({ id: target.playerId, text: target.note })}>Nota</button>
             <button type="button" onClick={() => changeTarget(() => onArchiveTarget(target.playerId))}>Archivar</button>
           </div>
-          <div className="market-talent__saved-history"><span>{target.note || 'Sin notas'} · {target.history.length} cambios</span>
+          <div className="market-talent__saved-history"><span>{target.note || 'Sin notas'} · {target.history.length} cambios · {target.knowledgeSnapshots?.length ?? 0} revisiones</span>
             {reports[0]?.evaluatorName ? <button type="button" onClick={() => { const staffId = world.evaluatorReportsById[reports[0]!.id]?.evaluatorStaffId; if(staffId !== undefined) navigateToStaff(staffId) }}>Scout: {reports[0].evaluatorName} ↗</button> : null}
           </div>
         </div>
@@ -195,8 +197,11 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
           const message = onTargetNote(noteEdit.id, noteEdit.text); setActionError(message)
           if (message === null) setNoteEdit(null)
         }}>Guardar nota</button></div>
-        <h4>Historial</h4>
-        <div className="market-target-picker__list">{targets.find((target) => target.playerId === noteEdit.id)?.history.slice().reverse().map((event,index) =>
+        <h4>Conocimiento registrado</h4>
+        <div className="market-target-picker__list market-target-picker__history">{targets.find((target) => target.playerId === noteEdit.id)?.knowledgeSnapshots?.slice().reverse().map((snapshot,index) =>
+          <div key={index}><b>{snapshot.date}</b><small>{snapshot.knownRatingCount} atributos · {snapshot.reportCount} informes · Confianza {snapshot.confidence === null ? '—' : Math.round(snapshot.confidence*100)+'%'}</small></div>)}</div>
+        <h4>Historial de acciones</h4>
+        <div className="market-target-picker__list market-target-picker__history">{targets.find((target) => target.playerId === noteEdit.id)?.history.slice().reverse().map((event,index) =>
           <div key={index}><b>{event.date}</b><small>{event.kind.replaceAll('_',' ')} {event.detail ?? ''}</small></div>)}</div>
       </section>
     </div> : null}
