@@ -61,7 +61,9 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
     return MARKET_TABS.some((tab) => tab.id === selected) ? selected as MarketTab : initialTab
   })
   const [searchPreset, setSearchPreset] = useState<'ALL' | 'FREE'>(() => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('marketTab') === 'free-agents' || new URLSearchParams(window.location.search).get('marketContract') === 'FREE') ? 'FREE' : 'ALL')
-  const [targetsView, setTargetsView] = useState<'tracking' | 'planning'>('tracking')
+  const [targetsView, setTargetsView] = useState<'tracking' | 'planning'>(() =>
+    typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('marketTargetsView') === 'planning' || new URLSearchParams(window.location.search).get('marketTab') === 'planning')
+      ? 'planning' : 'tracking')
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
@@ -82,9 +84,13 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
       const params = new URLSearchParams(window.location.search)
       const next = params.get('marketTab')
       if (next === 'free-agents') { setSearchPreset('FREE'); setActiveTab('explore') }
-      else if (next === 'planning') setActiveTab('targets')
+      else if (next === 'planning') { setTargetsView('planning'); setActiveTab('targets') }
       else if (next === 'centre') setActiveTab('explore')
-      else if (MARKET_TABS.some((tab) => tab.id === next)) setActiveTab(next as MarketTab)
+      else if (MARKET_TABS.some((tab) => tab.id === next)) {
+        if (next === 'explore') setSearchPreset(params.get('marketContract') === 'FREE' ? 'FREE' : 'ALL')
+        if (next === 'targets') setTargetsView(params.get('marketTargetsView') === 'planning' ? 'planning' : 'tracking')
+        setActiveTab(next as MarketTab)
+      }
     }
     window.addEventListener('bdm-ng-nav', sync)
     window.addEventListener('popstate', sync)
