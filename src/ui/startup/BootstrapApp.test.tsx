@@ -108,4 +108,36 @@ describe('New Game World DB Spain ACB flow', () => {
     })
     expect(mocks.replaceWorld).not.toHaveBeenCalled()
   })
+  it('requires a coach identity and forwards a real creator payload for the synthetic ACB game', async () => {
+    mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'created-coach-world' })
+    render(<BootstrapApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'acb2026' } })
+    expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
+
+    fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: 'Elena' } })
+    fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: 'Villalobos' } })
+    fireEvent.change(screen.getByLabelText('DATE OF BIRTH'), { target: { value: '1991-06-19' } })
+    fireEvent.change(screen.getByLabelText('GENDER'), { target: { value: 'female' } })
+    fireEvent.change(screen.getByLabelText('BACKGROUND'), { target: { value: 'inDebt' } })
+    fireEvent.change(screen.getByLabelText('COACHING STYLE'), { target: { value: 'tactician' } })
+    fireEvent.change(screen.getByLabelText('PERSONALITY'), { target: { value: 'ambitious' } })
+    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
+
+    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
+      universeId: 'acb2026',
+      userTeamKey: expect.any(String),
+      userCoachCreation: {
+        firstName: 'Elena',
+        lastName: 'Villalobos',
+        dateOfBirth: '1991-06-19',
+        gender: 'female',
+        background: 'inDebt',
+        coachingStyle: 'tactician',
+        disposition: 'ambitious',
+      },
+    }))
+    expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: 'created-coach-world' })
+  })
+
 })
