@@ -24,6 +24,9 @@ describe('CoachDevelopmentWorkspace', () => {
 
     expect(screen.getByRole('heading', { name: 'Skills' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Perks' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Professional traits' })).toBeInTheDocument()
+    expect(screen.getByText(/youth developer/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/0 \/ 100 evidence/).length).toBeGreaterThan(0)
     expect(screen.getByText('Game Preparation')).toBeInTheDocument()
     expect(screen.getByText('Film Room Specialist')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Develop' })).toHaveLength(10)

@@ -341,3 +341,31 @@
 @container bdm-workspace (max-width:750px) {
   .coach-relations__circle-grid{grid-template-columns:1fr}
 }
+
+/* Canonical RPG trait evidence, never illustrative character attributes. */
+.coach-courtside-ng .ng-coach-dev__panel--traits{grid-column:1/-1}
+.coach-courtside-ng .ng-coach-dev__trait-grid {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px;
+}
+.coach-courtside-ng .ng-coach-dev__trait {
+  display:grid;gap:8px;padding:11px;border:1px solid var(--coach-line2);
+  border-radius:8px;background:var(--coach-raised);
+}
+.coach-courtside-ng .ng-coach-dev__trait-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.coach-courtside-ng .ng-coach-dev__trait-heading strong {
+  color:var(--coach-text);font:800 15px/1 var(--coach-head);text-transform:capitalize;
+}
+.coach-courtside-ng .ng-coach-dev__trait-heading span{
+  color:var(--coach-muted);font:700 11px var(--coach-font);white-space:nowrap;
+}
+.coach-courtside-ng .ng-coach-dev__trait[data-earned='true'] .ng-coach-dev__trait-heading span{color:var(--coach-lime)}
+.coach-courtside-ng .ng-coach-dev__trait-track{height:6px;border-radius:3px;overflow:hidden;background:var(--coach-hover)}
+.coach-courtside-ng .ng-coach-dev__trait-track span{display:block;height:100%;background:var(--coach-orange)}
+.coach-courtside-ng .ng-coach-dev__trait[data-earned='true'] .ng-coach-dev__trait-track span{background:var(--coach-lime)}
+.coach-courtside-ng .ng-coach-dev__trait small{font:500 10px/1.4 var(--coach-font);color:var(--coach-muted)}
+@container bdm-workspace (max-width:960px) {
+  .coach-courtside-ng .ng-coach-dev__trait-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container bdm-workspace (max-width:630px) {
+  .coach-courtside-ng .ng-coach-dev__trait-grid{grid-template-columns:minmax(0,1fr)}
+}
