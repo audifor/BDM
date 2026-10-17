@@ -1164,4 +1164,54 @@ mod tests {
             std::fs::write(output_path, json).expect("write smoke slice outside the DB");
         }
     }
+
+    #[test]
+    fn canonical_eight_personality_scores_are_imported_without_legacy_replacement() {
+        let connection = Connection::open_in_memory().unwrap();
+        assert!(query_person_runtime_personality(&connection, "person:a").unwrap().is_none());
+        connection.execute_batch(
+            "CREATE TABLE person_personality_value (person_id TEXT, dimension_code TEXT, value INTEGER);
+             INSERT INTO person_personality_value VALUES ('person:a','P_01',99);"
+        ).unwrap();
+        assert!(query_person_runtime_personality(&connection, "person:a").unwrap().is_none());
+        for (dimension, score) in [
+            ("ambition", 93), ("professionalism", 84), ("loyalty", 61),
+            ("resilience", 72), ("temperament", 58), ("teamOrientation", 88),
+            ("adaptability", 77), ("competitiveness", 95),
+        ] {
+            connection.execute(
+                "INSERT INTO person_personality_value VALUES (?1,?2,?3)",
+                rusqlite::params!["person:a", dimension, score],
+            ).unwrap();
+        }
+        let values = query_person_runtime_personality(&connection, "person:a").unwrap().unwrap();
+        assert_eq!(values.len(), 8);
+        assert_eq!(values["ambition"], 93);
+        assert_eq!(values["competitiveness"], 95);
+        assert!(query_person_runtime_personality(&connection, "person:b").unwrap().is_none());
+    }
+
+    #[test]
+    fn partial_personality_and_invalid_scores_fail_closed() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection.execute_batch(
+            "CREATE TABLE person_personality_value (person_id TEXT, dimension_code TEXT, value INTEGER);
+             INSERT INTO person_personality_value VALUES ('person:partial','ambition',80);"
+        ).unwrap();
+        assert!(query_person_runtime_personality(&connection, "person:partial")
+            .unwrap_err().contains("partial BDM runtime personality"));
+        for (dimension, score) in [
+            ("ambition", 93), ("professionalism", 84), ("loyalty", 61),
+            ("resilience", 72), ("temperament", 58), ("teamOrientation", 88),
+            ("adaptability", 77), ("competitiveness", 105),
+        ] {
+            connection.execute(
+                "INSERT INTO person_personality_value VALUES (?1,?2,?3)",
+                rusqlite::params!["person:bad", dimension, score],
+            ).unwrap();
+        }
+        assert!(query_person_runtime_personality(&connection, "person:bad")
+            .unwrap_err().contains("out of 0..100"));
+    }
+
 }
