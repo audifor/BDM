@@ -19,6 +19,8 @@ import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCe
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
+import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
+import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
@@ -57,6 +59,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   )
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
+  const replaceWorld = useGameStore((state) => state.replaceWorld)
   const toggleComparison = (id: PlayerId) => setComparisonIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
@@ -83,6 +86,11 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
   }
 
   const finances = getTeamFinancialSnapshot(world, team.id)
+  const targets = getMarketTargetsForTeam(world, team.id)
+  const applyTargetChange = (update: () => GameWorld): string | null => {
+    try { const next = update(); if (next !== world) replaceWorld(next); return null }
+    catch (error) { return error instanceof Error ? error.message : 'No se pudo modificar el objetivo.' }
+  }
   const selectedIntentPlanId = selectedId === undefined ? undefined : Object.values(world.negotiationsById).find((item) => item.teamId === team.id && item.playerId === selectedId)?.sourcePlanId
   const offers = assessRoutedFreeAgentOfferIntelligence(world, team.id, selectedId, selectedIntentPlanId)
   const selected = agents.find((player) => player.id === selectedId)
@@ -118,6 +126,7 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         teamId={team.id}
         availableFreeAgents={getFreeAgents(world).length}
         remainingSalaryBudget={finances.remainingPlayerSalaryBudget}
+        targetCount={targets.length}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenFreeAgents={() => setActiveTab('free-agents')}
         onOpenExplore={() => setActiveTab('explore')}
@@ -135,6 +144,11 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
         onOpenPlayer={navigateToPlayer}
         onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
         onOpenOperations={() => setActiveTab('operations')}
+        targets={targets}
+        onAddTarget={(playerId) => applyTargetChange(() => addMarketTarget(world, team.id, playerId))}
+        onArchiveTarget={(playerId) => applyTargetChange(() => archiveMarketTarget(world, team.id, playerId))}
+        onTargetPriority={(playerId, priority: MarketTargetPriority) => applyTargetChange(() => setMarketTargetPriority(world, team.id, playerId, priority))}
+        onTargetNote={(playerId, note) => applyTargetChange(() => setMarketTargetNote(world, team.id, playerId, note))}
         onRequestScouting={requestScoutingAssignment}
         onOpenFreeAgent={(playerId) => { setSelectedId(playerId); setPosition('ALL'); setQuery(''); setActiveTab('free-agents') }}
       /> : null}
