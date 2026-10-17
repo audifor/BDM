@@ -24,6 +24,7 @@ import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
+import './market-courtside-v3.css'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
 type MarketTab = 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'operations'
