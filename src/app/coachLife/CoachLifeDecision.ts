@@ -94,8 +94,8 @@ export function decideOpeningDebt(world: GameWorld, choice: OpeningDebtChoice, c
 }
 
 /** A query for BDM logic and future UX; expose only unresolved choices grounded in the world. */
-export function getPendingOpeningDebtDecision(world: GameWorld): { readonly id: string; readonly body: string; readonly dueOn: string } | null {
+export function getPendingOpeningDebtDecision(world: GameWorld): { readonly id: string; readonly body: string; readonly openedOn: string } | null {
   const item = world.inboxItemsById[openingDebtInboxId(world.userCoachId)]
   if (item === undefined || item.status === 'archived' || item.context.lifeScenario !== 'openingDebt') return null
-  return { id: item.id, body: item.body, dueOn: item.gameDate }
+  return { id: item.id, body: item.body, openedOn: item.gameDate }
 }
