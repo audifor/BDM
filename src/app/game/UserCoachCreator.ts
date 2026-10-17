@@ -3,6 +3,7 @@ import { createCoach } from '@/domain/coach'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
 import { applyCoachRpgPreset, type CoachRpgPreset } from '@/domain/coachRpg'
 import { createPersonality } from '@/domain/personality'
+import { createPerson } from '@/domain/person'
 import { createStaffPerson, createStaffProfessionalProfile } from '@/domain/staff'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CountryId } from '@/domain/ids'
@@ -58,7 +59,11 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
       } })
     : baseProfile
   const updatedStaff = createStaffPerson({ ...staff, identity: { ...staff.identity, firstName, lastName, dateOfBirth: dob, nationality: nationalityId }, professional: adjusted })
+  const person = world.personsById[coach.personId]
+  if (person === undefined) throw new RangeError('Player-controlled Coach is missing its canonical Person')
+  const updatedPerson = createPerson({ ...person, firstName, lastName, gender: input.gender, dateOfBirth: dob, nationalityIds: [nationalityId] })
   let next = updateGameWorld(world, {
+    persons: Object.values(world.personsById).map((entry) => entry.id === person.id ? updatedPerson : entry),
     coaches: Object.values(world.coaches).map((entry) => entry.id === coach.id ? updatedCoach : entry),
     staffPeople: Object.values(world.staffPeopleById).map((entry) => entry.id === staff.id ? updatedStaff : entry),
   })
