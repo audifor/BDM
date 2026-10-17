@@ -129,6 +129,57 @@ function CaseForecast({ rows, onOpenPlayer }: { readonly rows: readonly MedicalI
   </Panel>
 }
 
+
+/** A real roster-wide medical view, useful even on day one with no injuries. */
+export function MedicalSquadMonitor({ rows, onOpenPlayer }: {
+  readonly rows: readonly MedicalRiskRow[]
+  readonly onOpenPlayer: (id: PlayerId) => void
+}) {
+  const ordered = [...rows].sort((a, b) => b.riskScore - a.riskScore || b.fatigue - a.fatigue || a.playerName.localeCompare(b.playerName))
+  return <Panel title="Squad medical monitor" meta={`${rows.length} PLAYER ASSESSMENTS`} className="medical-cs__squad-monitor">
+    {ordered.length === 0
+      ? <div className="medical-cs__no-data">No medical assessments recorded for this roster.</div>
+      : <div className="medical-cs__squad-grid">
+        {ordered.map(row => <button type="button" key={row.playerId} className="medical-cs__squad-player" onClick={() => onOpenPlayer(row.playerId)}
+          aria-label={`Open medical profile for ${row.playerName}: fatigue ${row.fatigue}, risk ${row.riskScore}`}>
+          <div className="medical-cs__squad-person">
+            <span className="medical-cs__squad-position">{row.position}</span>
+            <strong>{row.playerName}</strong>
+            <span className="medical-cs__squad-status" data-band={row.available ? row.riskBand : 'unavailable'}>
+              {row.available ? row.riskBandLabel.toUpperCase() : 'UNAVAILABLE'}
+            </span>
+          </div>
+          <div className="medical-cs__squad-bars">
+            <div><small>FATIGUE</small><Meter value={row.fatigue} label={`${row.playerName} fatigue`}
+              tone={row.fatigue >= 70 ? 'red' : row.fatigue >= 50 ? 'orange' : 'lime'} /><b>{row.fatigue}</b></div>
+            <div><small>RISK</small><Meter value={row.riskScore} label={`${row.playerName} injury risk score`}
+              tone={row.riskBand === 'high' ? 'red' : row.riskBand === 'elevated' ? 'orange' : 'lime'} /><b>{row.riskScore}</b></div>
+          </div>
+        </button>)}
+      </div>}
+    <small className="medical-cs__annotation">These are current engine assessments. The risk score is not a percentage probability of injury. Select any player to open their medical file.</small>
+  </Panel>
+}
+
+export function MedicalNoInjuries({ model, onOpenPlayer }: {
+  readonly model: MedicalWorkspaceModel
+  readonly onOpenPlayer: (id: PlayerId) => void
+}) {
+  return <div className="medical-cs__healthy-state" data-ng-region="medical-healthy-injuries">
+    <section className="medical-cs__healthy-banner" aria-label="No active injuries">
+      <div className="medical-cs__healthy-symbol" aria-hidden="true">✓</div>
+      <div><span>MEDICAL SITUATION</span><h2>NO ACTIVE INJURIES</h2>
+        <p>No current injury cases require rehabilitation or a return-to-play review. Medical risk monitoring remains available below.</p></div>
+      <div className="medical-cs__healthy-counts">
+        <div><strong>{model.injuredCount}</strong><span>ACTIVE CASES</span></div>
+        <div><strong>{model.availableCount}<small> / {model.rosterCount}</small></strong><span>AVAILABLE</span></div>
+        <div><strong>{model.highRiskCount + model.elevatedRiskCount}</strong><span>ELEVATED OR HIGH RISK</span></div>
+      </div>
+    </section>
+    <MedicalSquadMonitor rows={model.risk} onOpenPlayer={onOpenPlayer} />
+  </div>
+}
+
 export function MedicalOverviewVisual({ model, onOpenPlayer }: {
   readonly model: MedicalWorkspaceModel
   readonly onOpenPlayer: (id: PlayerId) => void
