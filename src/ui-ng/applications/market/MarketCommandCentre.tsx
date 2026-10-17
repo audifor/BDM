@@ -52,25 +52,7 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
       : { headline: 'Focos activos', explanation: 'Consulta candidatos y cobertura.', action: onOpenScouting, label: 'Revisar candidatos' }
   return (
     <div className="market-cs" data-testid="market-command-centre">
-      <section className="market-cs__hero">
-        <div className="market-cs__hero-copy">
-          <span className="market-cs__kicker">MERCADO · {world.currentDate}</span>
-          <h2>Centro de mercado</h2>
-          <p>Scouting, jugadores, agentes libres y operaciones.</p>
-          <div className="market-cs__actions">
-            <button className="market-cs__primary" onClick={onOpenScouting} type="button">Abrir Scouting</button>
-            <button className="market-cs__secondary" onClick={onOpenExplore} type="button">Explorar jugadores</button><button className="market-cs__secondary" onClick={onOpenTargets} type="button">Mesa de objetivos</button>
-          </div>
-        </div>
-        <div aria-label="Estado del departamento" className="market-cs__orbit">
-          <div className="market-cs__orbit-ring market-cs__orbit-ring--outer" />
-          <div className="market-cs__orbit-ring market-cs__orbit-ring--inner" />
-          <div className="market-cs__orbit-centre"><strong>{coverage.length}</strong><span>Territorios activos</span></div>
-          <span className="market-cs__orbit-node market-cs__orbit-node--one" />
-          <span className="market-cs__orbit-node market-cs__orbit-node--two" />
-          <span className="market-cs__orbit-node market-cs__orbit-node--three" />
-        </div>
-      </section>
+      <div className="market-cs__compact-head"><strong>RESUMEN</strong><span>{coverage.length} territorios · {reports.length} informes recientes · {negotiations.length} operaciones</span><button type="button" onClick={onOpenScouting}>Scouting →</button><button type="button" onClick={onOpenExplore}>Explorar →</button><button type="button" onClick={onOpenTargets}>Objetivos →</button></div>
       <div className="market-cs__quick-links"><button onClick={onOpenPlanning} type="button">Planificar próxima temporada →</button><button onClick={onOpenFreeAgents} type="button">Consultar agentes libres →</button><button onClick={onOpenOperations} type="button">Seguir operaciones →</button></div>
       <div className="market-cs__metrics">
         <div><span>Focos activos</span><strong>{focuses.length}</strong><small>Focos de reclutamiento</small></div>
