@@ -4,6 +4,8 @@ import type { GameWorld } from '@/domain/world'
 import { isPlayerFreeAgent } from '@/domain/world'
 import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
 import type { RequestScoutingInput } from '@/app/scouting'
+import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
+import { marketTargetId, type MarketTarget, type MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/buildScoutingRosterComparison'
 import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
@@ -16,6 +18,11 @@ interface Props {
   readonly world: GameWorld
   readonly teamId: TeamId
   readonly mode: Mode
+  readonly targets: readonly MarketTarget[]
+  readonly onAddTarget: (id: PlayerId) => string | null
+  readonly onArchiveTarget: (id: PlayerId) => string | null
+  readonly onTargetPriority: (id: PlayerId, priority: MarketTargetPriority) => string | null
+  readonly onTargetNote: (id: PlayerId, note: string) => string | null
   readonly comparisonIds: readonly PlayerId[]
   readonly onToggleComparison: (playerId: PlayerId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
@@ -35,11 +42,14 @@ function playerName(world: GameWorld, playerId: PlayerId): string {
   return player === undefined ? 'Jugador' : `${player.firstName} ${player.lastName}`
 }
 
-export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, onArchiveTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
   const [scoutingTarget, setScoutingTarget] = useState<PlayerId | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [noteEdit, setNoteEdit] = useState<{ id: PlayerId; text: string } | null>(null)
+  const changeTarget = (action: () => string | null) => { const message = action(); setActionError(message) }
   const [position, setPosition] = useState<string>('ALL')
   const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'FREE' | 'ACTIVE'>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
@@ -48,6 +58,7 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
   if (team === undefined || model === null) return null
   // All identities come from the canonical addressable list, never from world.players globally.
   const addressable = model.knowledge.filter((row) => !row.isOwnRoster)
+  const savedIds = new Set(targets.map((target) => target.playerId))
   const rows = addressable.filter((row) =>
     (position === 'ALL' || row.position === position) &&
     (status === 'ALL' || status === 'KNOWN' && hasKnowledge(row) ||
@@ -68,10 +79,11 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
   const compared = comparisonIds.map((id) => addressable.find((row) => row.playerId === id)).filter((row): row is ScoutingKnowledgeRow => row !== undefined)
   const activeReports = selected === null ? [] : model.reports.filter((report) => report.playerId === selected.playerId).slice(0, 3)
   return <div className="market-talent" data-testid={mode === 'explore' ? 'market-explore' : 'market-targets'}>
-    <div className="market-talent__compact-head"><strong>{mode === 'targets' ? 'OBJETIVOS · ' + compared.length + '/3' : 'EXPLORAR JUGADORES · ' + ordered.length}</strong>
+    <div className="market-talent__compact-head"><strong>{mode === 'targets' ? 'OBJETIVOS · ' + targets.length : 'EXPLORAR JUGADORES · ' + ordered.length}</strong>
       {mode === 'targets' ? <button className="market-cs__primary" onClick={() => setPickerOpen(true)} type="button">+ Añadir objetivo</button> : null}
       <button className="market-cs__secondary" onClick={onOpenScouting} type="button">Scouting →</button>
     </div>
+    {actionError !== null ? <p className="market-talent__error" role="alert">{actionError} <button type="button" onClick={() => setActionError(null)}>×</button></p> : null}
     {scoutingTarget !== null ? <RequestScoutingModal key={scoutingTarget} world={world} teamId={teamId} playerId={scoutingTarget} onClose={() => setScoutingTarget(null)} onSubmit={onRequestScouting} /> : null}
     {mode === 'targets' && pickerOpen ? <div className="market-target-picker__overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false) }}>
       <section className="market-target-picker" role="dialog" aria-modal="true" aria-label="Añadir objetivos">
@@ -80,8 +92,8 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
         <div className="market-target-picker__list">
           {addressable.filter((row) => (row.name + ' ' + row.clubName + ' ' + row.countryName).toLocaleLowerCase().includes(pickerQuery.toLocaleLowerCase())).slice(0, 60).map((row) =>
             <div key={row.playerId}><span><b>{row.name}</b><small>{row.position} · {row.clubName} · {STATES[row.knowledgeState]}</small></span>
-              <button disabled={!comparisonIds.includes(row.playerId) && compared.length >= 3} onClick={() => onToggleComparison(row.playerId)} type="button">
-                {comparisonIds.includes(row.playerId) ? 'Quitar' : 'Añadir'}
+              <button onClick={() => changeTarget(() => savedIds.has(row.playerId) ? onArchiveTarget(row.playerId) : onAddTarget(row.playerId))} type="button">
+                {savedIds.has(row.playerId) ? 'Archivar' : 'Añadir'}
               </button></div>)}
         </div>
       </section>
@@ -90,7 +102,7 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
       <label>Buscar<input aria-label="Buscar objetivos" placeholder="Nombre, país, liga o club" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <label>Posición<select aria-label="Posición de objetivos" value={position} onChange={(event) => setPosition(event.target.value)}>{POSITIONS.map((p) => <option value={p} key={p}>{p === 'ALL' ? 'Todas' : p}</option>)}</select></label>
       <label>Situación<select aria-label="Situación de objetivos" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="ALL">Todos</option><option value="KNOWN">Con informes</option><option value="FREE">Agentes libres</option><option value="ACTIVE">En observación</option></select></label>
-      <span className="market-talent__count">{rows.length} visibles · {compared.length}/3 en mesa</span>
+      <span className="market-talent__count">{rows.length} visibles · {targets.length} objetivos</span>
     </div>
     <div className="market-talent__grid">
       <section className="market-talent__catalog" aria-label="Candidatos de mercado">
@@ -101,10 +113,9 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
             <div><b>{row.position}</b><small>{row.age} años</small></div>
             <div><span className="market-talent__knowledge">{STATES[row.knowledgeState]}</span><small>Confianza: {row.confidenceLabel}</small></div>
             <button className={'market-talent__add' + (comparisonIds.includes(row.playerId) ? ' is-added' : '')}
-              disabled={!comparisonIds.includes(row.playerId) && comparisonIds.length >= 3}
-              title={comparisonIds.includes(row.playerId) ? 'Quitar de mesa' : 'Incorporar a comparación temporal'}
-              aria-label={(comparisonIds.includes(row.playerId) ? 'Quitar ' : 'Comparar ') + row.name}
-              onClick={() => onToggleComparison(row.playerId)} type="button">{comparisonIds.includes(row.playerId) ? '✓' : '+'}</button>
+              title={savedIds.has(row.playerId) ? 'Archivar objetivo' : 'Guardar como objetivo'}
+              aria-label={(savedIds.has(row.playerId) ? 'Archivar ' : 'Añadir objetivo ') + row.name}
+              onClick={() => changeTarget(() => savedIds.has(row.playerId) ? onArchiveTarget(row.playerId) : onAddTarget(row.playerId))} type="button">{savedIds.has(row.playerId) ? '✓' : '+'}</button>
           </div>)}
       </section>
       <aside className="market-talent__inspector" aria-label="Expediente de scouting">
@@ -130,9 +141,51 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
         </>}
       </aside>
     </div></> : null}
+    {mode === 'targets' ? <section className="market-talent__saved" aria-label="Objetivos guardados">
+      <div className="market-talent__saved-head"><strong>LISTA DE OBJETIVOS</strong><span>Prioridad · Informes · Acciones</span></div>
+      {targets.length === 0 ? <div className="market-talent__empty">Sin objetivos registrados.</div> :
+      <div className="market-talent__saved-list">{targets.map((target) => {
+        const row = addressable.find((candidate) => candidate.playerId === target.playerId)
+        const knownPlayer = world.players[target.playerId]
+        const displayName = knownPlayer === undefined ? 'Jugador' : `${knownPlayer.firstName} ${knownPlayer.lastName}`
+        const reports = model.reports.filter((report) => report.playerId === target.playerId)
+        const assignments = model.assignments.filter((assignment) => assignment.playerId === target.playerId && (assignment.status === 'ACTIVE' || assignment.status === 'QUEUED'))
+        const isComparing = comparisonIds.includes(target.playerId)
+        return <div className="market-talent__saved-row" key={target.id}>
+          <div className="market-talent__saved-person"><button type="button" onClick={() => onOpenPlayer(target.playerId)}>{displayName}</button><small>{row?.position ?? knownPlayer?.basketball.primaryPosition ?? '—'} · {row?.clubName ?? '—'}</small></div>
+          <select aria-label={'Prioridad ' + displayName} value={target.priority} onChange={(event) => changeTarget(() => onTargetPriority(target.playerId, event.target.value as MarketTargetPriority))}>
+            <option value="HIGH">Alta</option><option value="NORMAL">Normal</option><option value="LOW">Baja</option>
+          </select>
+          <div className="market-talent__saved-report"><strong>{reports.length} informes</strong><small>{assignments.length > 0 ? 'En observación' : row?.confidenceLabel !== '—' ? 'Confianza ' + (row?.confidenceLabel ?? '—') : 'Sin evaluar'}</small></div>
+          <div className="market-talent__saved-buttons">
+            <button type="button" disabled={!isComparing && comparisonIds.length >= 3} onClick={() => onToggleComparison(target.playerId)}>{isComparing ? 'Quitar comparación' : 'Comparar'}</button>
+            <button type="button" disabled={assignments.length > 0} onClick={() => setScoutingTarget(target.playerId)}>Informe</button>
+            {isPlayerFreeAgent(world, target.playerId) ? <button type="button" onClick={() => onOpenFreeAgent(target.playerId)}>Contactar</button> : null}
+            <button type="button" onClick={() => setNoteEdit({ id: target.playerId, text: target.note })}>Nota</button>
+            <button type="button" onClick={() => changeTarget(() => onArchiveTarget(target.playerId))}>Archivar</button>
+          </div>
+          <div className="market-talent__saved-history"><span>{target.note || 'Sin notas'} · {target.history.length} cambios</span>
+            {reports[0]?.evaluatorName ? <span>Último informe: {reports[0].evaluatorName}</span> : null}
+          </div>
+        </div>
+      })}</div>}
+    </section> : null}
+    {noteEdit !== null ? <div className="market-target-picker__overlay" onMouseDown={(event) => { if (event.currentTarget === event.target) setNoteEdit(null) }}>
+      <section className="market-target-picker market-target-picker--note" role="dialog" aria-modal="true" aria-label="Nota de objetivo">
+        <header><h3>Nota de objetivo</h3><button onClick={() => setNoteEdit(null)} type="button" aria-label="Cerrar nota">×</button></header>
+        <textarea aria-label="Observaciones del objetivo" maxLength={500} rows={4} value={noteEdit.text} onChange={(event) => setNoteEdit({ ...noteEdit, text: event.target.value })}/>
+        <div className="market-talent__saved-buttons"><button type="button" onClick={() => {
+          const message = onTargetNote(noteEdit.id, noteEdit.text); setActionError(message)
+          if (message === null) setNoteEdit(null)
+        }}>Guardar nota</button></div>
+        <h4>Historial</h4>
+        <div className="market-target-picker__list">{targets.find((target) => target.playerId === noteEdit.id)?.history.slice().reverse().map((event,index) =>
+          <div key={index}><b>{event.date}</b><small>{event.kind.replaceAll('_',' ')} {event.detail ?? ''}</small></div>)}</div>
+      </section>
+    </div> : null}
     {mode === 'targets' ? <section className="market-talent__comparison">
-      <header><div><span className="market-cs__kicker">COMPARACIÓN · HASTA 3 JUGADORES</span><h3>Comparación de jugadores</h3></div><small>Hasta 3 jugadores</small></header>
-      {compared.length === 0 ? <div className="market-talent__empty">Selecciona jugadores con +.</div> :
+      <header><div><span className="market-cs__kicker">COMPARACIÓN</span><h3>Hasta tres jugadores</h3></div><small>Hasta 3 jugadores</small></header>
+      {compared.length === 0 ? <div className="market-talent__empty">Selecciona hasta tres objetivos para comparar.</div> :
         <div className="market-talent__compare-cards">{compared.map((row) => <article key={row.playerId}>
           <div><b>{row.position}</b><button aria-label={'Quitar ' + row.name} onClick={() => onToggleComparison(row.playerId)} type="button">×</button></div>
           <h4>{row.name}</h4><p>{row.clubName}</p>
