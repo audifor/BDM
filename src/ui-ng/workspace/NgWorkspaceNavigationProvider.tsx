@@ -253,6 +253,11 @@ export function NgWorkspaceNavigationProvider({ children }: { readonly children:
   )
 }
 
+/** Embedded Courtside views may also render in the Tauri desktop host. */
+export function useOptionalNgWorkspaceNavigation(): NgWorkspaceNavigationValue | null {
+  return useContext(NgWorkspaceNavigationContext)
+}
+
 export function useNgWorkspaceNavigation(): NgWorkspaceNavigationValue {
   const value = useContext(NgWorkspaceNavigationContext)
   if (value === null) {
