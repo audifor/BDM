@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties, type ReactNode } from 'react'
 import type { BoardState } from '@/domain/board'
 import {
   deriveGovernanceCommitmentStatus,
@@ -33,18 +33,18 @@ const labelForTarget = (target: { readonly kind: string; readonly value?: number
   if (target.kind === 'RANGE') return String(target.minimum) + ' a ' + String(target.maximum)
   return target.value === undefined ? 'No definido' : String(target.value)
 }
-function Panel({ label, children, className = '' }: { readonly label: string; readonly children: React.ReactNode; readonly className?: string }) {
+function Panel({ label, children, className = '' }: { readonly label: string; readonly children: ReactNode; readonly className?: string }) {
   return <section className={'cs-board-v3__panel ' + className}><h2>{label}</h2>{children}</section>
 }
-function Kpi({ label, value, detail, tone }: { readonly label: string; readonly value: React.ReactNode; readonly detail?: string; readonly tone?: 'warm' | 'risk' }) {
+function Kpi({ label, value, detail, tone }: { readonly label: string; readonly value: ReactNode; readonly detail?: string; readonly tone?: 'warm' | 'risk' }) {
   return <div className={'cs-board-v3__kpi ' + (tone ? 'cs-board-v3__kpi--' + tone : '')}>
     <span>{label}</span><strong>{value}</strong>{detail ? <small>{detail}</small> : null}
   </div>
 }
-function Empty({ children }: { readonly children: React.ReactNode }) {
+function Empty({ children }: { readonly children: ReactNode }) {
   return <p className="cs-board-v3__empty">{children}</p>
 }
-function Pill({ children, status }: { readonly children: React.ReactNode; readonly status?: string }) {
+function Pill({ children, status }: { readonly children: ReactNode; readonly status?: string }) {
   const tone = status === 'overdue' || status === 'REJECTED' || status === 'VETOED' || status === 'BREACHED' || status === 'severelyFailed' || status === 'failed' || status === 'CRITICAL'
     ? 'risk' : status === 'APPROVED' || status === 'EXECUTED' || status === 'FULFILLED' || status === 'met' || status === 'exceeded' || status === 'exceptional' ? 'good' : 'neutral'
   return <span className={'cs-board-v3__pill cs-board-v3__pill--' + tone}>{children}</span>
@@ -97,7 +97,7 @@ export function BoardCourtsideSections(props: Props) {
         <section className="cs-board-v3__confidence">
           <span className="cs-board-v3__eyebrow">Confidence</span>
           <div className="cs-board-v3__confidence-main">
-            <div className="cs-board-v3__dial" style={{ '--cs-board-progress': state.confidence + '%' } as React.CSSProperties}>
+            <div className="cs-board-v3__dial" style={{ '--cs-board-progress': state.confidence + '%' } as CSSProperties}>
               <strong>{state.confidence}</strong><span>/ 100</span>
             </div>
             <div><h2>Confianza de la directiva</h2><p>Situación laboral: <strong>{readable(jobSecurity)}</strong></p><p>Renovación: {readable(renewal)}</p><small>Indicador Board. La evaluación institucional V2 se presenta por separado.</small></div>
@@ -113,6 +113,7 @@ export function BoardCourtsideSections(props: Props) {
           </div>
         </section>
       </div>
+      <div className="cs-board-v3__section-eyebrow" data-ng-region="board-governance-attention">Governance attention</div>
       <div className="cs-board-v3__kpis">
         <Kpi label="Decisiones pendientes" value={governance.pendingDecisions.length} detail={String(actionable.length) + ' requieren tu intervención'} tone={actionable.length ? 'warm' : undefined} />
         <Kpi label="Solicitudes activas" value={activeRequests.length} detail={String(activeRequests.filter((item) => item.overdue).length) + ' fuera de plazo'} tone={activeRequests.some((item) => item.overdue) ? 'risk' : undefined} />
