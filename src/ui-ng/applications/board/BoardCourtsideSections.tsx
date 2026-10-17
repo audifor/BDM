@@ -113,7 +113,7 @@ export function BoardCourtsideSections(props: Props) {
           </div>
         </section>
         <section className="cs-board-v3__mandate">
-          <span className="cs-board-v3__eyebrow">Mandate</span>
+          <span className="cs-board-v3__eyebrow">Board mandate</span>
           <h2>{state.expectation.summary}</h2>
           <p>Expectativa principal de la temporada</p>
           <div className="cs-board-v3__mandate-foot">
