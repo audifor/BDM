@@ -1,0 +1,24 @@
+name: PERSON 50 Live Relationship CI
+on:
+  push:
+    branches:
+      - feat/personality-full50-live-relationship-events
+permissions:
+  contents: read
+jobs:
+  behavior:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Legacy and semantic runtime tests
+        run: |
+          npm test -- src/domain/world/SemanticRelationshipAutoBridge.test.ts src/domain/world/CompatibilityInteractionBridge.test.ts src/domain/personality/SemanticPersonalityEffects.test.ts src/domain/world/RelationshipEvents.test.ts src/save/RelationshipPersistence.test.ts
+          npx vitest run src/app/game/WorldDbGameBootstrap.test.ts -t 'WorldDB canonical PERSON personality bootstrapping|WorldDB full 50-dimension PERSON runtime and Save V4'
