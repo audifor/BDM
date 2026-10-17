@@ -243,8 +243,8 @@ function priorityAfter(priority: ScoutingPriority): ScoutingPriority {
   return PRIORITIES[Math.min(PRIORITIES.length - 1, PRIORITIES.indexOf(priority) + 1)]!
 }
 
-export function ScoutingWorkspace() {
-  const world = useGameStore((state) => state.world)
+export function ScoutingWorkspace({ initialWorld }: { readonly initialWorld?: GameWorld } = {}) {
+  const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const setPriority = useGameStore((state) => state.updateScoutingAssignmentPriority)
   const cancelAssignment = useGameStore((state) => state.cancelScoutingAssignment)
