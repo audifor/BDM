@@ -83,3 +83,31 @@
 .market-target-picker__list span {display:grid;gap:3px;min-width:0;}
 .market-target-picker__list small {font-size:10px;color:var(--market-muted);}
 .market-target-picker__list button {border:1px solid var(--market-line);padding:7px 13px;color:var(--market-text);background:var(--market-surface-alt);border-radius:99px;}
+
+
+/* Compact, save-backed shortlist. No new page hero or nested empty cards. */
+.market-talent__saved {background:var(--market-surface);border:1px solid var(--market-line);border-radius:12px;overflow:hidden;}
+.market-talent__saved-head {display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid var(--market-line);}
+.market-talent__saved-head strong {font:700 15px var(--market-display);}
+.market-talent__saved-head span {font-size:10px;color:var(--market-muted);}
+.market-talent__saved-list {max-height:360px;overflow:auto;overscroll-behavior:contain;}
+.market-talent__saved-row {display:grid;grid-template-columns:minmax(130px,1.3fr) 84px minmax(100px,.75fr) minmax(250px,2fr);align-items:center;column-gap:9px;row-gap:4px;padding:10px 13px;border-bottom:1px solid var(--market-line-soft);}
+.market-talent__saved-person {display:grid;min-width:0;gap:3px;}
+.market-talent__saved-person button {background:none;border:0;padding:0;text-align:left;font-weight:700;color:var(--market-text);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.market-talent__saved-person small,.market-talent__saved-report small {font-size:10px;color:var(--market-muted);}
+.market-talent__saved-row select {background:var(--market-surface-alt);border:1px solid var(--market-line);color:var(--market-text);border-radius:7px;padding:6px 2px;width:100%;font-size:11px;}
+.market-talent__saved-report {display:grid;gap:3px;min-width:0;}
+.market-talent__saved-report strong {font-size:11px;color:var(--market-text);}
+.market-talent__saved-buttons {display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.market-talent__saved-buttons button {background:var(--market-surface-alt);border:1px solid var(--market-line);border-radius:99px;padding:6px 9px;color:var(--market-text);font:700 11px var(--market-display);}
+.market-talent__saved-buttons button:disabled {opacity:.45;cursor:not-allowed;}
+.market-talent__saved-history {grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;color:var(--market-faint);font-size:10px;}
+.market-talent__saved-history button {background:transparent;border:0;padding:0;color:var(--market-accent);font-size:10px;}
+.market-target-picker--note textarea {resize:vertical;width:100%;padding:10px;background:var(--market-surface-alt);color:var(--market-text);border:1px solid var(--market-line);border-radius:9px;}
+.market-target-picker--note h4 {font:700 14px var(--market-display);margin:14px 0 5px;}
+.market-talent__error {display:flex;align-items:center;justify-content:space-between;color:var(--cs-negative,#ff5470);font-size:11px;padding:8px;border:1px solid currentColor;border-radius:9px;}
+.market-talent__error button {color:inherit;border:0;background:none;font-size:16px;}
+.market-talent__card-actions {display:flex;gap:5px;flex-wrap:wrap;}
+.market-talent__card-actions button {flex:1 1 auto;padding:6px 9px!important;font-size:12px!important;}
+@media(max-width:1100px){.market-talent__saved-row{grid-template-columns:minmax(140px,1fr) 80px minmax(110px,1fr);}.market-talent__saved-buttons{grid-column:1/-1;justify-content:flex-start}.market-talent__saved-history{grid-column:1/-1;}}
+@media(max-width:700px){.market-talent__saved-head span{display:none}.market-talent__saved-row{grid-template-columns:minmax(0,1fr) 75px}.market-talent__saved-report{grid-column:1/-1}}
