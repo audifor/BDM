@@ -2,6 +2,8 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { calculateStaffWorkload } from '@/domain/world'
 import { getRecruitmentFocusCandidates } from '@/app/scouting'
+import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
+import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 import { navigateToStaff, navigateToStaffDepartment, navigateToStaffMarket } from '@/ui-ng/workspace/workspaceApps'
 import type { ScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import './scouting-war-room.css'
@@ -50,6 +52,8 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
       : world.competitions[territory.competitionId]?.name ?? territory.competitionId
 
   return <div className="scouting-war" data-testid="scouting-war-room">
+    <MarketOperationsBar world={world} teamId={teamId} onOpenScouting={onOpenAssignments}
+      onOpenFreeAgents={() => syncWorkspaceAppQuery('market', 'push')} />
     <div className="scouting-war__compact-head"><strong>SCOUTING</strong><span>{scouts.length} scouts · {active} misiones activas · {coverage.length} territorios</span>
       <button onClick={onOpenFocuses} type="button">+ Crear foco</button>
       <button onClick={onOpenCoverage} type="button">Territorios</button>
