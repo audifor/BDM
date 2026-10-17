@@ -26,6 +26,7 @@ import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
 import { SPAIN_ACB_2025_26_CALENDAR } from '@/data/worldCompetitionCalendars'
 import { spainCopaCompetitionSeasonId } from '@/data/worldCompetitionCalendars'
 import { createWorldDbSpainGame } from './WorldDbSpainGame'
+import { createConfiguredGameAsync } from './createConfiguredGame'
 import { startNextSeason, startNextSeasonFor } from './startNextSeason'
 import * as SeasonLifecycle from './startNextSeason'
 import { simulateUntilDate, type SimulateUntilResult } from './simulateUntilDate'
@@ -130,6 +131,29 @@ function reportWorldDbStop(label: string, initial: GameWorld, target: string, re
 }
 
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+
+  it('BS19B launches a real configured WorldDB career with a custom manager and the club Board', async () => {
+    const access = { repository: repository(), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }
+    const world = await createConfiguredGameAsync({
+      universeId: 'worldDbSpain',
+      userTeamKey: selection.teamId,
+      userCoachCreation: {
+        firstName: 'Lucía', lastName: 'Núñez', gender: 'female', dateOfBirth: '1992-09-13',
+        background: 'rookie', disposition: 'loyal', coachingStyle: 'developer',
+      },
+    }, access)
+    const coach = world.coaches[world.userCoachId]!
+    expect(coach.firstName).toBe('Lucía')
+    expect(coach.lastName).toBe('Núñez')
+    expect(world.personsById[coach.personId]?.dateOfBirth).toBe('1992-09-13')
+    expect(world.teams[selection.teamId as never]?.coachId).toBe(coach.id)
+    expect(Object.values(world.coaches).some(item => item.id !== coach.id && item.firstName === 'Head')).toBe(true)
+    expect(world.boardStatesByTeamId[selection.teamId as never]).toBeDefined()
+    expect(world.worldDbCompetitionRuntime?.competitionRuntimeBundle).not.toBeNull()
+    expect(Object.values(world.coachJobOffersById).some(x => x.coachId === coach.id && x.status === 'accepted')).toBe(true)
+    expect(Object.values(world.inboxItemsById).filter(x => x.coachId === coach.id && x.action?.type === 'coachJobOffer').every(x => x.status === 'archived')).toBe(true)
+    expect(Object.values(world.staffContractsById).some(x => x.staffId === coach.staffProfileId && x.termination === undefined)).toBe(true)
+  }, 120_000)
 
   it('BS19B creates a distinct head coach, keeps historical PERSON intact and round-trips Save V4', () => {
     const initial = worldWithAssistantCoach()
