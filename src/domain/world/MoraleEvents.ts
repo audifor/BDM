@@ -1,4 +1,5 @@
 import { evolvePersonalityFromMoraleEvidence } from '@/domain/personality/ObservedPersonalityEvolution'
+import type { CoachId, PlayerId, StaffPersonId } from '@/domain/ids'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { updateGameWorld, type GameWorld } from './GameWorld'
 
@@ -16,12 +17,12 @@ export function applyMoraleEventToWorld(world: GameWorld, event: MoraleEvent): G
     return updateGameWorld(world, { moraleByPersonId: { ...world.moraleByPersonId, [event.personId]: updated } })
   }
   if (event.gameDate > world.currentDate) throw new RangeError('Observed personality evidence cannot occur after current game date')
-  const profilePersonId = world.players[event.personId]?.personId
-    ?? world.staffPeopleById[event.personId]?.personId
-    ?? world.coaches[event.personId]?.personId
+  const profilePersonId = world.players[event.personId as PlayerId]?.personId
+    ?? world.staffPeopleById[event.personId as StaffPersonId]?.personId
+    ?? world.coaches[event.personId as CoachId]?.personId
   const born = (profilePersonId === undefined ? undefined : world.personsById[profilePersonId]?.dateOfBirth)
-    ?? world.players[event.personId]?.bio.dateOfBirth
-    ?? world.staffPeopleById[event.personId]?.identity.dateOfBirth
+    ?? world.players[event.personId as PlayerId]?.bio.dateOfBirth
+    ?? world.staffPeopleById[event.personId as StaffPersonId]?.identity.dateOfBirth
   const history = world.personalityHistoryByPersonId[event.personId] ?? []
   const evolved = evolvePersonalityFromMoraleEvidence(personality, event.personId, born, history, event)
   if (evolved.personality === personality && evolved.history === history) {
