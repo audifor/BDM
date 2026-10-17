@@ -165,7 +165,7 @@ export function MarketTalentBoard({ world, teamId, mode, targets, onAddTarget, o
             <button type="button" onClick={() => changeTarget(() => onArchiveTarget(target.playerId))}>Archivar</button>
           </div>
           <div className="market-talent__saved-history"><span>{target.note || 'Sin notas'} · {target.history.length} cambios</span>
-            {reports[0]?.evaluatorName ? <span>Último informe: {reports[0].evaluatorName}</span> : null}
+            {reports[0]?.evaluatorName ? <button type="button" onClick={() => { const staffId = world.evaluatorReportsById[reports[0]!.id]?.evaluatorStaffId; if(staffId !== undefined) navigateToStaff(staffId) }}>Scout: {reports[0].evaluatorName} ↗</button> : null}
           </div>
         </div>
       })}</div>}
