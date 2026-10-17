@@ -29,6 +29,7 @@ import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToPlayerMedical, navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
+import { formatMedicalOneDecimal } from './formatMedicalOneDecimal'
 import { MedicalHistoryVisual, MedicalInjuryVisual, MedicalNoInjuries, MedicalOverviewVisual, MedicalRecoveryVisual, MedicalRiskScatter, MedicalSquadMonitor, MedicalStaffVisual } from './MedicalCourtsideVisuals'
 
 import './medical-workspace.css'
@@ -46,7 +47,7 @@ function MedicalWorkspaceHeader({ model }: { readonly model: MedicalWorkspaceMod
           {' · '}
           <span className="ng-type-numeric">{model.injuredCount}</span> injured
           {' · '}
-          <span className="ng-type-numeric">{model.averageFatigue}</span> fatigue
+          <span className="ng-type-numeric">{formatMedicalOneDecimal(model.averageFatigue)}</span> fatigue
           {' · '}
           <span className="ng-type-numeric">{model.medicalStaffCount}</span> staff
         </span>
@@ -94,7 +95,7 @@ function ReturnToPlayBoard({
               <div><small>FITNESS TEST</small><strong>{row.fitnessTestRequired ? row.fitnessTestResult ?? 'REQUIRED' : 'NOT REQUIRED'}</strong></div>
             </div>
             <div className="medical-cs__rtp-meta">
-              <span>CAREER FATIGUE <b>{row.fatigue}/100</b></span>
+              <span>CAREER FATIGUE <b>{formatMedicalOneDecimal(row.fatigue)}/100</b></span>
               {row.recommendationSummary && <span>STAFF: <b>{row.staffName} · {row.staffQuality}/100</b></span>}
             </div>
             {(row.recommendationSummary || row.reviewHistory.length > 0) && <details className="medical-cs__rtp-details">
@@ -255,7 +256,7 @@ function InjuredBoard({
           <div className="medical-cs__injury-facts">
             <div><small>SEVERITY</small><strong data-severity={selected.severity}>{selected.severityLabel}</strong></div>
             <div><small>DAYS TO REVIEW</small><strong>{Math.max(0, selected.daysRemaining)}</strong></div>
-            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<small>/100</small></strong></div>
+            <div><small>CAREER FATIGUE</small><strong>{formatMedicalOneDecimal(selected.fatigue)}<small>/100</small></strong></div>
           </div>
           <div className="medical-cs__injury-milestones">
             <div><small>INJURED</small><strong>{selected.injuredOnLabel}</strong></div>
@@ -379,14 +380,14 @@ function RiskBoard({
             ngCol('availability', 'Availability', (row) => (row.available ? 'Available' : 'Injured'), {
               value: (row) => (row.available ? 'Available' : 'Injured'),
             }),
-            ngCol('fatigue', 'Fatigue', (row) => row.fatigue, { numeric: true, value: (row) => row.fatigue }),
+            ngCol('fatigue', 'Fatigue', (row) => formatMedicalOneDecimal(row.fatigue), { numeric: true, value: (row) => row.fatigue }),
             ngCol('load', 'Load', (row) => row.fatigueLabel, { value: (row) => row.fatigueLabel }),
             ngCol('risk', 'Risk', (row) => (
               <span className={`medical-workspace__badge medical-workspace__badge--${row.riskBand}`}>
                 {row.riskBandLabel}
               </span>
             ), { value: (row) => row.riskBandLabel }),
-            ngCol('score', 'Score', (row) => row.riskScore, { numeric: true, value: (row) => row.riskScore }),
+            ngCol('score', 'Score', (row) => formatMedicalOneDecimal(row.riskScore), { numeric: true, value: (row) => row.riskScore }),
           ])}
           gridId="ng-medical-load"
           onSelectionChange={(ids) => {
@@ -402,8 +403,8 @@ function RiskBoard({
           <p className="medical-workspace__eyebrow">Risk assessment</p>
           <h3 className="medical-workspace__inspector-title">{selected.playerName}</h3>
           <div className="medical-cs__risk-inspector">
-            <div><small>INJURY RISK</small><strong>{selected.riskScore}<span>/100 · {selected.riskBandLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.riskBand === 'high' ? 'red' : selected.riskBand === 'elevated' ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.riskScore))}%` }} /></div></div>
-            <div><small>CAREER FATIGUE</small><strong>{selected.fatigue}<span>/100 · {selected.fatigueLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.fatigue >= 70 ? 'red' : selected.fatigue >= 50 ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.fatigue))}%` }} /></div></div>
+            <div><small>INJURY RISK</small><strong>{formatMedicalOneDecimal(selected.riskScore)}<span>/100 · {selected.riskBandLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.riskBand === 'high' ? 'red' : selected.riskBand === 'elevated' ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.riskScore))}%` }} /></div></div>
+            <div><small>CAREER FATIGUE</small><strong>{formatMedicalOneDecimal(selected.fatigue)}<span>/100 · {selected.fatigueLabel}</span></strong><div className="medical-cs__meter"><span className="medical-cs__meter-fill" data-tone={selected.fatigue >= 70 ? 'red' : selected.fatigue >= 50 ? 'orange' : 'lime'} style={{ width: `${Math.max(0,Math.min(100,selected.fatigue))}%` }} /></div></div>
           </div>
           <div className="medical-cs__risk-inspector-foot">
             <span>{selected.available ? 'AVAILABLE' : 'UNAVAILABLE'}</span>
