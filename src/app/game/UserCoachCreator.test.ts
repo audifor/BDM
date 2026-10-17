@@ -3,6 +3,7 @@ import { createAcbTestGame } from './createAcbTestGame'
 import { applyUserCoachCreation, type UserCoachCreationInput } from './UserCoachCreator'
 import { createConfiguredGame, createConfiguredGameAsync } from './createConfiguredGame'
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
+import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
 const created: UserCoachCreationInput = {
   firstName: '  Elena ',
@@ -41,6 +42,18 @@ describe('BS19B user-created Coach foundation', () => {
     ]))
     expect(previousFinance.debts).toHaveLength(0)
     expect(original.coaches[original.userCoachId]!.firstName).toBe('BDM')
+  })
+
+  it('preserves created Person, StaffProfile, personality and debt across Save V4', () => {
+    const world = applyUserCoachCreation(createAcbTestGame(), created)
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(world, '2026-10-17T10:00:00.000Z'))
+    const coach = restored.coaches[restored.userCoachId]!
+    expect([coach.firstName, coach.lastName, coach.gender]).toEqual(['Elena', 'Villalobos', 'female'])
+    expect(restored.staffPeopleById[coach.staffProfileId]!.identity.dateOfBirth).toBe('1991-06-19')
+    expect(restored.personsById[coach.personId]!.dateOfBirth).toBe('1991-06-19')
+    expect(restored.personalitiesByPersonId[coach.id]!.values.ambition).toBeGreaterThanOrEqual(70)
+    expect(restored.coachFinancesByCoachId[coach.id]!.cash).toBe(2_500)
+    expect(restored.coachFinancesByCoachId[coach.id]!.debts[0]!.principalRemaining).toBe(30_000)
   })
 
   it('preserves the source identity if no creation request was supplied', () => {
