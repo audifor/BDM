@@ -25,7 +25,7 @@ describe('Courtside Market command centre', () => {
     const team = getUserTeam(world)!
     const rosterPlayer = world.players[team.rosterPlayerIds[0]!]!
     expect(screen.getByTestId('market-command-centre')).toBeInTheDocument()
-    expect(screen.getByText('Del informe a la operación')).toBeInTheDocument()
+    expect(screen.getByText('Actividad de mercado')).toBeInTheDocument()
     expect(document.body.textContent).not.toContain(JSON.stringify(rosterPlayer.basketball.ratings))
   })
 
