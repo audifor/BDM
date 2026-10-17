@@ -138,7 +138,8 @@ describe('NG start menu', () => {
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Mercado' }))
     expect(dialog.querySelector('.ng-start-menu__category[data-category="mercado"]')).not.toBeNull()
-    expect(within(dialog).getByRole('button', { name: 'Scouting' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Market' })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Scouting' })).not.toBeInTheDocument()
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Partidos y competición' }))
     expect(dialog.querySelector('.ng-start-menu__category[data-category="partidos"]')).not.toBeNull()
