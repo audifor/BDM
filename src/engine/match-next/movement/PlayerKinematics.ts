@@ -3,7 +3,7 @@ import type { MatchNextPlayerProfile } from '../setup'
 import type { MatchPlayerState, MatchState } from '../state'
 import { MOVEMENT_URGENCY_FACTORS, type MovementIntent } from './MovementIntent'
 import { tuning } from '../tuning'
-import { CROSSOVER_RULES_D5B } from '../actions/TechniqueExecution'
+import { CROSSOVER_RULES_D5B } from '../actions/TechniqueRules'
 
 export const MOVEMENT_DT_SECONDS = 0.1
 export const TARGET_ARRIVAL_TOLERANCE_METERS = 0.15
