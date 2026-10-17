@@ -491,3 +491,7 @@
   .courtside-staff-screen .cs-staff-people__row>span:nth-child(3),
   .courtside-staff-screen .cs-staff-people__row>span:nth-child(4) {display:none}
 }
+
+
+.cs-staff-market-quicklinks {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.cs-staff-market-quicklinks>button:not(.cs-staff-primary) {padding:8px 12px;border-radius:99px;color:var(--cs-text,var(--ng-text-primary));background:var(--cs-s2,var(--ng-bg-panel-secondary));border:1px solid var(--cs-line2,var(--ng-border-standard));font:700 13px var(--cs-font-display,var(--ng-font-display));}
