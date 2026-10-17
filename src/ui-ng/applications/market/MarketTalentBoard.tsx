@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { isPlayerFreeAgent } from '@/domain/world'
+import { RequestScoutingModal } from '@/ui-ng/applications/scouting/ScoutingModals'
+import type { RequestScoutingInput } from '@/app/scouting'
 import { buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/buildScoutingRosterComparison'
 import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
@@ -19,6 +21,8 @@ interface Props {
   readonly onOpenPlayer: (playerId: PlayerId) => void
   readonly onOpenScouting: () => void
   readonly onOpenOperations: () => void
+  readonly onRequestScouting: (input: RequestScoutingInput) => string | null
+  readonly onOpenFreeAgent: (playerId: PlayerId) => void
 }
 
 const STATES = { UNKNOWN: 'Sin observar', DISCOVERED: 'Descubierto', QUICK_LOOK: 'Primera valoración', PARTIAL: 'Parcial', DETAILED: 'Detallado' } as const
@@ -31,10 +35,11 @@ function playerName(world: GameWorld, playerId: PlayerId): string {
   return player === undefined ? 'Jugador' : `${player.firstName} ${player.lastName}`
 }
 
-export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
+  const [scoutingTarget, setScoutingTarget] = useState<PlayerId | null>(null)
   const [position, setPosition] = useState<string>('ALL')
   const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'FREE' | 'ACTIVE'>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
@@ -67,6 +72,7 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
       {mode === 'targets' ? <button className="market-cs__primary" onClick={() => setPickerOpen(true)} type="button">+ Añadir objetivo</button> : null}
       <button className="market-cs__secondary" onClick={onOpenScouting} type="button">Scouting →</button>
     </div>
+    {scoutingTarget !== null ? <RequestScoutingModal key={scoutingTarget} world={world} teamId={teamId} playerId={scoutingTarget} onClose={() => setScoutingTarget(null)} onSubmit={onRequestScouting} /> : null}
     {mode === 'targets' && pickerOpen ? <div className="market-target-picker__overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false) }}>
       <section className="market-target-picker" role="dialog" aria-modal="true" aria-label="Añadir objetivos">
         <header><h3>Añadir objetivo</h3><button onClick={() => setPickerOpen(false)} aria-label="Cerrar selector" type="button">×</button></header>
@@ -118,7 +124,9 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
           <div className="market-talent__subheading"><strong>Informes registrados</strong><small>{activeReports.length} mostrados</small></div>
           {activeReports.length === 0 ? <p className="market-talent__empty">Sin informes registrados para este jugador.</p> :
             <div className="market-talent__reports">{activeReports.map((report) => <div key={report.id}><b>{report.missionLabel}</b><span>{report.evaluatorName} · {report.createdLabel}</span><small>Confianza {report.confidenceLabel}</small></div>)}</div>}
-          <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Abrir ficha completa</button><button className="market-cs__secondary" onClick={onOpenScouting} type="button">Gestionar observación</button></div>
+          <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => setScoutingTarget(selected.playerId)} type="button" disabled={selected.activeAssignment !== null}>{selected.activeAssignment === null ? 'Solicitar informe' : 'Observación en curso'}</button>
+            {isPlayerFreeAgent(world, selected.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(selected.playerId)} type="button">Contactar agente libre</button> : null}
+            <button className="market-cs__secondary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Ficha completa</button></div>
         </>}
       </aside>
     </div></> : null}
@@ -129,7 +137,9 @@ export function MarketTalentBoard({ world, teamId, mode, comparisonIds, onToggle
           <div><b>{row.position}</b><button aria-label={'Quitar ' + row.name} onClick={() => onToggleComparison(row.playerId)} type="button">×</button></div>
           <h4>{row.name}</h4><p>{row.clubName}</p>
           <dl><div><dt>Cobertura</dt><dd>{row.coverageLabel}</dd></div><div><dt>Confianza</dt><dd>{row.confidenceLabel}</dd></div><div><dt>Frescura</dt><dd>{row.freshnessLabel}</dd></div><div><dt>Desacuerdo</dt><dd>{row.disagreement === 'HIGH' ? 'Alto' : row.disagreement === 'MODERATE' ? 'Medio' : 'Bajo'}</dd></div></dl>
-          <button className="market-cs__secondary" onClick={() => { setSelectedId(row.playerId); onOpenPlayer(row.playerId) }} type="button">Examinar jugador</button>
+          <div className="market-talent__card-actions"><button className="market-cs__secondary" onClick={() => setScoutingTarget(row.playerId)} type="button" disabled={row.activeAssignment !== null}>Informar</button>
+          {isPlayerFreeAgent(world,row.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(row.playerId)} type="button">Contactar</button> : null}
+          <button className="market-cs__secondary" onClick={() => onOpenPlayer(row.playerId)} type="button">Ficha</button></div>
         </article>)}</div>}
       {compared.length > 0 ? <div className="market-talent__compare-footer"><span>Los atributos no observados aparecen como «?».</span><button className="market-cs__secondary" onClick={onOpenOperations} type="button">Consultar operaciones →</button></div> : null}
     </section> : null}
