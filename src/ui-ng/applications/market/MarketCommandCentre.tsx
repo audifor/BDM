@@ -46,17 +46,17 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
     return player === undefined ? [] : [{ id: item.id, playerId: item.subjectPlayerId, name: player.firstName + ' ' + player.lastName, date: item.createdAt }]
   })
   const nextAction = assignments.length > 0
-    ? { headline: 'Revisar la red de observación', explanation: 'Hay misiones asignadas. Consulta plazos, prioridades y capacidad.', action: onOpenScouting, label: 'Abrir Scouting' }
+    ? { headline: 'Misiones abiertas', explanation: 'Misiones pendientes de seguimiento.', action: onOpenScouting, label: 'Abrir Scouting' }
     : focuses.length === 0
-      ? { headline: 'Definir el próximo perfil', explanation: 'No hay focos de reclutamiento activos. Empieza por una necesidad deportiva.', action: onOpenScouting, label: 'Crear un foco' }
-      : { headline: 'Evaluar nuevas opciones', explanation: 'Tu red ya tiene focos activos. Revisa candidatos y cobertura antes de actuar.', action: onOpenScouting, label: 'Revisar candidatos' }
+      ? { headline: 'Sin focos activos', explanation: 'Crea un foco de reclutamiento.', action: onOpenScouting, label: 'Crear un foco' }
+      : { headline: 'Focos activos', explanation: 'Consulta candidatos y cobertura.', action: onOpenScouting, label: 'Revisar candidatos' }
   return (
     <div className="market-cs" data-testid="market-command-centre">
       <section className="market-cs__hero">
         <div className="market-cs__hero-copy">
-          <span className="market-cs__kicker">INTELIGENCIA DE PLANTILLA · {world.currentDate}</span>
-          <h2>CADA FICHAJE EMPIEZA CON UNA DECISIÓN</h2>
-          <p>Dirige la búsqueda, contrasta la información y ejecuta operaciones con los sistemas reales de tu club.</p>
+          <span className="market-cs__kicker">MERCADO · {world.currentDate}</span>
+          <h2>Centro de mercado</h2>
+          <p>Scouting, jugadores, agentes libres y operaciones.</p>
           <div className="market-cs__actions">
             <button className="market-cs__primary" onClick={onOpenScouting} type="button">Abrir Scouting</button>
             <button className="market-cs__secondary" onClick={onOpenExplore} type="button">Explorar jugadores</button><button className="market-cs__secondary" onClick={onOpenTargets} type="button">Mesa de objetivos</button>
@@ -73,14 +73,14 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
       </section>
       <div className="market-cs__quick-links"><button onClick={onOpenPlanning} type="button">Planificar próxima temporada →</button><button onClick={onOpenFreeAgents} type="button">Consultar agentes libres →</button><button onClick={onOpenOperations} type="button">Seguir operaciones →</button></div>
       <div className="market-cs__metrics">
-        <div><span>Focos activos</span><strong>{focuses.length}</strong><small>Necesidades que investiga la red</small></div>
-        <div><span>Jugadores conocidos</span><strong>{known.length}</strong><small>Información de la organización</small></div>
-        <div><span>Agentes libres</span><strong>{availableFreeAgents}</strong><small>Disponibles en el mundo actual</small></div>
-        <div><span>Presupuesto restante</span><strong className="market-cs__money">{formatMoney(remainingSalaryBudget)}</strong><small>Margen salarial del equipo</small></div>
+        <div><span>Focos activos</span><strong>{focuses.length}</strong><small>Focos de reclutamiento</small></div>
+        <div><span>Jugadores conocidos</span><strong>{known.length}</strong><small>Expedientes</small></div>
+        <div><span>Agentes libres</span><strong>{availableFreeAgents}</strong><small>Disponibles</small></div>
+        <div><span>Presupuesto restante</span><strong className="market-cs__money">{formatMoney(remainingSalaryBudget)}</strong><small>Disponible para salarios</small></div>
       </div>
       <div className="market-cs__columns">
         <section className="market-cs__panel">
-          <header><div><span className="market-cs__kicker">FLUJO CANÓNICO</span><h3>Del informe a la operación</h3></div><span>Estado actual</span></header>
+          <header><div><span className="market-cs__kicker">SEGUIMIENTO</span><h3>Actividad de mercado</h3></div><span>Estado actual</span></header>
           <div className="market-cs__pipeline">
             {pipeline.map((stage, index) => (
               <div className="market-cs__stage" key={stage.label}>
@@ -92,7 +92,7 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
           </div>
         </section>
         <section className="market-cs__panel market-cs__panel--decision">
-          <header><div><span className="market-cs__kicker">PRÓXIMA DECISIÓN</span><h3>{nextAction.headline}</h3></div></header>
+          <header><div><span className="market-cs__kicker">PENDIENTES</span><h3>{nextAction.headline}</h3></div></header>
           <p>{nextAction.explanation}</p>
           <button className="market-cs__primary" onClick={nextAction.action} type="button">{nextAction.label}</button>
           <div className="market-cs__decision-foot">
@@ -103,13 +103,13 @@ export function MarketCommandCentre({ world, teamId, availableFreeAgents, remain
       </div>
       <div className="market-cs__columns market-cs__columns--bottom">
         <section className="market-cs__panel">
-          <header><div><span className="market-cs__kicker">PLANIFICACIÓN</span><h3>Focos de reclutamiento</h3></div><button onClick={onOpenScouting} type="button">Gestionar →</button></header>
-          {focuses.length === 0 ? <p className="market-cs__empty">Todavía no hay focos activos. Define perfiles, territorios y scouts desde Scouting.</p> :
+          <header><div><span className="market-cs__kicker">SCOUTING</span><h3>Focos de reclutamiento</h3></div><button onClick={onOpenScouting} type="button">Gestionar →</button></header>
+          {focuses.length === 0 ? <p className="market-cs__empty">Sin focos activos.</p> :
             <div className="market-cs__compact-list">{focuses.slice(0, 4).map((focus) => <div key={focus.id}><strong>{focus.name}</strong><span>{focus.positions.join(' · ')} · {focus.daysActive} días</span></div>)}</div>}
         </section>
         <section className="market-cs__panel">
-          <header><div><span className="market-cs__kicker">EVIDENCIA RECIENTE</span><h3>Últimos informes</h3></div><button onClick={onOpenScouting} type="button">Ver todos →</button></header>
-          {lastReports.length === 0 ? <p className="market-cs__empty">Sin informes cerrados todavía. Los descubrimientos no revelan atributos ocultos.</p> :
+          <header><div><span className="market-cs__kicker">INFORMES</span><h3>Últimos informes</h3></div><button onClick={onOpenScouting} type="button">Ver todos →</button></header>
+          {lastReports.length === 0 ? <p className="market-cs__empty">Sin informes registrados.</p> :
             <div className="market-cs__compact-list">{lastReports.map((report) => <div key={report.id}><button onClick={() => onOpenPlayer(report.playerId)} type="button">{report.name}</button><span>{report.date}</span></div>)}</div>}
         </section>
       </div>
