@@ -1186,6 +1186,83 @@ mod tests {
     }
 
     #[test]
+    fn native_reader_preserves_all_fifty_semantic_personality_dimensions() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection.execute_batch(
+            "CREATE TABLE person_personality_value (person_id TEXT, dimension_code TEXT, value INTEGER);",
+        ).unwrap();
+        let codes = [
+            "ambition",
+            "competitiveness",
+            "achievementDrive",
+            "statusSeeking",
+            "persistence",
+            "goalFocus",
+            "recognitionNeed",
+            "professionalism",
+            "discipline",
+            "preparation",
+            "conscientiousness",
+            "workEthic",
+            "accountability",
+            "coachability",
+            "loyalty",
+            "fairness",
+            "integrity",
+            "reciprocity",
+            "contractualCommitment",
+            "honesty",
+            "resilience",
+            "temperament",
+            "stressTolerance",
+            "impulseControl",
+            "emotionalStability",
+            "frustrationTolerance",
+            "composure",
+            "teamOrientation",
+            "empathy",
+            "communication",
+            "leadership",
+            "trust",
+            "conflictResolution",
+            "adaptability",
+            "curiosity",
+            "learningOrientation",
+            "flexibility",
+            "culturalOpenness",
+            "uncertaintyTolerance",
+            "riskAppetite",
+            "decisionPatience",
+            "decisiveness",
+            "tacticalAwareness",
+            "selfReflection",
+            "mediaComfort",
+            "privacyPreference",
+            "socialConfidence",
+            "publicResponsibility",
+            "controversyTolerance",
+            "humor",
+        ];
+        for (i, dimension) in codes.iter().enumerate() {
+            connection.execute(
+                "INSERT INTO person_personality_value VALUES (?1,?2,?3)",
+                rusqlite::params!["person:complete", dimension, ((i * 13 + 21) % 101) as i64],
+            ).unwrap();
+        }
+        let values = query_person_runtime_personality(&connection, "person:complete")
+            .unwrap().unwrap();
+        assert_eq!(values.len(), 50);
+        assert_eq!(values["ambition"], 21);
+        assert_eq!(values["humor"], ((49 * 13 + 21) % 101) as u8);
+        connection.execute(
+            "DELETE FROM person_personality_value WHERE person_id='person:complete' AND dimension_code='humor'",
+            [],
+        ).unwrap();
+        assert!(query_person_runtime_personality(&connection, "person:complete")
+            .unwrap_err().contains("partial semantic personality"));
+    }
+
+    #[test]
     fn production_spain_slice_smoke_is_opt_in_and_read_only() {
         let Some(database_path) = std::env::var_os("BDM_WORLD_DB_PATH") else {
             return;
