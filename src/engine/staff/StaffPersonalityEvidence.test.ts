@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { createPersonality } from '@/domain/personality'
+import { parseGameDate } from '@/domain/date'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { createStaffPerson, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { createStaffHumanContext, createStaffHumanEvent, createStaffHumanState, staffHumanContextIdFor } from '@/domain/staffHumanState'
@@ -12,7 +13,7 @@ function fixture() {
   const base = createNewGame()
   const staff = Object.values(base.staffPeopleById).find((person) => person.marketRole !== 'headCoach')!
   const employee = createStaffPerson({
-    ...staff, identity: { ...staff.identity, dateOfBirth: '1990-04-20' },
+    ...staff, identity: { ...staff.identity, dateOfBirth: parseGameDate('1990-04-20') },
     professional: { attributes: { ...Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, staff.professional.attributes[key]])) } as never },
   })
   const withStaff = updateGameWorld(base, {
