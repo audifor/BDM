@@ -10,6 +10,7 @@ import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavi
 import { BoardWorkspace } from '@/ui-ng/applications/board/BoardWorkspace'
 import { FinancesWorkspace } from '@/ui-ng/applications/finances/FinancesWorkspace'
 import { FacilitiesWorkspace } from '@/ui-ng/applications/facilities/FacilitiesWorkspace'
+import { EnforcementWorkspace } from '@/ui-ng/applications/enforcement/EnforcementWorkspace'
 
 afterEach(cleanup)
 beforeEach(() => {
@@ -43,6 +44,15 @@ describe('Courtside club satellite views', () => {
     expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Cash flow' }))
     expect(jump).toHaveValue('cash')
+  })
+
+  it('preserves enforcement records while adding an institutional risk summary', () => {
+    renderWorkspace(<EnforcementWorkspace />)
+    const root = document.querySelector('[data-ng-region="enforcement-workspace"]')
+    expect(root).toHaveClass('cs-club-management', 'cs-club-enforcement')
+    expect(root?.querySelectorAll('.cs-enforcement__stat')).toHaveLength(3)
+    fireEvent.click(screen.getByRole('button', { name: 'Investigations' }))
+    expect(screen.getByText('No investigations recorded.')).toBeInTheDocument()
   })
 
   it('makes facility priorities visible and moves secondary KPIs to an expandable detail', () => {
