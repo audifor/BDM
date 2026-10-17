@@ -711,15 +711,61 @@ fn query_person_runtime_personality(
     connection: &Connection,
     person_id: &str,
 ) -> Result<Option<BTreeMap<String, u8>>, String> {
-    const KEYS: [&str; 8] = [
+    const RUNTIME_KEYS: [&str; 8] = [
+        "ambition", "professionalism", "loyalty", "resilience",
+        "temperament", "teamOrientation", "adaptability", "competitiveness",
+    ];
+    const SEMANTIC_KEYS: [&str; 50] = [
         "ambition",
+        "competitiveness",
+        "achievementDrive",
+        "statusSeeking",
+        "persistence",
+        "goalFocus",
+        "recognitionNeed",
         "professionalism",
+        "discipline",
+        "preparation",
+        "conscientiousness",
+        "workEthic",
+        "accountability",
+        "coachability",
         "loyalty",
+        "fairness",
+        "integrity",
+        "reciprocity",
+        "contractualCommitment",
+        "honesty",
         "resilience",
         "temperament",
+        "stressTolerance",
+        "impulseControl",
+        "emotionalStability",
+        "frustrationTolerance",
+        "composure",
         "teamOrientation",
+        "empathy",
+        "communication",
+        "leadership",
+        "trust",
+        "conflictResolution",
         "adaptability",
-        "competitiveness",
+        "curiosity",
+        "learningOrientation",
+        "flexibility",
+        "culturalOpenness",
+        "uncertaintyTolerance",
+        "riskAppetite",
+        "decisionPatience",
+        "decisiveness",
+        "tacticalAwareness",
+        "selfReflection",
+        "mediaComfort",
+        "privacyPreference",
+        "socialConfidence",
+        "publicResponsibility",
+        "controversyTolerance",
+        "humor",
     ];
     let exists: Option<i64> = connection
         .query_row(
@@ -742,16 +788,11 @@ fn query_person_runtime_personality(
         .map_err(|e| format!("World DB personality read failed for {person_id}: {e}"))?;
     let mut values = BTreeMap::new();
     for row in rows {
-        let (code, raw) =
-            row.map_err(|e| format!("World DB personality invalid for {person_id}: {e}"))?;
-        if KEYS.contains(&code.as_str()) {
-            let value = u8::try_from(raw).map_err(|_| {
-                format!("World DB personality {code} invalid for {person_id}: {raw}")
-            })?;
+        let (code, raw) = row.map_err(|e| format!("World DB personality invalid for {person_id}: {e}"))?;
+        if SEMANTIC_KEYS.contains(&code.as_str()) {
+            let value = u8::try_from(raw).map_err(|_| format!("World DB personality {code} invalid for {person_id}: {raw}"))?;
             if value > 100 {
-                return Err(format!(
-                    "World DB personality {code} out of 0..100 for {person_id}"
-                ));
+                return Err(format!("World DB personality {code} out of 0..100 for {person_id}"));
             }
             values.insert(code, value);
         }
@@ -759,11 +800,11 @@ fn query_person_runtime_personality(
     if values.is_empty() {
         return Ok(None);
     }
-    if values.len() != KEYS.len() {
-        return Err(format!(
-            "World DB PERSON {person_id} has partial BDM runtime personality: {}/8",
-            values.len()
-        ));
+    if !RUNTIME_KEYS.iter().all(|key| values.contains_key(*key)) {
+        return Err(format!("World DB PERSON {person_id} has partial BDM runtime personality: {}/8", RUNTIME_KEYS.iter().filter(|key| values.contains_key(**key)).count()));
+    }
+    if values.len() != 8 && values.len() != SEMANTIC_KEYS.len() {
+        return Err(format!("World DB PERSON {person_id} has partial semantic personality: {}/50", values.len()));
     }
     Ok(Some(values))
 }
