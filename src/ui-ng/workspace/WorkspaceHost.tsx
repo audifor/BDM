@@ -55,7 +55,7 @@ export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType
   roster: RosterWorkspace,
   player: PlayerWorkspace,
   staff: StaffWorkspace,
-  scouting: ScoutingWorkspace,
+  scouting: () => <MarketWorkspace initialTab="scouting" />,
   tactics: TacticsWorkspace,
   training: TrainingStudioWorkspace,
   mentoring: () => <TrainingStudioWorkspace initialTab="mentoring" />,
