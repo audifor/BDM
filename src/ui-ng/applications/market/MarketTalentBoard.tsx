@@ -134,7 +134,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const compared = comparisonIds.map((id) => addressable.find((row) => row.playerId === id)).filter((row): row is ScoutingKnowledgeRow => row !== undefined)
   const activeReports = selected === null ? [] : model.reports.filter((report) => report.playerId === selected.playerId).slice(0, 3)
   return <div className="market-talent" data-testid={mode === 'explore' ? 'market-explore' : 'market-targets'}>
-    <div className="market-talent__compact-head"><strong>{mode === 'targets' ? 'OBJETIVOS · ' + targets.length : 'EXPLORAR JUGADORES · ' + ordered.length}</strong>
+    <div className="market-talent__compact-head"><strong>{mode === 'targets' ? 'OBJETIVOS · ' + targets.length : 'BUSCAR JUGADORES · ' + ordered.length}</strong>
       {mode === 'targets' ? <button className="market-cs__primary" onClick={() => setPickerOpen(true)} type="button">+ Añadir objetivo</button> : null}
       <button className="market-cs__secondary" onClick={onOpenScouting} type="button">Scouting →</button>
     </div>
@@ -154,10 +154,23 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
       </section>
     </div> : null}
     {mode === 'explore' ? <><div className="market-talent__toolbar">
-      <label>Buscar<input aria-label="Buscar objetivos" placeholder="Nombre, país, liga o club" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-      <label>Posición<select aria-label="Posición de objetivos" value={position} onChange={(event) => setPosition(event.target.value)}>{POSITIONS.map((p) => <option value={p} key={p}>{p === 'ALL' ? 'Todas' : p}</option>)}</select></label>
-      <label>Situación<select aria-label="Situación de objetivos" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="ALL">Todos</option><option value="KNOWN">Con informes</option><option value="FREE">Agentes libres</option><option value="ACTIVE">En observación</option></select></label>
-      <span className="market-talent__count">{rows.length} visibles · {targets.length} objetivos</span>
+      <label>Buscar<input aria-label="Buscar jugadores" placeholder="Nombre, país, liga o club" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      <label>Posición<select aria-label="Posición" value={position} onChange={(event) => setPosition(event.target.value)}>{POSITIONS.map((p) => <option value={p} key={p}>{p === 'ALL' ? 'Todas' : p}</option>)}</select></label>
+      <label>Contrato<select aria-label="Contrato" value={contractStatus} onChange={(event) => setContractStatus(event.target.value as typeof contractStatus)}>
+        <option value="ALL">Todos</option><option value="FREE">Sin contrato</option><option value="ROSTERED">Con contrato</option>
+        <option value="EXPIRING_3">Vence en 3 meses</option><option value="EXPIRING_6">Vence en 6 meses</option><option value="EXPIRING_12">Vence en 12 meses</option>
+      </select></label>
+      <details className="market-search-advanced"><summary>Más filtros</summary>
+        <div className="market-search-advanced__fields">
+          <label>Scouting<select aria-label="Estado de scouting" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="ALL">Todos</option><option value="KNOWN">Con informes</option><option value="ACTIVE">En observación</option><option value="UNSCOUTED">Sin evaluar</option></select></label>
+          <label>Edad mínima<input aria-label="Edad mínima" type="number" min="0" value={minimumAge} onChange={(event) => setMinimumAge(event.target.value)} /></label>
+          <label>Edad máxima<input aria-label="Edad máxima" type="number" min="0" value={maximumAge} onChange={(event) => setMaximumAge(event.target.value)} /></label>
+          <label>País<select aria-label="País" value={country} onChange={(event) => setCountry(event.target.value)}><option value="">Todos</option>{countries.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Competición<select aria-label="Competición" value={competition} onChange={(event) => setCompetition(event.target.value)}><option value="">Todas</option>{competitions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Salario esperado máximo<input aria-label="Salario esperado máximo" type="number" min="0" step="1000" value={maximumSalary} placeholder="Solo valores conocidos" onChange={(event) => setMaximumSalary(event.target.value)} /></label>
+        </div>
+      </details>
+      <span className="market-talent__count">{rows.length} jugadores · {targets.length} objetivos</span>
     </div>
     <div className="market-talent__grid">
       <section className="market-talent__catalog" aria-label="Candidatos de mercado">
