@@ -1,25 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { getRelationshipsForPerson } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
-import { CoachCareerScreen } from '@/ui-ng/applications/coach/CoachCareerScreen'
 import { CoachDevelopmentWorkspace } from '@/ui-ng/applications/coach/CoachDevelopmentWorkspace'
-import { CoachLegacyScreen } from '@/ui-ng/applications/coach/CoachLegacyScreen'
-import { CoachOpportunitiesScreen } from '@/ui-ng/applications/coach/CoachOpportunitiesScreen'
-import { CoachOverviewScreen } from '@/ui-ng/applications/coach/CoachOverviewScreen'
-import { CoachReputationScreen } from '@/ui-ng/applications/coach/CoachReputationScreen'
-import { buildCoachOverviewModel } from '@/ui-ng/applications/coach/coachOverviewModel'
 import { CoachRelationshipsPanel } from '@/ui-ng/applications/coach/CoachRelationshipsPanel'
+import { CoachFactsWorkspace, type CoachFactsTab } from '@/ui-ng/applications/coach/CoachFactsWorkspace'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import './coach-courtside.css'
+import './coach-truth.css'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'development', label: 'Development' },
+  { id: 'relationships', label: 'Relationships' },
+  { id: 'reputation', label: 'Reputation' },
   { id: 'opportunities', label: 'Opportunities' },
   { id: 'career', label: 'Career' },
-  { id: 'reputation', label: 'Reputation' },
-  { id: 'relationships', label: 'Relationships' },
-  { id: 'development', label: 'Development' },
   { id: 'legacy', label: 'Legacy' },
 ] as const
 
@@ -31,9 +27,6 @@ export function CoachWorkspace() {
   const acceptUserCoachOffer = useGameStore((state) => state.acceptUserCoachOffer)
   const declineUserCoachOffer = useGameStore((state) => state.declineUserCoachOffer)
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('overview')
-  // The Overview reads a runtime projection of the world; the hook stays unconditional because the
-  // empty-world branch below renders a different tree.
-  const overviewModel = useMemo(() => (world === null ? null : buildCoachOverviewModel(world)), [world])
 
   if (world === null) {
     return <NgHoloShell className="coach-courtside-ng" appLabel="Coach" empty emptyMessage="No career loaded." region="coach-workspace" />
@@ -70,24 +63,16 @@ export function CoachWorkspace() {
       teamId={headCoachAssignment?.teamId}
       title={`${staffProfile.identity.firstName} ${staffProfile.identity.lastName}`}
     >
-      {tab === 'overview' ? (
-        <CoachOverviewScreen
-          model={overviewModel ?? undefined}
-          onOpenHistory={() => setTab('career')}
-          onOpenTab={openTab}
-          onSelectStatus={openTab}
-        />
-      ) : null}
-      {tab === 'opportunities' ? (
-        <CoachOpportunitiesScreen
+      {tab !== 'development' && tab !== 'relationships' ? (
+        <CoachFactsWorkspace
+          tab={tab as CoachFactsTab}
+          world={world}
+          onNavigate={openTab}
+          onApply={applyUserCoachForJob}
           onAcceptOffer={acceptUserCoachOffer}
-          onApplyForJob={applyUserCoachForJob}
           onDeclineOffer={declineUserCoachOffer}
-          onOpenTab={openTab}
         />
       ) : null}
-      {tab === 'career' ? <CoachCareerScreen onOpenTab={openTab} /> : null}
-      {tab === 'reputation' ? <CoachReputationScreen onOpenTab={openTab} /> : null}
       {tab === 'relationships' ? <CoachRelationshipsPanel world={world} relationships={relationships} /> : null}
       {tab === 'development' ? (
         rpg === undefined ? (
@@ -96,7 +81,6 @@ export function CoachWorkspace() {
           <CoachDevelopmentWorkspace onDevelopSkill={purchaseUserCoachSkill} onPurchasePerk={purchaseUserCoachPerk} rpg={rpg} />
         )
       ) : null}
-      {tab === 'legacy' ? <CoachLegacyScreen onOpenTab={openTab} /> : null}
     </NgHoloShell>
   )
 }

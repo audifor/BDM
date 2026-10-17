@@ -1,3 +1,4 @@
+import { ensureUserCoachRpgProfile } from '@/app/game/ensureUserCoachRpg'
 import {
   continueGame as runContinueGame,
   simulateUntilDate as runSimulateUntilDate,
@@ -608,7 +609,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return outcome
   },
   getActiveMatchSession: () => liveController,
-  replaceWorld: (world) => { liveController = null; set({ world, lastDayAdvanceResult: null }) },
+  replaceWorld: (world) => { liveController = null; set({ world: ensureUserCoachRpgProfile(world), lastDayAdvanceResult: null }) },
   resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null }) },
 }))
 

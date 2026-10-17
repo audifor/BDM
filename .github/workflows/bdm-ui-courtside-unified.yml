@@ -166,4 +166,5 @@ jobs:
             src/ui-ng/applications/coach/CoachLegacyScreen.test.tsx \
             src/ui/screens/CoachScreen.test.ts \
             src/ui/screens/CoachScreen.courtside.test.tsx \
+            src/app/game/ensureUserCoachRpg.test.ts \
             --maxWorkers=2 --no-file-parallelism
