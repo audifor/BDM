@@ -67,3 +67,19 @@
 .market-talent__compare-footer {display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;font-size:10px;color:var(--market-muted);}
 @media(max-width:1120px) {.market-talent__grid {grid-template-columns:minmax(0,1fr)}.market-talent__catalog {max-height:370px}}
 @media(max-width:740px) {.market-talent__intro {flex-direction:column;align-items:start}.market-talent__tablehead,.market-talent__candidate {grid-template-columns: minmax(0,1.3fr) minmax(40px,.5fr) minmax(72px,.8fr) 35px;gap:5px;padding:9px 7px}.market-talent__compare-cards {grid-template-columns:1fr}.market-talent__comparison>header {align-items:start;flex-direction:column}}
+
+
+.market-talent__compact-head {display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0;}
+.market-talent__compact-head strong {font:700 15px var(--market-display);letter-spacing:.06em;margin-right:auto;}
+.market-talent__compact-head button {padding:7px 15px;min-height:29px;}
+.market-target-picker__overlay {position:fixed;inset:0;z-index:1001;display:grid;place-items:center;background:#000a;padding:18px;}
+.market-target-picker {width:min(660px,100%);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;border-radius:18px;border:1px solid var(--market-line);padding:16px;background:var(--market-surface);color:var(--market-text);}
+.market-target-picker header {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.market-target-picker header h3 {font:700 23px var(--market-display);margin:0;}
+.market-target-picker header button {border:0;background:none;color:var(--market-text);font-size:24px;}
+.market-target-picker>input {width:100%;padding:9px;border:1px solid var(--market-line);border-radius:9px;background:var(--market-surface-alt);color:var(--market-text);}
+.market-target-picker__list {overflow:auto;margin-top:8px;}
+.market-target-picker__list>div {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid var(--market-line-soft);}
+.market-target-picker__list span {display:grid;gap:3px;min-width:0;}
+.market-target-picker__list small {font-size:10px;color:var(--market-muted);}
+.market-target-picker__list button {border:1px solid var(--market-line);padding:7px 13px;color:var(--market-text);background:var(--market-surface-alt);border-radius:99px;}
