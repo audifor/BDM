@@ -2,6 +2,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { calculateStaffWorkload } from '@/domain/world'
 import { getRecruitmentFocusCandidates } from '@/app/scouting'
+import { navigateToStaff, navigateToStaffDepartment, navigateToStaffMarket } from '@/ui-ng/workspace/workspaceApps'
 import type { ScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import './scouting-war-room.css'
 
@@ -49,17 +50,19 @@ export function ScoutingWarRoom({ world, teamId, model, onOpenPlayer, onOpenRepo
       : world.competitions[territory.competitionId]?.name ?? territory.competitionId
 
   return <div className="scouting-war" data-testid="scouting-war-room">
-    <section className="scouting-war__intro">
-      <div>
-        <span className="scouting-war__eyebrow">SCOUTING · {world.currentDate}</span>
-        <h2>Departamento de scouting</h2>
-        <p>Territorios, misiones, informes y carga de trabajo.</p>
-      </div>
-      <div className="scouting-war__intro-actions">
-        <button className="scouting-war__primary" onClick={onOpenFocuses} type="button">Nuevo foco de búsqueda</button>
-        <button className="scouting-war__secondary" onClick={onOpenCoverage} type="button">Gestionar territorios</button>
-      </div>
-    </section>
+    <div className="scouting-war__compact-head"><strong>SCOUTING</strong><span>{scouts.length} scouts · {active} misiones activas · {coverage.length} territorios</span>
+      <button onClick={onOpenFocuses} type="button">+ Crear foco</button>
+      <button onClick={onOpenCoverage} type="button">Territorios</button>
+      <button onClick={() => navigateToStaffDepartment('scouting')} type="button">Mi staff</button>
+      <button onClick={() => navigateToStaffMarket('scouting')} type="button">Contratar scout</button>
+    </div>
+    <div className="scouting-war__staff-strip"><b>MI EQUIPO</b>
+      {scouts.length === 0 ? <span>Sin scouts contratados</span> : scouts.slice(0, 5).map((item) => {
+        const person = world.staffPeopleById[item.staffPersonId]
+        const load = calculateStaffWorkload(world, item.staffPersonId)
+        return <button key={item.staffPersonId} onClick={() => navigateToStaff(item.staffPersonId)} type="button">{person?.identity.firstName} {person?.identity.lastName} <span>{load.totalCapacityUsed}/{load.capacityLimit}</span></button>
+      })}
+    </div>
     <div className="scouting-war__kpis">
       <button onClick={onOpenFocuses} type="button"><small>Focos activos</small><strong>{focuses.length}</strong><span>Planificación</span></button>
       <button onClick={onOpenKnowledge} type="button"><small>Jugadores conocidos</small><strong>{model.knownSubjectCount}</strong><span>Conocimiento real</span></button>
