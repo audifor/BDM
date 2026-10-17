@@ -114,7 +114,7 @@ export function BoardWorkspace() {
         </p>
       )}
 
-      {(['overview', 'mandate', 'institution', 'requests', 'resources'] as const).includes(tab as 'overview') ? (
+      {tab !== 'governance' && tab !== 'history' ? (
         <BoardCourtsideSections
           tab={tab as 'overview' | 'mandate' | 'institution' | 'requests' | 'resources'}
           world={world}
