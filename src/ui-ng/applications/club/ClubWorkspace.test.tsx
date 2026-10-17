@@ -34,7 +34,7 @@ describe('Club Courtside', () => {
     const { team } = mountClub()
     const hub = document.querySelector('[data-ng-region="club-courtside"]')!
     expect(within(hub as HTMLElement).getByRole('heading', { name: team.name })).toBeInTheDocument()
-    expect(within(hub as HTMLElement).getByText(String(team.rosterPlayerIds.length))).toBeInTheDocument()
+    expect(hub.querySelectorAll('.cs-club__metric dd')[0]).toHaveTextContent(String(team.rosterPlayerIds.length))
     expect(within(hub as HTMLElement).getByText('DIRECCIÓN Y OBJETIVOS')).toBeInTheDocument()
     expect(within(hub as HTMLElement).getByText('CENTRO DE GESTIÓN')).toBeInTheDocument()
     expect(hub.querySelectorAll('.cs-club__metric')).toHaveLength(4)
