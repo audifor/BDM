@@ -312,3 +312,5 @@
     transition:none!important;animation:none!important;
   }
 }
+/* Override the Overview's white-only identity text in the light Courtside theme. */
+.coach-courtside-ng .co-identity__name {color:var(--coach-text)}

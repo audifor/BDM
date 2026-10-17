@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
@@ -43,9 +43,10 @@ describe('CoachWorkspace', () => {
     useGameStore.setState({ world: createNewGame() })
     const { container } = render(<CoachWorkspace />)
     expect(container.querySelector('.coach-courtside-ng')).toBeInTheDocument()
+    const tabs = within(screen.getByRole('navigation', { name: 'Workspace tabs' }))
     for (const name of ['Overview', 'Opportunities', 'Career', 'Reputation', 'Relationships', 'Development', 'Legacy']) {
-      fireEvent.click(screen.getByRole('button', { name: new RegExp('^' + name + '$') }))
-      expect(screen.getByRole('button', { name: new RegExp('^' + name + '$') })).toHaveClass('is-active')
+      fireEvent.click(tabs.getByRole('button', { name: new RegExp('^' + name + '$') }))
+      expect(tabs.getByRole('button', { name: new RegExp('^' + name + '$') })).toHaveClass('is-active')
     }
   })
 
