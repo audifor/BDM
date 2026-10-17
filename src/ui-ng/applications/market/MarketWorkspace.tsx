@@ -18,6 +18,7 @@ import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/works
 import { MarketCommandCentre } from '@/ui-ng/applications/market/MarketCommandCentre'
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
+import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
@@ -108,6 +109,9 @@ export function MarketWorkspace({ initialWorld, onOpenScouting }: { readonly ini
       activeTabId={activeTab}
       onTabSelect={(id) => setActiveTab(id as MarketTab)}
     >
+      <MarketOperationsBar world={world} teamId={team.id}
+        onOpenScouting={onOpenScouting ?? (() => syncWorkspaceAppQuery('scouting', 'push'))}
+        onOpenFreeAgents={() => setActiveTab('free-agents')} />
       {activeTab === 'centre' ? <MarketCommandCentre
         world={world}
         teamId={team.id}
