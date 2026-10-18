@@ -557,7 +557,9 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const repeated = deserializeGameWorldV4(saved)
     expect(repaired.staffEmploymentByStaffId[assignment.staffPersonId]).toEqual({ status: 'employed', teamId: assignment.teamId, roleId: assignment.role, startedOn: assignment.assignedOn })
     expect(repaired.staffCareerHistoryByStaffId[assignment.staffPersonId]).toContainEqual({ kind: 'appointment', staffId: assignment.staffPersonId, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' })
-    expect(Object.values(repaired.staffContractsById).filter((contract) => contract.staffId === assignment.staffPersonId && contract.termination === undefined)).toHaveLength(1)
+    // Save V4 repairs missing employment/history, but must not invent a contractual salary commitment.
+    // Contract backfill belongs only to the explicit V1/V2 -> V3 migration authority.
+    expect(Object.values(repaired.staffContractsById).filter((contract) => contract.staffId === assignment.staffPersonId && contract.termination === undefined)).toHaveLength(0)
     expect(repeated.staffEmploymentByStaffId).toEqual(repaired.staffEmploymentByStaffId)
     expect(repeated.staffCareerHistoryByStaffId).toEqual(repaired.staffCareerHistoryByStaffId)
     expect(repeated.staffContractsById).toEqual(repaired.staffContractsById)
