@@ -1,7 +1,7 @@
 import { addDays, addYears, parseGameDate, type GameDate } from '@/domain/date'
 import type { CoachId, StaffPersonId, TeamId } from '@/domain/ids'
 import { applyStaffConflictTrigger } from '@/engine/staff/StaffConflictEngine'
-import { addInboxItem, applyMoraleEventToWorld, applyRelationshipEventsToWorld, archiveInboxItem, type GameWorld } from '@/domain/world'
+import { addInboxItem, applyMoraleEventToWorld, applyRelationshipEventsToWorld, archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { recordMemory } from '@/engine/memory/MemoryEngine'
 
 export type StaffPromiseOutcome = 'FULFILLED' | 'BROKEN' | 'CANCELLED'
@@ -85,9 +85,19 @@ export function postponeStaffPromise(world: GameWorld, requestId: string): Staff
     return { status: 'BLOCKED', world, reason: 'NOT_ELIGIBLE' }
   }
   const dueOn = addDays(promise.dueOn, 7)
-  const next = recordBoth(world, requestId, promise.staffId, promise.teamId, 'extended',
+  let next = recordBoth(world, requestId, promise.staffId, promise.teamId, 'extended',
     { commitment: 'staffCareerRequest', priorDueOn: promise.dueOn, dueOn, extensionDays: 7 },
     'opportunity', 'opportunity', -8, -16)
+  const inbox = next.inboxItemsById[staffPromiseInboxId(promise.coachId, requestId)]
+  // The dated memory remains the authority; keep its Inbox projection accurate too.
+  if (inbox !== undefined && inbox.status !== 'archived') {
+    next = updateGameWorld(next, { inboxItemsById: {
+      ...next.inboxItemsById, [inbox.id]: {
+        ...inbox, body: 'You agreed a single seven-day extension of the real staff request. Fulfil the commitment before the revised date.',
+        context: { ...inbox.context, dueOn, postponed: true },
+      },
+    } })
+  }
   return { status: 'APPLIED', world: next }
 }
 
