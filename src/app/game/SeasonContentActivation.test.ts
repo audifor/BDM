@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { updateGameWorld } from '@/domain/world'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
-import { simulateRemainingGamesToday } from './advanceGameDay'
+import { applyMatchResult } from '@/engine/match'
+import { finalizeCompletedSeason } from '@/engine/season'
 import { advanceDay } from '@/engine/calendar'
 import { createNewGame } from './createNewGame'
 
@@ -26,13 +27,22 @@ describe('season content activation', () => {
     const nbaGames = Object.values(world.games).filter((game) => game.seasonId === nbaSeason.id)
     const lastGame = nbaGames[nbaGames.length - 1]!
     const staged = updateGameWorld(world, { currentDate: lastGame.date, games: Object.values(world.games).map((game) => game.seasonId !== nbaSeason.id ? game : game.id === lastGame.id ? game : { ...game, status: 'completed' as const, result: { homeScore: 100, awayScore: 90 } }) })
-    const advanced = simulateRemainingGamesToday(staged)
+    // Exercise the same canonical game-result and season-finalization authorities
+    // without attempting an unrelated day advance past other scheduled games.
+    const completed = applyMatchResult(staged, {
+      gameId: lastGame.id,
+      homeTeamId: lastGame.homeTeamId,
+      awayTeamId: lastGame.awayTeamId,
+      homeScore: 100,
+      awayScore: 90,
+    })
+    const advanced = finalizeCompletedSeason(completed, nbaSeason.id)
     const draft = Object.values(advanced.draftsById).find((item) => item.sourceSeasonId === nbaSeason.id)!
 
     expect(advanced.seasonHistoryBySeasonId[otherSeason.id]).toBeUndefined()
     expect(draft.rules).toMatchObject({ rounds: 2, scheduledAfterDays: 7 })
     expect(Object.values(advanced.draftPicksById).filter((item) => item.draftId === draft.id)).toHaveLength(8)
     expect(Object.values(advanced.draftsById).filter((item) => item.sourceSeasonId === nbaSeason.id)).toHaveLength(1)
-    expect(Object.values(simulateRemainingGamesToday(advanced).draftsById).filter((item) => item.sourceSeasonId === nbaSeason.id)).toHaveLength(1)
+    expect(Object.values(finalizeCompletedSeason(advanced, nbaSeason.id).draftsById).filter((item) => item.sourceSeasonId === nbaSeason.id)).toHaveLength(1)
   })
 })
