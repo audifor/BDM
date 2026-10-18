@@ -1,0 +1,37 @@
+name: BDM Architecture Boundary Focal
+on:
+  push:
+    branches: [fix/ci-training-test-boundary-20261018]
+  pull_request:
+    branches: [main]
+    paths:
+      - src/engine/training/TrainingPhysicalConsequences.test.tsx
+      - src/integration/facilitiesSporting/TrainingPhysicalConsequences.test.tsx
+      - .github/workflows/bdm-ci-boundary-focal.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-training-boundary:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Confirm no React, Zustand or Tauri imports from Domain or Engine
+        shell: bash
+        run: |
+          if grep -R -E --line-number --include='*.ts' --include='*.tsx' "from ['\"](react|zustand|@tauri-apps/)" src/domain src/engine; then
+            echo 'Domain/Engine dependency boundary violated'
+            exit 1
+          fi
+      - name: Typecheck and build
+        run: |
+          npm run typecheck
+          npm run build
+      - name: Entire relocated BS17 training-integration test suite
+        run: npm test -- --maxWorkers=1 --testTimeout=120000 src/integration/facilitiesSporting/TrainingPhysicalConsequences.test.tsx
