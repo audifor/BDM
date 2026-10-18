@@ -23,6 +23,7 @@ import { progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveConta
 import { ensureAiAcceptedPlayerContractSigningDecisions, type PlayerContractSigningWorkflowResult } from '@/app/governance'
 import { executeAcceptedRetentionAgreement, type RetentionSigningResult } from '@/app/contractRetention/RetentionSigningService'
 import { progressStaffPromises } from '@/app/coachLife/StaffProfessionalCommitment'
+import { queueVerifiedPlayerTrainingFeedback } from '@/app/coachLife/PlayerTrainingFeedback'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -254,6 +255,13 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
       ran: current !== beforePromises, worldChanged: current !== beforePromises, diagnostics: [],
       summary: current === beforePromises ? 'No staff promise changed status today.' : 'Updated outcomes of dated staff promises from real StaffCareerRequests.' })
+
+    activePhaseId = 'BS19C_PLAYER_TRAINING_FEEDBACK'
+    const beforePlayerFeedback = current
+    current = queueVerifiedPlayerTrainingFeedback(current)
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: current !== beforePlayerFeedback, worldChanged: current !== beforePlayerFeedback, diagnostics: [],
+      summary: current === beforePlayerFeedback ? 'No new verified individual-training feedback to discuss.' : 'Recorded optional player discussion from verified individual training evidence.' })
 
     const calendarAcceptedIds = newlyAcceptedNegotiationIds(beforeCalendar, current)
     const calendarSigning = ensureAiAcceptedPlayerContractSigningDecisions(current, calendarAcceptedIds)
