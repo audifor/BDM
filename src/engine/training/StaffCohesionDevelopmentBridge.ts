@@ -3,6 +3,7 @@ import { getTeamStaffAssignments } from '@/domain/world'
 import type { ScheduledTrainingSession } from '@/domain/training'
 import { staffRoleDefinition } from '@/domain/staff'
 import { staffUnitKeyFor } from '@/domain/staffUnitCohesion'
+import { relationshipKey } from '@/domain/relationships'
 
 /** P7: one bounded read-only connection from canonical Staff Unit Cohesion into
  * the existing player's training development stimulus.
@@ -38,9 +39,10 @@ export function staffCohesionDevelopmentMultiplier(world: GameWorld, session: Sc
     if (state === undefined || state.lastEvaluatedOn > world.currentDate) continue
     // A structure-only cohesion value cannot justify emotional or political
     // training gains; require at least one *observed* intra-unit relationship.
-    const observed = Object.values(world.relationshipsByKey).some(profile =>
-      profile.sourceId !== profile.targetId && members.has(profile.sourceId) &&
-      members.has(profile.targetId) && profile.events.length > 0)
+    const memberIds = [...members].sort()
+    const observed = memberIds.some(sourceId => memberIds.some(targetId =>
+      sourceId !== targetId &&
+      (world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.events.length ?? 0) > 0))
     if (!observed) continue
     const { communication, coordination, mutualSupport, trustClimate } = state.current
     const evidenceScore = (communication + coordination + mutualSupport + trustClimate) / 4
