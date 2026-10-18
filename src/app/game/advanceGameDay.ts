@@ -22,6 +22,7 @@ import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmP
 import { progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
 import { ensureAiAcceptedPlayerContractSigningDecisions, type PlayerContractSigningWorkflowResult } from '@/app/governance'
 import { executeAcceptedRetentionAgreement, type RetentionSigningResult } from '@/app/contractRetention/RetentionSigningService'
+import { progressStaffPromises } from '@/app/coachLife/StaffProfessionalCommitment'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -245,6 +246,14 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     }
     current = calendar.world
     phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
+    // Check a personally accepted, dated StaffCareerRequest obligation AFTER the
+    // actual calendar transition. Never block match simulation to force a decision.
+    activePhaseId = 'BS19C_STAFF_PROMISE_REVIEW'
+    const beforePromises = current
+    current = progressStaffPromises(current)
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: current !== beforePromises, worldChanged: current !== beforePromises, diagnostics: [],
+      summary: current === beforePromises ? 'No staff promise changed status today.' : 'Updated outcomes of dated staff promises from real StaffCareerRequests.' })
 
     const calendarAcceptedIds = newlyAcceptedNegotiationIds(beforeCalendar, current)
     const calendarSigning = ensureAiAcceptedPlayerContractSigningDecisions(current, calendarAcceptedIds)
