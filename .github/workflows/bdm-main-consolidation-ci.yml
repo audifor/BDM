@@ -34,6 +34,8 @@ jobs:
         run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/hrpg src/app/coachLife/StaffProfessionalCommitment.test.ts src/app/coachLife/StaffRequestFollowUp.test.ts src/app/coachLife/StaffPoliticalLobby.test.ts
       - name: Save V4 and simulation safety
         run: npm test -- --testTimeout=30000 --maxWorkers=2 src/save/GameWorldSaveV4.test.ts src/engine/memory/MemoryEngine.test.ts
+      - name: Match NG instant-result state does not regress
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/ui-ng/applications/match/MatchWorkspace.test.tsx
       - name: Check no Courtside or database-generator modifications
         run: |
           git fetch --no-tags --depth=1 origin main
