@@ -6,12 +6,13 @@ import { updateGameWorld } from '@/domain/world'
 import { applyRelationshipEventToWorld } from '@/domain/world'
 import { assessStaffCareerOpportunity, decideStaffAutonomousOffer, STAFF_CAREER_AUTONOMY_TUNING } from '@/engine/staff/StaffCareerAutonomyEngine'
 import { recordMemory } from '@/engine/memory'
+import { queueStaffRequestFollowUp } from '@/app/coachLife/StaffRequestFollowUp'
 
 export function declineStaffCareerRequest(world: GameWorld, requestId: string): GameWorld {
   const request = requireOpenRequest(world, requestId)
   const resolved = resolveRequest(world, requestId, 'DECLINED')
   const withMemory = recordMemory(resolved, { id: `memory:staff-career-request-declined:${request.id}`, owner: { kind: 'staff', id: request.staffId }, type: 'opportunity', occurredOn: world.currentDate, entityRefs: [{ kind: 'team', id: request.teamId }, { kind: 'coach', id: world.userCoachId }], sourceId: request.id, semanticKey: `staff-career-request-declined:${request.id}`, importance: request.kind === 'PROMOTION' || request.kind === 'RELEASE' ? 'important' : 'notable', valence: -35, intensity: 50, decayPerMonth: 1, permanent: false, tags: ['staff', 'career', 'request', 'declined'], context: { requestId: request.id, kind: request.kind, teamId: request.teamId } })
-  return applyRelationshipEventToWorld(withMemory, request.staffId, world.userCoachId, { id: `staff-career-request-declined:${request.id}`, gameDate: world.currentDate, source: 'teamDecision', delta: -4, context: { requestId: request.id }, dimensionDeltas: { trust: -4, professionalRespect: -4, perceivedSupport: -6 } })
+  return queueStaffRequestFollowUp(applyRelationshipEventToWorld(withMemory, request.staffId, world.userCoachId, { id: `staff-career-request-declined:${request.id}`, gameDate: world.currentDate, source: 'teamDecision', delta: -4, context: { requestId: request.id }, dimensionDeltas: { trust: -4, professionalRespect: -4, perceivedSupport: -6 } }), request.id)
 }
 
 export function withdrawStaffCareerRequest(world: GameWorld, requestId: string): GameWorld {
