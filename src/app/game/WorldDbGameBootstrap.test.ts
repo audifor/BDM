@@ -1267,3 +1267,35 @@ function completeGamesWithTrigger(world: ReturnType<typeof bootstrapGameWorldFro
   const prepared = completeGames(world, scheduled.slice(0, -1))
   return applyMatchResult(prepared, { gameId: trigger.id, homeTeamId: trigger.homeTeamId, awayTeamId: trigger.awayTeamId, homeScore: 100, awayScore: 80 })
 }
+
+
+describe('PLAYER 2.4-D3 real WorldDB source to GameWorld and Save V4', () => {
+  const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }
+  const sourceFacts = {
+    version: 'PLAYER-2.4-D1-40-TRAITS-60-MOVES-V1' as const,
+    contextualTraits: [{ code: 'HIGH_MOTOR', strength: 92, startedOn: '2025-09-01' }],
+    technicalMoves: [{ code: 'CROSSOVER', proficiency: 81, usageTendency: 37, asOfOn: '2025-10-01' }],
+    basketballSpecializationTraits: [{ code: 'SHOOTING_GRAVITY', startedOn: '2025-09-01' }],
+  }
+  it('preserves optional original WorldDB facts by player ID without touching Player.traitIds', () => {
+    const original = slice()
+    const selected = original.players[0]!
+    const enriched = { ...original, players: original.players.map((player, i) => i === 0 ? { ...player, repertoire: sourceFacts } : player) }
+    const world = bootstrapGameWorldFromWorldDb(enriched, selection, pin)
+    const imported = world.playerRepertoireByPlayerId[selected.playerId]
+    expect(imported).toMatchObject({ playerId: selected.playerId, ...sourceFacts })
+    expect(world.players[selected.playerId as never]!.basketball.traitIds).toEqual([])
+    const saved = serializeGameWorldV4(world, '2026-10-17T12:00:00.000Z')
+    const loaded = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(loaded.playerRepertoireByPlayerId[selected.playerId]).toEqual(imported)
+    expect(loaded.players[selected.playerId as never]!.basketball.traitIds).toEqual([])
+    expect(Object.keys(bootstrapGameWorldFromWorldDb(original, selection, pin).playerRepertoireByPlayerId)).toHaveLength(0)
+  })
+  it('rejects future evidence, duplicate moves and out-of-range source values before creating GameWorld', () => {
+    const original = slice()
+    const inject = (repertoire: unknown) => ({ ...original, players: original.players.map((player, i) => i === 0 ? { ...player, repertoire } : player) } as WorldDbGameBootstrapSliceV1)
+    expect(() => bootstrapGameWorldFromWorldDb(inject({ ...sourceFacts, technicalMoves: [{ ...sourceFacts.technicalMoves[0], asOfOn: '2026-07-01' }] }), selection, pin)).toThrow(/future-dated/)
+    expect(() => bootstrapGameWorldFromWorldDb(inject({ ...sourceFacts, technicalMoves: [...sourceFacts.technicalMoves, ...sourceFacts.technicalMoves] }), selection, pin)).toThrow(/duplicate/)
+    expect(() => bootstrapGameWorldFromWorldDb(inject({ ...sourceFacts, contextualTraits: [{ ...sourceFacts.contextualTraits[0], strength: 140 }] }), selection, pin)).toThrow()
+  })
+})
