@@ -31,7 +31,15 @@ describe('Match Next debug surface', () => {
     for (let index = 0; index < 7; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
     expect(screen.getByLabelText('Rebound target')).toBeTruthy()
     expect(screen.getByLabelText('Action inspector').textContent).toContain('BOX_OUT')
-    expect(screen.getByText(/Attacker crash:/).textContent).toContain('Attacker crash: 2 | Defender pursuit: 2 | Box-out: 3 | Transition safety: 3')
+    // The shooting side may send 0–2 crashers based on the real live decision.
+    // All ten players must still receive one coherent rebound/transition responsibility.
+    const responsibilities = screen.getByText(/Attacker crash:/).textContent ?? ''
+    const roles = responsibilities.match(/Attacker crash: (\\d+) \\| Defender pursuit: (\\d+) \\| Box-out: (\\d+) \\| Transition safety: (\\d+)/)
+    expect(roles, responsibilities).not.toBeNull()
+    const [, crash, pursue, boxOut, safety] = roles!.map(Number)
+    expect(pursue).toBe(2)
+    expect(boxOut).toBe(3)
+    expect(crash + safety).toBe(5)
     fireEvent.click(screen.getByRole('button', { name: 'Check JSON resume' }))
     expect(screen.getByText('Serialization: PASS')).toBeTruthy()
 
