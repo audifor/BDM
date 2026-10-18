@@ -525,7 +525,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyClubGovernanceCommand(get, set, (world, teamId) => executeClubGovernanceDecision(world, { teamId, decisionId, executorBodyId }), decisionId),
   respondGovernanceRequest: (requestId, kind) => {
     const world = requireWorld(get().world)
-    if (get().simulationBusy) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['INVALID_REQUEST_TRANSITION'] }
+    if (get().simulationBusy) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['SIMULATION_BUSY'] }
     const team = getUserTeam(world)
     if (team === undefined) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['UNKNOWN_TEAM'] }
     const result = respondToClubGovernanceRequest(world, { teamId: team.id, requestId, kind })

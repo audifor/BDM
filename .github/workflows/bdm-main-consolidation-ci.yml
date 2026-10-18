@@ -36,9 +36,10 @@ jobs:
         run: npm test -- --testTimeout=30000 --maxWorkers=2 src/save/GameWorldSaveV4.test.ts src/engine/memory/MemoryEngine.test.ts
       - name: Check no Courtside or database-generator modifications
         run: |
-          git diff-tree --no-commit-id --name-only -r HEAD | while read path; do
+          git fetch --no-tags --depth=1 origin main
+          git diff --name-only origin/main HEAD | while read path; do
             case "$path" in
-              *courtside*|*Courtside*|*COURTSIDE*|database/generators/*|generators/worlddb/*)
+              *courtside*|*Courtside*|*COURTSIDE*|database/generators/*|generators/worlddb/*|src/engine/worldDb/generators/*)
                 echo "Forbidden direct source change: $path"
                 exit 1 ;;
             esac

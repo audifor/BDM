@@ -18,6 +18,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 export type ClubGovernanceRequestResponse = 'ACKNOWLEDGED' | 'ACCEPTED' | 'DECLINED'
 export type ClubGovernanceRequestResponseReason =
   | 'UNKNOWN_TEAM'
+  | 'SIMULATION_BUSY'
   | 'NOT_USER_TEAM'
   | 'REQUEST_NOT_FOUND'
   | 'NOT_CLUB_REQUEST'
