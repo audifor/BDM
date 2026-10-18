@@ -1,5 +1,20 @@
 # BDM architecture
 
+## Human simulation core (BS19 HRPG)
+
+The human pipeline is `canonical source -> individual observation -> contextual
+situation -> validated action -> canonical consequence -> later source/memory`.
+Domain `humanSimulation` stores source references, subjective knowledge and minimal
+situation lifecycle only; personality, relationships, memories, money, professional
+decisions and sporting simulation keep their existing authorities. Application
+adapters bind the common pure Engine to those authorities. Staff AI owns autonomous
+responses; the shared application day processes HRPG before atomic publication.
+Save V4 persists the optional state without inventing past events for legacy saves.
+Public information is distinct from individual awareness, and a report or rumour
+does not replace canonical truth. Courtside remains presentation and is unchanged.
+See `docs/strengthening/BS19_HRPG_CORE_INTEGRATION.md` for operational boundaries,
+growth limits, compatibility and certification limitations.
+
 ## Layers
 
 The dependency direction is `UI -> Application -> Engine -> Domain`.

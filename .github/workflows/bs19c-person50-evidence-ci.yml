@@ -1,0 +1,29 @@
+name: BS19C PERSON50 Evidence Bridge
+
+on:
+  push:
+    branches:
+      - feat/bs19c-person50-evidence-bridge-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Verify BS19C life evidence, Coach Creator and startup
+        run: npm test -- src/app/coachLife/CoachLifeDecision.test.ts src/app/game/UserCoachCreator.test.ts src/ui/startup/BootstrapApp.test.tsx
+      - name: Verify actual WorldDB employment evidence and Save V4
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t BS19B

@@ -1,0 +1,30 @@
+name: BS19C P4 Professional Promises
+
+on:
+  push:
+    branches:
+      - feat/bs19c-staff-promises-p4-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  professional-promises:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: BDM typecheck
+        run: npm run typecheck
+      - name: P4 promise lifecycle, real day boundary and Save V4
+        run: npm test -- src/app/coachLife/StaffProfessionalCommitment.test.ts src/app/staffCareerAutonomy/StaffCareerAutonomyService.test.ts
+      - name: BS19B/C and PERSONAL50 regression
+        run: npm test -- src/app/coachLife/StaffRequestFollowUp.test.ts src/app/coachLife/CoachLifeDecision.test.ts src/app/game/UserCoachCreator.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
+      - name: WorldDB coach and Staff evidence
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t 'BS19B|BS19C'

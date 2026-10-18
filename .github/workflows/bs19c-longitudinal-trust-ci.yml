@@ -1,0 +1,30 @@
+name: BS19C P5 Longitudinal Staff Trust
+
+on:
+  push:
+    branches:
+      - feat/bs19c-longitudinal-trust-p5-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trust-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck BDM
+        run: npm run typecheck
+      - name: P5 trust progression and P4 promise lifecycle
+        run: npm test -- src/app/coachLife/StaffProfessionalCommitment.test.ts src/engine/staff/StaffCareerAutonomyEngine.test.ts src/app/staffCareerAutonomy/StaffCareerAutonomyService.test.ts
+      - name: BS19C interpersonal and PERSON50 regression
+        run: npm test -- src/app/coachLife/StaffRequestFollowUp.test.ts src/app/coachLife/CoachLifeDecision.test.ts src/app/game/UserCoachCreator.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
+      - name: WorldDB coach and Staff, Save V4
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t 'BS19B|BS19C'

@@ -5,6 +5,26 @@ import type { StaffJobOffer, StaffJobOpening } from '@/domain/staffCareer'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition } from '@/domain/staff'
 import type { StaffPersonId } from '@/domain/ids'
 import { getRelationshipDimensions } from '@/domain/relationships'
+import type { HumanSituation } from '@/domain/hrpg/HumanSimulation'
+import { inspectHumanContext, type HumanAction } from '@/engine/hrpg/HumanSimulationEngine'
+
+/** Shared human-response entry point. Professional offers, requests and resignations
+ * retain their existing authority below; social context never executes a career move.
+ */
+export function chooseStaffHumanResponse(world: GameWorld, situation: HumanSituation, actions: readonly HumanAction[]): string | undefined {
+  const context = inspectHumanContext(world, situation)
+  const values = context.personality?.values
+  const p = (key: 'teamOrientation' | 'communication' | 'loyalty') => (values as Readonly<Record<string, number>> | undefined)?.[key] ?? 50
+  const stress = context.staffHumanState?.stress ?? 0
+  const motive = (context.staffHumanState?.recognitionSatisfaction ?? 50) - 50
+  const rememberedSupport = context.memories.reduce((sum, memory) => sum + memory.valence * memory.intensity / 100, 0)
+  const social = p('teamOrientation') + p('communication') * 0.25 + p('loyalty') * 0.2
+    + context.relationship.trust * 0.2 + Math.max(-15, Math.min(15, rememberedSupport / 10))
+    + (context.compatibility?.personalAffinity ?? 50) * 0.1 - stress * 0.4
+    - (100 - (context.staffHumanState?.autonomySatisfaction ?? 50)) * 0.2 + motive * 0.1
+  if (social >= 50 && actions.some(a => a.effect === 'discuss')) return actions.find(a => a.effect === 'discuss')!.id
+  return actions.find(a => a.effect === 'reflect')?.id ?? actions.find(a => a.effect === 'ignore')?.id
+}
 
 export const STAFF_CAREER_AUTONOMY_TUNING = {
   adaptation: 0.28,
@@ -40,6 +60,45 @@ export type StaffAutonomousOfferDecision = 'ACCEPT' | 'DECLINE'
 const low = (value: number) => Math.max(0, 50 - value) * 2
 const clamp = (value: number) => Math.max(0, Math.min(100, Math.round(value)))
 
+/**
+ * Long-lived grievance is derived ONLY from the staff member's witnessed promise
+ * memories. Existing relationships still model current trust; this smaller,
+ * bounded signal represents a specific unforgotten breach in later career appraisals.
+ * An actual late promotion/delegation reduces the burden without deleting history.
+ *
+ * No new storage, personality engine, autonomous action, or imaginary promise.
+ * Lookups use source request IDs instead of scanning a growing lifetime Memory table.
+ */
+export function staffPromiseGrievance(world: GameWorld, staffId: StaffPersonId, teamId: string):
+  { readonly pressure: number; readonly unresolved: number; readonly remedied: number } {
+  const coachId = world.teams[teamId as keyof GameWorld['teams']]?.coachId
+  if (coachId === undefined || world.coachRpgProfilesByCoachId[coachId]?.creatorOrigin === undefined) {
+    return { pressure: 0, unresolved: 0, remedied: 0 }
+  }
+  let pressure = 0
+  let unresolved = 0
+  let remedied = 0
+  for (const request of Object.values(world.staffCareerRequestsById)) {
+    if (request.staffId !== staffId || request.teamId !== teamId) continue
+    const prefix = `memory:bs19c:staff-promise:${coachId}:${request.id}`
+    const broken = world.memoriesById[`${prefix}:broken:staff`]
+    if (broken === undefined || broken.owner.id !== staffId) continue
+    const repair = world.memoriesById[`${prefix}:remedied:staff`]
+    // Repaired doesn't mean forgotten. The remaining emotional burden declines
+    // after lived time, but the original witnessed Memory never disappears.
+    const ageDays = Math.max(0, Math.floor((Date.parse(world.currentDate) - Date.parse(broken.occurredOn)) / 86400000))
+    if (repair) {
+      remedied++
+      pressure += ageDays <= 180 ? 3 : 1
+    } else {
+      unresolved++
+      pressure += ageDays <= 180 ? 12 : ageDays <= 730 ? 8 : 4
+    }
+    if (pressure >= 24) break
+  }
+  return { pressure: Math.min(24, pressure), unresolved, remedied }
+}
+
 /** Pure deterministic appraisal: all inputs come from canonical state; UNKNOWN expectations remain neutral in Human State. */
 export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext, state: StaffHumanState): StaffCareerAppraisal {
   const personality = world.personalitiesByPersonId[context.staffId]?.values
@@ -60,7 +119,8 @@ export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext
   const relationshipPressure = clamp((Math.max(0, -dimensions.trust) + Math.max(0, -dimensions.professionalRespect) + Math.max(0, -dimensions.communicationQuality) + Math.max(0, -dimensions.collaboration) + Math.max(0, -dimensions.perceivedSupport) + Math.max(0, -dimensions.reliability) + Math.max(0, -dimensions.professionalAlignment)) / 3)
   // WSR2: per-collection indexes; the same elements in the same order, so the same sums.
   const cohesionPressure = clamp((cohesionUnitsByScope(world.staffUnitCohesionStatesByUnitKey).get(context.teamId) ?? []).reduce((sum, unit) => sum + low(unit.current.mutualSupport) * 0.08 + low(unit.current.trustClimate) * 0.08, 0))
-  const belonging = clamp(low(state.organizationalCommitment) * 0.65 + relationshipPressure * 0.12 + cohesionPressure * 0.08 + (culture === undefined ? 0 : low(culture.current.collaboration) * 0.075 + low(culture.current.communicationOpenness) * 0.075))
+  const promiseGrievance = staffPromiseGrievance(world, context.staffId, context.teamId)
+  const belonging = clamp(low(state.organizationalCommitment) * 0.65 + relationshipPressure * 0.12 + cohesionPressure * 0.08 + promiseGrievance.pressure + (culture === undefined ? 0 : low(culture.current.collaboration) * 0.075 + low(culture.current.communicationOpenness) * 0.075))
   const conflict = clamp((conflictsByParticipant(world.staffConflictsById).get(context.staffId) ?? [])
     .filter((item) => item.status === 'ACTIVE')
     .reduce((sum, item) => sum + ({ MINOR: 12, MODERATE: 25, SERIOUS: 42, SEVERE: 60, CRITICAL: 60 }[item.severity] ?? 0), 0))
@@ -80,6 +140,8 @@ export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext
   if (responsibility >= 45) reasons.push('Current responsibility and influence feel below expectations')
   if (conflict >= 25) reasons.push('An unresolved professional conflict is weighing on the situation')
   if (belonging >= 45) reasons.push('Attachment to the organization has weakened')
+  if (promiseGrievance.unresolved > 0) reasons.push('A documented broken staff promise still affects confidence in the head coach')
+  else if (promiseGrievance.remedied > 0) reasons.push('A later fulfilled commitment has partly repaired a documented breach')
   if (workload >= 45) reasons.push('Sustained workload pressure is a concern')
   if (reasons.length === 0) reasons.push('Current professional situation is broadly settled')
   return { progressionPressure: progression, responsibilityPressure: responsibility, autonomyPressure: autonomy, recognitionPressure: recognition, contractPressure: contract, workloadPressure: workload, belongingPressure: belonging, conflictPressure: conflict, opportunityPressure: opportunity, recommendedOutlook: outlook, recommendedIntent: intent, targetIntensity: clamp(target), reasons }

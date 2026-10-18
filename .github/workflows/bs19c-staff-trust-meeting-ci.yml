@@ -1,0 +1,28 @@
+name: BS19C Staff Trust Meeting
+
+on:
+  push:
+    branches:
+      - feat/bs19c-staff-trust-meeting-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staff-trust:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck BDM
+        run: npm run typecheck
+      - name: BS19C real staff meeting and WorldDB career
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t 'BS19B|BS19C'
+      - name: RPG origins / relationships / PERSON50 / Save V4 regression
+        run: npm test -- src/app/game/UserCoachCreator.test.ts src/app/coachLife/CoachLifeDecision.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts src/domain/world/SemanticRelationshipAutoBridge.test.ts

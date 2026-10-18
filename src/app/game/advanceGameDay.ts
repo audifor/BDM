@@ -22,6 +22,9 @@ import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmP
 import { progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
 import { ensureAiAcceptedPlayerContractSigningDecisions, type PlayerContractSigningWorkflowResult } from '@/app/governance'
 import { executeAcceptedRetentionAgreement, type RetentionSigningResult } from '@/app/contractRetention/RetentionSigningService'
+import { progressStaffPromises } from '@/app/coachLife/StaffProfessionalCommitment'
+import { queueVerifiedPlayerTrainingFeedback } from '@/app/coachLife/PlayerTrainingFeedback'
+import { initializeHumanSimulation, synchronizeHumanSimulationWithResult } from '@/app/hrpg/HumanSimulationService'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -245,6 +248,21 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     }
     current = calendar.world
     phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
+    // Check a personally accepted, dated StaffCareerRequest obligation AFTER the
+    // actual calendar transition. Never block match simulation to force a decision.
+    activePhaseId = 'BS19C_STAFF_PROMISE_REVIEW'
+    const beforePromises = current
+    current = progressStaffPromises(current)
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: current !== beforePromises, worldChanged: current !== beforePromises, diagnostics: [],
+      summary: current === beforePromises ? 'No staff promise changed status today.' : 'Updated outcomes of dated staff promises from real StaffCareerRequests.' })
+
+    activePhaseId = 'BS19C_PLAYER_TRAINING_FEEDBACK'
+    const beforePlayerFeedback = current
+    current = queueVerifiedPlayerTrainingFeedback(current)
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: current !== beforePlayerFeedback, worldChanged: current !== beforePlayerFeedback, diagnostics: [],
+      summary: current === beforePlayerFeedback ? 'No new verified individual-training feedback to discuss.' : 'Recorded optional player discussion from verified individual training evidence.' })
 
     const calendarAcceptedIds = newlyAcceptedNegotiationIds(beforeCalendar, current)
     const calendarSigning = ensureAiAcceptedPlayerContractSigningDecisions(current, calendarAcceptedIds)
@@ -332,6 +350,17 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     const beforeMedia = current
     current = userGame === undefined ? current : createPreMatchMediaOpportunity(current, userGame.id)
     phases.push({ phaseId: 'PRE_MATCH_MEDIA', order: phases.length + 1, date: current.currentDate, ran: userGame !== undefined, worldChanged: current !== beforeMedia, diagnostics: [], summary: userGame === undefined ? 'No user match today; no pre-match media opportunity was created.' : `Applied the existing pre-match media lifecycle for game ${userGame.id}.`, elapsedMs: Math.round((performance.now() - mediaStart) * 100) / 100 })
+
+    // Consume the completed transition, including late signing/governance/repair
+    // facts. Running before those authorities would permanently miss their events.
+    activePhaseId = 'HUMAN_SIMULATION'
+    const beforeHumans = current
+    const humans = synchronizeHumanSimulationWithResult(world, initializeHumanSimulation(current))
+    current = humans.world
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: true, worldChanged: current !== beforeHumans,
+      diagnostics: humans.suppressed ? [{ code: 'HRPG_ADMISSION_LIMIT', message: `${humans.suppressed} situation candidates suppressed by configured capacity limits; canonical source facts remain intact.` }] : [],
+      summary: `Examined ${humans.examined} source references; admitted ${humans.admitted} human situations and processed autonomous responses.` })
 
     activePhaseId = 'BREAKPOINT_EVALUATION'
     const afterStart = performance.now()

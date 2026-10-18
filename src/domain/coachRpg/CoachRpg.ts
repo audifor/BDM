@@ -28,7 +28,19 @@ export interface CoachSkillState { readonly skillId: CoachSkillId; readonly rank
 export interface CoachProfessionalTraitDefinition { readonly id: CoachProfessionalTraitId; readonly name: string; readonly description: string }
 export interface CoachPerkDefinition { readonly id: CoachPerkId; readonly name: string; readonly description: string; readonly category: CoachRpgCategory; readonly maxRank: number; readonly developmentPointCostByRank: readonly number[] }
 export interface CoachPerkState { readonly perkId: CoachPerkId; readonly rank: number }
-export interface CoachRpgProfile { readonly professionalExperience: CoachProfessionalExperienceLedger; readonly development: CoachDevelopmentState; readonly skills: Readonly<Record<CoachSkillId, CoachSkillState>>; readonly professionalTraits: readonly CoachProfessionalTraitId[]; readonly professionalTraitEvidence: Readonly<Partial<Record<ProfessionalTraitEvidenceId, number>>>; readonly perks: Readonly<Record<CoachPerkId, CoachPerkState>> }
+/** Player-declared fictional past, not a sourced WorldDB fact. Part of the existing Coach RPG
+ * save authority so it survives Save V4 without inventing a parallel PERSON profile. */
+export const USER_COACH_BACKGROUNDS = ['rookie', 'formerPlayer', 'inDebt', 'academyCoach', 'videoAnalyst', 'formerAssistant'] as const
+export type UserCoachBackground = typeof USER_COACH_BACKGROUNDS[number]
+export const USER_COACH_AMBITIONS = ['firstTitle', 'talentDeveloper', 'eliteReputation', 'financialFreedom'] as const
+export type UserCoachAmbition = typeof USER_COACH_AMBITIONS[number]
+export interface CoachRpgCreatorOrigin {
+  readonly background: UserCoachBackground
+  readonly ambition: UserCoachAmbition
+  /** Optional user-written fictional biography. No claims are made about historical employers. */
+  readonly biography?: string
+}
+export interface CoachRpgProfile { readonly professionalExperience: CoachProfessionalExperienceLedger; readonly development: CoachDevelopmentState; readonly skills: Readonly<Record<CoachSkillId, CoachSkillState>>; readonly professionalTraits: readonly CoachProfessionalTraitId[]; readonly professionalTraitEvidence: Readonly<Partial<Record<ProfessionalTraitEvidenceId, number>>>; readonly perks: Readonly<Record<CoachPerkId, CoachPerkState>>; readonly creatorOrigin?: CoachRpgCreatorOrigin }
 export type CoachRpgRequirement =
   | { readonly kind: 'professionalAttribute'; readonly attribute: StaffProfessionalAttributeKey; readonly minimum: number }
   | { readonly kind: 'skillRank'; readonly skillId: CoachSkillId; readonly minimumRank: number }
@@ -115,7 +127,20 @@ export function createCoachRpgProfile(input: CoachRpgProfile): CoachRpgProfile {
   if (new Set(traits).size !== traits.length) throw new RangeError('Duplicate Coach professional trait')
   const evidence = input.professionalTraitEvidence as Record<string, number>
   for (const [id, value] of Object.entries(evidence)) { if (!PROFESSIONAL_TRAIT_EVIDENCE_IDS.includes(id as ProfessionalTraitEvidenceId)) throw new RangeError('Invalid Coach professional trait evidence'); requireFiniteNonNegative(value, 'Coach professional trait evidence') }
-  return { professionalExperience, development, skills, professionalTraits: traits, professionalTraitEvidence: { ...input.professionalTraitEvidence }, perks }
+  const origin = input.creatorOrigin
+  if (origin !== undefined) {
+    if (!USER_COACH_BACKGROUNDS.includes(origin.background) || !USER_COACH_AMBITIONS.includes(origin.ambition)) {
+      throw new RangeError('Invalid user-created Coach background or career ambition')
+    }
+    if (origin.biography !== undefined && (typeof origin.biography !== 'string' || origin.biography.trim().length > 600)) {
+      throw new RangeError('Coach biography must contain at most 600 characters')
+    }
+  }
+  return { professionalExperience, development, skills, professionalTraits: traits, professionalTraitEvidence: { ...input.professionalTraitEvidence }, perks,
+    ...(origin === undefined ? {} : { creatorOrigin: { background: origin.background, ambition: origin.ambition,
+      ...(origin.biography === undefined || origin.biography.trim().length === 0 ? {} : { biography: origin.biography.trim() }),
+    } }),
+  }
 }
 
 export function createInitialCoachRpgProfile(): CoachRpgProfile {

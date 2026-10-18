@@ -64,6 +64,10 @@ import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKin
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
+import { decideOpeningDebt, getPendingOpeningDebtDecision, decideFirstStaffMeeting, getPendingFirstStaffMeeting, decideStaffRequestFollowUp, getPendingStaffRequestFollowUps, promiseStaffCareerRequest, postponeStaffPromise, getActiveStaffPromises, decideStaffPoliticalLobby, getPendingStaffPoliticalLobbies, decidePlayerTrainingFeedback, getPendingPlayerTrainingFeedback, type PlayerFeedbackChoice, type PlayerFeedbackResult, type StaffLobbyChoice, type StaffLobbyDecision, type StaffPromiseResult, type OpeningDebtChoice, type OpeningDebtDecisionResult, type StaffMeetingChoice, type StaffMeetingDecisionResult, type StaffRequestFollowUpChoice, type StaffRequestFollowUpResult } from '@/app/coachLife'
+import { decideUserHumanSituation, getUserHumanContinuity, getUserHumanSituations, initializeHumanSimulation, resolveHumanCompatibility } from '@/app/hrpg/HumanSimulationService'
+import { politicalLobbyInboxId, staffPromiseInboxId, staffRequestFollowUpInboxId } from '@/app/coachLife'
+import type { HumanCommandResult } from '@/engine/hrpg/HumanSimulationEngine'
 import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
@@ -92,6 +96,9 @@ import { executeFacilityMaintenanceUiCommand, type FacilityMaintenanceCommandRes
 import {
   executeClubGovernanceDecision,
   recordClubGovernanceDecisionEvent,
+  respondToClubGovernanceRequest,
+  type ClubGovernanceRequestResponse,
+  type ClubGovernanceRequestResponseResult,
   type GovernanceCommandResult,
   type GovernanceDecisionEventChoice,
 } from '@/app/governance'
@@ -166,6 +173,14 @@ interface GameStore {
   declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
+  decideUserCoachOpeningDebt(choice: OpeningDebtChoice): OpeningDebtDecisionResult
+  decideUserHumanSituation(situationId: string, actionId: string): HumanCommandResult
+  decideUserCoachStaffMeeting(staffId: StaffPersonId, choice: StaffMeetingChoice): StaffMeetingDecisionResult
+  decideUserCoachStaffRequestFollowUp(requestId: string, choice: StaffRequestFollowUpChoice): StaffRequestFollowUpResult
+  promiseUserStaffCareerRequest(requestId: string, daysAhead: 7 | 14 | 30): StaffPromiseResult
+  postponeUserStaffPromise(requestId: string): StaffPromiseResult
+  decideUserCoachStaffPoliticalLobby(actionId: string, choice: StaffLobbyChoice): StaffLobbyDecision
+  decideUserCoachPlayerTrainingFeedback(choice: PlayerFeedbackChoice): PlayerFeedbackResult
   acceptUserCoachOffer(offerId: string): void
   declineUserCoachOffer(offerId: string): void
   applyUserCoachForJob(openingId: string): void
@@ -237,6 +252,7 @@ interface GameStore {
   executeFacilityMaintenance(command: FacilityMaintenanceUiCommand): FacilityMaintenanceCommandResult
   recordGovernanceDecisionEvent(decisionId: string, kind: GovernanceDecisionEventChoice, bodyId: string): GovernanceCommandResult
   executeGovernanceDecision(decisionId: string, executorBodyId: string): GovernanceCommandResult
+  respondGovernanceRequest(requestId: string, kind: ClubGovernanceRequestResponse): ClubGovernanceRequestResponseResult
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
   resetGame(): void
@@ -507,10 +523,79 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyClubGovernanceCommand(get, set, (world, teamId) => recordClubGovernanceDecisionEvent(world, { teamId, decisionId, kind, bodyId }), decisionId),
   executeGovernanceDecision: (decisionId, executorBodyId) =>
     applyClubGovernanceCommand(get, set, (world, teamId) => executeClubGovernanceDecision(world, { teamId, decisionId, executorBodyId }), decisionId),
+  respondGovernanceRequest: (requestId, kind) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['SIMULATION_BUSY'] }
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'BLOCKED', world, requestId, requestStatus: undefined, reasons: ['UNKNOWN_TEAM'] }
+    const result = respondToClubGovernanceRequest(world, { teamId: team.id, requestId, kind })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
   grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
+  decideUserHumanSituation: (situationId, actionId) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = decideUserHumanSituation(initializeHumanSimulation(world), situationId, actionId)
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  decideUserCoachOpeningDebt: (choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'openingDebt', choice, current => decideOpeningDebt(current, choice))
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  decideUserCoachStaffMeeting: (staffId, choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'firstStaffMeeting', choice, current => decideFirstStaffMeeting(current, staffId, choice))
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  decideUserCoachStaffRequestFollowUp: (requestId, choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'staffRequestFollowUp', choice, current => decideStaffRequestFollowUp(current, requestId, choice),
+      { kind: 'lifeInbox', id: staffRequestFollowUpInboxId(world.userCoachId, requestId) })
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  promiseUserStaffCareerRequest: (requestId, daysAhead) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'staffRequestDecision', 'promise', current => promiseStaffCareerRequest(current, requestId, daysAhead),
+      { kind: 'staffRequest', id: requestId })
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  postponeUserStaffPromise: (requestId) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'staffPromise', 'postpone', current => postponeStaffPromise(current, requestId),
+      { kind: 'lifeInbox', id: staffPromiseInboxId(world.userCoachId, requestId) })
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  decideUserCoachStaffPoliticalLobby: (actionId, choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'staffPoliticalLobby', choice, current => decideStaffPoliticalLobby(current, actionId, choice),
+      { kind: 'lifeInbox', id: politicalLobbyInboxId(actionId) })
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  decideUserCoachPlayerTrainingFeedback: (choice) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = resolveHumanCompatibility(world, 'playerTrainingFeedback', choice, current => decidePlayerTrainingFeedback(current, choice))
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),
   declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
@@ -684,6 +769,14 @@ export function selectUserCoachPendingOffers(world: GameWorld | null) { return w
 export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
 /** Derived selector; relationship profiles remain exclusively in GameWorld. */
 export function selectUserCoachRelationships(world: GameWorld | null) { return world === null ? [] : getRelationshipsForPerson(world, world.userCoachId) }
+export function selectUserPendingPlayerTrainingFeedback(world: GameWorld | null) { return world === null ? null : getPendingPlayerTrainingFeedback(world) }
+export function selectUserHumanSituations(world: GameWorld | null) { return world === null ? [] : getUserHumanSituations(world) }
+export function selectUserHumanContinuity(world: GameWorld | null) { return world === null ? [] : getUserHumanContinuity(world) }
+export function selectUserPendingStaffPoliticalLobbies(world: GameWorld | null) { return world === null ? [] : getPendingStaffPoliticalLobbies(world) }
+export function selectUserActiveStaffPromises(world: GameWorld | null) { return world === null ? [] : getActiveStaffPromises(world) }
+export function selectUserPendingStaffRequestFollowUps(world: GameWorld | null) { return world === null ? [] : getPendingStaffRequestFollowUps(world) }
+export function selectUserPendingStaffMeeting(world: GameWorld | null) { return world === null ? null : getPendingFirstStaffMeeting(world) }
+export function selectUserPendingOpeningDebt(world: GameWorld | null) { return world === null ? null : getPendingOpeningDebtDecision(world) }
 export function selectUserInbox(world:GameWorld|null){return world===null?[]:getInboxItemsForCoach(world,world.userCoachId)}
 export function selectUnreadInboxCount(world:GameWorld|null){return world===null?0:getUnreadInboxCount(world,world.userCoachId)}
 export function selectRecentNews(world:GameWorld|null,limit=5){return world===null?[]:getNewsFeed(world).slice(0,limit)}

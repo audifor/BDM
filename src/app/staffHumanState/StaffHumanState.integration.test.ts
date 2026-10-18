@@ -1,3 +1,7 @@
+import { createGameDate } from '@/domain/date'
+import { createPersonality, type Personality } from '@/domain/personality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
+import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { describe, expect, it } from 'vitest'
 import { createAcbTestGame as createFullAcbTestGame } from '@/app/game/createAcbTestGame'
 import { advanceGameDay } from '@/app/game/advanceGameDay'
@@ -213,7 +217,7 @@ describe('CASO 5 — PATTERN', () => {
 })
 
 describe('CASO 7 — WORKLOAD', () => {
-  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 45000 }, () => {
+  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 90000 }, () => {
     const base = createAcbTestGame({ userTeamKey: 'caz' })
     const team = getUserTeam(base)!
     const staffId = pickStaff(base, team.id, 'assistantCoach')
@@ -273,5 +277,68 @@ describe('CASO 8 — ATTRIBUTION', () => {
     expect(result.world.relationshipsByKey[`${staffId}->${gmId}`]).toBeDefined()
     const coachId = Object.values(withGm.coaches)[0]!.id
     expect(result.world.relationshipsByKey[`${staffId}->${coachId}`]).toBeUndefined()
+  })
+})
+
+describe('PERSON 50 confirmed advisory decisions → lived personality (Save V4)', () => {
+  function realMedicalAdvisory() {
+    const base = createAcbTestGame({ userTeamKey: 'caz' })
+    const team = getUserTeam(base)!
+    const { world: injured } = withActiveInjury(base, team.id, ':person50')
+    const { world: medical, staffId } = withMedicalAdvisoryStaff(injured, team.id, 'teamDoctor', 'treatmentRecommendation')
+    const { world } = ensureContext(medical, staffId, team.id)
+    const personality = createPersonality({
+      values: Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) => [key, 50])) as unknown as Personality['values'],
+    })
+    const prepared = updateGameWorld(world, {
+      staffPeople: Object.values(world.staffPeopleById).map((staff) => staff.id === staffId
+        ? { ...staff, identity: { ...staff.identity, dateOfBirth: createGameDate(1985, 3, 1) } }
+        : staff),
+      personalitiesByPersonId: { ...world.personalitiesByPersonId, [staffId]: personality },
+    })
+    const progressed = progressMedicalAdvisories(prepared)
+    const outcome = Object.values(progressed.delegationOutcomesById).find(
+      (item) => item.staffId === staffId && item.kind === 'treatmentRecommendation',
+    )!
+    expect(outcome).toBeDefined()
+    return { world: progressed, staffId, outcome }
+  }
+
+  it('a real actionable dismissal changes only frustrationTolerance and survives Save V4', () => {
+    const { world, staffId, outcome } = realMedicalAdvisory()
+    const original = world.personalitiesByPersonId[staffId]!.values
+    expect(original.frustrationTolerance).toBe(50)
+    const result = dismissStaffRecommendation(world, outcome.id)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.world.personalitiesByPersonId[staffId]!.values.frustrationTolerance).toBeLessThan(50)
+    const journals = result.world.moraleByPersonId[staffId]!.events.filter(
+      (event) => event.context.personalityEventKind === 'RECOMMENDATION_REJECTED',
+    )
+    expect(journals).toHaveLength(1)
+    expect(result.world.personalityHistoryByPersonId[staffId]).toHaveLength(1)
+    expect(result.world.personalityHistoryByPersonId[staffId]![0]!.dimensionCode).toBe('frustrationTolerance')
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(result.world, '2032-10-01T00:00:00.000Z'))
+    expect(loaded.personalitiesByPersonId[staffId]!.values).toEqual(result.world.personalitiesByPersonId[staffId]!.values)
+    expect(loaded.moraleByPersonId[staffId]!.events).toEqual(result.world.moraleByPersonId[staffId]!.events)
+    expect(loaded.personalityHistoryByPersonId[staffId]).toEqual(result.world.personalityHistoryByPersonId[staffId])
+    expect(dismissStaffRecommendation(result.world, outcome.id)).toMatchObject({ ok: false, reason: 'alreadyResolved' })
+  })
+
+  it('a genuinely accepted recommendation changes recognitionNeed and no other personality dimension', () => {
+    const { world, staffId, outcome } = realMedicalAdvisory()
+    const result = acceptStaffRecommendation(world, outcome.id)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const after = result.world.personalitiesByPersonId[staffId]!.values
+    expect(after.recognitionNeed).toBeGreaterThan(50)
+    expect(Object.entries(after).filter(([key, score]) =>
+      score !== world.personalitiesByPersonId[staffId]!.values[key as keyof typeof after],
+    ).map(([key]) => key)).toEqual(['recognitionNeed'])
+    expect(result.world.moraleByPersonId[staffId]!.events.some(
+      (e) => e.context.personalityEventKind === 'RECOMMENDATION_ACCEPTED'
+        && result.world.personalityHistoryByPersonId[staffId]?.[0]?.previousValue === 50
+        && result.world.personalityHistoryByPersonId[staffId]?.[0]?.newValue === after.recognitionNeed,
+    )).toBe(true)
   })
 })

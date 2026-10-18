@@ -1,0 +1,30 @@
+name: BS19C P7 Sports Consequences
+
+on:
+  push:
+    branches:
+      - feat/bs19c-p7-politics-training-consequences-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  politics-to-players:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: BDM typecheck
+        run: npm run typecheck
+      - name: P7 real politics to player development and training regression
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/engine/training/StaffCohesionDevelopmentBridge.test.ts src/engine/training/TrainingStaffExecution.test.ts src/engine/staff/StaffUnitCohesionEngine.test.ts src/engine/staff/StaffCultureCohesionPipeline.test.ts
+      - name: P6 politics and real staff autonomy regression
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/coachLife/StaffPoliticalLobby.test.ts src/engine/staff/StaffPoliticalCaseEngine.test.ts src/engine/staff/StaffPoliticalActionConsequenceEngine.test.ts
+      - name: Prior BS19/PERSON50 and Save
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/coachLife/StaffProfessionalCommitment.test.ts src/app/coachLife/StaffRequestFollowUp.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts

@@ -6,6 +6,7 @@ import {
   governanceDecisionById,
   governanceRequestById,
   type ClubGovernanceModel,
+  type ClubGovernanceRequestResponse,
   type GovernanceDecisionRow,
   type GovernanceRequestRow,
 } from '@/app/governance'
@@ -36,6 +37,7 @@ export function BoardWorkspace() {
   const world = useGameStore((state) => state.world)
   const recordGovernanceDecisionEvent = useGameStore((state) => state.recordGovernanceDecisionEvent)
   const executeGovernanceDecision = useGameStore((state) => state.executeGovernanceDecision)
+  const respondGovernanceRequest = useGameStore((state) => state.respondGovernanceRequest)
   const navigation = useNgWorkspaceNavigation()
   const hasGovernanceContext = (navigation.decisionId ?? '') !== '' || (navigation.requestId ?? '') !== ''
   const [tab, setTab] = useState<BoardTabId>(hasGovernanceContext ? 'governance' : 'overview')
@@ -84,6 +86,13 @@ export function BoardWorkspace() {
       return
     }
     setNotice({ tone: 'BLOCKED', text: [...result.reasons.map((reason) => GOVERNANCE_COMMAND_REASON_TEXT[reason]), ...result.canonicalReasons].join(' ') })
+  }
+
+  const respondRequest = (requestId: string, kind: ClubGovernanceRequestResponse) => {
+    const result = respondGovernanceRequest(requestId, kind)
+    setNotice(result.status === 'APPLIED'
+      ? { tone: 'APPLIED', text: `Request ${kind.toLowerCase()} · recorded in Governance history.` }
+      : { tone: 'BLOCKED', text: `Request response refused: ${result.reasons.join(', ')}` })
   }
 
   return (
@@ -190,6 +199,7 @@ export function BoardWorkspace() {
       {tab === 'governance' ? (
         <GovernancePanel
           governance={governance}
+          onRespond={respondRequest}
           onExecute={executeDecision}
           onRecordEvent={recordEvent}
           selectedDecisionId={selectedDecision?.decisionId}
@@ -224,12 +234,14 @@ export function BoardWorkspace() {
 
 function GovernancePanel({
   governance,
+  onRespond,
   onRecordEvent,
   onExecute,
   selectedDecisionId,
   selectedRequestId,
 }: {
   readonly governance: ClubGovernanceModel
+  readonly onRespond: (requestId: string, kind: ClubGovernanceRequestResponse) => void
   readonly onRecordEvent: (decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED', bodyId: string) => void
   readonly onExecute: (decisionId: string, executorBodyId: string) => void
   readonly selectedDecisionId: string | undefined
@@ -264,7 +276,7 @@ function GovernancePanel({
         ) : (
           <ul className="ng-canon__list">
             {governance.requests.map((request) => (
-              <RequestRow key={request.requestId} request={request} selected={request.requestId === selectedRequestId} />
+              <RequestRow key={request.requestId} request={request} selected={request.requestId === selectedRequestId} onRespond={onRespond} />
             ))}
           </ul>
         )}
@@ -344,14 +356,28 @@ function DecisionCard({
   )
 }
 
-function RequestRow({ request, selected }: { readonly request: GovernanceRequestRow; readonly selected: boolean }) {
+function RequestRow({ request, selected, onRespond }: {
+  readonly request: GovernanceRequestRow
+  readonly selected: boolean
+  readonly onRespond: (requestId: string, kind: ClubGovernanceRequestResponse) => void
+}) {
   return (
     <li data-ng-region="board-governance-request" data-selected={selected ? 'true' : undefined}>
       {request.category} · {request.summary} · {request.status ?? 'NOT_ISSUED'}
       {request.dueOn === null ? '' : ` · due ${request.dueOn}${request.overdue ? ' (overdue)' : ''}`}
       {` · from ${request.issuerLabel} to ${request.recipientLabel}`}
       {request.addressedToUser ? ' · addressed to you' : ''}
-      {request.responseCommandAvailable ? '' : ' · read-only: no canonical response command exists yet'}
+      {request.responseCommandAvailable ? (
+        <div className="ng-canon__actions">
+          {request.status === 'ISSUED' ? (
+            <button className="ng-canon__action" type="button" onClick={() => onRespond(request.requestId, 'ACKNOWLEDGED')}>Acknowledge request</button>
+          ) : null}
+          <button className="ng-canon__action" type="button" onClick={() => onRespond(request.requestId, 'ACCEPTED')}>Accept request</button>
+          <button className="ng-canon__action" type="button" onClick={() => onRespond(request.requestId, 'DECLINED')}>Decline request</button>
+        </div>
+      ) : request.addressedToUser && request.status === 'ACCEPTED'
+        ? ' · accepted; fulfillment requires canonical evidence'
+        : !request.addressedToUser ? ' · read-only: not addressed to your coach' : ''}
     </li>
   )
 }

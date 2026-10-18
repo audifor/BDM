@@ -1,4 +1,6 @@
 import { addDays } from '@/domain/date'
+import { EMPTY_HUMAN_SIMULATION, readHumanSimulation } from '@/domain/hrpg/HumanSimulation'
+import { validateHumanSimulationWorld } from '@/domain/hrpg/validateHumanSimulationWorld'
 import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
 import { staffAssignmentIndex, teamIndex } from './collectionIndexes'
 import { WorldValidationScope, type WorldValidationMode } from './WorldValidationScope'
@@ -91,6 +93,7 @@ import { createCoachReputationProfile, createDefaultCoachReputationProfile, type
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
 import { generatePersonality, type Personality } from '@/domain/personality'
+import type { PersonalityHistoryByPersonId } from '@/domain/personality/ObservedPersonalityEvolution'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
@@ -134,6 +137,7 @@ import { createPlayerRegistration, createTeamPathwayRelation, type PlayerRegistr
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
 export interface GameWorld {
+  readonly humanSimulation: import('@/domain/hrpg/HumanSimulation').HumanSimulationState
   readonly schemaVersion: typeof GAME_WORLD_SCHEMA_VERSION
   readonly currentDate: GameDate
   readonly currentSeasonId: SeasonId
@@ -290,6 +294,7 @@ export interface GameWorld {
   readonly staffPoliticalFactionsById: Readonly<Record<string, StaffPoliticalFaction>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
+  readonly personalityHistoryByPersonId: PersonalityHistoryByPersonId
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
   readonly inboxItemsById: Readonly<Record<string, InboxItem>>
   readonly newsItemsById: Readonly<Record<string, NewsItem>>
@@ -430,6 +435,7 @@ export interface GameWorld {
 }
 
 export interface CreateGameWorldInput {
+  humanSimulation?: import('@/domain/hrpg/HumanSimulation').HumanSimulationState
   currentDate: GameDate
   currentSeasonId?: SeasonId
   userCoachId: CoachId
@@ -582,6 +588,7 @@ export interface CreateGameWorldInput {
   staffReputationProfilesByStaffId?: Readonly<Record<StaffPersonId, StaffReputationProfile>>
   relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
   personalitiesByPersonId?: Readonly<Record<string, Personality>>
+  personalityHistoryByPersonId?: PersonalityHistoryByPersonId
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
   inboxItemsById?: Readonly<Record<string, InboxItem>>
   newsItemsById?: Readonly<Record<string, NewsItem>>
@@ -773,6 +780,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     return createConference({ id, ecosystemId: input.competitions.find((competition) => competition.id === season.competitionId)!.ecosystemId, name: `Conference ${id}` })
   })
   const world: GameWorld = {
+    humanSimulation: input.humanSimulation === undefined ? EMPTY_HUMAN_SIMULATION : readHumanSimulation(input.humanSimulation),
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,
     currentSeasonId,
@@ -916,6 +924,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     staffPoliticalFactionsById: indexById((input.staffPoliticalFactions ?? []).map(createStaffPoliticalFaction), 'Staff political faction'),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.personalitiesByPersonId, generatePersonality),
+    personalityHistoryByPersonId: Object.freeze({ ...(input.personalityHistoryByPersonId ?? {}) }),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), savedPlaysById:Object.freeze(Object.fromEntries(Object.entries(input.savedPlaysById??{}).map(([id,play])=>[id,createSavedPlay(play)]))), playbooksById:Object.freeze(Object.fromEntries(Object.entries(input.playbooksById??{}).map(([id,playbook])=>[id,createPlaybook(playbook)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
@@ -1258,6 +1267,7 @@ export function activePhysicalSessions(world: GameWorld, previous?: GameWorld): 
 }
 
 function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | undefined, mode: WorldValidationMode = 'full'): void {
+  if (previous?.humanSimulation !== canonical.humanSimulation) validateHumanSimulationWorld(canonical)
   const scope = new WorldValidationScope(canonical, previous, mode)
   const updated = scope.world
   scope.run('BS17D-C1:physicalAllocationLinks', () => validatePhysicalAllocations(updated, activePhysicalSessions(updated, previous)), ['scheduledTrainingSessionsById', 'facilityComponentsById', 'injuriesById'])

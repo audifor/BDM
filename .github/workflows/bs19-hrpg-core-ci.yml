@@ -1,0 +1,37 @@
+name: BS19 HRPG Core Integration
+
+on:
+  push:
+    branches: [integration/bs19-hrpg-core-20261018]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hrpg-integration:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Universal pipeline, legacy BS19, PERSON50 and Training
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/hrpg src/app/coachLife src/app/game/UserCoachCreator.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts src/engine/staff/StaffCareerAutonomyEngine.test.ts src/engine/training/TrainingStaffExecution.test.ts
+      - name: Source-backed WorldDB Coach compatibility
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/game/WorldDbGameBootstrap.test.ts -t 'BS19B|BS19C|created Coach'
+      - name: Politics and canonical batched memory regression
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/engine/staff/StaffPoliticalPositionEngine.test.ts src/engine/staff/StaffPoliticalCaseEngine.test.ts src/engine/staff/StaffPoliticalActionEngine.test.ts src/engine/staff/StaffPoliticalGroupEngine.test.ts src/engine/memory/MemoryEngine.test.ts
+      - name: Save V4 and canonical source persistence
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/save/GameWorldSaveV4.test.ts src/save/CoachCareerPersistence.test.ts src/save/CoachRpgPersistence.test.ts
+      - name: Determinism and production boundaries
+        shell: bash
+        run: |
+          if rg -n -F 'Math.random(' src; then exit 1; fi
+          if rg -n 'from.*(react|zustand|@tauri-apps)' src/domain src/engine -g '*.ts' -g '*.tsx' -g '!*.test.ts' -g '!*.test.tsx'; then exit 1; fi
+          if rg -n '@/app|@/ui|@/stores' src/domain/hrpg src/engine/hrpg; then exit 1; fi

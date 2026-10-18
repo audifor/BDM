@@ -1,0 +1,62 @@
+name: BDM Main Consolidation Gate · BS19 PERSON50 BS18
+
+on:
+  push:
+    branches:
+      - integration/bs19-person50-bs18-main-gate-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-focused:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript and build
+        run: |
+          npm run typecheck
+          npm run build
+      - name: Personality 76, single journal, HRPG Player feedback and advisory regression
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/domain/personality/ObservedPersonalityEvolution.test.ts src/app/coachLife/PlayerTrainingFeedback.test.ts src/app/staffHumanState/StaffHumanState.integration.test.ts src/save/CoachRpgPersistence.test.ts
+      - name: BS18 canonical Governance request responses, Board read model and NG Board UI
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/governance/ClubGovernanceRequestResponse.test.ts src/app/governance/BoardGovernance.test.ts src/ui-ng/applications/board/BoardWorkspace.governance.test.tsx
+      - name: HRPG core and legacy scenarios
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/hrpg src/app/coachLife/StaffProfessionalCommitment.test.ts src/app/coachLife/StaffRequestFollowUp.test.ts src/app/coachLife/StaffPoliticalLobby.test.ts
+      - name: Save V4 and simulation safety
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/save/GameWorldSaveV4.test.ts src/engine/memory/MemoryEngine.test.ts
+      - name: Match NG instant-result state does not regress
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/ui-ng/applications/match/MatchWorkspace.test.tsx
+      - name: Check no Courtside or database-generator modifications
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git diff --name-only origin/main HEAD | while read path; do
+            case "$path" in
+              *courtside*|*Courtside*|*COURTSIDE*|database/generators/*|generators/worlddb/*|src/engine/worldDb/generators/*)
+                echo "Forbidden direct source change: $path"
+                exit 1 ;;
+            esac
+          done
+          cargo fmt --check --manifest-path src-tauri/Cargo.toml
+
+  full-typescript:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Complete Vitest suite with resource-safe timeouts
+        run: npm test -- --testTimeout=30000 --hookTimeout=30000 --maxWorkers=2
