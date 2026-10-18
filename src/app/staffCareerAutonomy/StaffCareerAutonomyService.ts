@@ -7,7 +7,7 @@ import { applyRelationshipEventToWorld } from '@/domain/world'
 import { assessStaffCareerOpportunity, decideStaffAutonomousOffer, STAFF_CAREER_AUTONOMY_TUNING } from '@/engine/staff/StaffCareerAutonomyEngine'
 import { recordMemory } from '@/engine/memory'
 import { queueStaffRequestFollowUp } from '@/app/coachLife/StaffRequestFollowUp'
-import { settleStaffPromise } from '@/app/coachLife/StaffProfessionalCommitment'
+import { recordLateStaffPromiseRepair, settleStaffPromise } from '@/app/coachLife/StaffProfessionalCommitment'
 
 export function declineStaffCareerRequest(world: GameWorld, requestId: string): GameWorld {
   const request = requireOpenRequest(world, requestId)
@@ -31,7 +31,7 @@ export function grantStaffCareerRequest(world: GameWorld, requestId: string): Ga
   else if (request.kind === 'PROMOTION') next = promoteStaffWithinTeam(next, { staffId: request.staffId, newRoleId: request.targetRoleId!, reason: 'promoted' })
   else if (request.kind === 'ROLE_CHANGE') next = reassignStaffWithinTeam(next, { staffId: request.staffId, newRoleId: request.targetRoleId! })
   // CONTRACT_DISCUSSION deliberately records acknowledgement only: Contract Negotiation V2 remains out of scope.
-  return settleStaffPromise(resolveRequest(next, requestId, 'GRANTED'), requestId)
+  return recordLateStaffPromiseRepair(settleStaffPromise(resolveRequest(next, requestId, 'GRANTED'), requestId), requestId)
 }
 
 /**

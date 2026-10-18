@@ -8,6 +8,7 @@ import { relationshipKey, getRelationshipDimensions } from '@/domain/relationshi
 import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { advanceGameDayWithResult } from '@/app/game/advanceGameDay'
+import { appraiseStaffCareer, staffPromiseGrievance } from '@/engine/staff/StaffCareerAutonomyEngine'
 import { getActiveStaffPromises, getStaffPromise, postponeStaffPromise, progressStaffPromises, promiseStaffCareerRequest, staffPromiseInboxId } from './StaffProfessionalCommitment'
 
 const coach = { firstName: 'Ana', lastName: 'García', dateOfBirth: '1987-07-07',
@@ -122,6 +123,71 @@ describe('BS19C P4 — promises backed by real staff requests', () => {
     expect(day.phases.some(phase => phase.phaseId === 'BS19C_STAFF_PROMISE_REVIEW' && phase.worldChanged)).toBe(true)
     expect(day.world.memoriesById[`memory:bs19c:staff-promise:${world.userCoachId}:${request.id}:broken:staff`]).toBeDefined()
   }, 120_000)
+
+  it('P5 remembers a proven breach in weekly Staff autonomy independently of current relationship mood', () => {
+    const { world, request, staffId } = start()
+    const context = Object.values(world.staffHumanContextsById).find(item => item.staffId === staffId)!
+    const human = world.staffHumanStatesByContextId[context.id]!
+    expect(staffPromiseGrievance(world, staffId, context.teamId)).toEqual({ pressure: 0, unresolved: 0, remedied: 0 })
+
+    const expired = progressStaffPromises(updateGameWorld(world, { currentDate: addDays(world.currentDate, 8) }))
+    expect(staffPromiseGrievance(expired, staffId, context.teamId)).toEqual({ pressure: 12, unresolved: 1, remedied: 0 })
+    const sameRelationship = updateGameWorld(expired, { relationshipsByKey: world.relationshipsByKey })
+    const baseline = appraiseStaffCareer(world, context, human)
+    const remembered = appraiseStaffCareer(sameRelationship, context, human)
+    expect(remembered.belongingPressure).toBeGreaterThan(baseline.belongingPressure)
+    expect(remembered.reasons).toContain('A documented broken staff promise still affects confidence in the head coach')
+
+    // The Staff appraiser now reads the same evidence used by its existing weekly
+    // autonomous career requests / market exploration / resignation pipeline.
+    const otherStaff = Object.values(world.staffPeopleById).find(item => item.id !== staffId)!
+    expect(staffPromiseGrievance(expired, otherStaff.id, context.teamId).pressure).toBe(0)
+  }, 120_000)
+
+  it('P5 a genuine later grant partially repairs trust without erasing the original breach or conflicts', () => {
+    const { world, request, staffId } = start()
+    const overdue = progressStaffPromises(updateGameWorld(world, { currentDate: addDays(world.currentDate, 8) }))
+    const brokenId = `memory:bs19c:staff-promise:${world.userCoachId}:${request.id}:broken:staff`
+    const brokenMemory = overdue.memoriesById[brokenId]!
+    const breach = getRelationshipDimensions(overdue.relationshipsByKey[relationshipKey(staffId, world.userCoachId)])
+    const existingConflicts = overdue.staffConflictsById
+    const late = grantStaffCareerRequest(overdue, request.id)
+    expect(late.staffCareerRequestsById[request.id]?.status).toBe('GRANTED')
+    expect(Object.values(late.responsibilitiesById).some(item =>
+      item.holderStaffId === staffId && item.kind === 'createTeamTrainingPlan')).toBe(true)
+    expect(late.memoriesById[brokenId]).toEqual(brokenMemory)
+    const repairedId = `memory:bs19c:staff-promise:${world.userCoachId}:${request.id}:remedied:staff`
+    expect(late.memoriesById[repairedId]).toMatchObject({
+      owner: { kind: 'staff', id: staffId },
+      context: { repairedRequestId: request.id, requestStatus: 'GRANTED', remedy: 'realDelegationOrPromotion' },
+    })
+    const improvement = getRelationshipDimensions(late.relationshipsByKey[relationshipKey(staffId, world.userCoachId)])
+    expect(improvement.trust).toBeGreaterThan(breach.trust)
+    expect(improvement.reliability).toBeGreaterThan(breach.reliability)
+    expect(late.staffConflictsById).toEqual(existingConflicts)
+    expect(staffPromiseGrievance(late, staffId, request.teamId)).toEqual({ pressure: 3, unresolved: 0, remedied: 1 })
+    const context = Object.values(world.staffHumanContextsById).find(item => item.staffId === staffId)!
+    const human = world.staffHumanStatesByContextId[context.id]!
+    const originalRelations = world.relationshipsByKey
+    const unresolvedAppraisal = appraiseStaffCareer(updateGameWorld(overdue, { relationshipsByKey: originalRelations }), context, human)
+    const repairedAppraisal = appraiseStaffCareer(updateGameWorld(late, { relationshipsByKey: originalRelations }), context, human)
+    expect(repairedAppraisal.belongingPressure).toBeLessThan(unresolvedAppraisal.belongingPressure)
+    expect(repairedAppraisal.reasons).toContain('A later fulfilled commitment has partly repaired a documented breach')
+
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(late, '2026-10-18T12:00:00.000Z'))
+    expect(loaded.memoriesById[brokenId]).toEqual(brokenMemory)
+    expect(loaded.memoriesById[repairedId]).toEqual(late.memoriesById[repairedId])
+    expect(staffPromiseGrievance(loaded, staffId, request.teamId).pressure).toBe(3)
+    expect(() => grantStaffCareerRequest(loaded, request.id)).toThrow()
+  }, 120_000)
+
+  it('P5 an ordinary timely granted promise cannot acquire a fabricated later breach repair', () => {
+    const { world, request } = start()
+    const fulfilled = grantStaffCareerRequest(world, request.id)
+    const repairedId = `memory:bs19c:staff-promise:${world.userCoachId}:${request.id}:remedied:staff`
+    expect(fulfilled.memoriesById[repairedId]).toBeUndefined()
+    expect(staffPromiseGrievance(fulfilled, request.staffId, request.teamId).pressure).toBe(0)
+  })
 
   it('rejects unrelated NPC, missing or resolved requests without inventing a commitment', () => {
     const { initial, request, staffId } = withRequest()

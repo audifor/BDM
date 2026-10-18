@@ -165,6 +165,52 @@ export function settleStaffPromise(world: GameWorld, requestId: string): GameWor
   return archiveInboxItem(next, staffPromiseInboxId(promise.coachId, requestId))
 }
 
+/**
+ * P5. An overdue obligation remains BROKEN forever in the historical record.
+ * If the real, still-open request is later GRANTED via StaffCareer's existing
+ * authority, that *new fact* permits partial repair, not retroactive fulfillment.
+ * Neither personal conversation nor passing time can grant the request.
+ */
+export function recordLateStaffPromiseRepair(world: GameWorld, requestId: string): GameWorld {
+  const coachId = world.userCoachId
+  const request = world.staffCareerRequestsById[requestId]
+  const broken = world.memoriesById[memoryId(coachId, requestId, 'broken', 'staff')]
+  if (request?.status !== 'GRANTED' || request.resolvedOn === undefined || broken === undefined ||
+      world.memoriesById[memoryId(coachId, requestId, 'remedied', 'staff')] !== undefined ||
+      broken.owner.id !== request.staffId || !eligible(world, coachId, request.staffId, request.teamId)) return world
+  if (broken.occurredOn > request.resolvedOn) return world
+  let next = recordBoth(world, requestId, request.staffId, request.teamId, 'remedied',
+    { commitment: 'staffCareerRequest', repairedRequestId: requestId, brokenOn: broken.occurredOn,
+      requestStatus: 'GRANTED', remedy: 'realDelegationOrPromotion' },
+    'trust', 'support', 15, 22)
+  next = applyRelationshipEventsToWorld(next, [
+    { sourceId: request.staffId, targetId: coachId, event: {
+      id: `relationship:${source(coachId, requestId)}:remedied:staff`,
+      gameDate: world.currentDate, source: 'professionalInteraction', delta: 5,
+      dimensionDeltas: { trust: 5, reliability: 7, perceivedSupport: 5, professionalRespect: 3 },
+      context: { requestId, promiseRemedy: 'REAL_REQUEST_GRANTED', brokenOn: broken.occurredOn },
+    } },
+    { sourceId: coachId, targetId: request.staffId, event: {
+      id: `relationship:${source(coachId, requestId)}:remedied:coach`,
+      gameDate: world.currentDate, source: 'professionalInteraction', delta: 3,
+      dimensionDeltas: { trust: 3, collaboration: 3 },
+      context: { requestId, promiseRemedy: 'REAL_REQUEST_GRANTED', brokenOn: broken.occurredOn },
+    } },
+  ])
+  const staff = next.staffPeopleById[request.staffId]
+  const dob = (staff?.personId === undefined ? undefined : next.personsById[staff.personId]?.dateOfBirth) ?? staff?.identity.dateOfBirth
+  next = applyMoraleEventToWorld(next, {
+    id: `morale:${source(coachId, requestId)}:remedied:staff`,
+    personId: request.staffId, gameDate: world.currentDate, source: 'professionalInteraction',
+    delta: 5,
+    context: { ...(dob && addYears(dob, 15) <= world.currentDate ? { personalityEventKind: 'TRUST_REBUILT' } : {}),
+      requestId, promiseRemedy: 'REAL_REQUEST_GRANTED', brokenOn: broken.occurredOn },
+  })
+  // An active conflict belongs to StaffConflictEngine; progressStaffConflicts
+  // may cool it over subsequent weeks, but this command cannot erase it.
+  return next
+}
+
 /** Called after the actual calendar transition; never during pre-match state.
  * Past-due obligations generate consequences once without interrupting matches.
  */
