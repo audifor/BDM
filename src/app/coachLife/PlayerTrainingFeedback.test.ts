@@ -69,7 +69,7 @@ describe('BS19C P8 — source-backed coach and player training feedback', () => 
     })
     expect(next.memoriesById[`memory:${source}:coach`]?.owner).toEqual({ kind: 'coach', id: world.userCoachId })
     expect(next.moraleByPersonId[playerId]!.events.find(e => e.id === `morale:${source}:player`)).toMatchObject({
-      source: 'developmentEvent', context: { personalityEventKind: 'COACH_PRAISE', sourceEvidenceId: evidenceId },
+      source: 'professionalInteraction', context: { personalityEventKind: 'COACH_PRAISE', sourceEvidenceId: evidenceId },
     })
     expect(next.personalitiesByPersonId[next.userCoachId]).toEqual(next.personalitiesByPersonId[next.coaches[next.userCoachId]!.staffProfileId])
     expect(next.developmentStimulusByPlayerId).toEqual(queued.developmentStimulusByPlayerId)

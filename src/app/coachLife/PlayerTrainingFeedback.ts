@@ -136,7 +136,7 @@ export function decidePlayerTrainingFeedback(world: GameWorld, choice: PlayerFee
   const ageValid = playerDOB !== undefined && addYears(playerDOB, 15) <= world.currentDate
   next = applyMoraleEventToWorld(next, {
     id: `morale:${source}:player`, personId: pending.playerId,
-    gameDate: world.currentDate, source: 'developmentEvent', delta: praise ? 7 : -4,
+    gameDate: world.currentDate, source: 'professionalInteraction', delta: praise ? 7 : -4,
     context: { ...(ageValid ? { personalityEventKind: praise ? 'COACH_PRAISE' : 'COACH_CRITICISM' } : {}),
       sourceTrainingSessionId: pending.sessionId, sourceEvidenceId: pending.evidenceId, choice },
   })

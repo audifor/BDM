@@ -3,7 +3,7 @@ import { createNewGame } from '@/app/game'
 import { addYears, type GameDate } from '@/domain/date'
 import { createPersonality, generatePersonality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
-import { evolvePersonalityFromMoraleEvidence, validatePersonalityJournal } from '@/domain/personality/ObservedPersonalityEvolution'
+import { OBSERVED_PERSONALITY_RULES, evolvePersonalityFromMoraleEvidence, validatePersonalityJournal } from '@/domain/personality/ObservedPersonalityEvolution'
 import { applyMoraleEventToWorld, updateGameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 
@@ -16,6 +16,27 @@ const event = (personId: string, date: GameDate, id: string, kind = 'COACH_PRAIS
 })
 
 describe('PERSON 23I real event journal through BDM', () => {
+  it('matches the 76-kind PERSON 23K dictionary without dropping professional or advisory facts', () => {
+    expect(OBSERVED_PERSONALITY_RULES).toHaveLength(76)
+    expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.kind)).size).toBe(76)
+    expect(new Set(OBSERVED_PERSONALITY_RULES.map((entry) => entry.code)).size).toBe(76)
+    expect(OBSERVED_PERSONALITY_RULES.map((entry) => String(entry.kind))).not.toContain('TEAM_SCOUTING_REPORT')
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'PROFESSIONAL_REVIEW'))
+      .toMatchObject({ dimension: 'conscientiousness', minAge: 18, sources: ['professionalInteraction'] })
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'RECOMMENDATION_ACCEPTED'))
+      .toMatchObject({ dimension: 'recognitionNeed', minAge: 18 })
+    expect(OBSERVED_PERSONALITY_RULES.find((entry) => entry.kind === 'RECOMMENDATION_REJECTED'))
+      .toMatchObject({ dimension: 'frustrationTolerance', minAge: 18 })
+  })
+
+  it('rejects a source outside the canonical event family without changing personality', () => {
+    const personality = make50()
+    const mismatch = { ...event('person:test', '2026-10-01' as GameDate, 'event:bad-source', 'NEW_CONTRACT_SIGNED'), source: 'matchResult' as const }
+    expect(() => evolvePersonalityFromMoraleEvidence(personality, 'person:test', '1990-01-01', [], mismatch))
+      .toThrow('cannot come from')
+    expect(personality.values.contractualCommitment).toBe(50)
+  })
+
   it('changes exactly one score only when an observed event has been committed', () => {
     const base = createNewGame()
     const player = Object.values(base.players)[0]!
@@ -54,6 +75,20 @@ describe('PERSON 23I real event journal through BDM', () => {
     expect(deserializeGameWorldV4({ ...save, payload: legacyPayload }).personalityHistoryByPersonId).toEqual({})
   })
 
+  it('does not silently discard populated alternate experimental Save V4 journals', () => {
+    const world = createNewGame()
+    const save = serializeGameWorldV4(world, '2032-10-01T00:00:00.000Z')
+    const empty = { ...save, payload: { ...save.payload, personalityExperienceHistory: [] } }
+    expect(deserializeGameWorldV4(empty).personalityHistoryByPersonId).toEqual({})
+    const populated = { ...save, payload: { ...save.payload, personalityExperienceHistory: [{
+      id: 'legacy-experimental:1', personId: Object.keys(world.personalitiesByPersonId)[0],
+      kind: 'COACH_PRAISE', occurredOn: world.currentDate, dimension: 'recognitionNeed', before: 50, after: 51,
+    }] } }
+    expect(() => deserializeGameWorldV4(populated)).toThrow('verified-evidence migration')
+    expect(() => deserializeGameWorldV4({ ...save, payload: { ...save.payload, personalityExperienceHistory: 'invalid' } }))
+      .toThrow('must be an array')
+  })
+
   it('rejects tampered journals that lack an actual source, duplicate an ID, or change a score', () => {
     const base = createNewGame()
     const player = Object.values(base.players)[0]!
@@ -67,6 +102,29 @@ describe('PERSON 23I real event journal through BDM', () => {
     expect(() => deserializeGameWorldV4(saveWith([{ ...record, sourceEventId: 'made-up' }]))).toThrow('committed')
     expect(() => deserializeGameWorldV4(saveWith([{ ...record, newValue: 96 }]))).toThrow()
     expect(() => deserializeGameWorldV4(saveWith([record, record]))).toThrow()
+  })
+
+  it('rejects plausible but falsified event dimensions, magnitudes and history chains', () => {
+    const base = createNewGame()
+    const player = Object.values(base.players)[0]!
+    const world = updateGameWorld(base, {
+      personalitiesByPersonId: { ...base.personalitiesByPersonId, [player.id]: make50() },
+    })
+    const once = applyMoraleEventToWorld(world, event(player.id, world.currentDate, 'evidence:strict:1'))
+    const twice = applyMoraleEventToWorld(once, event(player.id, world.currentDate, 'evidence:strict:2'))
+    const save = serializeGameWorldV4(twice, '2032-10-01T00:00:00.000Z')
+    const [first, second] = save.payload.personalityHistory!
+    expect(first).toBeDefined()
+    expect(second).toBeDefined()
+    const changed = (entries: unknown) => ({ ...save, payload: { ...save.payload, personalityHistory: entries } })
+    expect(() => deserializeGameWorldV4(changed([{ ...first, dimensionCode: 'teamOrientation' }, second])))
+      .toThrow('canonical observed event kind')
+    expect(() => deserializeGameWorldV4(changed([{ ...first, newValue: first!.newValue - 1 }, second])))
+      .toThrow('delta does not match')
+    expect(() => deserializeGameWorldV4(changed([first, {
+      ...second, previousValue: second!.previousValue - 1, newValue: second!.newValue - 1,
+    }])))
+      .toThrow('chronological chain')
   })
 
   it('does not change legacy profiles or untagged morale events', () => {
