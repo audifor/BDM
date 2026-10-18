@@ -1,6 +1,7 @@
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import type { CourtGeometry, CourtPosition } from '@/domain/court'
 import type { BasketballPosition } from '@/domain/primitives'
+import { createPlayerRepertoire, type PlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
 import type { DefensiveIdentity, OffensiveIdentity } from './tactics/TacticalIdentity'
 
@@ -38,6 +39,8 @@ export interface MatchNextPlayerProfile {
   readonly rebounding: { readonly impact: number }
   /** Compact, derived pre-match condition; never a Player Truth rating. */
   readonly dynamicState?: { readonly careerFatigue: number }
+  /** Opt-in technical facts. D5A is DATA-ONLY: kernel decisions must not use this yet. */
+  readonly repertoire?: PlayerRepertoire
 }
 
 export interface MatchNextTacticalPlan {
@@ -89,6 +92,10 @@ export function validateMatchSetup(setup: MatchSetup): void {
   for (const profile of setup.players) {
     if (profiles.has(profile.playerId)) throw new Error(`Duplicate player profile: ${profile.playerId}`)
     if (profile.dynamicState !== undefined && (!Number.isFinite(profile.dynamicState.careerFatigue) || profile.dynamicState.careerFatigue < 0 || profile.dynamicState.careerFatigue > 100)) throw new Error(`Player ${profile.playerId} has invalid career fatigue`)
+    if (profile.repertoire !== undefined) {
+      if (profile.repertoire.playerId !== profile.playerId) throw new Error(`Player ${profile.playerId} has mismatched repertoire identity`)
+      createPlayerRepertoire(profile.repertoire) // strict version, duplicate, 0..100 and ISO date gates
+    }
     for (const field of ['maxSpeedMps', 'accelerationMps2', 'brakingMps2'] as const) {
       if (!Number.isFinite(profile.kinematics[field]) || profile.kinematics[field] <= 0) throw new Error(`Player ${profile.playerId} has invalid kinematics ${field}`)
     }

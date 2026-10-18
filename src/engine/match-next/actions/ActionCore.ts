@@ -19,6 +19,7 @@ import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow, re
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
+import { attemptCrossoverOnDrive } from './TechniqueExecution'
 import { actionById, actionIndexById, activeActions, appendAction, copyActions, findLastAction, replaceActionAt, someActionAfter } from './ActionIndex'
 import { defensiveShape, tacticalIntent } from '../tactics/TacticalIdentity'
 import { onBallCushion } from '../defense/PointOfAttack'
@@ -455,7 +456,10 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
       phase: 'DRIVING', startPosition: { ...actor.position }, target, targetBasket: { ...basket },
       ...(screenSet === null || rejected ? {} : { waypoint: { ...screenSet.waypoint }, screenId: screenSet.id }),
     })
-    return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
+    // The action must have started with a live dribble; the technique itself is
+    // optional and spatially/physically resolved by TechniqueExecution.
+    const liveDrive = useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
+    return attemptCrossoverOnDrive(liveDrive, actor.playerId, action.id, basket)
   }
   if (decision.kind === 'SHOOT' || decision.kind === 'CATCH_AND_SHOOT') {
     const action = createAction(state, decision, decision.kind, {

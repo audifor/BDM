@@ -1,4 +1,5 @@
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
+import { getRepertoireScoutingBrief, type RepertoireObservationStatus } from '@/engine/repertoire/RepertoireAdvice'
 import { type GameId, type OrganizationId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import {
@@ -240,7 +241,8 @@ export function consolidateOrganizationKnowledge(existing: readonly Organization
   const current = { organizationId: report.organizationId, subjectPlayerId: report.subjectPlayerId, dimensions: byDimension }
   return [...existing.filter((item) => item !== prior), current]
 }
-export function getPlayerKnowledgeSummary(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId): { readonly organizationId:OrganizationId; readonly playerId:PlayerId; readonly overallCoverage:number; readonly overallConfidence:number; readonly freshness:number; readonly disagreement:'LOW'|'MODERATE'|'HIGH'; readonly knownDomains:readonly string[]; readonly lastAssessedAt?:GameDate } {
+export function getPlayerKnowledgeSummary(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId): { readonly organizationId:OrganizationId; readonly playerId:PlayerId; readonly overallCoverage:number; readonly overallConfidence:number; readonly freshness:number; readonly disagreement:'LOW'|'MODERATE'|'HIGH'; readonly knownDomains:readonly string[]; readonly lastAssessedAt?:GameDate; readonly repertoireStatus?:RepertoireObservationStatus; readonly repertoireGeneralReportIds?:readonly string[]; readonly suggestedRepertoireMission?:'LIVE_GAME' } {
+  const repertoire = world.playerRepertoireByPlayerId[playerId] === undefined ? undefined : getRepertoireScoutingBrief(world, organizationId, playerId)
   const knowledge = world.organizationKnowledge.find((item) => item.organizationId === organizationId && item.subjectPlayerId === playerId)
   const own = Object.values(world.teams).some((team) => team.organizationId === organizationId && team.rosterPlayerIds.includes(playerId))
   const dimensions = knowledge?.dimensions ?? {}
@@ -260,6 +262,7 @@ export function getPlayerKnowledgeSummary(world: GameWorld, organizationId: Orga
     freshness,
     disagreement: uncertainty >= 13 ? 'HIGH' : uncertainty >= 8 ? 'MODERATE' : 'LOW',
     knownDomains,
+    ...(repertoire === undefined ? {} : { repertoireStatus: repertoire.status, repertoireGeneralReportIds: repertoire.generalReportIds, ...(repertoire.suggestedMission === undefined ? {} : { suggestedRepertoireMission: repertoire.suggestedMission }) }),
     ...(findings.length === 0 ? {} : { lastAssessedAt: findings.map((item) => item.assessedAt).sort().at(-1)! }),
   }
 }

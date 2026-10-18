@@ -121,6 +121,7 @@ export type MatchNextEventType =
   | 'looseBallCreated' | 'looseBallRecovered'
   | 'defensiveAssignmentsEstablished' | 'defensiveResponsibilityChanged'
   | 'decisionSelected' | 'actionStarted' | 'actionResolved'
+  | 'techniqueAttempted' | 'techniqueResolved'
   | 'screenSet' | 'screenUsed' | 'screenEnded' | 'offBallMove'
   | 'contact' | 'foul' | 'freeThrowSequenceStarted' | 'freeThrowMade' | 'freeThrowMissed' | 'shotBlocked' | 'steal' | 'deflection' | 'stealAttempt'
   | 'turnover' | 'outOfBounds' | 'assist' | 'playStateChanged' | 'foulOut'
@@ -180,6 +181,9 @@ export interface MatchNextEvent {
   readonly actionId?: string
   readonly actionKind?: string
   readonly actionOutcome?: string
+  /** Only physically selected techniques; never inferred from generic DRIVE/SHOOT. */
+  readonly moveCode?: 'CROSSOVER'
+  readonly techniqueOutcome?: 'EXECUTED' | 'FAILED'
   readonly shotProbability?: number
   /** BT4E/F: derived labels of a released shot (see stats/ShotEcology). */
   readonly shotZone?: string
@@ -387,6 +391,9 @@ export interface MatchPlayerState {
   readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; readonly lateralGripMps2?: number; readonly backpedalFactor?: number }
   /** BT6: a defender who reached for the ball and missed is off balance (late to the handler's next step) until this tick. */
   readonly offBalanceUntilT?: number
+  /** D5B verified crossover footwork, bounded separate from missed-steal imbalance. */
+  readonly techniqueBalanceUntilT?: number
+  readonly repertoire?: MatchSetup['players'][number]['repertoire']
 }
 
 export interface MatchState {
@@ -541,6 +548,7 @@ function createMatchPlayer(setup: MatchSetup, playerId: PlayerId, teamId: TeamId
     reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility,
     offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 },
     defense: { ...profile.defense }, kinematics: { ...profile.kinematics },
+    ...(profile.repertoire === undefined ? {} : { repertoire: profile.repertoire }),
   }
 }
 

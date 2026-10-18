@@ -1,0 +1,52 @@
+name: PLAYER 2.4 D3-D5B integration gate
+on:
+  push:
+    branches:
+      - integration/player24-d3-d5b-main-20261018
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  player-repertoire:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and frontend build
+        run: |
+          npm run typecheck
+          npm run build
+      - name: PLAYER 2.4 D3/D4/D5A/D5B sports and Save V4
+        run: >-
+          npm test -- --testTimeout=45000 --hookTimeout=45000 --maxWorkers=2
+          src/domain/player/PlayerRepertoire.integration.test.ts
+          src/engine/repertoire/RepertoireAdvice.test.ts
+          src/app/matchNext/MatchNextRepertoireInput.test.ts
+          src/engine/match-next/actions/TechniqueExecution.test.ts
+          src/engine/scouting/ScoutingEngine.test.ts
+          src/engine/training/TrainingPlanning.test.ts
+      - name: Source-backed WorldDB import (specific PLAYER 2.4-D3 tests)
+        run: npm test -- --testTimeout=45000 --maxWorkers=2 src/app/game/WorldDbGameBootstrap.test.ts -t 'PLAYER 2.4-D3'
+  player-native-bridge:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Rust formatting
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+      - name: Repertoire native SQLite tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml player_repertoire --lib
