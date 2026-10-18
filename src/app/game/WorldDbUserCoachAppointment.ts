@@ -9,7 +9,7 @@ import { createDefaultCoachReputationProfile } from '@/domain/coachReputation'
 import { createStaffPerson } from '@/domain/staff'
 import { createStaffContract, staffContractIdFromString } from '@/domain/staffContract'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
-import { archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
+import { applyMoraleEventToWorld, archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createUserCoachRookieProfessionalProfile } from '@/engine/world/CoachProfessionalProfileGenerator'
 import { acceptCoachJobOffer, applyUserCoachForJob, fireCoachFromTeam, getOpenCoachJobs } from '@/app/coachCareer'
 import { applyUserCoachCreation, type UserCoachCreationInput } from './UserCoachCreator'
@@ -113,12 +113,33 @@ export function appointCreatedUserCoachToWorldDbClub(world: GameWorld, teamId: T
     },
   })
 
+  // A signed and accepted *actual* job offer is valid PERSONALITY-23I observed evidence.
+  // The semantic PERSON50 branch uses this exact catalog event only when a full 50/50
+  // personality and adult DOB are available. Legacy eight-score profiles get morale
+  // without fabricated personality evolution, keeping Save V4 backward compatible.
+  if (result.coachJobOffersById[offer.id]?.status !== 'accepted') {
+    throw new Error('PERSON50 evidence requires an accepted, committed job offer')
+  }
+  const observed = applyMoraleEventToWorld(result, {
+    id: `morale:bs19c:contract-offer-accepted:${offer.id}:${id}`,
+    personId: id,
+    gameDate: world.currentDate,
+    source: 'careerEvent',
+    delta: 12,
+    context: {
+      personalityEventKind: 'CONTRACT_OFFER_ACCEPTED',
+      offerId: offer.id,
+      teamId,
+      proof: 'coachCareer:acceptedJobOffer',
+    },
+  })
+
   // The imported incumbent remains a separate, available historical person and staff
   // profile, with unchanged identity and never the user's new coach.
-  if (result.personsById[historicalPerson.id]?.firstName !== historicalPerson.firstName ||
-      result.staffPeopleById[historicalStaff.id]?.personId !== historicalStaff.personId ||
-      result.coaches[incumbent.id] === undefined) {
+  if (observed.personsById[historicalPerson.id]?.firstName !== historicalPerson.firstName ||
+      observed.staffPeopleById[historicalStaff.id]?.personId !== historicalStaff.personId ||
+      observed.coaches[incumbent.id] === undefined) {
     throw new Error('WorldDB career handover unexpectedly changed the historical coach identity')
   }
-  return result
+  return observed
 }
