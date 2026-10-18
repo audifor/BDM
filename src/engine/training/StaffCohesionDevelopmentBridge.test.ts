@@ -90,11 +90,15 @@ describe('BS19C P7 — witnessed staff cooperation affects real player developme
 
   it('the real political COORDINATE pathway supplies the relationship evidence; never an invented sporting score', () => {
     const f = fixture()
+    const subject = Object.values(f.world.teamStaffAssignmentsById).find(item =>
+      item.teamId === f.team.id && item.role === 'assistantCoach' &&
+      item.staffPersonId !== f.shooting.staffPersonId && item.staffPersonId !== f.skills.staffPersonId)!
+    if (!subject) throw new Error('Political case must have an independent real applicant')
     const caseId = staffPoliticalCaseIdFor(f.team.id, 'CAREER_REQUEST', 'bs19c-p7-represented-request')
     const politicalCase = createStaffPoliticalCase({
       id: caseId, scopeKey: f.team.id, teamId: f.team.id,
       sourceKind: 'CAREER_REQUEST', sourceId: 'bs19c-p7-represented-request', agenda: 'RESPONSIBILITY',
-      subjectStaffId: f.shooting.staffPersonId, openedOn: f.world.currentDate,
+      subjectStaffId: subject.staffPersonId, openedOn: f.world.currentDate,
       lastEvaluatedOn: f.world.currentDate, status: 'OPEN',
     })
     const actors = [f.shooting.staffPersonId, f.skills.staffPersonId].sort()
