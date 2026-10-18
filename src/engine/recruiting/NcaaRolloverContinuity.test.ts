@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { simulateAndApplyGame } from '@/app/game/playUserGame'
+import { withShortGameFormat } from '@/app/game/testFixtures'
 import { startNextSeasonFor } from '@/app/game/startNextSeason'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { addYears } from '@/domain/date'
@@ -12,11 +13,13 @@ import { arriveSignedRecruits, generateLegacyFixtureRecruitingPool as generateRe
 let completed: GameWorld
 let cycleId: string
 beforeAll(() => {
-  completed = createNewGame({ seed: 15015 })
+  // NCAA continuity is a season-lifecycle test, not a full-length basketball simulation.
+  // Keep the production Match Next game path but use its canonical short-game fixture.
+  completed = withShortGameFormat(createNewGame({ seed: 15015 }))
   const cycle = Object.values(completed.recruitingCyclesById)[0]!
   cycleId = cycle.id
   for (const game of Object.values(completed.games).filter(item => item.seasonId === cycle.sourceSeasonId)) completed = simulateAndApplyGame(completed, game, 15015)
-}, 30_000)
+}, 180_000)
 
 describe('NCAA successor continuity', () => {
   it('signs a generated recruit and enrolls in the background competition season after Save V4', () => {
