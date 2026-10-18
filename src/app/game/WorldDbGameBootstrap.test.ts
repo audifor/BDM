@@ -1155,13 +1155,33 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
     })
-    const startedAt = performance.now()
-    for (let day = 0; day < dayCount; day += 1) world = advanceGameDay(world)
-    const elapsedMs = performance.now() - startedAt
+    const initialDate = world.currentDate
+    const primaryCompetitionId = world.seasons[world.currentSeasonId]!.competitionId
+    const rolledSeasonIds = new Set<string>()
+    let elapsedMs = 0
+    for (let day = 0; day < dayCount; day += 1) {
+      // A headless longitudinal benchmark must explicitly make each supported manager decision.
+      // An unanswered press opportunity is a legitimate game stop, not a simulation error to bypass.
+      const mediaChoices = Object.values(world.mediaOpportunitiesById).filter((item) => item.status === 'pending').map((item) => item.id).sort()
+      for (const opportunityId of mediaChoices) world = skipMediaOpportunity(world, opportunityId)
+      const latestPrimarySeason = Object.values(world.seasons)
+        .filter((season) => season.competitionId === primaryCompetitionId)
+        .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+      if (!rolledSeasonIds.has(latestPrimarySeason.id)
+        && isSeasonComplete(world, latestPrimarySeason.id)
+        && world.seasonHistoryBySeasonId[latestPrimarySeason.id] !== undefined) {
+        world = startNextSeasonFor(world, latestPrimarySeason.id)
+        rolledSeasonIds.add(latestPrimarySeason.id)
+      }
+      const began = performance.now()
+      world = advanceGameDay(world, () => 151617, ['userGame'])
+      elapsedMs += performance.now() - began
+    }
+    // Exact date coverage is the contract; this cannot report 365 days if a real checkpoint stopped it.
+    expect(world.currentDate).toBe(addDays(initialDate, dayCount))
     // eslint-disable-next-line no-console
     console.log(`advanceGameDay x${dayCount}: ${elapsedMs.toFixed(1)}ms (${(elapsedMs / dayCount).toFixed(2)}ms/day)`)
-    expect(world.currentDate).toBeDefined()
-  }, 60_000)
+  }, 900_000)
 
   it.each([10, 20])('RWS-BUG-002A lifecycle: rolls over %i consecutive ACB seasons without duplicate IDs, dates, or fixtures', async (seasonCount) => {
     let world = await createWorldDbSpainGame(selection.teamId, {
