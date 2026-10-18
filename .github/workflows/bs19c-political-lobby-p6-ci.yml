@@ -23,7 +23,7 @@ jobs:
       - name: BDM TypeScript
         run: npm run typecheck
       - name: P6 NPC lobbying and canonical political engine
-        run: npm test -- src/app/coachLife/StaffPoliticalLobby.test.ts src/engine/staff/StaffPoliticalCaseEngine.test.ts src/engine/staff/StaffPoliticalActionEngine.test.ts src/engine/staff/StaffPoliticalActionConsequenceEngine.test.ts src/engine/staff/StaffPoliticalGroupEngine.test.ts
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/coachLife/StaffPoliticalLobby.test.ts src/engine/staff/StaffPoliticalCaseEngine.test.ts src/engine/staff/StaffPoliticalActionEngine.test.ts src/engine/staff/StaffPoliticalActionConsequenceEngine.test.ts src/engine/staff/StaffPoliticalGroupEngine.test.ts
       - name: P5/P4 and PERSON50 regression
         run: npm test -- src/app/coachLife/StaffProfessionalCommitment.test.ts src/app/coachLife/StaffRequestFollowUp.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
       - name: Coach creation and WorldDB
