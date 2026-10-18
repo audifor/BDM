@@ -2,13 +2,13 @@ import { addYears, compareGameDates, parseGameDate } from '@/domain/date'
 import { createCoach } from '@/domain/coach'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
 import { applyCoachRpgPreset, createCoachRpgProfile, USER_COACH_AMBITIONS, USER_COACH_BACKGROUNDS, type CoachRpgPreset, type UserCoachAmbition, type UserCoachBackground } from '@/domain/coachRpg'
-import { createPersonality } from '@/domain/personality'
 import { createPerson } from '@/domain/person'
 import { createStaffPerson, createStaffProfessionalProfile } from '@/domain/staff'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CountryId } from '@/domain/ids'
 import type { Gender } from '@/domain/primitives'
 import { queueOpeningDebtDecision } from '@/app/coachLife/CoachLifeDecision'
+import { generateCreatedCoachPerson50 } from './UserCoachSemanticPersonality'
 
 /** BS19B P0. Edits only the selected manager's canonical Person/StaffProfile.
  * Imported historical WorldDB coaches cannot be edited. Newly created WorldDB coaches have
@@ -92,27 +92,17 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
     staffPeople: Object.values(world.staffPeopleById).map((entry) => entry.id === staff.id ? updatedStaff : entry),
   })
 
-  // Coach and headCoach StaffProfile project the same canonical PERSON. Generated universes
-  // may seed the two role aliases independently: the creator aligns both to one profile.
-  // Preserve any extended PERSON50 keys if the canonical bridge has already supplied them.
-  const coachPersonality = next.personalitiesByPersonId[coach.id]
-  const staffPersonality = next.personalitiesByPersonId[staff.id]
-  const personality = staffPersonality !== undefined && Object.keys(staffPersonality.values).length > Object.keys(coachPersonality?.values ?? {}).length
-    ? staffPersonality
-    : coachPersonality
-  if (personality !== undefined) {
-    const values = input.disposition === 'ambitious'
-      ? { ...personality.values, ambition: Math.max(70, personality.values.ambition), loyalty: Math.min(55, personality.values.loyalty) }
-      : input.disposition === 'loyal'
-        ? { ...personality.values, loyalty: Math.max(70, personality.values.loyalty), ambition: Math.min(55, personality.values.ambition) }
-        : personality.values
-    const createdPersonality = createPersonality({ values })
-    next = updateGameWorld(next, { personalitiesByPersonId: {
-      ...next.personalitiesByPersonId,
-      [coach.id]: createdPersonality,
-      [staff.id]: createdPersonality,
-    } })
-  }
+  // This Coach is explicitly fictional and newly created. Generate the 50 canonical
+  // PERSON-23C values once from user-selected biography/disposition, then project
+  // the same personality onto both runtime role aliases for this single PERSON ID.
+  // Sourced historical WorldDB people are guarded above and are never overwritten.
+  const seed = [coach.personId, firstName, lastName, dob, input.background, input.disposition, input.ambition ?? 'firstTitle'].join(':')
+  const createdPersonality = generateCreatedCoachPerson50(seed, input)
+  next = updateGameWorld(next, { personalitiesByPersonId: {
+    ...next.personalitiesByPersonId,
+    [coach.id]: createdPersonality,
+    [staff.id]: createdPersonality,
+  } })
 
   // A single CoachRpg profile owns the creator's narrative and ambition. The same data is
   // restored by the existing Save V4 path, and remains separate from sourced WorldDB history.

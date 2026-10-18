@@ -33,6 +33,8 @@ export {
 export type { WorldAnnualDevelopmentCycle } from './WorldAnnualDevelopmentCycle'
 export { addMemoriesToGameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
+export { applyCompatibilityModulatedInteraction } from './CompatibilityInteractionBridge'
+export type { PairPredisposition } from './CompatibilityInteractionBridge'
 export { applyMoraleEventToWorld } from './MoraleEvents'
 export { addInboxItem, addNewsItem, archiveInboxItem, markInboxItemRead } from './InboxOperations'
 export { getInjuriesForPlayer, getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'

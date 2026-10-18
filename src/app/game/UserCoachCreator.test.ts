@@ -41,6 +41,11 @@ describe('BS19B user-created Coach foundation', () => {
     expect(Object.values(world.personsById).filter((row) => row.id === coach.personId)).toHaveLength(1)
     expect(world.staffPeopleById[coach.staffProfileId]!.professional.attributes.tacticalKnowledge).toBeGreaterThan(previousProfessional.attributes.tacticalKnowledge)
     expect(world.personalitiesByPersonId[coach.id]!.values.ambition).toBeGreaterThanOrEqual(70)
+    expect(Object.keys(world.personalitiesByPersonId[coach.id]!.values)).toHaveLength(50)
+    expect(world.personalitiesByPersonId[coach.id]).toEqual(world.personalitiesByPersonId[coach.staffProfileId])
+    expect(world.personalitiesByPersonId[coach.id]!.values.goalFocus).toBeGreaterThanOrEqual(66)
+    expect(Object.keys(original.personalitiesByPersonId[coach.id]!.values)).toHaveLength(8)
+
     expect(world.coachFinancesByCoachId[coach.id]!.cash).toBe(2_500)
     expect(world.coachFinancesByCoachId[coach.id]!.debts).toEqual(expect.arrayContaining([
       expect.objectContaining({ principalRemaining: 30_000, monthlyPayment: 850, status: 'active' }),
@@ -61,6 +66,9 @@ describe('BS19B user-created Coach foundation', () => {
     expect(restored.staffPeopleById[coach.staffProfileId]!.identity.dateOfBirth).toBe('1991-06-19')
     expect(restored.personsById[coach.personId]!.dateOfBirth).toBe('1991-06-19')
     expect(restored.personalitiesByPersonId[coach.id]!.values.ambition).toBeGreaterThanOrEqual(70)
+    expect(Object.keys(restored.personalitiesByPersonId[coach.id]!.values)).toHaveLength(50)
+    expect(restored.personalitiesByPersonId[coach.id]).toEqual(restored.personalitiesByPersonId[coach.staffProfileId])
+
     expect(restored.coachFinancesByCoachId[coach.id]!.cash).toBe(2_500)
     expect(restored.coachFinancesByCoachId[coach.id]!.debts[0]!.principalRemaining).toBe(30_000)
     expect(restored.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({

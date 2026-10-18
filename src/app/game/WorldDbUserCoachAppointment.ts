@@ -134,12 +134,24 @@ export function appointCreatedUserCoachToWorldDbClub(world: GameWorld, teamId: T
     },
   })
 
+  // Coach and StaffProfile are two role-facing projections of one canonical PERSON.
+  // PERSON23I applies evidence to its originating role ID; keep the second projection
+  // synchronized when the verified job offer advances the new coach's 50-score profile.
+  const evolvedPersonality = observed.personalitiesByPersonId[id]
+  if (evolvedPersonality === undefined) throw new Error('Created coach lost PERSON50 after signing')
+  const aligned = observed.personalitiesByPersonId[newStaff.id] === evolvedPersonality
+    ? observed
+    : updateGameWorld(observed, { personalitiesByPersonId: {
+        ...observed.personalitiesByPersonId,
+        [newStaff.id]: evolvedPersonality,
+      } })
+
   // The imported incumbent remains a separate, available historical person and staff
   // profile, with unchanged identity and never the user's new coach.
-  if (observed.personsById[historicalPerson.id]?.firstName !== historicalPerson.firstName ||
-      observed.staffPeopleById[historicalStaff.id]?.personId !== historicalStaff.personId ||
-      observed.coaches[incumbent.id] === undefined) {
+  if (aligned.personsById[historicalPerson.id]?.firstName !== historicalPerson.firstName ||
+      aligned.staffPeopleById[historicalStaff.id]?.personId !== historicalStaff.personId ||
+      aligned.coaches[incumbent.id] === undefined) {
     throw new Error('WorldDB career handover unexpectedly changed the historical coach identity')
   }
-  return observed
+  return aligned
 }

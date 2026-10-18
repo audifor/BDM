@@ -14,6 +14,9 @@ import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSa
 import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
 import { executeAcceptedRetentionAgreement } from './RetentionSigningService'
 import { executeContractRelease } from '@/app/market/ContractReleaseService'
+import { createPersonality } from '@/domain/personality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
+import { applyObservedPlayerSigning } from './ObservedPlayerContractSigning'
 
 function fixture(extraTerms: Partial<RetentionTermSet> = {}) {
   const base = createNewGame()
@@ -62,6 +65,37 @@ function fixture(extraTerms: Partial<RetentionTermSet> = {}) {
 }
 
 describe('BS11D1 retention signing', () => {
+  it('PERSON 50 evolves only after signed, governed retention; records one Save V4 fact', () => {
+    const setup = fixture()
+    const playerId = setup.negotiation.playerId
+    const profile = createPersonality({ values: Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) => [key, 50])) as never })
+    const world = updateGameWorld(setup.world, {
+      personalitiesByPersonId: { ...setup.world.personalitiesByPersonId, [playerId]: profile },
+    })
+    const pending = executeAcceptedRetentionAgreement(world, setup.negotiation.id)
+    expect(pending.status).toBe('GOVERNANCE_REQUIRED')
+    expect(pending.world.personalityHistoryByPersonId[playerId]).toBeUndefined()
+    const decision = Object.values(pending.world.governanceDecisionsById).find((item) => item.subject.kind === 'GENERIC' && item.subject.referenceId === `retention:${setup.negotiation.id}`)!
+    const approved = recordPlayerContractSigningDecisionEvent(pending.world, {
+      decisionId: decision.id, kind: 'APPROVED', actor: { kind: 'STAFF', id: setup.approver }, bodyId: 'body:retention-board',
+    })
+    expect(approved.status).toBe('APPROVED')
+    expect(approved.world.personalityHistoryByPersonId[playerId]).toBeUndefined()
+    const signed = executeAcceptedRetentionAgreement(approved.world, setup.negotiation.id)
+    expect(signed.status, signed.reason).toBe('SIGNED')
+    const history = signed.world.personalityHistoryByPersonId[playerId]!
+    expect(history).toHaveLength(1)
+    expect(history[0]).toMatchObject({ personId: playerId, dimensionCode: 'contractualCommitment', occurredOn: world.currentDate, previousValue: 50, newValue: 51 })
+    const event = signed.world.moraleByPersonId[playerId]!.events.find((item) => item.id === history[0]!.sourceEventId)!
+    expect(event).toMatchObject({ source: 'careerEvent', context: { personalityEventKind: 'NEW_CONTRACT_SIGNED', signingKind: 'RETENTION', contractId: String(signed.contractId) } })
+    const repeated = applyObservedPlayerSigning(signed.world, { kind: 'RETENTION', negotiationId: setup.negotiation.id, playerId, contractId: signed.contractId! })
+    expect(repeated).toBe(signed.world)
+    expect(executeAcceptedRetentionAgreement(signed.world, setup.negotiation.id)).toMatchObject({ status: 'ALREADY_SIGNED', world: signed.world })
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(signed.world, '2032-10-01T00:00:00.000Z'))
+    expect(restored.personalityHistoryByPersonId[playerId]).toEqual(history)
+    expect(restored.personalitiesByPersonId[playerId]!.values.contractualCommitment).toBe(51)
+  })
+
   it('requires Governance, creates one scheduled successor after approval, and is idempotent', () => {
     const setup = fixture()
     const pending = executeAcceptedRetentionAgreement(setup.world, setup.negotiation.id)

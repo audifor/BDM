@@ -91,6 +91,7 @@ import { createCoachReputationProfile, createDefaultCoachReputationProfile, type
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
 import { generatePersonality, type Personality } from '@/domain/personality'
+import type { PersonalityHistoryByPersonId } from '@/domain/personality/ObservedPersonalityEvolution'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
@@ -290,6 +291,7 @@ export interface GameWorld {
   readonly staffPoliticalFactionsById: Readonly<Record<string, StaffPoliticalFaction>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
+  readonly personalityHistoryByPersonId: PersonalityHistoryByPersonId
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
   readonly inboxItemsById: Readonly<Record<string, InboxItem>>
   readonly newsItemsById: Readonly<Record<string, NewsItem>>
@@ -582,6 +584,7 @@ export interface CreateGameWorldInput {
   staffReputationProfilesByStaffId?: Readonly<Record<StaffPersonId, StaffReputationProfile>>
   relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
   personalitiesByPersonId?: Readonly<Record<string, Personality>>
+  personalityHistoryByPersonId?: PersonalityHistoryByPersonId
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
   inboxItemsById?: Readonly<Record<string, InboxItem>>
   newsItemsById?: Readonly<Record<string, NewsItem>>
@@ -916,6 +919,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     staffPoliticalFactionsById: indexById((input.staffPoliticalFactions ?? []).map(createStaffPoliticalFaction), 'Staff political faction'),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.personalitiesByPersonId, generatePersonality),
+    personalityHistoryByPersonId: Object.freeze({ ...(input.personalityHistoryByPersonId ?? {}) }),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), savedPlaysById:Object.freeze(Object.fromEntries(Object.entries(input.savedPlaysById??{}).map(([id,play])=>[id,createSavedPlay(play)]))), playbooksById:Object.freeze(Object.fromEntries(Object.entries(input.playbooksById??{}).map(([id,playbook])=>[id,createPlaybook(playbook)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),

@@ -4,6 +4,7 @@ import { recordMemory } from '@/engine/memory'
 import { applyRelationshipEvent, createRelationshipProfile, getRelationshipDimensions, relationshipKey, type RelationshipEvent, type RelationshipProfile } from '@/domain/relationships'
 import { applyRelationshipEventToWorld, getStaffAssignment, getStaffPerson, updateGameWorld, type GameWorld } from '@/domain/world'
 import { relationshipFacetDeltasFor } from './StaffProfessionalRelationshipDefinitions'
+import { applyObservedStaffPersonalityEvidence } from './StaffPersonalityEvidence'
 import { applyStaffConflictTrigger } from './StaffConflictEngine'
 import { staffConflictTriggerFromHumanEvent } from './StaffConflictTriggerRegistry'
 import {
@@ -55,7 +56,8 @@ export function applyStaffHumanEvent(world: GameWorld, context: StaffHumanContex
   if (computed.memory !== undefined) next = recordMemory(next, computed.memory)
   if (computed.relationshipEvent !== undefined) next = applyRelationshipEventToWorld(next, event.staffId, computed.relationshipEvent.actorId, computed.relationshipEvent.event)
   const trigger = staffConflictTriggerFromHumanEvent(world, event, context.teamId)
-  return { world: trigger === undefined ? next : applyStaffConflictTrigger(next, trigger), reaction: computed.reaction }
+  const committed = trigger === undefined ? next : applyStaffConflictTrigger(next, trigger)
+  return { world: applyObservedStaffPersonalityEvidence(world, committed, [event]), reaction: computed.reaction }
 }
 
 interface ComputedReaction {
@@ -149,11 +151,12 @@ export function applyStaffHumanEventsBatch(world: GameWorld, events: readonly St
     ...(deduplicatedMemories.length === 0 ? {} : { memories: [...Object.values(world.memoriesById), ...deduplicatedMemories] }),
     ...(relationshipUpdates.size === 0 ? {} : { relationshipsByKey: { ...world.relationshipsByKey, ...Object.fromEntries(relationshipUpdates) } }),
   })
-  return events.reduce((current, event) => {
+  const processed = events.reduce((current, event) => {
     const context = current.staffHumanContextsById[event.contextId]
     const trigger = context === undefined ? undefined : staffConflictTriggerFromHumanEvent(current, event, context.teamId)
     return trigger === undefined ? current : applyStaffConflictTrigger(current, trigger)
   }, next)
+  return applyObservedStaffPersonalityEvidence(world, processed, events)
 }
 
 /** Mirrors `recordMemory`'s own dedupe rule (by id, and by owner+semanticKey) since the batch path bypasses `recordMemory` itself for performance. */
