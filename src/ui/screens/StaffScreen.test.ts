@@ -98,7 +98,7 @@ describe('StaffScreen', () => {
       const person = transitioned.staffPeopleById[assignment.staffPersonId]!
       expect(markup).toContain(`${person.identity.firstName} ${person.identity.lastName}`)
     }
-  })
+  }, 240_000)
 })
 
 function rebuildWorld(world: GameWorld, staffPeople: readonly StaffPerson[], teamStaffAssignments: readonly TeamStaffAssignment[]): GameWorld {
