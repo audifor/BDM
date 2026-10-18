@@ -2,3 +2,5 @@ export { queueOpeningDebtDecision, decideOpeningDebt, getPendingOpeningDebtDecis
 export type { OpeningDebtChoice, OpeningDebtDecisionResult } from './CoachLifeDecision'
 export { queueFirstStaffMeeting, decideFirstStaffMeeting, getPendingFirstStaffMeeting, firstStaffMeetingInboxId } from './StaffTrustMeeting'
 export type { StaffMeetingChoice, StaffMeetingDecisionResult, PendingStaffMeeting } from './StaffTrustMeeting'
+export { queueStaffRequestFollowUp, getPendingStaffRequestFollowUp, getPendingStaffRequestFollowUps, decideStaffRequestFollowUp, staffRequestFollowUpInboxId } from './StaffRequestFollowUp'
+export type { StaffRequestFollowUpChoice, StaffRequestFollowUpResult, PendingStaffRequestFollowUp } from './StaffRequestFollowUp'
