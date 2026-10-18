@@ -152,6 +152,21 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(world.boardStatesByTeamId[selection.teamId as never]).toBeDefined()
     expect(world.worldDbCompetitionRuntime?.competitionRuntimeBundle).not.toBeNull()
     expect(Object.values(world.coachJobOffersById).some(x => x.coachId === coach.id && x.status === 'accepted')).toBe(true)
+    const observedOffer = Object.values(world.coachJobOffersById).find(x => x.coachId === coach.id && x.status === 'accepted')!
+    const event = world.moraleByPersonId[coach.id]?.events.find(x => x.id === `morale:bs19c:contract-offer-accepted:${observedOffer.id}:${coach.id}`)
+    expect(event).toMatchObject({
+      personId: coach.id,
+      source: 'careerEvent',
+      delta: 12,
+      context: {
+        personalityEventKind: 'CONTRACT_OFFER_ACCEPTED',
+        offerId: observedOffer.id,
+        teamId: selection.teamId,
+        proof: 'coachCareer:acceptedJobOffer',
+      },
+    })
+    expect(world.personsById[coach.personId]?.dateOfBirth).toBeDefined()
+
     expect(Object.values(world.inboxItemsById).filter(x => x.coachId === coach.id && x.action?.type === 'coachJobOffer').every(x => x.status === 'archived')).toBe(true)
     expect(Object.values(world.staffContractsById).some(x => x.staffId === coach.staffProfileId && x.termination === undefined)).toBe(true)
   }, 120_000)
@@ -209,6 +224,12 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(restored.staffPeopleById[coach.staffProfileId].id).toBe(coach.staffProfileId)
     expect(restored.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
     expect(restored.coachRpgProfilesByCoachId[coach.id]?.creatorOrigin).toEqual({ background: 'inDebt', ambition: 'financialFreedom', biography: 'A fictional, self-created background.' })
+    const offer = Object.values(world.coachJobOffersById).find(x => x.coachId === coach.id && x.status === 'accepted')!
+    const eventId = `morale:bs19c:contract-offer-accepted:${offer.id}:${coach.id}`
+    expect(world.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId)).toHaveLength(1)
+    expect(restored.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId)).toEqual(world.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId))
+    // Without full PERSON50 the evidence remains visible, while no semantic score evolves.
+    expect(restored.personalitiesByPersonId[coach.id]).toEqual(world.personalitiesByPersonId[coach.id])
   }, 120_000)
 
   it('V2 differential: Medical review is a coherent required stop, with only the explicit fixture decision executed', async () => {
