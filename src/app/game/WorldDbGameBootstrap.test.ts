@@ -178,6 +178,38 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(queueFirstStaffMeeting(restored)).toBe(restored)
   }, 120_000)
 
+  it('BS19C imported staff missing DOB can attend a meeting without false PERSON50 evolution', () => {
+    const initial = worldWithAssistantCoach()
+    const assistant = Object.values(initial.teamStaffAssignmentsById).find(x => x.teamId === selection.teamId && x.role === 'assistantCoach')!
+    const started = appointCreatedUserCoachToWorldDbClub(initial, selection.teamId as never, {
+      firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25',
+      gender: 'female', background: 'rookie', disposition: 'balanced', coachingStyle: 'balanced',
+    })
+    const staffId = assistant.staffPersonId
+    const staff = started.staffPeopleById[staffId]!
+    const staffPerson = started.personsById[staff.personId!]!
+    const { dateOfBirth: _staffBirth, ...identityWithoutDob } = staff.identity
+    const { dateOfBirth: _personBirth, ...personWithoutDob } = staffPerson
+    const withoutDob = updateGameWorld(started, {
+      persons: Object.values(started.personsById).map(item => item.id === staffPerson.id ? personWithoutDob : item),
+      staffPeople: Object.values(started.staffPeopleById).map(item => item.id === staffId ? { ...item, identity: identityWithoutDob } : item),
+      personalitiesByPersonId: {
+        ...started.personalitiesByPersonId,
+        [staffId]: started.personalitiesByPersonId[started.userCoachId]!,
+      },
+    })
+    const applied = decideFirstStaffMeeting(withoutDob, staffId, 'seekInput')
+    expect(applied.status).toBe('APPLIED')
+    if (applied.status !== 'APPLIED') throw new Error('Meeting should remain available')
+    const eventId = `morale:bs19c:first-staff-meeting:${withoutDob.userCoachId}:${staffId}:assistant`
+    const actual = applied.world.moraleByPersonId[staffId]!.events.find(item => item.id === eventId)!
+    expect(actual).toBeDefined()
+    expect(actual.context).not.toHaveProperty('personalityEventKind')
+    expect(applied.world.personalityHistoryByPersonId[staffId]).toBeUndefined()
+    expect(applied.world.relationshipsByKey[relationshipKey(staffId, withoutDob.userCoachId)]).toBeDefined()
+    expect(applied.world.staffPeopleById[staffId]!.identity.dateOfBirth).toBeUndefined()
+  }, 120_000)
+
   it('BS19C directive first meeting can cause friction without rewriting staff identities; no invented staff without assignment', () => {
     const initial = worldWithAssistantCoach()
     const assistant = Object.values(initial.teamStaffAssignmentsById).find(x => x.teamId === selection.teamId && x.role === 'assistantCoach')!
