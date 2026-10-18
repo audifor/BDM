@@ -35,3 +35,24 @@ Integration branch: `integration/bs19-person50-bs18-main-gate-20261018`. No chan
 - PLAYER repertoire #140 requires pending external DB source gates; excluded here.
 
 This consolidation is a **reviewable draft branch** and not automatically equivalent to BS19 or BS18 global certification.
+
+## Main CI baseline (prior to this integration)
+
+`main` was already red at SHA `ceaa45529ce23c4e94bbc2cef17d9d0d987552b6`, GitHub Actions run [38172556246](https://github.com/audifor/BDM/actions/runs/38172556246) (2026-10-11). All four Vitest shards failed. Do **not** classify every failed existing test as a new HRPG regression.
+
+Examples grounded in the original GitHub job logs:
+- Many five-second timeouts in UI, daily simulation, staff politics, recruitment, season progression, Save/Load. This branch increases CI test/hook timeouts to 30 seconds and bounds workers per shard to 2; no assertions are muted.
+- `src/engine/match/MatchSession.test.ts`: difference in FIBA/NCAA game-format fixture.
+- `src/engine/match/rotation/MatchRotationRunner.test.ts`: player being substituted out was not active for team.
+- `src/presentation/match-next/audit/nextTruth.audit.test.ts`: observed shot-clock rule mismatch.
+- `src/engine/marketIntelligence/FreeAgentOfferIntelligence.test.ts`: expected actionable free-agent proposal fixture missing.
+- `src/engine/eligibility/CollegePortalTurnover.test.ts`: platform-specific `C:/Temp/...` fixture path unavailable on Linux.
+- `src/ui/desktop/DesktopAppHost.test.ts` and `src/ui-ng/applications/matchNextDebug/MatchNextDebugApp.test.tsx`: baseline UI expectations differ from actual rendered state.
+
+Any full-suite failure on the integration head requires **exact test + error + comparison to this baseline**. Absence of a failure from this short list is not proof of regression freedom. See raw logs for the remaining baseline issues.
+
+## Workflow configuration
+
+The inherited `.github/workflows/ci.yml` ran each shard with default five-second timeout and unbounded worker scheduling on shared runners. In the integration branch, each shard has at most two workers, 30-second test/hook timeouts, and 60-minute job limit. The additional integration gate executes a complete unsharded Vitest run with the same bounded worker options; it is intentionally redundant coverage, not evidence that prior baseline failures vanished.
+
+**Do not mark this gate PASS or merge `main` on the strength of the focused job alone.**
