@@ -1,0 +1,28 @@
+name: NCAA Successor Continuity CI
+on:
+  push:
+    branches: [fix/ci-ncaa-rollover-timeout-20261018]
+  pull_request:
+    branches: [main]
+    paths:
+      - src/engine/recruiting/NcaaRolloverContinuity.test.ts
+      - .github/workflows/ncaa-rollover-continuity-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ncaa-continuity:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Verify NCAA successor, recruiting, enrollment and Save V4
+        run: npm test -- --maxWorkers=2 --testTimeout=30000 --hookTimeout=30000 src/engine/recruiting/NcaaRolloverContinuity.test.ts
