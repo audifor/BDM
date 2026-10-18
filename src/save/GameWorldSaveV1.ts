@@ -1,3 +1,5 @@
+import { createPersonality } from '@/domain/personality'
+import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { createClinicalAuthorization, type ClinicalAuthorization } from '@/domain/staff/ClinicalAuthorization'
 import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from '@/domain/injury/EquippedRehabilitationAct'
 import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
@@ -698,7 +700,31 @@ function readRelationshipDimensions(value: unknown): import('@/domain/relationsh
 function readRelationships(value: unknown): Readonly<Record<string, RelationshipProfile>> { return Object.fromEntries(array(value, 'Save relationships').map((entry) => { const v = record(entry, 'Relationship'); const sourceId = string(v.sourceId, 'Relationship source person'); const targetId = string(v.targetId, 'Relationship target person'); return [`${sourceId}->${targetId}`, { sourceId, targetId, value: integer(v.value, 'Relationship value'), events: array(v.events, 'Relationship events').map(readRelationshipEvent), ...(v.dimensions === undefined ? {} : { dimensions: readRelationshipDimensions(v.dimensions) }) }] })) }
 function readRelationshipEvent(value: unknown) { const v = record(value, 'Relationship event'); const source = string(v.source, 'Relationship event source'); const dimensionDeltas = v.dimensionDeltas === undefined ? undefined : record(v.dimensionDeltas, 'Relationship event dimensionDeltas'); return { id: string(v.id, 'Relationship event id'), gameDate: parseGameDate(string(v.gameDate, 'Relationship event date')), source: ['careerEvent', 'teamDecision', 'playingTime', 'developmentEvent', 'professionalInteraction'].includes(source) ? source as RelationshipEventSource : fail('Relationship event source is invalid'), delta: integer(v.delta, 'Relationship event delta'), context: readRelationshipContext(record(v.context, 'Relationship event context')), ...(dimensionDeltas === undefined ? {} : { dimensionDeltas: Object.fromEntries(Object.entries(dimensionDeltas).filter(([key]) => (RELATIONSHIP_DIMENSION_KEY_LIST as readonly string[]).includes(key)).map(([key, delta]) => [key, integer(delta, `Relationship event dimensionDeltas.${key}`)])) }) } }
 function readRelationshipContext(context: JsonRecord): Readonly<Record<string, string | number | boolean>> { const result: Record<string, string | number | boolean> = {}; for (const [key, value] of Object.entries(context)) { if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') throw new TypeError(`Relationship event context ${key} is invalid`); if (typeof value === 'number' && !Number.isFinite(value)) throw new TypeError(`Relationship event context ${key} is invalid`); result[key] = value } return result }
-function readPersonalities(value: unknown) { return Object.fromEntries(array(value, 'Save personalities').map((entry) => { const v = record(entry, 'Personality'); const p = record(v.profile, 'Personality profile'); const values = record(p.values, 'Personality values'); return [string(v.coachId, 'Personality person'), { values: { ambition: integer(values.ambition, 'Personality ambition'), professionalism: integer(values.professionalism, 'Personality professionalism'), loyalty: integer(values.loyalty, 'Personality loyalty'), resilience: integer(values.resilience, 'Personality resilience'), temperament: integer(values.temperament, 'Personality temperament'), teamOrientation: integer(values.teamOrientation, 'Personality teamOrientation'), adaptability: values.adaptability === undefined ? 50 : integer(values.adaptability, 'Personality adaptability'), competitiveness: values.competitiveness === undefined ? 50 : integer(values.competitiveness, 'Personality competitiveness') } }] })) }
+function readPersonalities(value: unknown) {
+  return Object.fromEntries(array(value, 'Save personalities').map((entry) => {
+    const v = record(entry, 'Personality')
+    const p = record(v.profile, 'Personality profile')
+    const values = record(p.values, 'Personality values')
+    const runtime = {
+      ambition: integer(values.ambition, 'Personality ambition'),
+      professionalism: integer(values.professionalism, 'Personality professionalism'),
+      loyalty: integer(values.loyalty, 'Personality loyalty'),
+      resilience: integer(values.resilience, 'Personality resilience'),
+      temperament: integer(values.temperament, 'Personality temperament'),
+      teamOrientation: integer(values.teamOrientation, 'Personality teamOrientation'),
+      adaptability: values.adaptability === undefined ? 50 : integer(values.adaptability, 'Personality adaptability'),
+      competitiveness: values.competitiveness === undefined ? 50 : integer(values.competitiveness, 'Personality competitiveness'),
+    }
+    const extended = Object.keys(values).some((key) => !Object.hasOwn(runtime, key))
+    const semantic = extended
+      ? Object.fromEntries(SEMANTIC_PERSONALITY_DIMENSIONS.map((key) =>
+          [key, integer(values[key], `Personality ${key}`)]))
+      : undefined
+    return [string(v.coachId, 'Personality person'), createPersonality({
+      values: { ...runtime, ...(semantic ?? {}) },
+    })]
+  }))
+}
 function readMorale(value: unknown) { return Object.fromEntries(array(value, 'Save morale').map((entry) => { const v = record(entry, 'Morale'); const personId = string(v.personId, 'Morale person'); return [personId, { personId, value: integer(v.value, 'Morale value'), events: array(v.events, 'Morale events').map((item) => { const e = record(item, 'Morale event'); return { id: string(e.id, 'Morale event id'), personId: string(e.personId, 'Morale event person'), gameDate: parseGameDate(string(e.gameDate, 'Morale event date')), source: string(e.source, 'Morale event source') as import('@/domain/morale').MoraleEventSource, delta: integer(e.delta, 'Morale event delta'), context: readRelationshipContext(record(e.context, 'Morale event context')) } }) }] })) }
 function readInboxItems(value:unknown){return Object.fromEntries(array(value,'Save inbox').map(item=>{const v=record(item,'Inbox');const id=string(v.id,'Inbox id');const action=v.action===undefined?undefined:record(v.action,'Inbox action');return[id,{id,coachId:string(v.coachId,'Inbox coach'),gameDate:parseGameDate(string(v.gameDate,'Inbox date')),category:string(v.category,'Inbox category') as import('@/domain/inbox').InboxCategory,priority:string(v.priority,'Inbox priority') as import('@/domain/inbox').InboxPriority,title:string(v.title,'Inbox title'),body:string(v.body,'Inbox body'),status:string(v.status,'Inbox status') as import('@/domain/inbox').InboxItemStatus,...(action===undefined?{}:{action:{type:string(action.type,'Inbox action type') as 'coachJobOffer',entityId:string(action.entityId,'Inbox action entity')}}),context:readRelationshipContext(record(v.context,'Inbox context'))}]}))}
 function readNewsItems(value:unknown){return Object.fromEntries(array(value,'Save news').map(item=>{const v=record(item,'News');const id=string(v.id,'News id');return[id,{id,gameDate:parseGameDate(string(v.gameDate,'News date')),category:string(v.category,'News category') as import('@/domain/inbox').NewsCategory,headline:string(v.headline,'News headline'),body:string(v.body,'News body'),context:readRelationshipContext(record(v.context,'News context'))}]}))}

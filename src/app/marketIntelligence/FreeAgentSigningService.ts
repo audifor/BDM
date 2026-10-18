@@ -7,6 +7,7 @@ import type { ContractNegotiation } from '@/domain/market'
 import { getPlayerRosterTeamId, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import { resolveSigningExecutionAuthority } from '@/engine/market'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
+import { applyObservedPlayerSigning } from '@/app/contractRetention/ObservedPlayerContractSigning'
 
 export type FreeAgentSigningStatus =
   | 'SIGNED'
@@ -182,7 +183,8 @@ export function completeAcceptedFreeAgentSigning(
     return result('FINANCIAL_BLOCK', world, negotiation, 'CONTRACT_CAPACITY_AUTHORITY_UNAVAILABLE')
   }
   const planned = reviewClubManagementPlanning(changed, team.id, 'MATERIAL_ROSTER_CHANGE').world
-  return { status: 'SIGNED', world: planned, negotiation: signed, contractId: contract.id }
+  const withExperience = applyObservedPlayerSigning(planned, { kind: 'FREE_AGENT', negotiationId: negotiation.id, playerId: player.id, contractId: contract.id })
+  return { status: 'SIGNED', world: withExperience, negotiation: signed, contractId: contract.id }
 }
 
 /** Handles only the exact newly ACCEPTED AI negotiations supplied by the caller. */

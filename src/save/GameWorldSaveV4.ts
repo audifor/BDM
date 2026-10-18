@@ -87,6 +87,7 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
+import { validatePersonalityJournal, type PersonalityHistoryEntry } from '@/domain/personality/ObservedPersonalityEvolution'
 import { createPlayer } from '@/domain/player'
 import { createGovernanceDecisionEvent } from '@/domain/governance'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
@@ -223,6 +224,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly playerPathwayHistory?: readonly { readonly playerId: string; readonly pathwayHistory: readonly import('@/domain/player').PlayerPathwayRecord[] }[]
   /** Additive BS15I career-end records; absent in older V4 saves. */
   readonly playerCareerEnds?: readonly { readonly playerId: string; readonly endedOn: string; readonly reason: 'ageLimit' | 'manual' }[]
+  /** PERSON experiences use canonical BDM event IDs; absent in old V4 saves. */
+  readonly personalityHistory?: readonly PersonalityHistoryEntry[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -333,6 +336,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       teamPathwayRelations: Object.values(world.teamPathwayRelationsById),
       playerRegistrations: Object.values(world.playerRegistrationsById),
       playerCareerEnds: Object.values(world.players).flatMap((player) => player.careerEnd === undefined ? [] : [{ playerId: player.id, ...player.careerEnd }]),
+      personalityHistory: Object.entries(world.personalityHistoryByPersonId).sort(([a], [b]) => a.localeCompare(b)).flatMap(([, entries]) => [...entries]),
     }),
   })
 }
@@ -391,6 +395,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const talentCohorts = Object.prototype.hasOwnProperty.call(payload, 'talentCohorts') ? parseTalentCohorts(payload.talentCohorts) : []
   const talentMaterializations = Object.prototype.hasOwnProperty.call(payload, 'talentMaterializations') ? parseTalentMaterializations(payload.talentMaterializations) : []
   const playerCareerEnds = Object.prototype.hasOwnProperty.call(payload, 'playerCareerEnds') ? parsePlayerCareerEnds(payload.playerCareerEnds) : []
+  const personalityHistory = Object.prototype.hasOwnProperty.call(payload, 'personalityHistory') ? parsePersonalityHistoryV4(payload.personalityHistory) : []
   const teamPathwayRelations = Object.prototype.hasOwnProperty.call(payload, 'teamPathwayRelations') ? rawArray(payload.teamPathwayRelations, 'Save V4 team pathways').map((item) => createTeamPathwayRelation(record(item, 'Save V4 team pathway') as unknown as TeamPathwayRelation)) : []
   const playerRegistrations = Object.prototype.hasOwnProperty.call(payload, 'playerRegistrations') ? rawArray(payload.playerRegistrations, 'Save V4 player registrations').map((item) => createPlayerRegistration(record(item, 'Save V4 player registration') as unknown as PlayerRegistration)) : []
   const collegeRulesets = Object.prototype.hasOwnProperty.call(payload, 'collegeRulesets') ? rawArray(payload.collegeRulesets, 'Save V4 college rulesets').map((item) => createCollegeRuleset(record(item, 'Save V4 college ruleset') as unknown as CollegeRuleset)) : []
@@ -524,7 +529,49 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     const history = playerPathwayHistory.find((item) => item.playerId === player.id)?.pathwayHistory
     return history === undefined ? player : createPlayer({ ...player, pathwayHistory: history })
   }) })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPathwayHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  // No invented experiences on old V4 saves; each new journal entry MUST
+  // refer to a committed morale event already restored from the same payload.
+  const indexedHistory: Record<string, PersonalityHistoryEntry[]> = {}
+  for (const item of personalityHistory) {
+    const profile = withPathwayHistory.personalitiesByPersonId[item.personId]
+    const morale = withPathwayHistory.moraleByPersonId[item.personId]
+    if (profile === undefined || morale === undefined
+      || !morale.events.some((event) => event.id === item.sourceEventId && event.gameDate === item.occurredOn)) {
+      throw new TypeError('Save V4 personality history requires a committed matching event and PERSON profile')
+    }
+    ;(indexedHistory[item.personId] ??= []).push(item)
+  }
+  for (const [id, entries] of Object.entries(indexedHistory)) {
+    validatePersonalityJournal(entries, id, withPathwayHistory.currentDate)
+    const latestByDimension = new Map(entries.map((entry) => [entry.dimensionCode, entry.newValue]))
+    for (const [dimension, lastValue] of latestByDimension) {
+      const savedScore = (withPathwayHistory.personalitiesByPersonId[id]!.values as Readonly<Record<string, number>>)[dimension]
+      if (savedScore !== lastValue) {
+        throw new TypeError('Save V4 personality journal last value disagrees with canonical PERSON score')
+      }
+    }
+  }
+  const withHistory = personalityHistory.length === 0 ? withPathwayHistory
+    : updateGameWorld(withPathwayHistory, { personalityHistoryByPersonId: indexedHistory })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+}
+
+function parsePersonalityHistoryV4(value: unknown): readonly PersonalityHistoryEntry[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 personalityHistory must be an array')
+  return value.map((raw) => {
+    const entry = record(raw, 'Save V4 personality experience')
+    exactKeys(entry, [
+      'sourceEventId', 'personId', 'occurredOn', 'dimensionCode', 'previousValue', 'newValue',
+    ], 'Save V4 personality experience')
+    return {
+      sourceEventId: nonEmptyText(entry.sourceEventId, 'Personality source event'),
+      personId: nonEmptyText(entry.personId, 'Personality person id'),
+      occurredOn: parseGameDate(nonEmptyText(entry.occurredOn, 'Personality event date')),
+      dimensionCode: nonEmptyText(entry.dimensionCode, 'Personality dimension'),
+      previousValue: integer(entry.previousValue, 'Personality previous score'),
+      newValue: integer(entry.newValue, 'Personality new score'),
+    }
+  })
 }
 
 function parsePlayerCareerEnds(value: unknown): readonly { readonly playerId: string; readonly endedOn: string; readonly reason: 'ageLimit' | 'manual' }[] {
