@@ -139,10 +139,12 @@ describe('MX0.7 Board governance surface', () => {
     expect(selected).toHaveAttribute('data-selected', 'true')
     // The request that was not addressed by the deep link stays unselected.
     expect(screen.getByText(/addressed to you/)).not.toHaveAttribute('data-selected', 'true')
-    expect(screen.getByText(/read-only: no canonical response command exists yet/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Acknowledge request' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accept request' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Decline request' })).toBeInTheDocument()
   })
 
-  it('deep links a governance request and keeps it read-only', () => {
+  it('deep links an actionable governance request', () => {
     const scenario = createGovernanceClubScenario()
     const issued = withIssuedGovernanceRequest({ ...scenario, world: withProposedSigning(scenario) })
     mountBoard(issued.world, `&requestId=${encodeURIComponent(issued.requestId)}`)
@@ -150,6 +152,38 @@ describe('MX0.7 Board governance surface', () => {
     const request = screen.getByText(/addressed to you/).closest('li')!
     expect(request).toHaveAttribute('data-selected', 'true')
     expect(screen.getByText(/^Player signing · /).closest('article')!).not.toHaveAttribute('data-selected')
+  })
+
+  it('accepts a real user-addressed request and persists its canonical history', () => {
+    const scenario = createGovernanceClubScenario()
+    const issued = withIssuedGovernanceRequest(scenario)
+    mountBoard(issued.world)
+    openGovernanceTab()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept request' }))
+    const stored = useGameStore.getState().world!
+    expect(Object.values(stored.governanceRequestEventsById).filter((event) => event.requestId === issued.requestId && event.kind === 'ACCEPTED')).toHaveLength(1)
+    expect(screen.getByText(/Request accepted/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Accept request' })).toBeNull()
+    expect(screen.getByText(/fulfillment requires canonical evidence/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(screen.getByText('ACCEPTED')).toBeInTheDocument()
+  })
+
+  it('acknowledges then declines a request with no duplicate response action', () => {
+    const scenario = createGovernanceClubScenario()
+    const issued = withIssuedGovernanceRequest(scenario)
+    mountBoard(issued.world)
+    openGovernanceTab()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Acknowledge request' }))
+    expect(screen.getByText(/Request acknowledged/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Acknowledge request' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Decline request' }))
+    expect(screen.getByText(/Request declined/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Decline request' })).toBeNull()
+    expect(Object.values(useGameStore.getState().world!.governanceRequestEventsById).filter((event) => event.requestId === issued.requestId)).toHaveLength(3)
   })
 
   it('lists every recorded governance event in history', () => {
