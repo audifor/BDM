@@ -34,7 +34,7 @@ describe('Match Next debug surface', () => {
     // The shooting side may send 0–2 crashers based on the real live decision.
     // All ten players must still receive one coherent rebound/transition responsibility.
     const responsibilities = screen.getByText(/Attacker crash:/).textContent ?? ''
-    const roles = responsibilities.match(/Attacker crash: (\\d+) \\| Defender pursuit: (\\d+) \\| Box-out: (\\d+) \\| Transition safety: (\\d+)/)
+    const roles = responsibilities.match(/Attacker crash: (\d+) \| Defender pursuit: (\d+) \| Box-out: (\d+) \| Transition safety: (\d+)/)
     expect(roles, responsibilities).not.toBeNull()
     const [, crash, pursue, boxOut, safety] = roles!.map(Number)
     expect(pursue).toBe(2)
