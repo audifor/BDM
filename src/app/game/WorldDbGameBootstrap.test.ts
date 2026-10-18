@@ -198,6 +198,11 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(world.coachCareerHistoryByCoachId[coach.id]?.at(-1)?.kind).toBe('appointment')
     expect(world.staffCareerHistoryByStaffId[coach.staffProfileId]?.at(-1)?.kind).toBe('appointment')
     expect(world.coachFinancesByCoachId[coach.id]?.debts[0]?.principalRemaining).toBe(30_000)
+    expect(Object.keys(world.personalitiesByPersonId[coach.id]!.values)).toHaveLength(50)
+    expect(world.personalitiesByPersonId[coach.id]).toEqual(world.personalitiesByPersonId[coach.staffProfileId])
+    expect(Object.keys(initial.personalitiesByPersonId[oldCoach.id]!.values)).toHaveLength(8)
+    expect(world.personalitiesByPersonId[oldCoach.id]).toEqual(initial.personalitiesByPersonId[oldCoach.id])
+
     // BS19C: the same sourced WorldDB appointment exposes a causal personal dilemma
     // only because this fictional coach was explicitly created with starting debt.
     expect(Object.values(world.inboxItemsById).filter(item => item.context.lifeScenario === 'openingDebt')).toEqual([
@@ -227,8 +232,19 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const offer = Object.values(world.coachJobOffersById).find(x => x.coachId === coach.id && x.status === 'accepted')!
     const eventId = `morale:bs19c:contract-offer-accepted:${offer.id}:${coach.id}`
     expect(world.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId)).toHaveLength(1)
+    const observedJournal = world.personalityHistoryByPersonId[coach.id]
+    expect(observedJournal).toHaveLength(1)
+    expect(observedJournal![0]).toMatchObject({
+      sourceEventId: eventId,
+      dimensionCode: 'decisionPatience',
+      personId: coach.id,
+    })
+    expect(observedJournal![0]!.newValue).toBe(observedJournal![0]!.previousValue + 1)
+    expect(restored.personalityHistoryByPersonId[coach.id]).toEqual(observedJournal)
+    expect(restored.personalitiesByPersonId[coach.id]).toEqual(world.personalitiesByPersonId[coach.staffProfileId])
+
     expect(restored.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId)).toEqual(world.moraleByPersonId[coach.id]?.events.filter(x => x.id === eventId))
-    // Without full PERSON50 the evidence remains visible, while no semantic score evolves.
+    // PERSON50 is now active for the fictional user Coach; historical identities remain sourced.
     expect(restored.personalitiesByPersonId[coach.id]).toEqual(world.personalitiesByPersonId[coach.id])
   }, 120_000)
 
