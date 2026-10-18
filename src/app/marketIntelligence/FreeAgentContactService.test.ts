@@ -55,7 +55,7 @@ beforeAll(() => {
     clubStrategicStatesByTeamId: { ...reviewed.world.clubStrategicStatesByTeamId, [team.id]: { ...priorStrategy, mode: 'CONTEND', horizon: 'NOW', riskTolerance: 'HIGH', developmentEmphasis: 15, acquisitionAggression: 'HIGH' } },
   })
   const ready = assessRoutedFreeAgentOfferIntelligence(planWorld, team.id).find((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.contactReadiness === 'READY_TO_CONTACT' && offer.contactAuthority.authorityStatus === 'AUTHORIZED')
-  if (ready === undefined) throw new Error(`Expected a current routed and authorized free-agent approach fixture; plans=${JSON.stringify(Object.values(reviewed.world.gmPlanStatesById).filter((plan) => plan.teamId === team.id).map((plan) => ({ needId: plan.needId, option: plan.selectedOptionKind })))} offers=${JSON.stringify(assessRoutedFreeAgentOfferIntelligence(reviewed.world, team.id).map((offer) => ({ outcome: offer.outcome, blockers: offer.blockers, readiness: offer.contactReadiness, id: offer.sourceProposalId })))}`)
+  if (ready === undefined) throw new Error(`Expected a current routed and authorized free-agent approach fixture; plans=${JSON.stringify(Object.values(reviewed.world.gmPlanStatesById).filter((plan) => plan.teamId === team.id).map((plan) => ({ needId: plan.needId, option: plan.selectedOptionKind })))} offers=${JSON.stringify(assessRoutedFreeAgentOfferIntelligence(planWorld, team.id).map((offer) => ({ outcome: offer.outcome, blockers: offer.blockers, readiness: offer.contactReadiness, id: offer.sourceProposalId })))}`)
   plannedWorld = planWorld
   teamId = team.id
   proposalId = ready.sourceProposalId
