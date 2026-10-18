@@ -1081,6 +1081,7 @@ describe('MatchSession', () => {
       madeBasketSubstitutionEligibleTeam: 'both',
       clockStopReasons: ['outOfBounds', 'other', 'shotClockViolation'],
       substitutionOpportunityReasons: ['outOfBounds', 'other', 'shotClockViolation'],
+      foulRules: { personalFoulLimit: 5, teamFoulOneAndOneFrom: 7, teamFoulPenaltyFrom: 10 },
       clockRestartOnInbound: 'receive',
     })
     expect(session.state.clockSecondsRemaining).toBe(1200)

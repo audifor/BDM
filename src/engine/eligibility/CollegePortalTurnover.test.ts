@@ -1,4 +1,6 @@
 import { writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { updateGameWorld } from '@/domain/world'
@@ -59,6 +61,6 @@ it('completes an AI Portal route at default thresholds with canonically exhauste
   const restored = deserializeGameWorldV4(saved)
   expect(runCollegeRosterContinuationAndTransferAI(restored, cycle.id)).toBe(restored)
   expect(restored.transferPortalEntriesById[entry!.id]!.movement).toEqual(entry!.movement)
-  writeFileSync('C:/Temp/BS15I-pathway-portal-completed-save-v4.json', JSON.stringify(saved))
+  writeFileSync(join(tmpdir(), 'BS15I-pathway-portal-completed-save-v4.json'), JSON.stringify(saved))
   process.stdout.write(`[BS15I AI Portal] ${JSON.stringify({ playerId, personId, sourceId, destinationId: entry!.destinationTeamId, entryId: entry!.id, completedOn: entry!.movement!.transferredOn, commitmentThreshold: cycle.rules.commitmentThreshold })}\n`)
 }, 60_000)

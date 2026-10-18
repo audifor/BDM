@@ -1,33 +1,26 @@
 import { describe, expect, it } from 'vitest'
 
-import { createMatchRandomSources, createNewGame, prepareMatch } from '@/app/game'
+import { createNewGame, prepareMatch } from '@/app/game'
+import { prepareMatchOptions } from '@/app/game/playUserGame'
 import { getGamesToday } from '@/engine/calendar'
-import { calculateTeamStrength, selectStartingFive } from '@/engine/team'
-
-import { calculateFatigueAtEvents, createMatchPlayerProfile } from '../index'
+import { calculateFatigueAtEvents } from '../index'
 import { simulateMatchDetailed, type MatchEvent } from '../MatchEngine'
 
 describe('automatic match rotation runner', () => {
   it('adds substitutions while preserving the sporting sequence and final score', () => {
     const world = createNewGame()
     const game = getGamesToday(world)[0]!
-    const lineups = { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) }
-    const withoutRotations = simulateMatchDetailed({
-      world,
-      gameId: game.id,
-      homeStrength: calculateTeamStrength(world, game.homeTeamId),
-      awayStrength: calculateTeamStrength(world, game.awayTeamId),
-      lineups,
-      squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
-      playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
-      ...createMatchRandomSources(12345),
-    })
+    // The coaching selector may choose a different starting five than the legacy
+    // team-strength selector. Replay fatigue from the actual match lineup, not a
+    // different five that was never active in the simulated match.
+    const prepared = prepareMatchOptions(world, game, undefined, 12345)
+    const { lineups, squads } = prepared
+    const withoutRotations = simulateMatchDetailed(prepared)
     const withRotations = prepareMatch(world, game, undefined, 12345)
 
     expect(withRotations.events.filter((event) => event.type === 'substitution').length).toBeGreaterThan(0)
     expect(withRotations.finalScore.home).toBeGreaterThanOrEqual(0)
     expect(withRotations.finalScore.away).toBeGreaterThanOrEqual(0)
-    const squads = { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
     const rotatedFatigue = calculateFatigueAtEvents(lineups, squads, game.homeTeamId, game.awayTeamId, withRotations.events)
     const uninterruptedFatigue = calculateFatigueAtEvents(lineups, squads, game.homeTeamId, game.awayTeamId, withoutRotations.events)
     expect(Object.values(rotatedFatigue).every((value) => Number.isFinite(value) && value >= 0 && value <= 100)).toBe(true)

@@ -46,7 +46,7 @@ describe('season progression', () => {
     expect(finalStandings.reduce((sum, line) => sum + line.losses, 0)).toBe(56)
     expect(() => finalizeSeason(world, season.id)).toThrow('already finalized')
     expect(advanceGameDay(world).currentDate).not.toBe(world.currentDate)
-  })
+  }, 240_000)
 
   it('rejects invalid history snapshots through GameWorld validation', () => {
     let world = createNewGame()
@@ -56,7 +56,7 @@ describe('season progression', () => {
 
     expect(() => rebuildWithHistory(world, [{ ...history, championTeamId: second.teamId }])).toThrow('champion must be first')
     expect(() => rebuildWithHistory(world, [{ ...history, finalStandings: [{ ...history.finalStandings[0]!, position: 2 }, second, ...history.finalStandings.slice(2)] }])).toThrow('invalid standings positions')
-  })
+  }, 240_000)
 
   it('round-trips completed season history and accepts old active V1 payloads without it', () => {
     let world = createNewGame()

@@ -198,7 +198,8 @@ describe('LiveMatchController', () => {
 
   it('updates the runtime active five and the next gameplay step after substitution', () => {
     const world = createNewGame()
-    const controller = createLiveUserMatch(world)
+    // An explicit seed makes the opening sporting sequence reproducible in CI.
+    const controller = createLiveUserMatch(world, undefined, 424242)
     const userTeam = getUserTeam(world)!
     const side = userTeam.id === controller.snapshot().homeTeamId ? 'home' : 'away'
     const activeBefore = controller.activeLineups[side]
@@ -216,11 +217,13 @@ describe('LiveMatchController', () => {
 
     let afterStep = updated
     let gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
-    for (let step = 0; gameplayEvent === undefined && step < 3; step += 1) {
+    // One match step can be a setup/movement tick rather than a player event.
+    // Observe the first actual player event, keeping a bounded guard against a stalled engine.
+    for (let step = 0; gameplayEvent === undefined && step < 80 && !controller.isComplete; step += 1) {
       afterStep = controller.advanceOneStep()
       gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
     }
-    expect(gameplayEvent).toBeDefined()
+    expect(gameplayEvent, 'A player event must occur after substitution; no gameplay event in 80 steps').toBeDefined()
     if (gameplayEvent !== undefined && 'teamId' in gameplayEvent && 'playerId' in gameplayEvent) {
       const eventLineup = gameplayEvent.teamId === controller.snapshot().homeTeamId ? controller.activeLineups.home : controller.activeLineups.away
       expect(eventLineup).toContain(gameplayEvent.playerId)

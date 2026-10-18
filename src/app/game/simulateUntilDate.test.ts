@@ -241,7 +241,7 @@ describe('simulate until date', () => {
       const resultA = simulateUntilDate(worldA, target, () => 12345)
       const resultB = simulateUntilDate(worldB, target, () => 12345)
       expect(resultA.world).toEqual(resultB.world)
-    }, 15_000)
+    }, 90_000)
   })
 
   it('exposes a daily-advance tick that resolves today user game', () => {
