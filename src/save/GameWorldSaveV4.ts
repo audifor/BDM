@@ -1,4 +1,5 @@
 import { createInjury } from '@/domain/injury'
+import { EMPTY_HUMAN_SIMULATION, readHumanSimulation, type HumanSimulationState } from '@/domain/hrpg/HumanSimulation'
 import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from '@/domain/injury/EquippedRehabilitationAct'
 import type { RehabilitationEquipmentEvidence } from '@/domain/facilities/RehabilitationEquipmentEvidence'
 import { validateGameWorld } from '@/domain/world'
@@ -121,6 +122,7 @@ export interface WorldAnnualDevelopmentCycleSaveV4 {
 
 /** Save V4 persists the minimal World DB competition runtime projection. */
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
+  readonly humanSimulation?: HumanSimulationState
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
   /** Minimal accepted club intent and review memory; assessment projections remain derived. */
@@ -337,6 +339,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       playerRegistrations: Object.values(world.playerRegistrationsById),
       playerCareerEnds: Object.values(world.players).flatMap((player) => player.careerEnd === undefined ? [] : [{ playerId: player.id, ...player.careerEnd }]),
       personalityHistory: Object.entries(world.personalityHistoryByPersonId).sort(([a], [b]) => a.localeCompare(b)).flatMap(([, entries]) => [...entries]),
+      humanSimulation: world.humanSimulation,
     }),
   })
 }
@@ -553,7 +556,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   }
   const withHistory = personalityHistory.length === 0 ? withPathwayHistory
     : updateGameWorld(withPathwayHistory, { personalityHistoryByPersonId: indexedHistory })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withHistory, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withHumans = updateGameWorld(withHistory, { humanSimulation: payload.humanSimulation === undefined ? EMPTY_HUMAN_SIMULATION : readHumanSimulation(payload.humanSimulation) })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withHumans, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 function parsePersonalityHistoryV4(value: unknown): readonly PersonalityHistoryEntry[] {

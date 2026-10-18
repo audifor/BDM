@@ -1,13 +1,31 @@
 import { createMemory, type MemoryRecord } from '@/domain/memory'
-import { applyRelationshipEventToWorld, updateGameWorld, type GameWorld } from '@/domain/world'
+import { addMemoriesToGameWorld, applyRelationshipEventToWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { Personality } from '@/domain/personality'
 
 
 export function recordMemory(world: GameWorld, memory: MemoryRecord): GameWorld {
-  const created = createMemory(memory)
-  if (world.memoriesById[created.id] !== undefined || Object.values(world.memoriesById).some((item) => item.owner.id === created.owner.id && item.semanticKey === created.semanticKey)) return world
-  let next = updateGameWorld(world, { memories: [...Object.values(world.memoriesById), created] })
-  if (created.relationshipImpact !== undefined && isPerson(next, created.owner.id) && isPerson(next, created.relationshipImpact.targetPersonId)) next = applyRelationshipEventToWorld(next, created.owner.id, created.relationshipImpact.targetPersonId, { id: `memory:${created.id}`, gameDate: created.occurredOn, source: 'professionalInteraction', delta: created.relationshipImpact.delta, context: { memoryId: created.id, memoryType: created.type } })
+  return recordMemories(world, [memory])
+}
+
+/** One semantic-index pass and one canonical merge for a human simulation wave.
+ * The single-record API uses this same authority and keeps its original contract. */
+export function recordMemories(world: GameWorld, memories: readonly MemoryRecord[]): GameWorld {
+  if (!memories.length) return world
+  const candidates = memories.map(createMemory).filter(memory => world.memoriesById[memory.id] === undefined)
+  if (!candidates.length) return world
+  const key = (memory: MemoryRecord) => JSON.stringify([memory.owner.id, memory.semanticKey])
+  const seen = new Set(Object.values(world.memoriesById).map(key))
+  const ids = new Set<string>()
+  const additions: MemoryRecord[] = []
+  for (const created of candidates) {
+    if (ids.has(created.id) || seen.has(key(created))) continue
+    ids.add(created.id)
+    seen.add(key(created))
+    additions.push(created)
+  }
+  if (!additions.length) return world
+  let next = addMemoriesToGameWorld(world, additions)
+  for (const created of additions) if (created.relationshipImpact !== undefined && isPerson(next, created.owner.id) && isPerson(next, created.relationshipImpact.targetPersonId)) next = applyRelationshipEventToWorld(next, created.owner.id, created.relationshipImpact.targetPersonId, { id: `memory:${created.id}`, gameDate: created.occurredOn, source: 'professionalInteraction', delta: created.relationshipImpact.delta, context: { memoryId: created.id, memoryType: created.type } })
   return next
 }
 /** Personality adjusts an observer's interpretation, never the underlying event. */

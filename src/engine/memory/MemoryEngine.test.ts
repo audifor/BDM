@@ -2,10 +2,22 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getCurrentlyRelevantMemoriesForEntity, getMemoriesBetweenEntities, getMemoryReinforcementForEntities, getRecentMemoriesForEntity } from '@/domain/world'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
-import { decayMemoriesForMonth, recordMemory } from './MemoryEngine'
+import { decayMemoriesForMonth, recordMemories, recordMemory } from './MemoryEngine'
 
 describe('Memory system', () => {
   const baseMemory = (world: ReturnType<typeof createNewGame>, id: string, valence: number, permanent = false) => ({ id, owner: { kind: 'coach' as const, id: world.userCoachId }, type: 'opportunity' as const, occurredOn: world.currentDate, entityRefs: [{ kind: 'team' as const, id: Object.values(world.teams)[0]!.id }], semanticKey: 'first-opportunity', importance: permanent ? 'historic' as const : 'important' as const, valence, intensity: 80, decayPerMonth: 5, permanent, tags: ['career'], context: {} })
+  it('records a batch with observer-semantic deduplication and each relationship impact exactly once', () => {
+    const world = createNewGame()
+    const playerId = Object.values(world.players)[0]!.id
+    const first = { ...baseMemory(world, 'memory:batch:one', 20), semanticKey: 'batch:one', relationshipImpact: { targetPersonId: playerId, delta: 4 } }
+    const second = { ...first, id: 'memory:batch:two', semanticKey: 'batch:two' }
+    const inputs = [first, { ...first, id: 'memory:batch:duplicate' }, second, second]
+    const recorded = recordMemories(world, inputs)
+    expect(Object.keys(recorded.memoriesById)).toHaveLength(2)
+    expect(recorded.relationshipsByKey[`${world.userCoachId}->${playerId}`]?.events).toHaveLength(2)
+    expect(recordMemories(recorded, inputs)).toBe(recorded)
+    expect(recordMemory(recorded, { ...first, id: 'memory:batch:later-duplicate' })).toBe(recorded)
+  })
   it('keeps distinct perspectives while deduplicating one observer semantic event', () => { const world = createNewGame(); const playerId = Object.values(world.players)[0]!.id; const coach = recordMemory(world, baseMemory(world, 'memory:coach', 70)); const player = recordMemory(coach, { ...baseMemory(world, 'memory:player', -70), owner: { kind: 'player', id: playerId } }); const duplicate = recordMemory(player, baseMemory(world, 'memory:duplicate', 70)); expect(Object.keys(player.memoriesById)).toHaveLength(2); expect(duplicate).toEqual(player); expect([...Object.values(player.memoriesById).map((item) => item.valence)].sort()).toEqual([-70, 70]) })
   it('decays ordinary memories once per month but preserves permanent history', () => { const world = createNewGame(); const remembered = recordMemory(recordMemory(world, baseMemory(world, 'memory:ordinary', -20)), { ...baseMemory(world, 'memory:historic', 100, true), semanticKey: 'championship' }); const decayed = decayMemoriesForMonth(remembered); expect(decayed.memoriesById['memory:ordinary']!.intensity).toBe(75); expect(decayed.memoriesById['memory:historic']!.intensity).toBe(80); expect(decayMemoriesForMonth(decayed)).toEqual(decayed) })
   it('round-trips memory history and supplies empty defaults to legacy saves', () => { const world = recordMemory(createNewGame(), baseMemory(createNewGame(), 'memory:round-trip', 30)); const saved = serializeGameWorldV1(world, '2032-10-01T00:00:00.000Z'); expect(deserializeGameWorldV1(saved).memoriesById).toEqual(world.memoriesById); const legacy = { ...saved, payload: { ...saved.payload } }; delete (legacy.payload as { memories?: unknown }).memories; expect(deserializeGameWorldV1(legacy).memoriesById).toEqual({}) })

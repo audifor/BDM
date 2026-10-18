@@ -24,6 +24,7 @@ import { ensureAiAcceptedPlayerContractSigningDecisions, type PlayerContractSign
 import { executeAcceptedRetentionAgreement, type RetentionSigningResult } from '@/app/contractRetention/RetentionSigningService'
 import { progressStaffPromises } from '@/app/coachLife/StaffProfessionalCommitment'
 import { queueVerifiedPlayerTrainingFeedback } from '@/app/coachLife/PlayerTrainingFeedback'
+import { initializeHumanSimulation, synchronizeHumanSimulationWithResult } from '@/app/hrpg/HumanSimulationService'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -349,6 +350,17 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     const beforeMedia = current
     current = userGame === undefined ? current : createPreMatchMediaOpportunity(current, userGame.id)
     phases.push({ phaseId: 'PRE_MATCH_MEDIA', order: phases.length + 1, date: current.currentDate, ran: userGame !== undefined, worldChanged: current !== beforeMedia, diagnostics: [], summary: userGame === undefined ? 'No user match today; no pre-match media opportunity was created.' : `Applied the existing pre-match media lifecycle for game ${userGame.id}.`, elapsedMs: Math.round((performance.now() - mediaStart) * 100) / 100 })
+
+    // Consume the completed transition, including late signing/governance/repair
+    // facts. Running before those authorities would permanently miss their events.
+    activePhaseId = 'HUMAN_SIMULATION'
+    const beforeHumans = current
+    const humans = synchronizeHumanSimulationWithResult(world, initializeHumanSimulation(current))
+    current = humans.world
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: true, worldChanged: current !== beforeHumans,
+      diagnostics: humans.suppressed ? [{ code: 'HRPG_ADMISSION_LIMIT', message: `${humans.suppressed} situation candidates suppressed by configured capacity limits; canonical source facts remain intact.` }] : [],
+      summary: `Examined ${humans.examined} source references; admitted ${humans.admitted} human situations and processed autonomous responses.` })
 
     activePhaseId = 'BREAKPOINT_EVALUATION'
     const afterStart = performance.now()

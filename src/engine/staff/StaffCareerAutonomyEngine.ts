@@ -5,6 +5,26 @@ import type { StaffJobOffer, StaffJobOpening } from '@/domain/staffCareer'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition } from '@/domain/staff'
 import type { StaffPersonId } from '@/domain/ids'
 import { getRelationshipDimensions } from '@/domain/relationships'
+import type { HumanSituation } from '@/domain/hrpg/HumanSimulation'
+import { inspectHumanContext, type HumanAction } from '@/engine/hrpg/HumanSimulationEngine'
+
+/** Shared human-response entry point. Professional offers, requests and resignations
+ * retain their existing authority below; social context never executes a career move.
+ */
+export function chooseStaffHumanResponse(world: GameWorld, situation: HumanSituation, actions: readonly HumanAction[]): string | undefined {
+  const context = inspectHumanContext(world, situation)
+  const values = context.personality?.values
+  const p = (key: 'teamOrientation' | 'communication' | 'loyalty') => (values as Readonly<Record<string, number>> | undefined)?.[key] ?? 50
+  const stress = context.staffHumanState?.stress ?? 0
+  const motive = (context.staffHumanState?.recognitionSatisfaction ?? 50) - 50
+  const rememberedSupport = context.memories.reduce((sum, memory) => sum + memory.valence * memory.intensity / 100, 0)
+  const social = p('teamOrientation') + p('communication') * 0.25 + p('loyalty') * 0.2
+    + context.relationship.trust * 0.2 + Math.max(-15, Math.min(15, rememberedSupport / 10))
+    + (context.compatibility?.personalAffinity ?? 50) * 0.1 - stress * 0.4
+    - (100 - (context.staffHumanState?.autonomySatisfaction ?? 50)) * 0.2 + motive * 0.1
+  if (social >= 50 && actions.some(a => a.effect === 'discuss')) return actions.find(a => a.effect === 'discuss')!.id
+  return actions.find(a => a.effect === 'reflect')?.id ?? actions.find(a => a.effect === 'ignore')?.id
+}
 
 export const STAFF_CAREER_AUTONOMY_TUNING = {
   adaptation: 0.28,

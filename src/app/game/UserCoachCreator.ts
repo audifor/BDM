@@ -9,6 +9,7 @@ import type { CountryId } from '@/domain/ids'
 import type { Gender } from '@/domain/primitives'
 import { queueOpeningDebtDecision } from '@/app/coachLife/CoachLifeDecision'
 import { queueFirstStaffMeeting } from '@/app/coachLife/StaffTrustMeeting'
+import { initializeHumanSimulation } from '@/app/hrpg/HumanSimulationService'
 import { generateCreatedCoachPerson50 } from './UserCoachSemanticPersonality'
 
 /** BS19B P0. Edits only the selected manager's canonical Person/StaffProfile.
@@ -142,5 +143,5 @@ export function applyUserCoachCreation(world: GameWorld, input: UserCoachCreatio
       }),
     } })
   }
-  return queueFirstStaffMeeting(queueOpeningDebtDecision(next, coach.id))
+  return initializeHumanSimulation(queueFirstStaffMeeting(queueOpeningDebtDecision(next, coach.id)))
 }
