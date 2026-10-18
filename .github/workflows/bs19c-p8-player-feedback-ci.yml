@@ -1,0 +1,30 @@
+name: BS19C P8 Coach Player Feedback
+
+on:
+  push:
+    branches:
+      - feat/bs19c-p8-player-feedback-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  player-feedback:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Coach player training feedback and career day
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/coachLife/PlayerTrainingFeedback.test.ts src/engine/training/TrainingStaffExecution.test.ts
+      - name: Coach Life regression and semantic PERSON50
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/coachLife/StaffPoliticalLobby.test.ts src/app/coachLife/StaffProfessionalCommitment.test.ts src/domain/personality/ObservedPersonalityEvolution.test.ts
+      - name: Coach creation and WorldDB
+        run: npm test -- --testTimeout=30000 --maxWorkers=2 src/app/game/UserCoachCreator.test.ts src/app/game/WorldDbGameBootstrap.test.ts -t 'BS19B|BS19C|created Coach'

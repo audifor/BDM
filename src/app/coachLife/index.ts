@@ -8,3 +8,5 @@ export { promiseStaffCareerRequest, getStaffPromise, getActiveStaffPromises, pos
 export type { StaffPromiseOutcome, StaffPromiseResult, ActiveStaffPromise } from './StaffProfessionalCommitment'
 export { queueVerifiedStaffLobbies, decideStaffPoliticalLobby, getPendingStaffPoliticalLobby, getPendingStaffPoliticalLobbies, politicalLobbyInboxId } from './StaffPoliticalLobby'
 export type { StaffLobbyChoice, StaffLobbyDecision, PendingStaffLobby } from './StaffPoliticalLobby'
+export { queueVerifiedPlayerTrainingFeedback, decidePlayerTrainingFeedback, getPendingPlayerTrainingFeedback, playerFeedbackInboxId } from './PlayerTrainingFeedback'
+export type { PlayerFeedbackChoice, PlayerFeedbackResult, PendingPlayerTrainingFeedback } from './PlayerTrainingFeedback'
