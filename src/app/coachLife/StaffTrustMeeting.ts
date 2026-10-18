@@ -1,4 +1,5 @@
 import type { CoachId, StaffPersonId, TeamId } from '@/domain/ids'
+import { addYears } from '@/domain/date'
 import { addInboxItem, applyMoraleEventToWorld, applyRelationshipEventsToWorld, archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { recordMemory } from '@/engine/memory/MemoryEngine'
 
@@ -131,10 +132,18 @@ export function decideFirstStaffMeeting(world: GameWorld, staffId: StaffPersonId
     source: 'professionalInteraction', delta: consult ? 6 : 2,
     context: { personalityEventKind: 'TEAM_MEETING', sourceInboxId: pending.inboxId, choice, staffId },
   })
+  // Source-backed historical STAFF may lack a DOB. PERSON23I requires adult-age
+  // evidence before evolving 50 dimensions; an observed meeting must not crash
+  // or invent the missing birth date. Morale still records the genuine meeting.
+  const staff = eligible.staff
+  const birthDate = (staff.personId === undefined ? undefined : next.personsById[staff.personId]?.dateOfBirth)
+    ?? staff.identity.dateOfBirth
+  const ageValidated = birthDate !== undefined && addYears(birthDate, 15) <= world.currentDate
   next = applyMoraleEventToWorld(next, {
     id: `morale:${sourceId}:assistant`, personId: staffId, gameDate: world.currentDate,
     source: 'professionalInteraction', delta: consult ? 8 : -6,
-    context: { personalityEventKind: 'TEAM_MEETING', sourceInboxId: pending.inboxId, choice, coachId },
+    context: { ...(ageValidated ? { personalityEventKind: 'TEAM_MEETING' } : {}),
+      sourceInboxId: pending.inboxId, choice, coachId },
   })
   const coach = next.coaches[coachId]!
   if (next.personalitiesByPersonId[coachId] !== undefined) {
