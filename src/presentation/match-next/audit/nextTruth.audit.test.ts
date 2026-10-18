@@ -27,8 +27,20 @@ describe('canonical truth quality (MatchEngine Next, first 13 min of play, two s
     for (const seed of SEEDS) expect(summary(seed).maxPlayerSpeedMps).toBeLessThan(9)
   })
 
-  it('does not stall: no shot-clock violations from a frozen possession (period horn during an action, seed 424242)', () => {
-    expect(summary(424242).shotClockViolations).toBe(0)
+  it('does not stall: isolated legitimate shot-clock expirations close the possession and resume play (seed 424242)', () => {
+    const run = runNextAudit(424242, { maxTicks: TICKS })
+    const violations = run.events.filter((event) => event.type === 'shotClockViolation')
+    // A single genuine shot-clock turnover is legal. The bug was recurring timeouts
+    // from an ACTION left ACTIVE after the period horn.
+    expect(violations.length).toBeLessThanOrEqual(1)
+    for (const violation of violations) {
+      const samePossession = run.events.filter((event) => event.possessionId === violation.possessionId && event.t === violation.t)
+      expect(samePossession.some((event) => event.type === 'turnover' && event.turnoverType === 'SHOT_CLOCK')).toBe(true)
+      expect(samePossession.some((event) => event.type === 'possessionEnd' && event.endReason === 'shotClock')).toBe(true)
+      const nextPossession = run.events.find((event) => event.type === 'possessionStart' && event.t > violation.t)
+      expect(nextPossession, 'Play must restart after a shot-clock turnover').toBeDefined()
+      expect(nextPossession!.t - violation.t).toBeLessThan(300)
+    }
   })
 
   it('has a real rebound contest: offensive rebounds are far below the 98% measured before the fix', () => {

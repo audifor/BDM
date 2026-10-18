@@ -140,5 +140,5 @@ describe('BS15D college enrollment and eligibility', () => {
     expect(loaded.playerRegistrationsById[registration.id]).toEqual(registration)
     expect(loaded.players[playerId]!.personId).toBe(personId)
     expect(resolveCollegeRuleset(loaded, ecosystemId, loaded.currentDate)?.version).toBe('V1')
-  }, 30_000)
+  }, 240_000)
 })

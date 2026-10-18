@@ -8,7 +8,7 @@ import { createGMPlanState } from '@/domain/gmPlanning'
 import { addDays } from '@/domain/date'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning/GMPlanningLifecycleService'
 import { assessRoutedFreeAgentOfferIntelligence } from './FreeAgentOfferIntelligenceService'
@@ -31,11 +31,12 @@ beforeAll(() => {
   const assignment = Object.values(released.teamStaffAssignmentsById).find((item) => item.teamId === team.id && ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'].includes(item.role))!
   const operatorId = assignment?.staffPersonId ?? staffPersonIdFromString('bs10d-b:contact-operator')
   const contactResponsibilityId = `responsibility:${team.id}:initiateNegotiationContact`
-  const financed = authorizeTeamSalaryForTest(
+  // Provide spendable ledger liquidity through the canonical financing authority as well as salary authorization.
+  const financed = financingDrawdownForTest(authorizeTeamSalaryForTest(
     fundTeamWithOpeningCapital(released, team.id, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
     team.id,
     { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
-  )
+  ), team.id, 10_000_000_000, 'free-agent-market-fixture')
   const shortRoster = updateGameWorld(financed, {
     teams: Object.values(released.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.slice(0, 5) } : item),
     marketKnowledge: [...released.marketKnowledge, ...source.rosterPlayerIds.slice(0, 3).map((playerId) => ({ organizationId: team.organizationId, playerId, availability: 'OPEN' as const, expectedSalary: 650_000, expectedYears: 2, playerInterest: 60, confidence: 75, assessedAt: released.currentDate, source: 'AGENT' as const }))],
@@ -55,7 +56,7 @@ beforeAll(() => {
     clubStrategicStatesByTeamId: { ...reviewed.world.clubStrategicStatesByTeamId, [team.id]: { ...priorStrategy, mode: 'CONTEND', horizon: 'NOW', riskTolerance: 'HIGH', developmentEmphasis: 15, acquisitionAggression: 'HIGH' } },
   })
   const ready = assessRoutedFreeAgentOfferIntelligence(planWorld, team.id).find((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.contactReadiness === 'READY_TO_CONTACT' && offer.contactAuthority.authorityStatus === 'AUTHORIZED')
-  if (ready === undefined) throw new Error(`Expected a current routed and authorized free-agent approach fixture; plans=${JSON.stringify(Object.values(reviewed.world.gmPlanStatesById).filter((plan) => plan.teamId === team.id).map((plan) => ({ needId: plan.needId, option: plan.selectedOptionKind })))} offers=${JSON.stringify(assessRoutedFreeAgentOfferIntelligence(reviewed.world, team.id).map((offer) => ({ outcome: offer.outcome, blockers: offer.blockers, readiness: offer.contactReadiness, id: offer.sourceProposalId })))}`)
+  if (ready === undefined) throw new Error(`Expected a current routed and authorized free-agent approach fixture; plans=${JSON.stringify(Object.values(reviewed.world.gmPlanStatesById).filter((plan) => plan.teamId === team.id).map((plan) => ({ needId: plan.needId, option: plan.selectedOptionKind })))} offers=${JSON.stringify(assessRoutedFreeAgentOfferIntelligence(planWorld, team.id).map((offer) => ({ outcome: offer.outcome, blockers: offer.blockers, readiness: offer.contactReadiness, id: offer.sourceProposalId })))}`)
   plannedWorld = planWorld
   teamId = team.id
   proposalId = ready.sourceProposalId

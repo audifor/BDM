@@ -49,7 +49,8 @@ describe('DesktopAppHost', () => {
     const mentoring = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'mentoring', world, actions }))
     expect(roster).toContain('Buscar jugador')
     expect(roster).not.toContain('Análisis + Dinámicas')
-    expect(analysis).toContain('Depth Chart')
+    expect(analysis).toContain('Club strategy and needs')
+    expect(analysis).toContain('Top needs')
     expect(mentoring).toContain('Mentoring')
   })
 

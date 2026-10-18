@@ -1,0 +1,44 @@
+name: BDM CI Repair Focal
+on:
+  push:
+    branches: [fix/global-ci-baseline-20261018]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  market:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Canonical Finance free-agent fixtures
+        run: npm test -- --testTimeout=45000 --hookTimeout=45000 --maxWorkers=1 src/engine/marketIntelligence/FreeAgentOfferIntelligence.test.ts src/app/marketIntelligence/FreeAgentContactService.test.ts
+  match-and-season:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Match rotations season end UI and live game
+        run: npm test -- --testTimeout=90000 --hookTimeout=90000 --maxWorkers=1 src/engine/match/rotation/MatchRotationRunner.test.ts src/app/game/SeasonContentActivation.test.ts src/app/game/LiveMatchController.test.ts src/ui-ng/applications/matchNextDebug/MatchNextDebugApp.test.tsx src/presentation/match-next/audit/nextTruth.audit.test.ts
+  quality:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build

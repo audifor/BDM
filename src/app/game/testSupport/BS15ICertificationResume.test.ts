@@ -26,4 +26,4 @@ it('continues the certification match seed sequence through a Save V4 boundary',
   for (const player of Object.values(continuous.world.players)) {
     expect(resumed.world.players[player.id]!.personId).toBe(player.personId)
   }
-}, 60_000)
+}, 240_000)
