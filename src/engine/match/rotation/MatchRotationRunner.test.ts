@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame, prepareMatch, prepareMatchOptions } from '@/app/game'
+import { createNewGame, prepareMatch } from '@/app/game'
+import { prepareMatchOptions } from '@/app/game/playUserGame'
 import { getGamesToday } from '@/engine/calendar'
 import { calculateFatigueAtEvents } from '../index'
 import { simulateMatchDetailed, type MatchEvent } from '../MatchEngine'
