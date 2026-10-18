@@ -128,10 +128,12 @@ describe('BS19C P4 — promises backed by real staff requests', () => {
     expect(invalid).toMatchObject({ status: 'BLOCKED', reason: 'NO_REAL_REQUEST', world: initial })
     const granted = grantStaffCareerRequest(initial, request.id)
     expect(promiseStaffCareerRequest(granted, request.id, 7)).toMatchObject({ status: 'BLOCKED', reason: 'NO_REAL_REQUEST' })
-    const fake = updateGameWorld(initial, { staffCareerRequests: [{
-      ...request, id: 'foreign-request', staffId: 'non-existent-staff' as never,
-    }] })
-    expect(promiseStaffCareerRequest(fake, 'foreign-request', 7)).toMatchObject({ status: 'BLOCKED', reason: 'NOT_ELIGIBLE' })
+    // GameWorld correctly prohibits creating an OPEN request for a non-existent
+    // Staff/StaffHumanContext; the application must reject a missing request
+    // without attempting to bypass that validator.
+    expect(promiseStaffCareerRequest(initial, 'foreign-request', 7)).toMatchObject({
+      status: 'BLOCKED', reason: 'NO_REAL_REQUEST', world: initial,
+    })
     expect(initial.staffPeopleById[staffId]).toBeDefined()
   }, 120_000)
 })
