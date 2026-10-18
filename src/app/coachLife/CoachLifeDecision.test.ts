@@ -47,6 +47,11 @@ describe('BS19C opening debt dilemma: situation -> decision -> finance -> memory
     const memories = Object.values(choice.world.memoriesById).filter(item => item.semanticKey === `life:opening-debt:${coachId}`)
     expect(memories).toHaveLength(1)
     expect(memories[0]).toMatchObject({ permanent: true, context: { decision: 'extraPayment', debtId: debt.id } })
+    const morale = choice.world.moraleByPersonId[coachId]!
+    expect(morale.events.filter(item => item.id === `morale:bs19c:opening-debt:${coachId}`)).toEqual([
+      expect.objectContaining({ delta: 5, source: 'careerEvent', context: { lifeScenario: 'openingDebt', choice: 'extraPayment', sourceInboxId: openingDebtInboxId(coachId) } }),
+    ])
+    expect(morale.value).toBeGreaterThan(original.moraleByPersonId[coachId]!.value)
     expect(decideOpeningDebt(choice.world, 'extraPayment')).toMatchObject({ status: 'BLOCKED', reason: 'NOT_PENDING' })
     expect(decideOpeningDebt(choice.world, 'reduceLifestyle')).toMatchObject({ status: 'BLOCKED', reason: 'NOT_PENDING' })
   }, 120_000)
@@ -57,6 +62,9 @@ describe('BS19C opening debt dilemma: situation -> decision -> finance -> memory
     expect(choice.status).toBe('APPLIED')
     if (choice.status !== 'APPLIED') throw new Error('Expected decision to apply')
     expect(choice.world.coachFinancesByCoachId[world.userCoachId]!.lifestyle).toBe('modest')
+    expect(choice.world.moraleByPersonId[world.userCoachId]!.events.find(item => item.id === `morale:bs19c:opening-debt:${world.userCoachId}`)).toMatchObject({
+      delta: -3, context: { lifeScenario: 'openingDebt', choice: 'reduceLifestyle', sourceInboxId: openingDebtInboxId(world.userCoachId) },
+    })
     expect(choice.world.coachFinancesByCoachId[world.userCoachId]!.debts[0]!.principalRemaining).toBe(30_000)
     const reduced = processCoachFinancesForMonth(choice.world)
     const unchanged = processCoachFinancesForMonth(world)
@@ -79,6 +87,8 @@ describe('BS19C opening debt dilemma: situation -> decision -> finance -> memory
       first.world.memoriesById[`memory:bs19c:opening-debt:${created.userCoachId}`],
     )
     expect(loaded.inboxItemsById[openingDebtInboxId(created.userCoachId)]!.status).toBe('archived')
+    expect(loaded.moraleByPersonId[created.userCoachId]!.events).toEqual(first.world.moraleByPersonId[created.userCoachId]!.events)
+    expect(loaded.moraleByPersonId[created.userCoachId]!.events.filter(item => item.id === `morale:bs19c:opening-debt:${created.userCoachId}`)).toHaveLength(1)
     expect(decideOpeningDebt(loaded, 'extraPayment')).toMatchObject({ status: 'BLOCKED', reason: 'NOT_PENDING', world: loaded })
     expect(queueOpeningDebtDecision(loaded)).toBe(loaded)
   }, 120_000)
