@@ -333,7 +333,7 @@ describe('TrainingPcbPage / interactions', () => {
     expect(within(modal).getByText(/Perfil de efectos heredado/)).toBeInTheDocument()
     expect(within(modal).getByText(/Estímulo de desarrollo/)).toBeInTheDocument()
     expect(within(modal).getByText(/Carga\/fatiga/)).toBeInTheDocument()
-    expect(within(modal).getByText(/Riesgo de lesión \(metadato, no aplicado por el motor\)/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Factor de riesgo relativo de lesión \(motor canónico\)/)).toBeInTheDocument()
   })
 
   it('clicking a player row in Load Management selects it with an unmistakable selected state', () => {

@@ -8,7 +8,7 @@ import { type PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getOrganizationKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
+import { getFreeAgents, getOrganizationKnowledge, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import type { NegotiationResponsibleActor } from '@/domain/market'
@@ -19,6 +19,7 @@ import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspa
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
+import { getMarketSalarySummary, marketMinorUnitsToMajor } from './marketFinancialSummary'
 import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, reviewMarketTarget, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
 import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
@@ -101,9 +102,10 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
     return <NgHoloShell appLabel="Market" empty region="market-workspace" />
   }
 
-  const finances = world.teamFinancesByTeamId[team.id]?.playerSalaryBudget === undefined
-    ? null : getTeamFinancialSnapshot(world, team.id)
-  const remainingSalaryBudget = finances?.remainingPlayerSalaryBudget ?? null
+  const salarySummary = getMarketSalarySummary(world, team.id)
+  const remainingSalaryBudget = salarySummary === null || salarySummary.players === null
+    ? null
+    : marketMinorUnitsToMajor(salarySummary.players.availableMinorUnits, salarySummary.currencyCode)
   const targets = getMarketTargetsForTeam(world, team.id)
   const applyTargetChange = (update: () => GameWorld): string | null => {
     try { const next = update(); if (next !== world) replaceWorld(next); return null }

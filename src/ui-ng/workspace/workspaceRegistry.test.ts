@@ -27,21 +27,19 @@ import { MatchWorkspace } from '@/ui-ng/applications/match/MatchWorkspace'
 import { MediaWorkspace } from '@/ui-ng/applications/media/MediaWorkspace'
 import { MedicalWorkspace } from '@/ui-ng/applications/medical/MedicalWorkspace'
 import { MemoriesWorkspace } from '@/ui-ng/applications/memories/MemoriesWorkspace'
-import { MentoringWorkspace } from '@/ui-ng/applications/mentoring/MentoringWorkspace'
 import { NarrativesWorkspace } from '@/ui-ng/applications/narratives/NarrativesWorkspace'
 import { NilWorkspace } from '@/ui-ng/applications/nil/NilWorkspace'
 import { PlayerWorkspace } from '@/ui-ng/applications/player/PlayerWorkspace'
 import { RecruitingWorkspace } from '@/ui-ng/applications/recruiting/RecruitingWorkspace'
 import { RosterWorkspace } from '@/ui-ng/applications/roster/RosterWorkspace'
 import { ScheduleWorkspace } from '@/ui-ng/applications/schedule/ScheduleWorkspace'
-import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
-import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
+import { TrainingStudioWorkspace } from '@/ui-ng/applications/training/TrainingStudioWorkspace'
 import { resolveBreakpointDestination } from '@/ui-ng/system/breakpointRouting'
 import { allStartMenuApps } from '@/ui-ng/system/startMenuCatalog'
-import { WORKSPACE_COMPONENTS } from '@/ui-ng/workspace/WorkspaceHost'
+import { MentoringTrainingStudioWorkspace, ScoutingMarketWorkspace, WORKSPACE_COMPONENTS } from '@/ui-ng/workspace/WorkspaceHost'
 import { WORKSPACE_APP_IDS, WORKSPACE_TASKBAR_APPS, type WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
 /** The canonical workspace each audited area must mount. A mismatch is a rewire, never a test tweak. */
@@ -50,10 +48,10 @@ const CANONICAL_WORKSPACE: Readonly<Record<WorkspaceAppId, unknown>> = {
   roster: RosterWorkspace,
   player: PlayerWorkspace,
   staff: StaffWorkspace,
-  scouting: ScoutingWorkspace,
+  scouting: ScoutingMarketWorkspace,
   tactics: TacticsWorkspace,
-  training: TrainingWorkspace,
-  mentoring: MentoringWorkspace,
+  training: TrainingStudioWorkspace,
+  mentoring: MentoringTrainingStudioWorkspace,
   medical: MedicalWorkspace,
   schedule: ScheduleWorkspace,
   competition: CompetitionWorkspace,

@@ -10,7 +10,7 @@ import { TalentOperationsWorkspace } from './TalentOperationsWorkspace'
 afterEach(cleanup)
 
 describe('TalentOperationsWorkspace', () => {
-  it('shows actionable pathway queues and navigates into the existing Scouting workspace', () => {
+  it('shows actionable pathway queues and opens the Courtside scouting tab in Market', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
     window.history.replaceState({}, '', '/?ui=ng&app=talent')
@@ -20,6 +20,8 @@ describe('TalentOperationsWorkspace', () => {
     expect(screen.getByText('No active or queued Scouting assignments.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Open Scouting' }))
 
-    expect(new URL(window.location.href).searchParams.get('app')).toBe('scouting')
+    const query = new URL(window.location.href).searchParams
+    expect(query.get('app')).toBe('market')
+    expect(query.get('marketTab')).toBe('scouting')
   })
 })

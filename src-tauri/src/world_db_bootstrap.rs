@@ -1056,7 +1056,8 @@ fn query_player(
         .map(|(code, _, _)| code.clone())
         .collect();
     // Preserve unmodified source familiarity. No numeric eligibility threshold.
-    let position_familiarity = positions.into_iter()
+    let position_familiarity = positions
+        .into_iter()
         .map(|(code, _, familiarity)| (code, familiarity))
         .collect();
     let ratings = query_values(
@@ -1115,7 +1116,11 @@ fn query_positions(
     let mut statement = connection.prepare("SELECT position_code,is_primary,familiarity FROM player_position WHERE person_id=?1 ORDER BY is_primary DESC,familiarity DESC,position_code").map_err(|error| format!("Unable to prepare World DB position query: {error}"))?;
     let rows = statement
         .query_map([person_id], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? != 0, row.get::<_, Option<f64>>(2)?))
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)? != 0,
+                row.get::<_, Option<f64>>(2)?,
+            ))
         })
         .map_err(|error| format!("Unable to query World DB positions: {error}"))?;
     rows.collect::<rusqlite::Result<Vec<_>>>()
@@ -1387,8 +1392,10 @@ mod tests {
         assert!(query_player_repertoire(&connection, "person:p")
             .unwrap_err()
             .contains("unverified"));
+    }
+
     #[test]
-fn query_positions_preserves_numeric_familiarity_without_promoting_roles() {
+    fn query_positions_preserves_numeric_familiarity_without_promoting_roles() {
         let connection = Connection::open_in_memory().unwrap();
         connection.execute_batch("CREATE TABLE player_position(person_id TEXT, position_code TEXT, is_primary INTEGER, familiarity REAL);
             INSERT INTO player_position VALUES ('p','SG',1,91),('p','PG',0,65),('p','SF',0,12),('p','PF',0,1),('p','C',0,NULL);").unwrap();
@@ -1396,7 +1403,9 @@ fn query_positions_preserves_numeric_familiarity_without_promoting_roles() {
         assert_eq!(rows.len(), 5);
         assert_eq!(rows[0], ("SG".to_owned(), true, Some(91.0)));
         assert_eq!(rows[1], ("PG".to_owned(), false, Some(65.0)));
-        assert!(rows.iter().any(|(pos, _, score)| pos == "C" && score.is_none()));
+        assert!(rows
+            .iter()
+            .any(|(pos, _, score)| pos == "C" && score.is_none()));
     }
 
     #[test]

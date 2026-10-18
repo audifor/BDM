@@ -75,6 +75,7 @@ import { createOrganizationKnowledge, type OrganizationKnowledge } from '@/domai
 import { createEvaluatorProfile, createOrganizationPlayerAwareness, createScoutingRecruitmentFocus, createScoutingTerritoryAssignment, type Evidence, type EvaluatorProfile, type EvaluatorReport, type OrganizationPlayerAwareness, type ScoutingAssignment, type ScoutingRecruitmentFocus, type ScoutingTerritoryAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import { isActiveNegotiation, type Agency, type Agent, type ContractNegotiation, type MarketKnowledge, type MarketReality, type MarketSignal, type PlayerRepresentation, type RolePromise } from '@/domain/market'
+import { createMarketTarget, marketTargetId, type MarketTarget } from '@/domain/market/MarketTarget'
 import type { OrganizationId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
@@ -101,6 +102,7 @@ import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/do
 import { createPlayerSeasonRatingChange, type PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import { createDevelopmentStimulusEvent, type DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
+import { createTrainingStudioPlan, type TrainingStudioPlan } from '@/domain/training/TrainingStudioPlan'
 import { clampTeamCohesion, createDefaultTrainingPlan, createIndividualTrainingPlan, createScheduledTrainingSession, createUserTrainingModule, findCollidingSession, type IndividualTrainingPlan, type ScheduledTrainingSession, type TeamTrainingPlan, type TrainingResponsibility, type TrainingSession, type UserTrainingModule } from '@/domain/training'
 import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, createOppositionScoutingReport, createPlaybook, createSavedPlay, oppositionScoutingReportId, validateTeamLineup, type OppositionScoutingReport, type Playbook, type SavedPlay, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
 import { createSalaryRules, type SalaryRules } from '@/domain/salary'
@@ -245,6 +247,7 @@ export interface GameWorld {
   readonly evaluatorReportsById: Readonly<Record<string, EvaluatorReport>>
   readonly scoutingTerritoryAssignmentsById: Readonly<Record<string, ScoutingTerritoryAssignment>>
   readonly scoutingRecruitmentFocusesById: Readonly<Record<string, ScoutingRecruitmentFocus>>
+  readonly marketTargetsById: Readonly<Record<string, MarketTarget>>
   readonly organizationPlayerAwarenessById: Readonly<Record<string, OrganizationPlayerAwareness>>
   readonly organizationEvaluationPoliciesById: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>>
   readonly agentsById: Readonly<Record<import('@/domain/ids').AgentId, Agent>>
@@ -299,6 +302,7 @@ export interface GameWorld {
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
   readonly inboxItemsById: Readonly<Record<string, InboxItem>>
   readonly newsItemsById: Readonly<Record<string, NewsItem>>
+  readonly trainingStudioPlansByTeamId: Readonly<Record<string, TrainingStudioPlan>>
   readonly trainingPlansByTeamId: Readonly<Record<string, TeamTrainingPlan>>
   readonly individualTrainingPlansByPlayerId: Readonly<Record<string, IndividualTrainingPlan>>
   readonly trainingResponsibilitiesByTeamId: Readonly<Record<string, Readonly<Partial<Record<TrainingResponsibility, StaffPersonId>>>>>
@@ -543,6 +547,7 @@ export interface CreateGameWorldInput {
   evaluatorReports?: readonly EvaluatorReport[]
   scoutingTerritoryAssignments?: readonly ScoutingTerritoryAssignment[]
   scoutingRecruitmentFocuses?: readonly ScoutingRecruitmentFocus[]
+  marketTargets?: readonly MarketTarget[]
   organizationPlayerAwareness?: readonly OrganizationPlayerAwareness[]
   organizationEvaluationPoliciesById?: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>>
   agents?: readonly Agent[]
@@ -595,6 +600,7 @@ export interface CreateGameWorldInput {
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
   inboxItemsById?: Readonly<Record<string, InboxItem>>
   newsItemsById?: Readonly<Record<string, NewsItem>>
+  trainingStudioPlansByTeamId?: Readonly<Record<string, TrainingStudioPlan>>
   trainingPlansByTeamId?: Readonly<Record<string, TeamTrainingPlan>>
   individualTrainingPlansByPlayerId?: Readonly<Record<string, IndividualTrainingPlan>>
   trainingResponsibilitiesByTeamId?: Readonly<Record<string, Readonly<Partial<Record<TrainingResponsibility, StaffPersonId>>>>>
@@ -888,6 +894,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
     scoutingTerritoryAssignmentsById: indexById((input.scoutingTerritoryAssignments ?? []).map(createScoutingTerritoryAssignment), 'Scouting territory assignment'),
     scoutingRecruitmentFocusesById: indexById((input.scoutingRecruitmentFocuses ?? []).map(createScoutingRecruitmentFocus), 'Scouting recruitment focus'),
+    marketTargetsById: indexById((input.marketTargets ?? []).map(createMarketTarget), 'Market target'),
     organizationPlayerAwarenessById: indexById((input.organizationPlayerAwareness ?? []).map(createOrganizationPlayerAwareness), 'Organization player awareness'),
     organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
     agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), retentionNegotiationsById: indexById((input.retentionNegotiations ?? []).map(createRetentionNegotiation), 'Retention negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
@@ -931,6 +938,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     personalityHistoryByPersonId: Object.freeze({ ...(input.personalityHistoryByPersonId ?? {}) }),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
+    trainingStudioPlansByTeamId: Object.freeze({ ...(input.trainingStudioPlansByTeamId ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), savedPlaysById:Object.freeze(Object.fromEntries(Object.entries(input.savedPlaysById??{}).map(([id,play])=>[id,createSavedPlay(play)]))), playbooksById:Object.freeze(Object.fromEntries(Object.entries(input.playbooksById??{}).map(([id,playbook])=>[id,createPlaybook(playbook)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.entries(input.scheduledTrainingSessionsById ?? {}).map(([id, session]) => [id, createScheduledTrainingSession(session)]))),
     userTrainingModulesById: Object.freeze(Object.fromEntries(Object.entries(input.userTrainingModulesById ?? {}).map(([id, module]) => [id, createUserTrainingModule(module)]))),
@@ -1344,6 +1352,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
   ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
+  marketTargets: (value) => indexById((value as readonly MarketTarget[]).map(createMarketTarget), 'Market target'),
   talentCohorts: (value) => indexById((value as readonly TalentCohort[]).map(createTalentCohort), 'Talent cohort'),
   talentMaterializations: (value) => indexTalentMaterializations((value as readonly TalentMaterialization[]).map(createTalentMaterialization)),
   teamPathwayRelations: (value) => indexById((value as readonly TeamPathwayRelation[]).map(createTeamPathwayRelation), 'Team pathway relation'),
@@ -2039,6 +2048,24 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
       for (const playerId of focus.dismissedPlayerIds ?? []) requireEntity(world.players, playerId, 'Recruitment Focus dismissed Player')
       if (focus.completedAt !== undefined) parseGameDate(focus.completedAt)
       if (focus.cancelledAt !== undefined) parseGameDate(focus.cancelledAt)
+    }
+  })
+  scope.run('53:marketTargetsById', () => {
+    const uniqueIds = new Set<string>()
+    for (const [id, target] of Object.entries(world.marketTargetsById)) {
+      createMarketTarget(target)
+      if (id !== target.id || id !== marketTargetId(target.teamId, target.playerId)) throw new GameWorldValidationError('Market target identity mismatch')
+      if (uniqueIds.has(id)) throw new GameWorldValidationError('Duplicate market target')
+      uniqueIds.add(id)
+      requireEntity(world.teams, target.teamId, 'Market target team')
+      requireEntity(world.players, target.playerId, 'Market target player')
+    }
+  })
+  scope.run('53:trainingStudioPlansByTeamId', () => {
+    for (const [teamId, plan] of Object.entries(world.trainingStudioPlansByTeamId)) {
+      const validated = createTrainingStudioPlan(plan)
+      if (teamId !== validated.teamId) throw new GameWorldValidationError('Training Studio plan Team does not match its key')
+      requireEntity(world.teams, validated.teamId as TeamId, 'Training Studio plan Team')
     }
   })
   scope.run('54:validateOrganizationPlayerAwareness', () => {

@@ -51,14 +51,14 @@ export const START_MENU_GROUPS: readonly StartMenuGroup[] = [
   {
     id: 'equipo',
     label: 'Equipo',
-    description: 'Plantilla, jugador, staff, tácticas, entrenamiento y medical',
-    appIds: ['roster', 'player', 'staff', 'tactics', 'training', 'medical'],
+    description: 'Plantilla, jugador, staff, scouting, tácticas, entrenamiento, mentoring y medical',
+    appIds: ['roster', 'player', 'staff', 'scouting', 'tactics', 'training', 'mentoring', 'medical'],
   },
   {
     id: 'talent',
     label: 'Talent Operations',
-    description: 'Recruiting, Transfer Portal and Draft pathways',
-    appIds: ['talent', 'recruiting', 'portal', 'draft'],
+    description: 'Scouting, recruiting, Transfer Portal and Draft pathways',
+    appIds: ['talent', 'scouting', 'recruiting', 'portal', 'draft'],
   },
   {
     id: 'partidos',

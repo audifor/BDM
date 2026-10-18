@@ -16,7 +16,7 @@ it('shows configured youth infrastructure and scoped rights in Talent, then navi
   const { world } = youthFacilitiesFixture()
   useGameStore.getState().replaceWorld(world)
   window.history.replaceState({}, '', '/?ui=ng&app=talent')
-  const before = serializeGameWorldV4(world, '2032-10-01T00:00:00.000Z')
+  const before = serializeGameWorldV4(useGameStore.getState().world!, '2032-10-01T00:00:00.000Z')
   render(<TalentOperationsWorkspace />)
   expect(screen.getByRole('heading', { name: 'Youth facilities and Training' })).toBeInTheDocument()
   expect(screen.getByText('Configured U18 (U18)')).toBeInTheDocument()

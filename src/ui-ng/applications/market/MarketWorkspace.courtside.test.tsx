@@ -6,6 +6,7 @@ import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
+import { getMarketSalarySummary } from './marketFinancialSummary'
 
 afterEach(cleanup)
 beforeEach(() => {
@@ -20,7 +21,7 @@ function mount() {
 }
 
 describe('Courtside Market command centre', () => {
-  it('opens without financial budgets or a newly introduced target collection in older world data', () => {
+  it('uses canonical salary authorization when legacy team budgets are absent', () => {
     const world = createNewGame()
     const team = getUserTeam(world)!
     const older = { ...world,
@@ -28,14 +29,16 @@ describe('Courtside Market command centre', () => {
         Object.entries(world.teamFinancesByTeamId).filter(([id]) => id !== team.id)),
       marketTargetsById: undefined,
     } as unknown as typeof world
+    expect(getMarketSalarySummary(older, team.id)?.players).not.toBeNull()
     useGameStore.getState().replaceWorld(older)
     render(<MarketWorkspace />)
     expect(screen.getByTestId('market-explore')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
-    expect(screen.getAllByText('Sin datos financieros')).toHaveLength(2)
+    expect(screen.getByText('SALARIOS JUGADORES')).toBeInTheDocument()
+    expect(screen.queryByText('Sin autorización salarial vigente')).not.toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Presupuesto y decisiones de mercado' })).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Salario anual propuesto'), { target: { value: '20000' } })
-    expect(screen.getByText('Presupuesto de jugadores no disponible.')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Salario anual propuesto'), { target: { value: '0' } })
+    expect(screen.getByText('Dentro del margen salarial')).toBeInTheDocument()
   })
 
   it('opens the live organisation overview without displaying hidden player ratings', () => {

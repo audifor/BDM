@@ -49,15 +49,23 @@ import './workspace.css'
  * The `Record<WorkspaceAppId, ...>` type keeps the registry total over `WORKSPACE_APP_IDS` at compile time: an
  * available app id can never resolve to `undefined`.
  */
+export function ScoutingMarketWorkspace() {
+  return <MarketWorkspace initialTab="scouting" />
+}
+
+export function MentoringTrainingStudioWorkspace() {
+  return <TrainingStudioWorkspace initialTab="mentoring" />
+}
+
 export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType>> = {
   home: HomeWorkspace,
   roster: RosterWorkspace,
   player: PlayerWorkspace,
   staff: StaffWorkspace,
-  scouting: () => <MarketWorkspace initialTab="scouting" />,
+  scouting: ScoutingMarketWorkspace,
   tactics: TacticsWorkspace,
   training: TrainingStudioWorkspace,
-  mentoring: () => <TrainingStudioWorkspace initialTab="mentoring" />,
+  mentoring: MentoringTrainingStudioWorkspace,
   medical: MedicalWorkspace,
   schedule: ScheduleWorkspace,
   competition: CompetitionWorkspace,
