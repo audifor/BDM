@@ -6,3 +6,5 @@ export { queueStaffRequestFollowUp, getPendingStaffRequestFollowUp, getPendingSt
 export type { StaffRequestFollowUpChoice, StaffRequestFollowUpResult, PendingStaffRequestFollowUp } from './StaffRequestFollowUp'
 export { promiseStaffCareerRequest, getStaffPromise, getActiveStaffPromises, postponeStaffPromise, settleStaffPromise, progressStaffPromises, staffPromiseInboxId } from './StaffProfessionalCommitment'
 export type { StaffPromiseOutcome, StaffPromiseResult, ActiveStaffPromise } from './StaffProfessionalCommitment'
+export { queueVerifiedStaffLobbies, decideStaffPoliticalLobby, getPendingStaffPoliticalLobby, getPendingStaffPoliticalLobbies, politicalLobbyInboxId } from './StaffPoliticalLobby'
+export type { StaffLobbyChoice, StaffLobbyDecision, PendingStaffLobby } from './StaffPoliticalLobby'
