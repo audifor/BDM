@@ -52,7 +52,10 @@ describe('MatchWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Instant result' }))
 
     expect(document.querySelector('[data-ng-region="match-live"]')).toBeNull()
-    expect(await screen.findByRole('status')).toHaveTextContent('Simulando resultado ME-NEXT')
+    // The first async frame may already have reported its current period.
+    // Both messages mean that the same ME-NEXT simulation is actively running.
+    expect(await screen.findByRole('status')).toHaveTextContent(/Simulando (?:resultado )?ME-NEXT/)
+    expect(screen.getByRole('button', { name: 'Instant result' })).toBeDisabled()
     expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('scheduled')
   })
 })
