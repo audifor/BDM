@@ -64,7 +64,7 @@ import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKin
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
-import { decideOpeningDebt, getPendingOpeningDebtDecision, decideFirstStaffMeeting, getPendingFirstStaffMeeting, decideStaffRequestFollowUp, getPendingStaffRequestFollowUps, type OpeningDebtChoice, type OpeningDebtDecisionResult, type StaffMeetingChoice, type StaffMeetingDecisionResult, type StaffRequestFollowUpChoice, type StaffRequestFollowUpResult } from '@/app/coachLife'
+import { decideOpeningDebt, getPendingOpeningDebtDecision, decideFirstStaffMeeting, getPendingFirstStaffMeeting, decideStaffRequestFollowUp, getPendingStaffRequestFollowUps, promiseStaffCareerRequest, postponeStaffPromise, getActiveStaffPromises, type StaffPromiseResult, type OpeningDebtChoice, type OpeningDebtDecisionResult, type StaffMeetingChoice, type StaffMeetingDecisionResult, type StaffRequestFollowUpChoice, type StaffRequestFollowUpResult } from '@/app/coachLife'
 import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
@@ -170,6 +170,8 @@ interface GameStore {
   decideUserCoachOpeningDebt(choice: OpeningDebtChoice): OpeningDebtDecisionResult
   decideUserCoachStaffMeeting(staffId: StaffPersonId, choice: StaffMeetingChoice): StaffMeetingDecisionResult
   decideUserCoachStaffRequestFollowUp(requestId: string, choice: StaffRequestFollowUpChoice): StaffRequestFollowUpResult
+  promiseUserStaffCareerRequest(requestId: string, daysAhead: 7 | 14 | 30): StaffPromiseResult
+  postponeUserStaffPromise(requestId: string): StaffPromiseResult
   acceptUserCoachOffer(offerId: string): void
   declineUserCoachOffer(offerId: string): void
   applyUserCoachForJob(openingId: string): void
@@ -536,6 +538,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (result.status === 'APPLIED') set({ world: result.world })
     return result
   },
+  promiseUserStaffCareerRequest: (requestId, daysAhead) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = promiseStaffCareerRequest(world, requestId, daysAhead)
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
+  postponeUserStaffPromise: (requestId) => {
+    const world = requireWorld(get().world)
+    if (get().simulationBusy) return { status: 'BLOCKED', world, reason: 'SIMULATION_BUSY' }
+    const result = postponeStaffPromise(world, requestId)
+    if (result.status === 'APPLIED') set({ world: result.world })
+    return result
+  },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),
   declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
@@ -709,6 +725,7 @@ export function selectUserCoachPendingOffers(world: GameWorld | null) { return w
 export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
 /** Derived selector; relationship profiles remain exclusively in GameWorld. */
 export function selectUserCoachRelationships(world: GameWorld | null) { return world === null ? [] : getRelationshipsForPerson(world, world.userCoachId) }
+export function selectUserActiveStaffPromises(world: GameWorld | null) { return world === null ? [] : getActiveStaffPromises(world) }
 export function selectUserPendingStaffRequestFollowUps(world: GameWorld | null) { return world === null ? [] : getPendingStaffRequestFollowUps(world) }
 export function selectUserPendingStaffMeeting(world: GameWorld | null) { return world === null ? null : getPendingFirstStaffMeeting(world) }
 export function selectUserPendingOpeningDebt(world: GameWorld | null) { return world === null ? null : getPendingOpeningDebtDecision(world) }

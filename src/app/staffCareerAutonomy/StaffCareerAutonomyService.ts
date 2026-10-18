@@ -7,17 +7,18 @@ import { applyRelationshipEventToWorld } from '@/domain/world'
 import { assessStaffCareerOpportunity, decideStaffAutonomousOffer, STAFF_CAREER_AUTONOMY_TUNING } from '@/engine/staff/StaffCareerAutonomyEngine'
 import { recordMemory } from '@/engine/memory'
 import { queueStaffRequestFollowUp } from '@/app/coachLife/StaffRequestFollowUp'
+import { settleStaffPromise } from '@/app/coachLife/StaffProfessionalCommitment'
 
 export function declineStaffCareerRequest(world: GameWorld, requestId: string): GameWorld {
   const request = requireOpenRequest(world, requestId)
   const resolved = resolveRequest(world, requestId, 'DECLINED')
   const withMemory = recordMemory(resolved, { id: `memory:staff-career-request-declined:${request.id}`, owner: { kind: 'staff', id: request.staffId }, type: 'opportunity', occurredOn: world.currentDate, entityRefs: [{ kind: 'team', id: request.teamId }, { kind: 'coach', id: world.userCoachId }], sourceId: request.id, semanticKey: `staff-career-request-declined:${request.id}`, importance: request.kind === 'PROMOTION' || request.kind === 'RELEASE' ? 'important' : 'notable', valence: -35, intensity: 50, decayPerMonth: 1, permanent: false, tags: ['staff', 'career', 'request', 'declined'], context: { requestId: request.id, kind: request.kind, teamId: request.teamId } })
-  return queueStaffRequestFollowUp(applyRelationshipEventToWorld(withMemory, request.staffId, world.userCoachId, { id: `staff-career-request-declined:${request.id}`, gameDate: world.currentDate, source: 'teamDecision', delta: -4, context: { requestId: request.id }, dimensionDeltas: { trust: -4, professionalRespect: -4, perceivedSupport: -6 } }), request.id)
+  return settleStaffPromise(queueStaffRequestFollowUp(applyRelationshipEventToWorld(withMemory, request.staffId, world.userCoachId, { id: `staff-career-request-declined:${request.id}`, gameDate: world.currentDate, source: 'teamDecision', delta: -4, context: { requestId: request.id }, dimensionDeltas: { trust: -4, professionalRespect: -4, perceivedSupport: -6 } }), request.id), request.id)
 }
 
 export function withdrawStaffCareerRequest(world: GameWorld, requestId: string): GameWorld {
   requireOpenRequest(world, requestId)
-  return resolveRequest(world, requestId, 'WITHDRAWN')
+  return settleStaffPromise(resolveRequest(world, requestId, 'WITHDRAWN'), requestId)
 }
 
 /** Delegates each real mutation to its existing application authority, then marks the request resolved. */
@@ -30,7 +31,7 @@ export function grantStaffCareerRequest(world: GameWorld, requestId: string): Ga
   else if (request.kind === 'PROMOTION') next = promoteStaffWithinTeam(next, { staffId: request.staffId, newRoleId: request.targetRoleId!, reason: 'promoted' })
   else if (request.kind === 'ROLE_CHANGE') next = reassignStaffWithinTeam(next, { staffId: request.staffId, newRoleId: request.targetRoleId! })
   // CONTRACT_DISCUSSION deliberately records acknowledgement only: Contract Negotiation V2 remains out of scope.
-  return resolveRequest(next, requestId, 'GRANTED')
+  return settleStaffPromise(resolveRequest(next, requestId, 'GRANTED'), requestId)
 }
 
 /**
