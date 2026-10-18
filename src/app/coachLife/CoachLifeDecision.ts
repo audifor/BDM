@@ -1,6 +1,6 @@
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
 import type { CoachId } from '@/domain/ids'
-import { addInboxItem, archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
+import { addInboxItem, applyMoraleEventToWorld, archiveInboxItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { registerCoachFinanceMovement, setCoachLifestyle } from '@/engine/coachFinances'
 import { recordMemory } from '@/engine/memory/MemoryEngine'
 
@@ -88,6 +88,18 @@ export function decideOpeningDebt(world: GameWorld, choice: OpeningDebtChoice, c
     permanent: true,
     tags: ['life', 'finance', 'personalDecision'],
     context: { scenario: 'openingDebt', decision: choice, debtId: debt.id },
+  })
+  // A personal financial choice can affect the coach's morale today.
+  // Deliberately NO personalityEventKind: the canonical 75-event PERSON23I catalog
+  // does not include personal debt repayment or lifestyle cuts. Evidence is stored
+  // in Finance + Memory instead of impersonating an unrelated semantic event.
+  next = applyMoraleEventToWorld(next, {
+    id: `morale:bs19c:opening-debt:${coachId}`,
+    personId: coachId,
+    gameDate: world.currentDate,
+    source: 'careerEvent',
+    delta: choice === 'extraPayment' ? 5 : -3,
+    context: { lifeScenario: 'openingDebt', choice, sourceInboxId: inbox.id },
   })
   next = archiveInboxItem(next, inbox.id)
   return { status: 'APPLIED', world: next, choice }
