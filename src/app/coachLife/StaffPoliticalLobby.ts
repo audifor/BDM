@@ -30,9 +30,15 @@ export function queueVerifiedStaffLobbies(world: GameWorld, actions: readonly St
   if (world.coachRpgProfilesByCoachId[world.userCoachId]?.creatorOrigin === undefined) return world
   let next = world
   for (const action of actions) {
-    if (!validLobbySource(world, action)) continue
-    const politicalCase = world.staffPoliticalCasesById[action.caseId]!
-    const actor = world.staffPeopleById[action.actorIds[0]!]!
+    const committed = world.staffPoliticalActionsById[action.id]
+    // A caller's candidate list is only a hint: all claims must agree with the
+    // already-validated immutable StaffPoliticalAction stored in GameWorld.
+    if (!committed || committed.caseId !== action.caseId || committed.kind !== action.kind ||
+      committed.stance !== action.stance || committed.teamId !== action.teamId ||
+      committed.target?.kind !== action.target?.kind || committed.target?.id !== action.target?.id ||
+      committed.actorIds.join('|') !== action.actorIds.join('|') || !validLobbySource(world, committed)) continue
+    const politicalCase = world.staffPoliticalCasesById[committed.caseId]!
+    const actor = world.staffPeopleById[committed.actorIds[0]!]!
     next = addInboxItem(next, {
       id: politicalLobbyInboxId(action.id), coachId: world.userCoachId, gameDate: action.performedOn,
       category: 'career', priority: 'normal', status: 'unread',
