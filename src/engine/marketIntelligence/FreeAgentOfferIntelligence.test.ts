@@ -9,7 +9,7 @@ import { assessRoutedFormalOfferPreparations } from '@/app/marketIntelligence/Fo
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
 import { getEcosystemForTeam, updateGameWorld } from '@/domain/world'
-import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
+import { authorizeTeamSalaryForTest, commitTeamLiquidityForTest, financingDrawdownForTest, fundTeamWithOpeningCapital } from '@/domain/finance/financeTestFixture'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { ClubNeed } from '@/engine/clubNeeds'
 import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
@@ -35,11 +35,12 @@ beforeAll(() => {
   const organizationId = released.teams[teamId]!.organizationId
   // Canonical Finance decides affordability, so the fixture gives the club real liquidity and a real
   // APPROVED salary authorization instead of raising the legacy payroll pool.
-  const financed = authorizeTeamSalaryForTest(
+  // Provide spendable ledger liquidity through the canonical financing authority as well as salary authorization.
+  const financed = financingDrawdownForTest(authorizeTeamSalaryForTest(
     fundTeamWithOpeningCapital(released, teamId, { currencyCode: 'USD', cashMinorUnits: 10_000_000_000 }),
     teamId,
     { currencyCode: 'USD', playerSalaryMinorUnits: 200_000_000_000, staffSalaryMinorUnits: 200_000_000_000 },
-  )
+  ), teamId, 10_000_000_000, 'free-agent-market-fixture')
   base = updateGameWorld(financed, {
     marketKnowledge: source.rosterPlayerIds.slice(0, 3).map((candidateId) => ({
       organizationId,
