@@ -1181,7 +1181,9 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(world.currentDate).toBe(addDays(initialDate, dayCount))
     // eslint-disable-next-line no-console
     console.log(`advanceGameDay x${dayCount}: ${elapsedMs.toFixed(1)}ms (${(elapsedMs / dayCount).toFixed(2)}ms/day)`)
-  }, 900_000)
+  // CI measured 1,011,420 ms for 365 full gameplay days on 18 Oct 2026.
+  // Budget 22.5 minutes so the complete real simulation remains asserted, not skipped.
+  }, 1_350_000)
 
   it.each([10, 20])('RWS-BUG-002A lifecycle: rolls over %i consecutive ACB seasons without duplicate IDs, dates, or fixtures', async (seasonCount) => {
     let world = await createWorldDbSpainGame(selection.teamId, {
