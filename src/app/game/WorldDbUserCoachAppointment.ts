@@ -14,6 +14,7 @@ import { createUserCoachRookieProfessionalProfile } from '@/engine/world/CoachPr
 import { acceptCoachJobOffer, applyUserCoachForJob, fireCoachFromTeam, getOpenCoachJobs } from '@/app/coachCareer'
 import { applyUserCoachCreation, type UserCoachCreationInput } from './UserCoachCreator'
 import { queueFirstStaffMeeting } from '@/app/coachLife/StaffTrustMeeting'
+import { initializeHumanSimulation } from '@/app/hrpg/HumanSimulationService'
 
 /**
  * BS19B WorldDB initial appointment. This is an explicitly simulated career divergence,
@@ -154,5 +155,5 @@ export function appointCreatedUserCoachToWorldDbClub(world: GameWorld, teamId: T
       aligned.coaches[incumbent.id] === undefined) {
     throw new Error('WorldDB career handover unexpectedly changed the historical coach identity')
   }
-  return queueFirstStaffMeeting(aligned)
+  return initializeHumanSimulation(queueFirstStaffMeeting(aligned))
 }

@@ -7,7 +7,7 @@ import { buildStaffPoliticalRelevanceIndex } from './StaffPoliticalPositionEngin
 import { progressStaffPoliticalActionsDetailed } from './StaffPoliticalActionEngine'
 import { applyStaffPoliticalActionConsequences } from './StaffPoliticalActionConsequenceEngine'
 import { reconcileStaffPoliticalGroups } from './StaffPoliticalGroupEngine'
-import { queueVerifiedStaffLobbies } from '@/app/coachLife/StaffPoliticalLobby'
+import { queueVerifiedStaffLobbies } from '@/engine/hrpg/LegacyStaffPoliticalLobby'
 
 const agendaForCareerRequest = (kind: import('@/domain/staffCareerAutonomy').StaffCareerRequestKind): import('@/domain/staffPolitics').PoliticalAgenda => kind === 'MORE_RESPONSIBILITY' ? 'RESPONSIBILITY' : 'CAREER'
 

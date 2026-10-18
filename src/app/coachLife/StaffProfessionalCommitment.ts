@@ -220,6 +220,7 @@ export function progressStaffPromises(world: GameWorld): GameWorld {
   return next
 }
 
+export { eligible as isEligibleStaffPromise }
 function eligible(world: GameWorld, coachId: CoachId, staffId: StaffPersonId, teamId: TeamId): boolean {
   const staff = world.staffPeopleById[staffId]
   const employment = world.staffEmploymentByStaffId[staffId]

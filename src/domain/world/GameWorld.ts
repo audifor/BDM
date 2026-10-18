@@ -1,4 +1,6 @@
 import { addDays } from '@/domain/date'
+import { EMPTY_HUMAN_SIMULATION, readHumanSimulation } from '@/domain/hrpg/HumanSimulation'
+import { validateHumanSimulationWorld } from '@/domain/hrpg/validateHumanSimulationWorld'
 import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
 import { staffAssignmentIndex, teamIndex } from './collectionIndexes'
 import { WorldValidationScope, type WorldValidationMode } from './WorldValidationScope'
@@ -135,6 +137,7 @@ import { createPlayerRegistration, createTeamPathwayRelation, type PlayerRegistr
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
 export interface GameWorld {
+  readonly humanSimulation: import('@/domain/hrpg/HumanSimulation').HumanSimulationState
   readonly schemaVersion: typeof GAME_WORLD_SCHEMA_VERSION
   readonly currentDate: GameDate
   readonly currentSeasonId: SeasonId
@@ -432,6 +435,7 @@ export interface GameWorld {
 }
 
 export interface CreateGameWorldInput {
+  humanSimulation?: import('@/domain/hrpg/HumanSimulation').HumanSimulationState
   currentDate: GameDate
   currentSeasonId?: SeasonId
   userCoachId: CoachId
@@ -776,6 +780,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     return createConference({ id, ecosystemId: input.competitions.find((competition) => competition.id === season.competitionId)!.ecosystemId, name: `Conference ${id}` })
   })
   const world: GameWorld = {
+    humanSimulation: input.humanSimulation === undefined ? EMPTY_HUMAN_SIMULATION : readHumanSimulation(input.humanSimulation),
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,
     currentSeasonId,
@@ -1262,6 +1267,7 @@ export function activePhysicalSessions(world: GameWorld, previous?: GameWorld): 
 }
 
 function validateUpdatedGameWorld(canonical: GameWorld, previous: GameWorld | undefined, mode: WorldValidationMode = 'full'): void {
+  if (previous?.humanSimulation !== canonical.humanSimulation) validateHumanSimulationWorld(canonical)
   const scope = new WorldValidationScope(canonical, previous, mode)
   const updated = scope.world
   scope.run('BS17D-C1:physicalAllocationLinks', () => validatePhysicalAllocations(updated, activePhysicalSessions(updated, previous)), ['scheduledTrainingSessionsById', 'facilityComponentsById', 'injuriesById'])
