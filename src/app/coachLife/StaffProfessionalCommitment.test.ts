@@ -75,6 +75,7 @@ describe('BS19C P4 — promises backed by real staff requests', () => {
     if (extension.status !== 'APPLIED') throw new Error('Expected extension')
     expect(getStaffPromise(extension.world, request.id)?.postponed).toBe(true)
     expect(getStaffPromise(extension.world, request.id)?.dueOn).toBe(addDays(world.currentDate, 14))
+    expect(extension.world.inboxItemsById[staffPromiseInboxId(world.userCoachId, request.id)]?.context.dueOn).toBe(addDays(world.currentDate, 14))
     expect(postponeStaffPromise(extension.world, request.id)).toMatchObject({ status: 'BLOCKED', reason: 'EXTENSION_ALREADY_USED' })
     const previousDeadline = updateGameWorld(extension.world, { currentDate: addDays(world.currentDate, 8) })
     expect(progressStaffPromises(previousDeadline)).toBe(previousDeadline)
