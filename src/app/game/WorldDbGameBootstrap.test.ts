@@ -13,6 +13,8 @@ import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseReposito
 import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment'
+import { decideFirstStaffMeeting, firstStaffMeetingInboxId, getPendingFirstStaffMeeting, queueFirstStaffMeeting } from '@/app/coachLife/StaffTrustMeeting'
+import { getRelationshipDimensions, relationshipKey } from '@/domain/relationships'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { advanceGameDay, type WorldDayAdvanceResult } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
@@ -131,6 +133,78 @@ function reportWorldDbStop(label: string, initial: GameWorld, target: string, re
 }
 
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+
+  it('BS19C source-backed assistant meeting applies both perspectives, PERSON50 journal, and Save V4 once', () => {
+    const historical = worldWithAssistantCoach()
+    const assistant = Object.values(historical.teamStaffAssignmentsById).find(x => x.teamId === selection.teamId && x.role === 'assistantCoach')!
+    const assistantBefore = historical.staffPeopleById[assistant.staffPersonId]!
+    const world = appointCreatedUserCoachToWorldDbClub(historical, selection.teamId as never, {
+      firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25',
+      gender: 'female', background: 'academyCoach', ambition: 'talentDeveloper', disposition: 'ambitious', coachingStyle: 'developer',
+    })
+    const coach = world.coaches[world.userCoachId]!
+    const pending = getPendingFirstStaffMeeting(world)
+    expect(pending).toMatchObject({ assistantStaffId: assistant.staffPersonId, teamId: selection.teamId })
+    expect(world.inboxItemsById[firstStaffMeetingInboxId(coach.id, assistant.staffPersonId)]?.status).toBe('unread')
+    expect(queueFirstStaffMeeting(world)).toBe(world)
+    expect(Object.values(world.relationshipsByKey).some(item => item.events.some(e => e.context.scenario === 'firstStaffMeeting'))).toBe(false)
+    const handled = decideFirstStaffMeeting(world, assistant.staffPersonId, 'seekInput')
+    expect(handled.status).toBe('APPLIED')
+    if (handled.status !== 'APPLIED') throw new Error('Expected meeting')
+    const after = handled.world
+    const fromCoach = after.relationshipsByKey[relationshipKey(coach.id, assistant.staffPersonId)]!
+    const fromAssistant = after.relationshipsByKey[relationshipKey(assistant.staffPersonId, coach.id)]!
+    expect(fromCoach.value).toBeGreaterThan(0)
+    expect(fromAssistant.value).toBeGreaterThan(0)
+    expect(getRelationshipDimensions(fromAssistant).perceivedSupport).toBeGreaterThan(0)
+    expect(getRelationshipDimensions(fromCoach).collaboration).toBeGreaterThan(0)
+    expect(after.memoriesById[`memory:bs19c:first-staff-meeting:${coach.id}:${assistant.staffPersonId}:coach`]?.context.choice).toBe('seekInput')
+    expect(after.memoriesById[`memory:bs19c:first-staff-meeting:${coach.id}:${assistant.staffPersonId}:assistant`]?.context.choice).toBe('seekInput')
+    const eventId = `morale:bs19c:first-staff-meeting:${coach.id}:${assistant.staffPersonId}:coach`
+    expect(after.moraleByPersonId[coach.id]?.events.find(item => item.id === eventId)).toMatchObject({
+      source: 'professionalInteraction', context: { personalityEventKind: 'TEAM_MEETING', choice: 'seekInput' },
+    })
+    const journal = after.personalityHistoryByPersonId[coach.id]!
+    expect(journal.find(entry => entry.sourceEventId === eventId)?.dimensionCode).toBe('communication')
+    expect(after.personalitiesByPersonId[coach.staffProfileId]).toEqual(after.personalitiesByPersonId[coach.id])
+    expect(after.staffPeopleById[assistant.staffPersonId]).toEqual(assistantBefore)
+    expect(getPendingFirstStaffMeeting(after)).toBeNull()
+    expect(decideFirstStaffMeeting(after, assistant.staffPersonId, 'setDirection')).toMatchObject({ status: 'BLOCKED', reason: 'NO_ACTIVE_MEETING', world: after })
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(after, '2026-10-18T11:00:00.000Z'))
+    expect(restored.personalityHistoryByPersonId[coach.id]).toEqual(journal)
+    expect(restored.relationshipsByKey[relationshipKey(assistant.staffPersonId, coach.id)]).toEqual(fromAssistant)
+    expect(restored.memoriesById).toEqual(after.memoriesById)
+    expect(getPendingFirstStaffMeeting(restored)).toBeNull()
+    expect(queueFirstStaffMeeting(restored)).toBe(restored)
+  }, 120_000)
+
+  it('BS19C directive first meeting can cause friction without rewriting staff identities; no invented staff without assignment', () => {
+    const initial = worldWithAssistantCoach()
+    const assistant = Object.values(initial.teamStaffAssignmentsById).find(x => x.teamId === selection.teamId && x.role === 'assistantCoach')!
+    const input = { firstName: 'Elena', lastName: 'Carrera', dateOfBirth: '1993-04-25', gender: 'female' as const,
+      background: 'rookie' as const, ambition: 'firstTitle' as const, disposition: 'loyal' as const, coachingStyle: 'balanced' as const }
+    const started = appointCreatedUserCoachToWorldDbClub(initial, selection.teamId as never, input)
+    const coachId = started.userCoachId
+    const other = started.staffPeopleById[assistant.staffPersonId]!
+    const applied = decideFirstStaffMeeting(started, assistant.staffPersonId, 'setDirection')
+    expect(applied.status).toBe('APPLIED')
+    if (applied.status !== 'APPLIED') throw new Error('Meeting not applied')
+    expect(applied.world.relationshipsByKey[relationshipKey(assistant.staffPersonId, coachId)]?.value).toBeLessThan(0)
+    expect(applied.world.moraleByPersonId[assistant.staffPersonId]!.value).toBeLessThan(started.moraleByPersonId[assistant.staffPersonId]!.value)
+    expect(applied.world.staffPeopleById[other.id]).toEqual(other)
+    expect(decideFirstStaffMeeting(started, assistant.staffPersonId, 'fakeChoice' as never)).toMatchObject({
+      status: 'BLOCKED', reason: 'INVALID_CHOICE', world: started,
+    })
+    expect(decideFirstStaffMeeting(started, assistant.staffPersonId, 'seekInput', 'another-coach' as never)).toMatchObject({
+      status: 'BLOCKED', reason: 'NOT_USER_COACH', world: started,
+    })
+
+    const noAssistant = bootstrapGameWorldFromWorldDb(slice(), selection, {
+      contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema,
+    })
+    const newCoach = appointCreatedUserCoachToWorldDbClub(noAssistant, selection.teamId as never, input)
+    expect(getPendingFirstStaffMeeting(newCoach)).toBeNull()
+  }, 120_000)
 
   it('BS19B launches a real configured WorldDB career with a custom manager and the club Board', async () => {
     const access = { repository: repository(), databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }
