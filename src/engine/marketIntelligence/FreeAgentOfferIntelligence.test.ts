@@ -56,7 +56,8 @@ beforeAll(() => {
   const candidates = assessMarketCandidatesForNeed(base, teamId, makeNeed(), 'CONTEND')
   proposal = selectAcquisitionProposal(base, assessMarketCandidateFeasibility(base, candidates))
   if (proposal.proposalType !== 'FREE_AGENT_APPROACH' || proposal.preferredCandidate?.playerId === undefined) {
-    throw new Error('Expected BS10C to produce a free-agent approach fixture')
+    const feasibility = assessMarketCandidateFeasibility(base, candidates)
+    throw new Error(`Expected BS10C to produce a free-agent approach fixture: type=${proposal.proposalType} reason=${proposal.noProposalReason ?? 'none'} blockers=${JSON.stringify(proposal.blockers)} candidates=${JSON.stringify(feasibility.candidates.slice(0, 6).map((candidate) => ({ id: candidate.playerId, fit: candidate.needFit, contractStatus: candidate.contractStatus, route: candidate.feasibility.route, support: candidate.feasibility.routeSupport, affordability: candidate.feasibility.affordability, blockers: candidate.feasibility.blockers })))}`)
   }
   playerId = proposal.preferredCandidate.playerId
   const planId = `${teamId}:${makeNeed().id}`
