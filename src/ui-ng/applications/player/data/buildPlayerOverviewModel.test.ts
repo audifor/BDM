@@ -159,7 +159,9 @@ describe('buildPlayerOverviewModel', () => {
         .reverse()
         .map((line) => line.stats.points),
     )
-    expect(gameLine.points).toBeGreaterThan(0)
+    // A valid tracked player can score zero. The game must still contain
+    // positive scoring, and this player's series must mirror the exact box log.
+    expect(updated.matchStatLogsByGameId[simulation.gameId]!.playerLines.some((line) => line.stats.points > 0)).toBe(true)
     expect(scoring.average).toBe(Number(overview.season.headline[0]!.value))
     const freeThrows = overview.season.trends.find((trend) => trend.id === 'ft')
     if (freeThrows !== undefined) {

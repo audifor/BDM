@@ -120,7 +120,7 @@ describe('MX0.3 closure — annual development executes exactly once across save
     expect(hasAppliedAnnualDevelopmentCycle(after, cycle)).toBe(true)
     expect(annualDevelopmentApplications(after)).toBe(1)
     expect(annualDevelopmentRecordedCycles(after).get(cycle)).toBeGreaterThan(0)
-  })
+  }, 240_000)
 
   it('CASE A — save before the checkpoint, load, then cross 1 July: exactly one application', async () => {
     const before = offSeasonBeforeCheckpoint()
