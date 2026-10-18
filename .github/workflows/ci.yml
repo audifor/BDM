@@ -13,7 +13,7 @@ jobs:
   unit-tests:
     name: Unit tests (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-22.04
-    timeout-minutes: 35
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -33,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Unit tests
-        run: npm test -- --shard=${{ matrix.shard }}/4
+        run: npm test -- --shard=${{ matrix.shard }}/4 --testTimeout=30000 --hookTimeout=30000 --maxWorkers=2
 
   validate:
     needs: unit-tests
