@@ -1,0 +1,30 @@
+name: BS19 PERSON50 Integration CI
+
+on:
+  push:
+    branches:
+      - integration/bs19-person50-real-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  person50-bs19:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck merged PERSON50 + BS19 tree
+        run: npm run typecheck
+      - name: Core BS19 RPG plus PERSON50 migration/evolution/relations tests
+        run: npm test -- src/app/coachLife/CoachLifeDecision.test.ts src/app/game/UserCoachCreator.test.ts src/ui/startup/BootstrapApp.test.tsx src/domain/personality/ObservedPersonalityEvolution.test.ts src/domain/personality/SemanticPersonalityEffects.test.ts src/domain/world/SemanticRelationshipAutoBridge.test.ts src/domain/world/CompatibilityInteractionBridge.test.ts src/engine/staff/StaffPersonalityEvidence.test.ts
+      - name: WorldDB new coach + real evidence tests
+        run: npm test -- src/app/game/WorldDbGameBootstrap.test.ts -t BS19B
+      - name: Live contract signing personality bridges
+        run: npm test -- src/app/contractRetention/RetentionSigningService.test.ts src/app/marketIntelligence/FreeAgentSigningService.test.ts
