@@ -102,7 +102,7 @@ describe('PLAYER 2.4-D5B real spatial CROSSOVER', () => {
     expect(completed.events.slice(scene.events.length).every(e => e.type.startsWith('technique'))).toBe(true)
     const movementIntent = { playerId: defenderId, target: { x: defender.position.x - 5, y: defender.position.y + 1 },
       urgency: 'sprint' as const, facing: { kind: 'BALL' as const },
-      provenance: { owner: 'defensiveStructure' as const, responsibilityId: 'guard-action-1' } }
+      provenance: { owner: 'defensiveStructure' as const, responsibilityId: 'guard-action-1', decisionId: 'decision:guard-action-1' } }
     const untreated = integrateMatchPlayers({ ...scene, movementIntents: [movementIntent] })
     const affected = integrateMatchPlayers({ ...completed, movementIntents: [movementIntent] })
     const slow = affected.find(p => p.playerId === defenderId)!
