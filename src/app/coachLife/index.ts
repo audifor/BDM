@@ -4,3 +4,5 @@ export { queueFirstStaffMeeting, decideFirstStaffMeeting, getPendingFirstStaffMe
 export type { StaffMeetingChoice, StaffMeetingDecisionResult, PendingStaffMeeting } from './StaffTrustMeeting'
 export { queueStaffRequestFollowUp, getPendingStaffRequestFollowUp, getPendingStaffRequestFollowUps, decideStaffRequestFollowUp, staffRequestFollowUpInboxId } from './StaffRequestFollowUp'
 export type { StaffRequestFollowUpChoice, StaffRequestFollowUpResult, PendingStaffRequestFollowUp } from './StaffRequestFollowUp'
+export { promiseStaffCareerRequest, getStaffPromise, getActiveStaffPromises, postponeStaffPromise, settleStaffPromise, progressStaffPromises, staffPromiseInboxId } from './StaffProfessionalCommitment'
+export type { StaffPromiseOutcome, StaffPromiseResult, ActiveStaffPromise } from './StaffProfessionalCommitment'
