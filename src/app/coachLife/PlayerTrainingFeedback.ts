@@ -41,7 +41,7 @@ export function queueVerifiedPlayerTrainingFeedback(world: GameWorld): GameWorld
     const participated = session.execution!.participants.find(p => p.playerId === session.playerId && p.participation !== 'REST')
     const evidenceId = participated?.developmentStimulusEventId
     const evidence = evidenceId === undefined ? undefined : world.developmentStimulusEventsById[evidenceId]
-    if (!evidence || evidence.sourceType !== 'training' || evidence.sourceId !== session.id ||
+    if (evidenceId === undefined || evidence === undefined || evidence.sourceType !== 'training' || evidence.sourceId !== session.id ||
       evidence.playerId !== session.playerId || evidence.date !== world.currentDate ||
       !Object.values(evidence.byRating).some(value => value !== undefined && value > 0)) continue
     const player = world.players[session.playerId]
