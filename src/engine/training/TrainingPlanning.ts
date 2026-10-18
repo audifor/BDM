@@ -1,4 +1,5 @@
 import { addDays, type GameDate } from '@/domain/date'
+import { recommendRepertoireTraining, type RepertoireTrainingAdvice } from '@/engine/repertoire/RepertoireAdvice'
 import type { TeamId } from '@/domain/ids'
 import { isPlayerAvailable, updateGameWorldBatch, type GameWorld } from '@/domain/world'
 import { getTeamRoster } from '@/domain/world'
@@ -80,6 +81,8 @@ export interface TrainingPlanningContext {
   readonly matchConflictCount: number
   readonly recommendedModuleId?: string
   readonly recommendedIntensity?: TrainingIntensity
+  /** Optional own-roster advice only. No automatic scheduling or growth. */
+  readonly repertoireAdvice?: readonly RepertoireTrainingAdvice[]
   readonly recommendation: 'REST' | 'RECOVERY' | 'LIGHT' | 'PLAN'
   readonly reasons: readonly TrainingPlanningWarningCode[]
   readonly warnings: readonly TrainingPlanningWarningCode[]
@@ -197,6 +200,8 @@ export function buildTrainingPlanningContext(world: GameWorld, teamId: TeamId, a
     matchConflictCount,
     ...(recommendedModuleId === undefined ? {} : { recommendedModuleId }),
     ...(recommendedIntensity === undefined ? {} : { recommendedIntensity }),
+    ...(roster.some((player) => world.playerRepertoireByPlayerId[player.id] !== undefined)
+      ? { repertoireAdvice: recommendRepertoireTraining(world, teamId, asOfDate) } : {}),
     recommendation,
     reasons,
     warnings: reasons,
