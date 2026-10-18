@@ -26,25 +26,42 @@ describe('Finance V2 workspace', () => {
 
   it('shows canonical empty states and keeps salary cap separate', () => {
     render(<FinancesWorkspace world={world} />)
-    expect(screen.getByRole('heading', { name: 'Finance overview' })).toBeInTheDocument()
-    expect(screen.getByText('No Organization finance facts available.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Cash flow' }))
-    expect(screen.getByText('No cash accounts recorded.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Salary cap' }))
+    expect(screen.getByRole('heading', { name: 'Tu dinero, de un vistazo' })).toBeInTheDocument()
+    expect(screen.getByText('No hay datos financieros del club todavía.')).toBeInTheDocument()
+    expect(screen.getByText('Dinero disponible')).toBeInTheDocument()
+    expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Caja' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Movimientos' }))
+    expect(screen.getByText('Aún no hay movimientos de caja en este periodo.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Plantilla' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Límite salarial' }))
     expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
-    expect(screen.getByText(/separate from Organization cash/)).toBeInTheDocument()
+  })
+
+
+  it('keeps the high-priority navigation direct without fourteen shell tabs', () => {
+    render(<FinancesWorkspace world={world} />)
+    expect(screen.getByRole('navigation', { name: 'Apartados de finanzas' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Finance AI' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Ver restricciones/ }))
+    expect(screen.getByRole('heading', { name: 'Salary cap' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Futuro' }))
+    expect(screen.getByRole('button', { name: 'Previsiones' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Valor del club' })).toBeInTheDocument()
   })
 
   it('requires explicit valuation inputs and distinguishes a missing operating metric', () => {
     render(<FinancesWorkspace world={world} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Valuation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Futuro' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Valor del club' }))
     expect(screen.getByText(/No reporting currency configured/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Filtros y opciones avanzadas'))
     fireEvent.change(screen.getByLabelText('Reporting currency'), { target: { value: 'EUR' } })
     expect(screen.getByText(/No valuation assumptions configured/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Multiple numerator'), { target: { value: '3' } })
     expect(screen.getByText(/no positive operating metric/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Multiple numerator'), { target: { value: '0' } })
-    expect(screen.getByRole('alert')).toHaveTextContent('Invalid valuation multiple')
+    expect(screen.getByRole('alert')).toHaveTextContent('Multiplicador no válido')
   })
 
   it('keeps currencies separate and exposes source references for a recorded cash fact', () => {
@@ -74,6 +91,11 @@ describe('Finance V2 workspace', () => {
     expect(view.tables[0]!.rows[0]!.references).toEqual([budget.id, line.id])
     expect(buildFinanceWorkspaceSection(planned, organizationId, 'revenue').tables[2]!.columns).toContain('Forecast')
     expect(buildFinanceWorkspaceSection(planned, organizationId, 'costs').tables[3]!.columns).toContain('Committed')
+    render(<FinancesWorkspace world={planned} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Presupuesto' }))
+    expect(screen.getByRole('region', { name: 'Estado del presupuesto de gastos' })).toBeInTheDocument()
+    expect(screen.getByText('Gasto presupuestado')).toBeInTheDocument()
+    expect(screen.getByText('Gasto previsto')).toBeInTheDocument()
   })
 
   it('exposes settlement and source distinctions in revenue, costs, payroll and competition', () => {

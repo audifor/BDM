@@ -43,6 +43,9 @@ describe('buildPlayerDevelopmentModel', () => {
     expect(model!.seasonStimulus.totalStimulus).toBe(0)
     expect(model!.trainingContext.teamIntensity).toBe('Normal')
     expect(model!.trainingContext.teamFocus).toBe('Balanced')
+    expect(model!.trainingPlan.loadLabel).toBe('Normal')
+    expect(model!.trainingPlan.loadFill).toBe(56)
+    expect(model!.trainingEffect.confidenceLabel).toBe('0 / 8 families')
   })
 
   it('never exposes hidden internal development ceilings in the presentation model', () => {
@@ -214,7 +217,8 @@ describe('buildPlayerDevelopmentModel', () => {
     // The projection reads the reported scouting ranges, or says it has none: never invents one.
     expect(model.projection.note.length).toBeGreaterThan(0)
     expect(model.projection.status === 'available' ? 3 : 0).toBe(model.projection.outcomes.length)
-    expect(model.trainingEffect.note).toContain('legacy rating profile')
+    expect(model.trainingEffect.note).toContain('not rating increases')
+    expect(model.trainingEffect.rows).toHaveLength(0)
   })
 
   it('rebuilds the category curve honestly when no transition exists yet', () => {

@@ -1,6 +1,6 @@
 import type { DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import type { CanonicalRatingKey } from '@/domain/player'
-import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
+import { validateShotZoneBreakdown, type MatchStatLog } from '@/domain/stats/MatchStatLog'
 import type { GameWorld } from '@/domain/world'
 import { matchSessionFatigueDeltaToCareer } from '@/engine/match-next'
 import type { BackgroundMatchResult } from '@/engine/world-sim/background/BackgroundMatchModel'
@@ -33,7 +33,9 @@ export function createMatchStatLogFromBackground(world: GameWorld, result: Backg
     finalScore: { ...result.score },
     playerLines: result.playerStats.map((stats) => {
       const isHome = home.has(stats.playerId)
-      return { playerId: stats.playerId, teamId: isHome ? game.homeTeamId : game.awayTeamId, opponentTeamId: isHome ? game.awayTeamId : game.homeTeamId, isHome, started: starters.has(stats.playerId), stats: { ...stats } }
+      const shotZones = result.playerShotZones?.[stats.playerId]
+      if (shotZones !== undefined) validateShotZoneBreakdown(shotZones, stats)
+      return { playerId: stats.playerId, teamId: isHome ? game.homeTeamId : game.awayTeamId, opponentTeamId: isHome ? game.awayTeamId : game.homeTeamId, isHome, started: starters.has(stats.playerId), stats: { ...stats }, ...(shotZones === undefined ? {} : { shotZones }) }
     }),
     resolution: 'BACKGROUND',
     backgroundModelVersion: result.modelVersion,

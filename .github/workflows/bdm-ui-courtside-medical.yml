@@ -1,0 +1,33 @@
+name: BDM UI Courtside Medical
+on:
+  pull_request:
+    branches: [feat/bdm-ui-courtside]
+    paths:
+      - 'src/ui-ng/applications/medical/**'
+      - 'src/ui-ng/styles/ng-data-grid.css'
+      - '.github/workflows/bdm-ui-courtside-medical.yml'
+  push:
+    branches: [feat/courtside-medical-visual-v1, feat/courtside-medical-density-and-contrast]
+    paths:
+      - 'src/ui-ng/applications/medical/**'
+      - '.github/workflows/bdm-ui-courtside-medical.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  medical:
+    name: Medical Courtside typecheck and gameplay regression
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx vitest run src/ui-ng/applications/medical/MedicalWorkspace.test.tsx src/ui-ng/applications/medical/MedicalCourtsideDensity.test.tsx src/ui-ng/applications/medical/buildMedicalWorkspaceModel.test.ts src/ui-ng/applications/player/PlayerMedicalCourtside.test.tsx --maxWorkers=2 --no-file-parallelism
+      - run: npm run build

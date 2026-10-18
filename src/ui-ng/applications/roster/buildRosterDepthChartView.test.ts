@@ -16,6 +16,8 @@ function player(
     stars: 3,
     band,
     slot: undefined,
+    secondaryPositions: [],
+    injured: false,
   }
 }
 

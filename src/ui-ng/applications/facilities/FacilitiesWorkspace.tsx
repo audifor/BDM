@@ -34,6 +34,7 @@ import {
   scheduleLabel,
   serviceabilityLabel,
 } from './facilitiesPresentation'
+import '@/ui-ng/applications/club/courtside-club-management.css'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -75,10 +76,10 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
   )
 
   if (world === null) {
-    return <NgHoloShell appLabel="Facilities" empty emptyMessage="No career loaded." region="facilities-workspace" />
+    return <NgHoloShell appLabel="Facilities" empty emptyMessage="No career loaded." region="facilities-workspace" className="cs-club-management cs-club-facilities" />
   }
   if (team === undefined || model === null) {
-    return <NgHoloShell appLabel="Facilities" empty emptyMessage="No team assigned to the user coach." region="facilities-workspace" />
+    return <NgHoloShell appLabel="Facilities" empty emptyMessage="No team assigned to the user coach." region="facilities-workspace" className="cs-club-management cs-club-facilities" />
   }
 
   const runCommand = (result: { readonly status: 'APPLIED' | 'BLOCKED'; readonly reasons: readonly (keyof typeof CLUB_FACILITY_COMMAND_REASON_TEXT)[] }, appliedText: string) => {
@@ -108,6 +109,7 @@ export function FacilitiesWorkspace({ world: suppliedWorld }: { readonly world?:
       }
       onTabSelect={(id) => setTab(id as FacilitiesTabId)}
       region="facilities-workspace"
+      className="cs-club-management cs-club-facilities"
       tabs={TABS}
       teamId={model.teamId}
       title={model.teamName}
@@ -189,23 +191,29 @@ function OverviewPanel({ model }: { readonly model: ClubFacilitiesWorkspaceModel
   const currencyCode = model.costs[0]?.currencyCode
 
   return (
-    <section className="ng-canon__overview">
+    <section className="ng-canon__overview cs-facilities__summary">
       <p className="ng-canon__note">Known assets may have unknown properties or no recorded components. A team association does not establish ownership or sporting access. Season-only source dates are not exact relationship dates; no access right is inferred.</p>
       <div className="ng-canon__panel ng-holo-panel">
-        <dl className="ng-canon__metrics">
-          <NgMetric label="Club organization" value={model.organizationName ?? model.organizationId} />
+        <p className="ng-canon__eyebrow">Estado de infraestructuras</p>
+        <dl className="ng-canon__metrics cs-facilities__primary">
           <NgMetric label="Facilities" value={model.facilities.length} />
-          <NgMetric label="Components" value={model.components.length} />
-          <NgMetric label="Out of service" value={outOfService} />
-          <NgMetric label="Open maintenance needs" value={model.openNeeds.length} />
           <NgMetric label="Critical needs" value={model.criticalOpenNeeds.length} />
           <NgMetric label="Active projects" value={model.activeProjectIds.length} />
-          <NgMetric label="Projects eligible to start" value={model.eligibleProjectIds.length} />
-          <NgMetric label="Capital committed" value={currencyCode === undefined ? 'No financial facts' : formatFacilityAmount(currencyCode, committed)} />
-          <NgMetric label="Capital paid" value={currencyCode === undefined ? 'No financial facts' : formatFacilityAmount(currencyCode, paid)} />
-          <NgMetric label="Reporting currency" value={model.reportingCurrencyCode ?? 'Not configured'} />
-          <NgMetric label="As of" value={model.asOf} />
+          <NgMetric label="Out of service" value={outOfService} />
         </dl>
+        <details className="cs-facilities__extra">
+          <summary>Ver indicadores adicionales</summary>
+          <dl className="ng-canon__metrics">
+            <NgMetric label="Club organization" value={model.organizationName ?? model.organizationId} />
+            <NgMetric label="Components" value={model.components.length} />
+            <NgMetric label="Open maintenance needs" value={model.openNeeds.length} />
+            <NgMetric label="Projects eligible to start" value={model.eligibleProjectIds.length} />
+            <NgMetric label="Capital committed" value={currencyCode === undefined ? 'No financial facts' : formatFacilityAmount(currencyCode, committed)} />
+            <NgMetric label="Capital paid" value={currencyCode === undefined ? 'No financial facts' : formatFacilityAmount(currencyCode, paid)} />
+            <NgMetric label="Reporting currency" value={model.reportingCurrencyCode ?? 'Not configured'} />
+            <NgMetric label="As of" value={model.asOf} />
+          </dl>
+        </details>
         {model.facilities.length === 0 ? (
           <p className="ng-canon__note" data-ng-region="facilities-empty-truth">
             No canonical Facility is recorded for this club organization in this universe.

@@ -705,3 +705,1220 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+
+/* CONTRACT V2 · Courtside management hierarchy.
+   Shared HOME tokens are the only dark/light palette authority. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root {
+  --pc-line:var(--cs-line2);
+  --pc-surface:var(--cs-s1);
+  --pc-surface-soft:var(--cs-s2);
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-auto-rows:max-content;
+  align-content:start;
+  gap:8px;
+  padding:8px 10px;
+  color:var(--cs-text);
+  background:transparent;
+  font-family:var(--cs-font);
+  min-width:0;
+  height:100%;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--cs-line2) transparent;
+}
+
+.pc-contract-hero {
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,.82fr) minmax(0,.82fr) auto;
+  align-items:center;
+  gap:12px;
+  min-height:90px;
+  padding:13px 15px;
+  border:1px solid var(--pc-line,var(--cs-line2));
+  border-radius:11px;
+  background:var(--pc-surface,var(--cs-s1));
+}
+.pc-contract-hero__identity,
+.pc-contract-hero__milestone,
+.pc-contract-hero__decision {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+  min-width:0;
+}
+.pc-contract-hero__milestone,
+.pc-contract-hero__decision {
+  padding-left:15px;
+  border-left:1px solid var(--pc-line,var(--cs-line2));
+}
+.pc-contract-hero__eyebrow {
+  color:var(--cs-text2);
+  font:700 10px/1.1 var(--cs-font);
+  letter-spacing:.07em;
+}
+.pc-contract-hero__identity > strong {
+  color:var(--cs-text);
+  font:700 clamp(17px,1.55cqi,24px)/1.04 var(--cs-font-display);
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.pc-contract-hero__status {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--cs-text2);
+  font:600 11px/1.2 var(--cs-font);
+}
+.pc-contract-hero__pill {
+  padding:4px 7px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  text-transform:uppercase;
+  color:var(--cs-text2);
+  background:var(--cs-s2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-contract-hero__pill.is-active {
+  color:var(--cs-positive);
+  border-color:color-mix(in srgb,var(--cs-positive) 40%,var(--cs-line2));
+}
+.pc-contract-hero__pill.is-expiring {
+  color:var(--cs-orange2);
+  border-color:color-mix(in srgb,var(--cs-orange2) 50%,var(--cs-line2));
+}
+.pc-contract-hero__milestone > strong,
+.pc-contract-hero__decision > strong {
+  font:700 clamp(20px,1.95cqi,29px)/1 var(--cs-font-display);
+  color:var(--cs-lime);
+  white-space:nowrap;
+}
+.pc-contract-hero__milestone small,
+.pc-contract-hero__decision small {
+  color:var(--cs-text2);
+  font:500 11px/1.2 var(--cs-font);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.pc-contract-hero__decision > strong.is-high {color:var(--cs-negative);}
+.pc-contract-hero__decision > strong.is-moderate {color:var(--cs-orange2);}
+.pc-contract-hero__decision > strong.is-low {color:var(--cs-positive);}
+.pc-contract-hero__manage {
+  align-self:center;
+  min-height:39px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:9px 13px;
+  background:var(--cs-lime);
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  /* Bright lime needs stable dark foreground in BOTH Courtside themes. */
+  color:#17141f;
+  font:700 14px/1 var(--cs-font-display);
+  white-space:nowrap;
+  cursor:pointer;
+}
+.pc-contract-hero__manage:hover {filter:brightness(1.09);}
+.pc-contract-hero__manage:focus-visible {outline:2px solid var(--cs-orange2);outline-offset:3px;}
+
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview {
+  grid-template-columns:minmax(0,1fr) minmax(0,1.32fr) minmax(0,1.06fr);
+  gap:8px;
+  align-items:stretch;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview > * {
+  min-height:0;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-snapshot,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-timeline,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-intel,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-schedule,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-rights,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-history,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-contract-activity {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:10px 12px;
+  border:1px solid var(--pc-line,var(--cs-line2));
+  border-radius:10px;
+  background:var(--pc-surface,var(--cs-s1));
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-panel-head {
+  flex:0 0 auto;
+  min-height:24px;
+  padding:0 0 7px;
+  background:transparent;
+  border-bottom:1px solid var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-panel-head__title {
+  color:var(--cs-text);
+  font:700 17px/1 var(--cs-font-display);
+  letter-spacing:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-panel-head__meta {
+  color:var(--cs-text2);
+  font:600 11px/1 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-panel-empty,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-panel-note {
+  padding:0;
+  color:var(--cs-text2);
+  font:500 11px/1.35 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-snapshot__grid {
+  flex:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:5px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-snapshot__cell {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  border-bottom:1px solid var(--cs-line);
+  padding:5px 0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-snapshot__cell:last-child {border-bottom:0;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-snapshot__label {
+  font:700 11px/1.2 var(--cs-font);
+  color:var(--cs-text2);
+  letter-spacing:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-snapshot__value {
+  font:700 clamp(19px,1.75cqi,25px)/1 var(--cs-font-display);
+  color:var(--cs-lime);
+  text-align:right;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline__track {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
+  align-items:center;
+  overflow-x:auto;
+  overflow-y:hidden;
+  min-height:100px;
+  padding:10px 3px;
+  scrollbar-width:thin;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node {
+  min-width:90px;
+  flex:1 0 90px;
+  min-height:84px;
+  gap:7px;
+  justify-content:flex-start;
+  border-radius:6px;
+  font:600 11px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node__season {
+  color:var(--cs-text);
+  font:700 14px/1 var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node__guarantee {
+  color:var(--cs-text2);
+  font-size:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node.is-selected {
+  border-color:var(--cs-lime);
+  background:color-mix(in srgb,var(--cs-lime) 7%,var(--cs-s1));
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node__marker {background:var(--cs-text2);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-timeline-node--current .pc-timeline-node__marker {
+  background:var(--cs-lime);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--cs-lime) 22%,transparent);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__facts {
+  display:grid;
+  gap:6px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__facts > div {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  border-bottom:1px solid var(--cs-line);
+  gap:8px;
+  padding:0 0 5px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__facts dt {
+  font:700 11px/1.2 var(--cs-font);
+  color:var(--cs-text2);
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__facts dd {font:700 13px/1.2 var(--cs-font);color:var(--cs-text);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__note {
+  color:var(--cs-text2);
+  font:500 11px/1.25 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__risk.is-high {color:var(--cs-negative);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__risk.is-moderate {color:var(--cs-orange2);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__risk.is-low {color:var(--cs-positive);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-intel__events {
+  max-height:77px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
+
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-schedule {
+  min-height:175px;
+  padding:9px 12px;
+  gap:7px;
+}
+.pc-schedule__trend {
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.pc-schedule__trend-legend {
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+  letter-spacing:.035em;
+}
+.pc-schedule__trend-legend i {
+  display:inline-block;
+  height:5px;
+  width:14px;
+  margin:0 7px;
+  vertical-align:middle;
+  border-radius:2px;
+  background:var(--cs-lime);
+}
+.pc-schedule__trend-bars {
+  display:flex;
+  align-items:stretch;
+  gap:5px;
+  min-height:65px;
+  max-height:65px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+}
+.pc-schedule__trend-bars > button {
+  display:flex;
+  flex:1 0 55px;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  min-width:55px;
+  max-width:165px;
+  padding:2px 4px;
+  border:1px solid transparent;
+  border-radius:6px;
+  background:transparent;
+  cursor:pointer;
+}
+.pc-schedule__trend-bars > button[aria-pressed='true'] {
+  border-color:var(--cs-lime);
+  background:color-mix(in srgb,var(--cs-lime) 5%,var(--cs-s1));
+}
+.pc-schedule__trend-track {
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  height:42px;
+  width:35px;
+  background:var(--cs-s3);
+  border-radius:3px 3px 0 0;
+}
+.pc-schedule__trend-salary {
+  position:relative;
+  width:100%;
+  border-radius:3px 3px 0 0;
+  background:color-mix(in srgb,var(--cs-orange2) 30%,var(--cs-s3));
+  overflow:hidden;
+}
+.pc-schedule__trend-guaranteed {
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:var(--cs-lime);
+  opacity:.85;
+}
+.pc-schedule__trend-bars > button small {
+  white-space:nowrap;
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-schedule__scroll {
+  flex:1 1 auto;
+  min-height:88px;
+  max-height:160px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-schedule__table {font-size:11px;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--closing {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--closing > * {
+  flex:1 1 230px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-rights__grid {
+  padding:0;
+  gap:6px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-history__list {
+  padding:0;
+  max-height:100px;
+  overflow-y:auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root .pc-contract-activity > span {
+  font:600 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries {
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s1);
+  overflow:hidden;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries > summary {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  padding:8px 11px;
+  color:var(--cs-text2);
+  font:700 11px/1.2 var(--cs-font);
+  cursor:pointer;
+  list-style:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries > summary::-webkit-details-marker {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries[open] > summary {
+  border-bottom:1px solid var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries .pc-closing {
+  grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
+  padding:9px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__data-boundaries .pc-gap-panel {
+  padding:10px;
+  background:var(--cs-s2);
+  border-color:var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--restricted {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.pc-restricted {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:13px;
+  max-width:560px;
+  padding:35px 28px;
+  border:1px solid var(--cs-line2);
+  border-radius:12px;
+  background:var(--cs-s1);
+  color:var(--cs-text);
+  text-align:center;
+}
+.pc-restricted__eyebrow {
+  color:var(--cs-text2);
+  font:700 11px/1 var(--cs-font);
+}
+.pc-restricted > strong {
+  color:var(--cs-lime);
+  font:700 clamp(20px,2cqi,29px)/1 var(--cs-font-display);
+}
+.pc-restricted > p {
+  margin:0;
+  color:var(--cs-text2);
+  font:500 12px/1.45 var(--cs-font);
+}
+.pc-restricted > button {
+  padding:9px 13px;
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  background:transparent;
+  color:var(--cs-lime);
+  cursor:pointer;
+  font:700 13px/1 var(--cs-font-display);
+}
+
+/* Narrower workspaces recompose rather than compress information into unreadable cells. */
+@container player-space (max-width:1250px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview > .pc-intel {
+    grid-column:1/-1;
+  }
+}
+@container player-space (max-width:850px) {
+  .pc-contract-hero {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-contract-hero__manage {justify-self:stretch;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root__row--overview > .pc-intel {
+    grid-column:auto;
+  }
+}
+@container player-space (max-width:520px) {
+  .pc-contract-hero {grid-template-columns:minmax(0,1fr);}
+  .pc-contract-hero__milestone,.pc-contract-hero__decision {
+    padding:0;
+    border-left:0;
+    border-top:1px solid var(--cs-line2);
+    padding-top:9px;
+  }
+  .pc-contract-hero__manage {width:100%;}
+}
+
+
+/* CONTRACT V3: no empty inspector, no false data, real information and actions. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--agreement,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--no-agreement {
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-width:0;
+}
+.pc-schedule__selected {
+  display:grid;
+  grid-template-columns:minmax(100px,1.25fr) repeat(4,minmax(0,1fr));
+  align-items:center;
+  gap:7px;
+  padding:7px 9px;
+  min-width:0;
+  border:1px solid var(--cs-line2);
+  border-radius:7px;
+  background:var(--cs-s2);
+}
+.pc-schedule__selected-title {
+  color:var(--cs-lime);
+  font:700 clamp(18px,1.6cqi,25px)/1 var(--cs-font-display);
+}
+.pc-schedule__selected > div {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  padding-left:9px;
+  border-left:1px solid var(--cs-line2);
+}
+.pc-schedule__selected small {
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-schedule__selected strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:var(--cs-text);
+  font:700 clamp(14px,1.2cqi,20px)/1.1 var(--cs-font-display);
+}
+
+/* Missing contract is a single actionable case, not three invented reports. */
+.pc-no-agreement {
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(260px,.85fr);
+  gap:9px;
+}
+.pc-no-agreement__hero,
+.pc-no-agreement__actions {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:10px;
+  min-height:155px;
+  padding:18px 21px;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__hero {
+  background:linear-gradient(120deg,color-mix(in srgb,var(--cs-orange2) 7%,var(--cs-s1)),var(--cs-s1) 66%);
+}
+.pc-no-agreement__hero > span,
+.pc-no-agreement__actions > span,
+.pc-no-agreement__support > div > span {
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+  letter-spacing:.06em;
+}
+.pc-no-agreement__hero > strong {
+  font:700 clamp(26px,3.1cqi,44px)/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.pc-no-agreement__hero > small {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-no-agreement__actions > strong {
+  color:var(--cs-lime);
+  font:700 clamp(19px,2cqi,28px)/1 var(--cs-font-display);
+}
+.pc-no-agreement__actions > p {
+  margin:0;
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-no-agreement__actions > button {
+  border:1px solid var(--cs-lime);
+  background:var(--cs-lime);
+  border-radius:6px;
+  color:#17141f;
+  padding:10px 13px;
+  cursor:pointer;
+  font:700 13px/1 var(--cs-font-display);
+}
+.pc-no-agreement__support {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.pc-no-agreement__support > div {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:100px;
+  padding:15px;
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__support strong {
+  color:var(--cs-text);
+  font:700 22px/1 var(--cs-font-display);
+}
+.pc-no-agreement__support small {
+  color:var(--cs-text2);
+  font:500 11px/1.3 var(--cs-font);
+}
+
+/* Rival opportunity dossier: market intelligence is never omniscient. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-rpg {
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  min-width:0;
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:8px 10px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--cs-line2) transparent;
+  color:var(--cs-text);
+  font-family:var(--cs-font);
+}
+.pc-rpg__hero {
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,.7fr) auto;
+  align-items:center;
+  gap:16px;
+  min-height:104px;
+  padding:12px 15px;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  background:var(--cs-s1);
+}
+.pc-rpg__eyebrow,
+.pc-rpg__hero-status > small,
+.pc-rpg__intelligence > div > span,
+.pc-rpg__approaches > header > span,
+.pc-rpg__approach-details > div:first-child > span,
+.pc-rpg__risk > span {
+  display:block;
+  color:var(--cs-text2);
+  font:700 10px/1.1 var(--cs-font);
+  letter-spacing:.04em;
+}
+.pc-rpg__hero h2 {
+  margin:6px 0;
+  color:var(--cs-lime);
+  font:700 clamp(24px,2.7cqi,41px)/1 var(--cs-font-display);
+  text-transform:uppercase;
+}
+.pc-rpg__hero p {
+  margin:0;
+  color:var(--cs-text2);
+  font:500 11px/1.4 var(--cs-font);
+}
+.pc-rpg__hero-status {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-left:15px;
+  border-left:1px solid var(--cs-line2);
+}
+.pc-rpg__hero-status > strong {
+  color:var(--cs-lime);
+  font:700 clamp(19px,2cqi,30px)/1 var(--cs-font-display);
+  white-space:nowrap;
+}
+.pc-rpg__hero-status > span {
+  color:var(--cs-text2);
+  font:600 10px/1.15 var(--cs-font);
+}
+.pc-rpg__primary {
+  min-height:40px;
+  padding:10px 12px;
+  background:var(--cs-lime);
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  color:#17141f;
+  font:700 13px/1 var(--cs-font-display);
+  white-space:nowrap;
+  cursor:pointer;
+}
+.pc-rpg__intelligence {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+}
+.pc-rpg__intelligence > div {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-height:62px;
+  padding:10px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s1);
+  min-width:0;
+}
+.pc-rpg__intelligence > div > strong {
+  color:var(--cs-text);
+  font:700 clamp(15px,1.5cqi,22px)/1 var(--cs-font-display);
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+.pc-rpg__intelligence > div > small {
+  font:500 10px/1.15 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-rpg__flow {
+  display:grid;
+  grid-template-columns:minmax(0,1.42fr) minmax(260px,.65fr);
+  gap:9px;
+  align-items:stretch;
+  min-height:0;
+  flex:1 1 auto;
+}
+.pc-rpg__approaches,
+.pc-rpg__signals {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+  border:1px solid var(--cs-line2);
+  border-radius:11px;
+  padding:12px;
+  background:var(--cs-s1);
+}
+.pc-rpg__approaches > header,
+.pc-rpg__signals > header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:29px;
+  padding-bottom:9px;
+  border-bottom:1px solid var(--cs-line2);
+}
+.pc-rpg__approaches > header > span,
+.pc-rpg__signals > header > strong {
+  color:var(--cs-text);
+  font:700 clamp(16px,1.5cqi,21px)/1 var(--cs-font-display);
+}
+.pc-rpg__approaches > header small,
+.pc-rpg__signals > header small {
+  color:var(--cs-text2);
+  font:500 10px/1.2 var(--cs-font);
+}
+.pc-rpg__approach-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.pc-rpg__approach-grid > button {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+  min-height:106px;
+  min-width:0;
+  padding:10px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  text-align:left;
+  cursor:pointer;
+}
+.pc-rpg__approach-grid > button[aria-pressed='true'] {
+  border-color:var(--cs-lime);
+  background:color-mix(in srgb,var(--cs-lime) 7%,var(--cs-s1));
+}
+.pc-rpg__approach-grid > button:hover {
+  border-color:color-mix(in srgb,var(--cs-lime) 55%,var(--cs-line2));
+}
+.pc-rpg__approach-icon {
+  font:700 27px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.pc-rpg__approach-grid > button strong {
+  font:700 clamp(13px,1.2cqi,17px)/1 var(--cs-font-display);
+  color:var(--cs-text);
+}
+.pc-rpg__approach-grid > button small {
+  color:var(--cs-text2);
+  font:500 10px/1.15 var(--cs-font);
+}
+.pc-rpg__approach-details {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px;
+  padding:13px;
+  flex:1 1 auto;
+  min-height:135px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+}
+.pc-rpg__approach-details > div:first-child > strong {
+  display:block;
+  margin-top:6px;
+  font:700 25px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+}
+.pc-rpg__approach-details > p,
+.pc-rpg__risk p {
+  margin:0;
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text);
+}
+.pc-rpg__risk {
+  display:grid;
+  gap:5px;
+  padding-left:10px;
+  border-left:2px solid var(--cs-orange2);
+}
+.pc-rpg__not-live {
+  margin-top:auto;
+  padding:7px 9px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  color:var(--cs-text2);
+  font:600 10px/1.35 var(--cs-font);
+}
+.pc-rpg__signals > header {flex:0 0 auto;}
+.pc-rpg__signals > header strong {font:700 clamp(16px,1.5cqi,21px)/1 var(--cs-font-display);}
+.pc-rpg__empty {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  flex:1 1 auto;
+  min-height:130px;
+  padding:15px;
+  border:1px dashed var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s2);
+  text-align:center;
+}
+.pc-rpg__empty strong {font:700 19px/1 var(--cs-font-display);color:var(--cs-text);}
+.pc-rpg__empty span {font:500 11px/1.3 var(--cs-font);color:var(--cs-text2);}
+.pc-rpg__signals ol {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:0;
+  margin:0;
+  list-style:none;
+}
+.pc-rpg__signals li {
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:4px;
+  padding:8px;
+  border:1px solid var(--cs-line2);
+  border-radius:6px;
+  background:var(--cs-s2);
+}
+.pc-rpg__signals li > time {color:var(--cs-text2);font:600 10px var(--cs-font);}
+.pc-rpg__signals li > strong {font:700 12px var(--cs-font);color:var(--cs-text);}
+.pc-rpg__signals li > span {grid-column:1/-1;font:500 11px var(--cs-font);color:var(--cs-text2);}
+.pc-rpg__next-action {
+  margin-top:auto;
+  padding-top:10px;
+  border-top:1px solid var(--cs-line2);
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pc-rpg__next-action > button {
+  width:100%;
+  min-height:36px;
+  border:1px solid var(--cs-lime);
+  border-radius:6px;
+  background:transparent;
+  color:var(--cs-lime);
+  cursor:pointer;
+  font:700 13px/1 var(--cs-font-display);
+}
+
+@container player-space (max-width:1200px) {
+  .pc-rpg__hero {grid-template-columns:minmax(0,1fr) minmax(0,.85fr);}
+  .pc-rpg__primary {grid-column:1/-1;justify-self:start;}
+  .pc-rpg__flow {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__approach-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg__intelligence {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-no-agreement {grid-template-columns:minmax(0,1fr);}
+}
+@container player-space (max-width:700px) {
+  .pc-rpg__hero {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__hero-status {border-left:0;border-top:1px solid var(--cs-line2);padding:9px 0 0;}
+  .pc-rpg__approach-grid {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg__intelligence,.pc-no-agreement__support {grid-template-columns:minmax(0,1fr);}
+  .pc-schedule__selected {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-schedule__selected-title {grid-column:1/-1;}
+}
+
+
+/* CONTRACT V3.1: remove ornamental empty real estate, keep Courtside theme authority. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-root--v31 {
+  height:100%;
+  align-content:start;
+  gap:8px;
+  overflow-x:hidden;
+}
+.pc-no-agreement--v31 {
+  grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);
+  align-items:stretch;
+  gap:8px;
+}
+.pc-no-agreement--v31 .pc-no-agreement__hero,
+.pc-no-agreement--v31 .pc-no-agreement__actions {
+  min-height:160px;
+  padding:18px 20px;
+  justify-content:center;
+  gap:12px;
+}
+.pc-no-agreement__main {display:flex;align-items:center;gap:19px;min-width:0;}
+.pc-no-agreement__main > div {display:flex;flex-direction:column;gap:9px;min-width:0;}
+.pc-no-agreement__main strong {
+  display:block;
+  font:700 clamp(24px,2.9cqi,41px)/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.pc-no-agreement__main small {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+  max-width:580px;
+}
+.pc-no-agreement__document {
+  display:flex;
+  flex:0 0 55px;
+  height:65px;
+  flex-direction:column;
+  gap:6px;
+  padding:16px 10px 9px;
+  box-sizing:border-box;
+  border:2px solid var(--cs-orange2);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--cs-orange2) 8%,var(--cs-s1));
+}
+.pc-no-agreement__document i {height:4px;width:100%;border-radius:3px;background:color-mix(in srgb,var(--cs-orange2) 44%,transparent);}
+.pc-no-agreement__document i:last-child {width:64%;}
+.pc-no-agreement__evidence {display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+.pc-no-agreement__evidence span {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 8px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-no-agreement__evidence span:first-child {color:var(--cs-positive);}
+.pc-no-agreement__evidence b {font:700 13px/1 var(--cs-font);}
+.pc-no-agreement--v31 .pc-no-agreement__actions {gap:8px;}
+.pc-no-agreement--v31 .pc-no-agreement__actions strong {font-size:clamp(18px,1.9cqi,26px);}
+.pc-no-agreement--v31 .pc-no-agreement__actions button {margin-top:2px;}
+.pc-no-agreement__registration {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 13px;
+  min-height:37px;
+  padding:9px 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  background:var(--cs-s1);
+}
+.pc-no-agreement__registration > strong {
+  margin-right:5px;
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+}
+.pc-no-agreement__registration > span {
+  display:flex;
+  gap:8px;
+  color:var(--cs-text);
+  font:700 11px/1.1 var(--cs-font);
+}
+.pc-no-agreement__registration > span b {color:var(--cs-text2);font-weight:500;}
+
+/* Rival dossier: four strong choice cards with a genuinely useful detail strip.
+   The page must not allocate a huge panel to missing information. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .pc-rpg--v31 {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto auto auto;
+  align-content:start;
+  gap:8px;
+}
+.pc-rpg--v31 .pc-rpg__hero {
+  grid-template-columns:minmax(0,1.25fr) minmax(175px,.65fr) auto;
+  gap:13px;
+  min-height:73px;
+  padding:10px 15px;
+}
+.pc-rpg--v31 .pc-rpg__hero h2 {
+  font-size:clamp(20px,2.05cqi,29px);
+  margin:5px 0 4px;
+}
+.pc-rpg--v31 .pc-rpg__hero p {font-size:11px;}
+.pc-rpg--v31 .pc-rpg__hero-status strong {font-size:clamp(20px,1.9cqi,27px);}
+.pc-rpg--v31 .pc-rpg__intel-strip {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  align-items:center;
+  min-height:51px;
+  padding:9px 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  padding:2px 12px;
+  border-right:1px solid var(--cs-line2);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div:first-child {padding-left:0;}
+.pc-rpg--v31 .pc-rpg__intel-strip > div:last-child {border-right:0;}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > span {
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > strong {
+  color:var(--cs-text);
+  font:700 clamp(14px,1.3cqi,19px)/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip > div > small {
+  color:var(--cs-text2);
+  font:500 10px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip.is-unknown {
+  display:flex;
+  min-height:35px;
+  align-items:center;
+  gap:11px;
+}
+.pc-rpg--v31 .pc-rpg__intel-icon {
+  color:var(--cs-orange2);
+  font:700 23px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-strip.is-unknown > strong {
+  flex:0 0 auto;
+  color:var(--cs-text);
+  font:700 15px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__intel-explanation {
+  color:var(--cs-text2);
+  font:500 11px/1.3 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__approaches {
+  min-height:0;
+  gap:8px;
+  padding:12px 13px;
+}
+.pc-rpg--v31 .pc-rpg__approaches > header {padding-bottom:8px;}
+.pc-rpg--v31 .pc-rpg__approach-grid {gap:8px;}
+.pc-rpg--v31 .pc-rpg__approach-grid > button {
+  min-height:123px;
+  gap:7px;
+  padding:12px 13px;
+  position:relative;
+  transition:border-color .13s ease,background .13s ease;
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button[aria-pressed='true'] {
+  border-color:var(--cs-lime);
+  box-shadow:inset 0 3px var(--cs-lime);
+}
+.pc-rpg--v31 .pc-rpg__approach-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+}
+.pc-rpg--v31 .pc-rpg__approach-index {
+  color:var(--cs-text3);
+  font:700 11px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button strong {
+  font-size:clamp(16px,1.45cqi,22px);
+}
+.pc-rpg--v31 .pc-rpg__approach-grid > button small {
+  font-size:11px;
+}
+.pc-rpg--v31 .pc-rpg__approach-flag {
+  margin-top:auto;
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+  letter-spacing:.03em;
+}
+.pc-rpg--v31 .pc-rpg__approach-details {
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1.05fr) minmax(145px,.5fr);
+  align-items:center;
+  gap:14px;
+  min-height:76px;
+  padding:11px 14px;
+}
+.pc-rpg--v31 .pc-rpg__route-description {display:flex;flex-direction:column;gap:5px;min-width:0;}
+.pc-rpg--v31 .pc-rpg__route-description > span,
+.pc-rpg--v31 .pc-rpg__risk > span {
+  color:var(--cs-text2);
+  font:700 9px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__route-description > strong {
+  color:var(--cs-lime);
+  font:700 20px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__route-description p,
+.pc-rpg--v31 .pc-rpg__risk p {
+  font:500 11px/1.3 var(--cs-font);
+  color:var(--cs-text);
+}
+.pc-rpg--v31 .pc-rpg__risk {display:flex;flex-direction:column;gap:7px;padding-left:12px;}
+.pc-rpg--v31 .pc-rpg__route-state {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:9px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s1);
+  min-width:0;
+}
+.pc-rpg--v31 .pc-rpg__route-state span {
+  color:var(--cs-orange2);
+  font:700 11px/1 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__route-state small {
+  color:var(--cs-text2);
+  font:500 10px/1.25 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__history {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:9px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+}
+.pc-rpg--v31 .pc-rpg__history-title {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex-wrap:wrap;
+  gap:9px;
+}
+.pc-rpg--v31 .pc-rpg__history-title strong {
+  color:var(--cs-text);
+  font:700 16px/1 var(--cs-font-display);
+}
+.pc-rpg--v31 .pc-rpg__history-title > span {color:var(--cs-text2);font:600 11px/1 var(--cs-font);}
+.pc-rpg--v31 .pc-rpg__history-title button {
+  margin-left:auto;
+  padding:7px 10px;
+  border:1px solid var(--cs-lime);
+  border-radius:5px;
+  color:var(--cs-lime);
+  background:transparent;
+  font:700 12px/1 var(--cs-font-display);
+  cursor:pointer;
+}
+.pc-rpg--v31 .pc-rpg__history-empty {
+  color:var(--cs-text2);
+  font:500 11px/1.25 var(--cs-font);
+}
+.pc-rpg--v31 .pc-rpg__history ol {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  padding:0;
+  margin:0;
+  list-style:none;
+}
+.pc-rpg--v31 .pc-rpg__history li {
+  display:flex;
+  gap:7px;
+  flex-direction:column;
+  padding:8px;
+  border:1px solid var(--cs-line2);
+  border-radius:5px;
+  background:var(--cs-s2);
+}
+.pc-rpg--v31 .pc-rpg__history li time,
+.pc-rpg--v31 .pc-rpg__history li > span {color:var(--cs-text2);font:500 10px/1.15 var(--cs-font);}
+.pc-rpg--v31 .pc-rpg__history li strong {color:var(--cs-text);font:700 12px/1 var(--cs-font);}
+
+@container player-space (max-width:1250px) {
+  .pc-rpg--v31 .pc-rpg__hero {grid-template-columns:minmax(0,1fr) minmax(0,.7fr);}
+  .pc-rpg--v31 .pc-rpg__primary {grid-column:1/-1;justify-self:start;}
+  .pc-rpg--v31 .pc-rpg__approach-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg--v31 .pc-rpg__approach-details {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-rpg--v31 .pc-rpg__route-state {grid-column:1/-1;}
+}
+@container player-space (max-width:850px) {
+  .pc-no-agreement--v31 {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg--v31 .pc-rpg__intel-strip {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .pc-rpg--v31 .pc-rpg__intel-strip > div {border-right:0;padding:4px;}
+  .pc-rpg--v31 .pc-rpg__history ol {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@container player-space (max-width:600px) {
+  .pc-rpg--v31 .pc-rpg__hero,
+  .pc-rpg--v31 .pc-rpg__approach-grid,
+  .pc-rpg--v31 .pc-rpg__approach-details,
+  .pc-rpg--v31 .pc-rpg__history ol {grid-template-columns:minmax(0,1fr);}
+  .pc-rpg--v31 .pc-rpg__route-state {grid-column:auto;}
+  .pc-rpg--v31 .pc-rpg__intel-strip.is-unknown {flex-wrap:wrap;}
+  .pc-no-agreement__document {display:none;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .pc-rpg--v31 .pc-rpg__approach-grid > button {transition:none;}
+}

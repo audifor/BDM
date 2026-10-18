@@ -1,0 +1,171 @@
+name: BDM UI Courtside unified
+on:
+  push:
+    branches: [feat/bdm-ui-courtside]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bdm-ui-courtside-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  typecheck-build:
+    name: Unified TypeScript and build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+  home-and-shell:
+    name: Home, bars and desktop regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/ui-ng/applications/home/homeLeaderCategories.test.ts src/ui-ng/applications/home/homeStandingsDigest.test.ts src/ui-ng/applications/home/HomeWorkspace.test.tsx src/ui-ng/system/NgStartMenu.test.tsx src/ui-ng/system/Taskbar.test.tsx src/ui-ng/workspace/taskbarInstances.test.ts src/ui-ng/workspace/taskbarOpenApps.test.ts src/ui-ng/workspace/workspaceApps.test.ts --maxWorkers=2 --no-file-parallelism
+  player:
+    name: Player Courtside regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/player/components/PerformanceNineZoneCourt.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerPerformanceModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerPerformanceCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerDevelopmentModel.test.ts \
+            src/ui-ng/applications/player/views/PlayerDevelopmentCourtside.test.tsx \
+            src/ui-ng/applications/player/views/PlayerCourtsideOverview.fow.test.tsx \
+            src/ui-ng/applications/player/views/PlayerAttributesView.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerContractModel.test.ts \
+            src/ui-ng/applications/player/PlayerMedicalCourtside.test.tsx \
+            src/ui-ng/applications/player/data/buildPlayerScoutingDecision.test.ts \
+            src/ui-ng/applications/player/PlayerScoutingCourtside.test.tsx \
+            src/ui-ng/applications/player/PlayerContractHubLink.test.tsx \
+            src/ui-ng/applications/player/components/visual/CourtsideFamilyRadar.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
+  roster:
+    name: Roster Courtside regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/ui-ng/applications/roster/RosterWorkspace.test.tsx src/ui-ng/applications/roster/rosterV4Filters.test.ts src/ui/pcb-migrated/plantilla/CanonicalRoster.test.ts --maxWorkers=2 --no-file-parallelism
+  staff:
+    name: Staff Courtside gameplay and market
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/ui-ng/applications/staff/StaffWorkspace.test.tsx src/ui-ng/applications/staff/assignments/staffAssignmentsModel.test.ts src/ui-ng/applications/staff/buildStaffPersonWorkspaceModel.test.ts src/ui-ng/applications/staff/buildStaffWorkspaceModel.test.ts src/ui-ng/applications/staff/dynamicsTone.test.ts --maxWorkers=2 --no-file-parallelism
+
+  market-scouting:
+    name: Market and Scouting runtime regressions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/market/MarketWorkspace.courtside.test.tsx \
+            src/ui-ng/applications/scouting/ScoutingWorkspace.test.tsx \
+            src/app/market/MarketTargetService.test.ts \
+            src/ui-ng/system/startMenuCatalog.courtside.test.ts \
+            src/ui/desktop/DesktopNavigation.test.ts \
+            src/ui/desktop/MarketScoutingDesktopSmoke.test.tsx \
+            src/ui-ng/workspace/WorkspaceErrorBoundary.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
+
+  club-and-institutions:
+    name: Club Courtside, Board, Finance and Facilities
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/club/ClubWorkspace.test.tsx \
+            src/ui-ng/applications/club/ClubCourtsideSatellite.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.production.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.governance.test.tsx \
+            src/ui-ng/applications/board/BoardWorkspace.courtside.test.tsx \
+            src/ui-ng/applications/finances/FinancesWorkspace.test.tsx \
+            src/ui-ng/applications/facilities/FacilitiesWorkspace.test.tsx \
+            --maxWorkers=2 --no-file-parallelism
+
+  coach:
+    name: Coach Courtside all seven tabs
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx vitest run \
+            src/ui-ng/applications/coach/CoachWorkspace.test.tsx \
+            src/ui-ng/applications/coach/CoachOverviewScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachOpportunitiesScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachReputationScreen.test.tsx \
+            src/ui-ng/applications/coach/CoachDevelopmentWorkspace.test.tsx \
+            src/ui-ng/applications/coach/CoachLegacyScreen.test.tsx \
+            src/ui/screens/CoachScreen.test.ts \
+            src/ui/screens/CoachScreen.courtside.test.tsx \
+            src/app/game/ensureUserCoachRpg.test.ts \
+            --maxWorkers=2 --no-file-parallelism

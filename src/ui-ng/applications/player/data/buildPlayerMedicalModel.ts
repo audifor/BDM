@@ -27,6 +27,7 @@ import { injuryRequiresFitnessTest } from '@/engine/injury/FitnessTest'
 import { getPlayerGameLogs } from '@/engine/stats/PlayerHistory'
 
 import { findTeamForPlayer, formatGameDateLabel } from './presentationHelpers'
+import { formatMedicalNumber } from './formatMedicalNumber'
 import type { OverviewGapModel, PresentationAvailability } from './playerWorkspaceModel'
 
 export type MedicalAvailabilityTone = 'available' | 'injured'
@@ -637,7 +638,7 @@ function buildReadiness(
       id: 'fatigue',
       label: 'Fatigue',
       fill: fatigue,
-      valueLabel: `${fatigue}%`,
+      valueLabel: `${formatMedicalNumber(fatigue)}%`,
       bandLabel: fatigueTone === 'low' ? 'Very fresh' : fatigueTone === 'moderate' ? 'Moderate' : 'High',
       tone: fatigueToneValue,
     },
@@ -665,9 +666,9 @@ function buildReadiness(
     },
     {
       id: 'recovery',
-      label: 'Daily recovery',
+      label: 'Fatigue recovery',
       fill: null,
-      valueLabel: `-${CAREER_FATIGUE_DAILY_RECOVERY}`,
+      valueLabel: `${CAREER_FATIGUE_DAILY_RECOVERY}/day`,
       bandLabel: 'Fatigue points recovered per day',
       tone: 'neutral',
     },
@@ -702,8 +703,8 @@ const BODY_REGIONS: readonly {
   { id: 'neck', label: 'Neck', column: 'right', kinds: [] },
   { id: 'shoulder-r', label: 'Shoulder (R)', column: 'left', kinds: ['shoulderStrain'] },
   { id: 'shoulder-l', label: 'Shoulder (L)', column: 'right', kinds: ['shoulderStrain'] },
-  { id: 'arm-r', label: 'Arm (R)', column: 'left', kinds: ['handInjury'] },
-  { id: 'arm-l', label: 'Arm (L)', column: 'right', kinds: ['handInjury'] },
+  { id: 'arm-r', label: 'Hand (R)', column: 'left', kinds: ['handInjury'] },
+  { id: 'arm-l', label: 'Hand (L)', column: 'right', kinds: ['handInjury'] },
   { id: 'core', label: 'Core', column: 'right', kinds: ['backStrain'] },
   { id: 'hip-r', label: 'Hip (R)', column: 'left', kinds: ['hamstringStrain'] },
   { id: 'hip-l', label: 'Hip (L)', column: 'right', kinds: ['hamstringStrain'] },
@@ -742,7 +743,7 @@ function buildBodyRegions(
       column: region.column,
       status: 'attention',
       statusLabel: formatInjuryKind(match.kind),
-      detail: `Recorded ${formatGameDateLabel(match.injuredOn)} · expected return ${formatGameDateLabel(match.expectedReturnDate)} (${SEVERITY_LABELS[match.severity].toLowerCase()}). The save does not record the side, so both sides are marked.`,
+      detail: `Recorded ${formatGameDateLabel(match.injuredOn)} · expected return ${formatGameDateLabel(match.expectedReturnDate)} (${SEVERITY_LABELS[match.severity].toLowerCase()}). Laterality is unknown: both sides are possible locations, not two separate injuries.`,
     }
   })
 }
@@ -817,9 +818,11 @@ function buildRecoveryMilestones(
     {
       id: 'training',
       label: 'Training',
-      stateLabel: available ? 'Full' : 'Restricted',
-      tone: available ? 'positive' : 'caution',
-      note: available ? null : 'Load is managed until the medical staff clear the player.',
+      // Match-selection availability is NOT evidence of a training restriction.
+      // No authoritative player-specific training-clearance field exists in Save.
+      stateLabel: 'Not recorded',
+      tone: 'neutral',
+      note: 'Training clearance is not recorded. Match unavailability does not imply a training ban.',
     },
     {
       id: 'match-play',

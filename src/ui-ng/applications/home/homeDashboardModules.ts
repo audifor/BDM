@@ -7,6 +7,9 @@ export const HOME_DASHBOARD_MODULE_IDS = [
   'upcoming',
   'inbox',
   'news',
+  'results',
+  'injuries',
+  'training-agenda',
 ] as const
 
 export type HomeDashboardModuleId = (typeof HOME_DASHBOARD_MODULE_IDS)[number]
@@ -20,6 +23,9 @@ export const HOME_DASHBOARD_MODULE_LABELS: Readonly<Record<HomeDashboardModuleId
   upcoming: 'Próximos partidos',
   inbox: 'Buzón',
   news: 'Noticias del club',
+  results: 'Últimos resultados',
+  injuries: 'Parte médico',
+  'training-agenda': 'Entrenamientos programados',
 }
 
 export const HOME_DASHBOARD_DEFAULT_SLOTS: readonly HomeDashboardModuleId[] = [

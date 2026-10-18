@@ -6,6 +6,14 @@
 
 This document defines how legacy/current applications enter the NG visual and interaction system **without** assuming PlayerWorkspace composition is universal.
 
+## OWNER DECISION — COURTSIDE CANONICALITY (2026-10-19)
+
+Completed work in Courtside is canonical for the applications and surfaces already
+built there. Applications that have not received Courtside work continue to use
+BDM_OS_NG as their canonical visual and interaction system. This decision supersedes
+older guidance that treated Courtside as unchanged; it does not change shared game,
+simulation, navigation, or persistence authorities.
+
 ---
 
 ## Core equation

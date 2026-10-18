@@ -1,0 +1,1381 @@
+/* PLAYER ATTRIBUTES Courtside V1
+   Only the approved Attributes screen is affected. Exact HOME font and dark/light
+   tokens are inherited from the shared Courtside shell. */
+.pac-workspace {
+  height:100%;
+  min-height:0;
+  overflow:auto;
+  color:var(--cs-text);
+  background:var(--cs-bg);
+  font:400 13px/1.4 var(--cs-font);
+  scrollbar-width:thin;
+}
+.pac-workspace *,.pac-workspace *::before,.pac-workspace *::after {box-sizing:border-box;}
+.pac-grid {
+  display:grid;
+  grid-template-columns:minmax(280px,25fr) minmax(430px,43fr) minmax(360px,32fr);
+  gap:12px;
+  height:100%;
+  min-height:615px;
+  padding:12px 14px 4px;
+  align-items:stretch;
+}
+.pac-column {display:grid;gap:10px;min-width:0;min-height:0;}
+.pac-column--left {grid-template-rows:minmax(340px,1.2fr) minmax(210px,.8fr);}
+.pac-column--center {grid-template-rows:minmax(270px,1fr) minmax(315px,1.08fr);}
+.pac-column--right {grid-template-rows:minmax(315px,1.65fr) minmax(98px,.53fr) minmax(124px,.7fr);}
+.pac-card {min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--cs-s1);border:1px solid var(--cs-line);border-radius:16px;color:var(--cs-text);}
+.pac-head {display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-height:43px;padding:9px 12px;border-bottom:1px solid var(--cs-line2);}
+.pac-head h2,.pac-head h3 {margin:0;font:700 21px/1 var(--cs-font-display);letter-spacing:.025em;color:var(--cs-text);}
+.pac-head > span,.pac-head > div > span {font-size:12px;color:var(--cs-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pac-head > div {min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;}
+.pac-head > span:last-child:not(:first-child) {margin-left:auto;}
+.pac-subtext {margin:9px 12px 6px;color:var(--cs-text2);font-size:12px;}
+.pac-empty {font-size:13px;color:var(--cs-text2);margin:14px;padding:14px;border-radius:10px;background:var(--cs-s2);line-height:1.45;}
+.pac-sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+.pac-card button,.pac-card select,.pac-card input {font-family:var(--cs-font);}
+.pac-card button {cursor:pointer;color:var(--cs-text);}
+.pac-card button:focus-visible,.pac-card input:focus-visible,.pac-card select:focus-visible {outline:2px solid var(--cs-lime);outline-offset:2px;}
+.pac-card button:disabled {opacity:.45;cursor:not-allowed;}
+.pac-meter {display:block;height:7px;min-width:32px;border-radius:99px;background:var(--cs-s3);overflow:hidden;}
+.pac-meter > i {display:block;height:100%;background:var(--cs-lime);border-radius:99px;}
+
+/* Category selection retains the NG component's keyboard navigation and callback contract. */
+.pac-category .po-at-categories {border:0;border-radius:0;box-shadow:none;background:transparent;overflow:auto;flex:1;min-height:0;padding:4px 9px 9px;}
+.pac-category .po-at-categories::before,.pac-category .po-at-categories::after,.pac-category .po-at-categories > .po-at-panel__head {display:none;}
+.pac-category .po-at-categories__list {display:grid;gap:5px;}
+.pac-category .po-at-category {display:grid;grid-template-columns:minmax(0,1fr) 70px 30px;min-height:39px;height:auto;padding:6px 11px;gap:9px;border-radius:9px;border:1px solid var(--cs-line2);background:var(--cs-s2);}
+.pac-category .po-at-category:hover,.pac-category .po-at-category:focus-visible {border-color:var(--cs-lime);background:var(--cs-s3);}
+.pac-category .po-at-category.is-active {border-color:var(--cs-lime);box-shadow:inset 4px 0 0 var(--cs-lime);background:color-mix(in srgb,var(--cs-lime) 12%,var(--cs-s2));}
+.pac-category .po-at-category__label {font-size:13px;font-weight:600;color:var(--cs-text);}
+.pac-category .po-at-category.is-active .po-at-category__label {color:var(--cs-lime);}
+.pac-category .po-at-category__value {font:700 19px var(--cs-font-display);text-align:right;color:var(--cs-text);}
+.pac-category .po-at-category__track {background:var(--cs-s3);height:7px;border-radius:99px;overflow:hidden;}
+.pac-category .po-at-category__fill {background:var(--cs-positive);border-radius:99px;}
+.pac-category .po-at-category.is-active .po-at-category__fill {background:var(--cs-lime);}
+
+/* Focused attributes follow the player, not the active category. */
+.pac-focus__items {flex:1;min-height:0;overflow:auto;padding:2px 11px;}
+.pac-focus__item {display:grid;grid-template-columns:minmax(0,1fr) minmax(82px,.6fr) 21px;align-items:center;gap:9px;min-height:49px;padding:5px 2px;border-bottom:1px solid var(--cs-line2);}
+.pac-focus__go {border:0;background:transparent;text-align:left;display:flex;flex-direction:column;min-width:0;gap:2px;padding:0;}
+.pac-focus__go strong {font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pac-focus__go small {color:var(--cs-text2);font-size:11px;}
+.pac-focus__go:hover strong {color:var(--cs-lime);}
+.pac-focus__metric {display:flex;align-items:center;gap:8px;}
+.pac-focus__metric b {font:700 18px var(--cs-font-display);color:var(--cs-lime);}
+.pac-focus__metric .pac-meter {flex:1;}
+.pac-focus__remove {width:21px;height:25px;background:none;border:0;font-size:20px;color:var(--cs-text2)!important;padding:0;}
+.pac-focus__change {grid-column:1 / -1;font-size:11px;color:var(--cs-positive);}
+.pac-focus__note {margin:6px 12px;color:var(--cs-text3);font-size:11px;line-height:1.3;}
+.pac-outline-action {margin:5px 11px 11px;min-height:31px;padding:6px 12px;font:700 14px var(--cs-font-display)!important;letter-spacing:.04em;color:var(--cs-lime)!important;background:transparent;border:1px solid var(--cs-lime);border-radius:9px;}
+
+/* Main radar panel, with opt-in real baselines only. */
+.pac-profile__body {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.9fr);flex:1;gap:6px;min-height:0;padding:8px 11px 10px;}
+.pac-profile__chart {display:flex;flex-direction:column;align-items:center;min-width:0;min-height:0;}
+.pac-profile__legend {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--cs-text2);}
+.pac-dot {display:inline-block;height:8px;width:8px;border-radius:50%;}
+.pac-dot--player {background:var(--cs-lime);}
+.pac-dot--reference {background:var(--cs-orange);}
+.pac-profile__chart .po-radar {display:block;min-height:205px;max-height:300px;width:100%;height:100%;flex:1;color:var(--cs-text);}
+.pac-profile__chart .po-radar__axis {cursor:pointer;}
+.pac-profile__chart .po-radar__label {font:600 11px var(--cs-font);fill:var(--cs-text2);}
+.pac-profile__chart .po-radar__value {font:700 16px var(--cs-font-display);fill:var(--cs-lime);}
+.pac-profile__chart .po-radar__axis.is-active .po-radar__label {fill:var(--cs-lime);}
+.pac-profile__chart .po-radar__axis:focus-visible {outline:2px solid var(--cs-lime);}
+.pac-profile__control {margin-top:auto;display:flex;align-items:center;gap:9px;font:700 13px var(--cs-font-display);color:var(--cs-text2);}
+.pac-profile__control select {min-height:28px;max-width:140px;border:1px solid var(--cs-line2);border-radius:7px;padding:4px 9px;font-size:12px;color:var(--cs-text);background:var(--cs-s2);}
+.pac-benchmark-missing {text-align:center;font-size:11px;line-height:1.3;color:var(--cs-orange2);margin:4px 0 0;}
+.pac-signals {display:flex;flex-direction:column;gap:4px;min-width:0;overflow:auto;border:1px solid var(--cs-line2);border-radius:12px;background:var(--cs-s2);padding:10px;}
+.pac-signals h3 {margin:0 0 1px;font:700 17px var(--cs-font-display);border-bottom:1px solid var(--cs-line2);padding-bottom:8px;}
+.pac-signal {display:grid;grid-template-columns:29px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid var(--cs-line2);}
+.pac-signal:last-of-type {border-bottom:0;}
+.pac-signal__icon {display:grid;place-items:center;align-self:start;width:27px;height:27px;border:1px solid var(--cs-orange);border-radius:50%;color:var(--cs-orange);font-size:17px;}
+.pac-signal--up .pac-signal__icon {border-color:var(--cs-positive);color:var(--cs-positive);}
+.pac-signal--down .pac-signal__icon {border-color:var(--cs-negative);color:var(--cs-negative);}
+.pac-signal strong,.pac-signal b {display:block;font-size:12px;}
+.pac-signal strong {color:var(--cs-orange2);font-weight:600;}
+.pac-signal--up strong {color:var(--cs-positive);}
+.pac-signal p {margin:3px 0 0;color:var(--cs-text2);font-size:12px;line-height:1.33;}
+.pac-signal__baseline {font-size:12px;margin-top:auto;color:var(--cs-lime);}
+
+/* Dense filtered category matrix. Does not drop any of the eight families or its ratings. */
+.pac-attributes__heading {justify-content:space-between;}
+.pac-search {display:block;flex:0 1 205px;min-width:120px;}
+.pac-search input {width:100%;min-height:30px;background:var(--cs-bg2);color:var(--cs-text);border:1px solid var(--cs-line2);border-radius:8px;padding:5px 9px;font-size:12px;}
+.pac-search input::placeholder {color:var(--cs-text3);}
+.pac-filters {display:flex;gap:5px;flex-wrap:wrap;padding:8px 11px;}
+.pac-filters button {min-height:27px;padding:5px 9px;border:1px solid var(--cs-line2);border-radius:99px;background:var(--cs-s2);font-size:12px;}
+.pac-filters button.is-active {border-color:var(--cs-lime);background:var(--cs-lime);color:var(--cs-bg);font-weight:700;}
+.pac-attributes__scroll {flex:1;min-height:0;overflow:auto;padding:0 8px 5px;scrollbar-width:thin;}
+.pac-attr-table__head,.pac-attr-row__select {display:grid;grid-template-columns:minmax(110px,1.7fr) 50px 55px 57px 65px minmax(50px,.85fr);align-items:center;gap:5px;}
+.pac-attr-table__head {margin-right:29px;min-height:22px;padding:4px 7px;border-bottom:1px solid var(--cs-line2);font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--cs-text2);}
+.pac-attr-table__head span:nth-child(n+2) {text-align:right;}
+.pac-attr-table__head span:nth-child(6){text-align:center;}
+.pac-attr-table__head span:last-child {display:none;}
+.pac-attr-row {display:flex;align-items:center;gap:4px;min-width:0;border-bottom:1px solid var(--cs-line);border-radius:6px;}
+.pac-attr-row__select {border:0;background:transparent;flex:1;min-width:0;min-height:31px;text-align:left;padding:4px 7px;}
+.pac-attr-row__select > *:not(:first-child) {text-align:right;color:var(--cs-text2);font-size:12px;}
+.pac-attr-row__select > b {font:700 16px var(--cs-font-display);color:var(--cs-text)!important;}
+.pac-attr-row__name {font-size:12px;color:var(--cs-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pac-attr-row__name small {display:block;color:var(--cs-text2);font-size:11px;}
+.pac-attr-row__select > .pac-meter {min-width:32px;}
+.pac-attr-row:hover,.pac-attr-row.is-selected {background:color-mix(in srgb,var(--cs-lime) 9%,var(--cs-s1));}
+.pac-attr-row.is-selected {box-shadow:inset 0 0 0 1px var(--cs-lime);}
+.pac-attr-row__watch {display:grid;place-items:center;width:25px;height:31px;padding:0;border:0;background:transparent;color:var(--cs-text2)!important;font-size:20px;}
+.pac-attr-row__watch.is-watched {color:var(--cs-orange)!important;}
+
+/* Selected attribute, honest recorded history and actionable comparisons. */
+.pac-detail__watch {margin-left:auto;min-height:30px;border:1px solid var(--cs-line2);border-radius:99px;background:var(--cs-s2);color:var(--cs-orange2)!important;padding:5px 10px;font-size:12px!important;white-space:nowrap;}
+.pac-detail__watch.is-watched {border-color:var(--cs-orange);}
+.pac-detail__kpis {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:12px 7px;gap:0;}
+.pac-detail__kpis > div {display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:start;min-width:0;padding:4px 3px;border-right:1px solid var(--cs-line2);}
+.pac-detail__kpis > div:last-child {border-right:0;}
+.pac-detail__kpis span {font:700 11px var(--cs-font-display);color:var(--cs-text2);text-align:center;}
+.pac-detail__kpis strong {font:700 35px var(--cs-font-display);color:var(--cs-lime);}
+.pac-detail__kpis b {font:700 20px var(--cs-font-display);}
+.pac-detail__description {margin:0 12px;padding:0 0 9px;color:var(--cs-text2);font-size:12px;line-height:1.38;}
+.pac-detail__evolution {flex:1;min-height:110px;overflow:auto;margin:2px 11px 10px;padding:10px;background:var(--cs-s2);border-radius:11px;}
+.pac-detail__evolution .po-attr-evolution {width:100%;margin:0;}
+.pac-detail__evolution .po-attr-evolution__head {font:700 14px var(--cs-font-display);}
+.pac-detail__empty-history {display:flex;flex-direction:column;align-items:start;justify-content:center;min-height:115px;}
+.pac-detail__empty-history strong {font:700 16px var(--cs-font-display);}
+.pac-detail__empty-history p {font-size:12px;color:var(--cs-text2);line-height:1.4;}
+.pac-why p,.pac-training p {font-size:12px;line-height:1.45;color:var(--cs-text2);margin:10px 12px;}
+.pac-right__bottom {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;min-height:0;}
+.pac-related {overflow:auto;}
+.pac-related > button {display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:28px;padding:3px 11px;background:transparent;border:0;border-bottom:1px solid var(--cs-line);font-size:12px;text-align:left;}
+.pac-related > button:hover {color:var(--cs-lime);}
+.pac-related > button span {min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.pac-related > button b {font:700 15px var(--cs-font-display);color:var(--cs-lime);}
+.pac-training__status {margin:auto 10px 10px;font:700 12px var(--cs-font-display);color:var(--cs-orange2);}
+.pac-empty-detail {padding:12px;}
+.pac-empty-detail h2 {font:700 21px var(--cs-font-display);margin:0;}
+.pac-empty-detail p {font-size:13px;color:var(--cs-text2);}
+
+/* Full NG deep-dive remains available for existing notes, skill rankings and comparisons.
+   It is opt-in so the approved Courtside board is the landing screen. */
+.pac-deep-dive {margin:8px 14px 18px;background:var(--cs-s1);border:1px solid var(--cs-line2);border-radius:13px;padding:11px 14px;}
+.pac-deep-dive > summary {font:700 18px var(--cs-font-display);cursor:pointer;}
+.pac-deep-dive > .po-at-board {height:auto;min-height:840px;overflow:visible;padding:12px 0;}
+.pac-deep-dive > .po-at-board .po-at-col > * {overflow:auto;}
+
+/* Recomposition replaces shrinking type as PLAYER gets narrower. */
+@container player-space (max-width:1439px) {
+  .pac-grid {grid-template-columns:minmax(260px,.9fr) minmax(420px,1.4fr);grid-template-rows:auto;min-height:0;height:auto;}
+  .pac-column--right {grid-column:1/-1;grid-template-rows:auto auto auto;}
+  .pac-column--right .pac-detail {min-height:280px;}
+  .pac-column--left,.pac-column--center {min-height:630px;}
+  .pac-column--left {grid-template-rows:1.1fr .9fr;}
+}
+@container player-space (max-width:860px) {
+  .pac-grid {grid-template-columns:minmax(0,1fr);}
+  .pac-column--left,.pac-column--center,.pac-column--right {grid-column:1;min-height:0;}
+  .pac-column--left {grid-template-rows:auto auto;}
+  .pac-category {min-height:370px;}
+  .pac-focus {min-height:210px;}
+  .pac-column--center {grid-template-rows:minmax(360px,auto) minmax(350px,auto);}
+  .pac-column--right {grid-template-rows:auto auto auto;}
+  .pac-detail {min-height:340px;}
+}
+@container player-space (max-width:520px) {
+  .pac-grid {padding:8px;gap:8px;}
+  .pac-profile__body {grid-template-columns:1fr;}
+  .pac-profile__chart .po-radar {min-height:230px;}
+  .pac-signals {display:grid;grid-template-columns:1fr;max-height:none;}
+  .pac-attributes__heading {flex-wrap:wrap;}
+  .pac-search {flex:1 1 100%;}
+  .pac-attr-table__head,.pac-attr-row__select {grid-template-columns:minmax(90px,1fr) 42px 52px 52px;}
+  .pac-attr-table__head span:nth-child(4),.pac-attr-table__head span:nth-child(6),
+  .pac-attr-row__select > span:nth-child(4),.pac-attr-row__select > span:nth-child(6) {display:none;}
+  .pac-right__bottom {grid-template-columns:1fr;}
+}
+
+
+/*
+ * ATTRIBUTES V1.1 · category-first vertical priority (approved).
+ * Eight families must always be navigable without an internal scrollbar
+ * at reference desktop heights. The smaller Focus Tracker retains all
+ * three watch slots, and only that secondary panel may scroll if needed.
+ */
+.pac-grid {min-height:540px;}
+.pac-column--left[data-focus-count="0"] {
+  grid-template-rows:minmax(350px,1fr) 132px;
+}
+.pac-column--left[data-focus-count="1"],
+.pac-column--left[data-focus-count="2"],
+.pac-column--left[data-focus-count="3"] {
+  grid-template-rows:minmax(350px,1fr) 171px;
+}
+.pac-category .po-at-categories {
+  overflow:visible;
+  min-height:0;
+  padding:3px 8px 5px;
+}
+.pac-category .po-at-categories__list {
+  gap:3px;
+}
+.pac-category .po-at-category {
+  min-height:34px;
+  height:34px;
+  padding:3px 9px;
+  gap:8px;
+}
+.pac-category .po-at-category__label {font-size:13px;}
+.pac-category .po-at-category__value {font-size:18px;}
+.pac-focus .pac-head {min-height:37px;padding:7px 11px;}
+.pac-focus .pac-head > span {font-size:11px;}
+.pac-focus__items {padding:0 10px;overflow-y:auto;}
+.pac-focus__item {
+  min-height:30px;
+  padding:2px 1px;
+  gap:5px;
+}
+.pac-focus__go {gap:0;}
+.pac-focus__go strong {font-size:12px;line-height:1.25;}
+.pac-focus__go small {font-size:10.5px;line-height:1.2;}
+.pac-focus__metric b {font-size:17px;}
+.pac-focus__change {font-size:11px;}
+.pac-focus__empty {
+  margin:6px 10px;
+  padding:8px 9px;
+  min-height:0;
+  font-size:12px;
+  line-height:1.3;
+}
+.pac-focus .pac-outline-action {
+  flex:none;
+  min-height:28px;
+  margin:4px 10px 8px;
+  padding:4px 9px;
+  font-size:13px!important;
+}
+@container player-space (max-width:860px) {
+  .pac-column--left[data-focus-count="0"] {grid-template-rows:minmax(350px,auto) 132px;}
+  .pac-column--left[data-focus-count="1"],
+  .pac-column--left[data-focus-count="2"],
+  .pac-column--left[data-focus-count="3"] {grid-template-rows:minmax(350px,auto) 171px;}
+}
+
+
+/*
+ * ATTRIBUTES V1.2 · approved visual refinement.
+ * No Why It Matters card. A full same-family navigator replaces the split
+ * secondary row, with real training availability as a compact footnote.
+ * The reference selector shares the radar legend to reclaim plot height.
+ */
+.pac-column--center {
+  grid-template-rows:minmax(284px,1.08fr) minmax(221px,.92fr);
+}
+.pac-column--right {
+  grid-template-rows:minmax(278px,3fr) minmax(181px,2fr);
+}
+.pac-profile__body {
+  grid-template-columns:minmax(0,1fr) minmax(144px,.41fr);
+  gap:9px;
+  padding:6px 10px 8px;
+}
+.pac-profile__chart {justify-content:stretch;}
+.pac-profile__legend {
+  display:flex;
+  width:100%;
+  min-height:30px;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.pac-profile__control {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex:0 0 auto;
+  margin:0 0 0 auto;
+  font:700 12px var(--cs-font-display);
+}
+.pac-profile__control select {min-height:26px;max-width:116px;font-size:12px;}
+.pac-profile__chart .po-radar {
+  display:block;
+  flex:1 1 auto;
+  width:100%;
+  height:100%;
+  min-height:190px;
+  max-height:310px;
+}
+.pac-profile__chart .po-radar__label {
+  font:600 12px var(--cs-font);
+  fill:var(--cs-text2);
+}
+.pac-profile__chart .po-radar__value {font:700 16px var(--cs-font-display);fill:var(--cs-lime);}
+.pac-signals {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-self:center;
+  gap:0;
+  overflow:visible;
+  padding:9px;
+}
+.pac-signals h3 {
+  font-size:16px;
+  margin:0;
+  padding:0 0 6px;
+}
+.pac-signal {
+  grid-template-columns:26px minmax(0,1fr);
+  gap:6px;
+  align-items:start;
+  padding:8px 0;
+}
+.pac-signal__icon {width:24px;height:24px;font-size:15px;}
+.pac-signal strong,.pac-signal b {font-size:12px;line-height:1.25;}
+.pac-signal b {font-size:14px;color:var(--cs-text);overflow-wrap:anywhere;}
+.pac-signal > div > span {display:block;margin-top:3px;font-size:12px;color:var(--cs-text2);}
+.pac-signal__baseline {
+  margin:5px 0 0;
+  padding-top:6px;
+  border-top:1px solid var(--cs-line2);
+  font-size:12px;
+  line-height:1.3;
+}
+.pac-signal__baseline span {color:var(--cs-text2);}
+.pac-related {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+.pac-related .pac-head {flex:0 0 auto;}
+.pac-related__list {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  padding:3px 10px 5px;
+}
+.pac-related__list > button {
+  display:flex;
+  flex:0 0 auto;
+  width:100%;
+  min-height:32px;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:5px 7px;
+  border:0;
+  border-bottom:1px solid var(--cs-line2);
+  border-radius:6px;
+  background:transparent;
+  font:500 13px var(--cs-font);
+  text-align:left;
+}
+.pac-related__list > button:last-child {border-bottom:0;}
+.pac-related__list > button:hover,
+.pac-related__list > button:focus-visible {
+  background:color-mix(in srgb,var(--cs-lime) 8%,var(--cs-s1));
+  color:var(--cs-lime);
+}
+.pac-related__list > button > span:first-child {
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.pac-related__metric {
+  display:flex;
+  flex:0 0 clamp(95px,34%,175px);
+  min-width:0;
+  align-items:center;
+  gap:10px;
+}
+.pac-related__metric b {
+  flex:0 0 26px;
+  font:700 17px var(--cs-font-display);
+  color:var(--cs-lime);
+  text-align:right;
+}
+.pac-related__metric .pac-meter {flex:1;min-width:35px;}
+.pac-related__training {
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 10px;
+  padding:8px 12px;
+  border-top:1px solid var(--cs-line2);
+  background:var(--cs-s2);
+}
+.pac-related__training strong {
+  font:700 13px var(--cs-font-display);
+  letter-spacing:.04em;
+  color:var(--cs-orange2);
+}
+.pac-related__training span {font-size:12px;line-height:1.35;color:var(--cs-text2);}
+.pac-detail__evolution {min-height:86px;}
+.pac-detail__empty-history {min-height:80px;}
+
+@container player-space (max-width:1439px) {
+  .pac-column--right {
+    grid-template-columns:minmax(0,1.17fr) minmax(0,.83fr);
+    grid-template-rows:minmax(280px,auto);
+  }
+  .pac-column--right .pac-detail {min-height:280px;}
+  .pac-column--right .pac-related {min-height:280px;}
+}
+@container player-space (max-width:860px) {
+  .pac-column--right {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(280px,auto) minmax(210px,auto);
+  }
+  .pac-column--right .pac-related {min-height:210px;}
+  .pac-profile__body {grid-template-columns:minmax(0,1.1fr) minmax(134px,.42fr);}
+}
+@container player-space (max-width:520px) {
+  .pac-profile__body {grid-template-columns:minmax(0,1fr);}
+  .pac-profile__chart .po-radar {min-height:245px;max-height:330px;}
+  .pac-signals {display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+  .pac-signals h3,.pac-signals .pac-signal__baseline {grid-column:1/-1;}
+  .pac-related__list > button {font-size:13px;}
+}
+
+
+/*
+ * ATTRIBUTES V1.3 · multicomparison radar.
+ * The four profile lines are always independently toggleable.
+ * Reclaim the entire horizontal radar panel from Profile Signals.
+ */
+.pac-column--center {
+  grid-template-rows:minmax(355px,1.35fr) minmax(220px,.86fr);
+}
+.pac-profile__body {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-height:0;
+  padding:5px 12px 9px;
+}
+.pac-profile__chart {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  align-items:center;
+}
+.pac-profile__legend {
+  display:flex;
+  flex:0 0 auto;
+  min-height:34px;
+  width:100%;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  justify-content:center;
+  padding:1px 3px 4px;
+}
+.pac-radar-key,.pac-radar-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 9px;
+  border:1px solid var(--cs-line2);
+  border-radius:99px;
+  font:600 12px/1.15 var(--cs-font);
+  white-space:nowrap;
+}
+.pac-radar-key {color:var(--cs-text);background:var(--cs-s2);}
+.pac-radar-key i {
+  display:inline-block;width:11px;height:11px;border-radius:50%;
+  background:var(--cs-lime);
+}
+.pac-radar-toggle {
+  color:var(--cs-text2);
+  background:var(--cs-s2);
+  cursor:pointer;
+}
+.pac-radar-toggle[aria-pressed="true"] {
+  color:var(--cs-text);
+  border-color:var(--pac-series-color, var(--cs-line2));
+  background:color-mix(in srgb,var(--pac-series-color,var(--cs-text)) 9%,var(--cs-s2));
+}
+.pac-radar-toggle__mark {
+  display:inline-block;
+  width:15px;
+  height:4px;
+  border-top:3px dashed var(--pac-series-color,var(--cs-text2));
+}
+.pac-radar-toggle[aria-pressed="false"] .pac-radar-toggle__mark {opacity:.40;}
+.pac-radar-toggle:disabled {opacity:.4;cursor:not-allowed;}
+.pac-profile__radar-wrap {
+  display:flex;
+  flex:1 1 auto;
+  width:100%;
+  min-height:240px;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+.pac-profile__radar-wrap .po-radar {
+  flex:1 1 auto;
+  width:100%;
+  height:100%;
+  max-width:390px;
+  max-height:355px;
+  min-height:240px;
+  overflow:visible;
+}
+.pac-profile__radar-wrap .po-radar__label {font:700 13px var(--cs-font);fill:var(--cs-text2);}
+.pac-profile__radar-wrap .po-radar__value {font:700 18px var(--cs-font-display);fill:var(--cs-lime);}
+.pac-profile__radar-wrap .po-radar__axis:focus-visible {outline:2px solid var(--cs-lime);}
+.pac-signals {
+  display:grid;
+  flex:0 0 auto;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  align-self:stretch;
+  gap:0 12px;
+  margin-top:3px;
+  padding:4px 12px;
+  background:var(--cs-s2);
+  border:1px solid var(--cs-line2);
+  border-radius:10px;
+}
+.pac-signals h3 {display:none;}
+.pac-signals .pac-signal {
+  display:flex;
+  gap:8px;
+  min-width:0;
+  border:0;
+  padding:2px 0;
+}
+.pac-signals .pac-signal > div {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:0 7px;
+}
+.pac-signals .pac-signal strong {color:var(--cs-text2);font-size:12px;}
+.pac-signals .pac-signal b {font-size:13px;}
+.pac-signals .pac-signal > div > span {font-size:12px;margin:0;}
+.pac-signals .pac-signal__icon {width:20px;height:20px;font-size:12px;}
+.pac-signals .pac-signal__baseline {
+  grid-column:1/-1;
+  padding:5px 0 1px;
+  margin:2px 0 0;
+  font-size:12px;
+  border-top:1px solid var(--cs-line2);
+}
+@container player-space (max-width:1439px) {
+  .pac-column--center {grid-template-rows:minmax(350px,auto) minmax(250px,auto);}
+}
+@container player-space (max-width:860px) {
+  .pac-column--center {grid-template-rows:minmax(370px,auto) minmax(280px,auto);}
+  .pac-profile__body {display:flex;flex-direction:column;}
+  .pac-profile__radar-wrap {min-height:255px;}
+}
+@container player-space (max-width:520px) {
+  .pac-profile__body {display:flex;flex-direction:column;}
+  .pac-profile__radar-wrap {min-height:230px;}
+  .pac-profile__radar-wrap .po-radar {min-height:220px;max-height:325px;}
+  .pac-profile__legend {justify-content:flex-start;}
+  .pac-radar-key,.pac-radar-toggle {font-size:12px;padding:6px 8px;}
+  .pac-signals {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+}
+
+
+/*
+ * ATTRIBUTES V1.4 · approved permanent three-column workspace
+ *
+ * Left: eight category selectors and focus tracker.
+ * Center: a single full-height comparative, interactive attribute radar.
+ * Right: filtered attribute navigation above selected attribute details/evolution.
+ * Earlier rules remain for legacy deep-dive; these layout rules apply only to
+ * the current Courtside board.
+ */
+.pac-grid {
+  grid-template-columns:minmax(280px,24fr) minmax(375px,38fr) minmax(470px,38fr);
+  height:100%;
+  min-height:520px;
+  align-items:stretch;
+}
+.pac-column--center {
+  grid-template-rows:minmax(0,1fr);
+}
+.pac-column--right {
+  grid-template-columns:minmax(0,1fr);
+  /* More room for comparisons and evolution, with attribute list scroll confined above. */
+  grid-template-rows:minmax(215px,.94fr) minmax(245px,1.06fr);
+  min-height:0;
+}
+.pac-column--center .pac-profile {
+  flex:1 1 auto;
+  height:100%;
+  min-height:0;
+}
+.pac-column--center .pac-profile__body {
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  flex-direction:column;
+  gap:10px;
+  padding:12px 16px 14px;
+}
+.pac-column--center .pac-profile__chart {
+  flex:1 1 auto;
+  min-height:0;
+  justify-content:flex-start;
+}
+.pac-column--center .pac-profile__legend {
+  min-height:37px;
+  flex:0 0 auto;
+  justify-content:center;
+  gap:8px;
+  padding:3px 0 5px;
+}
+.pac-column--center .pac-profile__radar-wrap {
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  height:100%;
+  width:100%;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar {
+  display:block;
+  flex:0 1 auto;
+  width:100%;
+  height:100%;
+  max-width:570px;
+  max-height:560px;
+  min-width:0;
+  min-height:0;
+  object-fit:contain;
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar__label {
+  font:700 13px var(--cs-font);
+  fill:var(--cs-text2);
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar__value {
+  font:700 18px var(--cs-font-display);
+  fill:var(--cs-lime);
+}
+.pac-column--center .pac-signals {
+  flex:0 0 auto;
+  align-self:stretch;
+  margin-top:auto;
+  padding:8px 12px;
+  gap:2px 14px;
+  min-height:50px;
+}
+.pac-column--center .pac-signals .pac-signal {
+  padding:3px 0;
+}
+.pac-column--right .pac-attributes {
+  min-height:0;
+  height:100%;
+}
+.pac-column--right .pac-attributes__scroll {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+}
+.pac-column--right .pac-attr-table__head,
+.pac-column--right .pac-attr-row__select {
+  grid-template-columns:minmax(100px,1.8fr) 42px 50px 53px 57px minmax(44px,.82fr);
+  gap:4px;
+}
+.pac-column--right .pac-attr-table__head {
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:var(--cs-s1);
+  font-size:10px;
+}
+.pac-column--right .pac-attr-row__select {
+  min-height:34px;
+}
+.pac-column--right .pac-attr-row__name {font-size:12px;}
+.pac-column--right .pac-detail {
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
+.pac-column--right .pac-detail > .pac-head {
+  flex:0 0 auto;
+}
+.pac-column--right .pac-detail__kpis {
+  flex:0 0 auto;
+  padding:9px 7px 7px;
+}
+.pac-column--right .pac-detail__kpis strong {font-size:32px;}
+.pac-column--right .pac-detail__description {
+  flex:0 0 auto;
+  font-size:12px;
+  line-height:1.4;
+  padding:1px 0 8px;
+}
+.pac-column--right .pac-detail__evolution {
+  flex:1 1 auto;
+  min-height:95px;
+  margin:2px 10px 7px;
+  overflow:auto;
+}
+.pac-column--right .pac-detail__empty-history {
+  min-height:75px;
+}
+.pac-detail__training {
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  gap:4px 9px;
+  align-items:baseline;
+  padding:7px 12px;
+  border-top:1px solid var(--cs-line2);
+  background:var(--cs-s2);
+}
+.pac-detail__training strong {
+  color:var(--cs-orange2);
+  font:700 13px var(--cs-font-display);
+}
+.pac-detail__training span {
+  min-width:0;
+  font:400 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pac-column--right .pac-empty-detail {min-height:0;}
+/* Responsive adaptation: preserve functional stacking at smaller widths. */
+@container player-space (max-width:1439px) {
+  .pac-grid {
+    grid-template-columns:minmax(265px,.85fr) minmax(400px,1.15fr);
+    grid-template-rows:auto auto;
+    height:auto;
+    min-height:0;
+  }
+  .pac-column--left {grid-column:1;grid-row:1;min-height:620px;}
+  .pac-column--center {grid-column:2;grid-row:1;grid-template-rows:minmax(520px,1fr);min-height:620px;}
+  .pac-column--right {
+    grid-column:1/-1;
+    grid-row:2;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(340px,auto) minmax(330px,auto);
+    min-height:680px;
+  }
+  .pac-column--right .pac-detail,
+  .pac-column--right .pac-attributes {min-height:0;height:100%;}
+}
+@container player-space (max-width:860px) {
+  .pac-grid {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto;
+    height:auto;
+  }
+  .pac-column--left {grid-column:1;grid-row:auto;min-height:0;}
+  .pac-column--center {grid-column:1;grid-row:auto;min-height:490px;grid-template-rows:minmax(490px,1fr);}
+  .pac-column--right {
+    grid-column:1;
+    grid-row:auto;
+    min-height:660px;
+    grid-template-rows:minmax(335px,auto) minmax(315px,auto);
+  }
+}
+@container player-space (max-width:520px) {
+  .pac-column--center {min-height:450px;grid-template-rows:minmax(450px,1fr);}
+  .pac-column--center .pac-profile__radar-wrap .po-radar {max-width:440px;max-height:440px;}
+  .pac-column--right .pac-attr-table__head,
+  .pac-column--right .pac-attr-row__select {
+    grid-template-columns:minmax(82px,1fr) 42px 52px 52px;
+  }
+}
+
+
+/*
+ * ATTRIBUTES V1.5 · refinement of the approved three-column Courtside design.
+ * Font sizes inside the radar SVG are SVG user units, not CSS screen pixels:
+ * use a substantially smaller internal size to avoid huge rendered labels.
+ */
+.pac-column--center .pac-profile__radar-wrap .po-radar__label {
+  font:700 7.3px/1 var(--cs-font);
+  fill:var(--cs-text2);
+  letter-spacing:0;
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar__value {
+  font:700 9.2px/1 var(--cs-font-display);
+  fill:var(--cs-lime);
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar__axis.is-active .po-radar__label {
+  fill:var(--cs-lime);
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar {
+  width:100%;
+  height:100%;
+  max-width:570px;
+  max-height:560px;
+  min-height:0;
+}
+/* Factual reading is separate from the colored polygons and remains readable in both themes. */
+.pac-column--center .pac-signal__baseline strong {
+  font-weight:700;
+  color:var(--cs-text);
+}
+.pac-column--center .pac-signal__reading {
+  display:block;
+  margin-top:3px;
+  font:600 12px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+/* Dense but usable 80-rating matrix; only its body scrolls. */
+.pac-column--right .pac-attributes .pac-head {min-height:39px;}
+.pac-column--right .pac-attributes__heading .pac-search input {font-size:13px;}
+.pac-column--right .pac-filters {gap:5px;padding:7px 10px;}
+.pac-column--right .pac-filters button {
+  min-height:29px;
+  padding:6px 9px;
+  font-size:12px;
+}
+.pac-column--right .pac-attr-table__head {
+  margin-right:27px;
+  min-height:28px;
+  font-size:11px;
+  line-height:1.2;
+  letter-spacing:0;
+  color:var(--cs-text2);
+  white-space:normal;
+}
+.pac-column--right .pac-attr-table__head span:nth-child(n+2) {text-align:right;}
+.pac-column--right .pac-attr-row__select {
+  min-height:38px;
+  padding:5px 7px;
+}
+.pac-column--right .pac-attr-row__name {
+  font-size:13px;
+  font-weight:600;
+}
+.pac-column--right .pac-attr-row__select > *:not(:first-child) {
+  font-size:13px;
+}
+.pac-column--right .pac-attr-row__select > b {
+  font:700 17px var(--cs-font-display);
+}
+.pac-column--right .pac-attr-row__watch {
+  min-height:38px;
+  font-size:22px;
+}
+.pac-column--right .pac-detail__kpis span {font-size:12px;}
+.pac-column--right .pac-detail__kpis b {font-size:20px;}
+.pac-column--right .pac-detail__description {font-size:13px;line-height:1.4;}
+/* No recorded evolution: stop allocating the remaining height to a nonexistent chart. */
+.pac-column--right .pac-detail--pending .pac-detail__evolution {
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  justify-content:center;
+  min-height:0;
+  margin:4px 10px 8px;
+  padding:12px 14px;
+  overflow:visible;
+}
+.pac-detail__evolution--pending > strong {
+  font:700 17px/1 var(--cs-font-display);
+  color:var(--cs-orange2);
+}
+.pac-detail__evolution--pending > p {
+  margin:7px 0 0;
+  color:var(--cs-text2);
+  font:400 13px/1.4 var(--cs-font);
+}
+/* Recorded evolution: allocate chart room and surface only a real season delta. */
+.pac-column--right .pac-detail--recorded .pac-detail__evolution {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:105px;
+  overflow:auto;
+  gap:9px;
+  padding:10px 12px;
+}
+.pac-detail__trend {
+  display:flex;
+  flex:0 0 auto;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid var(--cs-line2);
+  padding:2px 0 8px;
+}
+.pac-detail__trend > span {
+  font:700 12px var(--cs-font-display);
+  color:var(--cs-text2);
+}
+.pac-detail__trend > strong {
+  font:700 21px var(--cs-font-display);
+  color:var(--cs-text);
+}
+.pac-detail__trend > strong.is-positive {color:var(--cs-positive);}
+.pac-detail__trend > strong.is-negative {color:var(--cs-negative);}
+.pac-detail--recorded .po-attr-evolution {flex:1 1 auto;min-height:150px;}
+.pac-detail--recorded .po-attr-evolution__head {font-size:14px;}
+/* At narrow widths, keep reading sizes and let the existing responsive
+ * grid rearrange, without reducing the font indefinitely. */
+@container player-space (max-width:860px) {
+  .pac-column--center .pac-profile__radar-wrap .po-radar__label {font-size:7.3px;}
+  .pac-column--center .pac-profile__radar-wrap .po-radar__value {font-size:9.2px;}
+  .pac-column--right .pac-detail--recorded .pac-detail__evolution {min-height:145px;}
+}
+
+
+/*
+ * ATTRIBUTES RADAR V3 · voluntary, limited comparison.
+ * Always a clean player-first radar on load, with at most two thin overlays.
+ * + COMPARAR and LIMPIAR replace the permanently active reference chips.
+ */
+.pac-column--center .pac-profile__chart {position:relative;}
+.pac-radar-toolbar {
+  display:flex;
+  flex:0 0 auto;
+  min-height:36px;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  padding:2px 6px 5px;
+}
+.pac-radar-toolbar .pac-radar-key {
+  min-height:29px;
+  padding:6px 10px;
+  font:600 12px/1.2 var(--cs-font);
+}
+.pac-radar-add,
+.pac-radar-clear {
+  flex:0 0 auto;
+  min-height:29px;
+  padding:6px 12px;
+  background:var(--cs-s2);
+  color:var(--cs-text)!important;
+  border:1px solid var(--cs-line2);
+  border-radius:8px;
+  font:700 13px/1.2 var(--cs-font-display)!important;
+  letter-spacing:.02em;
+}
+.pac-radar-add {
+  color:var(--cs-lime)!important;
+  border-color:var(--cs-lime);
+}
+.pac-radar-clear {color:var(--cs-orange2)!important;}
+.pac-radar-add[aria-expanded="true"] {background:var(--cs-s3);}
+.pac-radar-toolbar button:hover {background:var(--cs-s3);}
+.pac-radar-options {
+  position:absolute;
+  z-index:6;
+  top:42px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(390px,calc(100% - 16px));
+  max-width:100%;
+  padding:12px;
+  border:1px solid var(--cs-line2);
+  border-radius:12px;
+  background:var(--cs-s1);
+  box-shadow:0 9px 25px rgba(0,0,0,.28);
+}
+.pac-radar-options p {
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+  margin:0 0 10px;
+}
+.pac-radar-options__choices {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.pac-radar-options .pac-radar-toggle {
+  min-height:35px;
+  justify-content:center;
+  margin:0;
+  font-size:12px;
+  padding:8px 6px;
+}
+.pac-radar-options .pac-radar-toggle:disabled {
+  cursor:not-allowed;
+  opacity:.45;
+}
+.pac-radar-options .pac-radar-toggle[aria-pressed="true"] {
+  opacity:1;
+}
+.pac-radar-active {
+  display:flex;
+  flex:0 0 auto;
+  min-height:27px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:2px 8px 3px;
+}
+.pac-radar-active span {
+  display:inline-flex;
+  gap:7px;
+  align-items:center;
+  white-space:nowrap;
+  font:600 12px/1.25 var(--cs-font);
+  color:var(--cs-text2);
+}
+.pac-radar-active i {
+  display:inline-block;
+  width:16px;
+  border-top:2px dashed var(--pac-series-color);
+}
+.pac-column--center .pac-profile__radar-wrap {
+  min-height:0;
+  flex:1 1 auto;
+}
+.pac-profile-compare {
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  width:100%;
+  padding:11px 13px;
+  border:1px solid var(--cs-line2);
+  border-radius:12px;
+  background:var(--cs-s2);
+}
+.pac-profile-compare__header {
+  display:flex;
+  gap:7px 12px;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.pac-profile-compare__header strong {
+  color:var(--cs-lime);
+  font:700 19px/1 var(--cs-font-display);
+}
+.pac-profile-compare__header span {
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+.pac-profile-compare__bars {display:flex;flex-direction:column;gap:6px;}
+.pac-profile-compare__row {
+  display:grid;
+  grid-template-columns:minmax(85px,1fr) minmax(100px,2fr) 32px;
+  align-items:center;
+  gap:10px;
+  min-height:19px;
+}
+.pac-profile-compare__row > span {
+  color:var(--cs-text);
+  font:600 12px/1.2 var(--cs-font);
+}
+.pac-profile-compare__row > strong {
+  color:var(--cs-text);
+  text-align:right;
+  font:700 16px/1.1 var(--cs-font-display);
+}
+.pac-profile-compare__track {
+  height:8px;
+  border-radius:8px;
+  overflow:hidden;
+  background:var(--cs-s3);
+}
+.pac-profile-compare__track > i {
+  display:block;
+  height:100%;
+  border-radius:8px;
+}
+.pac-profile-compare__player {background:var(--cs-lime);}
+.pac-profile-compare p {
+  margin:2px 0 0;
+  color:var(--cs-text2);
+  font:500 12px/1.35 var(--cs-font);
+}
+.pac-profile-compare small {
+  font:400 11px/1.3 var(--cs-font);
+  color:var(--cs-text2);
+}
+@container player-space (max-width:860px) {
+  .pac-radar-options {top:40px;}
+  .pac-profile-compare {padding:10px;}
+}
+@container player-space (max-width:520px) {
+  .pac-radar-toolbar {flex-wrap:wrap;}
+  .pac-radar-options {width:calc(100% - 12px);}
+  .pac-profile-compare__row {grid-template-columns:minmax(76px,1fr) minmax(70px,2fr) 28px;}
+}
+
+
+/*
+ * ATTRIBUTES RADAR V3.1 · invariant radar footprint.
+ *
+ * Previously the comparison summary grew from one to three bars and the
+ * active-reference legend was conditionally mounted. Both stole height from
+ * the flexible SVG and made the spider jump in size whenever the user
+ * switched comparisons.
+ *
+ * Reserve a stable footer independent of its contents. The chart occupies
+ * the remaining space; only the footer may scroll when extra notes do not
+ * fit at a particular window size.
+ */
+.pac-column--center .pac-profile__body {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) 157px;
+  gap:8px;
+  min-height:0;
+  height:100%;
+  padding:8px 13px 10px;
+}
+.pac-column--center .pac-profile__chart {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow:visible;
+}
+.pac-column--center .pac-radar-toolbar {
+  flex:0 0 35px;
+  width:100%;
+  height:35px;
+  min-height:35px;
+  max-height:35px;
+  flex-wrap:nowrap;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:1px 4px 4px;
+  scrollbar-width:none;
+}
+.pac-column--center .pac-radar-toolbar::-webkit-scrollbar {display:none;}
+.pac-column--center .pac-profile__radar-wrap {
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  height:auto;
+  overflow:hidden;
+}
+.pac-column--center .pac-profile__radar-wrap .po-radar {
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  max-width:570px;
+  max-height:560px;
+}
+.pac-column--center .pac-profile-compare {
+  display:flex;
+  flex-direction:column;
+  grid-row:2;
+  flex:none;
+  width:100%;
+  height:157px;
+  min-height:157px;
+  max-height:157px;
+  gap:4px;
+  padding:8px 11px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+.pac-column--center .pac-profile-compare__header {
+  flex:0 0 auto;
+  gap:5px 10px;
+}
+.pac-column--center .pac-profile-compare__header strong {font-size:17px;}
+.pac-column--center .pac-profile-compare__bars {
+  flex:0 0 auto;
+  gap:4px;
+}
+.pac-column--center .pac-profile-compare__row {min-height:18px;}
+.pac-column--center .pac-profile-compare p {
+  margin:1px 0 0;
+  flex:0 0 auto;
+  line-height:1.25;
+}
+.pac-column--center .pac-profile-compare small {flex:0 0 auto;}
+/* Recompose the columns at narrow widths, but never resize this chart
+ * as a consequence of clicking a reference, opening the menu, or clearing it. */
+@container player-space (max-width:860px) {
+  .pac-column--center .pac-profile__body {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) 157px;
+  }
+}
+@container player-space (max-width:520px) {
+  .pac-column--center .pac-radar-toolbar {flex-wrap:nowrap;}
+  .pac-column--center .pac-profile__radar-wrap {
+    min-height:0;
+    height:auto;
+  }
+  .pac-column--center .pac-profile__radar-wrap .po-radar {
+    min-height:0;
+    height:100%;
+  }
+}
+
+
+/*
+ * ATTRIBUTES V3.2 · reduce unnecessary scrolling without sacrificing text size.
+ * On a 1920×1080 reference workspace the 8 families and 3 watched attributes
+ * have dedicated, non-scrolling rows. The attribute list receives most of the
+ * right column; recorded evolution may still scroll when real history is long.
+ */
+.pac-column--left[data-focus-count="3"] {
+  grid-template-rows:minmax(325px,1fr) 192px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus {
+  overflow:visible;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__items {
+  display:grid;
+  grid-template-rows:repeat(3,minmax(0,1fr));
+  flex:1 1 auto;
+  overflow:visible;
+  padding:0 10px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__item {
+  min-height:35px;
+  max-height:39px;
+  padding:2px 1px;
+  gap:4px;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__go strong {
+  font-size:12px;
+  line-height:1.18;
+}
+.pac-column--left[data-focus-count="3"] .pac-focus__go small {
+  font-size:11px;
+  line-height:1.18;
+}
+.pac-column--right {
+  grid-template-rows:minmax(310px,1.77fr) minmax(184px,.93fr);
+}
+.pac-column--right .pac-attributes__scroll {
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+}
+.pac-column--right .pac-attributes .pac-head {
+  min-height:38px;
+  padding-top:7px;
+  padding-bottom:7px;
+}
+.pac-column--right .pac-attributes .pac-filters {
+  padding-block:5px;
+}
+.pac-column--right .pac-attributes .pac-attr-table__head {
+  min-height:25px;
+  padding-top:2px;
+  padding-bottom:2px;
+}
+.pac-column--right .pac-detail--pending {
+  overflow-y:auto;
+}
+.pac-column--right .pac-detail .pac-head {
+  min-height:38px;
+  padding-top:7px;
+  padding-bottom:7px;
+}
+.pac-column--right .pac-detail__kpis {
+  padding:6px 5px 4px;
+}
+.pac-column--right .pac-detail__kpis > div {
+  gap:3px;
+  padding-block:2px;
+}
+.pac-column--right .pac-detail__description {
+  margin-inline:11px;
+  padding-bottom:5px;
+  font-size:12px;
+  line-height:1.3;
+}
+.pac-column--right .pac-detail--pending .pac-detail__evolution {
+  min-height:0;
+  margin:2px 10px 7px;
+  padding:9px 12px;
+}
+.pac-column--right .pac-detail--pending .pac-detail__evolution > p {
+  margin-top:5px;
+  font-size:12px;
+  line-height:1.3;
+}
+@container player-space (max-width:1439px) {
+  .pac-column--right {
+    grid-template-rows:minmax(340px,auto) minmax(260px,auto);
+  }
+}
+@container player-space (max-width:860px) {
+  .pac-column--left[data-focus-count="3"] {
+    grid-template-rows:minmax(350px,auto) 192px;
+  }
+  .pac-column--right {
+    grid-template-rows:minmax(340px,auto) minmax(260px,auto);
+  }
+}
+
+/*
+ * ATTRIBUTES V3.3: exact visual parity with the approved Overview radar.
+ * Both now render CourtsideFamilyRadar and share the same four rings,
+ * polygon geometry, strokes, 8 paired labels/values and viewBox.
+ * Leave the comparative controls and axis interaction in Attributes.
+ */
+.pac-column--center .pac-profile__radar-wrap .po-cs-family-radar {
+  display:block;
+  flex:0 1 auto;
+  width:100%;
+  height:100%;
+  max-width:570px;
+  max-height:390px;
+  min-width:0;
+  min-height:0;
+  box-sizing:border-box;
+  padding:4px 3px;
+  color:var(--cs-text2);
+  overflow:visible;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis {
+  cursor:pointer;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis .po-cs-radar__label {
+  font:700 11px var(--cs-font);
+  fill:var(--cs-text2);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis .po-cs-radar__value {
+  font:700 17px var(--cs-font-display);
+  fill:var(--cs-lime);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis.is-active .po-cs-radar__label,
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible .po-cs-radar__label {
+  fill:var(--cs-text);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible {
+  outline:none;
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__axis:focus-visible .po-cs-radar__label {
+  text-decoration:underline;
+  text-decoration-color:var(--cs-lime);
+}
+
+.pac-profile__radar-wrap .po-cs-family-radar__comparison {
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+
+@container player-space (max-width:860px) {
+  .pac-column--center .pac-profile__radar-wrap .po-cs-family-radar {
+    max-width:100%;
+    max-height:100%;
+  }
+}

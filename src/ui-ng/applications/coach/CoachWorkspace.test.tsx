@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
-import { updateGameWorld } from '@/domain/world'
+import { applyRelationshipEventToWorld, updateGameWorld } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
 import { CoachWorkspace } from './CoachWorkspace'
 
@@ -38,4 +38,43 @@ describe('CoachWorkspace', () => {
 
     expect(screen.getByText('Coach development data is not available for this career.')).toBeInTheDocument()
   })
+
+  it('uses Courtside on every active Coach tab and preserves seven NG workspaces', () => {
+    useGameStore.setState({ world: createNewGame() })
+    const { container } = render(<CoachWorkspace />)
+    expect(container.querySelector('.coach-courtside-ng')).toBeInTheDocument()
+    const tabs = within(screen.getByRole('navigation', { name: 'Workspace tabs' }))
+    for (const name of ['Overview', 'Opportunities', 'Career', 'Reputation', 'Relationships', 'Development', 'Legacy']) {
+      fireEvent.click(tabs.getByRole('button', { name: new RegExp('^' + name + '$') }))
+      expect(tabs.getByRole('button', { name: new RegExp('^' + name + '$') })).toHaveClass('is-active')
+    }
+  })
+
+  it('shows a searchable, typed relationships table backed by canonical links', () => {
+    const world = createNewGame()
+    const player = Object.values(world.players)[0]!
+    const linked = applyRelationshipEventToWorld(world, world.userCoachId, player.id, {
+      id: 'relationship:coach-courtside-test',
+      gameDate: world.currentDate, source: 'professionalInteraction', delta: 25,
+      context: { kind: 'meeting' },
+    })
+    useGameStore.setState({ world: linked })
+    render(<CoachWorkspace />)
+    fireEvent.click(screen.getByRole('button', { name: /^Relationships$/ }))
+    expect(screen.getByText(player.firstName + ' ' + player.lastName)).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search coach relationships' }), { target: { value: 'no-matching-person-zz' } })
+    expect(screen.getByText('No matching relationships.')).toBeInTheDocument()
+  })
+
+  it('shows factual Coach tabs without illustrative values in the active NG interface', () => {
+    useGameStore.setState({ world: createNewGame() })
+    const { container } = render(<CoachWorkspace />)
+    const tabs = within(screen.getByRole('navigation', { name: 'Workspace tabs' }))
+    for (const name of ['Overview', 'Reputation', 'Opportunities', 'Career', 'Legacy']) {
+      fireEvent.click(tabs.getByRole('button', { name }))
+      expect(container.querySelector('[data-coach-truth]')).toBeInTheDocument()
+      expect(container.textContent).not.toMatch(/\bmock\b/i)
+    }
+  })
+
 })

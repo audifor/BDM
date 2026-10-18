@@ -1,0 +1,1917 @@
+/*
+ * BDM UI / Home, Courtside preview
+ *
+ * Canonical source: docs/visual-proposal/src/b.css (direction B, fixed dock
+ * rules 253-274), base.css fonts, app.js (SystemBar + Taskbar).
+ * Intentionally scoped to Home: no changes to domain, services or other NG apps.
+ * No fictitious projected values are added; every module still renders NG data.
+ */
+@font-face {
+  font-family: 'BDM Courtside Barlow';
+  src: url('../../../../docs/visual-proposal/src/fonts/barlow-condensed-700.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BDM Courtside Barlow';
+  src: url('../../../../docs/visual-proposal/src/fonts/barlow-condensed-600.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BDM Courtside Inter';
+  src: url('../../../../docs/visual-proposal/src/fonts/inter-tight-400.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BDM Courtside Inter';
+  src: url('../../../../docs/visual-proposal/src/fonts/inter-tight-600.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BDM Courtside Inter';
+  src: url('../../../../docs/visual-proposal/src/fonts/inter-tight-700.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] {
+  /* Exact Courtside dark tokens from b.css */
+  --cs-bg: #0c0a14;
+  --cs-bg2: #100e1a;
+  --cs-s1: #17141f;
+  --cs-s2: #1e1a29;
+  --cs-s3: #282336;
+  --cs-line: rgba(255,255,255,.07);
+  --cs-line2: rgba(255,255,255,.16);
+  --cs-text: #f7f3ee;
+  --cs-text2: #c4bdd0;
+  --cs-text3: #8b8399;
+  --cs-orange: #ff6a2b;
+  --cs-orange2: #ff9a4d;
+  --cs-lime: #d4ff3a;
+  --cs-positive: #5cf29a;
+  --cs-negative: #ff5470;
+  --cs-font-display: 'BDM Courtside Barlow', 'Barlow Condensed', sans-serif;
+  --cs-font: 'BDM Courtside Inter', 'Inter Tight', sans-serif;
+  --ng-font-display: var(--cs-font-display);
+  --ng-font-ui: var(--cs-font);
+  --ng-font-data: var(--cs-font);
+  --ng-text-primary: var(--cs-text);
+  --ng-text-secondary: var(--cs-text2);
+  --ng-text-muted: var(--cs-text3);
+  --ng-text-faint: var(--cs-text3);
+  --ng-cyan: var(--cs-lime);
+  --ng-cyan-bright: var(--cs-lime);
+  --ng-amber: var(--cs-orange);
+  --ng-amber-bright: var(--cs-orange2);
+  --ng-positive: var(--cs-positive);
+  --ng-negative: var(--cs-negative);
+  --ng-border-standard: var(--cs-line2);
+  --ng-border-subtle: var(--cs-line);
+  --ng-bg-workspace: var(--cs-bg);
+  --ng-bg-panel: var(--cs-s1);
+  --ng-bg-panel-secondary: var(--cs-s2);
+  --ng-system-bar-height: 78px;
+  --ng-taskbar-height: 68px;
+  --ng-workspace-header-height: 122px;
+  --ng-workspace-padding: 16px 28px 22px;
+  --bdm-panel-fill: var(--cs-s1);
+  --bdm-panel-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  color: var(--cs-text);
+  background:
+    radial-gradient(900px 600px at 100% -10%,rgba(255,106,43,.20),transparent 60%),
+    radial-gradient(800px 600px at 0% 100%,rgba(143,214,255,.09),transparent 60%),
+    var(--cs-bg);
+  font: 400 14px/1.4 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .bdm-os-ng__workspace-region {
+  background: transparent;
+}
+/* Keep the extra crest and role entirely out of NG when Home is not active. */
+.bdm-os-ng:not([data-bdm-courtside-shell='true']) .ng-system-bar__club-crest,
+.bdm-os-ng:not([data-bdm-courtside-shell='true']) .ng-system-bar__role {display:none;}
+/* 1:1 structural treatment of the source topbar */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar {
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:16px 28px 0;
+  border:0;
+  background:transparent;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar::after,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__orbit { display:none; }
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__left {
+  gap:18px;
+  flex:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__mark {
+  font:700 34px/1 var(--cs-font-display);
+  letter-spacing:.02em;
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__mark::after {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club-group {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-left:16px;
+  border-left:2px solid var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club-crest {
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:var(--cs-orange);
+  color:#14100a;
+  font:700 13px/1 var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club-identity {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club {
+  max-width:260px;
+  color:var(--cs-text);
+  font:700 21px/1 var(--cs-font-display);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__role {
+  display:block;
+  color:var(--cs-text3);
+  font:400 11.5px/1.15 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__center {
+  margin-left:auto;
+  flex:0 1 auto;
+  justify-content:flex-end;
+  gap:8px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__chip {
+  display:inline-flex;
+  align-items:center;
+  max-width:230px;
+  height:30px;
+  padding:0 14px;
+  border-radius:99px;
+  background:var(--cs-s1);
+  color:var(--cs-text2);
+  font:600 12px var(--cs-font);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__date {
+  padding:0 8px;
+  color:var(--cs-text);
+  font:700 24px/1 var(--cs-font-display);
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__right {
+  gap:10px;
+  flex:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__right > .ng-btn--primary {
+  order:2;
+  min-width:0;
+  height:42px;
+  padding:0 22px;
+  border:0;
+  border-radius:99px;
+  background:var(--cs-lime);
+  box-shadow:none;
+  color:#10140a;
+  font:700 19px/1 var(--cs-font-display);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__right > .ng-btn--primary:hover:not(:disabled) {
+  background:var(--cs-lime);
+  color:#10140a;
+  filter:brightness(1.06);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until {order:1;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until > .ng-btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:148px;
+  height:42px;
+  border:1.5px solid var(--cs-line2);
+  border-radius:99px;
+  background:transparent;
+  box-shadow:none;
+  color:var(--cs-text);
+  font:600 16px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until > .ng-btn::after {content:'Simular hasta…';margin-left:9px;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__right > .ng-btn--ghost {
+  border-radius:99px;
+  color:var(--cs-orange);
+  border-color:var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until-panel {
+  background:var(--cs-s1);
+  border-color:var(--cs-line2);
+  border-radius:16px;
+  color:var(--cs-text);
+}
+/* 1:1 fixed taskbar: 68px bar, 48px icons, 6px gaps and orange active tile */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar {
+  height:68px;
+  padding:0 14px;
+  gap:8px;
+  border:0;
+  border-top:1px solid var(--cs-line2);
+  background:var(--cs-s1);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar::after {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__apps {
+  gap:6px;
+  scrollbar-width:none;
+  overflow:hidden;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__start {
+  flex:none;
+  width:48px;
+  min-width:48px;
+  max-width:48px;
+  height:48px;
+  margin-right:12px;
+  border:0;
+  border-radius:50%;
+  background:var(--cs-lime);
+  box-shadow:0 0 28px rgba(212,255,58,.45);
+  color:#10140a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__start::after {
+  position:absolute;
+  right:-11px;
+  height:30px;
+  width:1px;
+  background:var(--cs-line2);
+  content:'';
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__start svg {width:22px;height:22px;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__start.is-open {
+  background:var(--cs-orange);
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app-slot,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__overflow {flex:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app:not(.ng-taskbar__start) {
+  display:grid;
+  place-items:center;
+  position:relative;
+  width:48px;
+  min-width:48px;
+  max-width:48px;
+  height:48px;
+  padding:0;
+  border:0;
+  border-radius:14px;
+  background:transparent;
+  box-shadow:none;
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app:not(.ng-taskbar__start) > span {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app:not(.ng-taskbar__start) > svg {width:22px;height:22px;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app.is-pinned:not(.is-running) {color:var(--cs-text3);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app.is-running::after {
+  content:'';
+  position:absolute;
+  bottom:3px;
+  left:calc(50% - 3px);
+  width:6px;
+  height:4px;
+  border-radius:4px;
+  background:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app.is-active:not(.ng-taskbar__start) {
+  background:var(--cs-orange);
+  color:#14100a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app.is-active.is-running::after {
+  left:calc(50% - 9px);
+  width:18px;
+  background:#14100a;
+  opacity:.65;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app:not(.ng-taskbar__start):hover {
+  background:var(--cs-s3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__status {
+  flex:none;
+  font:400 11px var(--cs-font);
+  letter-spacing:.12em;
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__status::before {
+  width:8px;
+  height:8px;
+  background:var(--cs-lime);
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__more > span {display:inline-flex !important;font-size:22px;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__more em {
+  position:absolute;
+  right:2px;
+  top:2px;
+  padding:1px 5px;
+  border-radius:99px;
+  font:700 10px var(--cs-font);
+  background:var(--cs-text);
+  color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__overflow {position:relative;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__overflow-list {
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:0;
+  z-index:42;
+  min-width:190px;
+  max-height:280px;
+  overflow:auto;
+  padding:8px;
+  border:1px solid var(--cs-line2);
+  border-radius:16px;
+  background:var(--cs-s1);
+  box-shadow:0 12px 36px #0008;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__overflow-list button {
+  display:block;
+  width:100%;
+  padding:10px;
+  text-align:left;
+  color:var(--cs-text);
+  background:none;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__overflow-list button:hover {background:var(--cs-s3);}
+/* Home presentation, NG semantic values and interactions are untouched */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] {
+  color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header {
+  height:122px;
+  min-height:122px;
+  padding:12px 28px 8px;
+  border:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__main {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__app {
+  color:var(--cs-orange)!important;
+  font:600 16px/1 var(--cs-font-display)!important;
+  letter-spacing:.2em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__sep {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__team {
+  display:block;
+  color:var(--cs-text);
+  font:700 clamp(42px,4vw,68px)/.92 var(--cs-font-display);
+  text-transform:uppercase;
+  letter-spacing:.005em;
+  white-space:normal;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__meta {
+  margin-top:2px;
+  color:var(--cs-text3)!important;
+  font:600 12px var(--cs-font-display);
+  letter-spacing:.08em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+  padding:16px 28px 22px;
+  overflow:auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard {
+  height:auto;
+  min-height:100%;
+  gap:16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__top {
+  grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);
+  gap:16px;
+  min-height:296px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+  min-height:320px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-holo-panel {
+  border:0;
+  border-radius:22px;
+  background:var(--cs-s1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  color:var(--cs-text);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+  min-height:296px;
+  padding:22px;
+  background:
+    radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1));
+}
+
+/*
+ * Required cross-skin correction: ng-holo.css intentionally sets all NG
+ * .ng-holo-panel surfaces to transparent !important and paints four corner
+ * ticks !important. Courtside's cards are filled, rounded and have an inset
+ * highlight. Restore the authentic Courtside surface only within HOME.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-holo-panel {
+  border:0 !important;
+  border-radius:22px !important;
+  background:var(--cs-s1) !important;
+  background-color:var(--cs-s1) !important;
+  background-image:none !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture.ng-holo-panel {
+  background:
+    radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+  background-color:var(--cs-s2) !important;
+  background-image:
+    radial-gradient(circle at 15% 65%,rgba(255,106,43,.19),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture::before {display:none;}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+  width:78px;
+  height:78px;
+  border:0;
+  border-radius:50%;
+  background:var(--crest-primary,var(--cs-s3));
+  color:var(--cs-text);
+  font:700 27px var(--cs-font-display);
+  box-shadow:inset 0 0 0 3px var(--crest-secondary,var(--cs-orange));
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  max-width:100%;
+  white-space:normal;
+  overflow:visible;
+  color:var(--cs-text);
+  font:700 25px/1 var(--cs-font-display);
+  text-transform:uppercase;
+  letter-spacing:.02em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  color:var(--cs-orange);
+  font:700 56px/.95 var(--cs-font-display);
+  letter-spacing:.02em;
+  text-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__eyebrow,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__title {
+  color:var(--cs-text);
+  font:700 20px/1.15 var(--cs-font-display);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__title::before,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__module > .ng-canon__eyebrow::before {
+  display:inline-block;
+  width:9px;
+  height:9px;
+  margin-right:9px;
+  border-radius:2px;
+  background:var(--cs-orange);
+  transform:rotate(45deg);
+  content:'';
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__trigger {color:var(--cs-text);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__chevron {color:var(--cs-orange);}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__action {
+  padding:8px 16px;
+  border:1.5px solid var(--cs-line2);
+  border-radius:99px;
+  background:transparent;
+  color:var(--cs-text);
+  font:600 16px/1 var(--cs-font-display);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__action:hover {
+  background:var(--cs-orange);
+  border-color:var(--cs-orange);
+  color:#14100a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta {
+  color:var(--cs-text3);
+  font:600 13px var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dynamics__value.is-home {
+  color:var(--cs-lime);
+  font:700 24px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dynamics__value.is-away {
+  color:var(--cs-orange);
+  font:700 24px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dynamics__label,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__meta,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__note {
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot {
+  min-height:320px;
+  height:auto;
+  border-radius:22px;
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__header {
+  padding:18px 22px 0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__body {
+  padding:12px 22px 22px;
+  max-height:430px;
+  overflow:auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__menu {
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  border:1px solid var(--cs-line2);
+  border-radius:14px;
+  box-shadow:0 18px 40px #0008;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__menu button.is-active {
+  background:var(--cs-s3);
+  color:var(--cs-lime);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {
+  background:color-mix(in srgb,var(--cs-lime) 13%,transparent);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-table .is-pts,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-finances dd {
+  color:var(--cs-lime);
+}
+@media (max-width: 1279px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar {gap:10px;padding:8px 16px 0;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club {max-width:170px;font-size:17px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__date {font-size:19px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__center {gap:4px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__chip {max-width:130px;padding:0 8px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__top {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {grid-column:1/-1;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width: 760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] {--ng-system-bar-height:66px;--ng-taskbar-height:64px;--ng-workspace-header-height:102px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__club-group,
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__center {display:none;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__right {margin-left:auto;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until > .ng-btn {width:42px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__until > .ng-btn::after {display:none;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar {height:64px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__status {display:none;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app:not(.ng-taskbar__start),
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__start {width:44px;min-width:44px;max-width:44px;height:44px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header {height:102px;min-height:102px;padding:12px 16px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon-header__team {font-size:40px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {padding:12px 16px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__top,
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {grid-template-columns:minmax(0,1fr);}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {grid-template-columns:1fr 1fr;grid-column:auto;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-center {grid-column:1/-1;grid-row:1;}
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   V1.2: authenticated Courtside light palette, from b.css line 17 onward.
+   The theme switcher is in the existing NG SystemBar.
+   ───────────────────────────────────────────────────────────────────── */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__theme-toggle {
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:40px;
+  height:40px;
+  border:1px solid var(--cs-line2);
+  border-radius:50%;
+  background:var(--cs-s1);
+  color:var(--cs-text2);
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__theme-toggle:hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__theme-toggle:focus-visible {
+  color:var(--cs-orange);
+  border-color:var(--cs-orange);
+  outline-offset:2px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] {
+  /* Exact canonical light tokens; no synthetic white or neon-green skin. */
+  --cs-bg:#f3eee4;
+  --cs-bg2:#ece6da;
+  --cs-s1:#fffcf6;
+  --cs-s2:#f6f0e4;
+  --cs-s3:#ebe3d3;
+  --cs-line:rgba(30,20,10,.09);
+  --cs-line2:rgba(30,20,10,.2);
+  --cs-text:#15111c;
+  --cs-text2:#463f52;
+  --cs-text3:#7a7186;
+  --cs-orange:#ff5a1f;
+  --cs-orange2:#e8480a;
+  --cs-lime:#16a05a;
+  --cs-positive:#12804a;
+  --cs-negative:#d9254a;
+  --ng-amber-bright:#d9440c;
+  --ng-cyan:#12804a;
+  --ng-cyan-bright:#12804a;
+  --ng-positive:#12804a;
+  --ng-negative:#d9254a;
+  --bdm-surface-1:#fffcf6;
+  --bdm-surface-2:#f6f0e4;
+  --bdm-surface-3:#ebe3d3;
+  --bdm-border-default:rgba(30,20,10,.2);
+  --bdm-panel-fill:var(--cs-s1);
+  --bdm-panel-shadow:none;
+  background:
+    radial-gradient(900px 600px at 100% -10%,rgba(255,90,31,.16),transparent 60%),
+    radial-gradient(800px 600px at 0% 100%,rgba(46,127,214,.08),transparent 60%),
+    var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-system-bar__right > .ng-btn--primary {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-system-bar__right > .ng-btn--primary:hover:not(:disabled) {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-taskbar__start {
+  background:var(--cs-text);
+  color:var(--cs-bg);
+  box-shadow:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-taskbar__start.is-open {
+  background:var(--cs-orange);
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-taskbar__app.is-active:not(.ng-taskbar__start) {
+  background:var(--cs-orange);
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-taskbar__app.is-active.is-running::after {
+  background:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-system-bar__club-crest {
+  color:#fffaf2;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-holo-panel {
+  box-shadow:none !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture.ng-holo-panel {
+  background:
+    radial-gradient(circle at 15% 65%,rgba(255,90,31,.12),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+  background-image:
+    radial-gradient(circle at 15% 65%,rgba(255,90,31,.12),transparent 40%),
+    linear-gradient(115deg,var(--cs-s2),var(--cs-s1)) !important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot__menu {
+  border-color:var(--cs-line2);
+  box-shadow:0 12px 32px rgba(25,16,30,.12);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table__head {
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {
+  background:rgba(22,160,90,.10);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   V1.2: rebalance real NG Home modules; retain all data and selectors.
+   Two data-rich adjustable slots to the left and two short slots stacked
+   on the right. Any of the 8 source modules can be selected in every slot.
+   ───────────────────────────────────────────────────────────────────── */
+@media (min-width:1280px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__top {
+    min-height:290px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {
+    display:grid;
+    grid-template-columns:minmax(0,1.13fr) minmax(0,1.13fr) minmax(0,.94fr);
+    grid-template-rows:repeat(2,minmax(0,1fr));
+    height:348px;
+    min-height:348px;
+    flex:0 0 auto;
+    gap:16px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot {
+    min-height:0;
+    height:100%;
+    min-width:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(1) {
+    grid-column:1;
+    grid-row:1 / span 2;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(2) {
+    grid-column:2;
+    grid-row:1 / span 2;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(3) {
+    grid-column:3;
+    grid-row:1;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(4) {
+    grid-column:3;
+    grid-row:2;
+  }
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+  padding:26px 22px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+  width:96px;
+  height:96px;
+  font-size:34px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  font-size:29px;
+  line-height:1.05;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  font-size:68px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dynamics__label {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dynamics__value {
+  font-size:27px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__main .ng-canon__link {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__meta {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__title {
+  font-size:22px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__body {
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-table__head {
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-table li {
+  font-size:13px;
+  min-height:28px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-list strong {
+  font-size:14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot-list__badge {
+  width:26px;
+  height:26px;
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note {
+  font-size:13px;
+}
+@media (max-width:1279px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__theme-toggle {
+    width:36px;
+    height:36px;
+  }
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-system-bar__theme-toggle {
+    width:32px;
+    height:32px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+    width:72px;
+    height:72px;
+    font-size:27px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+    font-size:56px;
+  }
+}
+
+/*
+ * V1.3 - Leaders in one view, without nested scrolling.
+ * Existing 6 real player links remain visible. Four statistical categories
+ * use the already computed competition PPG/RPG/APG/VPG averages.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot__body {
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__toolbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  min-height:30px;
+  min-width:0;
+  margin-bottom:1px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__scope {
+  color:var(--cs-text3);
+  font:500 11px/1.25 var(--cs-font);
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__category {
+  appearance:auto;
+  flex:none;
+  min-width:116px;
+  height:30px;
+  padding:0 8px 0 12px;
+  border:1px solid var(--cs-line2);
+  border-radius:99px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  font:600 12px var(--cs-font);
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__category:focus-visible {
+  outline:2px solid var(--cs-orange);
+  outline-offset:2px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__category option {
+  color:var(--cs-text);
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__list {
+  display:grid;
+  gap:0;
+  min-height:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__row {
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-height:34px;
+  padding:4px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__identity {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:3px 9px;
+  min-width:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link {
+  color:var(--cs-text);
+  font:600 13px/1.15 var(--cs-font);
+  white-space:normal;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link:hover {
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__team {
+  font:400 11px/1.15 var(--cs-font);
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__value {
+  font:700 22px/1 var(--cs-font-display);
+  color:var(--cs-lime);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__value small {
+  font:600 10px var(--cs-font);
+  color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__no-value {
+  color:var(--cs-text3);
+  font:600 14px var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-leaders__row.is-unranked .home-slot-list__badge {
+  color:var(--cs-text3);
+  border-color:var(--cs-line2);
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders {
+    height:auto;
+    min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot__body {
+    overflow:visible;
+  }
+}
+
+/* V1.4: seven-row standings digest. No nested scroll for the digest. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings {gap:6px;align-content:start;min-height:0}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings__digest {display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--cs-text2);font:600 12px var(--cs-font)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings__full,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__open {border:0;background:transparent;padding:0;color:var(--cs-orange);font:700 14px var(--cs-font-display);letter-spacing:.03em;text-transform:uppercase;cursor:pointer}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings__full:hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__open:hover {text-decoration:underline}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {min-height:26px;padding:2px 4px}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li.has-gap {border-top:1px dashed var(--cs-line2);margin-top:4px;padding-top:5px}
+/* Other selectable widgets read exclusively canonical world records. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module {display:flex;flex-direction:column;gap:8px;min-height:100%;min-width:0}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__list {display:grid;list-style:none;padding:0;margin:0;min-width:0}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__row {display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;min-width:0;border-bottom:1px solid var(--cs-line)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__primary {display:flex;flex-direction:column;gap:3px;min-width:0}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__primary>.ng-canon__link,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__primary>strong {color:var(--cs-text);font:600 13px/1.2 var(--cs-font);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__primary small,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__when small {color:var(--cs-text2);font:500 11px/1.2 var(--cs-font)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__result {color:var(--cs-text);font:700 23px/1 var(--cs-font-display);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__result.is-win {color:var(--cs-positive)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__result.is-loss {color:var(--cs-negative)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__when {display:flex;flex-direction:column;align-items:flex-end;gap:3px;font:700 14px/1.2 var(--cs-font-display);white-space:nowrap}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__severity {color:var(--cs-orange);font:700 12px/1.2 var(--cs-font);white-space:nowrap}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-micro-module__open {align-self:flex-start;margin-top:auto;padding:6px 0 0}
+/* Light theme: canonical #12804a links and #463f52 readable text, rather than NG's cyan.
+   Keep Courtside's cream/off-white surfaces and its original palette untouched. */
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot {--ng-text-faint:#463f52;--ng-text-muted:#463f52;--ng-text-secondary:#463f52}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__link {color:#12804a !important;font-weight:600}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table .is-team,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__identity .ng-canon__link {color:#15111c !important}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__scope,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__team,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table__head,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__note,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__empty {color:#463f52 !important;font-weight:500}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .is-pts,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-leaders__value {color:#12804a !important}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot-table li.is-user {color:#15111c;font-weight:700}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-micro-module__result.is-win {color:#12804a}
+@media (max-width:1279px) {.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings__digest {flex-wrap:wrap}}
+
+/* Small-print readability on Courtside light, without changing the brand tokens. */
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon-header__meta,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__meta,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dynamics__label,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__fixture-meta,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
+  color:#463f52 !important;
+  font-size:12px;
+  font-weight:500;
+}
+
+/* HOME V1.5
+ * Compact editorial layout, 1920/1680 desktop first.
+ * Cards, colors, rounding remain the original Courtside tokens.
+ * For compact windows, restore natural document scrolling rather than
+ * shrinking functional text below its readability floor.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+  padding:12px 20px 16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard {
+  gap:12px;
+  min-height:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+  padding:14px 18px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__crest {
+  width:76px;
+  height:76px;
+  font-size:29px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  font-size:24px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  font-size:54px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__header {
+  padding:12px 16px 0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__body {
+  padding:8px 16px 14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__module {
+  padding:12px 14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot__title,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__eyebrow {
+  font-size:20px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note {
+  font-size:14px;
+  line-height:1.4;
+}
+/* Full, season-sourced league table. Fixed columns permit NBA-size leagues
+   without artificial caps, deletions or hidden columns at desktop width. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--standings .home-slot__body {
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  height:100%;
+  min-height:0;
+  gap:5px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings__digest {
+  min-height:24px;
+  gap:10px;
+  font-size:12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table__head,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {
+  display:grid;
+  grid-template-columns:24px minmax(110px,1fr) 24px 24px 24px 36px 35px 35px 34px 34px;
+  gap:4px;
+  align-items:center;
+  padding:0 4px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table__head {
+  min-height:22px;
+  flex:none;
+  font-size:11px;
+  letter-spacing:0;
+  color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table {
+  display:grid;
+  grid-template-rows:repeat(var(--home-standings-rows),minmax(0,1fr));
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table li {
+  min-height:0;
+  font-size:12px;
+  line-height:1.15;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-num {
+  color:var(--cs-text2);
+  font-variant-numeric:tabular-nums;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-pct,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-streak {
+  color:var(--cs-text);
+  font-weight:700;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
+  flex:none;
+  min-height:15px;
+  font-size:10px;
+  margin-top:1px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-num {
+  color:#312b38;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-standings .home-slot-table .is-team {
+  color:#15111c !important;
+  font-weight:600;
+}
+/* Real contrast in light mode; use existing Courtside palette and fonts. */
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dashboard__module {
+  --ng-text-primary:#15111c;
+  --ng-text-secondary:#312b38;
+  --ng-text-muted:#463f52;
+  --ng-text-faint:#463f52;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot__title,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .ng-canon__eyebrow {
+  color:#15111c !important;
+  font-weight:700;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__empty,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-slot .ng-canon__note,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-dynamics__label,
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__meta {
+  color:#463f52 !important;
+  font-weight:600;
+}
+/* HOME V2 · approved spatial contract
+   Left: full-height standings; right: match / dynamics+upcoming /
+   same dynamics+finances / four leaders+objectives.
+   Slots keep their NG selectors and the user can still switch module kinds.
+*/
+@media (min-width:1400px) and (min-height:840px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+    overflow:hidden;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard {
+    display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.80fr) minmax(0,.82fr);
+    grid-template-rows:minmax(0,.95fr) minmax(0,1.20fr) minmax(0,.64fr) minmax(0,.98fr);
+    gap:12px;
+    height:100%;
+    min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__top,
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules {
+    display:contents !important;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__fixture {
+    grid-column:2/4;grid-row:1;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__dynamics {
+    grid-column:2;grid-row:2/4;height:100%;min-height:0;overflow:visible;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__dynamics .home-dynamics {
+    display:flex;flex:1;flex-direction:column;justify-content:space-evenly;min-height:0;gap:8px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__dynamics .home-dynamics__row {
+    min-height:32px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming {
+    grid-column:3;grid-row:2;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(1) {
+    grid-column:1;grid-row:1/5;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(2) {
+    grid-column:2;grid-row:4;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(3) {
+    grid-column:3;grid-row:4;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__modules > .home-slot:nth-child(4) {
+    grid-column:3;grid-row:3;height:100%;min-height:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders__list {
+    display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,minmax(0,1fr));grid-auto-flow:row;gap:0;
+    min-height:0;
+  }
+  /* Four approved leaders remain fully readable without a nested scrollbar. */
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders {
+    gap:3px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders__toolbar {
+    min-height:28px;margin-bottom:0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-leaders__row {
+    min-height:0;padding:1px 0;gap:8px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot-list__badge {
+    width:20px;height:20px;font-size:11px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--leaders .home-slot__body {
+    min-height:0;overflow:visible;padding-top:5px;padding-bottom:8px;
+  }
+  /* Five real scheduled games fit the expanded upper-right panel.
+     Remove the previous V2 fifth-row suppression and nested scrollbar. */
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming {
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming li {
+    padding:3px 0;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming__main .ng-canon__link {
+    font-size:13px;line-height:1.15;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming__meta {
+    font-size:12px;line-height:1.1;margin-top:2px;
+  }
+}
+/* Tablet, narrow desktop and very short windows: preserve readable type and
+   all rows by scrolling the page only, never hiding standings entries. */
+@media (max-width:1399px), (max-height:839px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .ng-canon__scroll {
+    overflow:auto;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard {
+    height:auto;min-height:100%;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--standings .home-slot__body {
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-standings .home-slot-table {
+    display:grid;grid-template-rows:none;grid-auto-rows:minmax(24px,auto);overflow:visible;
+  }
+}
+
+/* HOME V2.1 · Single line per upcoming game:
+   opponent (interactive, ellipsized when necessary) | date | home/away.
+   The game status is already implied by the Upcoming view and retained
+   in the row tooltip. All five games remain visible. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content 40px;
+  gap:8px;
+  align-items:center;
+  min-height:30px;
+  padding:4px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__opponent {
+  display:block;
+  min-width:0;
+  width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:left;
+  color:var(--cs-text);
+  font:600 13px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__date {
+  font:600 12px/1.15 var(--cs-font);
+  color:var(--cs-text2);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__venue {
+  display:block;
+  width:40px;
+  text-align:right;
+  color:var(--cs-lime);
+  font:700 11px/1.2 var(--cs-font);
+  white-space:nowrap;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__date {
+  color:#463f52;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__venue {
+  color:#12804a;
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__row {gap:5px;}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__date {font-size:11px;}
+}
+
+/* Persistent global Courtside chrome: all NG apps use the same fixed bars.
+   Content-specific overrides remain anchored to [data-ng-region=home-workspace]. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-backdrop {z-index:50;}
+
+/* Courtside global Start: 1:1 source proportions/colors; functional NG catalog. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu {
+  left:16px;bottom:calc(var(--ng-taskbar-height) + 10px);
+  width:min(1040px,calc(100vw - 32px));max-height:min(780px,calc(100vh - 104px));
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid var(--cs-line2);border-radius:30px;
+  padding:18px 18px 0;
+  background:color-mix(in srgb,var(--cs-bg2) 94%,transparent);
+  backdrop-filter:blur(22px);box-shadow:0 30px 90px rgba(0,0,0,.5);
+  color:var(--cs-text);font-family:var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__search {flex:none}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__search label {
+  height:48px;border-radius:99px;background:var(--cs-s1);border:1px solid var(--cs-line);
+  padding:0 16px;display:flex;align-items:center;gap:12px;color:var(--cs-text2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__search input {
+  width:100%;height:100%;color:var(--cs-text);background:none;font:500 15px var(--cs-font);border:0;outline:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__search kbd {
+  color:var(--cs-text3);font:500 11px var(--cs-font);white-space:nowrap;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu h2 {
+  font:700 16px/1.2 var(--cs-font-display);letter-spacing:.14em;color:var(--cs-orange);margin:0 0 10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu h2 small {
+  margin-left:12px;color:var(--cs-text3);font:400 11px var(--cs-font);letter-spacing:normal;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__pinned-area,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__recent {
+  padding:15px 3px 0;flex:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__pinned-grid,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__recent-grid {
+  display:flex;gap:9px;overflow:auto;padding-bottom:4px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile-wrap {position:relative;min-width:0}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile {
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  width:112px;min-height:98px;padding:9px 6px;border:0;border-radius:18px;background:var(--cs-s2);
+  color:var(--cs-text);font:600 16px/1.1 var(--cs-font-display);text-transform:uppercase;
+  letter-spacing:.03em;text-align:center;cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile--pinned {
+  min-height:102px;background:var(--cs-s1);border-radius:22px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile:hover {
+  background:var(--cs-s3);outline:1px solid var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile.is-current {
+  background:var(--cs-orange);color:#14100a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__icon {
+  width:46px;height:46px;display:grid;place-items:center;flex:none;
+  border-radius:15px;background:color-mix(in srgb,var(--cs-orange) 19%,transparent);color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile--pinned .ng-start-menu__icon {
+  border-radius:50%;width:52px;height:52px;background:var(--cs-text);color:var(--cs-bg);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile.is-current .ng-start-menu__icon {
+  background:rgba(0,0,0,.13);color:#14100a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile-label {
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__pinned {
+  position:absolute;right:7px;top:7px;color:var(--cs-text3);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__category-apps {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__categories {
+  display:grid;align-content:start;gap:14px;flex:1 1 auto;min-height:0;
+  overflow-y:auto;margin-top:16px;padding:0 3px 14px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__category {
+  display:block;padding:15px 16px;background:var(--cs-s1);
+  border:0;border-radius:24px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__category-title h3 {
+  color:var(--cs-orange);font:700 24px/1 var(--cs-font-display);
+  text-transform:uppercase;letter-spacing:.04em;margin:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__category-title p {
+  color:var(--cs-text3);font:400 12px/1.3 var(--cs-font);margin:5px 0 12px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__footer {
+  flex:none;display:flex;align-items:center;gap:12px;padding:12px 2px;
+  border-top:1px solid var(--cs-line);font:600 13px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__footer small {
+  display:block;margin-top:3px;color:var(--cs-text3);font-weight:400;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__footer-right {
+  margin-left:auto;color:var(--cs-text3);letter-spacing:.15em;font:700 13px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__avatar {
+  display:grid;place-items:center;border-radius:50%;width:38px;height:38px;
+  background:var(--cs-lime);color:#10140a;font:700 16px var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__context {
+  position:absolute;z-index:70;left:calc(100% - 10px);top:10px;min-width:190px;
+  padding:6px;border:1px solid var(--cs-line2);border-radius:16px;background:var(--cs-s2);
+  box-shadow:0 12px 36px #0008;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__context button {
+  display:block;width:100%;text-align:left;padding:10px;color:var(--cs-text);
+  background:none;border:0;border-radius:8px;font:600 13px var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__context button:hover {background:var(--cs-s3)}
+/* Context actions must keep visual focus above the 68px taskbar. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu {
+  min-width:208px;padding:7px;border-radius:18px;border:1px solid var(--cs-line2);
+  background:var(--cs-s1);box-shadow:0 22px 60px #0008;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu-heading {
+  padding:9px 11px 7px;color:var(--cs-text3);
+  font:700 14px var(--cs-font-display);letter-spacing:.12em;text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu button {
+  font:600 13px var(--cs-font);letter-spacing:normal;text-transform:none;
+  color:var(--cs-text);padding:10px;border-radius:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu button:hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu button:focus-visible {
+  background:var(--cs-s3);color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__menu button:disabled {
+  opacity:.35;cursor:not-allowed;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app[draggable='true'] {cursor:grab}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app[draggable='true']:active {cursor:grabbing}
+/* Home content selectors: the table never has a picker. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker {
+  position:relative;z-index:8;display:flex;align-items:center;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker__trigger {
+  display:flex;align-items:center;gap:8px;border:0;background:none;padding:0;
+  color:var(--cs-text);font:700 20px/1.1 var(--cs-font-display);
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker__trigger span:last-child {
+  color:var(--cs-orange);font-size:13px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker__menu {
+  position:absolute;z-index:80;left:0;top:calc(100% + 8px);min-width:220px;
+  max-height:min(360px,60vh);overflow:auto;display:grid;gap:2px;
+  padding:7px;border:1px solid var(--cs-line2);border-radius:15px;
+  background:var(--cs-s2);box-shadow:0 18px 40px #0009;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker__menu button {
+  padding:8px 11px;text-align:left;border:0;border-radius:8px;background:none;
+  color:var(--cs-text);font:600 13px var(--cs-font);cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-native-picker__menu button:hover {
+  background:var(--cs-s3);color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__alternative {
+  display:flex!important;flex-direction:column;min-width:0;min-height:0;
+  padding:0!important;grid-template-columns:none!important;gap:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__alternative .home-slot__body {
+  flex:1 1 auto;min-height:0;overflow:auto!important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__alternative .home-slot__header {
+  padding:12px 16px 0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-fixture-summary {
+  display:flex;flex-direction:column;gap:12px;justify-content:center;height:100%;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-fixture-summary strong {
+  color:var(--cs-text);font:700 22px/1.2 var(--cs-font-display);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-fixture-summary strong span {color:var(--cs-orange)}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-fixture-summary p {color:var(--cs-text2)}
+/* Explicit permission to scroll non-standings content without reducing fonts. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot:not(.home-slot--standings) .home-slot__body {
+  overflow:auto!important;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+  overflow:auto;
+}
+@media(max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu {
+    left:0;bottom:64px;width:100%;max-height:calc(100vh - 80px);border-radius:20px 20px 0 0;padding:12px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__tile {width:100%;min-width:90px}
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu__category-apps {
+    grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
+  }
+}
+
+/*
+ * V2.2 · Seven upcoming games already fit in one-line rows on desktop.
+ * The scrollbar was forced by the final generic overflow:auto override.
+ * Keep the picker dropdown visible and do not introduce an empty scroll area.
+ * Compact viewports retain deliberate scrolling when truly necessary.
+ */
+@media (min-width:1400px) and (min-height:840px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+    overflow:visible;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) .home-upcoming__row {
+    min-height:0;
+    padding:3px 0;
+  }
+}
+
+/* HOME V2.3: entire current-season fixture queue, scrollable by choice.
+   Unlike the former 7-row preview this is a complete pending calendar.
+   The header/count stay visible; scroll belongs to the list only. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__summary {
+  flex:none;
+  margin:5px 0 7px;
+  color:var(--cs-text2);
+  font:600 12px/1.2 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+  display:flex;
+  flex-direction:column;
+  overflow:visible;
+  gap:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) > .home-upcoming {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming__row,
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--upcoming .home-upcoming__row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(66px,98px) max-content 40px;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:7px 0;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+  display:block;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding:5px 6px;
+  border:1px solid var(--cs-line2);
+  border-radius:6px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  font:700 10px/1 var(--cs-font);
+  text-align:center;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__opponent {
+  font-size:13px;
+  line-height:1.25;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__module-content {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  height:100%;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--upcoming .home-upcoming {
+  flex:0 0 auto;
+  overflow:visible;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+  background:var(--cs-s2);
+  color:#312b38;
+  border-color:var(--cs-line2);
+}
+@media (min-width:1400px) and (min-height:840px) {
+  /* Override the obsolete seven-row squeeze rule from V2.2. */
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) .home-upcoming__row {
+    min-height:42px;
+    padding:7px 0;
+  }
+}
+@media (max-width:1100px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__row {
+    grid-template-columns:minmax(0,1fr) minmax(54px,76px) max-content 40px;
+    gap:5px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-upcoming__competition {
+    font-size:9px;
+  }
+}
+
+/*
+ * COURTSIDE START V2.4 · Structure restored from canonical
+ * docs/visual-proposal/src/base.css (.sm-cats, .sm-cat, .sm-apps)
+ * and docs/visual-proposal/src/b.css.
+ *
+ * The previous grid left category titles and app tiles in competing grid
+ * tracks, allowing app tiles to visually overlap following categories.
+ * Establish an explicit 2-column outer grid and intrinsically sized cards.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-auto-flow:row;
+  grid-auto-rows:max-content;
+  align-content:start;
+  align-items:start;
+  column-gap:14px;
+  row-gap:14px;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  padding:0 3px 16px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > h2,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > .ng-canon__empty {
+  grid-column:1 / -1;
+  min-width:0;
+  margin:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  position:relative;
+  flex:none;
+  align-self:start;
+  grid-column:auto;
+  width:100%;
+  height:max-content;
+  min-height:max-content;
+  min-width:0;
+  box-sizing:border-box;
+  padding:16px;
+  margin:0;
+  border:0;
+  border-radius:24px;
+  background:var(--cs-s1);
+  overflow:visible;
+  --cs-menu-cat-accent:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category[data-category='talent'],
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category[data-category='partidos'] {
+  --cs-menu-cat-accent:var(--cs-lime);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category[data-category='mercado'],
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category[data-category='mundo'] {
+  --cs-menu-cat-accent:#a58bff;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-title {
+  display:block;
+  flex:none;
+  min-width:0;
+  width:100%;
+  margin:0 0 12px;
+  padding:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-title h3 {
+  display:block;
+  margin:0;
+  padding:0;
+  color:var(--cs-menu-cat-accent);
+  font:700 24px/1.08 var(--cs-font-display);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  overflow-wrap:anywhere;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-title p {
+  margin:4px 0 0;
+  padding:0;
+  font:500 12px/1.35 var(--cs-font);
+  color:var(--cs-text2);
+  overflow-wrap:anywhere;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+  position:static;
+  display:grid;
+  flex:none;
+  grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
+  grid-auto-flow:row;
+  grid-auto-rows:108px;
+  align-items:stretch;
+  justify-items:stretch;
+  gap:8px;
+  width:100%;
+  height:auto;
+  min-height:0;
+  min-width:0;
+  margin:0;
+  padding:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile-wrap {
+  display:block;
+  position:relative;
+  width:100%;
+  height:108px;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  width:100%;
+  height:108px;
+  min-width:0;
+  min-height:0;
+  box-sizing:border-box;
+  gap:7px;
+  padding:9px 5px;
+  border:0;
+  border-radius:18px;
+  background:var(--cs-s2);
+  color:var(--cs-text);
+  font:600 16px/1.1 var(--cs-font-display);
+  letter-spacing:.04em;
+  text-align:center;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile-label {
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  max-width:100%;
+  white-space:normal;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  text-overflow:ellipsis;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__icon {
+  background:color-mix(in srgb,var(--cs-menu-cat-accent) 20%,transparent);
+  color:var(--cs-menu-cat-accent);
+  flex:none;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile:hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile:focus-visible {
+  background:var(--cs-s3);
+  outline:1px solid var(--cs-menu-cat-accent);
+  outline-offset:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile.is-current {
+  background:var(--cs-menu-cat-accent);
+  color:#10140a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile.is-current .ng-start-menu__icon {
+  background:rgba(0,0,0,.14);
+  color:#10140a;
+}
+/* The footer and search must never cover the category content. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__footer,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__search,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__pinned-area,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__recent {
+  flex:0 0 auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__pinned-grid .ng-start-menu__tile-wrap,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__recent-grid .ng-start-menu__tile-wrap {
+  flex:0 0 auto;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__search input {
+  min-width:0;
+}
+@media(max-width:900px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+    grid-template-columns:repeat(auto-fill,minmax(102px,1fr));
+  }
+}
+
+/*
+ * COURTSIDE START V2.5 · category launcher.
+ * The former pinned-app shelf now selects a canonical category, while
+ * exactly one category's apps are rendered in the lower pane.
+ * Colors, type and iconography reuse Courtside design tokens/artwork.
+ */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-picker {
+  display:flex;
+  flex-direction:column;
+  flex:0 0 auto;
+  gap:11px;
+  min-width:0;
+  padding:16px 3px 13px;
+  border-bottom:1px solid var(--cs-line);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading {
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading h2 {
+  margin:0;
+  color:var(--cs-orange);
+  font:700 16px/1.1 var(--cs-font-display);
+  letter-spacing:.13em;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-heading small {
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-list {
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(108px,1fr);
+  gap:8px;
+  min-width:0;
+  width:100%;
+  padding:1px 1px 6px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-inline:contain;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  min-height:112px;
+  min-width:0;
+  padding:10px 7px;
+  border:1px solid var(--cs-line2);
+  border-radius:19px;
+  background:var(--cs-s1);
+  color:var(--cs-text);
+  text-align:center;
+  cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:43px;
+  height:43px;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--cs-orange) 19%,transparent);
+  color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-label {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  max-width:100%;
+  font:700 13px/1.15 var(--cs-font-display);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button.is-selected {
+  background:var(--cs-orange);
+  color:#10140a;
+  border-color:var(--cs-orange);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button.is-selected .ng-start-menu__group-icon {
+  background:rgba(0,0,0,.13);
+  color:#10140a;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected):hover,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected):focus-visible {
+  border-color:var(--cs-orange);
+  background:var(--cs-s2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button:focus-visible {
+  outline:2px solid var(--cs-lime);
+  outline-offset:2px;
+}
+/* Override V2.4's multi-category two-column container. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories {
+  display:block;
+  flex:1 1 auto;
+  height:auto;
+  min-height:0;
+  min-width:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:14px 3px 16px;
+  margin:0;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > .ng-start-menu__category {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:18px 20px 22px;
+  border-radius:24px;
+  background:var(--cs-s1);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-title {
+  margin-bottom:16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(122px,1fr));
+  grid-auto-flow:row;
+  grid-auto-rows:112px;
+  align-content:start;
+  gap:10px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile-wrap,
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile {
+  height:112px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps .ng-start-menu__tile {
+  font-size:16px;
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-start-menu .ng-start-menu__group-button {
+  border-color:var(--cs-line2);
+}
+.bdm-os-ng[data-bdm-courtside-shell='true'][data-bdm-courtside-theme='light'] .ng-start-menu .ng-start-menu__group-button:not(.is-selected) {
+  color:#15111c;
+}
+@media (max-width:760px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-list {
+    grid-auto-columns:110px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__group-button {
+    min-height:104px;
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__category-apps {
+    grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+  }
+  .bdm-os-ng[data-bdm-courtside-shell='true'] .ng-start-menu .ng-start-menu__categories > .ng-start-menu__category {
+    padding:14px;
+  }
+}

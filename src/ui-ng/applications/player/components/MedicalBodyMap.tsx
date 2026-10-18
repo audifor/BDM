@@ -73,7 +73,6 @@ export function MedicalBodyMap({
 }) {
   const glowId = useId()
   const byId = new Map(regions.map((region) => [region.id, region]))
-  const attention = regions.filter((region) => region.status === 'attention').length
 
   const columns: readonly { readonly ids: readonly MedicalBodyRegionId[]; readonly side: 'left' | 'right' }[] = [
     { ids: LEFT_ORDER, side: 'left' },
@@ -125,6 +124,8 @@ export function MedicalBodyMap({
                     }
                   }}
                   role="button"
+                  aria-label={`${region.label}: ${region.statusLabel}`}
+                  aria-pressed={isSelected}
                   tabIndex={0}
                 >
                   <path
@@ -136,7 +137,7 @@ export function MedicalBodyMap({
                     cx={point.x}
                     cy={point.y}
                     filter={region.status === 'attention' ? `url(#${glowId})` : undefined}
-                    r={isSelected ? 3.4 : 2.6}
+                    r={2.6}
                   />
                   <text
                     className="po-med-bodymap__label"
@@ -147,7 +148,7 @@ export function MedicalBodyMap({
                   >
                     {region.label}
                   </text>
-                  <text
+                  {region.status === 'attention' && <text
                     className="po-med-bodymap__state"
                     dominantBaseline="middle"
                     textAnchor={textAnchor}
@@ -155,7 +156,7 @@ export function MedicalBodyMap({
                     y={y + 5}
                   >
                     {region.statusLabel}
-                  </text>
+                  </text>}
                 </g>
               )
             }),
@@ -163,11 +164,6 @@ export function MedicalBodyMap({
         </svg>
       </div>
 
-      <p className="po-med-bodymap__legend">
-        {attention === 0
-          ? 'No injury recorded: no recorded injury maps to any region.'
-          : `${attention} ${attention === 1 ? 'region' : 'regions'} marked from the recorded injuries.`}
-      </p>
     </div>
   )
 }

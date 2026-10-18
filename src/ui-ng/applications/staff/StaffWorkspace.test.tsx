@@ -7,7 +7,7 @@ import { advanceGameDay, createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
-import { STAFF_PROFESSIONAL_ATTRIBUTE_LABELS, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
+import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
 afterEach(cleanup)
@@ -42,18 +42,18 @@ describe('StaffWorkspace', () => {
   it('opens the Staff tab by default and reaches the Assignments tab second', () => {
     mountStaffWorkspace()
 
-    expect(screen.getByRole('button', { name: 'Staff' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'STAFF' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('heading', { name: 'STAFF ASSIGNMENTS' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT MATRIX' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'GESTIÓN DE RESPONSABILIDADES' })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    expect(screen.getByRole('heading', { name: 'ASSIGNMENT MATRIX' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'GESTIÓN DE RESPONSABILIDADES' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'STAFF POOL' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'AUTO-ASSIGN' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'OPTIMIZE' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '+ NEW ASSIGNMENT' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'AUTO-ASIGNAR' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'OPTIMIZAR' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ NUEVA ASIGNACIÓN' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Responsibilities' })).not.toBeInTheDocument()
   })
 
@@ -66,23 +66,111 @@ describe('StaffWorkspace', () => {
     expect(tabsSlot.compareDocumentPosition(headerSlot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(headerSlot.textContent).toContain(team.name)
     expect(document.querySelector('.ng-application-workspace__header-slot')).toBeNull()
-    expect(document.querySelector('.staff-workspace-header__app')!.textContent).toBe('Staff')
+    expect(document.querySelector('.staff-workspace-header__app')!.textContent).toBe('STAFF')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
-    expect(document.querySelector('.staff-workspace-header__app')!.textContent).toBe('Assignments')
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
+    expect(document.querySelector('.staff-workspace-header__app')!.textContent).toBe('ASIGNACIONES')
     expect(document.querySelector('.staff-workspace-header__actions')).not.toBeNull()
+  })
+
+  it('uses the Courtside presentation across the staff workspace and all its subpages',()=>{
+    mountStaffWorkspace()
+    const root=document.querySelector('[data-ng-region="staff-workspace"]')!
+    expect(root).toHaveClass('courtside-staff-screen')
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'MODO SENCILLO'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'MATRIZ AVANZADA'})).toBeInTheDocument()
+    expect(document.querySelector('.sa-matrix')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
+    expect(document.querySelector('[data-ng-region="staff-workspace"]')).toHaveClass('courtside-staff-screen')
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
+    expect(screen.getByRole('heading',{name:'CONSTRUYE TU STAFF'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
+    expect(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'})).toBeInTheDocument()
+  })
+
+  it('keeps a one-action simplified responsibility selection alongside the advanced matrix',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    fireEvent.click(screen.getByRole('button',{name:'MODO SENCILLO'}))
+    const simple=screen.getByLabelText('Asignaciones sencillas')
+    expect(simple).toBeInTheDocument()
+    const first=simple.querySelector<HTMLButtonElement>('button:not(:disabled)')!
+    expect(first).not.toBeNull()
+    fireEvent.click(first)
+    const candidate=screen.getAllByRole('option')[0]!
+    fireEvent.click(candidate)
+    expect(screen.getByRole('status')).toHaveTextContent('Assignment updated')
+    fireEvent.click(screen.getByRole('button',{name:'MATRIZ AVANZADA'}))
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
+  })
+
+  it('shows attributable advisory status without inventing recommendations',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
+    expect(screen.getByLabelText('Sala de decisiones del cuerpo técnico')).toBeInTheDocument()
+    expect(screen.getByText(/PENDIENTES/)).toBeInTheDocument()
+  })
+
+  it('starts with a role-by-role club diagnosis and keeps the league ranking on demand',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
+    expect(screen.getByRole('heading',{name:'RADIOGRAFÍA DEL CLUB'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Detalle competitivo del puesto')).toBeInTheDocument()
+    expect(screen.getByLabelText('Radiografía por especialidad')
+      .querySelectorAll('.cs-staff-comparison__role').length).toBeGreaterThan(0)
+    const head=document.querySelector('.cs-staff-operational-head')!
+    expect(head.querySelectorAll('select')).toHaveLength(1)
+    expect(head.contains(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'}))).toBe(true)
+    const expand=screen.getByRole('button',{name:/VER CLASIFICACIÓN COMPLETA/})
+    expect(expand).toHaveAttribute('aria-expanded','false')
+    fireEvent.click(expand)
+    expect(screen.getByLabelText('Clasificación completa por especialidad')
+      .querySelectorAll('.cs-staff-comparison__standing-list>div').length).toBeGreaterThan(0)
+  })
+
+  it('keeps hiring search and the real opening action ahead of secondary KPIs',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
+    const search=screen.getByLabelText('Buscar candidato de staff')
+    const metrics=screen.getByText('VACANTES ABIERTAS')
+    expect(search.compareDocumentPosition(metrics)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(document.querySelector('.cs-staff-operational-head')?.contains(
+      screen.getByRole('button',{name:'+ ABRIR VACANTE'}))).toBe(true)
+  })
+
+  it('shows an actionable Courtside decisions inbox rather than an NG spreadsheet',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^ASESORÍA/}))
+    const room=screen.getByLabelText('Sala de decisiones del cuerpo técnico')
+    expect(room.querySelector('.cs-staff-advisory__filters')).toBeInTheDocument()
+    expect(room.querySelector('.bdm-data-grid')).toBeNull()
+    expect(screen.getByRole('button',{name:/POR DECIDIR/})).toHaveAttribute('aria-pressed','true')
+    fireEvent.click(screen.getByRole('button',{name:/HISTORIAL/}))
+    expect(screen.getByRole('button',{name:/HISTORIAL/})).toHaveAttribute('aria-pressed','true')
+  })
+
+  it('shows department staff list before secondary charts and role descriptions',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getAllByRole('button',{name:'EXPLORAR EQUIPO ↗'})[0]!)
+    const dept=document.querySelector('[data-ng-region="staff-department-workspace"]')
+    expect(dept).toHaveClass('courtside-staff-screen')
+    const table=dept!.querySelector('.staff-workspace__table')!
+    const charts=dept!.querySelector('.staff-department-detail__grid')!
+    expect(table.compareDocumentPosition(charts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('assigns a responsibility in two clicks from the matrix quick assign control', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     const quickAssign = screen.getAllByTitle('Quick assign')[0]!
     expect(quickAssign).toHaveTextContent('+ ASSIGN')
     fireEvent.click(quickAssign)
 
     const popover = screen.getByRole('listbox')
-    expect(popover).toHaveTextContent('ASSIGN RESPONSIBILITY')
+    expect(popover).toHaveTextContent('ASIGNAR RESPONSABLE')
     const option = screen.getAllByRole('option')[0]!
     const holderName = option.querySelector('.sa-candidate__name')!.textContent!
     fireEvent.click(option)
@@ -98,7 +186,7 @@ describe('StaffWorkspace', () => {
 
   it('opts the head coach back in from the quick assign manager section', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     fireEvent.click(screen.getAllByTitle('Quick assign')[0]!)
     fireEvent.click(screen.getAllByRole('option')[0]!)
@@ -112,22 +200,47 @@ describe('StaffWorkspace', () => {
 
   it('opens the inspector only when the responsibility itself is clicked', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    expect(screen.queryByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    expect(screen.queryByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     fireEvent.click(screen.getByRole('button', { name: /APPLY \d+ CHANGES/ }))
 
     fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
-    expect(screen.getByRole('heading', { name: 'ASSIGNMENT INSPECTOR' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'DETALLE DE ASIGNACIÓN' })).toBeInTheDocument()
     expect(screen.getByText('ASSIGNMENT OPTIONS')).toBeInTheDocument()
+  })
+
+  it('restores the full matrix width after switching from an open advanced inspector to simple mode', () => {
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
+    const workspace = document.querySelector('.sa-workspace')!
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
+    expect(workspace).not.toHaveClass('sa-workspace--no-inspector')
+    expect(screen.getByLabelText('Assignment inspector')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'MODO SENCILLO' }))
+    expect(screen.getByLabelText('Asignaciones sencillas')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Assignment inspector')).not.toBeInTheDocument()
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getByRole('button', { name: 'MATRIZ AVANZADA' }))
+    expect(screen.queryByLabelText('Assignment inspector')).not.toBeInTheDocument()
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Open inspector for/ })[0]!)
+    expect(workspace).not.toHaveClass('sa-workspace--no-inspector')
+    fireEvent.click(screen.getByRole('button', { name: 'Close inspector' }))
+    expect(workspace).toHaveClass('sa-workspace--no-inspector')
   })
 
   it('shows the assigned holder in the inspector key matches', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     fireEvent.click(screen.getByRole('button', { name: /APPLY \d+ CHANGES/ }))
 
@@ -143,9 +256,9 @@ describe('StaffWorkspace', () => {
 
   it('applies an auto-assign strategy through the canonical world', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
-    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASSIGN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AUTO-ASIGNAR' }))
     expect(screen.getByRole('dialog', { name: 'AUTO-ASSIGN STAFF' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'PREVIEW' }))
     expect(screen.getByText('AUTO-ASSIGN PREVIEW')).toBeInTheDocument()
@@ -158,7 +271,7 @@ describe('StaffWorkspace', () => {
 
   it('scopes the section AUTO control to that section only', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     const scoutingHead = [...document.querySelectorAll('.sa-group__head')].find((head) => head.textContent?.startsWith('SCOUTING'))!
     fireEvent.click(scoutingHead.querySelector('.sa-group__auto')!)
@@ -177,55 +290,93 @@ describe('StaffWorkspace', () => {
 
   it('filters the matrix from the vacancies KPI', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: 'Assignments' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ASIGNACIONES' }))
 
     const before = screen.getAllByTitle('Quick assign').length
-    fireEvent.click(screen.getByRole('button', { name: /VACANCIES/ }))
+    fireEvent.click(screen.getByRole('button', { name: /SIN RESPONSABLE/ }))
     expect(screen.getByRole('button', { name: 'CLEAR FILTER' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'CLEAR FILTER' }))
     expect(screen.getAllByTitle('Quick assign')).toHaveLength(before)
   })
 
-  it('renders canonical team staff identities, roles and professional attributes on the Staff tab', () => {
-    const { team, world } = mountStaffWorkspace()
-    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === team.id)!
-    const person = world.staffPeopleById[assignment.staffPersonId]!
+  it('shows real departments and navigates directly to decisions without fictitious vacancies',()=>{
+    const {team}=mountStaffWorkspace()
+    expect(screen.getByRole('heading',{name:'DIRIGE TU CUERPO TÉCNICO'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Departamentos de staff')).toBeInTheDocument()
+    expect(screen.getByLabelText('Situación del cuerpo técnico')).toBeInTheDocument()
+    expect(screen.getByText('Vacantes abiertas reales'.toUpperCase())).toBeInTheDocument()
+    expect(screen.getByText((_,node)=>node?.classList.contains('staff-workspace-header__team')===true
+      &&node.textContent===team.name)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:/ORGANIZAR EL TRABAJO/}))
+    expect(screen.getByRole('heading',{name:'GESTIÓN DE RESPONSABILIDADES'})).toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
+  it('opens a real vacancy in the staff market through the canonical service',()=>{
+    const {team}=mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'CONSTRUYE TU STAFF'}))
+    expect(screen.getByRole('heading',{name:'CONSTRUYE TU STAFF'})).toBeInTheDocument()
+    expect(screen.getByText('No hay vacantes abiertas. Los objetivos visuales por puesto no cuentan como vacantes.',{exact:false})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'+ ABRIR VACANTE'}))
+    const world=useGameStore.getState().world!
+    expect(Object.values(world.staffJobOpeningsById).some(job=>job.teamId===team.id&&job.status==='open')).toBe(true)
+  })
 
-    expect(
-      screen.getByText((_, element) => element?.classList.contains('staff-workspace-header__team') === true && element.textContent === team.name),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'ng-staff-people' })).not.toBeInTheDocument()
-    expect(screen.getAllByText(STAFF_ROLE_LABELS.assistantCoach).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(STAFF_ROLE_LABELS.regionalScout).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(STAFF_ROLE_LABELS.physiotherapist).length).toBeGreaterThan(0)
-    for (const key of STAFF_PROFESSIONAL_ATTRIBUTE_KEYS) {
-      expect(screen.getAllByText(STAFF_PROFESSIONAL_ATTRIBUTE_LABELS[key]).length).toBeGreaterThan(0)
-    }
+  it('compares only staff with the same role and within a real competition edition',()=>{
+    const {world,team}=mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'COMPARATIVA'}))
+    expect(screen.getByRole('heading',{name:'STAFF INTELLIGENCE'})).toBeInTheDocument()
+    const comp=screen.getByLabelText('Competición de comparación')
+    expect(comp.querySelectorAll('option').length).toBeGreaterThan(0)
+    expect((comp as HTMLSelectElement).value).not.toBe('')
+    expect(Object.values(world.seasons).some(season=>
+      (season.participantTeamIds??world.competitions[season.competitionId]?.participantTeamIds??[]).includes(team.id))).toBe(true)
   })
 
   it('opens dynamics people from the canonical workspace tabs', () => {
     mountStaffWorkspace()
-    fireEvent.click(screen.getByRole('button', { name: /^Dynamics/ }))
-    expect(screen.getByRole('button', { name: 'People' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Units' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Conflicts' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Career' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^DINÁMICAS/ }))
+    expect(screen.getByRole('button', { name: 'PERSONAS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'UNIDADES' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CONFLICTOS' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CARRERA' })).toBeInTheDocument()
   })
 
   it('renders dynamics states as red-to-green tone dots instead of band text', () => {
     mountStaffWorkspace(advanceGameDay(createNewGame()))
-    fireEvent.click(screen.getByRole('button', { name: /^Dynamics/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^DINÁMICAS/ }))
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0)
+    expect(screen.getByLabelText('Profesionales y estado')).toBeInTheDocument()
     expect(screen.queryByText('VERY SATISFIED')).not.toBeInTheDocument()
     expect(screen.queryByText('EXTREMELY SATISFIED')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY DISSATISFIED')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Units' }))
+    fireEvent.click(screen.getByRole('button', { name: 'UNIDADES' }))
     expect(screen.getAllByRole('img').length).toBeGreaterThan(0)
     expect(screen.queryByText('VERY STRONG')).not.toBeInTheDocument()
     expect(screen.queryByText('VERY WEAK')).not.toBeInTheDocument()
+  }, 30000)
+
+  it('renders compact single-line assignments and a selectable one-row candidate list',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'ASIGNACIONES'}))
+    const first=document.querySelector('.sa-row')!
+    expect(first.querySelector('.sa-row__kind-meta')).toBeNull()
+    const trigger=screen.getAllByTitle('Quick assign')[0]!
+    fireEvent.click(trigger)
+    const popover=screen.getByRole('listbox')
+    expect(popover.querySelector('.sa-candidates .sa-candidate')).toBeInTheDocument()
+    expect(popover.querySelector('.sa-candidate__who')).toBeNull()
+    expect(popover.querySelector('.sa-candidate__fit-value')).toBeInTheDocument()
+    expect(popover.textContent).toContain('DESASIGNAR')
+    expect(popover.textContent).toContain('CANCELAR')
+  })
+
+  it('lets the manager focus on a professional in a small Courtside dynamics list',()=>{
+    mountStaffWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/^DINÁMICAS/}))
+    expect(screen.getByRole('heading',{name:'EL PULSO DEL EQUIPO'})).toBeInTheDocument()
+    expect(screen.getByRole('group',{name:'Filtrar estado del staff'})).toBeInTheDocument()
+    expect(screen.getByText('Ningún profesional coincide con los filtros actuales.')).toBeInTheDocument()
   })
 
   it('opens the individual staff dossier from a direct staff route', () => {
@@ -237,6 +388,7 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace(world)
 
     expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
+    expect(document.querySelector('[data-ng-region="staff-person"]')).toHaveClass('courtside-staff-screen')
     expect(
       screen.getByRole('heading', { name: `${person.identity.firstName}${person.identity.lastName}` }),
     ).toBeInTheDocument()
@@ -251,19 +403,15 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('menuitem', { name: 'COACHING' })).toBeInTheDocument()
   })
 
-  it('opens a staff dossier with one click on the name in a department table', () => {
-    const { team, world } = mountStaffWorkspace()
-    const assignment = Object.values(world.teamStaffAssignmentsById).find(
-      (item) => item.teamId === team.id && item.role === 'headCoach',
-    )!
-    const person = world.staffPeopleById[assignment.staffPersonId]!
-    const fullName = `${person.identity.firstName} ${person.identity.lastName}`
-
-    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
-    fireEvent.click(screen.getByRole('button', { name: /coaching/i }))
-    fireEvent.click(screen.getByRole('button', { name: fullName }))
-
-    expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
+  it('opens a staff dossier directly from the department leader on the Courtside overview', () => {
+    const { world } = mountStaffWorkspace()
+    const leader = document.querySelector<HTMLButtonElement>('.cs-staff-department__lead button')!
+    expect(leader).not.toBeNull()
+    const leaderName = leader.textContent!.replace(' ↗','')
+    const staff = Object.values(world.staffPeopleById).find(person =>
+      `${person.identity.firstName} ${person.identity.lastName}` === leaderName)!
+    fireEvent.click(leader)
+    expect(new URL(window.location.href).searchParams.get('staffId')).toBe(staff.id)
     expect(screen.getByRole('button', { name: 'Attributes' })).toBeInTheDocument()
     expect(screen.getByText('Role evaluation')).toBeInTheDocument()
   })

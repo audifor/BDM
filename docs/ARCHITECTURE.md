@@ -11,7 +11,10 @@ adapters bind the common pure Engine to those authorities. Staff AI owns autonom
 responses; the shared application day processes HRPG before atomic publication.
 Save V4 persists the optional state without inventing past events for legacy saves.
 Public information is distinct from individual awareness, and a report or rumour
-does not replace canonical truth. Courtside remains presentation and is unchanged.
+does not replace canonical truth. Per the owner decision dated 2026-10-19,
+completed Courtside application work is canonical for those applications; the
+remaining application surfaces continue to follow BDM_OS_NG. Courtside presentation
+does not change the shared simulation or persistence authorities.
 See `docs/strengthening/BS19_HRPG_CORE_INTEGRATION.md` for operational boundaries,
 growth limits, compatibility and certification limitations.
 

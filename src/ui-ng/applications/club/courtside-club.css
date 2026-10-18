@@ -1,0 +1,244 @@
+/* Courtside CLUB. Original BDM Courtside shell tokens are the only color / type source. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .cs-club-screen {
+  --cc-bg:var(--cs-bg);--cc-panel:var(--cs-s1);--cc-raised:var(--cs-s2);
+  --cc-hover:var(--cs-s3);--cc-line:var(--cs-line);
+  --cc-line2:var(--cs-line2);--cc-text:var(--cs-text);
+  --cc-muted:var(--cs-text2);--cc-faint:var(--cs-text3);
+  --cc-orange:var(--cs-orange);--cc-lime:var(--cs-lime);
+  --cc-positive:var(--cs-positive);--cc-negative:var(--cs-negative);
+  --cc-head:var(--cs-font-display);--cc-body:var(--cs-font);
+  --ng-workspace-header-height:62px;
+  --ng-workspace-tabs-height:40px;
+  --ng-workspace-padding:0;
+  background:var(--cc-bg);color:var(--cc-text);
+  font:400 13px/1.35 var(--cc-body);
+  height:100%;min-height:0;
+}
+.cs-club-screen * {box-sizing:border-box}
+.cs-club-screen button {cursor:pointer}
+.cs-club-screen button:focus-visible {outline:2px solid var(--cc-orange);outline-offset:2px}
+.cs-club-screen .ng-application-workspace {height:100%;min-height:0}
+.cs-club-screen .ng-application-workspace__header-slot {
+  padding:0 18px;border-bottom:1px solid var(--cc-line);
+  background:var(--cc-bg);
+}
+.cs-club-screen .ng-canon-header {height:62px;min-height:62px;padding:0}
+.cs-club-screen .ng-canon-header__app {
+  color:var(--cc-orange);font:700 19px/1 var(--cc-head);letter-spacing:.08em;
+}
+.cs-club-screen .ng-canon-header__team {
+  color:var(--cc-text);font:700 23px/1 var(--cc-head);letter-spacing:.02em;
+}
+.cs-club-screen .ng-canon-header__meta {
+  color:var(--cc-muted);font:600 12px/1.2 var(--cc-body);letter-spacing:0;
+}
+.cs-club-screen .ng-canon-header__sep {background:var(--cc-line2)}
+.cs-club-screen .ng-application-workspace__tabs-slot {
+  min-height:40px;height:40px;padding:0 17px;background:var(--cc-bg);
+  border-bottom:1px solid var(--cc-line2);
+}
+.cs-club-screen .ng-workspace-tabs {height:40px;min-height:40px;background:transparent;padding:0;border:0}
+.cs-club-screen .ng-workspace-tabs__list {height:100%;display:flex;gap:8px;overflow-x:auto}
+.cs-club-screen .ng-workspace-tabs__tab {
+  border:0;border-bottom:3px solid transparent;border-radius:0;
+  padding:0 14px;background:transparent;color:var(--cc-muted);
+  font:700 15px/1 var(--cc-head);letter-spacing:.08em;
+  min-height:39px;height:39px;white-space:nowrap;
+}
+.cs-club-screen .ng-workspace-tabs__tab.is-active {
+  color:var(--cc-lime);border-bottom-color:var(--cc-lime);background:transparent;
+}
+.cs-club-screen .ng-workspace-tabs__tab:hover {color:var(--cc-text);background:transparent}
+.cs-club-screen .ng-application-workspace__body-slot {height:100%;min-height:0;background:var(--cc-bg)}
+.cs-club-screen .ng-canon__scroll {
+  min-height:0;height:100%;padding:10px 16px 16px;
+  overflow:auto;scrollbar-color:var(--cc-line2) transparent;
+}
+.cs-club {display:flex;flex-direction:column;gap:9px;min-width:0;max-width:1720px;margin:0 auto}
+.cs-club__identity-band {
+  display:flex;align-items:center;gap:14px;min-height:90px;padding:11px 17px;
+  background:var(--cc-panel);border:1px solid var(--cc-line2);border-radius:14px;
+  position:relative;overflow:hidden;
+}
+.cs-club__identity-band::before {
+  content:'';width:4px;position:absolute;top:0;bottom:0;left:0;
+  background:var(--cc-orange);
+}
+.cs-club__crest {
+  flex:none;width:61px;height:61px;border-radius:13px;display:grid;place-items:center;
+  color:var(--cc-bg);background:var(--cc-orange);
+  font:700 26px/1 var(--cc-head);letter-spacing:.03em;
+}
+.cs-club__identity-copy {flex:1;min-width:0}
+.cs-club__eyebrow {
+  font:700 10px/1.4 var(--cc-body);letter-spacing:.13em;color:var(--cc-orange);
+}
+.cs-club__eyebrow-dot {padding:0 5px;color:var(--cc-faint)}
+.cs-club__identity-copy h1 {
+  margin:2px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:700 clamp(24px,2.6vw,36px)/1 var(--cc-head);
+  letter-spacing:.02em;text-transform:uppercase;color:var(--cc-text);
+}
+.cs-club__identity-details {display:flex;flex-wrap:wrap;gap:7px 16px;color:var(--cc-muted);font-size:11px}
+.cs-club__identity-details span:not(:first-child)::before {
+  content:'·';margin-right:12px;color:var(--cc-orange);
+}
+.cs-club__primary-btn {
+  flex:none;display:flex;align-items:center;gap:22px;
+  padding:9px 14px;border:1px solid var(--cc-orange);border-radius:7px;
+  background:var(--cc-orange);color:#171016;font:700 14px/1 var(--cc-head);
+  letter-spacing:.05em;
+}
+.cs-club__primary-btn:hover {filter:brightness(1.1)}
+.bdm-os-ng[data-bdm-courtside-theme='light'] .cs-club__primary-btn {color:#fffaf2}
+.cs-club__metric-row {
+  margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.cs-club__metric {
+  display:flex;flex-direction:column;justify-content:center;gap:3px;
+  min-width:0;min-height:71px;padding:8px 14px;
+  border:1px solid var(--cc-line2);border-radius:11px;background:var(--cc-panel);
+}
+.cs-club__metric dt {font:700 11px/1.1 var(--cc-head);letter-spacing:.09em;color:var(--cc-muted)}
+.cs-club__metric dd {
+  margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:700 30px/1 var(--cc-head);letter-spacing:.02em;color:var(--cc-text);
+}
+.cs-club__metric dd.cs-club__metric-value--accent {color:var(--cc-lime)}
+.cs-club__metric small {font:400 10px/1.1 var(--cc-body);color:var(--cc-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-club__overview {display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,1fr);gap:9px;align-items:stretch}
+.cs-club__panel {
+  min-width:0;border:1px solid var(--cc-line2);background:var(--cc-panel);
+  border-radius:12px;padding:12px 14px;min-height:0;
+}
+.cs-club__panel-head {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--cc-line);
+}
+.cs-club__panel-head h2 {
+  margin:0;color:var(--cc-text);font:700 19px/1 var(--cc-head);
+  letter-spacing:.05em;white-space:nowrap;
+}
+.cs-club__link {
+  padding:3px 0;border:0;background:transparent;color:var(--cc-orange);
+  font:700 11px/1 var(--cc-head);letter-spacing:.06em;white-space:nowrap;
+}
+.cs-club__link:hover {color:var(--cc-lime)}
+.cs-club__board-top {display:grid;grid-template-columns:1fr 1.1fr;gap:14px;padding-bottom:8px}
+.cs-club__board-top > div {min-width:0;display:flex;flex-direction:column;gap:5px}
+.cs-club__board-top span {color:var(--cc-faint);font:700 10px var(--cc-head);letter-spacing:.08em}
+.cs-club__board-top strong {color:var(--cc-lime);font:700 31px/1 var(--cc-head)}
+.cs-club__board-top strong small {font-size:13px;color:var(--cc-faint)}
+.cs-club__board-top strong.cs-club__board-security {
+  font-size:21px;line-height:1.15;color:var(--cc-text);
+}
+.cs-club__progress {height:5px;border-radius:5px;background:var(--cc-hover);overflow:hidden}
+.cs-club__progress>span {display:block;height:100%;background:var(--cc-lime)}
+.cs-club__mandate {
+  font:500 12px/1.35 var(--cc-body);color:var(--cc-muted);
+  margin:10px 0;padding-left:9px;border-left:2px solid var(--cc-orange);
+}
+.cs-club__table-title {
+  display:flex;justify-content:space-between;margin:9px 0 5px;
+  font:700 11px var(--cc-head);color:var(--cc-faint);letter-spacing:.09em;
+}
+.cs-club__table-title span {color:var(--cc-lime)}
+.cs-club__objective-list {display:flex;flex-direction:column;gap:0}
+.cs-club__objective {
+  display:grid;grid-template-columns:25px minmax(0,1fr) auto;
+  align-items:center;gap:9px;padding:6px 0;border-top:1px solid var(--cc-line);
+  min-height:27px;
+}
+.cs-club__objective-index {font:700 11px var(--cc-head);color:var(--cc-orange)}
+.cs-club__objective strong {
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:600 12px var(--cc-body);color:var(--cc-text);
+}
+.cs-club__objective>span:last-child {
+  font:600 11px var(--cc-head);letter-spacing:.03em;color:var(--cc-muted);
+}
+.cs-club__more {margin-top:6px;font:500 11px var(--cc-body);color:var(--cc-faint)}
+.cs-club__attention-list {display:flex;flex-direction:column;gap:4px;min-height:0}
+.cs-club__attention-row {
+  display:flex;align-items:center;gap:9px;width:100%;min-height:43px;
+  border:1px solid var(--cc-line);border-radius:8px;background:var(--cc-raised);
+  padding:7px 9px;color:var(--cc-text);text-align:left;
+}
+.cs-club__attention-row:hover {border-color:var(--cc-orange)}
+.cs-club__attention-row>span:nth-child(2) {display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.cs-club__attention-row strong {font:600 12px/1.2 var(--cc-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-club__attention-row small {font:400 11px var(--cc-body);color:var(--cc-muted)}
+.cs-club__attention-row>span:last-child {color:var(--cc-orange);font-size:15px}
+.cs-club__status {width:7px;height:7px;border-radius:50%;flex:none}
+.cs-club__status--orange {background:var(--cc-orange)}
+.cs-club__status--lime {background:var(--cc-lime)}
+.cs-club__status--red {background:var(--cc-negative)}
+.cs-club__panel-note {margin:9px 0 0;font-size:11px;color:var(--cc-faint)}
+.cs-club__quiet {
+  display:flex;flex-direction:column;justify-content:center;gap:5px;
+  min-height:103px;text-align:center;background:var(--cc-raised);border-radius:9px;
+}
+.cs-club__quiet strong {font:700 20px var(--cc-head);color:var(--cc-lime);letter-spacing:.06em}
+.cs-club__quiet span {color:var(--cc-muted);font:400 11px var(--cc-body);padding:0 15px}
+.cs-club__management-panel {padding-top:9px;padding-bottom:9px}
+.cs-club__management-panel .cs-club__panel-head {padding-bottom:7px;margin-bottom:7px}
+.cs-club__management-grid {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.cs-club__area {
+  display:flex;align-items:center;gap:7px;min-width:0;min-height:64px;
+  border:1px solid var(--cc-line2);border-radius:9px;
+  background:var(--cc-raised);color:var(--cc-text);
+  padding:9px;text-align:left;
+}
+.cs-club__area:hover {background:var(--cc-hover);border-color:var(--cc-orange)}
+.cs-club__area-copy {display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.cs-club__area-copy strong {
+  font:700 14px/1 var(--cc-head);letter-spacing:.04em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cs-club__area-copy small {
+  color:var(--cc-muted);font:400 10.5px/1.25 var(--cc-body);
+}
+.cs-club__area-number {font:700 13px var(--cc-head);color:var(--cc-lime);white-space:nowrap}
+.cs-club__area-chevron {font-size:15px;color:var(--cc-orange)}
+.cs-club__empty {margin:8px 0;color:var(--cc-muted);font:400 12px/1.45 var(--cc-body)}
+.cs-club__detail-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.cs-club__detail-grid>.cs-club__strategy {grid-column:1/-1}
+.cs-club__fields {margin:0;display:flex;flex-direction:column}
+.cs-club__field {
+  display:grid;grid-template-columns:minmax(130px,42%) minmax(0,1fr);
+  gap:10px;align-items:center;min-height:36px;
+  padding:7px 0;border-bottom:1px solid var(--cc-line);
+}
+.cs-club__field:last-child {border-bottom:0}
+.cs-club__field dt {color:var(--cc-muted);font:500 12px var(--cc-body)}
+.cs-club__field dd {margin:0;color:var(--cc-text);font:600 12px var(--cc-body);overflow-wrap:anywhere}
+.cs-club__strategy-mode {font:700 27px var(--cc-head);color:var(--cc-lime)}
+.cs-club__operations {display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:9px}
+.cs-club__operations-list {display:flex;flex-direction:column;gap:6px}
+.cs-club__operations-list .cs-club__area {min-height:57px;padding:8px 11px}
+.cs-club__operations-list .cs-club__area-copy strong {font-size:15px}
+.cs-club__disclaimer {font:400 11px/1.45 var(--cc-body);color:var(--cc-faint);margin:12px 0 0}
+@media(max-width:1150px) {
+  .cs-club__management-grid {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cs-club__metric-row {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cs-club__overview {grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:800px) {
+  .cs-club-screen .ng-canon__scroll {padding:8px}
+  .cs-club__identity-band {padding:10px;min-height:78px;gap:10px}
+  .cs-club__crest {width:45px;height:45px;font-size:20px}
+  .cs-club__identity-copy h1 {font-size:22px}
+  .cs-club__primary-btn {padding:8px;font-size:12px;gap:5px}
+  .cs-club__management-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cs-club__detail-grid,.cs-club__operations {grid-template-columns:1fr}
+  .cs-club__detail-grid>.cs-club__strategy {grid-column:auto}
+}
+@media(max-width:560px) {
+  .cs-club__identity-band {flex-wrap:wrap}
+  .cs-club__primary-btn {margin-left:auto}
+  .cs-club__identity-details {gap:4px}
+  .cs-club__identity-details span:not(:first-child)::before {margin-right:6px}
+  .cs-club__metric-row {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cs-club__management-grid {grid-template-columns:1fr}
+  .cs-club__board-top {grid-template-columns:1fr 1fr}
+}

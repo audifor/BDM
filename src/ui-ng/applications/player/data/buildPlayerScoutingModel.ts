@@ -192,7 +192,8 @@ function certaintyNote(evaluation: RatingEvaluation): string {
   if (evaluation.mode === 'UNKNOWN') return 'Not scouted'
   if (evaluation.mode === 'EXACT') return 'Reported as a single value'
   if (evaluation.mode === 'RANGE') return 'Scouting range'
-  return 'Mixed reports'
+  if (evaluation.mode === 'MIXED') return 'High uncertainty'
+  return 'Qualitative descriptor'
 }
 
 const ESTIMATE_FLOOR = 1
@@ -205,8 +206,9 @@ const ESTIMATE_CEILING = 100
  */
 function knowledgeStateOf(evaluation: RatingEvaluation): ScoutingKnowledgeState {
   if (evaluation.mode === 'UNKNOWN') return 'unknown'
-  if (evaluation.mode === 'EXACT') return evaluation.confidence >= 0.5 ? 'known' : 'estimated'
-  if (evaluation.mode === 'RANGE') return evaluation.confidence >= 0.5 ? 'estimated' : 'low'
+  // RatingEvaluation.confidence is 0-100, unlike the stored knowledge confidence (0-1).
+  if (evaluation.mode === 'EXACT') return evaluation.confidence >= 50 ? 'known' : 'estimated'
+  if (evaluation.mode === 'RANGE') return evaluation.confidence >= 50 ? 'estimated' : 'low'
   return 'low'
 }
 
@@ -374,7 +376,7 @@ export function buildPlayerScoutingModel(
       low: bounds.low,
       high: bounds.high,
       estimate: bounds.estimate,
-      confidence: evaluation.mode === 'UNKNOWN' ? null : evaluation.confidence,
+      confidence: evaluation.mode === 'UNKNOWN' ? null : evaluation.confidence / 100,
       knowledgeState: knowledgeStateOf(evaluation),
     }
   }).filter((row) => row.knowledgeState !== 'unknown')
@@ -388,7 +390,7 @@ export function buildPlayerScoutingModel(
       last: report.createdAt,
     }
     entry.reports += 1
-    entry.knowledge += report.findings.reduce((sum, finding) => sum + finding.confidence, 0) / Math.max(1, report.findings.length)
+    entry.knowledge += report.findings.reduce((sum, finding) => sum + finding.confidence, 0) / (100 * Math.max(1, report.findings.length))
     for (const finding of report.findings) entry.domains.add(finding.dimension)
     if (report.createdAt > entry.last) entry.last = report.createdAt
     byScout.set(report.evaluatorStaffId, entry)
@@ -405,7 +407,6 @@ export function buildPlayerScoutingModel(
       // The scout's own reading: their findings' span and their mean confidence, never a global score.
       const low = Math.max(ESTIMATE_FLOOR, Math.round(Math.min(...findings.map((f) => f.estimate - f.uncertainty))))
       const high = Math.min(ESTIMATE_CEILING, Math.round(Math.max(...findings.map((f) => f.estimate + f.uncertainty))))
-      const confidence = findings.reduce((sum, finding) => sum + finding.confidence, 0) / Math.max(1, findings.length)
       const coverage = entry.knowledge / entry.reports
       return {
         id: staffId,
@@ -454,7 +455,7 @@ export function buildPlayerScoutingModel(
       }
     })
 
-  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'unknown').sort(
+  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'low').sort(
     (left, right) => (right.estimate ?? 0) - (left.estimate ?? 0) || left.label.localeCompare(right.label),
   )
   const toHighlight = (row: ScoutingAttributeRowModel): ScoutingHighlightModel => ({
@@ -565,7 +566,7 @@ export function buildPlayerScoutingModel(
   const noteTimeline: ScoutingNoteModel[] = reports.map((report) => {
     const staff = world.staffPeopleById[report.evaluatorStaffId]
     const confidence =
-      report.findings.reduce((sum, finding) => sum + finding.confidence, 0) / Math.max(1, report.findings.length)
+      report.findings.reduce((sum, finding) => sum + finding.confidence, 0) / (100 * Math.max(1, report.findings.length))
     return {
       id: report.id,
       dateLabel: formatGameDateLabel(report.createdAt),

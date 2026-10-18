@@ -8,7 +8,8 @@ import { createNewGame } from '@/app/game'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { injuryIdFromString, type PlayerId } from '@/domain/ids'
 import { createInjury } from '@/domain/injury'
-import { updateGameWorld } from '@/domain/world'
+import { getTeamLineup, getTeamRoster, updateGameWorld } from '@/domain/world'
+import { getLineupSlotForPlayer } from '@/domain/tactics'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { CanonicalRoster } from '@/ui/pcb-migrated/plantilla/CanonicalRoster'
@@ -24,6 +25,7 @@ afterEach(cleanup)
 
 beforeEach(() => {
   useRosterWorkspaceSession.getState().reset()
+  localStorage.clear()
   window.history.replaceState({}, '', '/?ui=ng&app=roster')
 })
 
@@ -143,98 +145,104 @@ describe('CanonicalRoster NG variant', () => {
     expect(screen.queryByText(/seleccionados/)).not.toBeInTheDocument()
   })
 
-  it('opens a leftover inspector with basic player data when a row is selected', () => {
-    const { team, world } = mountRosterWorkspace()
-    const player = world.players[team.rosterPlayerIds[0]!]!
-
-    expect(document.querySelector('[data-ng-region="roster-row-inspector"]')).toBeNull()
-
-    fireEvent.click(document.querySelector('.bdm-data-table tbody tr')!)
-
-    const inspector = screen.getByRole('complementary', { name: 'Inspector del jugador' })
-    expect(inspector).toHaveClass('canonical-roster__inspector')
-    expect(inspector.querySelector('.canonical-roster__inspector-portrait img')).toHaveAttribute(
-      'src',
-      expect.stringContaining('player-portrait-placeholder'),
-    )
-    expect(inspector.textContent).toContain(player.firstName)
-    expect(inspector.textContent).toContain(player.lastName)
-    expect(inspector.textContent).toContain(String(player.bio.heightCm))
-    expect(inspector.textContent).toContain(String(player.bio.wingspanCm))
-    expect(inspector.querySelector('.canonical-roster__inspector-identity')?.textContent).toMatch(
-      /Age.*Height.*Weight.*Wingspan/s,
-    )
-    expect(inspector.querySelector('.canonical-roster__inspector-production')?.textContent).toMatch(
-      /PTS.*REB.*AST.*MIN.*VAL/s,
-    )
-    expect(inspector.textContent).not.toContain('+/-')
-    expect(inspector.querySelector('.canonical-roster__inspector-signals')).toBeNull()
-    expect(inspector.textContent).not.toMatch(/\bFIN\b/)
-
-    const dossier = screen.getByRole('complementary', { name: 'Dossier del jugador' })
-    expect(dossier.textContent).toContain('CONTRACT')
-    expect(dossier.textContent).toContain('STATUS')
-    expect(dossier.textContent).toContain('NOTES')
-    expect(dossier.querySelector('.roster-inspector-dossier__measures')).not.toBeNull()
-    expect(dossier.querySelector('.canonical-roster__inspector-measure-label')?.textContent).toMatch(
-      /Status|Availability|Scouting/i,
-    )
-    expect(dossier.textContent).not.toContain('El staff no ha emitido comentarios sobre este jugador.')
-    expect(dossier.querySelector('[data-zone="staff"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-briefing"]')).toBeNull()
-
-    const depthRow = document.querySelector(`[data-player-id="${player.id}"]`)
-    expect(depthRow).toHaveClass('is-selected')
-    expect(depthRow?.closest('.roster-depth-chart__lane')).toHaveClass('is-selected')
-    expect(depthRow?.querySelector('.roster-depth-chart__rank')?.textContent).toMatch(/^\d+$/)
+  it('renders a compact General view and allows optional columns without modifying Legacy',()=>{
+    mountRosterWorkspace()
+    const grid=screen.getByRole('region',{name:'Plantilla Courtside'})
+    expect(grid.querySelectorAll('thead th')).toHaveLength(9)
+    expect(grid.querySelectorAll('tbody tr').length).toBeGreaterThan(0)
+    expect(screen.getByRole('columnheader',{name:/JUGADOR/})).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'PTS'})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:/COLUMNAS/}))
+    expect(screen.getByRole('complementary',{name:'Editor de columnas'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox',{name:'PTS'}))
+    expect(grid.querySelectorAll('thead th')).toHaveLength(10)
   })
 
-  it('hides the leftover inspector when the same row is clicked again', () => {
+  it('offers all eight canonical rating families and a separate statistics view',()=>{
     mountRosterWorkspace()
-    const row = document.querySelector('.bdm-data-table tbody tr')!
+    const chooser=screen.getByLabelText('Todas las vistas de plantilla')
+    for(const id of ['shooting','finishing','ballHandling','playmaking','offBall','defense','physical','brain','performance']) {
+      expect(chooser.querySelector('option[value="'+id+'"]')).not.toBeNull()
+    }
+    fireEvent.change(chooser,{target:{value:'shooting'}})
+    expect(screen.getByRole('columnheader',{name:/TIRO LIBRE/})).toBeInTheDocument()
+    expect(screen.getByRole('columnheader',{name:/TRIPLE ESTÁTICO/})).toBeInTheDocument()
+    fireEvent.change(chooser,{target:{value:'performance'}})
+    expect(screen.getByRole('columnheader',{name:/PTS/})).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:/TRIPLE ESTÁTICO/})).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(row)
-    expect(screen.getByRole('complementary', { name: 'Inspector del jugador' })).toBeInTheDocument()
+  it('uses an accessible Courtside role picker and updates the canonical lineup',()=>{
+    const {team}=mountRosterWorkspace()
+    const world=useGameStore.getState().world!
+    const player=getTeamRoster(world,team.id)[0]!
+    const trigger=screen.getByRole('button',{name:`Rotación ${player.firstName} ${player.lastName}`})
+    expect(trigger).toHaveAttribute('aria-expanded','false')
+    fireEvent.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded','true')
+    expect(screen.getByRole('menu',{name:`Asignación de ${player.firstName} ${player.lastName}`})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
+    expect(getLineupSlotForPlayer(getTeamLineup(useGameStore.getState().world!,team.id)!,player.id)).toBe('PG')
+  })
 
-    fireEvent.click(row)
-    expect(screen.queryByRole('complementary', { name: 'Inspector del jugador' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('complementary', { name: 'Dossier del jugador' })).not.toBeInTheDocument()
-    expect(document.querySelector('[data-ng-region="roster-row-inspector"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-inspector-dossier"]')).toBeNull()
-    expect(document.querySelector('[data-ng-region="roster-briefing"]')).not.toBeNull()
-    expect(document.querySelector('.roster-depth-chart__row.is-selected')).toBeNull()
-    expect(document.querySelector('.roster-depth-chart__lane.is-selected')).toBeNull()
+  it('keeps the column editor over the table without hiding the first rows',()=>{
+    mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:/COLUMNAS/}))
+    expect(screen.getByRole('complementary',{name:'Editor de columnas'})).toBeInTheDocument()
+    expect(document.querySelector('.courtside-roster-table thead')).toBeInTheDocument()
+    expect(document.querySelector('.courtside-roster-table tbody tr')).toBeInTheDocument()
+  })
+
+  it('keeps the table full-width and opens an optional popup only on request', () => {
+    const {world,team}=mountRosterWorkspace()
+    expect(screen.getByRole('navigation',{name:'Secciones de plantilla'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'PLANIFICAR'})).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'VER CALENDARIO'})).toBeNull()
+    expect(document.querySelector('[data-ng-region="roster-v4-popup"]')).toBeNull()
+    expect(document.querySelector('[data-ng-region="roster-context-deck"]')).toBeNull()
+    expect(document.querySelector('.roster-depth-chart')).toBeNull()
+    fireEvent.click(document.querySelector('.bdm-data-table tbody tr')!)
+    expect(document.querySelector('[data-ng-region="roster-v4-popup"]')).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:/INSPECTOR/}))
+    expect(screen.getByRole('dialog',{name:'Inspector flotante de jugador'})).toBeInTheDocument()
+    expect(screen.getByRole('complementary',{name:'Inspector del jugador'})).toBeInTheDocument()
+    expect(screen.getByRole('complementary',{name:'Inspector del jugador'}).textContent)
+      .toContain(world.players[team.rosterPlayerIds[0]!]!.lastName)
+    fireEvent.pointerDown(document.querySelector('.roster-v4__metrics')!)
+    expect(screen.queryByRole('dialog',{name:'Inspector flotante de jugador'})).not.toBeInTheDocument()
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(1)
+  })
+
+  it('closes the inspector with Escape while keeping selection', () => {
+    mountRosterWorkspace()
+    fireEvent.click(document.querySelector('.bdm-data-table tbody tr')!)
+    fireEvent.click(screen.getByRole('button',{name:/INSPECTOR/}))
+    fireEvent.keyDown(document,{key:'Escape'})
+    expect(screen.queryByRole('dialog',{name:'Inspector flotante de jugador'})).not.toBeInTheDocument()
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(1)
   })
 })
 
 describe('RosterWorkspace session restoration', () => {
   it('preserves preset, search, selection, and position filter across unmount', () => {
-    const { unmount } = mountRosterWorkspace()
-
-    fireEvent.click(screen.getByLabelText('Preset de columnas'))
-    fireEvent.click(screen.getByRole('option', { name: 'PSICO' }))
-
-    const rows = document.querySelectorAll('.bdm-data-table tbody tr')
-    expect(rows.length).toBeGreaterThanOrEqual(2)
-    fireEvent.click(rows[0]!, { ctrlKey: true })
-    fireEvent.click(rows[1]!, { ctrlKey: true })
-
-    fireEvent.change(screen.getByPlaceholderText('Buscar jugador...'), { target: { value: 'mart' } })
-    fireEvent.click(screen.getByRole('button', { name: 'SG' }))
-
+    const {unmount}=mountRosterWorkspace()
+    fireEvent.change(screen.getByLabelText('Todas las vistas de plantilla'),{target:{value:'psico'}})
+    const rows=document.querySelectorAll('.bdm-data-table tbody tr')
+    fireEvent.click(rows[0]!,{ctrlKey:true})
+    fireEvent.click(rows[1]!,{ctrlKey:true})
+    fireEvent.change(screen.getByLabelText('Buscar jugador en roster'),{target:{value:'mart'}})
+    fireEvent.change(screen.getByLabelText('Posición del roster'),{target:{value:'SG'}})
     expect(useRosterWorkspaceSession.getState().activePreset).toBe('psico')
     expect(useRosterWorkspaceSession.getState().positionFilter).toBe('SG')
     expect(useRosterWorkspaceSession.getState().searchQuery).toBe('mart')
     expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)
-
     unmount()
-
     mountRosterWorkspace()
-
-    expect(screen.getByLabelText('Preset de columnas')).toHaveAttribute('data-preset', 'psico')
-    expect(screen.getByRole('button', { name: 'SG' })).toHaveAttribute('aria-pressed', 'true')
-    expect((screen.getByPlaceholderText('Buscar jugador...') as HTMLInputElement).value).toBe('mart')
-    expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)
+    expect(useRosterWorkspaceSession.getState().activePreset).toBe('psico')
+    expect(screen.getByLabelText('Todas las vistas de plantilla')).toHaveValue('')
+    expect(screen.getByLabelText('Posición del roster')).toHaveValue('SG')
+    expect(screen.getByLabelText('Buscar jugador en roster')).toHaveValue('mart')
+    expect(useRosterWorkspaceSession.getState().selectedRowIds).toHaveLength(2)
   })
 
   it('does not render embedded PlayerProfileApp panel', () => {
@@ -243,24 +251,79 @@ describe('RosterWorkspace session restoration', () => {
     expect(document.querySelector('.bdm-app-frame')).not.toBeInTheDocument()
   })
 
-  it('fills the leftover space with a roster briefing when no row is selected', () => {
+  it('shows source-backed briefing only when the Briefing tab is selected',()=>{
     mountRosterWorkspace()
-    const briefing = document.querySelector('[data-ng-region="roster-briefing"]')
+    expect(document.querySelector('[data-ng-region="roster-briefing"]')).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    const briefing=document.querySelector('[data-ng-region="roster-briefing"]')
     expect(briefing).not.toBeNull()
     expect(briefing?.textContent).toMatch(/jugadores/i)
     expect(briefing?.textContent).toMatch(/sin rol/i)
-    expect(briefing?.textContent).toMatch(/Scouting conocido/i)
-    expect(briefing?.textContent).toMatch(/Target 2–3/)
-    expect(briefing?.textContent).toMatch(/Balanced|Thin|Shortage|Overload|Critical/)
-    expect(document.querySelector('.roster-briefing__lane')).not.toBeNull()
-    expect(screen.queryByRole('complementary', { name: 'Inspector del jugador' })).not.toBeInTheDocument()
+  })
+
+  it('turns the canonical lineup into live manager agenda progress',()=>{
+    const {team}=mountRosterWorkspace()
+    expect(screen.getByLabelText('Agenda del mánager')).toHaveTextContent('0/5')
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    const agenda=screen.getByRole('region',{name:'Decisiones del mánager'})
+    expect(agenda).toHaveTextContent('0/5')
+    fireEvent.click(screen.getByRole('button',{name:'GESTIONAR QUINTETO ↗'}))
+    expect(screen.getByLabelText('Depth chart')).toBeInTheDocument()
+    const world=useGameStore.getState().world!
+    const guard=getTeamRoster(world,team.id).find(p=>p.basketball.primaryPosition==='PG')!
+    fireEvent.click(screen.getByRole('button',{name:`Rotación ${guard.firstName} ${guard.lastName}`}))
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    expect(screen.getByRole('region',{name:'Decisiones del mánager'})).toHaveTextContent('1/5')
+    expect(getLineupSlotForPlayer(getTeamLineup(useGameStore.getState().world!,team.id)!,guard.id)).toBe('PG')
+  })
+
+  it('saves a planning priority as a local manager intention without making a signing',()=>{
+    const {unmount,team}=mountRosterWorkspace()
+    const before=useGameStore.getState().world!
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    const pg=screen.getByRole('group',{name:'Prioridad del mánager en PG'})
+    fireEvent.click(pg.querySelector<HTMLButtonElement>('button:last-child')!)
+    expect(pg.querySelector('button:last-child')).toHaveAttribute('aria-pressed','true')
+    expect(useGameStore.getState().world).toBe(before)
+    fireEvent.click(screen.getByRole('button',{name:'BRIEFING'}))
+    expect(screen.getByRole('region',{name:'Decisiones del mánager'}))
+      .toHaveTextContent('PG · Estudiar refuerzo')
+    unmount()
+    mountRosterWorkspace(before)
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    expect(screen.getByRole('group',{name:'Prioridad del mánager en PG'})
+      .querySelector('button:last-child')).toHaveAttribute('aria-pressed','true')
+    expect(useGameStore.getState().world!.teams[team.id].rosterPlayerIds).toEqual(before.teams[team.id].rosterPlayerIds)
+  })
+
+  it('opens contractual planning with real roster players, not fictitious signings',()=>{
+    const {world,team}=mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'PLANIFICAR'}))
+    expect(screen.getByRole('heading',{name:'PLANIFICAR PLANTILLA'})).toBeInTheDocument()
+    expect(document.querySelectorAll('.roster-v4-planning__table tbody tr').length).toBe(team.rosterPlayerIds.length)
+    const player=world.players[team.rosterPlayerIds[0]!]!
+    expect(screen.getByText(player.firstName+' '+player.lastName)).toBeInTheDocument()
+  })
+
+  it('updates the canonical starting lineup from the Courtside depth selector',()=>{
+    const {team}=mountRosterWorkspace()
+    const world=useGameStore.getState().world!
+    const guard=getTeamRoster(world,team.id).find(player=>player.basketball.primaryPosition==='PG')!
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
+    fireEvent.click(screen.getByRole('button',{name:`Rotación ${guard.firstName} ${guard.lastName}`}))
+    fireEvent.click(screen.getByRole('menuitemradio',{name:'TITULAR PG'}))
+    const updated=useGameStore.getState().world!
+    expect(getLineupSlotForPlayer(getTeamLineup(updated,team.id)!,guard.id)).toBe('PG')
+    expect(screen.getByLabelText('Depth chart').textContent).toContain('TITULAR')
   })
 
   it('renders a position depth chart whose counts match the live roster', () => {
     const { team, world } = mountRosterWorkspace()
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
     const chart = screen.getByLabelText('Depth chart')
     expect(chart).toBeInTheDocument()
-    expect(chart).toHaveTextContent(`${team.rosterPlayerIds.length} players`)
+    expect(chart).toHaveTextContent(`${team.rosterPlayerIds.length} jugadores`)
     expect(chart.querySelector('.canonical-roster__player-link')).toBeInTheDocument()
 
     const lanes = [...chart.querySelectorAll('.roster-depth-chart__lane')]
@@ -281,8 +344,35 @@ describe('RosterWorkspace session restoration', () => {
     }
     expect(chart.textContent).not.toMatch(/FREE/)
     expect(chart.querySelector('.roster-depth-chart__group')).toBeNull()
-    expect(chart.querySelector('.roster-depth-chart__meter')).toBeNull()
-    expect(chart.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
+    const meters=[...chart.querySelectorAll('.roster-depth-chart__meter')]
+    expect(meters).toHaveLength(5)
+    expect(screen.getByLabelText('Leyenda de distribución de roles')).toHaveTextContent('Titulares')
+    for (const meter of meters) {
+      expect(meter.querySelector('.is-starter')).toHaveStyle({width:'0%'})
+      expect(meter.querySelector('.is-bench')).toHaveStyle({width:'0%'})
+      expect(meter.querySelector('.is-unassigned')).toHaveStyle({width:'100%'})
+    }
+    expect(chart.querySelector('.roster-depth-chart__rank')?.textContent).toBe('·')
+  })
+
+  it('divides a lane meter by all players, not by assigned players only',()=>{
+    const world=createNewGame()
+    const team=getUserTeam(world)!
+    const guards=getTeamRoster(world,team.id).filter(p=>p.basketball.primaryPosition==='PG')
+    expect(guards.length).toBeGreaterThan(1)
+    const assigned=setLineupSlot(world,team.id,'B1',guards[0]!.id)
+    mountRosterWorkspace(assigned)
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
+    const lanes=[...screen.getByLabelText('Depth chart').querySelectorAll('.roster-depth-chart__lane')]
+    const guardLane=lanes.find(l=>l.querySelector('.roster-depth-chart__pos')?.textContent==='PG')!
+    const meter=guardLane.querySelector('.roster-depth-chart__meter')!
+    const benchPercent=(1/guards.length)*100
+    const unassignedPercent=((guards.length-1)/guards.length)*100
+    expect(meter.querySelector('.is-starter')).toHaveStyle({width:'0%'})
+    expect(meter.querySelector('.is-bench')).toHaveStyle({width:`${benchPercent}%`})
+    expect(meter.querySelector('.is-unassigned')).toHaveStyle({width:`${unassignedPercent}%`})
+    expect(meter.getAttribute('aria-label')).toContain(`1 en banquillo y ${guards.length-1} sin asignar`)
+    expect(guardLane.querySelector('.roster-v4-depth__summary')).toHaveTextContent('BANQUILLO 1')
   })
 
   it('groups assigned lineup slots into BDM depth bands', () => {
@@ -299,16 +389,17 @@ describe('RosterWorkspace session restoration', () => {
     }
 
     mountRosterWorkspace(assigned)
+    fireEvent.click(screen.getByRole('button',{name:'PROFUNDIDAD'}))
     const chart = screen.getByLabelText('Depth chart')
     const pgLane = [...chart.querySelectorAll('.roster-depth-chart__lane')].find(
       (lane) => lane.querySelector('.roster-depth-chart__pos')?.textContent === 'PG',
     )
     expect(pgLane).toHaveClass('has-roles')
-    expect(pgLane?.textContent).toContain('STARTER')
+    expect(pgLane?.textContent).toContain('TITULAR')
     expect(pgLane?.textContent).not.toContain('FREE')
-    expect(pgLane?.querySelector(`[data-player-id="${starter.id}"]`)?.querySelector('.roster-depth-chart__rank')?.textContent).toBe('1')
+    expect(pgLane?.querySelector(`[data-player-id="${starter.id}"]`)?.querySelector('.roster-depth-chart__rank')?.textContent).toBe('T')
     if (rotation !== undefined) {
-      expect(pgLane?.textContent).toContain('ROTATION')
+      expect(pgLane?.textContent).toContain('ROTACIÓN')
     }
   })
 })
@@ -349,14 +440,14 @@ describe('WorkspaceHost player navigation', () => {
       </NgWorkspaceNavigationProvider>,
     )
 
-    expect(screen.getByLabelText('Preset de columnas')).toBeInTheDocument()
+    expect(screen.getByRole('region',{name:'Plantilla Courtside'})).toBeInTheDocument()
 
     act(() => {
       navigateToPlayerFromRoster(playerId)
     })
 
     await waitFor(() => {
-      expect(screen.queryByLabelText('Preset de columnas')).not.toBeInTheDocument()
+      expect(screen.queryByRole('region',{name:'Plantilla Courtside'})).not.toBeInTheDocument()
     })
     // The player workspace also renders the BS15H talent navigation ("Talent operations"), which has its own Overview entry;
     // the player's own Overview view tab must still be present exactly once outside it.

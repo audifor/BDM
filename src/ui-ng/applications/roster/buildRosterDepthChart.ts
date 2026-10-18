@@ -1,6 +1,6 @@
 import { BASKETBALL_POSITIONS, type BasketballPosition } from '@/domain/primitives'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { getTeamLineup, getTeamRoster, type GameWorld } from '@/domain/world'
+import { getCurrentPlayerInjury, getTeamLineup, getTeamRoster, type GameWorld } from '@/domain/world'
 import { getLineupSlotForPlayer, type LineupSlot } from '@/domain/tactics'
 import { calculatePlayerImpact } from '@/engine/team'
 
@@ -14,6 +14,8 @@ export interface RosterDepthChartPlayer {
   readonly stars: LeagueQualityStars
   readonly band: RosterDepthBand
   readonly slot: LineupSlot | undefined
+  readonly secondaryPositions: readonly BasketballPosition[]
+  readonly injured: boolean
 }
 
 export interface RosterDepthChartLane {
@@ -55,7 +57,6 @@ export function depthBandForSlot(slot: LineupSlot | undefined): RosterDepthBand 
 function comparePlayers(left: RosterDepthChartPlayer, right: RosterDepthChartPlayer): number {
   return (
     BAND_ORDER[left.band] - BAND_ORDER[right.band] ||
-    right.stars - left.stars ||
     left.name.localeCompare(right.name) ||
     left.id.localeCompare(right.id)
   )
@@ -114,6 +115,8 @@ export function buildRosterDepthChart(world: GameWorld, teamId: TeamId): RosterD
       stars: leagueQualityStars(impact, pools[player.basketball.primaryPosition]),
       band: depthBandForSlot(slot),
       slot,
+      secondaryPositions: player.basketball.secondaryPositions??[],
+      injured: getCurrentPlayerInjury(world,player.id)!==undefined,
     })
   }
 

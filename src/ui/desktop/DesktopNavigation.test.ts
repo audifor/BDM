@@ -43,6 +43,8 @@ describe('Desktop navigation', () => {
   it('groups applications by their functional area', () => {
     for (const appId of ['squad', 'analysis', 'locker-room', 'mentoring', 'tactics', 'training', 'medical', 'staff']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('EQUIPO')
     for (const appId of ['schedule', 'match', 'competition']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('PARTIDOS Y COMPETICIÓN')
+    for (const appId of ['market', 'scouting']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('MERCADO')
+    expect(getLauncherApps('').map((app) => app.id)).not.toContain('scouting')
     for (const appId of ['club', 'board', 'finances', 'enforcement']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('GESTIÓN DEL CLUB')
     for (const appId of ['coach', 'coach-finances']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('MI CARRERA')
     for (const appId of ['recruiting', 'nil', 'boosters']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('College Performance Center')

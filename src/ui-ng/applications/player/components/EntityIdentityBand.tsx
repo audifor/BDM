@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react'
 
 import type { TeamId } from '@/domain/ids'
 import type { PresentationField } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
+import { formatPhysicalMeasurement } from '@/ui-ng/applications/player/data/formatPhysicalMeasurement'
+import { formatMedicalNumber } from '@/ui-ng/applications/player/data/formatMedicalNumber'
 import { UNAVAILABLE_LABEL } from '@/ui-ng/applications/player/playerStructuralData'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { CountryNationalityMark } from '@/ui-ng/applications/player/components/CountryNationalityMark'
@@ -9,19 +11,12 @@ import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import playerPortraitPlaceholder from '@/ui-ng/assets/images/player-portrait-placeholder.png'
+import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
+import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlayerPathwayBand'
 
 function presentationValue<T>(field: PresentationField<T>, formatter?: (value: T) => string): string {
   if (field.status === 'unavailable') return field.label ?? UNAVAILABLE_LABEL
   return formatter === undefined ? String(field.value) : formatter(field.value as T)
-}
-
-function splitMeasure(field: PresentationField<string>): { readonly value: string; readonly unit: string } {
-  if (field.status === 'unavailable' || field.value === undefined) {
-    return { value: field.label ?? '—', unit: '' }
-  }
-  const match = field.value.match(/^(\d+(?:\.\d+)?)\s*(.*)$/)
-  if (match === null) return { value: field.value, unit: '' }
-  return { value: match[1]!, unit: match[2] ?? '' }
 }
 
 export function TeamCrest({ code, size = 28 }: { readonly code: string; readonly size?: number }) {
@@ -54,7 +49,8 @@ export function EntityIdentityBand() {
   const { openEntity } = useNgWorkspaceNavigation()
   if (model === null) return null
 
-  const { identity, status, contract } = model
+  const { identity, status } = model
+  const canViewPrivateCondition = model.knowledgeAccess.kind === 'own-roster'
   const teamLabel = presentationValue(identity.teamName)
   const teamDestination =
     identity.teamId.status === 'available'
@@ -64,13 +60,11 @@ export function EntityIdentityBand() {
           section: 'overview',
         } as const)
       : null
-  const height = splitMeasure(identity.height)
-  const weight = splitMeasure(identity.weight)
-  const wingspan = splitMeasure(identity.wingspan)
+  const height = formatPhysicalMeasurement(identity.height)
+  const weight = formatPhysicalMeasurement(identity.weight)
+  const wingspan = formatPhysicalMeasurement(identity.wingspan)
   const jersey =
     identity.jerseyNumber.status === 'available' ? String(identity.jerseyNumber.value) : null
-  const currentSalary =
-    contract.financialSchedule.find((row) => row.isCurrent) ?? contract.financialSchedule[0]
   const availability = presentationValue(status.availability)
   const availabilityTone = availability === 'Available' ? 'positive' : 'warning'
 
@@ -135,55 +129,45 @@ export function EntityIdentityBand() {
       </div>
 
       <div className="po-identity__condition">
-        <span className={`po-identity__availability po-identity__availability--${availabilityTone}`}>
-          <span className="po-identity__availability-dot" aria-hidden />
-          {availability}
-        </span>
-        <div className="po-identity__status-list">
-          {status.morale.status === 'available' && (
-            <StatusInstrument label="Morale" tone="positive" value={presentationValue(status.morale)} />
-          )}
-          {status.fatigue.status === 'available' && (
-            <StatusInstrument
-              label="Fatigue"
-              meter={typeof status.fatigue.value === 'number' ? status.fatigue.value : undefined}
-              tone="neutral"
-              value={presentationValue(status.fatigue, (value) => `${value}%`)}
-            />
-          )}
-          {status.risk.status === 'available' ? (
-            <StatusInstrument label="Injury Risk" tone={status.riskTone ?? 'neutral'} value={presentationValue(status.risk)} />
-          ) : (
-            <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
-          )}
+        <div className="po-identity__condition-top">
+          <span className={`po-identity__availability po-identity__availability--${canViewPrivateCondition ? availabilityTone : 'warning'}`}>
+            <span className="po-identity__availability-dot" aria-hidden />
+            {canViewPrivateCondition ? availability : 'CONDICIÓN NO EVALUADA'}
+          </span>
+          <details className="po-identity__trajectory">
+            <summary aria-label="Mostrar navegación y trayectoria del jugador">TRAYECTORIA ▾</summary>
+            <div className="po-identity__trajectory-panel">
+              <h3>TRAYECTORIA DEL JUGADOR</h3>
+              <TalentOperationsNav current="player" />
+              {canViewPrivateCondition ? <TalentPlayerPathwayBand playerId={identity.playerId} /> : <p className="po-identity__fow-pathway">Información de trayectoria sujeta al conocimiento de tu organización.</p>}
+            </div>
+          </details>
         </div>
-      </div>
-
-      <div className="po-identity__contract">
-        <div className="po-identity__contract-top">
-          <span className="po-identity__section-label">Contract</span>
-          <div className="po-identity__actions">
-            <button className="ng-btn ng-btn--ghost" type="button">Match Plan</button>
-            <button className="ng-btn ng-btn--ghost" type="button">Talk</button>
+        {canViewPrivateCondition ? (
+          <div className="po-identity__status-list">
+            {status.morale.status === 'available' && (
+              <StatusInstrument label="Morale" tone="positive" value={presentationValue(status.morale)} />
+            )}
+            {status.fatigue.status === 'available' && (
+              <StatusInstrument
+                label="Fatigue"
+                meter={typeof status.fatigue.value === 'number' ? status.fatigue.value : undefined}
+                tone="neutral"
+                value={presentationValue(status.fatigue, (value) => `${formatMedicalNumber(value)}%`)}
+              />
+            )}
+            {status.risk.status === 'available' ? (
+              <StatusInstrument label="Injury Risk" tone={status.riskTone ?? 'neutral'} value={presentationValue(status.risk)} />
+            ) : (
+              <StatusInstrument label="Injury Risk" tone="neutral" value={status.risk.label ?? UNAVAILABLE_LABEL} />
+            )}
           </div>
-        </div>
-        <div className="po-identity__contract-list">
-          <StatusInstrument
-            label="Expires"
-            tone="neutral"
-            value={contract.statusBand?.endDate ?? UNAVAILABLE_LABEL}
-          />
-          <StatusInstrument
-            label="Salary"
-            tone="neutral"
-            value={currentSalary?.baseSalary.formatted ?? contract.compensationContextNote ?? UNAVAILABLE_LABEL}
-          />
-          <StatusInstrument
-            label="Status"
-            tone="neutral"
-            value={contract.statusBand?.statusLabel ?? UNAVAILABLE_LABEL}
-          />
-        </div>
+        ) : (
+          <div className="po-identity__fow-condition" aria-label="Estado interno no evaluado">
+            <strong>ESTADO INTERNO NO CONOCIDO</strong>
+            <span>Moral, fatiga y riesgo físico no están disponibles sin una fuente autorizada.</span>
+          </div>
+        )}
       </div>
     </section>
   )

@@ -3,120 +3,160 @@ import { useMemo, useState } from 'react'
 import type { MedicalBodyRegionId } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
 import { MedicalBodyMap } from '@/ui-ng/applications/player/components/MedicalBodyMap'
 import { MedicalDetailInspector } from '@/ui-ng/applications/player/components/MedicalDetailInspector'
+import { PlayerMedicalHistoryBoard } from '@/ui-ng/applications/player/components/PlayerMedicalHistoryBoard'
+import { PlayerMedicalRecoverySummary } from '@/ui-ng/applications/player/components/PlayerMedicalRecoverySummary'
 import {
-  CurrentInjuryPanel,
-  InjuryPatternPanel,
+  PlayerMedicalDecisionHero,
+  PlayerMedicalDecisionPanel,
+  PlayerRivalMedicalBoundary,
+} from '@/ui-ng/applications/player/components/PlayerMedicalDecisions'
+import {
   LoadManagementPanel,
-  MedicalDetailPanel,
-  MedicalFilterStrip,
-  MedicalHistoryPanel,
   PhysicalReadinessPanel,
-  RecoveryTimelinePanel,
-  StaffNotesPanel,
 } from '@/ui-ng/applications/player/components/MedicalBoardPanels'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { findMedicalInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
 
+type MedicalCanvasTab = 'body' | 'load' | 'history'
+const MEDICAL_CANVAS_TABS: readonly MedicalCanvasTab[] = ['body', 'load', 'history']
+
 /**
- * PLAYER · MEDICAL — the reference's three columns: readiness, injury and load on the left; the body
- * map with the recovery timeline in the centre; the medical detail and its blocks on the right; and
- * the department filter strip along the bottom.
- *
- * Everything is read from the recorded injuries, the workload windows and the availability state.
- * The two blocks the save cannot fill (staff notes, treatment) state their gap instead of guessing.
+ * Courtside MEDICAL V3: an anatomical centre with progressive disclosure.
+ * The engine and Save remain the only clinical authority. Tab selection changes
+ * presentation, not medical treatment or any simulation value.
  */
 export function PlayerMedicalView() {
   const { model, session } = usePlayerWorkspace()
   const { selectedEventId, setSelectedEventId } = session.medical
   const [selectedRegionId, setSelectedRegionId] = useState<MedicalBodyRegionId | null>(null)
+  const [activeTab, setActiveTab] = useState<MedicalCanvasTab>('body')
   const medical = model?.medical
-  const staffNoteGaps = useMemo(
-    () => model?.medical.gaps.filter((gap) => gap.id === 'staff-notes') ?? [],
-    [model?.medical.gaps],
-  )
-
   if (model === null || medical === undefined) return null
 
-  const selectedRegion =
-    selectedRegionId === null
-      ? undefined
-      : medical.bodyRegions.find((region) => region.id === selectedRegionId)
+  // No private injury, rehabilitation, fatigue or risk data for rivals.
+  if (model.knowledgeAccess.kind !== 'own-roster') {
+    return <PlayerRivalMedicalBoundary onScouting={() => session.setActiveView('scouting')} />
+  }
 
-  return (
-    <div className="po-med-board" data-ng-region="player-medical">
-      <div className="po-med-col po-med-col--left">
-        <PhysicalReadinessPanel meters={medical.readiness} />
-        <CurrentInjuryPanel band={medical.availabilityBand} />
-        <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />
-      </div>
+  const noRecordedLoad = medical.loadWindows.every(window =>
+    window.matchMinutes === 0 && window.programmeLoad === 0 &&
+    window.matches === 0 && window.sessionCount === 0,
+  )
+  const region = selectedRegionId === null ? undefined
+    : medical.bodyRegions.find(entry => entry.id === selectedRegionId)
+  const riskReason = medical.risk?.primaryReason
+  // Injury and its severity are already explained by the case, status and review.
+  // The risk engine can echo "Active moderate injury"; do not duplicate it here.
+  const insight = medical.activeInjury !== null ? null : (riskReason ?? (
+    medical.fatigue.value >= 50
+      ? 'Fatigue is elevated. Review recorded training and match load before the next game.'
+      : null
+  ))
 
-      <div className="po-med-col po-med-col--center">
-        <section className="po-med-panel po-med-bodymap-panel">
-          <header className="po-med-panel__head">
-            <span className="po-med-panel__title">Body map</span>
-            <span className="po-med-panel__meta">
-              Click on a body region for detailed information
-            </span>
-            <span
-              className={`po-med-bodymap-panel__health is-${
-                medical.bodyRegions.some((region) => region.status === 'attention')
-                  ? 'attention'
-                  : 'healthy'
-              }`}
-            >
-              {medical.bodyRegions.some((region) => region.status === 'attention')
-                ? '● Issues recorded'
-                : '● No injury recorded'}
-            </span>
-          </header>
-          <MedicalBodyMap
-            onSelectRegion={setSelectedRegionId}
-            regions={medical.bodyRegions}
-            selectedRegionId={selectedRegionId}
-          />
-        </section>
+  return <div className="po-med-board po-med-board--v3" data-ng-region="player-medical"
+    onKeyDownCapture={event => {
+      if (event.key === 'Escape' && selectedRegionId !== null) {
+        setSelectedRegionId(null)
+      }
+    }}>
+    <PlayerMedicalDecisionHero medical={medical} playerId={model.identity.playerId} />
 
-        <RecoveryTimelinePanel milestones={medical.recoveryMilestones} />
-      </div>
+    <aside className="po-med-v3__left" aria-label="Readiness and recorded recovery">
+      <PhysicalReadinessPanel meters={medical.readiness.filter(meter =>
+        meter.id !== 'injury-risk' && meter.id !== 'recovery')} />
+      {medical.activeInjury !== null && <PlayerMedicalRecoverySummary medical={medical} />}
+    </aside>
 
-      <div className="po-med-col po-med-col--right">
-        <MedicalDetailPanel
-          detail={medical.detail}
-          regionDetail={selectedRegion?.detail ?? null}
-          regionLabel={selectedRegion?.label ?? null}
-        />
+    <section className="po-med-v3__center" aria-label="Medical exploration">
+      <header className="po-med-v3__canvas-head">
+        <div><strong>MEDICAL PROFILE</strong><small>Body · workload · injury records</small></div>
+        <div className="po-med-v3__tabs" role="tablist" aria-label="Medical profile views">
+          {MEDICAL_CANVAS_TABS.map(tab =>
+            <button key={tab} role="tab" type="button"
+              id={`po-med-tab-${tab}`}
+              aria-controls={`po-med-panel-${tab}`}
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}>{tab.toUpperCase()}</button>,
+          )}
+        </div>
+      </header>
+      <div className="po-med-v3__canvas" id={`po-med-panel-${activeTab}`}
+        role="tabpanel" aria-labelledby={`po-med-tab-${activeTab}`}>
+        {activeTab === 'body' && <div className="po-med-v3__body">
+          <div className="po-med-v3__body-status">
+            <span className={medical.bodyRegions.some(r => r.status === 'attention') ? 'is-warning' : 'is-good'}>●</span>
+            {medical.activeInjury?.kindLabel === 'Hand injury'
+              ? 'HAND INJURY · SIDE NOT RECORDED'
+              : medical.bodyRegions.some(r => r.status === 'attention')
+                ? 'RECORDED INJURY REGIONS'
+                : 'NO RECORDED REGIONAL INJURY'}
+          </div>
+          <MedicalBodyMap onSelectRegion={id =>
+              setSelectedRegionId(previous => previous === id ? null : id)}
+            selectedRegionId={selectedRegionId} regions={medical.bodyRegions} />
 
-        <div className="po-med-split po-med-split--history">
-          <MedicalHistoryPanel
-            emptyMessage={medical.historyEmptyMessage}
-            onSelectRow={(id) => setSelectedEventId(id as never)}
-            rows={medical.history}
+        </div>}
+        {activeTab === 'load' && <div className="po-med-v3__load">
+          {noRecordedLoad
+            ? <section className="po-med-v3__load-empty" data-ng-region="medical-load">
+                <div className="po-med-v3__load-empty-icon" aria-hidden="true">▤</div>
+                <strong>NO WORKLOAD LOGGED YET</strong>
+                <p>No match minutes or training sessions are recorded in these windows.
+                  A chart will appear when real workload is available.</p>
+                <div className="po-med-v3__load-windows">
+                  {medical.loadWindows.map(window => <div key={window.id}>
+                    <b>{window.label}</b><span>{window.matchMinutes} MIN · {window.sessionCount} SESSIONS</span>
+                  </div>)}
+                </div>
+              </section>
+            : <LoadManagementPanel note={medical.loadNote} windows={medical.loadWindows} />}
+        </div>}
+        {activeTab === 'history' && <div className={'po-med-v3__history' +
+          (medical.history.length <= 1 ? ' po-med-v3__history--compact' : '')}>
+          <PlayerMedicalHistoryBoard medical={medical}
             selectedEventId={selectedEventId}
-          />
+            onSelectEvent={setSelectedEventId} />
+        </div>}
+      </div>
+    </section>
 
-          <div className="po-med-stack">
-            <InjuryPatternPanel pattern={medical.injuryPattern} />
-            <StaffNotesPanel gaps={staffNoteGaps} />
+    <aside className="po-med-v3__right" aria-label="Manager medical decisions">
+      <PlayerMedicalDecisionPanel medical={medical} playerId={model.identity.playerId} />
+      {activeTab === 'body' && region !== undefined && <section
+        className="po-med-v3__region-detail"
+        data-ng-region="medical-selected-region"
+        aria-label="Selected body region"
+        aria-live="polite">
+        <header className="po-med-v3__region-detail-head">
+          <span>SELECTED REGION</span>
+          <button type="button" aria-label="Clear selected body region"
+            onClick={() => setSelectedRegionId(null)}>×</button>
+        </header>
+        <div className="po-med-v3__region-detail-main">
+          <strong className="po-med-v3__region-detail-name">{region.label}</strong>
+          <div className="po-med-v3__region-detail-status">
+            <span className={region.status === 'attention' ? 'is-warning' : 'is-positive'} aria-hidden="true">●</span>
+            <span>{region.statusLabel}</span>
           </div>
         </div>
-      </div>
-
-      <MedicalFilterStrip
-        alerts={model.overview.alerts}
-        onOpenPage={(view) => session.setActiveView(view)}
-      />
-    </div>
-  )
+        <p>{region.detail}</p>
+      </section>}
+      {insight !== null && <section className="po-med-v3__intelligence">
+        <div className="po-med-v3__section-title">MEDICAL INTELLIGENCE</div>
+        <small>{medical.activeInjury !== null ? 'RECORDED INJURY' : 'ENGINE ASSESSMENT'}</small>
+        <p>{insight}</p>
+      </section>}
+    </aside>
+  </div>
 }
 
+/** Legacy export retained for consumers outside the PLAYER workspace. */
 export function MedicalInspectorContent() {
   const { model, session } = usePlayerWorkspace()
   const { selectedEventId } = session.medical
-
   const detail = useMemo(() => {
-    if (model === null) return undefined
+    if (model === null || model.knowledgeAccess.kind !== 'own-roster') return undefined
     return findMedicalInspectorDetail(model.medical, selectedEventId)
   }, [model, selectedEventId])
-
   return <MedicalDetailInspector detail={detail} />
 }

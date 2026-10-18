@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
+import type { GameDate } from '@/domain/date'
 import { releasePlayer } from '@/app/market/MarketService'
 import type { PlayerId } from '@/domain/ids'
 import { getUserTeam } from '@/engine/calendar'
@@ -103,6 +104,29 @@ describe('buildPlayerContractModel', () => {
     expect(row?.guaranteed.amount).toBeGreaterThan(0)
     expect(row?.capHit.amount).toBeGreaterThan(0)
     expect(row?.guaranteeState).toBe('Guaranteed')
+  })
+
+  it('uses the start of a future signed contract as the next key date, not the distant expiry', () => {
+    const world = createNewGame()
+    const playerId = defaultPlayerIdForNg(world)!
+    const existing = Object.values(world.contractsById).find((entry) => entry.playerId === playerId)!
+    const year = Number(world.currentDate.slice(0, 4)) + 1
+    const startsOn = `${year}-07-01` as GameDate
+    const expiresOn = `${year + 2}-06-30` as GameDate
+    const scheduled = {
+      ...world,
+      contractsById: {
+        ...world.contractsById,
+        [existing.id]: { ...existing, term: { startsOn, expiresOn } },
+      },
+    }
+    const model = buildPlayerContractModel(scheduled, playerId)
+    expect(model.viewStatus).toBe('scheduled')
+    expect(model.intelligence.nextKeyDateLabel).toContain(String(year))
+    expect(model.intelligence.nextKeyDateLabel).not.toContain(String(year + 2))
+    expect(model.intelligence.nextKeyDateNote).toContain('starts in')
+    expect(model.intelligence.expiryRiskLabel).toBe('Not started')
+    expect(model.intelligence.decisionLabel).toBe('No')
   })
 
   it('derives expiring-this-season only when expiry falls within the current season window', () => {

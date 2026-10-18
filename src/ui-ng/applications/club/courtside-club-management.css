@@ -1,0 +1,386 @@
+/* Courtside Club satellite workspaces: Board, Finance, Facilities.
+   Visual authority: original --cs-* dual palette from Courtside shell.
+   No game logic or NG navigation is replaced. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .cs-club-management {
+  --cm-bg:var(--cs-bg);--cm-panel:var(--cs-s1);--cm-s2:var(--cs-s2);
+  --cm-s3:var(--cs-s3);--cm-line:var(--cs-line);--cm-line2:var(--cs-line2);
+  --cm-text:var(--cs-text);--cm-muted:var(--cs-text2);--cm-faint:var(--cs-text3);
+  --cm-orange:var(--cs-orange);--cm-lime:var(--cs-lime);
+  --cm-positive:var(--cs-positive);--cm-negative:var(--cs-negative);
+  --ng-font-ui:var(--cs-font);--ng-font-display:var(--cs-font-display);
+  --ng-font-data:var(--cs-font);--ng-text-primary:var(--cs-text);
+  --ng-text-secondary:var(--cs-text2);--ng-text-muted:var(--cs-text3);
+  --ng-cyan:var(--cs-lime);--ng-cyan-bright:var(--cs-lime);
+  --ng-amber:var(--cs-orange);--ng-positive:var(--cs-positive);
+  --ng-negative:var(--cs-negative);--ng-border-standard:var(--cs-line2);
+  --ng-border-subtle:var(--cs-line);
+  --grid-bg-frame:var(--cs-s1);--grid-bg-header:var(--cs-s2);
+  --grid-bg-toolbar:var(--cs-s1);--grid-row-bg:var(--cs-s1);
+  --grid-row-hover:var(--cs-s3);--grid-border:var(--cs-line2);
+  --grid-border-subtle:var(--cs-line);--grid-border-cell:var(--cs-line);
+  --grid-text-strong:var(--cs-text);--grid-text:var(--cs-text2);
+  --grid-text-header:var(--cs-text2);--grid-text-muted:var(--cs-text3);
+  --grid-cyan:var(--cs-lime);--grid-cyan-bright:var(--cs-lime);
+  --grid-amber:var(--cs-orange);--grid-green:var(--cs-positive);
+  --grid-green-bright:var(--cs-positive);--grid-red:var(--cs-negative);
+  --ng-workspace-header-height:60px;--ng-workspace-tabs-height:40px;
+  --ng-workspace-padding:0;--ng-precision-row-h:30px;
+  --ng-precision-header-h:30px;
+  height:100%;min-height:0;background:var(--cm-bg);
+  color:var(--cm-text);font:400 13px/1.36 var(--cs-font);
+}
+.cs-club-management * {box-sizing:border-box}
+.cs-club-management button,.cs-club-management select,
+.cs-club-management input {font:inherit}
+.cs-club-management button {cursor:pointer}
+.cs-club-management button:focus-visible,
+.cs-club-management select:focus-visible,
+.cs-club-management input:focus-visible,
+.cs-club-management summary:focus-visible {
+  outline:2px solid var(--cm-orange);outline-offset:2px;
+}
+.cs-club-management .ng-application-workspace {height:100%;min-height:0}
+.cs-club-management .ng-application-workspace__header-slot {
+  padding:0 17px;min-height:0;background:var(--cm-bg);
+  border-bottom:1px solid var(--cm-line);
+}
+.cs-club-management .ng-canon-header {
+  min-height:60px;height:60px;padding:0;gap:8px;
+}
+.cs-club-management .ng-canon-header__app {
+  font:700 19px/1 var(--cs-font-display);letter-spacing:.07em;
+  color:var(--cm-orange);
+}
+.cs-club-management .ng-canon-header__team {
+  font:700 22px/1 var(--cs-font-display);letter-spacing:.025em;
+  color:var(--cm-text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cs-club-management .ng-canon-header__meta {
+  font:600 11px/1.2 var(--cs-font);letter-spacing:.01em;
+  color:var(--cm-muted);
+}
+.cs-club-management .ng-canon-header__sep {background:var(--cm-line2)}
+.cs-club-management .ng-application-workspace__tabs-slot {
+  min-height:40px;height:40px;background:var(--cm-bg);
+  padding:0 15px;border-bottom:1px solid var(--cm-line2);
+}
+.cs-club-management .ng-workspace-tabs {
+  min-height:39px;height:39px;padding:0;border:0;background:transparent;
+}
+.cs-club-management .ng-workspace-tabs__list {gap:8px;overflow-x:auto;scrollbar-width:thin}
+.cs-club-management .ng-workspace-tabs__tab {
+  min-height:39px;height:39px;border:0;border-bottom:3px solid transparent;
+  border-radius:0;background:transparent;color:var(--cm-muted);
+  padding:0 12px;font:700 15px/1 var(--cs-font-display);
+  letter-spacing:.055em;white-space:nowrap;
+}
+.cs-club-management .ng-workspace-tabs__tab.is-active {
+  background:transparent;color:var(--cm-lime);border-bottom-color:var(--cm-lime);
+}
+.cs-club-management .ng-workspace-tabs__tab:hover {
+  background:transparent;color:var(--cm-text);
+}
+.cs-club-management .ng-application-workspace__body-slot {
+  min-height:0;height:100%;background:var(--cm-bg);
+}
+.cs-club-management .ng-canon__scroll {
+  height:100%;min-height:0;overflow:auto;
+  padding:10px 16px 17px;scrollbar-color:var(--cm-line2) transparent;
+}
+.cs-club-management .ng-canon__overview {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;align-items:stretch;
+}
+.cs-club-management .ng-canon__split {
+  display:grid;grid-template-columns:minmax(0,1.65fr) minmax(240px,1fr);
+  gap:9px;margin-top:9px!important;
+}
+.cs-club-management .ng-canon__card,
+.cs-club-management .ng-canon__panel,
+.cs-club-management .ng-canon__inspector,
+.cs-club-management .finance-workspace__table-panel {
+  min-width:0;padding:12px 14px;border:1px solid var(--cm-line2);
+  border-radius:12px;box-shadow:none;background:var(--cm-panel);
+  color:var(--cm-text);overflow:visible;
+}
+.cs-club-management .ng-canon__card {gap:7px}
+.cs-club-management .ng-canon__eyebrow {
+  font:700 15px/1.1 var(--cs-font-display);letter-spacing:.07em;
+  color:var(--cm-muted);margin:0 0 7px;text-transform:uppercase;
+}
+.cs-club-management .ng-canon__title {
+  font:700 27px/1 var(--cs-font-display);
+  letter-spacing:.02em;color:var(--cm-text);margin:0 0 7px;
+}
+.cs-club-management .ng-canon__overview > :first-child .ng-canon__title {
+  font-size:35px;color:var(--cm-lime);
+}
+.cs-club-management .ng-canon__note,
+.cs-club-management .ng-canon__empty {
+  font:400 12px/1.4 var(--cs-font);color:var(--cm-muted);
+  padding:7px 0;margin:0;
+}
+.cs-club-management .ng-canon__metrics {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:1px 13px;margin:0;
+}
+.cs-club-management .ng-canon__metric {
+  display:flex;min-width:0;min-height:28px;padding:6px 0;
+  border-bottom:1px solid var(--cm-line);gap:8px;
+}
+.cs-club-management .ng-canon__metric dt {
+  color:var(--cm-muted);font:500 11px/1.25 var(--cs-font);
+}
+.cs-club-management .ng-canon__metric dd {
+  color:var(--cm-text);font:700 13px/1.2 var(--cs-font-display);
+  overflow-wrap:anywhere;text-align:right;
+}
+.cs-club-management .ng-canon__list {
+  display:grid;gap:5px;padding:0;margin:0;list-style:none;
+}
+.cs-club-management .ng-canon__list li {
+  color:var(--cm-text);padding:7px 10px;background:var(--cm-s2);
+  border:1px solid var(--cm-line);border-radius:7px;
+  font:400 12px/1.4 var(--cs-font);overflow-wrap:anywhere;
+}
+.cs-club-management .ng-canon__list li[data-selected='true'],
+.cs-club-management [data-ng-region='board-governance-decision'][data-selected='true'] {
+  border-color:var(--cm-orange);background:var(--cm-s3);
+}
+.cs-club-management .ng-canon__actions {gap:6px;margin-top:5px}
+.cs-club-management .ng-canon__action {
+  padding:6px 10px;min-height:30px;border:1px solid var(--cm-line2);
+  border-radius:7px;background:var(--cm-s2);color:var(--cm-text);
+  font:700 12px/1.15 var(--cs-font-display);letter-spacing:.045em;
+}
+.cs-club-management .ng-canon__action:hover:not(:disabled) {
+  border-color:var(--cm-orange);color:var(--cm-orange);background:var(--cm-s3);
+}
+.cs-club-management .ng-canon__action:disabled {opacity:.42;cursor:not-allowed}
+.cs-club-management .ng-canon__badge {
+  border-color:var(--cm-negative);background:var(--cm-s2);
+  color:var(--cm-negative);font:600 12px var(--cs-font);padding:9px 11px;border-radius:8px;
+}
+.cs-club-management .ng-canon__scroll > [data-ng-region$='-notice'].ng-canon__note {
+  border:1px solid var(--cm-positive);border-radius:8px;padding:10px;
+  color:var(--cm-positive);background:var(--cm-s2);margin-bottom:9px;
+}
+.cs-club-management .ng-canon__toolbar {
+  gap:9px;align-items:center;margin:8px 0;
+}
+.cs-club-management .ng-canon__toolbar input,
+.cs-club-management .ng-canon__toolbar select,
+.cs-club-management .finance-workspace__controls input,
+.cs-club-management .finance-workspace__controls select,
+.cs-club-management .cs-finance-jump select {
+  background:var(--cm-s2);color:var(--cm-text);
+  border:1px solid var(--cm-line2);border-radius:8px;
+  min-height:32px;padding:5px 9px;
+  font:500 12px var(--cs-font);
+}
+.cs-club-management select option {background:var(--cm-panel);color:var(--cm-text)}
+/* Precision DataGrid, with dark and light text that follows Courtside tokens. */
+.bdm-os-ng .cs-club-management .bdm-data-grid,
+.bdm-os-ng .cs-club-management .bdm-data-table.bdm-data-grid {
+  --grid-bg-frame:var(--cm-panel);--grid-bg-header:var(--cm-s2);
+  --grid-row-bg:var(--cm-panel);--grid-row-hover:var(--cm-s3);
+  --grid-text:var(--cm-text);--grid-text-strong:var(--cm-text);
+  --grid-text-header:var(--cm-muted);--grid-text-muted:var(--cm-faint);
+  --grid-border:var(--cm-line2);--grid-border-cell:var(--cm-line);
+  --grid-cyan:var(--cm-lime);--grid-amber:var(--cm-orange);
+  color:var(--cm-text);
+}
+.cs-club-management .ng-canon__table {color:var(--cm-text)}
+.cs-club-management .ng-canon__table button {color:var(--cm-text)}
+.cs-club-management .ng-canon__table button:hover {color:var(--cm-orange)}
+/* Governance: decision queue and request tray side by side, bounded modular scroll. */
+.cs-club-board [data-ng-region='board-governance-queue'],
+.cs-club-board [data-ng-region='board-governance-requests'] {
+  display:flex;flex-direction:column;gap:8px;
+}
+.cs-club-board .cs-board__governance-layout {
+  display:grid;grid-template-columns:minmax(0,1.6fr) minmax(265px,1fr);
+  gap:9px;align-items:start;
+}
+.cs-club-board [data-ng-region='board-governance-decision'] {
+  border:1px solid var(--cm-line);background:var(--cm-s2);
+  border-radius:9px;padding:11px;margin:0;
+}
+.cs-club-board [data-ng-region='board-governance-decision'] .ng-canon__title {
+  font-size:19px;margin:0;
+}
+.cs-club-board .cs-board__governance-layout > .ng-canon__panel {
+  max-height:min(650px,calc(100vh - 245px));overflow:auto;
+}
+.cs-club-board [data-ng-region='board-governance-history'] {min-width:0}
+.cs-club-board [data-ng-region='board-governance-attention'] .ng-canon__metric dd {
+  color:var(--cm-lime);
+}
+/* Facilities overview: actionable KPIs first, details fold away. */
+.cs-club-facilities .cs-facilities__summary {
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  gap:9px;align-items:start;
+}
+.cs-club-facilities .cs-facilities__summary .ng-canon__panel {
+  height:100%;
+}
+.cs-club-facilities .cs-facilities__primary {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+.cs-club-facilities .cs-facilities__primary .ng-canon__metric {
+  display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:4px;padding:11px;
+  border:1px solid var(--cm-line2);border-radius:9px;background:var(--cm-s2);
+  min-height:76px;
+}
+.cs-club-facilities .cs-facilities__primary .ng-canon__metric dd {
+  order:0;text-align:left;color:var(--cm-lime);
+  font:700 30px/1 var(--cs-font-display);
+}
+.cs-club-facilities .cs-facilities__extra {
+  margin-top:10px;border-top:1px solid var(--cm-line);padding-top:7px;
+}
+.cs-club-facilities .cs-facilities__extra summary {
+  font:700 12px var(--cs-font-display);color:var(--cm-orange);
+  cursor:pointer;list-style:revert;padding:4px 0;
+}
+.cs-club-facilities .cs-facilities__extra .ng-canon__metrics {
+  margin-top:8px;
+}
+.cs-club-facilities [data-ng-region='facilities-projects'] {
+  display:flex;flex-direction:column;gap:9px;
+}
+.cs-club-facilities [data-ng-region='facilities-project-row'] {
+  border:1px solid var(--cm-line2);background:var(--cm-s2);
+  border-radius:9px;padding:12px;
+}
+.cs-club-facilities [data-ng-region='facilities-inspector'] {
+  margin-top:9px;
+}
+/* Finances: visible tabs remain available; jump control avoids horizontal scrolling. */
+.cs-club-finances .cs-finance-jump {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;padding:8px 13px;background:var(--cm-panel);
+  border:1px solid var(--cm-line2);border-radius:11px;margin-bottom:8px;
+}
+.cs-club-finances .cs-finance-jump label {
+  display:flex;align-items:center;gap:9px;
+  font:700 13px var(--cs-font-display);color:var(--cm-text);
+}
+.cs-club-finances .cs-finance-jump select {min-width:180px}
+.cs-club-finances .cs-finance-jump small {
+  color:var(--cm-muted);font:400 11px var(--cs-font);text-align:right;
+}
+.cs-club-finances .finance-workspace__controls {
+  display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;
+  padding:8px 11px;margin-bottom:8px;background:var(--cm-panel);
+  border:1px solid var(--cm-line2);border-radius:10px;
+}
+.cs-club-finances .finance-workspace__controls label {
+  color:var(--cm-muted);font:600 11px var(--cs-font);
+}
+.cs-club-finances .finance-workspace__section {
+  display:flex;flex-direction:column;gap:8px;padding:0;margin:0;
+}
+.cs-club-finances .finance-workspace__section h2 {
+  margin:1px 0 2px;font:700 22px/1 var(--cs-font-display);
+  color:var(--cm-text);letter-spacing:.035em;
+}
+.cs-club-finances .finance-workspace__section h3 {
+  margin:0 0 8px;font:700 18px var(--cs-font-display);color:var(--cm-text);
+}
+.cs-club-finances .finance-workspace__metrics {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.cs-club-finances .finance-workspace__metric {
+  padding:12px;border-radius:10px;min-width:0;min-height:83px;
+  background:var(--cm-panel);border:1px solid var(--cm-line2);
+}
+.cs-club-finances .finance-workspace__metric dt {
+  font:700 11px/1.2 var(--cs-font-display);
+  letter-spacing:.045em;color:var(--cm-muted);
+}
+.cs-club-finances .finance-workspace__metric dd {
+  margin:7px 0 0;font:700 26px/1.05 var(--cs-font-display);
+  color:var(--cm-lime);overflow-wrap:anywhere;
+}
+.cs-club-finances .finance-workspace__metric small {
+  font:400 11px var(--cs-font);color:var(--cm-muted);
+}
+.cs-club-finances .finance-workspace__table-panel {margin:0}
+.cs-club-finances .finance-workspace__table-scroll {overflow:auto;max-width:100%}
+.cs-club-finances .finance-workspace__table-panel table {
+  border-collapse:collapse;min-width:600px;width:100%;
+  font:400 12px/1.3 var(--cs-font);color:var(--cm-text);
+}
+.cs-club-finances .finance-workspace__table-panel th,
+.cs-club-finances .finance-workspace__table-panel td {
+  padding:7px 10px;border-bottom:1px solid var(--cm-line);
+  background:transparent;color:var(--cm-text);vertical-align:middle;
+}
+.cs-club-finances .finance-workspace__table-panel th {
+  position:sticky;top:0;z-index:1;background:var(--cm-s2);
+  color:var(--cm-muted);font:700 12px var(--cs-font-display);
+  letter-spacing:.045em;
+}
+.cs-club-finances .finance-workspace__table-panel tbody tr:hover {
+  background:var(--cm-s2);
+}
+.cs-club-finances .finance-workspace__note,
+.cs-club-finances .finance-workspace__empty {
+  font:400 12px/1.4 var(--cs-font);color:var(--cm-muted);
+}
+.cs-club-finances .finance-workspace__input-error {
+  border:1px solid var(--cm-negative);border-radius:7px;
+  padding:8px;margin:0 0 8px;color:var(--cm-negative);
+}
+.cs-club-finances .finance-workspace__table-panel details {
+  max-width:300px;white-space:normal;overflow-wrap:anywhere;
+}
+.cs-club-finances .finance-workspace__table-panel summary {
+  cursor:pointer;color:var(--cm-orange);
+}
+@media(max-width:1200px) {
+  .cs-club-management .ng-canon__overview {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cs-club-finances .finance-workspace__metrics {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:900px) {
+  .cs-club-management .ng-canon__split,
+  .cs-club-board .cs-board__governance-layout,
+  .cs-club-facilities .cs-facilities__summary {grid-template-columns:1fr}
+  .cs-club-board .cs-board__governance-layout > .ng-canon__panel {max-height:none;overflow:visible}
+  .cs-club-finances .finance-workspace__metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px) {
+  .cs-club-management .ng-canon__scroll {padding:8px}
+  .cs-club-management .ng-canon__overview {grid-template-columns:1fr}
+  .cs-club-management .ng-canon__metrics {grid-template-columns:1fr}
+  .cs-club-management .ng-canon-header__meta {display:none}
+  .cs-club-management .ng-workspace-tabs__tab {padding:0 9px}
+  .cs-club-finances .cs-finance-jump {align-items:stretch;flex-direction:column}
+  .cs-club-finances .cs-finance-jump small {text-align:left}
+}
+
+
+/* Compliance completes the Club institutional destinations. */
+.cs-club-enforcement .cs-enforcement__summary {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin-bottom:9px;
+}
+.cs-club-enforcement .cs-enforcement__stat {
+  display:flex;flex-direction:column;gap:6px;
+  border:1px solid var(--cm-line2);background:var(--cm-panel);
+  border-radius:11px;padding:11px 14px;min-height:75px;
+}
+.cs-club-enforcement .cs-enforcement__stat span {
+  color:var(--cm-muted);font:700 11px var(--cs-font-display);letter-spacing:.06em;
+}
+.cs-club-enforcement .cs-enforcement__stat strong {
+  color:var(--cm-lime);font:700 30px/1 var(--cs-font-display);
+}
+.cs-club-enforcement .cs-enforcement__stat:last-child strong {
+  color:var(--cm-orange);
+}
+@media(max-width:670px) {
+  .cs-club-enforcement .cs-enforcement__summary {grid-template-columns:1fr}
+}

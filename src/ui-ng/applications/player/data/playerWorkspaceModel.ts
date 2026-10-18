@@ -227,6 +227,9 @@ export interface RatingEvolutionModel {
   readonly accumulatedStimulus: number | null
   readonly league: AttributeLeagueBaselineModel
   readonly team: AttributeTeamBaselineModel
+  /** Same primary position across active rosters in the entire BDM world, not normalized for competition level. */
+  readonly worldPosition: AttributeLeagueBaselineModel
+  /** League-only same-position mean remains in standing.positionAverage. */
   readonly standing: AttributeStandingModel
   readonly trainings: readonly AttributeTrainingOptionModel[]
   /** Per-player, not per-rating: the same value is shared by every attribute of the player. */

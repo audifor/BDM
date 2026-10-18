@@ -184,6 +184,8 @@ export interface PlayerBioInput {
 export interface BasketballProfile {
   readonly primaryPosition: BasketballPosition
   readonly secondaryPositions?: readonly BasketballPosition[]
+  /** Unmodified source familiarity; never proof of positional role suitability. */
+  readonly positionFamiliarity?: Readonly<Partial<Record<BasketballPosition, number | null>>>
   readonly ratings: PlayerRatings
   readonly tendencies: PlayerTendencies
   readonly traitIds: readonly string[]
@@ -199,6 +201,7 @@ export interface CreatePlayerInput {
   basketball: {
     readonly primaryPosition: BasketballPosition
     readonly secondaryPositions?: readonly BasketballPosition[]
+    readonly positionFamiliarity?: Readonly<Partial<Record<BasketballPosition, number | null>>>
     readonly ratings:
       | PlayerRatings
       | PlayerTruthRatings
@@ -248,6 +251,15 @@ export function createPlayer(input: CreatePlayerInput): Player {
       ...(input.basketball.secondaryPositions === undefined
         ? {}
         : { secondaryPositions: [...input.basketball.secondaryPositions].map(requireBasketballPosition) }),
+      ...(input.basketball.positionFamiliarity === undefined ? {} : {
+        positionFamiliarity: Object.fromEntries(Object.entries(input.basketball.positionFamiliarity).map(([position, value]) => {
+          requireBasketballPosition(position)
+          if (value !== null && (typeof value !== 'number' || !Number.isFinite(value))) {
+            throw new RangeError('Player position familiarity must be a finite source number or null')
+          }
+          return [position, value]
+        })),
+      }),
       ratings,
       tendencies,
       traitIds: [...(input.basketball.traitIds ?? [])],

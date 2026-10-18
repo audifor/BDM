@@ -1,15 +1,16 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import { getPlayerContractStatus } from '@/domain/contract'
 import { getCashAccountBalances, getFinancialHealthSnapshot } from '@/domain/finance'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getTeamRoster } from '@/domain/world'
+import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary'
 import { formatMoney } from '@/ui/formatters'
 import { EntityLink } from '@/ui/navigation/EntityLink'
 import {
-  standingsClassificationPoints,
+  standingsPct,
   type CompetitionWorkspaceModel,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
 import {
@@ -19,11 +20,19 @@ import {
 import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
 import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import {
-  HOME_DASHBOARD_MODULE_IDS,
   homeDashboardModuleLabel,
   type HomeDashboardModuleId,
 } from '@/ui-ng/applications/home/homeDashboardModules'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
+import { homeStandingStreaks } from './homeStandingsMetrics'
+import { HOME_SELECTABLE_IDS, type HomeSelectableModuleId } from './homeLayoutSettings'
+import { HomeRecentResults, HomeMedicalReport, HomeTrainingAgenda } from './HomeExtraModules'
+import { navigateToCompetitionInNg } from '@/ui-ng/workspace/workspaceApps'
+import {
+  HOME_LEADER_CATEGORIES,
+  rankHomeLeaders,
+  type HomeLeaderCategory,
+} from '@/ui-ng/applications/home/homeLeaderCategories'
 import { NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
@@ -42,6 +51,7 @@ export interface HomeModuleUpcomingRow {
   readonly date: string
   readonly opponentTeamId: TeamId
   readonly opponentName: string
+  readonly competitionName: string | null
   readonly venue: 'Casa' | 'Fuera'
   readonly status: string
 }
@@ -59,10 +69,14 @@ export function HomeDashboardSlot({
   moduleId,
   context,
   onSelectModule,
+  className,
+  slotIndex,
 }: {
-  readonly moduleId: HomeDashboardModuleId
+  readonly moduleId: HomeSelectableModuleId | 'standings'
   readonly context: HomeDashboardSlotContext
-  readonly onSelectModule: (id: HomeDashboardModuleId) => void
+  readonly onSelectModule?: (id: HomeSelectableModuleId) => void
+  readonly className?: string
+  readonly slotIndex?: number
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLElement | null>(null)
@@ -87,30 +101,26 @@ export function HomeDashboardSlot({
   }, [open])
 
   return (
-    <section className="home-slot ng-holo-panel" ref={rootRef}>
+    <section className={`home-slot ng-holo-panel home-slot--${moduleId}${className?' '+className:''}${open?' is-choosing-module':''}`} data-home-slot-index={slotIndex} ref={rootRef}>
       <header className="home-slot__header">
-        <button
-          aria-controls={menuId}
-          aria-expanded={open}
-          aria-haspopup="menu"
-          className="home-slot__trigger"
-          onClick={() => setOpen((value) => !value)}
-          type="button"
-        >
-          <span className="home-slot__title">{homeDashboardModuleLabel(moduleId)}</span>
-          <span aria-hidden className="home-slot__chevron">
-            ▾
-          </span>
-        </button>
+        {moduleId === 'standings' ? (
+          <span className="home-slot__title">Clasificación de la liga</span>
+        ) : (
+          <button aria-controls={menuId} aria-expanded={open} aria-haspopup="menu"
+            className="home-slot__trigger" onClick={() => setOpen(value=>!value)} type="button">
+            <span className="home-slot__title">{moduleId==='fixture'?'Próximo partido':homeDashboardModuleLabel(moduleId)}</span>
+            <span aria-hidden className="home-slot__chevron">▾</span>
+          </button>
+        )}
         {open ? (
           <ul className="home-slot__menu ng-holo-float" id={menuId} role="menu">
-            {HOME_DASHBOARD_MODULE_IDS.map((id) => (
+            {HOME_SELECTABLE_IDS.map((id) => (
               <li key={id} role="none">
                 <button
                   aria-checked={id === moduleId}
                   className={id === moduleId ? 'is-active' : undefined}
                   onClick={() => {
-                    onSelectModule(id)
+                    onSelectModule?.(id)
                     setOpen(false)
                   }}
                   role="menuitemradio"
@@ -119,7 +129,7 @@ export function HomeDashboardSlot({
                   <span aria-hidden className="home-slot__check">
                     {id === moduleId ? '✓' : ''}
                   </span>
-                  {homeDashboardModuleLabel(id)}
+                  {id==='fixture'?'Próximo partido':homeDashboardModuleLabel(id)}
                 </button>
               </li>
             ))}
@@ -137,10 +147,12 @@ function HomeModuleBody({
   moduleId,
   context,
 }: {
-  readonly moduleId: HomeDashboardModuleId
+  readonly moduleId: HomeSelectableModuleId | 'standings'
   readonly context: HomeDashboardSlotContext
 }) {
   switch (moduleId) {
+    case 'fixture':
+      return <FixtureSummaryModule context={context} />
     case 'standings':
       return <StandingsModule context={context} />
     case 'leaders':
@@ -157,7 +169,26 @@ function HomeModuleBody({
       return <InboxModule context={context} />
     case 'news':
       return <NewsModule context={context} />
+    case 'results':
+      return <HomeRecentResults context={context} />
+    case 'injuries':
+      return <HomeMedicalReport context={context} />
+    case 'training-agenda':
+      return <HomeTrainingAgenda context={context} />
   }
+}
+
+function FixtureSummaryModule({context}:{readonly context:HomeDashboardSlotContext}) {
+  const {openEntity}=useNgWorkspaceNavigation()
+  const team=getUserTeam(context.world)
+  const game=getNextUserGame(context.world)
+  if(team===undefined||game===undefined)return <p className="ng-canon__empty">Sin próximo partido programado.</p>
+  const opponentId=game.homeTeamId===team.id?game.awayTeamId:game.homeTeamId
+  return <div className="home-fixture-summary">
+    <strong>{team.name} <span>VS</span> {context.world.teams[opponentId]?.name??'Rival'}</strong>
+    <p>{formatGameDateLabel(game.date)} · {context.competition?.competitionName??'Liga'}</p>
+    <button type="button" className="ng-canon__action" onClick={()=>openEntity({type:'team',teamId:opponentId,section:'overview'})}>Ver rival</button>
+  </div>
 }
 
 function HomeTeamLink({
@@ -205,19 +236,29 @@ function HomePlayerLink({
 function StandingsModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   const competition = context.competition
   const standings = competition?.standings ?? []
+  const streaks = useMemo(() => homeStandingStreaks(context.world, competition?.seasonId ?? context.world.currentSeasonId), [context.world, competition?.seasonId])
   if (standings.length === 0 || competition == null) {
     return <p className="ng-canon__empty">Sin clasificación disponible.</p>
   }
   return (
-    <div className="home-standings competition-standings">
+    <div className="home-standings competition-standings" style={{ '--home-standings-rows': standings.length } as CSSProperties}>
+      <div className="home-standings__digest">
+        <span>{competition.competitionName} · {standings.length} equipos</span>
+        <button className="home-standings__full" type="button" onClick={() => navigateToCompetitionInNg({type:'competition',competitionId:competition.competitionId,section:'standings'},'push','standings')}>
+          Ver en Competición ↗
+        </button>
+      </div>
       <div className="home-slot-table__head">
         <span>Pos</span>
         <span>Equipo</span>
         <span title="Partidos jugados">PJ</span>
         <span title="Ganados">G</span>
         <span title="Perdidos">P</span>
-        <span title="Diferencia de anotación">Dif</span>
-        <span title="Puntos de clasificación">Pts</span>
+        <span title="Porcentaje de victorias">%</span>
+        <span title="Puntos a favor">PF</span>
+        <span title="Puntos en contra">PC</span>
+        <span title="Diferencia de puntos">DIF</span>
+        <span title="Racha de victorias o derrotas">RAC</span>
       </div>
       <ol className="home-slot-table">
         {standings.map((row) => {
@@ -235,8 +276,11 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
               <span className="is-num">{row.played}</span>
               <span className="is-num">{row.wins}</span>
               <span className="is-num">{row.losses}</span>
+              <span className="is-num is-pct">{standingsPct(row)}</span>
+              <span className="is-num">{row.pointsFor}</span>
+              <span className="is-num">{row.pointsAgainst}</span>
               <span className="is-num">{row.pointDifference > 0 ? `+${row.pointDifference}` : row.pointDifference}</span>
-              <span className="is-num is-pts">{standingsClassificationPoints(row)}</span>
+              <span className="is-num is-streak">{streaks.get(row.teamId) ?? '—'}</span>
             </li>
           )
         })}
@@ -247,39 +291,62 @@ function StandingsModule({ context }: { readonly context: HomeDashboardSlotConte
 }
 
 function LeadersModule({ context }: { readonly context: HomeDashboardSlotContext }) {
-  const leaders = context.competition?.leaders.slice(0, 6) ?? []
-  const roster = context.teamId === undefined ? [] : getTeamRoster(context.world, context.teamId).slice(0, 6)
-  if (leaders.length === 0 && roster.length === 0) {
-    return <p className="ng-canon__empty">Sin líderes estadísticos todavía.</p>
-  }
+  const [category, setCategory] = useState<HomeLeaderCategory>('points')
+  const stat = HOME_LEADER_CATEGORIES.find((entry) => entry.id === category)!
+  const hasOfficialStats = (context.competition?.leaders.length ?? 0) > 0
+  const leaders = rankHomeLeaders(context.competition?.leaders ?? [], category).slice(0, 4)
+  // Do not present the unsorted preseason roster as a statistical ranking.
+  const roster = !hasOfficialStats && context.teamId !== undefined
+    ? getTeamRoster(context.world, context.teamId).slice(0, 4)
+    : []
+
   return (
-    <ul className="home-slot-list">
-      {leaders.length > 0
-        ? leaders.map((leader, index) => (
-            <li key={leader.playerId}>
-              <span aria-hidden className="home-slot-list__badge">
-                {index + 1}
-              </span>
-              <div>
-                <HomePlayerLink name={leader.playerName} playerId={leader.playerId} />
-                <div className="ng-canon__note">
-                  {leader.ppg.toFixed(1)} PPG · {leader.apg.toFixed(1)} AST · {leader.rpg.toFixed(1)} REB
-                </div>
-              </div>
-            </li>
-          ))
-        : roster.map((player, index) => (
-            <li key={player.id}>
-              <span aria-hidden className="home-slot-list__badge">
-                {index + 1}
-              </span>
-              <div>
-                <HomePlayerLink name={`${player.firstName} ${player.lastName}`} playerId={player.id} />
-                <div className="ng-canon__note">{player.basketball.primaryPosition} · Plantilla</div>
-              </div>
-            </li>
+    <div className="home-leaders">
+      <div className="home-leaders__toolbar">
+        <span className="home-leaders__scope">
+          {hasOfficialStats ? 'Liga · media por partido' : 'Plantilla · sin datos oficiales'}
+        </span>
+        <select
+          aria-label="Categoría estadística"
+          className="home-leaders__category"
+          onChange={(event) => setCategory(event.target.value as HomeLeaderCategory)}
+          value={category}
+        >
+          {HOME_LEADER_CATEGORIES.map((entry) => (
+            <option key={entry.id} value={entry.id}>{entry.label}</option>
           ))}
-    </ul>
+        </select>
+      </div>
+      {!hasOfficialStats && roster.length === 0 ? (
+        <p className="ng-canon__empty">Sin líderes estadísticos todavía.</p>
+      ) : (
+        <ol className="home-slot-list home-leaders__list" aria-label={hasOfficialStats ? `Líderes de ${stat.label.toLowerCase()}` : 'Jugadores pendientes de estadísticas'}>
+          {hasOfficialStats
+            ? leaders.map((leader, index) => (
+                <li className="home-leaders__row" key={leader.playerId}>
+                  <span aria-hidden="true" className="home-slot-list__badge">{index + 1}</span>
+                  <div className="home-leaders__identity">
+                    <HomePlayerLink name={leader.playerName} playerId={leader.playerId} />
+                    <span className="home-leaders__team">{leader.teamName}</span>
+                  </div>
+                  <strong className="home-leaders__value">
+                    {leader[stat.key].toFixed(1)} <small>{stat.abbrev}</small>
+                  </strong>
+                </li>
+              ))
+            : roster.map((player) => (
+                <li className="home-leaders__row is-unranked" key={player.id}>
+                  <span aria-hidden="true" className="home-slot-list__badge">–</span>
+                  <div className="home-leaders__identity">
+                    <HomePlayerLink name={`${player.firstName} ${player.lastName}`} playerId={player.id} />
+                    <span className="home-leaders__team">{player.basketball.primaryPosition} · Plantilla</span>
+                  </div>
+                  <span className="home-leaders__no-value" aria-label="Sin dato estadístico">—</span>
+                </li>
+              ))}
+        </ol>
+      )}
+    </div>
   )
 }
 
@@ -390,19 +457,22 @@ function DynamicsModule({ context }: { readonly context: HomeDashboardSlotContex
 function UpcomingModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   if (context.upcoming.length === 0) return <p className="ng-canon__empty">Sin partidos programados.</p>
   return (
-    <ul className="home-upcoming">
-      {context.upcoming.map((game) => (
-        <li key={game.id}>
-          <div className="home-upcoming__main">
-            <HomeTeamLink name={game.opponentName} teamId={game.opponentTeamId} />
-            <span>{game.venue}</span>
-          </div>
-          <div className="home-upcoming__meta">
-            {formatGameDateLabel(game.date)} · {game.status}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="home-upcoming__module-content">
+      <p className="home-upcoming__summary">{context.upcoming.length} partidos pendientes · temporada actual</p>
+      <ul className="home-upcoming" aria-label="Todos los próximos partidos de la temporada" tabIndex={0}>
+        {context.upcoming.map((game) => (
+          <li className="home-upcoming__row" key={game.id}
+            title={`${game.opponentName} · ${game.competitionName ?? 'Competición no disponible'} · ${formatGameDateLabel(game.date)} · ${game.venue}`}>
+            <HomeTeamLink className="home-upcoming__opponent" name={game.opponentName} teamId={game.opponentTeamId} />
+            <span className="home-upcoming__competition" title={game.competitionName ?? 'Competición no disponible'}>
+              {game.competitionName ?? '—'}
+            </span>
+            <time className="home-upcoming__date" dateTime={game.date}>{formatGameDateLabel(game.date)}</time>
+            <span className="home-upcoming__venue">{game.venue}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

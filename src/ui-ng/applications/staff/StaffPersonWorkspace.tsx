@@ -25,6 +25,9 @@ import { navigateToStaffDepartment, syncStaffViewQuery } from '@/ui-ng/workspace
 import '@/ui-ng/applications/player/player-overview.css'
 import '@/ui-ng/applications/player/player-attributes.css'
 import './staff-person.css'
+import './courtside-staff.css'
+import './courtside-staff-v2.css'
+import './courtside-staff-v3.css'
 
 export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPersonId }) {
   const world = useGameStore((state) => state.world)
@@ -77,7 +80,7 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
 
   if (model === null) {
     return (
-      <div className="staff-person staff-person--empty" data-ng-region="staff-person">
+      <div className="staff-person staff-person--empty courtside-staff-screen" data-ng-region="staff-person">
         <section className="staff-person__empty-state">
           <h1 className="staff-person__empty-title">Staff</h1>
           <p className="staff-person__empty-message">Staff person not found.</p>
@@ -87,7 +90,7 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
   }
 
   return (
-    <div className="staff-person po-root" data-ng-region="staff-person" style={teamStyle}>
+    <div className="staff-person po-root courtside-staff-screen" data-ng-region="staff-person" style={teamStyle}>
       <ApplicationWorkspace
         identityBand={<StaffPersonIdentityBand model={model} />}
         tabs={

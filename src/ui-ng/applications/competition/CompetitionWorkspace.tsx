@@ -140,7 +140,8 @@ function CalendarEventCard({ event }: { readonly event: CalendarEvent }) {
 
 export function CompetitionWorkspace() {
   const world = useGameStore((state) => state.world)
-  const [tab, setTab] = useState<CompetitionTabId>('calendar')
+  const [tab, setTab] = useState<CompetitionTabId>(() =>
+    new URLSearchParams(window.location.search).get('competitionTab') === 'standings' ? 'standings' : 'calendar')
   const { competitionId } = useNgWorkspaceNavigation()
   const [preferredCompetitionId, setPreferredCompetitionId] = useState<CompetitionId | undefined>(
     competitionId ?? undefined,

@@ -61,6 +61,14 @@
 - Solo protagonista bajo control humano, IA autónoma con objetivos y vidas tan profundas como los demás entrenadores; el mundo continúa fuera de cámara (81–84).
 - Calendario personal deportivo y extradeportivo; restricciones de tiempo y delegación (85–87).
 - **P88 = B, DECIDIDO: Coach con subsección «Vida».** Coach conserva identidad/carrera/desarrollo, y la subsección Vida reúne contexto personal, agenda y puntos de acceso a relaciones, hogar y patrimonio. Home, Inbox y calendario son puertas contextuales, no duplicados de los sistemas canónicos. Mantener Courtside 1:1 y navegación NG.
+
+### Addendum de decisión del propietario · 2026-10-19
+
+Decisión explícita del propietario: todo el trabajo ya realizado en Courtside pasa a
+ser la versión canónica de esas aplicaciones. Las superficies restantes siguen en
+NG hasta que reciban trabajo Courtside. Esta decisión sustituye la última frase de
+P88 sobre mantener Courtside sin cambios; no altera las autoridades de simulación,
+datos, persistencia ni navegación compartida.
 - Mostrar **percepción legible**, no números de personalidad/relaciones (89). Esto no elimina las puntuaciones internas de PERSON50.
 - Envejecer cambia oportunidades, capacidades, prioridades y circunstancias (91).
 

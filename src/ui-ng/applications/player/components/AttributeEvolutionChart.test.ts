@@ -65,6 +65,13 @@ function evolutionWith(overrides: Partial<RatingEvolutionModel> = {}): RatingEvo
       scopeLabel: 'Virelia Falcons',
       note: 'Average of this rating across the player\'s teammates; the inspected player is excluded.',
     },
+    worldPosition: {
+      status: 'available',
+      average: 66.8,
+      sampleSize: 240,
+      scopeLabel: 'World same-position sample',
+      note: 'Average of this rating across active rostered players at the same primary position.',
+    },
     standing: {
       status: 'available',
       percentile: 82,

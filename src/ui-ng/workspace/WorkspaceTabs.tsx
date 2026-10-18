@@ -4,6 +4,7 @@ import type { Ref, ReactNode } from 'react'
 import './workspace.css'
 
 export interface WorkspaceTabsProps {
+  readonly ariaLabel?: string
   readonly tabs: readonly WorkspaceTab[]
   readonly activeTabId?: string
   readonly onTabSelect?: (tabId: string) => void
@@ -19,6 +20,7 @@ export interface WorkspaceTabsProps {
 }
 
 export function WorkspaceTabs({
+  ariaLabel = 'Workspace tabs',
   tabs,
   activeTabId,
   onTabSelect,
@@ -31,7 +33,7 @@ export function WorkspaceTabs({
   tabRef,
 }: WorkspaceTabsProps) {
   return (
-    <nav aria-label="Workspace tabs" className="ng-workspace-tabs" data-ng-region="workspace-tabs">
+    <nav aria-label={ariaLabel} className="ng-workspace-tabs" data-ng-region="workspace-tabs">
       <div className="ng-workspace-tabs__list">
         {tabs.map((tab) => {
           const isActive = activeTabId !== undefined ? tab.id === activeTabId : tab.active === true

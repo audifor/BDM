@@ -55,7 +55,6 @@ export const WORKSPACE_TASKBAR_APPS: readonly WorkspaceTaskbarApp[] = [
   { id: 'scouting', label: 'Scouting' },
   { id: 'tactics', label: 'Tactics' },
   { id: 'training', label: 'Training' },
-  { id: 'mentoring', label: 'Mentoring' },
   { id: 'medical', label: 'Medical' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'competition', label: 'Competition' },
@@ -194,8 +193,9 @@ export function syncWorkspaceAppQuery(
   if (app === 'home') {
     url.searchParams.delete('app')
   } else {
-    url.searchParams.set('app', app)
+    url.searchParams.set('app', app === 'scouting' ? 'market' : app)
   }
+  if (app === 'scouting') url.searchParams.set('marketTab', 'scouting')
   url.searchParams.delete('staffId')
   url.searchParams.delete('staffView')
   url.searchParams.delete('teamId')
@@ -212,6 +212,7 @@ export function syncWorkspaceAppQuery(
   if (context.requestId !== undefined && context.requestId !== '') {
     url.searchParams.set('requestId', context.requestId)
   }
+  if (app !== 'market' && app !== 'scouting') url.searchParams.delete('marketTab')
   if (app !== 'recruiting') url.searchParams.delete('focusPlayerId')
   applyHistory(url, method)
   notifyNgNavigation()
@@ -284,6 +285,20 @@ export function navigateToPlayerMedical(playerId: PlayerId) {
   notifyNgNavigation()
 }
 
+/** Navigate from a player dossier into the real medical department actions. */
+export function navigateToMedicalDecision(
+  playerId: PlayerId,
+  tab: 'overview' | 'injured' | 'risk' | 'history' = 'overview',
+) {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.set('app', 'medical')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.set('medicalTab', tab)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
 export function navigateToContracts(teamId?: TeamId, playerId?: PlayerId) {
   const url = new URL(window.location.href)
   clearEntityQuery(url)
@@ -311,6 +326,35 @@ export function syncStaffViewQuery(view: StaffPersonViewId) {
     url.searchParams.set('staffView', view)
   }
   window.history.replaceState(window.history.state, '', url)
+  notifyNgNavigation()
+}
+
+/** Open staff hiring directly with the chosen canonical department. */
+/** Deep-link into one Market tab, preserving the NG app shell and taskbar. */
+export function navigateToMarketTab(tab: 'centre' | 'explore' | 'targets' | 'planning' | 'free-agents' | 'scouting' | 'operations') {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.delete('staffDept')
+  url.searchParams.delete('staffTab')
+  url.searchParams.delete('staffMarketDept')
+  url.searchParams.set('app', 'market')
+  url.searchParams.set('marketTab', tab === 'centre' ? 'explore' : tab === 'planning' ? 'targets' : tab === 'free-agents' ? 'explore' : tab)
+  if (tab === 'free-agents') url.searchParams.set('marketContract', 'FREE')
+  else url.searchParams.delete('marketContract')
+  if (tab === 'planning') url.searchParams.set('marketTargetsView', 'planning')
+  else url.searchParams.delete('marketTargetsView')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+export function navigateToStaffMarket(department: StaffDepartment = 'scouting') {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.delete('staffDept')
+  url.searchParams.set('app', 'staff')
+  url.searchParams.set('staffTab', 'market')
+  url.searchParams.set('staffMarketDept', department)
+  applyHistory(url, 'push')
   notifyNgNavigation()
 }
 
@@ -348,9 +392,12 @@ export function navigateToTeamInNg(
 export function navigateToCompetitionInNg(
   destination: Extract<EntityDestination, { type: 'competition' }>,
   method: 'push' | 'replace' = 'push',
+  targetTab?: 'standings',
 ) {
   const url = new URL(window.location.href)
   url.searchParams.set('app', 'competition')
+  if (targetTab === 'standings') url.searchParams.set('competitionTab', 'standings')
+  else url.searchParams.delete('competitionTab')
   url.searchParams.set('competitionId', destination.competitionId)
   url.searchParams.delete('playerId')
   url.searchParams.delete('playerView')

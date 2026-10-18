@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BDM Courtside Preview",
+  "identifier": "com.bdm.courtside.preview",
+  "app": {
+    "windows": [
+      {
+        "title": "BDM Courtside Preview",
+        "width": 1600,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "maximized": true,
+        "dragDropEnabled": false
+      }
+    ]
+  }
+}

@@ -11,7 +11,9 @@ import { StaffAssignmentsScreen, type StaffAssignmentPanelRequest } from '@/ui-n
 import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
 import { StaffDepartmentWorkspace } from '@/ui-ng/applications/staff/StaffDepartmentWorkspace'
 import { StaffDynamicsBoard } from '@/ui-ng/applications/staff/StaffDynamicsBoard'
-import { StaffPeopleBoard } from '@/ui-ng/applications/staff/StaffPeopleBoard'
+import { StaffCourtsideOverview } from '@/ui-ng/applications/staff/StaffCourtsideOverview'
+import { StaffCourtsideIntelligence } from '@/ui-ng/applications/staff/StaffCourtsideIntelligence'
+import { StaffCourtsideMarket } from '@/ui-ng/applications/staff/StaffCourtsideMarket'
 import { StaffPersonWorkspace } from '@/ui-ng/applications/staff/StaffPersonWorkspace'
 import { buildStaffWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffWorkspaceModel'
 import {
@@ -28,6 +30,9 @@ import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 import { navigateToStaff, parseWorkspaceStaffId } from '@/ui-ng/workspace/workspaceApps'
 
 import './staff-workspace.css'
+import './courtside-staff.css'
+import './courtside-staff-v2.css'
+import './courtside-staff-v3.css'
 
 function StaffWorkspaceHeader({
   model,
@@ -45,11 +50,11 @@ function StaffWorkspaceHeader({
         <span className="staff-workspace-header__sep" aria-hidden />
         <span className="staff-workspace-header__team">{model.teamName}</span>
         <span className="staff-workspace-header__meta">
-          <span className="ng-type-numeric">{model.staffCount}</span> staff
+          <span className="ng-type-numeric">{model.staffCount}</span> STAFF
           {' · '}
-          <span className="ng-type-numeric">{model.openAdvisoryCount}</span> advisory
+          <span className="ng-type-numeric">{model.openAdvisoryCount}</span> CONSEJOS
           {' · '}
-          <span className="ng-type-numeric">{model.needsAttentionCount}</span> attention
+          <span className="ng-type-numeric">{model.needsAttentionCount}</span> ALERTAS
         </span>
       </div>
       {actions === undefined ? null : <div className="staff-workspace-header__actions">{actions}</div>}
@@ -108,8 +113,18 @@ function StaffBoardWorkspace() {
   const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
   const grantStaffCareerRequest = useGameStore((state) => state.grantStaffCareerRequest)
   const declineStaffCareerRequest = useGameStore((state) => state.declineStaffCareerRequest)
-  const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>('staff')
+  const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('staffTab') === 'market' ? 'market' : 'staff')
+  useEffect(() => {
+    const readTab = () => {
+      if (new URLSearchParams(window.location.search).get('staffTab') === 'market') setActiveTab('market')
+    }
+    window.addEventListener('bdm-ng-nav', readTab)
+    window.addEventListener('popstate', readTab)
+    return () => { window.removeEventListener('bdm-ng-nav', readTab); window.removeEventListener('popstate', readTab) }
+  }, [])
   const [assignmentPanel, setAssignmentPanel] = useState<StaffAssignmentPanelRequest | null>(null)
+  const replaceWorld = useGameStore((state)=>state.replaceWorld)
   const departmentHover = useStaffDepartmentTabHover(null)
 
   const model = useMemo(() => (world === null ? null : buildStaffWorkspaceModel(world)), [world])
@@ -157,7 +172,7 @@ function StaffBoardWorkspace() {
 
   if (world === null || model === null) {
     return (
-      <div className="staff-workspace staff-workspace--empty" data-ng-region="staff-workspace">
+      <div className="staff-workspace staff-workspace--empty courtside-staff-screen" data-ng-region="staff-workspace">
         <section className="staff-workspace__empty-state">
           <h1 className="staff-workspace__empty-title">Staff</h1>
           <p className="staff-workspace__empty-message">No team assigned to the user coach.</p>
@@ -167,7 +182,7 @@ function StaffBoardWorkspace() {
   }
 
   return (
-    <div className="staff-workspace" data-ng-region="staff-workspace" style={teamStyle}>
+    <div className="staff-workspace courtside-staff-screen" data-ng-region="staff-workspace" style={teamStyle}>
       <ApplicationWorkspace
         tabs={tabsNode}
         tabsHeader={
@@ -176,13 +191,13 @@ function StaffBoardWorkspace() {
               activeTab === 'assignments' ? (
                 <>
                   <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'autoAssign' })} type="button">
-                    AUTO-ASSIGN
+                    AUTO-ASIGNAR
                   </button>
                   <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'optimize' })} type="button">
-                    OPTIMIZE
+                    OPTIMIZAR
                   </button>
                   <button className="sa-action sa-action--primary" onClick={() => setAssignmentPanel({ kind: 'newAssignment' })} type="button">
-                    + NEW ASSIGNMENT
+                    + NUEVA ASIGNACIÓN
                   </button>
                 </>
               ) : undefined
@@ -202,11 +217,12 @@ function StaffBoardWorkspace() {
         ) : (
           <ScrollRegion className="staff-workspace__scroll">
             {activeTab === 'staff' ? (
-              <StaffPeopleBoard
-                staff={model.staff}
-                teamId={model.teamId}
-                world={world}
-              />
+              <StaffCourtsideOverview world={world} teamId={model.teamId}
+                onOpenAssignments={()=>setActiveTab('assignments')}
+                onOpenMarket={()=>setActiveTab('market')}
+                onOpenAdvisory={()=>setActiveTab('advisory')}
+                onOpenDynamics={()=>setActiveTab('dynamics')}/>
+
             ) : null}
             {activeTab === 'advisory' ? (
               <StaffAdvisoryBoard
@@ -225,6 +241,9 @@ function StaffBoardWorkspace() {
                 world={world}
               />
             ) : null}
+            {activeTab === 'market' ? <StaffCourtsideMarket world={world} teamId={model.teamId}
+              onWorldChange={replaceWorld}/> : null}
+            {activeTab === 'intelligence' ? <StaffCourtsideIntelligence world={world} teamId={model.teamId}/> : null}
           </ScrollRegion>
         )}
       </ApplicationWorkspace>

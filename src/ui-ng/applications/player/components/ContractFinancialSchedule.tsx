@@ -21,12 +21,42 @@ export function ContractFinancialSchedule({
     )
   }
 
+  const maxSalary = Math.max(1, ...rows.map((row) => row.baseSalary.amount))
+  const focusedRow = rows.find(row => row.id === selectedItemId) ?? rows.find(row => row.isCurrent) ?? rows[0]!
   return (
     <section className="pc-schedule" data-ng-region="contract-financial-schedule">
       <header className="pc-panel-head">
         <span className="pc-panel-head__title">Financial Schedule</span>
         <span className="pc-panel-head__meta">{rows.length} seasons</span>
       </header>
+      <div className="pc-schedule__trend" aria-label="Salary and guaranteed cash by season">
+        <span className="pc-schedule__trend-legend">BASE SALARY <i /> GUARANTEED</span>
+        <div className="pc-schedule__trend-bars">
+          {rows.map((row) => (
+            <button key={row.id} type="button"
+              aria-label={`${row.seasonLabel}: base ${row.baseSalary.formatted}, guaranteed ${row.guaranteed.formatted}`}
+              aria-pressed={selectedItemId === row.id}
+              onClick={() => onSelectRow(row.id)}>
+              <span className="pc-schedule__trend-track">
+                <span className="pc-schedule__trend-salary"
+                  style={{ height: `${row.baseSalary.amount / maxSalary * 100}%` }}>
+                  <span className="pc-schedule__trend-guaranteed"
+                    style={{ height: `${row.baseSalary.amount > 0 ? row.guaranteed.amount / row.baseSalary.amount * 100 : 0}%` }} />
+                </span>
+              </span>
+              <small>{row.seasonLabel}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="pc-schedule__selected" data-ng-region="contract-selected-season"
+        aria-live="polite">
+        <span className="pc-schedule__selected-title">{focusedRow.seasonLabel}</span>
+        <div><small>BASE</small><strong>{focusedRow.baseSalary.formatted}</strong></div>
+        <div><small>GUARANTEED</small><strong>{focusedRow.guaranteed.formatted}</strong></div>
+        <div><small>CAP HIT</small><strong>{focusedRow.capHit.formatted}</strong></div>
+        <div><small>STATUS</small><strong>{focusedRow.guaranteeState}</strong></div>
+      </div>
       <div className="pc-schedule__scroll">
         <NgPrecisionTable
           className="pc-schedule__table"

@@ -27,5 +27,5 @@ export function visibleTaskbarAppIds(openApps: readonly WorkspaceAppId[]): reado
 }
 
 export function taskbarAppLabel(id: WorkspaceAppId): string {
-  return WORKSPACE_TASKBAR_APPS.find((entry) => entry.id === id)?.label ?? id
+  return WORKSPACE_TASKBAR_APPS.find((entry) => entry.id === id)?.label ?? (id === 'mentoring' ? 'Mentoring' : id)
 }

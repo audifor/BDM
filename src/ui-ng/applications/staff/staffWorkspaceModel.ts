@@ -9,24 +9,26 @@ export function parseStaffDepartment(value: string | null): StaffDepartment | nu
   return null
 }
 
-export const STAFF_WORKSPACE_TABS = ['staff', 'assignments', 'advisory', 'dynamics'] as const
+export const STAFF_WORKSPACE_TABS = ['staff', 'assignments', 'advisory', 'dynamics', 'market', 'intelligence'] as const
 export type StaffWorkspaceTabId = (typeof STAFF_WORKSPACE_TABS)[number]
 
 export const STAFF_TAB_LABELS: Readonly<Record<StaffWorkspaceTabId, string>> = {
-  staff: 'Staff',
-  assignments: 'Assignments',
-  advisory: 'Advisory',
-  dynamics: 'Dynamics',
+  staff: 'STAFF',
+  assignments: 'ASIGNACIONES',
+  advisory: 'ASESORÍA',
+  dynamics: 'DINÁMICAS',
+  market: 'CONSTRUYE TU STAFF',
+  intelligence: 'COMPARATIVA',
 }
 
 export const DYNAMICS_SUBVIEWS = ['people', 'units', 'conflicts', 'career'] as const
 export type DynamicsSubviewId = (typeof DYNAMICS_SUBVIEWS)[number]
 
 export const DYNAMICS_SUBVIEW_LABELS: Readonly<Record<DynamicsSubviewId, string>> = {
-  people: 'People',
-  units: 'Units',
-  conflicts: 'Conflicts',
-  career: 'Career',
+  people: 'PERSONAS',
+  units: 'UNIDADES',
+  conflicts: 'CONFLICTOS',
+  career: 'CARRERA',
 }
 
 export type DynamicsFilter =
@@ -55,16 +57,16 @@ export const DYNAMICS_FILTERS: readonly DynamicsFilter[] = [
 ]
 
 export const DYNAMICS_FILTER_LABELS: Readonly<Record<DynamicsFilter, string>> = {
-  ALL: 'All',
-  NEEDS_ATTENTION: 'Needs attention',
-  FRUSTRATED: 'Frustrated',
-  OVERLOADED: 'Overloaded',
-  UNDERUTILIZED: 'Underutilized',
-  LOW_INFLUENCE: 'Low influence',
-  LOW_COMMITMENT: 'Low commitment',
-  CONTRACT_CONCERNS: 'Contract concerns',
-  DEVELOPMENT_CONCERNS: 'Development concerns',
-  THRIVING: 'Thriving',
+  ALL: 'TODOS',
+  NEEDS_ATTENTION: 'REQUIEREN ATENCIÓN',
+  FRUSTRATED: 'FRUSTRADOS',
+  OVERLOADED: 'SOBRECARGADOS',
+  UNDERUTILIZED: 'INFRAUTILIZADOS',
+  LOW_INFLUENCE: 'POCA INFLUENCIA',
+  LOW_COMMITMENT: 'BAJO COMPROMISO',
+  CONTRACT_CONCERNS: 'CONTRATOS',
+  DEVELOPMENT_CONCERNS: 'DESARROLLO',
+  THRIVING: 'POSITIVOS',
 }
 
 export const DYNAMICS_STATE_LABELS = {

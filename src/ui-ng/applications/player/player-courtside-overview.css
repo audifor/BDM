@@ -1,0 +1,588 @@
+/*
+ * PLAYER · OVERVIEW Courtside. Scoped to the approved Player view.
+ * Theme values come from the already-certified HOME shell, never from NG's cyan board palette.
+ */
+.po-root[data-bdm-player-overview='true'] {
+  --po-font: var(--cs-font, 'Inter Tight', sans-serif);
+  --po-font-display: var(--cs-font-display, 'Barlow Condensed', sans-serif);
+  --po-ov-cyan: var(--cs-lime);
+  --po-ov-cyan-soft: var(--cs-lime);
+  --po-ov-green: var(--cs-positive);
+  --po-ov-yellow: var(--cs-orange);
+  --po-ov-red: var(--cs-negative);
+  --po-ov-text: var(--cs-text);
+  --po-ov-text-2: var(--cs-text2);
+  --po-ov-text-3: var(--cs-text3);
+}
+.po-root[data-bdm-player-overview='true'] .po-identity {
+  background:var(--cs-s1);
+  color:var(--cs-text);
+  border-radius: 18px;
+  overflow: visible;
+  font-family: var(--cs-font);
+}
+.po-root[data-bdm-player-overview='true'] .po-identity::before {background:var(--cs-orange); box-shadow:none;}
+.po-root[data-bdm-player-overview='true'] .po-identity__name {font-family:var(--cs-font-display);font-size:clamp(30px,2.4cqi,46px)}
+.po-root[data-bdm-player-overview='true'] .po-identity__lastname {color:var(--cs-lime);text-shadow:none}
+.po-root[data-bdm-player-overview='true'] .po-identity__positions,
+.po-root[data-bdm-player-overview='true'] .po-identity__measures,
+.po-root[data-bdm-player-overview='true'] .po-identity__condition,
+.po-root[data-bdm-player-overview='true'] .po-identity__contract {border-color:var(--cs-line2)}
+.po-root[data-bdm-player-overview='true'] .po-identity__measure-value {font-size:clamp(20px,1.6cqi,28px)}
+.po-root[data-bdm-player-overview='true'] .ng-workspace-tabs__tab {font-family:var(--cs-font-display);font-size:16px}
+.po-root[data-bdm-player-overview='true'] .ng-workspace-tabs__tab.is-active {color:var(--cs-lime)}
+.po-root[data-bdm-player-overview='true'] .po-workspace-content {min-height:0;overflow:auto;}
+.po-root[data-bdm-player-overview='true'] .po-identity__contract-top .po-identity__actions {display:none;}
+.po-cs-board {
+  display:grid;
+  grid-template-columns:minmax(0,2.17fr) minmax(255px,1fr) minmax(350px,1.43fr);
+  grid-template-rows:minmax(350px,auto) minmax(132px,auto);
+  grid-template-areas:'dna radar right' 'read read right';
+  gap:12px;
+  padding:12px 16px 6px;
+  align-items:stretch;
+  align-content:start;
+  color:var(--cs-text);
+  font-family:var(--cs-font);
+  background:var(--cs-bg);
+  min-width:0;
+}
+.po-cs-board *, .po-cs-board *::before, .po-cs-board *::after {box-sizing:border-box;}
+.po-cs-card {
+  position:relative;
+  min-width:0;
+  padding:0;
+  overflow:hidden;
+  background:var(--cs-s1);
+  border-radius:18px;
+  border:1px solid var(--cs-line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.po-cs-card__header {display:flex;align-items:center;gap:12px;min-height:43px;padding:9px 16px;border-bottom:1px solid var(--cs-line2);}
+.po-cs-card__header h2 {margin:0;flex:none;font-family:var(--cs-font-display);font-weight:700;letter-spacing:.06em;font-size:21px;color:var(--cs-text);line-height:1;}
+.po-cs-card__header span {font-size:12px;color:var(--cs-text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.po-cs-card__header button {flex:none;margin-left:auto;font:700 12px var(--cs-font-display);letter-spacing:.06em;color:var(--cs-text);border:1px solid var(--cs-line2);background:var(--cs-s2);border-radius:8px;padding:7px 10px;cursor:pointer;}
+.po-cs-card button:hover,.po-cs-card button:focus-visible {color:var(--cs-lime);outline-color:var(--cs-lime);}
+.po-cs-dna {grid-area:dna;}
+.po-cs-dna__hero {display:flex;align-items:center;gap:15px;padding:12px 17px 8px;background:linear-gradient(115deg,color-mix(in srgb,var(--cs-orange) 12%,var(--cs-s1)),transparent 75%)}
+.po-cs-dna__star {color:var(--cs-lime);font-size:28px;line-height:1;}
+.po-cs-dna__hero h3 {margin:0;font:700 clamp(27px,2.25cqi,40px)/1 var(--cs-font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--cs-lime);}
+.po-cs-dna__hero p {margin:6px 0 0;color:var(--cs-text2);font-size:12px;line-height:1.3;}
+.po-cs-dna__quadrants {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:8px 14px 14px;}
+.po-cs-dna__quadrant {display:flex;flex-direction:column;gap:5px;min-width:0;min-height:153px;padding:12px 13px 9px;background:var(--cs-s2);border:1px solid var(--cs-line2);border-radius:13px;}
+.po-cs-dna__quadrant-head {display:flex;align-items:center;gap:8px;}
+.po-cs-dna__quadrant-head > span {font:700 16px var(--cs-font-display);color:var(--cs-orange);}
+.po-cs-dna__quadrant h4 {margin:0;color:var(--cs-orange);font:700 18px var(--cs-font-display);letter-spacing:.035em;}
+.po-cs-dna__quadrant p {margin:0;font-size:11px;color:var(--cs-text2);}
+.po-cs-dna__chips {display:flex;flex-wrap:wrap;gap:6px;align-content:start;padding-top:5px;}
+.po-cs-chip {display:inline-flex;min-height:24px;align-items:center;padding:4px 8px;font-size:11px;font-weight:600;border:1px solid color-mix(in srgb,var(--cs-lime) 56%,transparent);border-radius:100px;color:var(--cs-text);background:color-mix(in srgb,var(--cs-lime) 8%,transparent);}
+.po-cs-unknown {font-size:12px;color:var(--cs-text2);}
+.po-cs-meter-row {display:grid;grid-template-columns:minmax(80px,1fr) minmax(45px,.75fr) minmax(54px,auto);gap:7px;align-items:center;min-height:21px;font-size:11px;}
+.po-cs-meter-row > span:first-child {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cs-text2);}
+.po-cs-meter-row strong {font-size:11px;font-weight:600;color:var(--cs-text);text-align:right;white-space:nowrap;}
+.po-cs-meter-track {display:block;height:7px;background:var(--cs-s3);border-radius:6px;overflow:hidden;}
+.po-cs-meter-track > i {display:block;height:100%;background:var(--cs-lime);border-radius:6px;}
+.po-cs-meter-track.is-unknown {background:repeating-linear-gradient(90deg,var(--cs-line2) 0 3px,transparent 3px 7px);}
+.po-cs-text-link {display:inline-flex;align-self:flex-start;margin-top:auto;padding:5px 0 0;border:0;background:none;color:var(--cs-orange2);font:700 12px var(--cs-font-display);letter-spacing:.06em;cursor:pointer;}
+.po-cs-radar {grid-area:radar;display:flex;flex-direction:column;}
+.po-cs-radar__svg {display:block;width:100%;height:auto;max-height:315px;flex:1;min-height:250px;color:var(--cs-text2);padding:7px;}
+.po-cs-radar__shape {fill:color-mix(in srgb,var(--cs-lime) 27%,transparent);stroke:var(--cs-lime);stroke-width:2.5;stroke-linejoin:round;}
+.po-cs-radar__label {font:600 11px var(--cs-font);fill:var(--cs-text2);}
+.po-cs-radar__value {font:700 15px var(--cs-font-display);fill:var(--cs-lime);}
+.po-cs-radar__more {border:0;background:none;cursor:pointer;color:var(--cs-orange2);font:700 12px var(--cs-font-display);text-align:center;padding:8px;}
+.po-cs-board__right {grid-area:right;display:grid;grid-template-rows:minmax(210px,auto) minmax(260px,1fr);gap:12px;min-width:0;}
+.po-cs-season {display:flex;flex-direction:column;}
+.po-cs-season__metrics {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:15px 8px 4px;}
+.po-cs-season__metrics > div:not(.po-cs-empty) {display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;padding:2px 6px;border-right:1px solid var(--cs-line2);}
+.po-cs-season__metrics > div:last-child {border-right:0;}
+.po-cs-season__metrics strong {font:700 clamp(23px,1.65cqi,32px) var(--cs-font-display);color:var(--cs-text);}
+.po-cs-season__metrics span {font:700 11px var(--cs-font-display);color:var(--cs-text2);text-align:center;text-transform:uppercase;}
+.po-cs-season__caption {margin:12px 14px 2px;font-size:12px;color:var(--cs-text2);}
+.po-cs-season > .po-cs-text-link {margin: auto 14px 12px;}
+.po-cs-form {display:flex;flex-direction:column;}
+.po-cs-form__games {display:flex;flex-direction:column;min-height:0;overflow:auto;padding:6px 12px;}
+.po-cs-form__game {border-bottom:1px solid var(--cs-line2);}
+.po-cs-form__game summary {list-style:none;display:grid;grid-template-columns:minmax(0,1.4fr) 44px 44px 60px;align-items:center;gap:8px;padding:10px 0;cursor:pointer;font-size:12px;}
+.po-cs-form__game summary::-webkit-details-marker {display:none;}
+.po-cs-form__game summary > span:first-child {display:flex;flex-direction:column;gap:2px;min-width:0;}
+.po-cs-form__game summary strong {color:var(--cs-text);font-size:12px;}
+.po-cs-form__game summary small {color:var(--cs-text2);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.po-cs-form__value {display:flex;flex-direction:column;align-items:center;}
+.po-cs-form__value b {font:700 18px var(--cs-font-display);color:var(--cs-lime);}
+.po-cs-form__mini {height:7px;background:var(--cs-s3);border-radius:5px;overflow:hidden;}
+.po-cs-form__mini i {display:block;height:100%;background:var(--cs-orange);border-radius:5px;}
+.po-cs-form__game dl {display:flex;flex-wrap:wrap;gap:9px 15px;padding:8px 4px;margin:0;background:var(--cs-s2);}
+.po-cs-form__game dl > div {display:flex;gap:5px;}
+.po-cs-form__game dt {font-size:11px;color:var(--cs-text2);}
+.po-cs-form__game dd {margin:0;font:700 11px var(--cs-font);}
+.po-cs-form > .po-cs-text-link {margin: auto 12px 12px;}
+.po-cs-read {grid-area:read;display:flex;flex-direction:column;gap:7px;}
+.po-cs-read .po-cs-card__header h2 {color:var(--cs-lime);}
+.po-cs-read p {margin:0;padding:3px 16px;font-size:13px;line-height:1.48;color:var(--cs-text);max-width:1080px;}
+.po-cs-read__links {display:flex;flex-wrap:wrap;gap:9px;padding:2px 16px 12px;margin-top:auto;}
+.po-cs-read__links button {background:var(--cs-s2);border:1px solid var(--cs-line2);border-radius:99px;color:var(--cs-orange2);font:700 12px var(--cs-font-display);padding:7px 12px;cursor:pointer;}
+.po-cs-empty {grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:80px;padding:15px;font-size:13px;color:var(--cs-text2);text-align:center;}
+.po-cs-depth {margin:8px 16px 18px;padding:10px 16px;background:var(--cs-s1);border:1px solid var(--cs-line2);border-radius:14px;color:var(--cs-text);font-family:var(--cs-font);}
+.po-cs-depth > summary {font:700 18px var(--cs-font-display);cursor:pointer;}
+.po-cs-depth .po-overview {height:auto;display:block;overflow:visible;padding:12px 0;background:transparent;}
+.po-cs-depth .po-ov-row {grid-template-columns:repeat(2,minmax(0,1fr));margin:8px 0;min-height:200px;}
+.po-cs-depth .po-ov-row > * {min-height:240px;overflow:auto;}
+/* The contextual trajectory is shared by every Player tab. */
+.po-identity__trajectory {position:relative;z-index:20;margin-left:auto;}
+.po-identity__trajectory > summary {list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid var(--cs-line2);border-radius:8px;background:var(--cs-s2);padding:6px 10px;color:var(--cs-text);font:700 13px var(--cs-font-display);text-transform:uppercase;}
+.po-identity__trajectory > summary::-webkit-details-marker {display:none;}
+.po-identity__trajectory[open] > summary {color:var(--cs-lime);}
+.po-identity__trajectory-panel {position:absolute;z-index:30;top:calc(100% + 9px);right:0;width:min(630px,85vw);max-height:min(66vh,500px);overflow:auto;background:var(--cs-s1);border:1px solid var(--cs-line2);border-radius:18px;padding:15px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.po-identity__trajectory-panel > h3 {font:700 22px var(--cs-font-display);color:var(--cs-lime);margin:0 0 12px;}
+.po-identity__trajectory-panel .talent-operations-nav {display:flex;flex-wrap:wrap;gap:6px;padding:0 0 12px;background:transparent;}
+.po-identity__trajectory-panel .talent-player-pathway-band {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;background:transparent;}
+.po-identity__trajectory-panel .talent-player-pathway-band > div {min-width:0;color:var(--cs-text);}
+.po-identity__trajectory-panel .talent-player-pathway-band strong {overflow-wrap:anywhere;}
+/* In the clear theme every surface is the real Courtside ivory palette. */
+.bdm-os-ng[data-bdm-courtside-theme='light'] .po-root[data-bdm-player-overview='true'] .po-cs-card,
+.bdm-os-ng[data-bdm-courtside-theme='light'] .po-cs-depth,
+.bdm-os-ng[data-bdm-courtside-theme='light'] .po-identity__trajectory-panel {box-shadow:0 1px 0 rgba(30,20,10,.05);}
+@container player-space (max-width:1350px) {
+  .po-cs-board {grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);grid-template-areas:'dna radar' 'read read' 'right right';}
+  .po-cs-board__right {grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;}
+}
+@container player-space (max-width:850px) {
+  .po-cs-board {grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:'dna' 'radar' 'read' 'right';}
+  .po-cs-board__right {grid-template-columns:minmax(0,1fr);}
+  .po-cs-radar__svg {max-height:330px;}
+  .po-cs-depth .po-ov-row {grid-template-columns:minmax(0,1fr);}
+}
+@container player-space (max-width:510px) {
+  .po-cs-dna__quadrants {grid-template-columns:1fr;}
+  .po-cs-card__header {flex-wrap:wrap;}
+  .po-cs-season__metrics {grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+  .po-cs-read p {font-size:13px;}
+  .po-identity__trajectory-panel {right:-20px;width:min(90vw,440px);}
+}
+
+/* The original workspace clips the identity row: allow the approved trajectory popup to escape. */
+.po-root .ng-application-workspace__identity-slot {overflow:visible;z-index:30;}
+.po-root .ng-application-workspace__tabs-slot {position:relative;z-index:1;}
+.po-cs-overview {height:100%;min-height:0;overflow:auto;scrollbar-width:thin;background:var(--cs-bg);}
+.po-identity__trajectory-panel .talent-operations-nav button {color:var(--cs-text);background:var(--cs-s2);border:1px solid var(--cs-line2);border-radius:99px;}
+.po-identity__trajectory-panel .talent-operations-nav button:hover,
+.po-identity__trajectory-panel .talent-operations-nav button:focus-visible {color:var(--cs-lime);border-color:var(--cs-lime);}
+.po-identity__trajectory-panel .talent-player-pathway-band span {font-size:12px;color:var(--cs-text2);}
+.po-identity__trajectory-panel .talent-player-pathway-band strong {font-size:13px;color:var(--cs-text);}
+
+/* Real game box-score visualization, never demo numbers. */
+.po-cs-season__chart-legend {display:flex;align-items:center;gap:14px;padding:10px 16px 0;font:700 11px var(--cs-font);color:var(--cs-text2);}
+.po-cs-season__chart-legend span::before {content:'';display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:2px;background:var(--cs-lime);}
+.po-cs-season__chart-legend span:nth-child(2)::before {background:var(--cs-orange);}
+.po-cs-season__chart-legend span:nth-child(3)::before {background:var(--cs-positive);}
+.po-cs-season__chart {display:flex;align-items:stretch;justify-content:space-around;gap:10px;min-height:125px;padding:8px 12px 0;overflow-x:auto;border-bottom:1px solid var(--cs-line2);}
+.po-cs-season__chart-game {display:flex;flex:1 0 48px;max-width:100px;flex-direction:column;justify-content:end;text-align:center;}
+.po-cs-season__bars {display:flex;align-items:stretch;justify-content:center;gap:4px;height:94px;}
+.po-cs-season__bars > span {position:relative;display:flex;align-items:end;flex:1;max-width:24px;height:100%;}
+.po-cs-season__bars i {display:block;width:100%;min-height:2px;background:var(--cs-lime);border-radius:3px 3px 0 0;}
+.po-cs-season__bars .is-rebounds i {background:var(--cs-orange);}
+.po-cs-season__bars .is-assists i {background:var(--cs-positive);}
+.po-cs-season__chart-game small {display:block;padding:5px 0 8px;font-size:10px;line-height:1.2;color:var(--cs-text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* V1.1 fidelity correction: greater density, readable information and no fake placeholder bars. */
+.po-cs-board {
+  grid-template-rows: minmax(364px, auto) minmax(142px, auto);
+  gap: 10px;
+  padding: 10px 14px 6px;
+}
+.po-cs-card {border-radius:20px;}
+.po-cs-card__header {min-height:38px;padding:7px 14px;}
+.po-cs-card__header h2 {font-size:22px;}
+.po-cs-card__header span {font-size:12px;}
+.po-cs-dna__hero {min-height:65px;padding:9px 15px 7px;}
+.po-cs-dna__hero h3 {font-size:clamp(29px,2.2cqi,39px);}
+.po-cs-dna__hero p {font-size:12.5px;margin-top:5px;}
+.po-cs-dna__quadrants {gap:8px;padding:7px 11px 10px;}
+.po-cs-dna__quadrant {min-height:124px;padding:9px 11px 7px;gap:4px;border-radius:13px;}
+.po-cs-dna__quadrant h4 {font-size:18px;}
+.po-cs-dna__quadrant p {font-size:12px;line-height:1.3;}
+.po-cs-dna__chips {gap:5px;padding-top:3px;}
+.po-cs-chip {font-size:12px;min-height:23px;padding:4px 7px;}
+.po-cs-meter-row {font-size:12px;min-height:22px;grid-template-columns:minmax(88px,1fr) minmax(45px,.72fr) minmax(58px,auto);}
+.po-cs-meter-row strong {font-size:12px;}
+.po-cs-text-link {font-size:13px;padding-top:3px;}
+.po-cs-character__unknown {display:flex;flex:1;flex-direction:column;justify-content:center;gap:7px;min-height:72px;padding:8px 10px;background:color-mix(in srgb,var(--cs-orange) 7%,var(--cs-s2));border-radius:9px;border:1px solid var(--cs-line);}
+.po-cs-character__unknown strong {font:700 16px var(--cs-font-display);color:var(--cs-orange2);letter-spacing:.04em;}
+.po-cs-character__unknown p {font-size:12px;line-height:1.4;margin:0;color:var(--cs-text2);}
+.po-cs-radar__svg {min-height:300px;max-height:390px;padding:4px 3px;}
+.po-cs-radar__label {font-size:11px;font-weight:700;}
+.po-cs-radar__value {font-size:17px;}
+.po-cs-radar__insights {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 13px 7px;padding:10px 0 5px;border-top:1px solid var(--cs-line2);}
+.po-cs-radar__insights span {font-size:12px;font-weight:600;color:var(--cs-text);min-width:0;}
+.po-cs-radar__insights b {display:block;margin-bottom:3px;font:700 12px var(--cs-font-display);color:var(--cs-orange2);letter-spacing:.05em;}
+.po-cs-radar__more {font-size:13px;}
+.po-cs-read {min-height:145px;gap:3px;}
+.po-cs-read__content {display:grid;grid-template-columns:minmax(0,1.8fr) minmax(210px,1fr);gap:10px;min-height:0;padding:8px 14px 4px;}
+.po-cs-read__content > p {padding:0;margin:0;max-width:none;font-size:13.5px;line-height:1.42;}
+.po-cs-read__verdicts {display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-left:10px;border-left:1px solid var(--cs-line2);min-width:0;}
+.po-cs-read__verdicts ul {display:flex;flex-direction:column;gap:5px;padding:0;margin:0;list-style:none;}
+.po-cs-read__verdicts li {position:relative;padding-left:15px;font-size:12px;line-height:1.32;color:var(--cs-text2);}
+.po-cs-read__verdicts li::before {position:absolute;left:0;top:0;content:'+';font-weight:700;color:var(--cs-positive);}
+.po-cs-read__watchouts li::before {content:'!';color:var(--cs-orange);}
+.po-cs-read__links {gap:6px;padding:4px 14px 9px;}
+.po-cs-read__links button {padding:5px 10px;font-size:12px;}
+.po-cs-board__right {grid-template-rows:minmax(250px,auto) minmax(220px,1fr);gap:10px;}
+.po-cs-form__games {flex:0 1 auto;padding:4px 12px;}
+.po-cs-form__game summary {padding:8px 0;}
+.po-cs-form__game summary strong {font-size:13px;}
+.po-cs-form__game summary small {font-size:12px;}
+.po-cs-form__game dl dt,.po-cs-form__game dl dd {font-size:12px;}
+.po-cs-form__sample {margin:6px 12px;padding:9px 11px;font-size:12px;color:var(--cs-text2);background:var(--cs-s2);border-radius:10px;}
+.po-cs-season__metrics span {font-size:12px;}
+.po-cs-season__chart-game small {font-size:11px;}
+.po-cs-season__caption {font-size:12px;}
+/* The identity composition is shared, but only the APPROVED overview gets its new geometry. */
+@container player-space (min-width:1441px) {
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='normal'] .ng-application-workspace {
+    --po-identity-height: 134px;
+  }
+  .po-root[data-bdm-player-overview='true'] .po-identity {
+    grid-template-columns:minmax(315px,1.58fr) minmax(112px,.4fr) minmax(290px,1fr) minmax(185px,.73fr) minmax(245px,.86fr);
+  }
+  .po-root[data-bdm-player-overview='true'] .po-identity > * {padding:7px 12px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__person {grid-template-columns:86px minmax(0,1fr);gap:12px;}
+  .po-root[data-bdm-player-overview='true'] .po-portrait {width:86px;height:116px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__who {gap:5px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__name {font-size:clamp(32px,2.35cqi,42px);}
+  .po-root[data-bdm-player-overview='true'] .po-identity__positions {gap:6px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__pos-row {gap:12px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__measures {justify-content:space-around;padding:7px 8px;gap:6px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__measure {min-width:0;gap:3px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__measure-reading {white-space:nowrap;gap:3px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__measure-value {font-size:clamp(22px,1.55cqi,29px);}
+  .po-root[data-bdm-player-overview='true'] .po-identity__condition {padding:7px 9px;gap:7px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__status-list .po-status {grid-template-columns:81px minmax(0,1fr);gap:6px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__contract {gap:7px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__contract-top {align-items:center;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__contract-list {gap:7px;}
+  .po-root[data-bdm-player-overview='true'] .po-identity__contract-list .po-status {grid-template-columns:56px minmax(0,1fr);gap:5px;}
+}
+/* Address previously unreadable micro-labels without painting global NG screens. */
+.po-root[data-bdm-player-overview='true'] .po-identity__section-label,
+.po-root[data-bdm-player-overview='true'] .po-identity__fact-label,
+.po-root[data-bdm-player-overview='true'] .po-identity__pos-label,
+.po-root[data-bdm-player-overview='true'] .po-identity__measure-label,
+.po-root[data-bdm-player-overview='true'] .po-status__label {font-size:11px;}
+.po-root[data-bdm-player-overview='true'] .po-status__value {font-size:14px;white-space:nowrap;}
+.po-root[data-bdm-player-overview='true'] .po-identity__trajectory > summary {min-height:32px;padding:7px 10px;font-size:14px;}
+@container player-space (max-width:1440px) {
+  .po-cs-board {grid-template-rows:auto;align-content:start;}
+  .po-cs-read__content {grid-template-columns:1fr;}
+  .po-cs-read__verdicts {border-left:0;border-top:1px solid var(--cs-line2);padding:8px 0 0;}
+}
+@container player-space (max-width:920px) {
+  .po-cs-board__right {grid-template-rows:auto;}
+  .po-cs-read__verdicts {grid-template-columns:1fr 1fr;}
+}
+@container player-space (max-width:510px) {
+  .po-cs-read__verdicts {grid-template-columns:1fr;}
+  .po-cs-dna__hero h3 {font-size:29px;}
+}
+
+/* Height-aware header: keep the existing compact/dense responsive contract. */
+@container player-space (min-width:1441px) {
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns:68px minmax(0,1fr);
+  }
+  .po-root[data-bdm-player-overview='true'][data-bdm-player-height-mode='dense'] .po-portrait {
+    width:68px;
+    height:94px;
+  }
+}
+
+
+/*
+ * PLAYER shared identity header typography · approved 2026-10-10.
+ * Applied across all 8 PLAYER pages; preserve Courtside colors, identity data and interactions.
+ * At narrow widths, recomposition replaces progressive font shrinkage.
+ */
+.po-root .po-identity .po-identity__section-label,
+.po-root .po-identity .po-identity__pos-label,
+.po-root .po-identity .po-identity__measure-label,
+.po-root .po-identity .po-status__label {
+  font-size: 13px;
+  line-height: 1.16;
+  letter-spacing: .08em;
+  color: var(--cs-text2);
+}
+.po-root .po-identity .po-identity__fact-label {
+  font-size: 12px;
+  line-height: 1.16;
+  color: var(--cs-text2);
+}
+.po-root .po-identity .po-status__value {
+  font-size: 16px;
+  line-height: 1.16;
+  letter-spacing: .01em;
+  min-width: 0;
+}
+.po-root .po-identity .po-identity__availability {
+  font-size: 16px;
+  letter-spacing: .08em;
+  line-height: 1.15;
+}
+.po-root .po-identity .po-identity__measure-unit {font-size:13px;color:var(--cs-text2);}
+.po-root .po-identity .po-identity__fact-value {font-size:15px;}
+.po-root .po-identity .po-identity__pos .ng-play-position {
+  min-width: 38px;
+  height: 26px;
+  padding-inline: 6px;
+  font-family: var(--cs-font-display);
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: .015em;
+}
+.po-root .po-identity .po-identity__pos-row {align-items:center;}
+.po-root .po-identity .po-identity__pos {gap:4px;}
+.po-root .po-identity .po-identity__status-list,
+.po-root .po-identity .po-identity__contract-list {gap:6px;}
+.po-root .po-identity .po-status {gap:6px;min-height:19px;}
+.po-root .po-identity .po-status__meter {flex:none;width:32px;}
+/* Reduce label/value distance while preserving readable columns in five-cell desktop layout. */
+@container player-space (min-width:1281px) {
+  .po-root .po-identity .po-identity__status-list .po-status {
+    grid-template-columns:minmax(68px,82px) minmax(0,1fr);
+  }
+  .po-root .po-identity .po-identity__contract-list .po-status {
+    grid-template-columns:minmax(52px,62px) minmax(0,1fr);
+  }
+  .po-root .po-identity .po-identity__condition {gap:7px;}
+  .po-root .po-identity .po-identity__contract {gap:7px;}
+}
+/* Responsive master: give the status labels more room without clipping the portrait or measures. */
+@container player-space (min-width:1281px) and (max-width:1440px) {
+  .po-root .po-identity {
+    grid-template-columns:minmax(240px,1.35fr) minmax(110px,.5fr) minmax(245px,1.03fr) minmax(195px,.9fr) minmax(240px,1.08fr);
+  }
+  .po-root .po-identity > * {padding:8px 9px;}
+  .po-root .po-identity__measures {gap:5px;}
+  .po-root .po-identity__measure-reading {gap:3px;}
+}
+/* The formerly crowded 3-column second row becomes tall enough to read full labels and values. */
+@container player-space (min-width:921px) and (max-width:1280px) {
+  .po-root .ng-application-workspace {--po-identity-height:260px;}
+  .po-root .po-identity {
+    grid-template-rows:minmax(116px,1fr) minmax(136px,1fr);
+  }
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {
+    grid-template-columns:minmax(70px,.78fr) minmax(0,1.22fr);
+    gap:5px;
+  }
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__condition,
+  .po-root .po-identity__contract {gap:8px;}
+}
+@container player-space (min-width:621px) and (max-width:920px) {
+  .po-root .ng-application-workspace {--po-identity-height:372px;}
+  .po-root .po-identity {
+    grid-template-rows:minmax(124px,auto) minmax(88px,auto) minmax(146px,auto);
+  }
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {
+    grid-template-columns:minmax(70px,.85fr) minmax(0,1.15fr);
+    gap:6px;
+  }
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__condition,.po-root .po-identity__contract {gap:8px;}
+}
+@container player-space (max-width:620px) {
+  .po-root .ng-application-workspace {--po-identity-height:575px;}
+  .po-root .po-identity {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:120px 72px 88px 135px 145px;
+  }
+  .po-root .po-identity > * {padding:6px 12px;min-width:0;}
+  .po-root .po-identity__person {grid-column:1;grid-row:1;grid-template-columns:72px minmax(0,1fr);}
+  .po-root .po-portrait {width:72px;height:105px;}
+  .po-root .po-identity__positions {grid-column:1;grid-row:2;align-items:flex-start;gap:4px;}
+  .po-root .po-identity__pos-row {justify-content:flex-start;}
+  .po-root .po-identity__measures {grid-column:1;grid-row:3;justify-content:space-between;gap:8px;}
+  .po-root .po-identity__condition {grid-column:1;grid-row:4;gap:5px;}
+  .po-root .po-identity__contract {grid-column:1;grid-row:5;gap:6px;}
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {grid-template-columns:minmax(0,1fr);gap:5px;}
+  .po-root .po-identity .po-status {grid-template-columns:minmax(100px,.45fr) minmax(0,.55fr);gap:6px;}
+  .po-root .po-identity__contract-top {flex-direction:row;align-items:center;}
+  .po-root .po-identity__measure-reading {white-space:nowrap;}
+  .po-root .po-identity .po-status__value {font-size:15px;}
+}
+
+
+/* Protect the new typography against older height-mode overrides in Player responsive CSS. */
+@container player-space (min-width:1281px) {
+  .po-root[data-bdm-player-height-mode='dense'] .ng-application-workspace {
+    --po-identity-height:128px;
+  }
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__condition {gap:5px;}
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__status-list,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract-list {gap:4px;}
+}
+@container player-space (min-width:1100px) and (max-width:1280px) {
+  .po-root[data-bdm-player-height-mode='compact'] .ng-application-workspace,
+  .po-root[data-bdm-player-height-mode='dense'] .ng-application-workspace {
+    --po-identity-height:260px;
+  }
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity {
+    grid-template-columns:minmax(0,1.3fr) minmax(0,.85fr) minmax(0,.95fr);
+    grid-template-rows:minmax(116px,1fr) minmax(136px,1fr);
+  }
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__person,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__person {grid-column:1/3;grid-row:1;}
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__positions,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__positions {grid-column:3;grid-row:1;}
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__measures,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__measures {grid-column:1;grid-row:2;}
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__condition,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__condition {grid-column:2;grid-row:2;}
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract {grid-column:3;grid-row:2;}
+}
+
+
+/*
+ * OVERVIEW FOW alignment. Opponent DNA, spider and Manager Read now use
+ * organization-scoped evaluations; the own-roster Courtside style is intact.
+ */
+.po-cs-dna__chips .po-cs-chip--estimate {
+  color:var(--cs-text);
+  border-color:color-mix(in srgb,var(--cs-lime) 46%,var(--cs-line2));
+  background:color-mix(in srgb,var(--cs-lime) 7%,var(--cs-s2));
+  font-weight:700;
+  font-size:12px;
+}
+.po-cs-private-unknown {
+  padding:9px 10px;
+  border:1px solid var(--cs-line2);
+  border-radius:9px;
+  background:var(--cs-s1);
+  color:var(--cs-text2)!important;
+  font:500 12px/1.4 var(--cs-font)!important;
+}
+.po-cs-radar--scouted .po-cs-radar__shape {
+  stroke-width:1.5;
+  fill:color-mix(in srgb,var(--cs-lime) 12%,transparent);
+}
+.po-cs-radar__disclaimer {
+  margin:0 13px 4px;
+  padding:4px 8px;
+  border:1px solid var(--cs-line2);
+  border-radius:7px;
+  background:var(--cs-s2);
+  color:var(--cs-text2);
+  text-align:center;
+  font:500 11px/1.3 var(--cs-font);
+}
+.po-cs-radar__unknown {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:240px;
+  padding:15px 19px;
+}
+.po-cs-radar__unknown > span {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+}
+.po-cs-radar__unknown strong {
+  font:700 21px/1.15 var(--cs-font-display);
+  color:var(--cs-text);
+}
+.po-cs-radar__unknown small {
+  font:500 12px/1.45 var(--cs-font);
+  color:var(--cs-text2);
+}
+.po-cs-dna__quadrant .po-cs-meter-row > strong {
+  max-width:145px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+/*
+ * Courtside rival OVERVIEW V2.1
+ * Keep manager interpretation and its action row inside the visible board at
+ * the 1680x900 desktop reference. Smaller windows scroll the whole Overview
+ * instead of clipping text behind the OS dock.
+ * Own-roster geometry remains unchanged.
+ */
+@container player-space (min-width:1351px) {
+  .po-cs-board.po-cs-board--opponent {
+    box-sizing:border-box;
+    height:100%;
+    min-height:610px;
+    grid-template-rows:minmax(385px,1fr) minmax(188px,auto);
+    align-content:stretch;
+  }
+  .po-cs-board--opponent .po-cs-read {
+    min-height:188px;
+    overflow:visible;
+  }
+  .po-cs-board--opponent .po-cs-read__content {
+    flex:1 1 auto;
+    grid-template-columns:minmax(0,1.7fr) minmax(235px,1fr);
+    gap:14px;
+    align-items:start;
+    padding:8px 14px 4px;
+  }
+  .po-cs-board--opponent .po-cs-read__links {
+    flex:0 0 auto;
+    margin-top:auto;
+    padding:5px 14px 11px;
+  }
+}
+.po-cs-public-games {
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  flex-direction:column;
+  gap:7px;
+  padding:3px 0;
+}
+.po-cs-public-games > div {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  border-bottom:1px solid var(--cs-line2);
+  padding:2px 0 5px;
+}
+.po-cs-public-games span {
+  font:700 11px/1.2 var(--cs-font);
+  color:var(--cs-text2);
+  letter-spacing:.02em;
+}
+.po-cs-public-games strong {
+  font:700 19px/1 var(--cs-font-display);
+  color:var(--cs-text);
+  text-align:right;
+}
+.po-cs-public-games p {
+  margin:0;
+  color:var(--cs-text2);
+  font:500 12px/1.3 var(--cs-font);
+}
+@container player-space (max-width:1350px) {
+  .po-cs-board--opponent {
+    height:auto;
+    min-height:0;
+    grid-template-rows:auto;
+  }
+  .po-cs-board--opponent .po-cs-read {
+    overflow:visible;
+    min-height:188px;
+  }
+}

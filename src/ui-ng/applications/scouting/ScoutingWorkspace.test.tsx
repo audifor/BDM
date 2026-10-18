@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
@@ -38,24 +38,72 @@ describe('ScoutingWorkspace', () => {
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 
+  it('opens scouting without salary budgets in partially initialized game worlds', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const older = { ...world,
+      teamFinancesByTeamId: Object.fromEntries(
+        Object.entries(world.teamFinancesByTeamId).filter(([id]) => id !== team.id)),
+    } as typeof world
+    mountScoutingWorkspace(older)
+    expect(screen.getByTestId('scouting-war-room')).toBeInTheDocument()
+    expect(screen.getByTestId('market-operations-bar')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
+    expect(screen.getAllByText('Sin datos financieros')).toHaveLength(2)
+  })
+
+  it('returns to Mercado through the compact header rather than a Talent navigation strip', () => {
+    mountScoutingWorkspace()
+    expect(screen.queryByRole('navigation', { name: 'Talent operations' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '← Mercado' }))
+    expect(new URLSearchParams(window.location.search).get('app')).toBe('market')
+  })
+
   it('renders organization knowledge from the live world without leaking hidden ratings', () => {
     const { team, world } = mountScoutingWorkspace()
     const player = world.players[team.rosterPlayerIds[0]!]!
 
+    expect(screen.getByTestId('scouting-war-room')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
     expect(screen.getByText((_, element) => element?.classList.contains('scouting-workspace-header__team') === true && element.textContent === team.name)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: `${player.firstName} ${player.lastName}` }).length).toBeGreaterThan(0)
     expect(document.body.textContent).not.toContain(JSON.stringify(player.basketball.ratings))
   })
 
+  it('renders the Courtside request structure and synchronizes mission, target, scout and priority', () => {
+    mountScoutingWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Request scouting' })[0]!)
+    const dialog = screen.getByRole('dialog', { name: 'REQUEST SCOUTING' })
+    expect(dialog).toHaveClass('scouting-modal--courtside-request')
+    expect(within(dialog).getByRole('heading', { name: 'ASSIGNMENT SETUP' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: 'ASSIGNMENT SUMMARY' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: 'KNOWLEDGE STATUS' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /confirm assignment/i })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'CANCEL' })).toBeInTheDocument()
+
+    const mission = dialog.querySelector('select')!
+    fireEvent.change(mission, { target: { value: 'SKILL_EVALUATION' } })
+    expect(within(dialog).getByText('Shooting family')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('Skill evaluation').length).toBeGreaterThan(0)
+    const selects = dialog.querySelectorAll('select')
+    expect(selects).toHaveLength(4)
+    fireEvent.change(selects[1]!, { target: { value: 'physical' } })
+    expect(within(dialog).getByText('Physical family')).toBeInTheDocument()
+    fireEvent.change(selects[3]!, { target: { value: 'URGENT' } })
+    expect(within(dialog).getAllByText('Urgent').length).toBeGreaterThan(0)
+  })
+
   it('queues a quick-look assignment from the knowledge board', () => {
     mountScoutingWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'Knowledge' }))
     fireEvent.click(screen.getAllByRole('button', { name: 'Request scouting' })[0]!)
     expect(screen.getByRole('option', { name: 'Full report' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Skill evaluation' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Potential evaluation' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Tactical fit' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Live game' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm assignment' }))
+    fireEvent.click(screen.getByRole('button', { name: /Confirm assignment/i }))
 
     const assignments = Object.values(useGameStore.getState().world!.scoutingAssignmentsById)
     expect(assignments).toHaveLength(1)

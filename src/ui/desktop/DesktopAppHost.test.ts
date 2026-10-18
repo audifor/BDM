@@ -31,7 +31,7 @@ describe('DesktopAppHost', () => {
 
   it('opens Golden Manager sections while preserving unrelated application hosts', () => {
     const world = createNewGame()
-    const labels = { training: 'Team Training', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
+    const labels = { training: 'Team Training', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Centro de mercado', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))
       expect(markup).toContain(label)

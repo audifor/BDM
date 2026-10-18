@@ -6,16 +6,12 @@ import type {
   PerformanceKpiModel,
   PerformanceRecentGame,
   PerformanceShotProfileModel,
+  PerformanceShotZoneModel,
   PerformanceSplitRowModel,
   PlayerGameLogRow,
 } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
-
-/** Colour of each shot-zone block, keyed by the zone the model reports. */
-const ZONE_TONE: Record<string, string> = {
-  'inside-arc': 'yellow',
-  'outside-arc': 'cyan',
-}
+import { PerformanceNineZoneCourt } from './PerformanceNineZoneCourt'
 
 /** Legend colours of the form chart. */
 const FORM_SERIES = [
@@ -134,80 +130,79 @@ export function PerformanceShotProfilePanel({
 }: {
   readonly profile: PerformanceShotProfileModel
 }) {
+  if (profile.detailedZones !== undefined) return <PerformanceNineZoneCourt profile={profile} />
   const inside = profile.zones.find((zone) => zone.id === 'inside-arc')
   const outside = profile.zones.find((zone) => zone.id === 'outside-arc')
+  const zones = [inside, outside].filter((zone): zone is PerformanceShotZoneModel => zone !== undefined)
+  const fieldGoalPoints = zones.reduce((sum, zone) => sum + zone.made * (zone.id === 'inside-arc' ? 2 : 3), 0)
+  const zoneRate = (zone: PerformanceShotZoneModel): number =>
+    zone.attempted > 0 ? (zone.made / zone.attempted) * 100 : 0
+  const pointShare = (zone: PerformanceShotZoneModel): number =>
+    fieldGoalPoints > 0 ? Math.round((zone.made * (zone.id === 'inside-arc' ? 2 : 3) / fieldGoalPoints) * 100) : 0
+  const analysis = (() => {
+    if (profile.totalAttempts === 0) return 'No field-goal attempts recorded in this selection.'
+    if ((inside?.attempted ?? 0) === 0) return 'Only three-point attempts recorded. Interior efficiency is still unknown.'
+    if ((outside?.attempted ?? 0) === 0) return 'Only two-point attempts recorded. Perimeter efficiency is still unknown.'
+    const interior = zoneRate(inside!)
+    const perimeter = zoneRate(outside!)
+    const comparison = interior === perimeter ? 'Both zones convert at the same rate.'
+      : interior > perimeter ? 'Conversion is higher inside the arc.'
+      : 'Conversion is higher beyond the arc.'
+    return profile.totalAttempts < 10 ? comparison + ' Small sample of ' + profile.totalAttempts + ' attempts.'
+      : comparison
+  })()
 
   return (
-    <section className="po-pf-panel po-pf-shot" data-ng-region="performance-shot-profile">
-      <header className="po-pf-panel__head">
-        <span className="po-pf-panel__title">Shot profile</span>
-        <span className="po-pf-panel__meta">FG% by location</span>
-      </header>
-
-      <div className="po-pf-shot__body">
+    <section className="po-pf-panel po-pf-shot po-pf-shot--courtside" data-ng-region="performance-shot-profile">
+      <div className="po-pf-shooting__stage">
         <div className="po-pf-shot__court">
-          <svg
-            aria-label="Half court showing the two shooting zones the save records"
-            className="po-pf-shot__svg"
-            role="img"
-            viewBox="0 0 200 168"
-          >
-            {/* Baseline and sidelines. */}
+          <svg aria-label="Half basketball court. Only recorded two-point and three-point shot totals are known, not locations."
+            className="po-pf-shot__svg" role="img" viewBox="0 0 200 168">
             <rect className="po-pf-court__line" height={168} width={186} x={7} y={1} />
-            {/* Lane and free-throw circle. */}
             <rect className="po-pf-court__line" height={86} width={68} x={66} y={1} />
             <circle className="po-pf-court__line" cx={100} cy={87} r={26} />
-            {/* Three-point arc and the rim. */}
             <path className="po-pf-court__line" d="M 7 22 L 7 6 M 193 22 L 193 6" />
-            <path
-              className="po-pf-court__line"
-              d="M 7 8 L 7 24 A 93 93 0 0 0 193 24 L 193 8"
-            />
+            <path className="po-pf-court__line" d="M 7 8 L 7 24 A 93 93 0 0 0 193 24 L 193 8" />
             <circle className="po-pf-court__rim" cx={100} cy={12} r={7} />
           </svg>
-
-          {inside !== undefined && (
-            <span
-              className={`po-pf-zone is-${ZONE_TONE[inside.id]}`}
-              style={{ left: '50%', top: '34%' }}
-              title={`${inside.label}\n${inside.made}/${inside.attempted}\n${inside.percentage ?? '—'}%\n${inside.share}% of attempts`}
-            >
-              <span className="po-pf-zone__pct ng-type-numeric">
-                {inside.percentage === null ? '—' : `${inside.percentage}%`}
-              </span>
-              <span className="po-pf-zone__made ng-type-numeric">
-                {inside.made}/{inside.attempted}
-              </span>
-            </span>
-          )}
-
-          {outside !== undefined && (
-            <span
-              className={`po-pf-zone is-${ZONE_TONE[outside.id]} is-small`}
-              style={{ left: '50%', top: '82%' }}
-              title={`${outside.label}\n${outside.made}/${outside.attempted}\n${outside.percentage ?? '—'}%\n${outside.share}% of attempts`}
-            >
-              <span className="po-pf-zone__pct ng-type-numeric">
-                {outside.percentage === null ? '—' : `${outside.percentage}%`}
-              </span>
-              <span className="po-pf-zone__made ng-type-numeric">
-                {outside.made}/{outside.attempted}
-              </span>
-            </span>
-          )}
-        </div>
-
-        <div className="po-pf-shot__legend">
-          <span className="po-pf-shot__legend-title">FGA distribution</span>
-          {profile.zones.map((zone) => (
-            <span className={`po-pf-legend-row is-${ZONE_TONE[zone.id]}`} key={zone.id}>
-              <span aria-hidden className="po-pf-legend-row__dot" />
-              <span className="po-pf-legend-row__label">{zone.label}</span>
-              <span className="po-pf-legend-row__value ng-type-numeric">{zone.share}%</span>
-            </span>
+          {zones.map((zone) => (
+            <div className={'po-pf-shooting__court-badge is-' + zone.id}
+              key={zone.id} title={zone.label + ': ' + zone.made + '/' + zone.attempted + ' · ' + (zone.percentage ?? '—') + '%'}>
+              <span>{zone.id === 'inside-arc' ? '2PT' : '3PT'}</span>
+              <strong>{zone.percentage === null ? '—' : zone.percentage + '%'}</strong>
+              <small>{zone.made}/{zone.attempted}</small>
+            </div>
           ))}
-          <span className="po-pf-stat__note">{profile.note}</span>
         </div>
+      </div>
+      <div className="po-pf-shooting__breakdown" aria-label="Two-point and three-point shooting volume and efficiency">
+        {zones.map((zone) => (
+          <div className={'po-pf-shooting__zone is-' + zone.id} key={zone.id}>
+            <div className="po-pf-shooting__zone-head">
+              <div><span>{zone.id === 'inside-arc' ? 'INSIDE THE ARC' : 'BEYOND THE ARC'}</span>
+                <small>{zone.id === 'inside-arc' ? '2-point attempts' : '3-point attempts'}</small></div>
+              <strong>{zone.percentage === null ? '—' : zone.percentage + '%'}</strong>
+            </div>
+            <div className="po-pf-shooting__numbers">
+              <span><b>{zone.made}/{zone.attempted}</b> MADE / ATT</span>
+              <span><b>{zone.made * (zone.id === 'inside-arc' ? 2 : 3)}</b> FIELD PTS</span>
+            </div>
+            <div className="po-pf-shooting__meter">
+              <div><span>VOLUME</span><b>{zone.share}%</b></div>
+              <span className="po-pf-shooting__track"><i style={{width: zone.share + '%'}} /></span>
+            </div>
+            <div className="po-pf-shooting__meter">
+              <div><span>EFFICIENCY</span><b>{zone.percentage === null ? '—' : zone.percentage + '%'}</b></div>
+              <span className="po-pf-shooting__track"><i style={{width: zoneRate(zone) + '%'}} /></span>
+            </div>
+            <p className="po-pf-shooting__share">{fieldGoalPoints === 0
+              ? 'No made field goals in this selection'
+              : pointShare(zone) + '% of recorded field-goal points'}</p>
+          </div>
+        ))}
+      </div>
+      <div className="po-pf-shooting__reading">
+        <span>SHOT READING</span><p>{analysis}</p>
       </div>
     </section>
   )

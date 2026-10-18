@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import type { CoachRpgProfile } from '@/domain/coachRpg'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
-import type { CoachRpgOperationResult } from '@/engine/coach'
+import { COACH_TRAIT_CATALOG, type CoachRpgOperationResult } from '@/engine/coach'
 import { CoachPerkGlyph, CoachSkillGlyph } from '@/ui-ng/applications/coach/CoachDevelopmentGlyph'
 import {
   buildCoachDevelopmentSummary,
@@ -158,6 +158,34 @@ export function CoachDevelopmentWorkspace({
             {summary.careerFocusUsed} / {summary.careerFocusLimit}
           </span>
         </footer>
+      </section>
+
+      <section className="ng-coach-dev__panel ng-coach-dev__panel--traits">
+        <header className="ng-coach-dev__panel-head">
+          <div className="ng-coach-dev__panel-heading">
+            <h2 className="ng-coach-dev__panel-title">Professional traits</h2>
+            <p className="ng-coach-dev__panel-subtitle">Earned through actual decisions, game events and skill prerequisites</p>
+          </div>
+          <span className="ng-coach-dev__stat-chip">{rpg.professionalTraits.length} earned</span>
+        </header>
+        <div className="ng-coach-dev__trait-grid">
+          {COACH_TRAIT_CATALOG.map((trait) => {
+            const evidence = rpg.professionalTraitEvidence[trait.evidenceId] ?? 0
+            const acquired = rpg.professionalTraits.includes(trait.id)
+            const minimumSkill = trait.requiredSkill
+            const skillMet = minimumSkill === undefined || (rpg.skills[minimumSkill[0]]?.rank ?? 0) >= minimumSkill[1]
+            const title = trait.id.replace(/([a-z])([A-Z])/g, '$1 $2')
+            return <div className="ng-coach-dev__trait" key={trait.id} data-earned={acquired}>
+              <div className="ng-coach-dev__trait-heading">
+                <strong>{title}</strong>
+                <span>{acquired ? 'Earned' : evidence >= 100 && skillMet ? 'Evidence reached' : 'Developing'}</span>
+              </div>
+              <div className="ng-coach-dev__trait-track"><span style={{ width: Math.min(100, evidence) + '%' }} /></div>
+              <small>{Math.round(evidence)} / 100 evidence · {trait.evidenceId.replace(/([a-z])([A-Z])/g, '$1 $2')}
+                {minimumSkill && !skillMet ? ' · Requires ' + minimumSkill[0].replace(/([a-z])([A-Z])/g, '$1 $2') + ' rank ' + minimumSkill[1] : ''}</small>
+            </div>
+          })}
+        </div>
       </section>
     </div>
   )

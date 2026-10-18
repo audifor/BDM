@@ -1,0 +1,130 @@
+/* Courtside V3: one visual grammar across ALL Market tabs.
+   Original engine tables and negotiation actions remain wired. */
+.market-workspace {
+ --market-surface:var(--cs-s1);--market-surface-alt:var(--cs-s2);
+ --market-text:var(--cs-text);--market-muted:var(--cs-text2);
+ --market-faint:var(--cs-text3);--market-line:var(--cs-line2);
+ --market-line-soft:var(--cs-line);--market-accent:var(--cs-orange);
+ --market-display:var(--cs-font-display);--market-body:var(--cs-font);
+ color:var(--cs-text);font-family:var(--cs-font);background:var(--cs-bg);
+ --ng-workspace-header-height:46px;--ng-workspace-tabs-height:39px;
+}
+.market-workspace :is(.ng-canon__scroll,.ng-scroll-region) {padding:9px 14px 14px;scrollbar-color:var(--cs-s3) transparent;}
+.market-workspace :is(.ng-canon-header,.ng-workspace-tabs) {background:var(--cs-bg)!important;border-color:var(--cs-line2);}
+.market-workspace .ng-workspace-tabs__tab {color:var(--cs-text2);font:700 13px var(--cs-font-display);}
+.market-workspace .ng-workspace-tabs__tab.is-active {color:var(--cs-orange);}
+.market-workspace .ng-canon-header__app {color:var(--cs-orange);font:700 15px var(--cs-font-display);}
+.market-workspace .ng-canon-header__team {color:var(--cs-text);}
+.market-workspace .ng-canon-header__meta {color:var(--cs-text3);font:600 11px var(--cs-font);}
+.market-workspace .ng-canon__panel,.market-workspace .ng-canon__inspector,
+.market-workspace :is(.market-cs__panel,.market-talent__catalog,.market-talent__inspector,.market-talent__comparison,.market-talent__saved,.market-plan__panel) {
+ background:var(--cs-s1);color:var(--cs-text);border:1px solid var(--cs-line2);
+ border-radius:11px;box-shadow:none;
+}
+.market-workspace :is(.market-cs__kicker,.market-cs__compact-head strong,.market-talent__compact-head strong,.market-plan__compact-head strong) {
+ color:var(--cs-orange);font-family:var(--cs-font-display);letter-spacing:.06em;
+}
+.market-workspace :is(.market-cs__metrics,.market-plan__stats) {gap:8px;}
+.market-workspace :is(.market-cs__metrics>div,.market-plan__stats>div) {padding:10px 12px;border:1px solid var(--cs-line2);border-radius:10px;background:var(--cs-s1);}
+.market-workspace :is(.market-cs__metrics strong,.market-plan__stats strong) {color:var(--cs-text);}
+.market-workspace :is(.market-cs__compact-head,.market-talent__compact-head,.market-plan__compact-head) {min-height:32px;gap:7px;}
+.market-workspace :is(.market-cs__columns,.market-plan__grid) {gap:10px;}
+.market-workspace :is(.market-cs__panel,.market-talent__inspector,.market-talent__comparison,.market-plan__panel) {padding:12px 14px;}
+.market-workspace :is(.market-cs__panel header,.market-plan__panel header) {margin-bottom:8px;}
+.market-workspace :is(.market-cs__panel h3,.market-plan__panel h3,.market-talent__comparison h3) {color:var(--cs-text);font:700 18px var(--cs-font-display);}
+.market-workspace :is(.market-cs__panel p,.market-plan__panel p) {font-size:11px;color:var(--cs-text2);}
+.market-workspace :is(.market-cs__quick-links button,.market-cs__compact-head button,.market-plan__panel header button) {
+ border:1px solid var(--cs-line2);color:var(--cs-text);background:var(--cs-s1);
+ border-radius:7px;font:700 13px var(--cs-font-display);padding:6px 12px;
+}
+.market-workspace :is(button,.ng-canon__link):focus-visible {outline:2px solid var(--cs-orange);outline-offset:2px;}
+.market-workspace :is(button,input,select,textarea):disabled {opacity:.47;cursor:not-allowed;}
+.market-workspace :is(.market-cs__quick-links button,.market-cs__compact-head button):hover {border-color:var(--cs-orange);color:var(--cs-orange);}
+.market-workspace :is(.market-cs__primary,.market-cs__secondary,.market-plan__actions button,.market-talent__inspector-actions button) {font:700 13px var(--cs-font-display);min-height:29px;border-radius:8px;box-shadow:none;}
+.market-workspace .market-cs__primary {background:var(--cs-orange);color:#1b140f;border-color:var(--cs-orange);}
+.market-workspace .market-cs__secondary {background:var(--cs-s2);color:var(--cs-text);border:1px solid var(--cs-line2);}
+.market-workspace :is(input,select,textarea,.ng-canon__toolbar input,.ng-canon__toolbar select) {
+ color:var(--cs-text);background:var(--cs-s2);border:1px solid var(--cs-line2);
+ border-radius:7px;font:500 12px var(--cs-font);accent-color:var(--cs-orange);
+}
+.market-workspace :is(input,select,textarea):focus-visible {outline:1px solid var(--cs-orange);outline-offset:1px;}
+.market-workspace :is(input,textarea)::placeholder {color:var(--cs-text3);}
+.market-workspace .market-talent__toolbar {padding:8px 10px;gap:7px;background:var(--cs-s1);border:1px solid var(--cs-line2);}
+.market-workspace .market-talent__toolbar label {font:700 10px var(--cs-font-display);color:var(--cs-text2);}
+.market-workspace .market-talent__grid {gap:10px;}
+.market-workspace .market-talent__catalog {max-height:min(520px,55vh);}
+.market-workspace .market-talent__candidate {padding:9px 12px;border-color:var(--cs-line);}
+.market-workspace .market-talent__candidate:hover,.market-workspace .market-talent__candidate.is-selected {background:var(--cs-s2);}
+.market-workspace .market-talent__add.is-added {border-color:var(--cs-orange);color:var(--cs-orange);}
+.market-workspace .market-talent__gauges>div>div span {background:var(--cs-orange);}
+.market-workspace .market-talent__ratings>div {color:var(--cs-text);border-color:var(--cs-line);}
+.market-workspace .market-talent__ratings .market-talent__ratings-head {color:var(--cs-text3);background:var(--cs-s2);}
+.market-workspace .market-talent__tablehead {background:var(--cs-s2);}
+.market-workspace .market-talent__saved-row {padding:8px 12px;}
+.market-workspace .market-talent__compare-cards article {border:1px solid var(--cs-line2);background:var(--cs-s2);}
+.market-workspace .market-talent__saved-buttons button {background:var(--cs-s2);color:var(--cs-text);border-color:var(--cs-line2);}
+.market-workspace .market-talent__lens strong {color:var(--cs-lime);}
+.market-workspace .market-plan__positions-head {background:var(--cs-s2);color:var(--cs-text2);}
+.market-workspace .market-plan__position {border-color:var(--cs-line);}
+.market-workspace .market-plan__position strong.is-risk {color:var(--cs-orange);}
+.market-workspace .market-plan__stats>div {min-height:80px;}
+/* Free agents: Courtside master/detail, with genuinely available space for the inspector. */
+.market-workspace .market-section-toolbar {display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--cs-line2);border-radius:10px;background:var(--cs-s1);margin-bottom:9px;}
+.market-workspace .market-section-toolbar input {min-width:220px;flex:1;min-height:33px;}
+.market-workspace .market-section-toolbar select {min-width:130px;min-height:33px;}
+.market-workspace .market-free-agent-layout {display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:10px;align-items:start;}
+.market-workspace .market-free-agent-results {padding:0;min-width:0;max-height:calc(100vh - 300px);min-height:250px;overflow:auto;}
+.market-workspace .market-free-agent-inspector {padding:13px;min-width:0;position:sticky;top:0;max-height:calc(100vh - 300px);overflow:auto;}
+.market-workspace .market-free-agent-inspector .ng-canon__eyebrow {color:var(--cs-orange);font:700 11px var(--cs-font-display);}
+.market-workspace .market-free-agent-inspector .ng-canon__title {font:700 23px var(--cs-font-display);color:var(--cs-text);margin:6px 0 13px;}
+.market-workspace .market-free-agent-inspector .ng-canon__metrics {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.market-workspace .market-free-agent-inspector .ng-canon__metric {background:var(--cs-s2);border:1px solid var(--cs-line2);border-radius:8px;padding:7px;}
+.market-workspace .market-free-agent-inspector :is(dt,dd) {overflow-wrap:anywhere;color:var(--cs-text);}
+.market-workspace .market-free-agent-inspector dt {font:700 10px var(--cs-font-display);color:var(--cs-text3);}
+.market-workspace .market-free-agent-inspector dd {font:700 15px var(--cs-font-display);}
+.market-workspace :is(.ng-canon__table th,.bdm-data-grid th) {background:var(--cs-s2);color:var(--cs-text2);border-color:var(--cs-line2);font:700 11px var(--cs-font-display);text-transform:uppercase;}
+.market-workspace :is(.ng-canon__table td,.bdm-data-grid td) {background:var(--cs-s1);color:var(--cs-text);border-color:var(--cs-line);font:500 12px var(--cs-font);}
+.market-workspace :is(.ng-canon__table tr:hover td,.bdm-data-grid tr:hover td) {background:var(--cs-s2);}
+.market-workspace .ng-canon__link {color:var(--cs-text);font-weight:700;}
+.market-workspace .ng-canon__link:hover {color:var(--cs-orange);}
+/* Operations: accordion rows preserve all original counter, offer and approval actions. */
+.market-workspace .market-negotiations {background:var(--cs-s1);border:1px solid var(--cs-line2);border-radius:11px;overflow:hidden;min-height:160px;}
+.market-workspace .market-negotiations__head {display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--cs-line2);}
+.market-workspace .market-negotiations__head strong {font:700 16px var(--cs-font-display);color:var(--cs-orange);}
+.market-workspace .market-negotiations__head span {font-size:11px;color:var(--cs-text3);margin-right:auto;}
+.market-workspace .market-negotiations__head select {min-height:30px;padding:5px 8px;}
+.market-workspace .market-negotiations__entry {border-bottom:1px solid var(--cs-line);}
+.market-workspace .market-negotiations__entry:last-child {border-bottom:0;}
+.market-workspace .market-negotiations__details summary {display:grid;grid-template-columns:minmax(130px,1fr) 120px 145px 100px 18px;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;list-style:none;outline-offset:-2px;}
+.market-workspace .market-negotiations__details summary::-webkit-details-marker {display:none;}
+.market-workspace .market-negotiations__details summary:hover,.market-workspace .market-negotiations__details[open] summary {background:var(--cs-s2);}
+.market-workspace .market-negotiations__person {font:700 14px var(--cs-font-display);color:var(--cs-text);}
+.market-workspace .market-negotiations__state {font:700 11px var(--cs-font-display);color:var(--cs-orange);}
+.market-workspace .market-negotiations__sum {font:700 12px var(--cs-font-display);color:var(--cs-text);}
+.market-workspace .market-negotiations__date {font-size:11px;color:var(--cs-text3);}
+.market-workspace .market-negotiations__chevron {color:var(--cs-orange);transition:transform .15s;}
+.market-workspace .market-negotiations__details[open] .market-negotiations__chevron {transform:rotate(180deg);}
+.market-workspace .market-negotiations__body {padding:10px 14px 13px;display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;background:var(--cs-s1);}
+.market-workspace .market-negotiations__body p {flex:1 1 210px;min-width:0;padding:7px 9px;background:var(--cs-s2);border:1px solid var(--cs-line);border-radius:7px;margin:0;color:var(--cs-text2);font-size:11px;}
+.market-workspace .market-negotiations__body button {color:var(--cs-text);font:700 12px var(--cs-font-display);padding:7px 12px;border-radius:7px;border:1px solid var(--cs-line2);background:var(--cs-s2);}
+.market-workspace .market-negotiations__body button:hover {color:var(--cs-orange);border-color:var(--cs-orange);}
+.market-workspace .market-negotiations__body label {display:grid;gap:3px;color:var(--cs-text3);font:700 10px var(--cs-font-display);}
+.market-workspace .market-negotiations__body label input {width:120px;min-height:31px;padding:5px;}
+/* No contrast regressions in light mode, including the independent modal portals. */
+.market-quick-modal,.market-target-picker {color:var(--cs-text);background:var(--cs-s1);border-color:var(--cs-line2);}
+.market-quick-modal :is(input,select,textarea),.market-target-picker :is(input,select,textarea) {background:var(--cs-s2);color:var(--cs-text);border-color:var(--cs-line2);}
+.market-quick-modal__figures>div,.market-target-picker__list>div {background:var(--cs-s2);color:var(--cs-text);border-color:var(--cs-line2);}
+.market-quick-modal__figures strong,.market-target-picker__list b {color:var(--cs-text);}
+@media(max-width:1100px){
+ .market-workspace .market-free-agent-layout {grid-template-columns:minmax(0,1fr);}
+ .market-workspace .market-free-agent-results {max-height:350px;}
+ .market-workspace .market-free-agent-inspector {position:static;max-height:none;}
+ .market-workspace .market-negotiations__details summary {grid-template-columns:minmax(125px,1fr) 95px 130px 16px;}
+ .market-workspace .market-negotiations__date {display:none;}
+}
+@media(max-width:700px){
+ .market-workspace .market-section-toolbar {flex-wrap:wrap;}
+ .market-workspace .market-section-toolbar input {min-width:130px;}
+ .market-workspace .market-negotiations__details summary {grid-template-columns:minmax(110px,1fr) 80px 16px;}
+ .market-workspace .market-negotiations__sum {display:none;}
+}

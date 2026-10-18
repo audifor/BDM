@@ -14,9 +14,9 @@ export type TrainingScope = 'team' | 'individual' | 'both'
  * - moraleDelta and cohesionDelta are fixed per-completed-session deltas, intentionally NOT
  *   scaled by intensity: they represent a bounded, flat quality-of-training-experience effect
  *   (e.g. team cohesion work; encouraging composure work) rather than a physical load effect.
- * - injuryRiskWeight is metadata only. No engine code currently creates injuries from training;
- *   it is not applied, consumed, or scaled anywhere, and must not be presented to the user as an
- *   active risk signal until a real injury-creation capability consumes it.
+ * - injuryRiskWeight is consumed by trainingInjuryProbability in ScheduledTrainingEngine.
+ *   It is a relative multiplier for the canonical injury model, never a stand-alone
+ *   injury probability. The engine enforces recurrence and club availability floors.
  */
 export interface TrainingEffectProfile {
   readonly targetRatings: readonly CanonicalRatingKey[]
@@ -28,7 +28,7 @@ export interface TrainingEffectProfile {
   readonly moraleDelta: number
   /** Fixed per-completed-session delta. Not scaled by intensity. */
   readonly cohesionDelta: number
-  /** Metadata only; not consumed by any engine code. */
+  /** Relative input to the canonical Training injury model, not a probability. */
   readonly injuryRiskWeight: number
 }
 

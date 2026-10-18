@@ -27,6 +27,8 @@ import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcb
 import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
 import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
+import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { WorkspaceErrorBoundary } from '@/ui-ng/workspace/WorkspaceErrorBoundary'
 
 export interface DesktopAppActions {
   readonly submitTransferNotice?: (playerId: PlayerId) => string | null
@@ -63,7 +65,12 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'training') return <TrainingScreen world={world} onFocus={actions.setTrainingFocus} onIntensity={actions.setTrainingIntensity} />
   if (key === 'coach') return <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
-  if (key === 'market') return <MarketWorkspace initialWorld={world} />
+  if (key === 'market') return <WorkspaceErrorBoundary app="Mercado" onReturnHome={() => actions.openApp('bdm')}>
+    <MarketWorkspace initialWorld={world} onOpenScouting={() => actions.openApp('scouting')} />
+  </WorkspaceErrorBoundary>
+  if (key === 'scouting') return <WorkspaceErrorBoundary app="Mercado" onReturnHome={() => actions.openApp('bdm')}>
+    <MarketWorkspace initialWorld={world} initialTab="scouting" />
+  </WorkspaceErrorBoundary>
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
   if (key === 'coach-finances') return <CoachFinancesScreen world={world} onLifestyle={actions.setCoachLifestyle ?? (() => undefined)} />

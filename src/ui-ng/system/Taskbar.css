@@ -197,3 +197,114 @@
   background: rgba(22, 217, 243, 0.12);
   color: var(--ng-cyan-bright);
 }
+
+
+/* Courtside grouped instances: a compact extension of the active shell.
+   The popover is portalled into .bdm-os-ng so these tokens follow dark/light
+   theme changes instead of inheriting generic body colors. */
+.ng-taskbar__app-slot {
+  display:flex;
+  align-items:center;
+  flex:0 0 auto;
+}
+
+.ng-taskbar__instance-popover {
+  position:fixed;
+  z-index:9999;
+  box-sizing:border-box;
+  width:min(320px,calc(100vw - 16px));
+  max-height:min(480px,65vh);
+  overflow-y:auto;
+  padding:5px;
+  border:1px solid var(--cs-line2,rgba(255,255,255,.16));
+  border-radius:10px;
+  background:var(--cs-s1,#17141f);
+  color:var(--cs-text,#f7f3ee);
+  box-shadow:0 12px 32px rgba(0,0,0,.28);
+  font-family:var(--cs-font,'Inter Tight',sans-serif);
+  scrollbar-width:thin;
+  scrollbar-color:var(--cs-line2,rgba(255,255,255,.16)) transparent;
+}
+
+.ng-taskbar__instance-row {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-height:40px;
+  padding:4px;
+  border:1px solid transparent;
+  border-radius:6px;
+}
+
+.ng-taskbar__instance-row:hover {background:var(--cs-s3,#282336);}
+.ng-taskbar__instance-row.is-active {
+  background:var(--cs-s2,#1e1a29);
+  border-color:var(--cs-line2,rgba(255,255,255,.16));
+}
+
+.ng-taskbar__instance-row > button:first-child {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  flex:1 1 auto;
+  min-height:32px;
+  padding:4px 7px;
+  border:0;
+  border-radius:5px;
+  background:transparent;
+  color:var(--cs-text,#f7f3ee);
+  cursor:pointer;
+  font:600 12px/1.2 var(--cs-font,'Inter Tight',sans-serif);
+  text-align:left;
+}
+
+.ng-taskbar__instance-row > button:first-child svg {
+  flex:0 0 auto;
+  color:var(--cs-text2,#c4bdd0);
+}
+
+.ng-taskbar__instance-row > button:first-child span {
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.ng-taskbar__instance-row > button:first-child:hover {
+  color:var(--cs-text,#f7f3ee);
+}
+
+.ng-taskbar__instance-close {
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  flex:0 0 auto;
+  border:1px solid var(--cs-line2,rgba(255,255,255,.16));
+  border-radius:5px;
+  background:transparent;
+  color:var(--cs-text2,#c4bdd0);
+  cursor:pointer;
+  font:700 19px/1 var(--cs-font,'Inter Tight',sans-serif);
+}
+
+.ng-taskbar__instance-close:hover {
+  color:var(--cs-negative,#ff5470);
+  border-color:var(--cs-negative,#ff5470);
+  background:color-mix(in srgb,var(--cs-negative,#ff5470) 9%,transparent);
+}
+
+.ng-taskbar__instance-popover button:focus-visible,
+.ng-taskbar__app-slot > .ng-taskbar__app:focus-visible {
+  outline:2px solid var(--cs-lime,#d4ff3a);
+  outline-offset:2px;
+}
+
+.bdm-os-ng[data-bdm-courtside-theme='light'] .ng-taskbar__instance-popover {
+  box-shadow:0 12px 30px rgba(25,16,30,.13);
+}
+
+/* Hovering the existing app icon is the only visual trigger, no count badge. */
+.bdm-os-ng[data-bdm-courtside-shell='true'] .ng-taskbar__app-slot > .ng-taskbar__app[aria-expanded='true'] {
+  color:var(--cs-text);
+}

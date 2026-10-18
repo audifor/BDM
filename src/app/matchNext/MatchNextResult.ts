@@ -2,6 +2,7 @@ import type { GameWorld } from '@/domain/world'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { MatchResolution, MatchStatLog, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import type { MatchNextEvent, MatchSetup, MatchState } from '@/engine/match-next'
+import { observedShotZones, observedShotZonesForBox } from './ShotZoneEvidence'
 
 export type MatchNextTeamStats = Omit<PlayerGameStatsSnapshot, 'playerId' | 'secondsPlayed' | 'plusMinus'>
 
@@ -103,6 +104,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
   const homePoints = sumStat(result.playerStats.filter((line) => world.teams[game.homeTeamId]!.rosterPlayerIds.includes(line.playerId)), 'points')
   const awayPoints = sumStat(result.playerStats.filter((line) => world.teams[game.awayTeamId]!.rosterPlayerIds.includes(line.playerId)), 'points')
   if (homePoints !== result.score.home || awayPoints !== result.score.away) throw new Error(`Match Next player points do not match final score: ${homePoints}-${awayPoints} vs ${result.score.home}-${result.score.away}`)
+  const zoneEvidence = observedShotZones(result.events)
   return {
     gameId: game.id,
     competitionId: game.competitionId,
@@ -114,6 +116,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
     playerLines: result.playerStats.map((stats) => {
       const isHome = world.teams[game.homeTeamId]!.rosterPlayerIds.includes(stats.playerId)
       const teamId = isHome ? game.homeTeamId : game.awayTeamId
+      const shotZones = observedShotZonesForBox(zoneEvidence.get(stats.playerId), stats)
       return {
         playerId: stats.playerId,
         teamId,
@@ -121,6 +124,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
         isHome,
         started: result.finalState.players.some((player) => player.playerId === stats.playerId && player.started === true),
         stats: { ...stats },
+        ...(shotZones === undefined ? {} : { shotZones }),
       }
     }),
     ...(resolution === undefined ? {} : { resolution }),

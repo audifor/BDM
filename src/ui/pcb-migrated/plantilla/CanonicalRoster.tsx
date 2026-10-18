@@ -2,6 +2,11 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
 import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
+import { PLAYER_TRUTH_RATING_KEYS, ratingKnowledgeDimensionFor } from '@/domain/player/PlayerTruthCatalog'
+import { courtsideFamilyColumnIds, COURTSIDE_ATTRIBUTE_FAMILIES, courtsideAttributeLabel } from '@/ui-ng/applications/roster/rosterCourtsideCategories'
+import { RosterUnknownMark } from '@/ui-ng/applications/roster/components/RosterUnknownMark'
+import { rosterRatingDisplay, rosterRatingExportValue, rosterRatingSortValue } from '@/ui-ng/applications/roster/rosterRatingPresentation'
+import { CourtsideRosterRolePicker } from '@/ui-ng/applications/roster/components/CourtsideRosterRolePicker'
 import { getPlayerContractStatus } from "@/domain/contract";
 import { formatInjuryKind } from "@/domain/injury";
 import {
@@ -35,6 +40,8 @@ import type { RosterNgSessionBridge } from "@/ui-ng/applications/roster/rosterWo
 import { buildRosterStaffComments } from "@/ui-ng/applications/roster/buildRosterStaffComments";
 import { RosterRowInspector } from "@/ui-ng/applications/roster/components/RosterRowInspector";
 import { RosterStaffComments } from "@/ui-ng/applications/roster/components/RosterStaffComments";
+import { buildRosterInspectorSeasonStats } from '@/ui-ng/applications/roster/buildRosterInspectorSeasonStats';
+import { CourtsideRosterTable } from '@/ui-ng/applications/roster/components/CourtsideRosterTable';
 
 import "./CanonicalRoster.css";
 
@@ -195,6 +202,9 @@ export function CanonicalRoster({
   onViewChange,
   rosterSection = "overview",
   sessionBridge,
+  v4Mode = false,
+  rowPredicate,
+  rosterCandidates,
   team,
   variant = "legacy",
   world,
@@ -207,6 +217,9 @@ export function CanonicalRoster({
   readonly onViewChange?: (view: string) => void;
   readonly rosterSection?: string;
   readonly sessionBridge?: RosterNgSessionBridge;
+  readonly v4Mode?: boolean;
+  readonly rowPredicate?: (player: Player) => boolean;
+  readonly rosterCandidates?: readonly Player[];
   readonly team: { readonly id: TeamId; readonly name: string };
   readonly variant?: CanonicalRosterVariant;
   readonly world: GameWorld;
@@ -226,7 +239,7 @@ export function CanonicalRoster({
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const viewMenuId = useId();
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
-  const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
+  const roster = useMemo(() => rosterCandidates ?? getTeamRoster(world, team.id), [world, team.id, rosterCandidates]);
   const rows = useMemo(() => {
     const filteredBySection = isNg
       ? roster
@@ -235,11 +248,10 @@ export function CanonicalRoster({
             .toLocaleLowerCase()
             .includes(query.trim().toLocaleLowerCase()),
         );
-    if (isNg && sessionBridge !== undefined) {
-      return filterRosterByPosition(filteredBySection, positionFilter);
-    }
-    return filteredBySection;
-  }, [isNg, positionFilter, query, roster, sessionBridge]);
+    const positioned = isNg && sessionBridge !== undefined
+      ? filterRosterByPosition(filteredBySection, positionFilter) : filteredBySection;
+    return rowPredicate === undefined ? positioned : positioned.filter(rowPredicate);
+  }, [isNg, positionFilter, query, roster, sessionBridge, rowPredicate]);
   const openPlayer = (player: Player) =>
     onOpenEntity?.({
       type: "player",
@@ -250,6 +262,22 @@ export function CanonicalRoster({
     () => (isNg ? buildRosterRatingEvaluationLookup(world, team.id) : undefined),
     [isNg, world, team.id],
   );
+  const seasonStatistics = useMemo(() => new Map(roster.map(player =>
+    [player.id, buildRosterInspectorSeasonStats(world, player.id)])), [roster, world]);
+  const performanceColumns = useMemo<readonly DataGridColumn<Player>[]>(() =>
+    ['MIN','PTS','REB','AST','VAL','+/-'].map(label => ({
+      id: 'season-' + label,
+      label,
+      defaultWidth: 72,
+      minWidth: 56,
+      numeric: true,
+      sortable: true,
+      value: player => {
+        const value = seasonStatistics.get(player.id)?.find(row => row.label === label)?.value;
+        return value === undefined || value === '—' ? undefined : Number(value);
+      },
+      render: player => seasonStatistics.get(player.id)?.find(row => row.label === label)?.value ?? '—',
+    })), [seasonStatistics]);
   const columns = useMemo<readonly DataGridColumn<Player>[]>(
     () => {
       const summaryColumns =
@@ -332,15 +360,32 @@ export function CanonicalRoster({
           </span>
         ),
       },
+      ...(v4Mode ? [{
+        id:'club-presence',
+        label:'CLUB',
+        defaultWidth:125,minWidth:88,sortable:true,
+        value: player=>world.teams[team.id]?.rosterPlayerIds.includes(player.id) ? 'En plantilla' : 'Fuera con contrato',
+        render:player=><span className="courtside-roster__membership">
+          {world.teams[team.id]?.rosterPlayerIds.includes(player.id)?'En plantilla':'Fuera con contrato'}
+        </span>,
+      } as DataGridColumn<Player>] : []),
       {
         id: "rotation",
         label: "ROL",
-        defaultWidth: 88,
-        minWidth: 72,
+        defaultWidth: v4Mode ? 155 : 88,
+        minWidth: v4Mode ? 130 : 72,
         sortable: true,
         value: (player) => getLineupSlotForPlayer(lineup, player.id) ?? "",
         render: (player) => {
           const currentSlot = getLineupSlotForPlayer(lineup, player.id);
+          if (v4Mode) {
+            return <CourtsideRosterRolePicker
+              name={player.firstName+' '+player.lastName} slot={currentSlot}
+              disabled={onLineupSlotChange===undefined || !world.teams[team.id]?.rosterPlayerIds.includes(player.id)}
+              onAssign={slot=>onLineupSlotChange?.(slot,player.id)}
+              onClear={()=>{if(currentSlot!==undefined)onLineupSlotClear?.(currentSlot)}}
+            />;
+          }
           return (
             <select
               aria-label={`Rotación ${player.firstName} ${player.lastName}`}
@@ -415,7 +460,7 @@ export function CanonicalRoster({
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
           return contract === undefined
-            ? "Beca"
+            ? (v4Mode ? "No consta" : "Beca")
             : compactMoney(contract.compensation.annualSalary);
         },
       },
@@ -438,7 +483,7 @@ export function CanonicalRoster({
         sortable: true,
         value: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
-          if (contract === undefined) return "No active contract";
+          if (contract === undefined) return v4Mode ? "No consta contrato" : "No active contract";
           const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
           const hasSuccessor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
           const hasNegotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
@@ -446,7 +491,7 @@ export function CanonicalRoster({
         },
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
-          if (contract === undefined) return <span>No active contract</span>;
+          if (contract === undefined) return <span>{v4Mode ? "No consta contrato" : "No active contract"}</span>;
           const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
           const successor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
           const negotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
@@ -455,11 +500,23 @@ export function CanonicalRoster({
         },
       },
       ...summaryColumns,
+      ...performanceColumns,
       ...ratingColumns(OFFENSE_RATING_KEYS),
       ...ratingColumns(BRAIN_RATING_KEYS),
       ...ratingColumns(DEFENSE_RATING_KEYS),
       ...ratingColumns(PHYSICAL_RATING_KEYS),
       ...ratingColumns(BALL_HANDLING_RATING_KEYS),
+      ...(v4Mode && ratingEvaluationLookup !== undefined ? PLAYER_TRUTH_RATING_KEYS.map((key):DataGridColumn<Player>=>({
+        id:'truth-'+key, label: courtsideAttributeLabel(key),
+        defaultWidth:125,minWidth:85,numeric:true,sortable:true,
+        sortValue: player=>rosterRatingSortValue(ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))),
+        exportValue: player=>rosterRatingExportValue(ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))),
+        render: player=>{
+          const evaluation=ratingEvaluationLookup(player,ratingKnowledgeDimensionFor(key))
+          return evaluation.mode==='UNKNOWN' ? <RosterUnknownMark label={courtsideAttributeLabel(key)}/> :
+            <span className="courtside-roster__rating" title={courtsideAttributeLabel(key)}>{rosterRatingDisplay(evaluation)}</span>
+        },
+      })) : []),
       ...PERSONALITY_DIMENSIONS.map(
         (dimension): DataGridColumn<Player> => ({
           id: `personality-${dimension}`,
@@ -476,7 +533,9 @@ export function CanonicalRoster({
     },
     [
       isNg,
+      performanceColumns,
       lineup,
+      v4Mode,
       onLineupSlotChange,
       onLineupSlotClear,
       playerMenu,
@@ -499,8 +558,15 @@ export function CanonicalRoster({
       // Compact FM-like overview: core roster fields plus the established
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
-      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
+      columnIds: v4Mode
+        ? ["player", "position", "age", "rotation", "status", "height", "weight", "fatigue", "salary"]
+        : [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
     },
+    ...(v4Mode ? [{
+      id: 'performance',
+      name: 'ESTADÍSTICAS',
+      columnIds: [...baseColumnIds, 'season-MIN','season-PTS','season-REB','season-AST','season-VAL','season-+/-', 'fatigue'],
+    }] : []),
     {
       id: "offense",
       name: "OFENSIVA",
@@ -531,6 +597,19 @@ export function CanonicalRoster({
       name: "PSICO",
       columnIds: [...baseColumnIds, ...personalityColumnIds],
     },
+    ...(v4Mode ? COURTSIDE_ATTRIBUTE_FAMILIES.map(({id,name,family})=>({
+      id,name,columnIds:[...baseColumnIds, ...courtsideFamilyColumnIds(family)],
+    })) : []),
+    ...(v4Mode ? [{
+      id: 'contracts',
+      name: 'CONTRATOS',
+      columnIds: [...baseColumnIds, 'salary','expiry','contract-plan'],
+    },
+    {
+      id: 'development',
+      name: 'DESARROLLO',
+      columnIds: [...baseColumnIds, 'fatigue','height','weight', ...physicalColumnIds, ...brainColumnIds],
+    }] : []),
     {
       id: "custom",
       name: "PERSONALIZADA",
@@ -538,7 +617,7 @@ export function CanonicalRoster({
     },
   ];
   const selectedView =
-    views.find((view) => view.id === ratingView) ?? views[0]!;
+    [...views, ...(sessionBridge?.customViews ?? [])].filter((view) => view.id === ratingView).at(-1) ?? views[0]!;
 
   useEffect(() => {
     if (!viewMenuOpen) return
@@ -578,8 +657,17 @@ export function CanonicalRoster({
   };
   const inspectedPlayer = inspectedId === undefined ? undefined : rows.find((player) => player.id === inspectedId);
 
+  // Courtside owns its own grid UI and view-scoped storage. Legacy/NG remains untouched.
+  if (v4Mode) {
+    return <CourtsideRosterTable
+      key={selectedView.id} columns={columns} rows={rows} view={selectedView}
+      searchQuery={gridSearchQuery ?? query} selectedIds={currentSelection}
+      onSelectionChange={handleSelectionChange} onOpenPlayer={openPlayer}
+    />;
+  }
+
   return (
-    <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}`}>
+    <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}${v4Mode ? ' canonical-roster--v4' : ''}`}>
       <header className="canonical-roster__toolbar">
         <div className="canonical-roster__identity">
           {!isNg && (

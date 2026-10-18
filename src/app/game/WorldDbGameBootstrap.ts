@@ -1,3 +1,4 @@
+import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoach } from '@/domain/coach'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
@@ -77,7 +78,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     return createPlayer({
       id: playerIdFromString(source.playerId), personId: source.personId as never, firstName: person.firstName, lastName: person.lastName,
       gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
-      basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
+      basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ...(source.positionFamiliarity === undefined ? {} : { positionFamiliarity: source.positionFamiliarity }), ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
       bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
       development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.startDate),
     })
@@ -123,14 +124,15 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const organizationOwnership = (slice.organizationOwnership ?? []).map((record) => createOrganizationOwnership({ id: record.ownershipId, organizationId: record.organizationId, owner: record.ownerKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.ownerId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.ownerId) }, ownershipPercentage: record.ownershipPercentage, validFrom: record.validFrom, validTo: record.validTo }))
   const organizationInvestorInterests = (slice.organizationInvestorInterest ?? []).map((record) => createOrganizationInvestorInterest({ id: record.interestId, organizationId: record.organizationId, investor: record.investorKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.investorId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.investorId) }, interestType: record.interestType, status: record.status, openedOn: record.openedOn, closedOn: record.closedOn }))
   const playerRepertoireByPlayerId = Object.fromEntries(slice.players.flatMap((source) => source.repertoire === undefined ? [] : [[source.playerId, createPlayerRepertoire({ ...source.repertoire, playerId: source.playerId })]]))
-  const baseWorld = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities })
+  const coachRpgProfilesByCoachId = { [coach.id]: createInitialCoachRpgProfile() }
+  const baseWorld = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities, coachRpgProfilesByCoachId })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
   const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
   const games = importedGames.length === generatedGames.length
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
-  const world = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities })
+  const world = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities, coachRpgProfilesByCoachId })
   const withStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(world)))
   return attachWorldDbCompetitionRuntime(withStaffCareer, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
 }

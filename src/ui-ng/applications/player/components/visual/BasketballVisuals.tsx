@@ -27,6 +27,13 @@ export interface RadarAxis {
   readonly value: number
 }
 
+export interface RadarComparisonSeries {
+  readonly key: string
+  readonly label: string
+  readonly axes: Readonly<Partial<Record<RatingCategory, number>>>
+  readonly color: string
+}
+
 export interface AttributeRadarProps {
   readonly axes: readonly RadarAxis[]
   readonly selectedCategory?: RatingCategory | null
@@ -34,6 +41,12 @@ export interface AttributeRadarProps {
   readonly accent?: string
   /** Draws each axis value under its label, as the attributes board's reference does. */
   readonly showValues?: boolean
+  /** Optional canonical aggregate per family; no polygon is drawn when a family is unknown. */
+  readonly comparisonAxes?: Readonly<Partial<Record<RatingCategory, number>>> | null
+  /** Multiple independently enabled, fully known comparative profiles. */
+  readonly comparisonSeries?: readonly RadarComparisonSeries[]
+  /** Courtside framing enlarges the active radar without affecting legacy placements. */
+  readonly courtsideFraming?: boolean
 }
 
 export function AttributeRadar({
@@ -42,30 +55,44 @@ export function AttributeRadar({
   onCategorySelect,
   accent = 'var(--ng-cyan)',
   showValues = false,
+  comparisonAxes = null,
+  comparisonSeries = [],
+  courtsideFraming = false,
 }: AttributeRadarProps) {
   const total = axes.length
+  // Increase the drawing radius only in the approved Courtside frame.
+  const radarRadius = courtsideFraming ? 54 : MAX_RADIUS
   const gridLevels = [0.25, 0.5, 0.75, 1]
+
+  const comparisonPoints = comparisonAxes !== null && axes.every((axis) => {
+    const value = comparisonAxes[axis.key]
+    return typeof value === 'number' && Number.isFinite(value)
+  }) ? axes.map((axis, index) => {
+    const value = comparisonAxes[axis.key] ?? 0
+    const [x, y] = polarPoint(index, total, (value / 100) * radarRadius)
+    return x + ',' + y
+  }).join(' ') : null
 
   const polygonPoints = axes
     .map((axis, index) => {
-      const radius = (axis.value / 100) * MAX_RADIUS
+      const radius = (axis.value / 100) * radarRadius
       const [x, y] = polarPoint(index, total, radius)
       return `${x},${y}`
     })
     .join(' ')
 
   return (
-    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={`${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
-      <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={MAX_RADIUS} />
+    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={courtsideFraming ? '-25 -25 170 170' : `${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
+      <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={radarRadius} />
       {[0.4, 0.7, 1].map((level) => (
         <circle
           key={`scope-${level}`}
           cx={CENTER}
           cy={CENTER}
           fill="none"
-          r={MAX_RADIUS * level}
+          r={radarRadius * level}
           stroke="rgba(116, 150, 168, 0.16)"
-          strokeWidth="0.6"
+          strokeWidth={courtsideFraming ? 0.4 : 0.6}
         />
       ))}
 
@@ -74,22 +101,22 @@ export function AttributeRadar({
           key={level}
           fill="none"
           points={Array.from({ length: total }, (_, index) => {
-            const [x, y] = polarPoint(index, total, MAX_RADIUS * level)
+            const [x, y] = polarPoint(index, total, radarRadius * level)
             return `${x},${y}`
           }).join(' ')}
           stroke="rgba(116, 150, 168, 0.38)"
-          strokeWidth="1"
+          strokeWidth={courtsideFraming ? 0.65 : 1}
         />
       ))}
 
       {axes.map((axis, index) => {
-        const [x, y] = polarPoint(index, total, MAX_RADIUS)
+        const [x, y] = polarPoint(index, total, radarRadius)
         const isActive = selectedCategory === axis.key
         return (
           <line
             key={`spoke-${axis.key}`}
             stroke={isActive ? 'var(--ng-cyan-bright)' : 'rgba(116, 150, 168, 0.32)'}
-            strokeWidth={isActive ? 1.5 : 1}
+            strokeWidth={courtsideFraming ? (isActive ? 1.15 : 0.8) : (isActive ? 1.5 : 1)}
             x1={CENTER}
             x2={x}
             y1={CENTER}
@@ -98,16 +125,53 @@ export function AttributeRadar({
         )
       })}
 
-      <polygon
+      {courtsideFraming && (<polygon
         fill={accent}
-        fillOpacity="0.24"
+        fillOpacity={courtsideFraming ? 0.075 : 0.13}
         points={polygonPoints}
         stroke={accent}
-        strokeWidth="1.5"
-      />
+        strokeWidth={courtsideFraming ? 1.5 : 2.2}
+      />)}
+      {comparisonPoints !== null && (
+        <polygon
+          className="po-radar__comparison"
+          fill="none"
+          points={comparisonPoints}
+          stroke="var(--cs-orange)"
+          strokeDasharray="5 3"
+          strokeWidth={courtsideFraming ? 1.15 : 1.8}
+        />
+      )}
+      {comparisonSeries.filter((series) => axes.every((axis) => {
+        const value = series.axes[axis.key]
+        return typeof value === 'number' && Number.isFinite(value)
+      })).map((series, seriesIndex) => (
+        <polygon
+          key={series.key}
+          aria-label={series.label + ' comparison'}
+          fill="none"
+          points={axes.map((axis, index) => {
+            const radius = ((series.axes[axis.key] ?? 0) / 100) * radarRadius
+            const [x, y] = polarPoint(index, total, radius)
+            return x + ',' + y
+          }).join(' ')}
+          stroke={series.color}
+          strokeDasharray={seriesIndex === 0 ? '6 3' : seriesIndex === 1 ? '2 3' : '9 2 2 2'}
+          strokeWidth={courtsideFraming ? 1.15 : 2.2}
+          strokeLinejoin="round"
+        />
+      ))}
+
+      {!courtsideFraming && (<polygon
+        fill={accent}
+        fillOpacity={courtsideFraming ? 0.075 : 0.13}
+        points={polygonPoints}
+        stroke={accent}
+        strokeWidth={courtsideFraming ? 1.5 : 2.2}
+      />)}
 
       {axes.map((axis, index) => {
-        const radius = (axis.value / 100) * MAX_RADIUS
+        const radius = (axis.value / 100) * radarRadius
         const [x, y] = polarPoint(index, total, radius)
         const isActive = selectedCategory === axis.key
         return (
@@ -116,13 +180,16 @@ export function AttributeRadar({
             cx={x}
             cy={y}
             fill={isActive ? 'var(--ng-amber-bright)' : 'var(--ng-cyan)'}
-            r={isActive ? 3.5 : 3}
+            r={courtsideFraming ? (isActive ? 2.7 : 2.2) : (isActive ? 3.5 : 3)}
           />
         )
       })}
 
       {axes.map((axis, index) => {
-        const [lx, ly] = polarPoint(index, total, LABEL_RADIUS)
+        // Courtside draws on a larger canvas. Keep labels clear of the polygon
+        // while giving long names enough room inside the SVG viewBox.
+        const labelRadius = courtsideFraming ? 67 : LABEL_RADIUS
+        const [lx, ly] = polarPoint(index, total, labelRadius)
         const isActive = selectedCategory === axis.key
         return (
           <g
@@ -138,7 +205,7 @@ export function AttributeRadar({
             role="button"
             tabIndex={0}
           >
-            <path className="po-radar__hit" d={wedgePath(index, total, MAX_RADIUS + 8)} />
+            <path className="po-radar__hit" d={wedgePath(index, total, radarRadius + 8)} />
             <text
               className="po-radar__label"
               dominantBaseline="middle"

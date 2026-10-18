@@ -1,0 +1,27 @@
+name: Roster V4 scoped certification
+on:
+  push:
+    branches: [feat/bdm-ui-roster-v4]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/ui-ng/applications/roster/**'
+      - 'src/ui/pcb-migrated/plantilla/CanonicalRoster.tsx'
+      - '.github/workflows/roster-v4-check.yml'
+jobs:
+  roster-v4:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Frontend build
+        run: npm run build
+      - name: Roster-specific regressions
+        run: npx vitest run src/ui-ng/applications/roster/RosterWorkspace.test.tsx src/ui-ng/applications/roster/rosterV4Filters.test.ts src/ui/pcb-migrated/plantilla/CanonicalRoster.test.ts --maxWorkers=2 --no-file-parallelism

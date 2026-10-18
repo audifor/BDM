@@ -5,6 +5,8 @@ import './player-attributes.css'
 import './player-attributes-board.css'
 import './player-performance.css'
 import './player-performance-board.css'
+import './player-courtside-performance.css'
+import './player-courtside-development.css'
 import './player-contract.css'
 import './player-medical.css'
 import './player-medical-board.css'
@@ -15,7 +17,15 @@ import './player-history-board.css'
 import './player-compare.css'
 import './player-scouting.css'
 import './player-scouting-board.css'
+import './player-scouting-courtside.css'
 import './player-responsive.css'
+import './player-courtside-overview.css'
+import './player-courtside-attributes.css'
+import './player-courtside-opponent.css'
+import './player-courtside-typography.css'
+import './player-courtside-header-compact.css'
+import './player-courtside-identity-unified.css'
+import './player-courtside-development-v2.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -44,19 +54,10 @@ import {
 } from '@/ui-ng/applications/player/playerStructuralData'
 import { PlayerAttributesView } from '@/ui-ng/applications/player/views/PlayerAttributesView'
 import { PlayerOverviewView } from '@/ui-ng/applications/player/views/PlayerOverviewView'
-import {
-  ContractInspectorContent,
-  PlayerContractView,
-} from '@/ui-ng/applications/player/views/PlayerContractView'
+import { PlayerContractView } from '@/ui-ng/applications/player/views/PlayerContractView'
 import { PlayerPerformanceView } from '@/ui-ng/applications/player/views/PlayerPerformanceView'
-import {
-  MedicalInspectorContent,
-  PlayerMedicalView,
-} from '@/ui-ng/applications/player/views/PlayerMedicalView'
-import {
-  DevelopmentInspectorContent,
-  PlayerDevelopmentView,
-} from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
+import { PlayerMedicalView } from '@/ui-ng/applications/player/views/PlayerMedicalView'
+import { PlayerDevelopmentView } from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
 import {
   PlayerHistoryView,
 } from '@/ui-ng/applications/player/views/PlayerHistoryView'
@@ -68,8 +69,6 @@ import { resolveBdmPlayerHeightMode } from '@/ui-ng/system/responsive/breakpoint
 import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 
 import { syncPlayerViewQueryFromApps } from '@/ui-ng/workspace/workspaceApps'
-import { TalentOperationsNav } from '@/ui-ng/applications/talent/TalentOperationsNav'
-import { TalentPlayerPathwayBand } from '@/ui-ng/applications/talent/TalentPlayerPathwayBand'
 
 function PlayerWorkspaceShell({
   data,
@@ -291,6 +290,7 @@ function PlayerWorkspaceLayout({
   return (
     <div
       className="po-root"
+      data-bdm-player-overview={activeView === 'overview' ? 'true' : undefined}
       data-bdm-player-height={playerSize.height}
       data-bdm-player-height-mode={playerSize.height > 0 ? resolveBdmPlayerHeightMode(playerSize.height) : undefined}
       data-bdm-player-width={playerSize.width}
@@ -310,36 +310,10 @@ function PlayerWorkspaceLayout({
       >
         <WorkspaceBody
           inspector={
-            activeView === 'contract' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Contract Detail"
-              >
-                <ContractInspectorContent />
-              </InspectorPane>
-            ) : activeView === 'medical' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Medical Detail"
-              >
-                <MedicalInspectorContent />
-              </InspectorPane>
-            ) : activeView === 'development' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Development Detail"
-              >
-                <DevelopmentInspectorContent />
-              </InspectorPane>
-            ) : undefined
+            undefined
           }
           main={
             <div className="po-workspace-content" data-ng-region="player-workspace-content">
-              <TalentOperationsNav current="player" />
-              <TalentPlayerPathwayBand playerId={model!.identity.playerId} />
               {activeView === 'overview' && <PlayerOverviewView />}
               {activeView === 'attributes' && <PlayerAttributesView />}
               {activeView === 'performance' && <PlayerPerformanceView />}

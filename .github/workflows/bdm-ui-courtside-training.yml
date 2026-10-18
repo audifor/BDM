@@ -1,0 +1,31 @@
+name: Training Studio Courtside
+on:
+  push:
+    branches: ['feat/bdm-ui-courtside']
+    paths:
+      - 'src/ui-ng/applications/training/**'
+      - 'src/domain/training/**'
+      - 'src/domain/world/GameWorld.ts'
+      - 'src/engine/training/**'
+      - 'src/engine/calendar/CalendarEngine.ts'
+      - 'src/save/GameWorldSaveV4.ts'
+      - 'src/save/TrainingStudioPersistence.test.ts'
+      - 'src/ui-ng/workspace/WorkspaceHost.tsx'
+      - '.github/workflows/bdm-ui-courtside-training.yml'
+  pull_request:
+    branches: ['feat/bdm-ui-courtside']
+  workflow_dispatch:
+jobs:
+  validate-training:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx vitest run src/domain/training/TrainingStudioPlan.test.ts src/engine/training/MentoringEngine.test.ts src/save/TrainingStudioPersistence.test.ts src/ui-ng/applications/training/TrainingStudioWorkspace.test.tsx
+      - run: npm run build

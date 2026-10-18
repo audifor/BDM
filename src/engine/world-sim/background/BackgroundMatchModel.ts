@@ -1,5 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
+import type { MatchShotZoneBreakdown, MatchShotZoneId, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import { hashStringToSeed } from '@/engine/random'
 import type { MatchSetup } from '@/engine/match-next'
 import { deriveBackgroundFeatures, playerFeatureVector, rateFeatureVector, shotFeatureVector, type BackgroundMatchContext, type BackgroundPlayerInput, type BackgroundTeamFeatures } from './BackgroundFeatures'
@@ -47,6 +47,8 @@ export interface BackgroundMatchResult {
   readonly starters: { readonly home: readonly PlayerId[]; readonly away: readonly PlayerId[] }
   readonly squads: { readonly home: readonly PlayerId[]; readonly away: readonly PlayerId[] }
   readonly playerStats: readonly PlayerGameStatsSnapshot[]
+  /** Experimental modeled finer-zone allocation. The calibrated BG engine still resolves rim/mid/three. */
+  readonly playerShotZones?: Readonly<Partial<Record<PlayerId, MatchShotZoneBreakdown>>>
   readonly teamDetail: { readonly home: BackgroundTeamStats; readonly away: BackgroundTeamStats }
   readonly playerLoad: readonly BackgroundPlayerLoad[]
 }
@@ -143,10 +145,30 @@ function pick(s: Sampler, random: () => number, exclude = -1): number {
   return s.ids.find((id) => id !== exclude) ?? s.ids[0]!
 }
 
-type Line = { -readonly [K in keyof PlayerGameStatsSnapshot]: PlayerGameStatsSnapshot[K] } & { rimA: number; rimM: number; midA: number; midM: number; tripsDrawn: number }
-const emptyLine = (playerId: PlayerId): Line => ({ playerId, secondsPlayed: 0, points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, twoPointMade: 0, twoPointAttempted: 0, threePointMade: 0, threePointAttempted: 0, freeThrowsMade: 0, freeThrowsAttempted: 0, offensiveRebounds: 0, defensiveRebounds: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, foulsCommitted: 0, plusMinus: 0, rimA: 0, rimM: 0, midA: 0, midM: 0, tripsDrawn: 0 })
+type Line = { -readonly [K in keyof PlayerGameStatsSnapshot]: PlayerGameStatsSnapshot[K] } & { rimA: number; rimM: number; midA: number; midM: number; tripsDrawn: number; shotZoneCounts: Partial<Record<MatchShotZoneId, { made: number; attempted: number }>> }
+const emptyLine = (playerId: PlayerId): Line => ({ playerId, secondsPlayed: 0, points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, twoPointMade: 0, twoPointAttempted: 0, threePointMade: 0, threePointAttempted: 0, freeThrowsMade: 0, freeThrowsAttempted: 0, offensiveRebounds: 0, defensiveRebounds: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, foulsCommitted: 0, plusMinus: 0, rimA: 0, rimM: 0, midA: 0, midM: 0, tripsDrawn: 0, shotZoneCounts: {} })
+
+/**
+ * BG-v1 is calibrated for three areas (rim / mid / three), not nine.
+ * Conditional partitions below are provisional geometry-informed hypotheses,
+ * NEVER claimed as observed FAST frequencies. They are deterministic without
+ * additional RNG draws, preserving the original calibrated match score.
+ * Refit empirically against shotReleased zone corpus before claiming 9-zone
+ * calibration and bump this presentation-only model version.
+ */
+export const BACKGROUND_SHOT_ZONE_MODEL_VERSION = 'bg-zone-conditional-provisional-v1'
+function shotSubzoneKey(version: string, gameId: string, playerId: PlayerId, attempt: number, zone: string): string {
+  return version + ':' + gameId + ':' + playerId + ':' + attempt + ':' + zone
+}
+export function backgroundSubzone(group: 'rim' | 'mid' | 'three', key: string): MatchShotZoneId {
+  const value = hashStringToSeed(BACKGROUND_SHOT_ZONE_MODEL_VERSION + ':' + key) / 0x100000000
+  if (group === 'rim') return value < 0.45 ? 'RESTRICTED' : value < 0.80 ? 'RIM' : 'SHORT_PAINT'
+  if (group === 'mid') return value < 0.26 ? 'FLOATER_RANGE' : value < 0.80 ? 'MIDRANGE' : 'LONG_MIDRANGE'
+  return value < 0.15 ? 'CORNER_THREE' : value < 0.97 ? 'ABOVE_BREAK_THREE' : 'DEEP'
+}
 
 interface TeamRun {
+  readonly gameId: string
   readonly features: BackgroundTeamFeatures
   readonly players: readonly BackgroundPlayerInput[]
   readonly lines: Line[]
@@ -167,8 +189,8 @@ export function simulateBackgroundMatch(setup: MatchSetup, params: BackgroundMod
   const features = deriveBackgroundFeatures(setup)
   const random = stream(hashStringToSeed(`world-sim-background-${params.version}:${setup.matchSeed}:${setup.gameId}`))
   const context = features.context
-  const home = prepareTeam(features.home, features.away, context, params, random)
-  const away = prepareTeam(features.away, features.home, context, params, random)
+  const home = prepareTeam(features.home, features.away, context, params, random, setup.gameId)
+  const away = prepareTeam(features.away, features.home, context, params, random, setup.gameId)
   // Pace: both teams' tendencies set the game's possessions per minute (one realised pace for the game, as FAST alternates possessions).
   const pace = (home.rates.pace + away.rates.pace) / 2
   const paceNoise = 1 + normal(random) * params.rates.pace.residualSd / Math.max(1e-6, params.rates.pace.intercept)
@@ -209,12 +231,13 @@ export function simulateBackgroundMatch(setup: MatchSetup, params: BackgroundMod
     starters: { home: [...setup.initialLineups.home], away: [...setup.initialLineups.away] },
     squads: { home: [...setup.homeSquad], away: [...setup.awaySquad] },
     playerStats: [...homeStats.lines, ...awayStats.lines],
+    playerShotZones: { ...homeStats.zones, ...awayStats.zones },
     teamDetail: { home: homeStats.detail, away: awayStats.detail },
     playerLoad: [...homeStats.load, ...awayStats.load],
   }
 }
 
-function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatures, context: BackgroundMatchContext, params: BackgroundModelParams, random: () => number): TeamRun {
+function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatures, context: BackgroundMatchContext, params: BackgroundModelParams, random: () => number, gameId: string): TeamRun {
   const players = team.players
   const vector = rateFeatureVector(team, opponent, context)
   const rates = {} as Record<TeamRate, number>
@@ -251,7 +274,7 @@ function prepareTeam(team: BackgroundTeamFeatures, opponent: BackgroundTeamFeatu
     rates[key] = Math.max(rate.min, Math.min(rate.max, rates[key] + normal(random) * rate.residualSd * 0.5))
   }
   return {
-    features: team, players, lines: players.map((player) => emptyLine(player.playerId)), minutes, samplers,
+    gameId, features: team, players, lines: players.map((player) => emptyLine(player.playerId)), minutes, samplers,
     zone, make,
     rates, points: 0, possessions: 0, trips: 0, fouls: players.map(() => 0),
   }
@@ -311,6 +334,9 @@ function playPossession(offense: TeamRun, defense: TeamRun, params: BackgroundMo
     const profile = offense.zone[shooter]!
     const zone = z < profile.rim ? 'rim' : z < profile.rim + profile.three ? 'three' : 'mid'
     const made = random() < offense.make[shooter]![zone]
+    const subzone = backgroundSubzone(zone, shotSubzoneKey(params.version, offense.gameId, line.playerId, line.fieldGoalsAttempted, zone))
+    const prior = line.shotZoneCounts[subzone] ?? { made: 0, attempted: 0 }
+    line.shotZoneCounts[subzone] = { made: prior.made + (made ? 1 : 0), attempted: prior.attempted + 1 }
     line.fieldGoalsAttempted += 1
     if (zone === 'three') line.threePointAttempted += 1; else line.twoPointAttempted += 1
     if (zone === 'rim') line.rimA += 1
@@ -345,7 +371,7 @@ function playPossession(offense: TeamRun, defense: TeamRun, params: BackgroundMo
   }
 }
 
-interface FinishedTeam { readonly lines: PlayerGameStatsSnapshot[]; readonly detail: BackgroundTeamStats; readonly load: BackgroundPlayerLoad[] }
+interface FinishedTeam { readonly lines: PlayerGameStatsSnapshot[]; readonly detail: BackgroundTeamStats; readonly load: BackgroundPlayerLoad[]; readonly zones: Readonly<Partial<Record<PlayerId, MatchShotZoneBreakdown>>> }
 
 function finishTeam(team: TeamRun, overtimeMinutes: number, margin: number, context: BackgroundMatchContext, params: BackgroundModelParams): FinishedTeam {
   applyFoulTrouble(team, context, params)
@@ -358,13 +384,15 @@ function finishTeam(team: TeamRun, overtimeMinutes: number, margin: number, cont
   const gameMinutes = context.regulationMinutes + overtimeMinutes
   const lines: PlayerGameStatsSnapshot[] = []
   const load: BackgroundPlayerLoad[] = []
+  const zones: Partial<Record<PlayerId, MatchShotZoneBreakdown>> = {}
   const rim = { made: 0, attempted: 0 }
   const mid = { made: 0, attempted: 0 }
   const three = { made: 0, attempted: 0 }
   team.players.forEach((player, index) => {
     const line = team.lines[index]!
     rim.made += line.rimM; rim.attempted += line.rimA; mid.made += line.midM; mid.attempted += line.midA; three.made += line.threePointMade; three.attempted += line.threePointAttempted
-    const { rimA: _ra, rimM: _rm, midA: _ma, midM: _mm, tripsDrawn: _td, ...stats } = line
+    const { rimA: _ra, rimM: _rm, midA: _ma, midM: _mm, tripsDrawn: _td, shotZoneCounts, ...stats } = line
+    zones[player.playerId] = { provenance: 'MODELLED', modelVersion: BACKGROUND_SHOT_ZONE_MODEL_VERSION, counts: shotZoneCounts }
     lines.push({ ...stats, secondsPlayed: seconds[index]!, plusMinus: plusMinus[index]! })
     const played = seconds[index]! / 60
     const actions = {} as Record<ActionRate, number>
@@ -384,7 +412,7 @@ function finishTeam(team: TeamRun, overtimeMinutes: number, margin: number, cont
     const after = played <= 0 ? before : Math.max(0, Math.min(100, before + params.fatigue.perCourtMinute * played + params.fatigue.perBenchMinute * (gameMinutes - played) + params.fatigue.perEventLoad * eventLoad))
     load.push({ playerId: player.playerId, minutes: played, preMatchCareerFatigue: player.preMatchCareerFatigue, matchFatigueBefore: before, matchFatigueAfter: after, eventLoad, actions: counts })
   })
-  return { lines, detail: { possessions: team.possessions, fieldGoalsByZone: { rim, mid, three }, freeThrowTrips: team.trips }, load }
+  return { lines, detail: { possessions: team.possessions, fieldGoalsByZone: { rim, mid, three }, freeThrowTrips: team.trips }, load, zones }
 }
 
 /**

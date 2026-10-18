@@ -15,6 +15,7 @@ import { calculateStandings } from '@/engine/competition/standings'
 import type { MatchSetup } from '@/engine/match-next'
 import { simulateBackgroundMatch } from '@/engine/world-sim/background/BackgroundMatchModel'
 import { BACKGROUND_MODEL_V1 } from '@/engine/world-sim/background/backgroundModelV1'
+import { validateShotZoneBreakdown, MATCH_SHOT_ZONE_IDS } from '@/domain/stats/MatchStatLog'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { completeBackgroundMatch } from './BackgroundMatchCompletion'
 import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationDetailSettings } from './SimulationResolutionPolicy'
@@ -25,6 +26,31 @@ const world0 = firstGameDay(createNewGame())
 const setupFor = (world: GameWorld, index = 0, seed = 11): MatchSetup => port.prepare(world, getScheduledGamesToday(world)[index]!, seed)
 const withFormat = (world: GameWorld, format: typeof NBA_GAME_FORMAT): GameWorld => updateGameWorld(world, { competitions: Object.values(world.competitions).map((c) => ({ ...c, rules: { ...c.rules, gameFormat: format } })) })
 const minimal: SimulationDetailSettings = { ...DEFAULT_SIMULATION_DETAIL, level: 'MINIMAL' }
+
+describe('Nine-zone background evidence and Save V4 continuity', () => {
+  it('retains modeled source/version, exact 2PT/3PT totals and identical deterministic scores', { timeout: 120_000 }, () => {
+    const setup = setupFor(world0, 0, 721)
+    const result = simulateBackgroundMatch(setup)
+    const again = simulateBackgroundMatch(setup)
+    expect(result.score).toEqual(again.score)
+    expect(result.playerStats).toEqual(again.playerStats)
+    expect(result.playerShotZones).toEqual(again.playerShotZones)
+    expect(Object.keys(result.playerShotZones ?? {}).length).toBe(result.playerStats.length)
+    for (const line of result.playerStats) {
+      const breakdown = result.playerShotZones?.[line.playerId]
+      expect(breakdown?.provenance).toBe('MODELLED')
+      expect(breakdown?.modelVersion).toContain('provisional')
+      expect(Object.keys(breakdown?.counts ?? {}).every((id) => MATCH_SHOT_ZONE_IDS.includes(id as typeof MATCH_SHOT_ZONE_IDS[number]))).toBe(true)
+      expect(() => validateShotZoneBreakdown(breakdown!, line)).not.toThrow()
+    }
+    const completed = completeBackgroundMatch(world0, result)
+    const log = completed.matchStatLogsByGameId[setup.gameId]!
+    expect(log.playerLines.some((line) => line.shotZones?.provenance === 'MODELLED')).toBe(true)
+    const saved = serializeGameWorldV4(completed, completed.currentDate + 'T12:00:00.000Z')
+    const loaded = deserializeGameWorldV4(saved)
+    expect(loaded.matchStatLogsByGameId[setup.gameId]!.playerLines).toEqual(log.playerLines)
+  })
+})
 
 describe('WSR1 BACKGROUND match model', () => {
   it('is deterministic for (model version, setup, seed) and varies with the seed', () => {

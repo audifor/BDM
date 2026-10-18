@@ -10,9 +10,9 @@ import {
   type StaffRecommendationPresentationItem,
 } from '@/ui/staffRecommendationPresentation'
 
-import { FilterGroup, InspectorSection, MetricRow } from '@/ui-ng/applications/staff/StaffChrome'
+import { InspectorSection, MetricRow } from '@/ui-ng/applications/staff/StaffChrome'
 import { RECOMMENDATION_FAILURE_MESSAGES } from '@/ui-ng/applications/staff/staffWorkspaceModel'
-import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
 type AdvisoryFilter = 'open' | 'history'
 
@@ -37,77 +37,67 @@ export function StaffAdvisoryBoard({
   )
   const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0]
 
+  const pending=items.filter(item=>item.status==='PENDING').length
+  const info=items.filter(item=>item.status==='INFORMATIONAL').length
+  const accepted=items.filter(item=>item.status==='ACCEPTED').length
+  const dismissed=items.filter(item=>item.status==='DISMISSED').length
   return (
-    <div className="staff-workspace__stack">
-      <FilterGroup>
-        <button
-          aria-pressed={filter === 'open'}
-          className={`ng-btn ng-btn--toggle${filter === 'open' ? ' is-active' : ''}`}
-          onClick={() => {
-            setFilter('open')
-            setFailureMessage(undefined)
-          }}
-          type="button"
-        >
-          Open
-        </button>
-        <button
-          aria-pressed={filter === 'history'}
-          className={`ng-btn ng-btn--toggle${filter === 'history' ? ' is-active' : ''}`}
-          onClick={() => {
-            setFilter('history')
-            setFailureMessage(undefined)
-          }}
-          type="button"
-        >
-          History
-        </button>
-      </FilterGroup>
-      {filtered.length === 0 ? (
-        <p className="staff-workspace__empty">
-          {filter === 'open' ? 'No open recommendations.' : 'No resolved recommendations yet.'}
-        </p>
-      ) : (
-        <div className="staff-workspace__split">
-          <div className="staff-workspace__panel ng-holo-panel">
-            <NgPrecisionTable
-              className="staff-workspace__table"
-              columns={ngTableColumns(filtered, [
-                ngCol('date', 'Date', (row) => row.decidedOn, { value: (row) => row.decidedOn }),
-                ngCol('domain', 'Domain', (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain], {
-                  value: (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain],
-                }),
-                ngCol('recommendation', 'Recommendation', (row) => row.summary, { value: (row) => row.summary }),
-                ngCol('from', 'From', (row) => row.staffName, { value: (row) => row.staffName }),
-                ngCol('quality', 'Quality', (row) => staffQualityBand(row.qualityScore), {
-                  value: (row) => staffQualityBand(row.qualityScore),
-                }),
-                ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
-              ])}
-              gridId="ng-staff-advisory"
-              onSelectionChange={(ids) => {
-                if (ids[0]) {
-                  setSelectedId(ids[0])
-                  setFailureMessage(undefined)
-                }
-              }}
-              rows={filtered}
-              selectedId={selected?.id}
-            />
-          </div>
-          {selected !== undefined ? (
-            <AdvisoryInspector
-              item={selected}
-              key={selected.id}
-              onAccept={onAcceptRecommendation}
-              onDismiss={onDismissRecommendation}
-              onFailure={setFailureMessage}
-            />
-          ) : null}
+    <section className="cs-staff-advisory" aria-label="Sala de decisiones del cuerpo técnico">
+      <header className="cs-staff-advisory__header">
+        <div>
+          <span className="cs-staff-eyebrow">CRITERIO DEL CUERPO TÉCNICO / TRAZABILIDAD</span>
+          <h1>SALA DE DECISIONES</h1>
+          <p>Decide sobre recomendaciones reales y consulta quién propuso cada medida.</p>
         </div>
-      )}
-      {failureMessage !== undefined ? <p className="staff-workspace__failure">{failureMessage}</p> : null}
-    </div>
+        <div className="cs-staff-advisory__counts" aria-label="Estado de recomendaciones">
+          <span><strong>{pending}</strong> PENDIENTES</span>
+          <span><strong>{info}</strong> INFORMATIVAS</span>
+          <span><strong>{accepted}</strong> ACEPTADAS</span>
+          <span><strong>{dismissed}</strong> DESCARTADAS</span>
+        </div>
+      </header>
+      <nav className="cs-staff-advisory__filters" aria-label="Filtrar recomendaciones">
+        <button type="button" aria-pressed={filter==='open'} onClick={()=>{
+          setFilter('open');setFailureMessage(undefined)}}>POR DECIDIR <strong>{pending+info}</strong></button>
+        <button type="button" aria-pressed={filter==='history'} onClick={()=>{
+          setFilter('history');setFailureMessage(undefined)}}>HISTORIAL <strong>{accepted+dismissed}</strong></button>
+      </nav>
+      {filtered.length===0?
+        <div className="cs-staff-advisory__empty">
+          <strong>{filter==='open'?'NINGUNA DECISIÓN PENDIENTE':'TODAVÍA NO HAY DECISIONES RESUELTAS'}</strong>
+          <p>{filter==='open'?'Cuando tus empleados emitan recomendaciones, aparecerán aquí con autor y evidencias reales.':
+            'Las recomendaciones aceptadas y descartadas se registrarán aquí.'}</p>
+        </div>:
+        <div className="cs-staff-advisory__layout">
+          <div className="cs-staff-advisory__inbox" aria-label="Recomendaciones del equipo">
+            {filtered.map(item=><button type="button" key={item.id}
+              className={'cs-staff-advisory__item'+(selected?.id===item.id?' is-selected':'')}
+              aria-pressed={selected?.id===item.id} onClick={()=>{
+                setSelectedId(item.id);setFailureMessage(undefined)}}>
+              <div className="cs-staff-advisory__item-top">
+                <span>{RESPONSIBILITY_DOMAIN_LABELS[item.domain]}</span>
+                <span className={'cs-staff-advisory__status cs-staff-advisory__status--'+item.status.toLowerCase()}>
+                  {item.status==='PENDING'?'PENDIENTE':item.status==='INFORMATIONAL'?'INFORMATIVA':
+                    item.status==='ACCEPTED'?'ACEPTADA':'DESCARTADA'}</span>
+              </div>
+              <strong>{item.title}</strong>
+              <p>{item.summary}</p>
+              <div className="cs-staff-advisory__item-bottom">
+                <span>{item.staffName} · {staffQualityBand(item.qualityScore)}</span><time>{item.decidedOn}</time>
+              </div>
+            </button>)}
+          </div>
+          {selected!==undefined?<div className="cs-staff-advisory__detail">
+            <AdvisoryInspector key={selected.id} item={selected}
+              onAccept={onAcceptRecommendation} onDismiss={onDismissRecommendation} onFailure={setFailureMessage}/>
+            <button type="button" className="cs-staff-advisory__profile" onClick={()=>navigateToStaff(selected.staffId)}>
+              VER PERFIL DE {selected.staffName.toUpperCase()} ↗
+            </button>
+          </div>:null}
+        </div>}
+      {failureMessage!==undefined?<p className="staff-workspace__failure" role="alert">{failureMessage}</p>:null}
+      <p className="cs-staff-advisory__caveat">Las opiniones están basadas en el conocimiento disponible para cada empleado; no implican acierto garantizado ni muestran datos ocultos del mundo.</p>
+    </section>
   )
 }
 
@@ -140,18 +130,18 @@ function AdvisoryInspector({
 
   return (
     <aside className="staff-workspace__inspector ng-holo-panel">
-      <p className="staff-workspace__eyebrow">Recommendation</p>
+      <p className="staff-workspace__eyebrow">RECOMENDACIÓN</p>
       <h2 className="staff-workspace__inspector-title">{item.title}</h2>
       <dl className="staff-workspace__metrics">
-        <MetricRow label="Domain" value={RESPONSIBILITY_DOMAIN_LABELS[item.domain]} />
-        <MetricRow label="Status" value={item.status} />
-        <MetricRow label="Date" value={item.decidedOn} />
-        <MetricRow label="From" value={item.staffName} />
-        {item.staffRole !== undefined ? <MetricRow label="Role" value={STAFF_ROLE_LABELS[item.staffRole]} /> : null}
-        <MetricRow label="Quality" value={staffQualityBand(item.qualityScore)} />
+        <MetricRow label="Área" value={RESPONSIBILITY_DOMAIN_LABELS[item.domain]} />
+        <MetricRow label="Estado" value={item.status} />
+        <MetricRow label="Fecha" value={item.decidedOn} />
+        <MetricRow label="Autor" value={item.staffName} />
+        {item.staffRole !== undefined ? <MetricRow label="Puesto" value={STAFF_ROLE_LABELS[item.staffRole]} /> : null}
+        <MetricRow label="Criterio" value={staffQualityBand(item.qualityScore)} />
       </dl>
 
-      <InspectorSection title="Details">
+      <InspectorSection title="Fundamentos">
         <p className="staff-workspace__note">{item.summary}</p>
         <dl className="staff-workspace__metrics">
           {item.detailRows.map((row) => (

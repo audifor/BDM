@@ -6,6 +6,11 @@ import {
   FolderOpen, Book, BookOpen, PlusSquare, Settings, Database, CheckCircle
 } from './PcbTacticsIcons';
 import { createEntityId } from '@/domain/ids';
+import type { Player } from '@/domain/player';
+import type { GameWorld } from '@/domain/world';
+import type { MatchShotZoneId } from '@/domain/stats/MatchStatLog';
+import { TacticalLabPanel } from './TacticalLabPanel';
+import { tacticalZoneTarget } from './TacticalLabModel';
 import type { Playbook as DomainPlaybook, SavedPlay as DomainSavedPlay } from '@/domain/tactics';
 
 /** Deterministic, stable-ID play-frame analysis, replacing the removed PcbPlaybookManager mock DB's analyzer. */
@@ -40,6 +45,11 @@ interface TacticsCreatorProps {
   onSavePlaybook?: (playbook: DomainPlaybook) => void;
   onDeletePlaybook?: (playbookId: string) => void;
   onSaveCustomPlay?: (play: any) => void;
+  labWorld?: GameWorld;
+  labRoster?: readonly Player[];
+  labDefaultPlayerIds?: readonly string[];
+  creatorMode?: 'edit' | 'lab';
+  onLabSlotAssign?: (slot: 'PG' | 'SG' | 'SF' | 'PF' | 'C', playerId: string) => void;
 }
 
 // --- TIPOS ---
@@ -131,12 +141,12 @@ function toLocalPlaybook(playbook: DomainPlaybook): LocalPlaybook {
 // --- TEMA VISUAL ---
 const THEME = {
   bg: '#1e293b',
-  courtLines: '#64748b',
-  moveColor: '#ffffff',
-  passColor: '#fbbf24',
-  dribbleColor: '#38bdf8',
-  screenColor: '#ef4444',
-  defColor: '#ef4444',
+  courtLines: 'var(--ct-draw-court, #64748b)',
+  moveColor: 'var(--ct-draw-cut, #ffffff)',
+  passColor: 'var(--ct-draw-pass, #fbbf24)',
+  dribbleColor: 'var(--ct-draw-dribble, #38bdf8)',
+  screenColor: 'var(--ct-draw-screen, #ef4444)',
+  defColor: 'var(--ct-draw-defense, #ef4444)',
 };
 
 // --- DATOS INICIALES ---
@@ -148,7 +158,7 @@ const INITIAL_PLAYERS = [
   { id: 5, label: '5', role:'C', x: 340, y: 150 },
 ];
 
-export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay }: TacticsCreatorProps) {
+export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay, labWorld, labRoster = [], labDefaultPlayerIds = [], creatorMode, onLabSlotAssign }: TacticsCreatorProps) {
   // ESTADO
   const [playName, setPlayName] = useState("Nueva Jugada");
   const [frames, setFrames] = useState<FrameData[]>([{
@@ -162,6 +172,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('select');
+  const [labMode, setLabMode] = useState<'edit' | 'lab'>(creatorMode ?? 'edit');
+  useEffect(() => { if (creatorMode !== undefined) setLabMode(creatorMode); }, [creatorMode]);
+  const [labSlot, setLabSlot] = useState(1);
+  const [labZone, setLabZone] = useState<MatchShotZoneId>('CORNER_THREE');
+  const [labAssignments, setLabAssignments] = useState<Record<number,string>>({});
 
   // GESTIÓN ARCHIVOS — derived directly from the canonical GameWorld-scoped collections passed in as
   // props, shared with Jugadas; a save/delete calls the canonical callback, and the next render
@@ -194,13 +209,20 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
 
   // ProtecciÃ³n extra: Si por algÃºn motivo no hay frame, no renderizamos nada (evita crash)
   if (!currentFrame) return null;
+  const labToken = currentFrame.players.find(p => p.id === labSlot);
+  const labTarget = labToken ? tacticalZoneTarget(labZone, labToken) : null;
+  const assignedLabPlayerId = (onLabSlotAssign ? labDefaultPlayerIds[labSlot-1] : labAssignments[labSlot] ?? labDefaultPlayerIds[labSlot-1]) ?? '';
 
   // --- MATEMÃTICAS ---
   const getSVGPoint = (e: React.MouseEvent | MouseEvent) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    const CTM = svgRef.current.getScreenCTM();
-    if (!CTM) return { x: 0, y: 0 };
-    return { x: (e.clientX - CTM.e) / CTM.a, y: (e.clientY - CTM.f) / CTM.d };
+    const svg = svgRef.current;
+    const matrix = svg?.getScreenCTM();
+    if (!svg || !matrix) return { x: 0, y: 0 };
+    const point = svg.createSVGPoint();
+    point.x = e.clientX;
+    point.y = e.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    return { x: Math.max(0, Math.min(500, local.x)), y: Math.max(0, Math.min(470, local.y)) };
   };
   const pointsToCurvedPath = (points: Position[]) => { if (points.length < 2) return ''; let d = `M ${points[0].x} ${points[0].y}`; for (let i = 1; i < points.length; i++) d += ` L ${points[i].x} ${points[i].y}`; return d; };
   const pointsToStraightPath = (points: Position[]) => { if (points.length < 2) return ''; const start = points[0]; const end = points[points.length - 1]; return `M ${start.x} ${start.y} L ${end.x} ${end.y}`; };
@@ -279,11 +301,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   };
 
   // --- ACTIONS ---
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.PointerEvent<SVGSVGElement>) => {
     const pos = getSVGPoint(e);
     if (activeTool === 'select') {
         const player = currentFrame.players.find(p => Math.hypot(p.x - pos.x, p.y - pos.y) < 30);
-        if (player) { setDragging({ type: 'player', id: player.id }); return; }
+        if (player) { setLabSlot(player.id); setDragging({ type: 'player', id: player.id }); return; }
         if (currentFrame.ballOwnerId === null && Math.hypot(currentFrame.ballPosition.x - pos.x, currentFrame.ballPosition.y - pos.y) < 20) { setDragging({ type: 'ball' }); return; }
         const defIndex = currentFrame.defenders.findIndex(d => Math.hypot(d.x - pos.x, d.y - pos.y) < 30);
         if (defIndex !== -1) { setDragging({ type: 'defender', index: defIndex }); return; }
@@ -306,7 +328,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
     }
   };
 
-  const onMouseMove = (e: React.MouseEvent) => {
+  const onMouseMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const pos = getSVGPoint(e);
     if (dragging) {
         if (dragging.type === 'player') {
@@ -334,17 +356,35 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
         setDragging(null); return;
     }
     if (isDrawing) {
-        if (currentPathPoints.length > 1) { 
+        if (currentPathPoints.length > 1) {
+            let finishedPoints = currentPathPoints;
             if (activeTool === 'pass') {
-                const last = currentPathPoints[currentPathPoints.length-1];
-                const target = currentFrame.players.find(p => Math.hypot(p.x - last.x, p.y - last.y) < 30);
-                if (target) { const newPoints = [...currentPathPoints]; newPoints[newPoints.length-1] = {x: target.x, y: target.y}; setCurrentPathPoints(newPoints); }
+                const last = finishedPoints[finishedPoints.length - 1];
+                const receiver = currentFrame.players.find(p => Math.hypot(p.x - last.x, p.y - last.y) < 30);
+                if (receiver) {
+                    finishedPoints = [...finishedPoints];
+                    finishedPoints[finishedPoints.length - 1] = { x: receiver.x, y: receiver.y };
+                }
             }
-            const newPath: ActionPath = { id: Date.now(), type: activeTool as any, points: currentPathPoints, linkedId: drawingLinkedId };
+            const newPath: ActionPath = { id: Date.now(), type: activeTool as ActionPath['type'], points: finishedPoints, linkedId: drawingLinkedId };
             updateFrame({ paths: [...currentFrame.paths, newPath] });
         }
         setIsDrawing(false); setCurrentPathPoints([]); setDrawingLinkedId(undefined);
     }
+  };
+
+  const applyLabMovement = () => {
+    if (!labToken || !labTarget || Math.hypot(labToken.x-labTarget.x,labToken.y-labTarget.y)<25) return;
+    const path: ActionPath = {
+      id: Math.max(Date.now(), ...currentFrame.paths.map(p => p.id+1)),
+      linkedId: labToken.id,
+      type: currentFrame.ballOwnerId === labToken.id ? 'dribble' : 'move',
+      points: [{x:labToken.x,y:labToken.y},labTarget],
+    };
+    updateFrame({paths:[...currentFrame.paths,path]});
+    setIsPlaying(false);
+    setActiveTool('select');
+    setLabMode('edit');
   };
 
   const addFrame = () => {
@@ -363,7 +403,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
     }
   };
 
-  const updateFrame = (newData: Partial<FrameData>) => { const newFrames = [...frames]; newFrames[currentFrameIndex] = { ...currentFrame, ...newData }; setFrames(newFrames); };
+  const updateFrame = (newData: Partial<FrameData>) => {
+    const newFrames = [...frames];
+    newFrames[displayIndex] = { ...currentFrame, ...newData };
+    setFrames(rebuildFramesFrom(newFrames, displayIndex));
+  };
 
   /**
    * Deletes one individual drawn action/step (a path in the RESUMEN list) from the current frame,
@@ -400,12 +444,12 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       
       {/* MODALES */}
       {modalMode === 'load' && (
-          <div style={modalOverlay}>
-              <div style={modalContent}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={modalContent}>
                   <h3>Cargar Jugada</h3>
                   <div style={listContainer}>
                       {savedPlays.length === 0 ? <p style={{color:'#94a3b8'}}>No hay jugadas guardadas.</p> : savedPlays.map(play => (
-                          <div key={play.id} onClick={()=>{ setFrames(play.frames); setPlayName(play.name); setCurrentFrameIndex(0); setModalMode('none'); }} style={listItem}>
+                          <div key={play.id} onClick={()=>{ setFrames(play.frames); setPlayName(play.name); setCurrentFrameIndex(0); setModalMode('none'); }} className="pcb-tactics-creator__modal-row" style={listItem}>
                               <div><div style={{color:'white', fontWeight:'bold'}}>{play.name}</div><div style={{color:'#64748b', fontSize:'0.8rem'}}>{play.date}</div></div>
                               <Play size={16} color="#fbbf24"/>
                           </div>
@@ -417,10 +461,10 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       )}
 
       {modalMode === 'createPB' && (
-          <div style={modalOverlay}>
-              <div style={modalContent}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={modalContent}>
                   <h3>Nuevo Playbook</h3>
-                  <input type="text" placeholder="Nombre (ej: Ataque Zona)" value={newPbName} onChange={e=>setNewPbName(e.target.value)} style={inputStyle} />
+                  <input type="text" placeholder="Nombre (ej: Ataque Zona)" value={newPbName} onChange={e=>setNewPbName(e.target.value)} className="pcb-tactics-creator__modal-input" style={inputStyle} />
                   <div style={{display:'flex', gap:10, marginTop:20}}>
                       <button onClick={createPlaybook} style={primaryBtn}>Crear</button>
                       <button onClick={()=>setModalMode('none')} style={closeBtn}>Cancelar</button>
@@ -430,13 +474,13 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       )}
 
       {modalMode === 'editPB' && (
-          <div style={modalOverlay}>
-              <div style={{...modalContent, width: 600}}>
+          <div className="pcb-tactics-creator__modal" style={modalOverlay}>
+              <div className="pcb-tactics-creator__modal-dialog" style={{...modalContent, width: 600}}>
                   <h3>Editar Playbooks</h3>
                   {!selectedPbForEdit ? (
                       <div style={listContainer}>
                           {playbooks.length === 0 ? <p style={{color:'#94a3b8'}}>No tienes playbooks.</p> : playbooks.map(pb => (
-                              <div key={pb.id} onClick={()=>setSelectedPbForEdit(pb)} style={listItem}>
+                              <div key={pb.id} onClick={()=>setSelectedPbForEdit(pb)} className="pcb-tactics-creator__modal-row" style={listItem}>
                                   <div style={{display:'flex', alignItems:'center', gap:10}}><Book size={20} color="#38bdf8"/><div><div style={{color:'white', fontWeight:'bold'}}>{pb.name}</div><div style={{color:'#64748b', fontSize:'0.8rem'}}>{pb.playIds.length} jugadas</div></div></div>
                                   <div style={{display:'flex', gap:10}}>
                                       <button onClick={(e)=>{e.stopPropagation(); deletePlaybook(pb.id)}} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer'}}><Trash2 size={16}/></button>
@@ -449,14 +493,14 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                       <div>
                           <div style={{display:'flex', gap:10, marginBottom:20}}>
                               <button onClick={()=>setSelectedPbForEdit(null)} style={{background:'transparent', border:'none', color:'#fbbf24', cursor:'pointer'}}><SkipBack/></button>
-                              <input type="text" value={selectedPbForEdit.name} onChange={e=>updatePlaybookName(selectedPbForEdit.id, e.target.value)} style={{...inputStyle, flex:1}} />
+                              <input type="text" value={selectedPbForEdit.name} onChange={e=>updatePlaybookName(selectedPbForEdit.id, e.target.value)} className="pcb-tactics-creator__modal-input" style={{...inputStyle, flex:1}} />
                           </div>
                           <div style={{...listContainer, maxHeight:250}}>
                               {selectedPbForEdit.playIds.length === 0 ? <p style={{color:'#94a3b8'}}>Vacío.</p> : selectedPbForEdit.playIds.map(pid => {
                                     const play = savedPlays.find(p => p.id === pid);
                                     if(!play) return null;
                                     return (
-                                        <div key={pid} style={{...listItem, cursor:'default'}}>
+                                        <div key={pid} className="pcb-tactics-creator__modal-row" style={{...listItem, cursor:'default'}}>
                                             <span style={{color:'white'}}>{play.name}</span>
                                             <button onClick={()=>removePlayFromPlaybook(selectedPbForEdit.id, pid)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer'}}><Trash2 size={16}/></button>
                                         </div>
@@ -482,7 +526,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
              <div style={{position:'relative'}}>
                  <button onClick={()=>setShowAddToPbDropdown(!showAddToPbDropdown)} style={{...textBtn, padding:'5px 10px'}}><Book size={16}/> Añadir a...</button>
                  {showAddToPbDropdown && (
-                     <div style={{position:'absolute', top:'100%', right:0, marginTop:5, background:'#1e293b', border:'1px solid #334155', borderRadius:6, width:200, zIndex:100, boxShadow:'0 4px 10px rgba(0,0,0,0.5)'}}>
+                     <div className="pcb-tactics-creator__pb-dropdown" style={{position:'absolute', top:'100%', right:0, marginTop:5, background:'#1e293b', border:'1px solid #334155', borderRadius:6, width:200, zIndex:100, boxShadow:'0 4px 10px rgba(0,0,0,0.5)'}}>
                          {playbooks.length === 0 ? <div style={{padding:10, color:'#94a3b8', fontSize:'0.8rem'}}>No hay playbooks</div> : playbooks.map(pb => (
                                 <div key={pb.id} onClick={()=>addCurrentPlayToPlaybook(pb.id)} style={{padding:'8px 12px', color:'white', cursor:'pointer', borderBottom:'1px solid #334155', fontSize:'0.85rem'}}>{pb.name}</div>
                             ))}
@@ -495,7 +539,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
         </div>
       </div>
 
-      <div style={{flex:1, display:'flex', gap:10, minHeight:0, overflow:'hidden'}}>
+      <div className="pcb-tactics-creator__workarea" style={{flex:1, display:'flex', gap:10, minHeight:0, overflow:'hidden'}}>
           {/* TOOLBAR */}
           <div className="pcb-tactics-creator__tools" style={{width: 70, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', flexDirection:'column', alignItems:'center', padding:'15px 0', gap: 8, overflowY:'auto'}}>
              <ToolBtn icon={<MousePointer2 size={20}/>} label="Select" active={activeTool==='select'} onClick={()=>setActiveTool('select')} />
@@ -515,7 +559,11 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
              <svg 
                 ref={svgRef} viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet" className="pcb-tactics-creator__court"
                 style={{maxHeight:'95%', maxWidth:'95%', aspectRatio:'50/47', background: THEME.bg, border:'2px solid #334155', cursor: activeTool==='select'?(dragging?'grabbing':'default'):'crosshair', boxShadow:'0 0 40px rgba(0,0,0,0.5)', touchAction:'none'}}
-                onMouseDown={handleMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onDoubleClick={(e)=>{const p=getSVGPoint(e); const pl=currentFrame.players.find(x=>Math.hypot(x.x-p.x,x.y-p.y)<35); if(pl&&activeTool==='select') updateFrame({ballOwnerId:pl.id})}}
+                onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); handleMouseDown(event); }}
+                 onPointerMove={onMouseMove}
+                 onPointerUp={event => { onMouseUp(); if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+                 onPointerCancel={onMouseUp}
+                 onDoubleClick={(e)=>{const p=getSVGPoint(e); const pl=currentFrame.players.find(x=>Math.hypot(x.x-p.x,x.y-p.y)<35); if(pl&&activeTool==='select') updateFrame({ballOwnerId:pl.id})}}
              >
                 <defs>
                   <marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill={THEME.moveColor} /></marker>
@@ -525,9 +573,13 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                 <g stroke={THEME.courtLines} strokeWidth="2" fill="none">
                     <rect x="0" y="0" width="500" height="470" /> <rect x="170" y="0" width="160" height="190" />
                     <path d="M 330,190 A 80,80 0 0,1 170,190" /> <path d="M 170,190 A 80,80 0 0,0 330,190" strokeDasharray="10,10" />
-                    <line x1="220" y1="40" x2="280" y2="40" strokeWidth="3" stroke="white"/> <circle cx="250" cy="52.5" r="7.5" stroke="#f97316" strokeWidth="2"/>
+                    <line x1="220" y1="40" x2="280" y2="40" strokeWidth="3" stroke="var(--ct-draw-backboard,#ffffff)"/> <circle cx="250" cy="52.5" r="7.5" stroke="#f97316" strokeWidth="2"/>
                     <path d="M 30,0 L 30,140 A 237.5,237.5 0 0,0 470,140 L 470,0" /> <path d="M 190,470 A 60,60 0 0,1 310,470" />
                 </g>
+                {labMode === 'lab' && labTarget && <g pointerEvents="none" aria-label="Objetivo táctico">
+                  <circle cx={labTarget.x} cy={labTarget.y} r="31" fill="#18a558" fillOpacity=".14" stroke="#18a558" strokeDasharray="7 5" strokeWidth="2.5"/>
+                  <circle cx={labTarget.x} cy={labTarget.y} r="5" fill="#18a558"/>
+                </g>}
                 {currentFrame.paths.map(path => {
                     let d='', color=THEME.moveColor, dash='0', marker='', extra=null;
                     if(path.type==='pass'){d=pointsToStraightPath(path.points); color=THEME.passColor; dash='8,8'; marker='url(#arrow-yellow)';}
@@ -536,12 +588,16 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                     else {d=pointsToCurvedPath(path.points); color=THEME.moveColor; marker='url(#arrow-white)';}
                     return <g key={path.id}><path d={d} stroke={color} strokeWidth="3" fill="none" strokeDasharray={dash} markerEnd={marker} strokeLinecap="round" strokeLinejoin="round"/>{extra}</g>
                 })}
-                {isDrawing && currentPathPoints.length > 0 && <path d={activeTool==='pass'?pointsToStraightPath([currentPathPoints[0], currentPathPoints[currentPathPoints.length-1]]) : pointsToCurvedPath(currentPathPoints)} stroke="rgba(255,255,255,0.5)" strokeWidth="3" fill="none" />}
+                {isDrawing && currentPathPoints.length > 0 && <path d={activeTool==='pass'?pointsToStraightPath([currentPathPoints[0], currentPathPoints[currentPathPoints.length-1]]) : pointsToCurvedPath(currentPathPoints)} stroke="var(--ct-draw-preview,rgba(255,255,255,0.6))" strokeWidth="3.5" fill="none" />}
                 {currentFrame.players.map(p => (
                     <g key={p.id} transform={`translate(${p.x},${p.y})`} style={{cursor:'pointer'}}>
+                        {labMode === 'lab' && p.id === labSlot && <circle r="26" fill="none" stroke="#18a558" strokeWidth="3"/>}
                         <circle r="16" fill={THEME.bg} stroke={THEME.moveColor} strokeWidth="2"/>
+                        <title>{labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])
+                          ? `${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.firstName} ${labRoster.find(player => player.id === labDefaultPlayerIds[p.id - 1])?.lastName} · ${p.role}`
+                          : `Ficha ${p.label} · ${p.role} · sin titular asignado`}</title>
                         {currentFrame.ballOwnerId === p.id && <circle r="19" fill="none" stroke={THEME.passColor} strokeWidth="3" opacity="0.8"/>}
-                        <text dy=".35em" textAnchor="middle" fontSize="14" fontWeight="bold" fill={THEME.moveColor} fontFamily="Arial">{p.label}</text>
+                        <text dy=".35em" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#ffffff" fontFamily="Arial">{p.label}</text>
                     </g>
                 ))}
                 {currentFrame.ballOwnerId===null && <circle cx={currentFrame.ballPosition.x} cy={currentFrame.ballPosition.y} r="9" fill={THEME.passColor} stroke="black" strokeWidth="1"/>}
@@ -551,20 +607,58 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
 
           {/* RESUMEN LATERAL */}
           <div className="pcb-tactics-creator__summary" style={{width: 180, background:'#1e293b', borderLeft:'1px solid #334155', padding:15, overflowY:'auto'}}>
-              <div style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> RESUMEN</div>
-              {currentFrame.paths.length === 0 && <span style={{fontSize:'0.7rem', color:'#64748b'}}>Sin acciones</span>}
-              <div style={{display:'flex', flexDirection:'column', gap:8}}>
+              <div className="pcb-tactics-creator__summary-head" style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}>
+                <ListChecks size={16}/> CONTROL DE JUGADA <span>{currentFrame.paths.length} acciones · {frames.length} pasos</span>
+                <div className="ct-lab-tabs" role="group" aria-label="Modo del diseñador">
+                  <button type="button" className={labMode === 'edit' ? 'is-active' : ''} aria-pressed={labMode === 'edit'} onClick={() => setLabMode('edit')}>EDICIÓN</button>
+                  <button type="button" className={labMode === 'lab' ? 'is-active' : ''} aria-pressed={labMode === 'lab'} onClick={() => {setLabMode('lab');setActiveTool('select')}}>LABORATORIO</button>
+                </div>
+              </div>
+              {labMode === 'edit' ? <>
+              <div className="pcb-tactics-creator__actions">
+                <h3>ACCIONES DEL PASO {displayIndex + 1}</h3>
+                {currentFrame.paths.length === 0 && <p className="pcb-tactics-creator__hint">Selecciona Corte, Pase, Bote o Bloqueo y dibuja sobre la cancha. Las acciones aparecerán aquí para revisarlas y eliminarlas.</p>}
+              <div className="pcb-tactics-creator__action-list" style={{display:'flex', flexDirection:'column', gap:8}}>
                 {currentFrame.paths.map((p) => {
                     const pl = currentFrame.players.find(x=>x.id===p.linkedId);
-                    return (<div key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
+                    return (<div className="pcb-tactics-creator__action" key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
                         <div style={{flex:1}}>
-                            <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
+                            <div className="pcb-tactics-creator__action-owner" style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
                             <div>{p.type.toUpperCase()}</div>
                         </div>
                         <button aria-label={`Eliminar acción ${p.type}`} onClick={() => deleteAction(p.id)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding:0, flexShrink:0}} type="button"><Trash2 size={14}/></button>
                     </div>)
                 })}
               </div>
+              </div>
+              <div className="pcb-tactics-creator__overview">
+                <h3>SECUENCIA DE LA JUGADA</h3>
+                <p className="pcb-tactics-creator__hint">Selecciona un paso para editar sus trayectorias y posiciones.</p>
+                <div className="pcb-tactics-creator__frame-picker" aria-label="Pasos de la jugada">
+                  {frames.map((frame, index) => <button key={index} type="button"
+                    className={displayIndex === index ? 'is-active' : ''}
+                    aria-pressed={displayIndex === index}
+                    onClick={() => { setIsPlaying(false); setCurrentFrameIndex(index) }}>
+                      <b>PASO {index + 1}</b>
+                      <span>{frame.paths.length} acciones</span>
+                  </button>)}
+                </div>
+                <h3>HERRAMIENTA ACTIVA</h3>
+                <div className="pcb-tactics-creator__tool-detail">
+                  <strong>{{ select:'SELECCIÓN', move:'CORTE', pass:'PASE', dribble:'BOTE', screen:'BLOQUEO', defender:'DEFENSA' }[activeTool]}</strong>
+                  <p>{{ select:'Arrastra una ficha para cambiar su posición. Doble clic sobre una ficha para asignar el balón.', move:'Selecciona un jugador y dibuja su recorrido.', pass:'Dibuja el pase desde el balón hacia un receptor.', dribble:'Dibuja la trayectoria con bote.', screen:'Señala la posición y la dirección del bloqueo.', defender:'Añade defensores para practicar la jugada contra oposición.' }[activeTool]}</p>
+                </div>
+                <button className="pcb-tactics-creator__add-step" type="button" onClick={addFrame}><Plus size={16}/> AÑADIR PASO</button>
+              </div>
+              </> : <TacticalLabPanel world={labWorld} roster={labRoster} tokens={currentFrame.players}
+                selectedTokenId={labSlot} onSelectToken={setLabSlot}
+                assignedPlayerId={assignedLabPlayerId}
+                onAssignPlayer={id=>{
+                  if (onLabSlotAssign && id && labToken) onLabSlotAssign(labToken.role as 'PG' | 'SG' | 'SF' | 'PF' | 'C', id);
+                  else setLabAssignments(previous=>({...previous,[labSlot]:id}));
+                }}
+                selectedZone={labZone} onSelectZone={setLabZone}
+                hasBall={currentFrame.ballOwnerId === labSlot} onApply={applyLabMovement}/>}
           </div>
       </div>
 

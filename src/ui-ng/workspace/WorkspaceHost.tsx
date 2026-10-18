@@ -17,26 +17,26 @@ import { MatchWorkspace } from '@/ui-ng/applications/match/MatchWorkspace'
 import { MediaWorkspace } from '@/ui-ng/applications/media/MediaWorkspace'
 import { MedicalWorkspace } from '@/ui-ng/applications/medical/MedicalWorkspace'
 import { MemoriesWorkspace } from '@/ui-ng/applications/memories/MemoriesWorkspace'
-import { MentoringWorkspace } from '@/ui-ng/applications/mentoring/MentoringWorkspace'
 import { NarrativesWorkspace } from '@/ui-ng/applications/narratives/NarrativesWorkspace'
 import { NilWorkspace } from '@/ui-ng/applications/nil/NilWorkspace'
 import { PlayerWorkspace } from '@/ui-ng/applications/player/PlayerWorkspace'
 import { RecruitingWorkspace } from '@/ui-ng/applications/recruiting/RecruitingWorkspace'
 import { RosterWorkspace } from '@/ui-ng/applications/roster/RosterWorkspace'
 import { ScheduleWorkspace } from '@/ui-ng/applications/schedule/ScheduleWorkspace'
-import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
 import { TalentOperationsWorkspace } from '@/ui-ng/applications/talent/TalentOperationsWorkspace'
 import { TransferPortalWorkspace } from '@/ui-ng/applications/talent/TransferPortalWorkspace'
-import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
+import { TrainingStudioWorkspace } from '@/ui-ng/applications/training/TrainingStudioWorkspace'
 
 import { useGameStore } from '@/stores/gameStore'
 import { resolveGameCapabilities } from '@/ui/gameContext'
 import { isWorkspaceApplicable } from '@/ui-ng/system/startMenuCatalog'
 import { NgSectionUnavailable } from '@/ui-ng/workspace/NgSectionUnavailable'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { WorkspaceErrorBoundary } from '@/ui-ng/workspace/WorkspaceErrorBoundary'
+import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 import type { WorkspaceAppId } from '@/ui-ng/workspace/workspaceApps'
 
 import './workspace.css'
@@ -54,10 +54,10 @@ export const WORKSPACE_COMPONENTS: Readonly<Record<WorkspaceAppId, ComponentType
   roster: RosterWorkspace,
   player: PlayerWorkspace,
   staff: StaffWorkspace,
-  scouting: ScoutingWorkspace,
+  scouting: () => <MarketWorkspace initialTab="scouting" />,
   tactics: TacticsWorkspace,
-  training: TrainingWorkspace,
-  mentoring: MentoringWorkspace,
+  training: TrainingStudioWorkspace,
+  mentoring: () => <TrainingStudioWorkspace initialTab="mentoring" />,
   medical: MedicalWorkspace,
   schedule: ScheduleWorkspace,
   competition: CompetitionWorkspace,
@@ -92,7 +92,9 @@ export function WorkspaceHost() {
 
   return (
     <main className="ng-workspace-host" data-ng-region="workspace-host">
-      {unavailable ? <NgSectionUnavailable app={app} /> : <Workspace />}
+      <WorkspaceErrorBoundary key={app} app={app} onReturnHome={() => syncWorkspaceAppQuery('home', 'push')}>
+        {unavailable ? <NgSectionUnavailable app={app} /> : <Workspace />}
+      </WorkspaceErrorBoundary>
     </main>
   )
 }

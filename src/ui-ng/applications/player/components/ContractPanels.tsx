@@ -160,6 +160,7 @@ export function ContractClosingPanels({
     registration: 'Rights / registration',
     negotiation: 'Negotiation intelligence',
     market: 'Market context',
+    bonuses: 'Bonuses & incentives',
     'decision-center': 'Decision center',
   }
 

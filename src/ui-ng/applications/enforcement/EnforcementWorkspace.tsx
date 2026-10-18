@@ -4,6 +4,7 @@ import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
+import '@/ui-ng/applications/club/courtside-club-management.css'
 
 const TABS = [
   { id: 'violations', label: 'Violations' },
@@ -16,12 +17,12 @@ export function EnforcementWorkspace() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('violations')
 
   if (world === null) {
-    return <NgHoloShell appLabel="Compliance" empty emptyMessage="No career loaded." region="enforcement-workspace" />
+    return <NgHoloShell appLabel="Compliance" empty emptyMessage="No career loaded." region="enforcement-workspace" className="cs-club-management cs-club-enforcement" />
   }
 
   const team = getUserTeam(world)
   if (team === undefined) {
-    return <NgHoloShell appLabel="Compliance" empty region="enforcement-workspace" />
+    return <NgHoloShell appLabel="Compliance" empty region="enforcement-workspace" className="cs-club-management cs-club-enforcement" />
   }
 
   const violations = Object.values(world.violationsById).filter((item) => item.programTeamId === team.id)
@@ -35,10 +36,16 @@ export function EnforcementWorkspace() {
       meta={`${investigations.filter((item) => item.status === 'active').length} open · ${sanctions.filter((item) => item.status === 'active').length} sanctions`}
       onTabSelect={(id) => setTab(id as (typeof TABS)[number]['id'])}
       region="enforcement-workspace"
+      className="cs-club-management cs-club-enforcement"
       tabs={TABS}
       teamId={team.id}
       title={team.name}
     >
+      <div className="cs-enforcement__summary" aria-label="Resumen de cumplimiento">
+        <div className="cs-enforcement__stat"><span>INFRACCIONES REGISTRADAS</span><strong>{violations.length}</strong></div>
+        <div className="cs-enforcement__stat"><span>INVESTIGACIONES ABIERTAS</span><strong>{investigations.filter((item) => item.status === 'active').length}</strong></div>
+        <div className="cs-enforcement__stat"><span>SANCIONES ACTIVAS</span><strong>{sanctions.filter((item) => item.status === 'active').length}</strong></div>
+      </div>
       {tab === 'violations' ? (
         <Table
           empty="No violations recorded."

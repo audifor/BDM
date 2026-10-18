@@ -47,6 +47,32 @@ describe('buildPlayerAttributesEvolution', () => {
     expect(shooting.team.note).toContain('inspected player is excluded')
   })
 
+  it('keeps world position separate from league position with a real, deduplicated roster sample', () => {
+    const world = createNewGame()
+    const playerId = userTeamPlayerId(world)
+    const player = world.players[playerId]!
+    const position = player.basketball.primaryPosition
+    const evolution = buildPlayerAttributesEvolution(world, player)
+    const rating = evolution.THREE_POINT_STATIC
+
+    const unique = new Set(Object.values(world.teams).flatMap((team) => team.rosterPlayerIds))
+    unique.delete(playerId)
+    const worldPeers = [...unique]
+      .map((id) => world.players[id])
+      .filter((candidate) => candidate?.basketball.primaryPosition === position)
+    const expected = Math.round(10 * worldPeers.reduce(
+      (sum, candidate) => sum + candidate!.basketball.ratings.THREE_POINT_STATIC, 0,
+    ) / worldPeers.length) / 10
+
+    expect(rating.worldPosition.sampleSize).toBe(worldPeers.length)
+    expect(rating.worldPosition.average).toBe(expected)
+    expect(rating.worldPosition.note).toContain('not adjusted for playing level')
+    expect(rating.worldPosition.scopeLabel).toContain('BDM world')
+    expect(rating.standing.positionSampleSize).toBeLessThanOrEqual(rating.league.sampleSize)
+    // A league-only group does not get mislabeled as a worldwide population.
+    expect(rating.worldPosition.sampleSize).toBeGreaterThanOrEqual(rating.standing.positionSampleSize)
+  })
+
   it('ranks signature skills above weak links by competition percentile', () => {
     const world = createNewGame()
     const player = world.players[userTeamPlayerId(world)]!
