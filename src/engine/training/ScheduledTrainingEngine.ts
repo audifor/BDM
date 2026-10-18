@@ -24,6 +24,7 @@ import type { InjuryRecord } from '@/domain/injury'
 import { validateTransferAuthorization } from '@/engine/eligibility/TransferPortalLifecycle'
 import { resolveSportingOperation } from '@/integration/facilitiesSporting/SportingOperationResolver'
 import { trainingPhysicalRequirements } from './TrainingPhysicalRequirements'
+import { staffCohesionDevelopmentMultiplier } from './StaffCohesionDevelopmentBridge'
 
 const sessionsByDateCache = new WeakMap<GameWorld['scheduledTrainingSessionsById'], ReadonlyMap<GameDate, readonly ScheduledTrainingSession[]>>()
 
@@ -293,6 +294,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   const playerIds = session.scope === 'individual' ? [session.playerId!] : session.selectedPlayerIds ?? world.teams[session.teamId]!.rosterPlayerIds
   const load = trainingLoad(intensity)
   const executionMultiplier = trainingStaffExecutionMultiplier(world, session, definition)
+  const collaborationStimulusMultiplier = staffCohesionDevelopmentMultiplier(world, session)
 
   let stimulus = { ...world.developmentStimulusByPlayerId }
   let fatigue = { ...world.careerFatigueByPlayerId }
@@ -321,7 +323,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     if (eligible) {
       const efficiency = Math.max(0.4, 1 - (fatigue[playerId] ?? 0) / 150)
       const stimulusMultiplier = planDelegation === undefined ? 1 : delegatedStimulusMultiplier(planDelegation.qualityScore, stimulusVarianceSeed(planDelegation.responsibilityId, session.id, playerId, world.currentDate))
-      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier * participationMultiplier)
+      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier * collaborationStimulusMultiplier * participationMultiplier)
       if (Object.keys(developmentDelta).length > 0) {
         stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
         const event = createDevelopmentStimulusEvent({ id: `training:${session.id}:${playerId}`, playerId, sourceType: 'training', sourceId: session.id, date: world.currentDate, byRating: developmentDelta })
