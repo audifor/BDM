@@ -1,0 +1,1391 @@
+{
+  "window": {
+    "from": "2026-09-27",
+    "days": 30,
+    "universe": "ACB 2026/27",
+    "club": "UCAM Murcia",
+    "salt": 7,
+    "matchSeeds": [
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0011",
+        "seed": 608655685
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0019",
+        "seed": 742876637
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0029",
+        "seed": 608508590
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0039",
+        "seed": 541251019
+      }
+    ]
+  },
+  "decisionsB": [
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "setStaffResponsibility",
+      "detail": "assignIndividualDevelopment delegated -> acb-staff-sandbox-v1:team:acb-team-ucm:playerDevelopmentCoach:1"
+    },
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-09-28 defensiveSystem normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-09-29 threePoint normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:skillsCoach:1"
+    },
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-09-30 offensiveSystem light staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-01 activeRecovery light staff=acb-staff-sandbox-v1:team:acb-team-ucm:physiotherapist:2"
+    },
+    {
+      "day": 1,
+      "date": "2026-09-27",
+      "action": "assignTrainingModuleToPlayer",
+      "detail": "2026-09-29 acb-player-ucm-13 threePoint"
+    },
+    {
+      "day": 6,
+      "date": "2026-10-02",
+      "action": "setLineupSlot",
+      "detail": "starters=PG:ucm-04,SF:ucm-07,SF:ucm-09,PF:ucm-11,C:ucm-15 bench=ucm-02,ucm-14,ucm-16,ucm-08,ucm-10 (rested ucm-02 fatigue 7.4)"
+    },
+    {
+      "day": 8,
+      "date": "2026-10-04",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-05 pickAndRollDefense normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 8,
+      "date": "2026-10-04",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-06 conditioning high staff=acb-staff-sandbox-v1:team:acb-team-ucm:performanceCoach:1"
+    },
+    {
+      "day": 8,
+      "date": "2026-10-04",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-07 transition light staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 8,
+      "date": "2026-10-04",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-08 lowLoadRecovery light staff=acb-staff-sandbox-v1:team:acb-team-ucm:physiotherapist:2"
+    },
+    {
+      "day": 8,
+      "date": "2026-10-04",
+      "action": "assignTrainingModuleToPlayer",
+      "detail": "2026-10-06 acb-player-ucm-13 threePoint"
+    },
+    {
+      "day": 13,
+      "date": "2026-10-09",
+      "action": "setLineupSlot",
+      "detail": "starters=PG:ucm-04,SF:ucm-07,SF:ucm-09,PF:ucm-11,C:ucm-15 bench=ucm-02,ucm-14,ucm-16,ucm-08,ucm-10"
+    },
+    {
+      "day": 15,
+      "date": "2026-10-11",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-12 defensiveSystem normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 15,
+      "date": "2026-10-11",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-13 threePoint normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:skillsCoach:1"
+    },
+    {
+      "day": 15,
+      "date": "2026-10-11",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-14 offensiveSystem light staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 15,
+      "date": "2026-10-11",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-15 activeRecovery light staff=acb-staff-sandbox-v1:team:acb-team-ucm:physiotherapist:2"
+    },
+    {
+      "day": 15,
+      "date": "2026-10-11",
+      "action": "assignTrainingModuleToPlayer",
+      "detail": "2026-10-13 acb-player-ucm-13 threePoint"
+    },
+    {
+      "day": 20,
+      "date": "2026-10-16",
+      "action": "setLineupSlot",
+      "detail": "starters=PG:ucm-04,SF:ucm-07,SF:ucm-09,PF:ucm-11,C:ucm-15 bench=ucm-02,ucm-14,ucm-16,ucm-08,ucm-10"
+    },
+    {
+      "day": 22,
+      "date": "2026-10-18",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-19 pickAndRollDefense normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 22,
+      "date": "2026-10-18",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-20 conditioning high staff=acb-staff-sandbox-v1:team:acb-team-ucm:performanceCoach:1"
+    },
+    {
+      "day": 22,
+      "date": "2026-10-18",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-21 transition light staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 22,
+      "date": "2026-10-18",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-22 lowLoadRecovery light staff=acb-staff-sandbox-v1:team:acb-team-ucm:physiotherapist:2"
+    },
+    {
+      "day": 22,
+      "date": "2026-10-18",
+      "action": "assignTrainingModuleToPlayer",
+      "detail": "2026-10-20 acb-player-ucm-13 threePoint"
+    },
+    {
+      "day": 27,
+      "date": "2026-10-23",
+      "action": "setLineupSlot",
+      "detail": "starters=PG:ucm-04,SF:ucm-07,SF:ucm-09,PF:ucm-11,C:ucm-15 bench=ucm-02,ucm-14,ucm-16,ucm-08,ucm-10"
+    },
+    {
+      "day": 29,
+      "date": "2026-10-25",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-26 defensiveSystem normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 29,
+      "date": "2026-10-25",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-27 threePoint normal staff=acb-staff-sandbox-v1:team:acb-team-ucm:skillsCoach:1"
+    },
+    {
+      "day": 29,
+      "date": "2026-10-25",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-28 offensiveSystem light staff=acb-staff-sandbox-v1:team:acb-team-ucm:associateCoach:1"
+    },
+    {
+      "day": 29,
+      "date": "2026-10-25",
+      "action": "scheduleTeamModuleSession",
+      "detail": "2026-10-29 activeRecovery light staff=acb-staff-sandbox-v1:team:acb-team-ucm:physiotherapist:2"
+    },
+    {
+      "day": 29,
+      "date": "2026-10-25",
+      "action": "assignTrainingModuleToPlayer",
+      "detail": "2026-10-27 acb-player-ucm-13 threePoint"
+    }
+  ],
+  "table": [
+    {
+      "indicator": "Fatiga media del plantel (día 30)",
+      "day0": 2.47,
+      "A": 0.57,
+      "B": 12.54,
+      "difference": 11.97,
+      "cause": "B programó sesiones (scheduleTeamModuleSession) cuyo careerFatigueDelta queda en execution.participants; la recuperación diaria es común"
+    },
+    {
+      "indicator": "Fatiga media diaria (promedio 30 días)",
+      "day0": 2.47,
+      "A": 0.83,
+      "B": 7.28,
+      "difference": 6.45,
+      "cause": "Carga de las sesiones menos recuperación (CAREER_FATIGUE_RECOVERY 3/día) y sesiones de recuperación"
+    },
+    {
+      "indicator": "Fatiga máxima alcanzada (jugador, 30 días)",
+      "day0": 11.74,
+      "A": 11.95,
+      "B": 33.93,
+      "difference": 21.98,
+      "cause": "Sesión de intensidad alta del miércoles de las semanas pares"
+    },
+    {
+      "indicator": "Recuperación: alivio de fatiga por sesiones de recuperación",
+      "day0": 0,
+      "A": 0,
+      "B": 97.48,
+      "difference": 97.48,
+      "cause": "activeRecovery / lowLoadRecovery (fatigueMultiplier < 0) programadas por B"
+    },
+    {
+      "indicator": "Carga de entrenamiento (puntuación de carga diaria acumulada)",
+      "day0": 0,
+      "A": 0,
+      "B": 831.5,
+      "difference": 831.5,
+      "cause": "dailyWorkloadScore de cada sesión ejecutada (intensidad × duración × multiplicador)"
+    },
+    {
+      "indicator": "Sesiones completadas (club del usuario)",
+      "day0": 0,
+      "A": 0,
+      "B": 23,
+      "difference": 23,
+      "cause": "Planificación semanal de B: executeScheduledTrainingSessions en la fase TRAINING del día"
+    },
+    {
+      "indicator": "Estímulo de desarrollo procedente de entrenamientos",
+      "day0": 0,
+      "A": 0,
+      "B": 776.3,
+      "difference": 776.3,
+      "cause": "DevelopmentStimulusEvent sourceType=training, uno por jugador y sesión"
+    },
+    {
+      "indicator": "Estímulo de desarrollo procedente de partidos",
+      "day0": 0,
+      "A": 277.4,
+      "B": 275.7,
+      "difference": -1.7,
+      "cause": "Minutos jugados: el reparto de minutos cambia entre A y B"
+    },
+    {
+      "indicator": "Cohesión del equipo (familiaridad táctica del motor)",
+      "day0": 50,
+      "A": 50,
+      "B": 68.13,
+      "difference": 18.13,
+      "cause": "cohesionDelta de las sesiones tácticas; el partido la lee como plan.familiarity"
+    },
+    {
+      "indicator": "Disponibilidad: jugadores disponibles (mínimo en 30 días)",
+      "day0": 16,
+      "A": 16,
+      "B": 16,
+      "difference": 0,
+      "cause": "Lesiones del plantel (ninguna fabricada; las naturales de partido y entrenamiento aplican las mismas reglas)"
+    },
+    {
+      "indicator": "Jugadores que juegan ≥ 10 minutos por partido (media)",
+      "day0": "—",
+      "A": 5.75,
+      "B": 6.5,
+      "difference": 0.75,
+      "cause": "Quinteto y banquillo guardados por B (setLineupSlot) frente a la selección contextual del entrenador (A)"
+    },
+    {
+      "indicator": "Minutos del titular más cargado (media por partido)",
+      "day0": "—",
+      "A": 39.2,
+      "B": 39.1,
+      "difference": -0.1,
+      "cause": "Descanso del titular más fatigado antes de cada partido"
+    },
+    {
+      "indicator": "Ejecución del staff: sesiones con ejecutor asignado",
+      "day0": 0,
+      "A": 0,
+      "B": 18,
+      "difference": 18,
+      "cause": "assignedStaffPersonIds de cada sesión programada; el ejecutor deja executingStaffRoles"
+    },
+    {
+      "indicator": "Ejecución del staff: multiplicador de calidad medio",
+      "day0": "—",
+      "A": 1,
+      "B": 1.072,
+      "difference": 0.07,
+      "cause": "trainingStaffExecutionMultiplier (rol × competencia del ejecutor), 0.90–1.18"
+    },
+    {
+      "indicator": "Decisiones delegadas registradas (DelegationOutcome)",
+      "day0": 0,
+      "A": 0,
+      "B": 5,
+      "difference": 5,
+      "cause": "assignIndividualDevelopment delegada: el responsable elige el módulo de cada sesión individual"
+    },
+    {
+      "indicator": "Rendimiento colectivo: puntos a favor − en contra (4 partidos)",
+      "day0": "—",
+      "A": 8,
+      "B": -63,
+      "difference": -71,
+      "cause": "Resultado del motor con las mismas semillas; no se atribuye causalidad a un marcador (ver tabla multisemilla)"
+    },
+    {
+      "indicator": "Resultados: victorias (4 partidos)",
+      "day0": "—",
+      "A": 3,
+      "B": 0,
+      "difference": -3,
+      "cause": "Idem"
+    },
+    {
+      "indicator": "Clasificación del usuario tras el día 30",
+      "day0": "—",
+      "A": 7,
+      "B": 17,
+      "difference": 10,
+      "cause": "calculateStandings sobre GameWorld"
+    }
+  ],
+  "games": {
+    "A": [
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0011",
+        "date": "2026-10-03",
+        "opponentId": "acb-team-vbc",
+        "isHome": false,
+        "pointsFor": 107,
+        "pointsAgainst": 101,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 37.21666666666667,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 2.1166666666666667,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 37.833333333333336,
+          "acb-player-ucm-08": 3.2666666666666666,
+          "acb-player-ucm-09": 36.71666666666667,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 34.63333333333333,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 3.8666666666666667,
+          "acb-player-ucm-15": 36.11666666666667,
+          "acb-player-ucm-16": 8.233333333333333
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 0,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 0,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 0,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 0,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 0,
+          "acb-player-ucm-16": 0
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0019",
+        "date": "2026-10-10",
+        "opponentId": "acb-team-jov",
+        "isHome": false,
+        "pointsFor": 91,
+        "pointsAgainst": 89,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 38.1,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 5.116666666666666,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 18.766666666666666,
+          "acb-player-ucm-08": 7.866666666666666,
+          "acb-player-ucm-09": 37.88333333333333,
+          "acb-player-ucm-10": 8.65,
+          "acb-player-ucm-11": 40,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 33.56666666666667,
+          "acb-player-ucm-16": 10.05
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 0,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 0,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 0,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 0,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 0,
+          "acb-player-ucm-16": 0
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0029",
+        "date": "2026-10-17",
+        "opponentId": "acb-team-bre",
+        "isHome": true,
+        "pointsFor": 84,
+        "pointsAgainst": 94,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 39.7,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0.3,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 40,
+          "acb-player-ucm-08": 7.933333333333334,
+          "acb-player-ucm-09": 35.78333333333333,
+          "acb-player-ucm-10": 0.3,
+          "acb-player-ucm-11": 33.5,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 6.033333333333333,
+          "acb-player-ucm-15": 23.266666666666666,
+          "acb-player-ucm-16": 13.183333333333334
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 0,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 0,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 0,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 0,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 0,
+          "acb-player-ucm-16": 0
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0039",
+        "date": "2026-10-24",
+        "opponentId": "acb-team-rmb",
+        "isHome": true,
+        "pointsFor": 107,
+        "pointsAgainst": 97,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 26.266666666666666,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0.55,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 38.96666666666667,
+          "acb-player-ucm-08": 8.266666666666667,
+          "acb-player-ucm-09": 33.13333333333333,
+          "acb-player-ucm-10": 2.6166666666666667,
+          "acb-player-ucm-11": 33.78333333333333,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 8.016666666666667,
+          "acb-player-ucm-15": 35.55,
+          "acb-player-ucm-16": 12.85
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 0,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 0,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 0,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 0,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 0,
+          "acb-player-ucm-16": 0
+        }
+      }
+    ],
+    "B": [
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0011",
+        "date": "2026-10-03",
+        "opponentId": "acb-team-vbc",
+        "isHome": false,
+        "pointsFor": 98,
+        "pointsAgainst": 105,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 10.483333333333333,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 34.166666666666664,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 26.933333333333334,
+          "acb-player-ucm-08": 1.95,
+          "acb-player-ucm-09": 38.35,
+          "acb-player-ucm-10": 1.55,
+          "acb-player-ucm-11": 39.9,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 4.816666666666666,
+          "acb-player-ucm-15": 27.933333333333334,
+          "acb-player-ucm-16": 13.916666666666666
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 4.4344,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 0,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 0.6143999999999998,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 0,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 2.7644,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 0,
+          "acb-player-ucm-16": 0
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0019",
+        "date": "2026-10-10",
+        "opponentId": "acb-team-jov",
+        "isHome": false,
+        "pointsFor": 75,
+        "pointsAgainst": 89,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 6.016666666666667,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 33.983333333333334,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 39.25,
+          "acb-player-ucm-08": 1.1666666666666667,
+          "acb-player-ucm-09": 38.833333333333336,
+          "acb-player-ucm-10": 0.75,
+          "acb-player-ucm-11": 38.4,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 1.6,
+          "acb-player-ucm-15": 36.56666666666667,
+          "acb-player-ucm-16": 3.433333333333333
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0.15920000000000023,
+          "acb-player-ucm-02": 0.7936000000000014,
+          "acb-player-ucm-03": 0.15920000000000023,
+          "acb-player-ucm-04": 4.269199999999998,
+          "acb-player-ucm-05": 0.15920000000000023,
+          "acb-player-ucm-06": 0.15920000000000023,
+          "acb-player-ucm-07": 2.553600000000001,
+          "acb-player-ucm-08": 0.15920000000000023,
+          "acb-player-ucm-09": 6.809200000000001,
+          "acb-player-ucm-10": 0.15920000000000023,
+          "acb-player-ucm-11": 10.843600000000002,
+          "acb-player-ucm-12": 0.15920000000000023,
+          "acb-player-ucm-13": 5.1591999999999985,
+          "acb-player-ucm-14": 0.15920000000000023,
+          "acb-player-ucm-15": 2.2592,
+          "acb-player-ucm-16": 0.15920000000000023
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0029",
+        "date": "2026-10-17",
+        "opponentId": "acb-team-bre",
+        "isHome": true,
+        "pointsFor": 68,
+        "pointsAgainst": 79,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 14.483333333333333,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 31.05,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 33.9,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 38.93333333333333,
+          "acb-player-ucm-10": 1.6333333333333333,
+          "acb-player-ucm-11": 39.35,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0.65,
+          "acb-player-ucm-15": 38.166666666666664,
+          "acb-player-ucm-16": 1.8333333333333333
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 0,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 4.433599999999998,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 5.587999999999999,
+          "acb-player-ucm-08": 0,
+          "acb-player-ucm-09": 8.5936,
+          "acb-player-ucm-10": 0,
+          "acb-player-ucm-11": 14.518,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 0,
+          "acb-player-ucm-15": 4.643599999999999,
+          "acb-player-ucm-16": 0
+        }
+      },
+      {
+        "gameId": "schedule-acb-season-2026-27-game-0039",
+        "date": "2026-10-24",
+        "opponentId": "acb-team-rmb",
+        "isHome": true,
+        "pointsFor": 93,
+        "pointsAgainst": 124,
+        "minutes": {
+          "acb-player-ucm-01": 0,
+          "acb-player-ucm-02": 15.25,
+          "acb-player-ucm-03": 0,
+          "acb-player-ucm-04": 24.75,
+          "acb-player-ucm-05": 0,
+          "acb-player-ucm-06": 0,
+          "acb-player-ucm-07": 37.9,
+          "acb-player-ucm-08": 4.7,
+          "acb-player-ucm-09": 34.95,
+          "acb-player-ucm-10": 2.45,
+          "acb-player-ucm-11": 29.8,
+          "acb-player-ucm-12": 0,
+          "acb-player-ucm-13": 0,
+          "acb-player-ucm-14": 10.133333333333333,
+          "acb-player-ucm-15": 28.75,
+          "acb-player-ucm-16": 11.316666666666666
+        },
+        "preMatchFatigue": {
+          "acb-player-ucm-01": 0.15920000000000023,
+          "acb-player-ucm-02": 0.15920000000000023,
+          "acb-player-ucm-03": 0.15920000000000023,
+          "acb-player-ucm-04": 8.632799999999996,
+          "acb-player-ucm-05": 0.15920000000000023,
+          "acb-player-ucm-06": 0.15920000000000023,
+          "acb-player-ucm-07": 11.117199999999997,
+          "acb-player-ucm-08": 0.15920000000000023,
+          "acb-player-ucm-09": 14.6528,
+          "acb-player-ucm-10": 0.15920000000000023,
+          "acb-player-ucm-11": 22.187199999999997,
+          "acb-player-ucm-12": 0.15920000000000023,
+          "acb-player-ucm-13": 3.1592000000000002,
+          "acb-player-ucm-14": 0.15920000000000023,
+          "acb-player-ucm-15": 11.632799999999996,
+          "acb-player-ucm-16": 0.15920000000000023
+        }
+      }
+    ]
+  },
+  "minutes": {
+    "A": {
+      "acb-player-ucm-01": 0,
+      "acb-player-ucm-02": 141.3,
+      "acb-player-ucm-03": 0,
+      "acb-player-ucm-04": 8.1,
+      "acb-player-ucm-05": 0,
+      "acb-player-ucm-06": 0,
+      "acb-player-ucm-07": 135.6,
+      "acb-player-ucm-08": 27.3,
+      "acb-player-ucm-09": 143.5,
+      "acb-player-ucm-10": 11.6,
+      "acb-player-ucm-11": 141.9,
+      "acb-player-ucm-12": 0,
+      "acb-player-ucm-13": 0,
+      "acb-player-ucm-14": 17.9,
+      "acb-player-ucm-15": 128.5,
+      "acb-player-ucm-16": 44.3
+    },
+    "B": {
+      "acb-player-ucm-01": 0,
+      "acb-player-ucm-02": 46.2,
+      "acb-player-ucm-03": 0,
+      "acb-player-ucm-04": 124,
+      "acb-player-ucm-05": 0,
+      "acb-player-ucm-06": 0,
+      "acb-player-ucm-07": 138,
+      "acb-player-ucm-08": 7.8,
+      "acb-player-ucm-09": 151.1,
+      "acb-player-ucm-10": 6.4,
+      "acb-player-ucm-11": 147.5,
+      "acb-player-ucm-12": 0,
+      "acb-player-ucm-13": 0,
+      "acb-player-ucm-14": 17.2,
+      "acb-player-ucm-15": 131.4,
+      "acb-player-ucm-16": 30.5
+    }
+  },
+  "dailyFatigue": {
+    "A": [
+      {
+        "day": 0,
+        "date": "2026-09-27",
+        "avgFatigue": 2.47,
+        "maxFatigue": 11.74,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 1,
+        "date": "2026-09-28",
+        "avgFatigue": 1.5325,
+        "maxFatigue": 8.74,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 2,
+        "date": "2026-09-29",
+        "avgFatigue": 0.733125,
+        "maxFatigue": 5.74,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 3,
+        "date": "2026-09-30",
+        "avgFatigue": 0.23812500000000003,
+        "maxFatigue": 2.74,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 4,
+        "date": "2026-10-01",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 5,
+        "date": "2026-10-02",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 6,
+        "date": "2026-10-03",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 7,
+        "date": "2026-10-04",
+        "avgFatigue": 2.6881250000000003,
+        "maxFatigue": 10.22,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 8,
+        "date": "2026-10-05",
+        "avgFatigue": 1.7506249999999999,
+        "maxFatigue": 7.220000000000001,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 9,
+        "date": "2026-10-06",
+        "avgFatigue": 0.813125,
+        "maxFatigue": 4.220000000000001,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 10,
+        "date": "2026-10-07",
+        "avgFatigue": 0.10999999999999999,
+        "maxFatigue": 1.2200000000000006,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 11,
+        "date": "2026-10-08",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 12,
+        "date": "2026-10-09",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 13,
+        "date": "2026-10-10",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 14,
+        "date": "2026-10-11",
+        "avgFatigue": 2.54875,
+        "maxFatigue": 11.95,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 15,
+        "date": "2026-10-12",
+        "avgFatigue": 1.72375,
+        "maxFatigue": 8.95,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 16,
+        "date": "2026-10-13",
+        "avgFatigue": 0.97375,
+        "maxFatigue": 5.949999999999999,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 17,
+        "date": "2026-10-14",
+        "avgFatigue": 0.30874999999999997,
+        "maxFatigue": 2.9499999999999993,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 18,
+        "date": "2026-10-15",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 19,
+        "date": "2026-10-16",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 20,
+        "date": "2026-10-17",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 21,
+        "date": "2026-10-18",
+        "avgFatigue": 2.5337500000000004,
+        "maxFatigue": 11.71,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 22,
+        "date": "2026-10-19",
+        "avgFatigue": 1.6012500000000003,
+        "maxFatigue": 8.71,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 23,
+        "date": "2026-10-20",
+        "avgFatigue": 0.8512500000000001,
+        "maxFatigue": 5.710000000000001,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 24,
+        "date": "2026-10-21",
+        "avgFatigue": 0.30500000000000005,
+        "maxFatigue": 2.710000000000001,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 25,
+        "date": "2026-10-22",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 26,
+        "date": "2026-10-23",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 27,
+        "date": "2026-10-24",
+        "avgFatigue": 0,
+        "maxFatigue": 0,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 28,
+        "date": "2026-10-25",
+        "avgFatigue": 2.4331250000000004,
+        "maxFatigue": 9.48,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 29,
+        "date": "2026-10-26",
+        "avgFatigue": 1.495625,
+        "maxFatigue": 6.48,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 30,
+        "date": "2026-10-27",
+        "avgFatigue": 0.574375,
+        "maxFatigue": 3.4800000000000004,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      }
+    ],
+    "B": [
+      {
+        "day": 0,
+        "date": "2026-09-27",
+        "avgFatigue": 2.47,
+        "maxFatigue": 11.74,
+        "available": 16,
+        "completedSessions": 0,
+        "cohesion": 50
+      },
+      {
+        "day": 1,
+        "date": "2026-09-28",
+        "avgFatigue": 6.5325,
+        "maxFatigue": 13.74,
+        "available": 16,
+        "completedSessions": 1,
+        "cohesion": 52.136
+      },
+      {
+        "day": 2,
+        "date": "2026-09-29",
+        "avgFatigue": 8.719999999999999,
+        "maxFatigue": 15.74,
+        "available": 16,
+        "completedSessions": 3,
+        "cohesion": 52.136
+      },
+      {
+        "day": 3,
+        "date": "2026-09-30",
+        "avgFatigue": 7.72,
+        "maxFatigue": 14.74,
+        "available": 16,
+        "completedSessions": 4,
+        "cohesion": 54.272000000000006
+      },
+      {
+        "day": 4,
+        "date": "2026-10-01",
+        "avgFatigue": 3.4144,
+        "maxFatigue": 10.4344,
+        "available": 16,
+        "completedSessions": 5,
+        "cohesion": 54.272000000000006
+      },
+      {
+        "day": 5,
+        "date": "2026-10-02",
+        "avgFatigue": 1.252625,
+        "maxFatigue": 7.4344,
+        "available": 16,
+        "completedSessions": 5,
+        "cohesion": 54.272000000000006
+      },
+      {
+        "day": 6,
+        "date": "2026-10-03",
+        "avgFatigue": 0.488325,
+        "maxFatigue": 4.4344,
+        "available": 16,
+        "completedSessions": 5,
+        "cohesion": 54.272000000000006
+      },
+      {
+        "day": 7,
+        "date": "2026-10-04",
+        "avgFatigue": 2.7858250000000004,
+        "maxFatigue": 13.6844,
+        "available": 16,
+        "completedSessions": 5,
+        "cohesion": 54.272000000000006
+      },
+      {
+        "day": 8,
+        "date": "2026-10-05",
+        "avgFatigue": 6.660825,
+        "maxFatigue": 15.6844,
+        "available": 16,
+        "completedSessions": 6,
+        "cohesion": 56.40800000000001
+      },
+      {
+        "day": 9,
+        "date": "2026-10-06",
+        "avgFatigue": 13.873325000000001,
+        "maxFatigue": 22.584400000000002,
+        "available": 16,
+        "completedSessions": 8,
+        "cohesion": 56.40800000000001
+      },
+      {
+        "day": 10,
+        "date": "2026-10-07",
+        "avgFatigue": 12.873325000000001,
+        "maxFatigue": 21.584400000000002,
+        "available": 16,
+        "completedSessions": 9,
+        "cohesion": 57.99800000000001
+      },
+      {
+        "day": 11,
+        "date": "2026-10-08",
+        "avgFatigue": 8.132525,
+        "maxFatigue": 16.843600000000002,
+        "available": 16,
+        "completedSessions": 10,
+        "cohesion": 57.99800000000001
+      },
+      {
+        "day": 12,
+        "date": "2026-10-09",
+        "avgFatigue": 5.132524999999999,
+        "maxFatigue": 13.843600000000002,
+        "available": 16,
+        "completedSessions": 10,
+        "cohesion": 57.99800000000001
+      },
+      {
+        "day": 13,
+        "date": "2026-10-10",
+        "avgFatigue": 2.132525,
+        "maxFatigue": 10.843600000000002,
+        "available": 16,
+        "completedSessions": 10,
+        "cohesion": 57.99800000000001
+      },
+      {
+        "day": 14,
+        "date": "2026-10-11",
+        "avgFatigue": 4.779,
+        "maxFatigue": 21.823600000000003,
+        "available": 16,
+        "completedSessions": 10,
+        "cohesion": 57.99800000000001
+      },
+      {
+        "day": 15,
+        "date": "2026-10-12",
+        "avgFatigue": 8.70655,
+        "maxFatigue": 23.823600000000003,
+        "available": 16,
+        "completedSessions": 11,
+        "cohesion": 60.134000000000015
+      },
+      {
+        "day": 16,
+        "date": "2026-10-13",
+        "avgFatigue": 10.89405,
+        "maxFatigue": 25.823600000000003,
+        "available": 16,
+        "completedSessions": 13,
+        "cohesion": 60.134000000000015
+      },
+      {
+        "day": 17,
+        "date": "2026-10-14",
+        "avgFatigue": 9.89405,
+        "maxFatigue": 24.823600000000003,
+        "available": 16,
+        "completedSessions": 14,
+        "cohesion": 62.27000000000002
+      },
+      {
+        "day": 18,
+        "date": "2026-10-15",
+        "avgFatigue": 5.58845,
+        "maxFatigue": 20.518,
+        "available": 16,
+        "completedSessions": 15,
+        "cohesion": 62.27000000000002
+      },
+      {
+        "day": 19,
+        "date": "2026-10-16",
+        "avgFatigue": 3.40445,
+        "maxFatigue": 17.518,
+        "available": 16,
+        "completedSessions": 15,
+        "cohesion": 62.27000000000002
+      },
+      {
+        "day": 20,
+        "date": "2026-10-17",
+        "avgFatigue": 2.36105,
+        "maxFatigue": 14.518,
+        "available": 16,
+        "completedSessions": 15,
+        "cohesion": 62.27000000000002
+      },
+      {
+        "day": 21,
+        "date": "2026-10-18",
+        "avgFatigue": 5.2516750000000005,
+        "maxFatigue": 25.028,
+        "available": 16,
+        "completedSessions": 15,
+        "cohesion": 62.27000000000002
+      },
+      {
+        "day": 22,
+        "date": "2026-10-19",
+        "avgFatigue": 9.214175,
+        "maxFatigue": 27.028,
+        "available": 16,
+        "completedSessions": 16,
+        "cohesion": 64.40600000000002
+      },
+      {
+        "day": 23,
+        "date": "2026-10-20",
+        "avgFatigue": 16.301675,
+        "maxFatigue": 33.928,
+        "available": 16,
+        "completedSessions": 18,
+        "cohesion": 64.40600000000002
+      },
+      {
+        "day": 24,
+        "date": "2026-10-21",
+        "avgFatigue": 15.301675000000001,
+        "maxFatigue": 32.928,
+        "available": 16,
+        "completedSessions": 19,
+        "cohesion": 65.99600000000002
+      },
+      {
+        "day": 25,
+        "date": "2026-10-22",
+        "avgFatigue": 10.560875,
+        "maxFatigue": 28.187199999999997,
+        "available": 16,
+        "completedSessions": 20,
+        "cohesion": 65.99600000000002
+      },
+      {
+        "day": 26,
+        "date": "2026-10-23",
+        "avgFatigue": 7.560874999999999,
+        "maxFatigue": 25.187199999999997,
+        "available": 16,
+        "completedSessions": 20,
+        "cohesion": 65.99600000000002
+      },
+      {
+        "day": 27,
+        "date": "2026-10-24",
+        "avgFatigue": 4.5608749999999985,
+        "maxFatigue": 22.187199999999997,
+        "available": 16,
+        "completedSessions": 20,
+        "cohesion": 65.99600000000002
+      },
+      {
+        "day": 28,
+        "date": "2026-10-25",
+        "avgFatigue": 6.345075,
+        "maxFatigue": 28.877199999999995,
+        "available": 16,
+        "completedSessions": 20,
+        "cohesion": 65.99600000000002
+      },
+      {
+        "day": 29,
+        "date": "2026-10-26",
+        "avgFatigue": 10.351424999999999,
+        "maxFatigue": 30.877199999999995,
+        "available": 16,
+        "completedSessions": 21,
+        "cohesion": 68.13200000000002
+      },
+      {
+        "day": 30,
+        "date": "2026-10-27",
+        "avgFatigue": 12.538924999999999,
+        "maxFatigue": 32.877199999999995,
+        "available": 16,
+        "completedSessions": 23,
+        "cohesion": 68.13200000000002
+      }
+    ]
+  },
+  "stimulusByRating": {
+    "A": {
+      "midRangeShooting": 6.660000000000001,
+      "threePointShooting": 12.36,
+      "freeThrowShooting": 0,
+      "rimFinishing": 19.54,
+      "contactFinishing": 0,
+      "dunking": 0,
+      "floater": 0,
+      "postScoring": 0,
+      "ballHandling": 0,
+      "ballSecurity": 0,
+      "firstStep": 12.880000000000003,
+      "changeOfDirection": 0,
+      "passing": 63.42,
+      "courtVision": 23.520000000000003,
+      "perimeterDefense": 0,
+      "interiorDefense": 0,
+      "screenNavigation": 0,
+      "defensiveAwareness": 175.82,
+      "steal": 0.72,
+      "rimProtection": 0,
+      "shotContest": 0,
+      "offensiveRebounding": 1.72,
+      "defensiveRebounding": 7.760000000000001,
+      "boxOut": 0,
+      "acceleration": 0,
+      "speed": 0,
+      "lateralAgility": 0,
+      "strength": 4.83,
+      "vertical": 4.740000000000001,
+      "stamina": 5,
+      "decisionMaking": 0,
+      "anticipation": 0.48000000000000004,
+      "composure": 0,
+      "offBallAwareness": 4.83,
+      "discipline": 0
+    },
+    "B": {
+      "midRangeShooting": 5.73,
+      "threePointShooting": 111.22802617600001,
+      "freeThrowShooting": 7.749082252710323,
+      "rimFinishing": 19.352553182705293,
+      "contactFinishing": 0,
+      "dunking": 0,
+      "floater": 0,
+      "postScoring": 0,
+      "ballHandling": 0,
+      "ballSecurity": 0,
+      "firstStep": 11.799999999999999,
+      "changeOfDirection": 0,
+      "passing": 60.85999999999999,
+      "courtVision": 86.21170075733333,
+      "perimeterDefense": 0,
+      "interiorDefense": 0,
+      "screenNavigation": 167.128506176,
+      "defensiveAwareness": 348.7285061760001,
+      "steal": 0.8700000000000001,
+      "rimProtection": 0,
+      "shotContest": 0,
+      "offensiveRebounding": 1.6000000000000003,
+      "defensiveRebounding": 7.360000000000002,
+      "boxOut": 0,
+      "acceleration": 130.89677333333336,
+      "speed": 0,
+      "lateralAgility": 0,
+      "strength": 5.16,
+      "vertical": 4.48,
+      "stamina": 111.38379015680002,
+      "decisionMaking": 32.625087424,
+      "anticipation": 0.5800000000000001,
+      "composure": 0,
+      "offBallAwareness": 5.16,
+      "discipline": 0
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009
+  ],
+  "games": [
+    {
+      "date": "2026-10-03",
+      "meanMarginA": 0.2,
+      "meanMarginB": 2.1,
+      "winsA": 5,
+      "winsB": 6
+    },
+    {
+      "date": "2026-10-10",
+      "meanMarginA": -4.7,
+      "meanMarginB": -4.1,
+      "winsA": 4,
+      "winsB": 4
+    },
+    {
+      "date": "2026-10-17",
+      "meanMarginA": -0.7,
+      "meanMarginB": 2.9,
+      "winsA": 4,
+      "winsB": 5
+    },
+    {
+      "date": "2026-10-24",
+      "meanMarginA": -3.7,
+      "meanMarginB": -0.5,
+      "winsA": 4,
+      "winsB": 7
+    }
+  ],
+  "pairedMeanDifferenceBminusA": 2.33,
+  "standardError": 3.4,
+  "interval95": [
+    -4.35,
+    9
+  ],
+  "pairs": 40
+}

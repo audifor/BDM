@@ -1,0 +1,8 @@
+{
+  "fatigueRested": 0,
+  "fatigueOverloaded": 42.84,
+  "seeds": 24,
+  "pairedMarginDifferenceOverloadedMinusRested": -1.25,
+  "standardError": 4.23,
+  "trainingInjuries": 1
+}

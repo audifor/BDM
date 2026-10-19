@@ -142,4 +142,26 @@ describe('TrainingWorkspace', () => {
     expect(history).toHaveTextContent('GOOD execution')
     expect(history).not.toHaveTextContent('1.00×')
   })
+  it('Staff tab shows the canonical Responsibilities the coach delegated in Staff, not the retired legacy map', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'assistantCoach')!
+    const holder = world.staffPeopleById[assignment.staffPersonId]!
+    mountTrainingWorkspace(world)
+    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
+    expect(screen.getAllByText('Create Team Training Plan').length).toBeGreaterThan(0)
+    expect(screen.queryByText(`${holder.identity.firstName} ${holder.identity.lastName}`)).not.toBeInTheDocument()
+
+    cleanup()
+    useGameStore.getState().resetGame()
+    mountTrainingWorkspace(world)
+    useGameStore.getState().setStaffResponsibility({ teamId: team.id, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: assignment.staffPersonId })
+    cleanup()
+    mountTrainingWorkspace(useGameStore.getState().world!)
+    fireEvent.click(screen.getByRole('button', { name: 'Staff' }))
+    const row = screen.getByText('Create Team Training Plan').closest('div')!
+    expect(row).toHaveTextContent(`${holder.identity.firstName} ${holder.identity.lastName}`)
+    expect(row).toHaveTextContent('DELEGATED')
+    expect(screen.getByText(/1 de \d+ funciones delegadas/)).toBeInTheDocument()
+  })
 })
