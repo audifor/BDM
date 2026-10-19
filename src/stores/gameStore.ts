@@ -46,9 +46,11 @@ import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanFor
 import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, TrainingParticipation, UserTrainingModule } from '@/domain/training'
 import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleAutomaticTeamTrainingWeek, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan, setTrainingParticipation } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { LineupSelectionError } from '@/engine/tactics/LineupAvailability'
+import { validateTacticalPlan } from '@/engine/match'
 import { getTeamLineup } from '@/domain/world'
 import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
-import { updateGamePlan } from '@/app/game/TacticalPlanning'
+import { clearGamePlanOverride, setTacticalInstruction, updateGamePlan } from '@/app/game/TacticalPlanning'
 import { deleteDesignerPlay, deleteDesignerPlaybook, saveDesignerPlay, saveDesignerPlaybook } from '@/engine/tactics/PlaybookEngine'
 import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
@@ -115,6 +117,11 @@ interface GameStore {
   readonly lastDayAdvanceResult: WorldDayAdvanceResult | null
   /** ME-LOCK1.1: a day is being simulated in the background (worker pool); world-changing actions wait for it. */
   readonly simulationBusy: boolean
+  /** Why the last Plantilla/Pizarra lineup change was refused (a player who cannot play the next game); null once a change is accepted. */
+  readonly lineupNotice: string | null
+  /** A live Match Next session is being watched: its progress is not part of GameWorld, so saving/loading is refused meanwhile. */
+  readonly liveMatchActive: boolean
+  setLiveMatchActive(active: boolean): void
   newGame(): void
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
@@ -200,6 +207,7 @@ interface GameStore {
   deleteUserTrainingModule(moduleId: string): void
   assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
+  clearLineupNotice(): void
   requestScoutingAssignment(input: RequestScoutingInput): string | null
   updateScoutingAssignmentPriority(assignmentId: string, priority: ScoutingPriority): string | null
   cancelScoutingAssignment(assignmentId: string): string | null
@@ -214,6 +222,10 @@ interface GameStore {
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
   updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
   updateGamePlanTacticalOverride(tacticalOverride: MatchTacticalPlan): void
+  /** Removes the next game's tactical override so the team's standing plan applies again (matchups are kept). */
+  clearGamePlanTacticalOverride(): void
+  /** The user team's standing tactical plan: the canonical instructions every game starts from. */
+  updateTeamTacticalPlan(plan: MatchTacticalPlan): void
   saveDesignerPlay(play: SavedPlay): void
   deleteDesignerPlay(playId: string): void
   saveDesignerPlaybook(playbook: Playbook): void
@@ -311,6 +323,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   lastDayAdvanceResult: null,
   simulationBusy: false,
+  lineupNotice: null,
+  liveMatchActive: false,
+  setLiveMatchActive: (active) => set({ liveMatchActive: active }),
   newGame: () => set({ world: createNewGame(), lastDayAdvanceResult: null }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
   startLiveMatch: (tacticalPlan) => { const world = addPreMatchMedia(requireWorld(get().world)); set({ world }); liveController = createLiveUserMatch(world, tacticalPlan); return liveController.snapshot() },
@@ -610,7 +625,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveUserTrainingModule: (module) => set({ world: createOrUpdateUserTrainingModule(requireWorld(get().world), module) }),
   deleteUserTrainingModule: (moduleId) => set({ world: deleteUserTrainingModule(requireWorld(get().world), moduleId) }),
   assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },
-  setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
+  setLineupSlot: (slot, playerId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return
+    try { set({ world: setLineupSlot(world, team.id, slot, playerId), lineupNotice: null }) }
+    catch (error) {
+      if (!(error instanceof LineupSelectionError)) throw error
+      const player = world.players[playerId]
+      set({ lineupNotice: `${player === undefined ? 'El jugador' : `${player.firstName} ${player.lastName}`}: ${error.message}` })
+    }
+  },
+  clearLineupNotice: () => set({ lineupNotice: null }),
   requestScoutingAssignment: (input) => {
     try {
       const world = requireWorld(get().world)
@@ -646,7 +672,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   cancelRecruitmentFocus: (focusId) => { try { set({ world: cancelRecruitmentFocus(requireWorld(get().world), focusId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Recruitment Focus could not be cancelled.' } },
   dismissRecruitmentFocusCandidate: (focusId, playerId) => { try { set({ world: dismissRecruitmentFocusCandidate(requireWorld(get().world), focusId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Candidate could not be removed.' } },
   editRecruitmentFocusCriteria: (focusId, criteria) => { try { set({ world: editRecruitmentFocusCriteria(requireWorld(get().world), focusId, criteria) }); return null } catch (error) { return error instanceof Error ? error.message : 'Recruitment Focus criteria could not be updated.' } },
-  clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
+  clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot), lineupNotice: null }) },
   updateRotationMinutes: (minutesByPeriod) => {
     const world = requireWorld(get().world)
     const team = getUserTeam(world)
@@ -669,6 +695,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (team === undefined || game === undefined) return
     const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
     set({ world: updateGamePlan(world, { gameId: game.id, teamId: team.id, ...(existing?.rotationOverride === undefined ? {} : { rotationOverride: existing.rotationOverride }), ...(existing?.matchups === undefined ? {} : { matchups: existing.matchups }), tacticalOverride }) })
+  },
+  clearGamePlanTacticalOverride: () => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const game = getNextUserGame(world)
+    if (team === undefined || game === undefined) return
+    const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
+    if (existing?.tacticalOverride === undefined) return
+    const { tacticalOverride: _dropped, ...rest } = existing
+    const keep = rest.matchups !== undefined || rest.rotationOverride !== undefined
+    set({ world: keep ? updateGamePlan(world, rest) : clearGamePlanOverride(world, game.id, team.id) })
+  },
+  updateTeamTacticalPlan: (plan) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return
+    validateTacticalPlan(plan, team.rosterPlayerIds)
+    set({ world: setTacticalInstruction(world, team.id, plan) })
   },
   saveDesignerPlay: (play) => set({ world: saveDesignerPlay(requireWorld(get().world), play) }),
   deleteDesignerPlay: (playId) => set({ world: deleteDesignerPlay(requireWorld(get().world), playId) }),
@@ -745,7 +789,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   getActiveMatchSession: () => liveController,
   replaceWorld: (world) => { liveController = null; set({ world: ensureUserCoachRpgProfile(world), lastDayAdvanceResult: null, focusedFacilityId: null }) },
-  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null, focusedFacilityId: null }) },
+  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null, focusedFacilityId: null, lineupNotice: null, liveMatchActive: false }) },
 }))
 
 function requireWorld(world: GameWorld | null): GameWorld {

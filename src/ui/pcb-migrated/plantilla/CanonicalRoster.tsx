@@ -42,6 +42,7 @@ import { RosterRowInspector } from "@/ui-ng/applications/roster/components/Roste
 import { RosterStaffComments } from "@/ui-ng/applications/roster/components/RosterStaffComments";
 import { buildRosterInspectorSeasonStats } from '@/ui-ng/applications/roster/buildRosterInspectorSeasonStats';
 import { CourtsideRosterTable } from '@/ui-ng/applications/roster/components/CourtsideRosterTable';
+import { classifyLineupCandidate } from '@/engine/tactics/LineupAvailability';
 
 import "./CanonicalRoster.css";
 
@@ -308,11 +309,20 @@ export function CanonicalRoster({
         defaultWidth: 58,
         minWidth: 54,
         sortable: true,
-        value: (player) => getCurrentPlayerInjury(world, player.id)?.kind ?? "ready",
+        value: (player) => getCurrentPlayerInjury(world, player.id)?.kind ?? (classifyLineupCandidate(world, team.id, player.id).reason ?? "ready"),
         render: (player) => {
           const injury = getCurrentPlayerInjury(world, player.id);
           if (injury === undefined) {
-            return <span className="canonical-roster__status canonical-roster__status--ok">OK</span>;
+            // Available, or out of the next game for a reason other than injury (not eligible for the competition, inactive).
+            const availability = classifyLineupCandidate(world, team.id, player.id);
+            if (availability.selectable || availability.reason === "NOT_ON_ROSTER") {
+              return <span className="canonical-roster__status canonical-roster__status--ok">OK</span>;
+            }
+            return (
+              <span className="canonical-roster__status canonical-roster__status--out" title={availability.detail}>
+                {availability.reason === "INELIGIBLE" ? "NE" : "BAJA"}
+              </span>
+            );
           }
           return (
             <span

@@ -149,7 +149,7 @@ export function NgMatchNextViewer({
         score={<GameClock arena={venue.arena} attendance={null} awayScore={frame.score.away} clockLabel={formatClock(frame.gameClock / 10)} finished={snapshot.isComplete} homeScore={frame.score.home} location={venue.location} periodLabel={formatPeriod(frame.period)} shotClock={frame.shotClock === null ? null : frame.shotClock / 10} />}
         away={<TeamScoreSummary fouls={null} mark={teamMark(awayName)} name={awayName} onOpen={() => navigateToTeamInNg({ type: 'team', teamId: game.awayTeamId, section: 'overview' })} record={teamRecordLabel(world, game.awayTeamId)} side="away" timeouts={null} />}
         controls={<div className="me-quick" aria-label="Match Next playback controls">
-          <button className="me-quick__btn is-emphasis" onClick={() => setIsPlaying((playing) => !playing)} type="button">{isPlaying ? 'Pausar partido' : 'Reanudar partido'}</button>
+          <button className="me-quick__btn is-emphasis" disabled={snapshot.isComplete} onClick={() => setIsPlaying((playing) => !playing)} type="button">{isPlaying ? 'Pausar partido' : 'Reanudar partido'}</button>
           <button className="me-quick__btn" disabled={snapshot.isComplete || isSkipping} onClick={nextPossession} type="button">Próxima posesión</button>
           <button className="me-quick__btn" disabled={snapshot.isComplete || isSkipping} onClick={runToEnd} type="button">{isSkipping ? 'Simulando final…' : 'Simular final'}</button>
           {snapshot.isComplete

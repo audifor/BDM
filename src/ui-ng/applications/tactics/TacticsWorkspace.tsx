@@ -2,7 +2,6 @@ import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
-import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { TacticsPcbPage, TACTICS_PCB_TABS, type TacticsPcbTab } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
 import { CourtsideTacticsPanels } from '@/ui-ng/applications/tactics/CourtsideTacticsPanels'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -69,9 +68,10 @@ export function TacticsWorkspace() {
   const deleteDesignerPlay = useGameStore((state) => state.deleteDesignerPlay)
   const saveDesignerPlaybook = useGameStore((state) => state.saveDesignerPlaybook)
   const deleteDesignerPlaybook = useGameStore((state) => state.deleteDesignerPlaybook)
-  const plan = useTacticalPlanStore((state) => state.plan)
-  const setPlan = useTacticalPlanStore((state) => state.setPlan)
-  const resetPlan = useTacticalPlanStore((state) => state.reset)
+  const updateTeamTacticalPlan = useGameStore((state) => state.updateTeamTacticalPlan)
+  const clearGamePlanTacticalOverride = useGameStore((state) => state.clearGamePlanTacticalOverride)
+  const lineupNotice = useGameStore((state) => state.lineupNotice)
+  const clearLineupNotice = useGameStore((state) => state.clearLineupNotice)
   const [activeTab, setActiveTab] = useState<Exclude<TacticsPcbTab, 'designer'>>('board')
   const [boardMode, setBoardMode] = useState<'prepare' | 'design' | 'analyse'>('prepare')
   const { openEntity } = useNgWorkspaceNavigation()
@@ -137,6 +137,7 @@ export function TacticsWorkspace() {
         <ScrollRegion className="tactics-workspace__scroll">
           <div className="ct-page" data-courtside-tactics-screen={activeTab === 'board' ? boardMode === 'prepare' ? 'board' : 'designer' : activeTab} aria-label={CT_PAGE_DESCRIPTIONS[activeTab]}>
             <h1 className="ct-page__sr-only">{CT_PAGE_TITLES[activeTab]}</h1>
+            {lineupNotice === null ? null : <p className="tactics-workspace__notice" role="alert">{lineupNotice} <button onClick={clearLineupNotice} type="button">Entendido</button></p>}
             {activeTab === 'board' ? <>
               <div className="ct-unified-switch" role="group" aria-label="Modo de Pizarra">
                 {([
@@ -153,19 +154,18 @@ export function TacticsWorkspace() {
             activeTab={boardMode === 'prepare' ? 'board' : 'designer'}
             keepDesignerMounted
             creatorMode={boardMode === 'analyse' ? 'lab' : 'edit'}
-            onChange={setPlan}
+            onChange={updateGamePlanTacticalOverride}
             onDeleteDesignerPlay={deleteDesignerPlay}
             onDeleteDesignerPlaybook={deleteDesignerPlaybook}
             onLineupSlotChange={setLineupSlot}
             onLineupSlotClear={clearLineupSlot}
             onOpenPlayer={(playerId) => openEntity({ type: 'player', playerId, section: 'overview' })}
-            onReset={resetPlan}
+            onReset={clearGamePlanTacticalOverride}
             onSaveDesignerPlay={saveDesignerPlay}
             onSaveDesignerPlaybook={saveDesignerPlaybook}
-            onSaveGamePlanTacticalOverride={updateGamePlanTacticalOverride}
+            onUpdateTeamPlan={updateTeamTacticalPlan}
             onUpdateMatchups={updateGamePlanMatchups}
             onUpdateRotationMinutes={updateRotationMinutes}
-            plan={plan}
             variant="ng"
             world={world}
           /></div></> : (

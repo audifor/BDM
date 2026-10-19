@@ -448,24 +448,16 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(document.querySelector('g[transform="translate(100,100)"]')).toBeNull()
   })
 
-  it('Match Plan no longer shows a fake session-only save confirmation for unrelated fields', () => {
+  it('Match Plan has no save step: each instruction is written to the upcoming game plan at once', () => {
     const world = createNewGame()
-    render(createElement(TacticsPcbPage, { world }))
+    const onChange = vi.fn()
+    render(createElement(TacticsPcbPage, { world, onChange }))
     fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar plan' }))
-    expect(screen.queryByText('Plan guardado para esta sesión.')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByRole('button', { name: 'Guardar plan' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Ritmo'), { target: { value: 'Rápido' } })
 
-  it('Guardar plan in Match Plan persists the tactical override into the real TeamGamePlan for the upcoming game', () => {
-    const world = createNewGame()
-    const onSaveGamePlanTacticalOverride = vi.fn()
-    render(createElement(TacticsPcbPage, { world, onSaveGamePlanTacticalOverride, plan: { pace: 1, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } } }))
-    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar plan' }))
-
-    expect(onSaveGamePlanTacticalOverride).toHaveBeenCalledWith(expect.objectContaining({ pace: 1 }))
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ pace: 1 }))
   })
 
   it('remounting Tactics for the same upcoming game rehydrates the persisted pace/coverage override into Partido controls', () => {

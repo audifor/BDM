@@ -338,3 +338,9 @@
   }
   .ct-courtside .ct-unified-content .tactics-board-panel-right {height:auto!important}
 }
+
+/* F1: the tactical plan panel lists every Courtside setting (the engine-backed ones are operable, the rest are declared as not executed),
+   so it uses the full height of the Pizarra instead of the 265px window meant for the bench lists. */
+.ct-courtside .ct-unified-content .tactics-board-panel-right > .tactics-board-panel-body:not(.tactics-board-panel-body--unassigned) {
+  flex:1 1 0;max-height:none!important;overflow-y:auto;
+}

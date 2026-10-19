@@ -701,3 +701,19 @@
   .ct-courtside .pcb-tactics-creator__summary-head {font-size:14px!important}
   .ct-courtside .ct-tactical-lab__zones {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* F1: honest states for controls the match engine does not execute, refused lineup picks and the footer status line. */
+.ct-courtside .pcb-tactics--ng .tactics-board-control-value.is-unconnected {
+  color:var(--ct-muted,var(--ct-text));opacity:.72;font:600 11px var(--ct-font);letter-spacing:.04em;
+  border:1px dashed var(--ct-line);border-radius:6px;padding:6px 8px;
+}
+.ct-courtside .pcb-tactics--ng .tactics-board-footer__status {margin:0 0 6px;font:600 11px var(--ct-font);color:var(--ct-muted,var(--ct-text));line-height:1.35}
+.ct-roster-item.is-unavailable {opacity:.62;cursor:not-allowed;border-style:dashed}
+.ct-roster-item.is-unavailable:hover {border-color:var(--ct-line);background:var(--ct-raised)}
+.ct-roster-item.is-unavailable .ct-roster-status {font:800 10px var(--ct-font);letter-spacing:.05em;color:var(--ct-orange,var(--ct-accent));flex-basis:auto}
+.tactics-workspace__notice {
+  display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:8px 12px;border-radius:8px;
+  border:1px solid var(--ct-orange,var(--ct-accent));background:color-mix(in srgb,var(--ct-orange,var(--ct-accent)) 10%,var(--ct-panel,transparent));
+  color:var(--ct-text);font:600 12px var(--ct-font);
+}
+.tactics-workspace__notice button {margin-left:auto;font:700 11px var(--ct-font);cursor:pointer}

@@ -68,12 +68,12 @@ describe('TacticsPcbPage / real GameWorld integration', () => {
     expect(screen.queryByText(/Atacar el lado débil/)).not.toBeInTheDocument()
   })
 
-  it('the Pizarra board persists state under the real team id, not a fabricated fallback', () => {
+  it('the Pizarra board keeps no tactical settings in browser storage: the plan is a GameWorld fact', () => {
     const world = createNewGame()
     const team = getUserTeam(world)!
     render(createElement(TacticsPcbPage, { world }))
 
-    expect(window.localStorage.getItem(`pcbasket.tactics.board.${team.id}.config`)).not.toBeNull()
+    expect(window.localStorage.getItem(`pcbasket.tactics.board.${team.id}.config`)).toBeNull()
     expect(window.localStorage.getItem('pcbasket.tactics.board.1.config')).toBeNull()
   })
 
