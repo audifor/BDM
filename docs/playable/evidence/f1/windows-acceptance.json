@@ -1,0 +1,189 @@
+{
+  "platform": "Windows Tauri debug executable, embedded production frontend (no Vite)",
+  "exe": "C:/BDM/src-tauri/target/debug/bdm.exe",
+  "userSaveSha256Before": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "saveBeforeMatch": {
+    "payloadSha256": "5237f8097a23525009b5f330cafa013ac9316acc83c2ffa29505892ed21125cc",
+    "schemaVersion": 4,
+    "completed": [],
+    "statLogs": 0
+  },
+  "liveFinalText": [
+    "FINAL",
+    "SIMULAR FINAL",
+    "ME-NEXT · SEMILLA 2714608024",
+    "FINAL"
+  ],
+  "result": {
+    "score": [
+      101,
+      75
+    ],
+    "gameId": "schedule-acb-season-2026-27-game-0003",
+    "header": "ACTA · LIGA ENDESA 2026/27 [TEST] · 2026-09-26 Casademont Zaragoza 101 – 75 UCAM Murcia DERROTA Jugado en directo",
+    "ucmStarters": [
+      "David DeJulius",
+      "Dylan Ennis",
+      "Emmanuel Cate",
+      "Howard Sant-Roos",
+      "Kaiser Gates"
+    ]
+  },
+  "standingsAfterMatch": {
+    "UCAM Murcia": [
+      "1",
+      "0",
+      "1",
+      "75",
+      "101",
+      "-26",
+      ".000"
+    ],
+    "Casademont Zaragoza": [
+      "1",
+      "1",
+      "0",
+      "101",
+      "75",
+      "+26",
+      "1.000"
+    ]
+  },
+  "homeAfterMatch": {
+    "nextFixture": "Valencia Basket · 03 OCT 2026",
+    "winner": "Casademont Zaragoza"
+  },
+  "saveAfterMatch": {
+    "payloadSha256": "b970840492b4b7711db8a365fb86f119e620357644b2c1d074007558e75e4eca",
+    "payloadEqualAfterProcessRestart": true,
+    "schemaVersion": 4,
+    "completed": [
+      {
+        "id": "schedule-acb-season-2026-27-game-0003",
+        "date": "2026-09-26",
+        "home": "acb-team-caz",
+        "away": "acb-team-ucm",
+        "result": {
+          "homeScore": 101,
+          "awayScore": 75
+        }
+      }
+    ],
+    "statLogs": 1
+  },
+  "afterSecondMatch": {
+    "completedGames": 10,
+    "userGames": 2,
+    "statLogs": 10
+  },
+  "steps": [
+    {
+      "id": 1,
+      "title": "NEW GAME → ACB 2026/27 → entrenador → UCAM Murcia → iniciar el 1 de julio de 2026",
+      "result": "PASS",
+      "ms": 4173
+    },
+    {
+      "id": 2,
+      "title": "Continuar hasta el primer encuentro (26 de septiembre de 2026, Casademont Zaragoza)",
+      "result": "PASS",
+      "ms": 9723
+    },
+    {
+      "id": 3,
+      "title": "Roster: modificar quinteto y banquillo",
+      "result": "PASS",
+      "ms": 16117
+    },
+    {
+      "id": 4,
+      "title": "Tactics muestra exactamente el mismo quinteto y banquillo",
+      "result": "PASS",
+      "ms": 3404,
+      "detail": {
+        "headers": [
+          "BANQUILLO 4 disp.",
+          "SIN ASIGNAR 7 disp."
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "Rotaciones: fijar minutos y guardarlos",
+      "result": "PASS",
+      "ms": 3520
+    },
+    {
+      "id": 6,
+      "title": "Pizarra: modificar instrucciones reales (ritmo, triples, esquema defensivo, bloqueo directo)",
+      "result": "PASS",
+      "ms": 4780,
+      "detail": {
+        "unconnectedControlsOnDefense": 4
+      }
+    },
+    {
+      "id": 7,
+      "title": "Guardar la partida (Save V4 nativo) y comprobar el fichero",
+      "result": "PASS",
+      "ms": 4801
+    },
+    {
+      "id": 8,
+      "title": "Cerrar BDM, volver a abrir y CONTINUE: Plantilla y Tácticas se recuperan exactamente",
+      "result": "PASS",
+      "ms": 17764
+    },
+    {
+      "id": 9,
+      "title": "Partido: la presentación usa el quinteto, la rotación y el plan guardados",
+      "result": "PASS",
+      "ms": 3037
+    },
+    {
+      "id": 10,
+      "title": "Disputar el encuentro en directo con el MatchViewer hasta el final",
+      "result": "PASS",
+      "ms": 15800
+    },
+    {
+      "id": 11,
+      "title": "Acta: marcador, estadísticas y minutos coherentes",
+      "result": "PASS",
+      "ms": 90
+    },
+    {
+      "id": 12,
+      "title": "Competition: clasificación y resultados actualizados desde GameWorld",
+      "result": "PASS",
+      "ms": 8049
+    },
+    {
+      "id": 13,
+      "title": "Home: resultado registrado y calendario avanzado",
+      "result": "PASS",
+      "ms": 2594
+    },
+    {
+      "id": 14,
+      "title": "Guardar, cerrar, volver a cargar y comprobar la conservación exacta",
+      "result": "PASS",
+      "ms": 18174
+    },
+    {
+      "id": 15,
+      "title": "Continuar hasta el siguiente encuentro sin duplicar el anterior y jugarlo (simulación rápida)",
+      "result": "PASS",
+      "ms": 22251
+    },
+    {
+      "id": 16,
+      "title": "Courtside: modo claro y ventana compacta, sin textos ilegibles ni errores de renderizado",
+      "result": "PASS",
+      "ms": 7054
+    }
+  ],
+  "consoleErrors": [],
+  "userSaveSha256After": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "userSaveRestored": true
+}

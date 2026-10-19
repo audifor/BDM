@@ -260,7 +260,7 @@ try {
         let row = [...document.querySelectorAll('button,a,span,div')].find((el) => el.children.length === 0 && el.textContent.trim() === team && el.getBoundingClientRect().width > 0)
         for (let depth = 0; row && depth < 6 && !(/^[0-9]/.test(squash(row)) && squash(row).includes(team + ' ')); depth += 1) row = row.parentElement
         const text = row ? squash(row) : ''
-        out[team] = text === '' ? [] : text.slice(text.indexOf(team) + team.length).trim().split(' ')
+        out[team] = text === '' ? [] : text.slice(text.indexOf(team) + team.length).trim().split(' ').slice(0, 7) // PJ W L PF PA DIFF PCT
       }
       return out
     })()`)
