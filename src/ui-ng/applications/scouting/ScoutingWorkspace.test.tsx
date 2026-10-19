@@ -38,18 +38,18 @@ describe('ScoutingWorkspace', () => {
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 
-  it('opens scouting without salary budgets in partially initialized game worlds', () => {
+  it('opens scouting without canonical financial authorization in partially initialized game worlds', () => {
     const world = createNewGame()
     const team = getUserTeam(world)!
     const older = { ...world,
-      teamFinancesByTeamId: Object.fromEntries(
-        Object.entries(world.teamFinancesByTeamId).filter(([id]) => id !== team.id)),
+      organizationFinancialProfilesById: Object.fromEntries(
+        Object.entries(world.organizationFinancialProfilesById).filter(([id]) => id !== team.organizationId)),
     } as typeof world
     mountScoutingWorkspace(older)
     expect(screen.getByTestId('scouting-war-room')).toBeInTheDocument()
     expect(screen.getByTestId('market-operations-bar')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Abrir presupuesto de mercado' }))
-    expect(screen.getAllByText('Sin datos financieros')).toHaveLength(2)
+    expect(screen.getAllByText('Sin autorización salarial vigente')).toHaveLength(2)
   })
 
   it('returns to Mercado through the compact header rather than a Talent navigation strip', () => {

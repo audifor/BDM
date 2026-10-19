@@ -56,7 +56,8 @@ describe('Player scouting addressability from public fixtures', () => {
     const attributes = Object.fromEntries(
       STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 65]),
     ) as Record<(typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS)[number], number>
-    const role = 'advanceScout' as const
+    // QUICK_LOOK is eligible for a player-evaluation scout, not an advance scout.
+    const role = 'regionalScout' as const
     const world = updateGameWorld(original, {
       staffPeople: [...Object.values(original.staffPeopleById), {
         id: staffId, identity: { firstName: 'Test', lastName: 'Scout' },

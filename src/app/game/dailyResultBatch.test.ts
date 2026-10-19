@@ -96,13 +96,32 @@ describe('daily result batch (WSR2.1)', () => {
 
   it('a batched day saves and reloads like any world (no domain lost beyond the inherited round-trip gaps) and keeps advancing', () => {
     const roundTrip = (world: GameWorld) => deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, '2026-10-05T00:00:00.000Z'))))
-    const lost = (world: GameWorld) => { const reloaded = roundTrip(world); return Object.keys({ ...world, ...reloaded }).filter((key) => JSON.stringify((world as unknown as Record<string, unknown>)[key]) !== JSON.stringify((reloaded as unknown as Record<string, unknown>)[key])) }
+    // Match stat logs are a semantic record: comparing JSON text also compares
+    // incidental property insertion order inside each log. Verify *all* saved
+    // game IDs, player lines, scores and provenance structurally instead.
+    const lost = (world: GameWorld) => {
+      const reloaded = roundTrip(world)
+      const source = world as unknown as Record<string, unknown>
+      const loaded = reloaded as unknown as Record<string, unknown>
+      return Object.keys({ ...source, ...loaded }).filter((key) => {
+        if (key === 'matchStatLogsByGameId') {
+          expect(loaded[key]).toEqual(source[key])
+          return false
+        }
+        return JSON.stringify(source[key]) !== JSON.stringify(loaded[key])
+      })
+    }
     const start = withShortGameFormat(createNewGame())
     let seed = 300
     const day = advanceGameDayWithResult(start, () => seed++, ['userGame'], { simulationDetail: mixed })
     expect(day.status).toBe('COMPLETED')
+    // Structural comparison before any JSON key-order comparison: if this fails,
+    // investigate the exact sporting stat/log field lost by Save V4.
+    expect(roundTrip(day.world).matchStatLogsByGameId).toEqual(day.world.matchStatLogsByGameId)
     // Inherited (pre-WSR2.1, already on a fresh world): the save format does not reproduce a few derived domains exactly.
-    expect(lost(day.world).every((key) => lost(start).includes(key))).toBe(true)
+    const inheritedLoss = lost(start)
+    const afterBatchLoss = lost(day.world)
+    expect(afterBatchLoss.filter((key) => !inheritedLoss.includes(key)), `New Save V4 mismatch after daily batch: ${afterBatchLoss.filter((key) => !inheritedLoss.includes(key)).join(', ')}`).toEqual([])
     const reloaded = roundTrip(day.world)
     expect(reloaded.matchStatLogsByGameId).toEqual(day.world.matchStatLogsByGameId)
     expect(reloaded.careerFatigueByPlayerId).toEqual(day.world.careerFatigueByPlayerId)
