@@ -1503,6 +1503,13 @@
   overscroll-behavior:contain;
   scrollbar-gutter:stable;
 }
+
+/* Keep the full calendar scrollable without stretching the next-match card off screen. */
+@media (max-width:1399px), (max-height:839px) {
+  .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming:not(.home-slot) {
+    height:320px;
+  }
+}
 .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-dashboard__upcoming .home-upcoming__row,
 .bdm-os-ng[data-bdm-courtside-shell='true'] [data-ng-region='home-workspace'] .home-slot--upcoming .home-upcoming__row {
   display:grid;

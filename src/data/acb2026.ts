@@ -1,6 +1,7 @@
 import type { BasketballPosition } from '@/domain/primitives'
 
 export const ACB_TEST_UNIVERSE_ID = 'acb-2026-27' as const
+export const ACB_CAREER_START_DATE = '2026-07-01' as const
 export const ACB_QUICK_START_TEAM_KEY = 'caz' as const
 export const ACB_SNAPSHOT_DATE = '2026-08-30' as const
 

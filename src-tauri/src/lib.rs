@@ -170,6 +170,8 @@ fn write_save(path: &Path, bytes: &[u8]) -> Result<(), String> {
             .map_err(|error| format!("Unable to write temporary save: {error}"))?;
         file.sync_all()
             .map_err(|error| format!("Unable to flush temporary save: {error}"))?;
+        // ReplaceFileW needs the replacement file's write handle closed on Windows.
+        drop(file);
         replace_save(&temporary, path)
     })();
     if result.is_err() {
@@ -265,6 +267,23 @@ mod tests {
         assert!(
             validate_envelope_json(r#"{"schemaVersion":4,"savedAt":"","payload":null}"#).is_err()
         );
+    }
+
+    #[test]
+    fn saves_and_replaces_the_same_native_slot() {
+        let directory = std::env::temp_dir().join(format!("bdm-save-test-{}", std::process::id()));
+        let path = directory.join("partida-á.json");
+        let first =
+            br#"{"schemaVersion":4,"savedAt":"2026-07-01","payload":{"currentDate":"2026-07-01"}}"#;
+        let second =
+            br#"{"schemaVersion":4,"savedAt":"2026-07-02","payload":{"currentDate":"2026-07-02"}}"#;
+
+        write_save(&path, first).expect("first native save");
+        assert_eq!(fs::read(&path).unwrap(), first);
+        write_save(&path, second).expect("replace existing native save");
+        assert_eq!(fs::read(&path).unwrap(), second);
+        assert!(!path.with_extension("json.tmp").exists());
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

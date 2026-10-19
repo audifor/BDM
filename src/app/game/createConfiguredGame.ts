@@ -1,5 +1,6 @@
 import type { GameWorld } from '@/domain/world'
-import { ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
+import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
+import { parseGameDate } from '@/domain/date'
 import { createAcbTestGame } from './createAcbTestGame'
 import { createNewGame } from './createNewGame'
 import { BDM_GAME_BALANCE_V1 } from '@/app/gameBalance/BdmGameBalanceV1'
@@ -12,7 +13,7 @@ export function createConfiguredGame(options: NewGameConfiguration = {}): GameWo
   const universeId = options.universeId ?? 'prototype'
   if (universeId === WORLD_DB_SPAIN_UNIVERSE_ID) throw new RangeError('World DB requires async new-game bootstrap')
   const world = universeId === ACB_TEST_UNIVERSE_ID
-    ? createAcbTestGame({ userTeamKey: options.userTeamKey, ...(options.userCoachCreation === undefined ? { coachRpgPreset: options.coachRpgPreset } : {}), gameBalance: BDM_GAME_BALANCE_V1 })
+    ? createAcbTestGame({ userTeamKey: options.userTeamKey, careerStartDate: parseGameDate(ACB_CAREER_START_DATE), ...(options.userCoachCreation === undefined ? { coachRpgPreset: options.coachRpgPreset } : {}), gameBalance: BDM_GAME_BALANCE_V1 })
     : universeId === NCAA_SIMULATED_UNIVERSE_ID
       ? createNcaaSimulatedGame({ gameBalance: BDM_GAME_BALANCE_V1 })
       : createNewGame({ ...(options.userCoachCreation === undefined ? { coachRpgPreset: options.coachRpgPreset } : {}), gameBalance: BDM_GAME_BALANCE_V1 })

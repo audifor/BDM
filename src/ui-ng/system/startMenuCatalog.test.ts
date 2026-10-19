@@ -22,11 +22,13 @@ describe('startMenuCatalog', () => {
     expect(labels).toContain('Mundo y narrativa')
     expect(labels).toContain('College Performance Center')
     expect(labels).toContain('Talent Operations')
-    expect(START_MENU_GROUPS.find((group) => group.id === 'talent')?.appIds).toEqual(['talent', 'scouting', 'recruiting', 'portal', 'draft'])
+    expect(START_MENU_GROUPS.find((group) => group.id === 'talent')?.appIds).toEqual(['talent', 'recruiting', 'portal', 'draft'])
     expect(START_MENU_GROUPS.find((group) => group.id === 'college')?.appIds).toEqual(['recruiting', 'nil', 'boosters'])
     expect(START_MENU_GROUPS.find((group) => group.id === 'equipo')?.appIds).toEqual(
-      expect.arrayContaining(['player', 'scouting']),
+      expect.arrayContaining(['player', 'roster']),
     )
+    expect(START_MENU_GROUPS.find((group) => group.id === 'mercado')?.appIds).toContain('market')
+    expect(START_MENU_GROUPS.every((group) => !group.appIds.includes('scouting'))).toBe(true)
   })
 
   it('exposes college and club apps in the searchable catalog', () => {

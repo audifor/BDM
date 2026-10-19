@@ -11,7 +11,7 @@ import { createStaffContract, staffContractIdFromString } from '@/domain/staffCo
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type StaffPerson, type StaffRoleId } from '@/domain/staff'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
-import { createGameDate } from '@/domain/date'
+import { createGameDate, type GameDate } from '@/domain/date'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import type { Game } from '@/domain/game'
 import {
@@ -48,6 +48,8 @@ const USER_COACH_ID = coachIdFromString('acb-user-coach')
 
 export interface CreateAcbTestGameOptions {
   readonly userTeamKey?: string
+  /** Playable career clock; omitted by the existing September development fixtures. */
+  readonly careerStartDate?: GameDate
   readonly coachRpgPreset?: CoachRpgPreset
   readonly gameBalance?: BdmGameBalancePreset
 }
@@ -57,6 +59,7 @@ export interface CreateAcbTestGameOptions {
  * Recognizable club/player/head-coach names sit beside a deliberately broad synthetic Staff sandbox.
  */
 export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameWorld {
+  const currentDate = options.careerStartDate ?? CURRENT_DATE
   const userTeamKey = options.userTeamKey ?? ACB_QUICK_START_TEAM_KEY
   const selectedDefinition = ACB_2026_27_TEAMS.find((team) => team.key === userTeamKey)
   if (selectedDefinition === undefined) throw new RangeError(`Unknown ACB test team: ${userTeamKey}`)
@@ -82,7 +85,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
     team.players.map(([name, position], playerIndex) => {
       const id = playerIdFromString(`acb-player-${team.key}-${String(playerIndex + 1).padStart(2, '0')}`)
       const personName = splitPersonName(name)
-      const bio = generatePlayerBio(id, position, CURRENT_DATE)
+      const bio = generatePlayerBio(id, position, currentDate)
       const ratings = generateCanonicalRatings(ACB_SEED, id, position)
       return createPlayer({
         id,
@@ -91,7 +94,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
         nationalityId: UNKNOWN_COUNTRY_ID,
         basketball: { primaryPosition: position, ratings },
         bio,
-        development: generateCanonicalDevelopmentProfile(ACB_SEED, id, ratings, calculateAge(bio.dateOfBirth, CURRENT_DATE)),
+        development: generateCanonicalDevelopmentProfile(ACB_SEED, id, ratings, calculateAge(bio.dateOfBirth, currentDate)),
       })
     }),
   )
@@ -118,7 +121,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   })
   const season = createSeason({ id: SEASON_ID, competitionId: competition.id, label: '2026/27', startDate: SEASON_START, endDate: SEASON_END })
   const contracts = teams.flatMap((team) =>
-    team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, SEASON_START)),
+    team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, options.careerStartDate ?? SEASON_START)),
   )
   const teamFinances = teams.map((team) =>
     generateInitialTeamFinances(
@@ -128,7 +131,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   )
   const freeAgentCoaches = Array.from({ length: 5 }, (_, index) => createCanonicalCoach({ id: coachIdFromString(`acb-free-agent-head-coach-${index + 1}`), firstName: 'Free', lastName: `Coach ${index + 1}`, gender: 'male', nationalityId: SPAIN_ID }))
   const coaches = [userCoach, ...aiCoaches, ...freeAgentCoaches]
-  const staffSandbox = generateStaffSandbox({ teams, assignedOn: CURRENT_DATE, idPrefix: 'acb-staff-sandbox-v1' })
+  const staffSandbox = generateStaffSandbox({ teams, assignedOn: currentDate, idPrefix: 'acb-staff-sandbox-v1' })
   const assignmentsByStaffId = new Map(staffSandbox.assignments.map((assignment) => [assignment.staffPersonId, assignment]))
   const staffEmploymentByStaffId = Object.fromEntries(staffSandbox.people.map((person) => {
     const assignment = assignmentsByStaffId.get(person.id)
@@ -140,7 +143,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const staffContracts = staffSandbox.assignments.map((assignment) => {
     const staff = staffSandbox.people.find((person) => person.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: currentDate, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
   })
   const financedTeams = teamFinances.map((finance) => {
     const staffPayroll = staffContracts.filter((contract) => contract.teamId === finance.teamId).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0)
@@ -152,7 +155,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   // one to every StaffPerson, and a save/load of an incomplete map would otherwise silently backfill the missing
   // entries (see `ensureStaffReputationStructure`), making the ACB world stop being a fixed point of its own save.
   const staffReputationProfilesByStaffId = Object.fromEntries([...staffSandbox.people, ...coachStaffProfiles].map((person) => [person.id, createDefaultStaffReputationProfile()]))
-  const coachAssignments = teams.flatMap((team) => team.coachId === undefined ? [] : [{ id: teamStaffAssignmentIdFromString(`staff-assignment:${team.coachId}:headCoach:${team.id}:${CURRENT_DATE}`), staffPersonId: coaches.find((coach) => coach.id === team.coachId)!.staffProfileId, teamId: team.id, role: 'headCoach' as const, assignedOn: CURRENT_DATE }])
+  const coachAssignments = teams.flatMap((team) => team.coachId === undefined ? [] : [{ id: teamStaffAssignmentIdFromString(`staff-assignment:${team.coachId}:headCoach:${team.id}:${currentDate}`), staffPersonId: coaches.find((coach) => coach.id === team.coachId)!.staffProfileId, teamId: team.id, role: 'headCoach' as const, assignedOn: currentDate }])
   const coachStaffEmployment = Object.fromEntries(coaches.map((coach) => {
     const assignment = coachAssignments.find((item) => item.staffPersonId === coach.staffProfileId)
     return [coach.staffProfileId, assignment === undefined ? { status: 'unemployed' as const } : { status: 'employed' as const, teamId: assignment.teamId, roleId: 'headCoach' as const, startedOn: assignment.assignedOn }]
@@ -163,13 +166,13 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   }))
   const coachStaffContracts = coachAssignments.map((assignment) => {
     const staff = coachStaffProfiles.find((item) => item.id === assignment.staffPersonId)!
-    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: currentDate, expiresOn: createGameDate(2028, 6, 30) }, financialScheduleStartsOn: SEASON_START, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
   })
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
   const buildWorld = (games: readonly Game[]) =>
     createGameWorld({
-      currentDate: CURRENT_DATE,
+      currentDate,
       currentSeasonId: season.id,
       userCoachId: USER_COACH_ID,
       countries,
