@@ -3,7 +3,9 @@
 Base: `61ce38444deb193452db407add88a3f28806c2ee` (`origin/main`, 2026-10-19).
 Rama: `playable/f0`. Alcance: exclusivamente F0.
 
-Certificación funcional Windows: **PASS**. Certificación global: en ejecución.
+Certificación funcional Windows: **PASS**. El resultado global y el estado final
+de F0 se registran en la [PR #162](https://github.com/audifor/BDM/pull/162), junto
+con los checks del commit que se va a fusionar.
 
 ## Recorrido comprobado en Windows
 
@@ -63,14 +65,17 @@ Capturas: [creación](evidence/f0/01-coach-club.png),
 
 ## Validación
 
-- Pruebas focales de F0, Home, bootstrap, menú y controles de persistencia: PASS.
+- Pruebas focales de F0, Home, bootstrap, menú y controles de persistencia: **50 PASS**.
 - Typecheck, build del frontend y compilación final Tauri: PASS.
 - `cargo fmt --check` y `cargo check --offline`: PASS.
 - `cargo test --offline`: **18 PASS**, incluida la regresión de reemplazo Windows.
 - Save V4: roundtrip técnico completo, equivalencia al avanzar un día después de
   cargar, continuación asíncrona y roundtrip real tras reiniciar el ejecutable: PASS.
-- `npm test -- --maxWorkers=2 --testTimeout=30000 --hookTimeout=30000`: en ejecución.
-- CI de la PR F0: pendiente de ejecución.
+- Suite global: `npm test -- --maxWorkers=2 --testTimeout=30000 --hookTimeout=30000`.
+  El resultado local y el de los cuatro shards de CI se adjuntan al resumen final
+  de la [PR #162](https://github.com/audifor/BDM/pull/162).
+- CI global: [checks de la PR F0](https://github.com/audifor/BDM/pull/162/checks).
+  Solo un resultado completo en verde permite declarar F0 PASS JUGABLE.
 
 La PR #161 seguía abierta al comenzar; se leyó su plan sin convertir propuestas
 ajenas a F0 en decisiones. La PR #160 estaba fusionada. La CI de `main` fallaba
