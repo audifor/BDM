@@ -9,13 +9,12 @@ afterEach(cleanup)
 afterEach(() => window.localStorage.clear())
 
 describe('TacticsPcbPage / Pizarra', () => {
-  it('GUARDAR AJUSTES shows an observable confirmation', () => {
+  it('has no decorative save: without an active game the tactical controls are disabled', () => {
     render(createElement(TacticsPcbPage))
 
-    const saveButton = screen.getByRole('button', { name: 'GUARDAR AJUSTES' })
-    fireEvent.click(saveButton)
-
-    expect(screen.getByRole('button', { name: 'AJUSTES GUARDADOS' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'GUARDAR AJUSTES' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'GENERAL' }))
+    expect(screen.getByLabelText('Ritmo')).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Sin partida activa')
   })
 })

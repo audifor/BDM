@@ -8,7 +8,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import { createEntityId } from '@/domain/ids'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation, intelligenceSortValue } from '@/domain/intelligence/OrganizationPlayerEvaluation'
 import { getLineupAssignments, getLineupSlotForPlayer, isValidRotationMinutes, LINEUP_SLOTS, PLAYERS_ON_COURT, type DefensiveMatchupAssignment, type LineupSlot, type Playbook, type SavedPlay, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
-import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
+import { PICK_AND_ROLL_COVERAGE_OPTIONS, TACTICAL_DEFENSE_OPTIONS, type MatchTacticalPlan, type TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
 import PcbTacticsBoard from './PcbTacticsBoard'
@@ -24,15 +24,6 @@ export type TacticsPcbTab = 'board' | 'designer' | 'matchups' | 'rotations' | 'm
 export const TACTICS_PCB_TABS: readonly [TacticsPcbTab, string][] = [['board', 'Pizarra'], ['designer', 'Diseñador'], ['matchups', 'Emparejamientos'], ['rotations', 'Rotaciones'], ['match', 'Partido']]
 type Tab = TacticsPcbTab
 const tabs = TACTICS_PCB_TABS
-const paceOptions: readonly { readonly label: string; readonly value: TacticalLevel }[] = [{ label: 'Equilibrado', value: 0 }, { label: 'Rápido', value: 1 }, { label: 'Lento', value: -1 }]
-const coverageOptions: readonly { readonly label: string; readonly value: 'Balanced' | 'Protect paint' | 'Pressure perimeter' }[] = [{ label: 'Drop', value: 'Balanced' }, { label: 'Switch', value: 'Protect paint' }, { label: 'Blitz', value: 'Pressure perimeter' }]
-const defensePresets: Record<'Balanced' | 'Protect paint' | 'Pressure perimeter', { readonly interior: TacticalLevel; readonly perimeter: TacticalLevel }> = { Balanced: { interior: 0, perimeter: 0 }, 'Protect paint': { interior: 2, perimeter: -1 }, 'Pressure perimeter': { interior: -1, perimeter: 2 } }
-function coveragePresetFor(defense: { readonly interior: TacticalLevel; readonly perimeter: TacticalLevel }): 'Balanced' | 'Protect paint' | 'Pressure perimeter' {
-  if (defense.interior === 2 && defense.perimeter === -1) return 'Protect paint'
-  if (defense.interior === -1 && defense.perimeter === 2) return 'Pressure perimeter'
-  return 'Balanced'
-}
-
 /** Deterministic FIN/SHO/PMK/PDE/IDE/REB/ATH projection of the 35 canonical Player V2 ratings, for the board's compact display only - never persisted, never read from stale legacy data. */
 function boardSummarySignals(player: Player) {
   return legacyRatingSignals(player.basketball.ratings)
@@ -65,7 +56,7 @@ export function TacticsPcbPage({
   onLineupSlotClear,
   onUpdateRotationMinutes,
   onUpdateMatchups,
-  onSaveGamePlanTacticalOverride,
+  onUpdateTeamPlan,
   onSaveDesignerPlay,
   onDeleteDesignerPlay,
   onSaveDesignerPlaybook,
@@ -85,7 +76,8 @@ export function TacticsPcbPage({
   readonly onLineupSlotClear?: (slot: LineupSlot) => void
   readonly onUpdateRotationMinutes?: (minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>) => void
   readonly onUpdateMatchups?: (matchups: readonly DefensiveMatchupAssignment[]) => void
-  readonly onSaveGamePlanTacticalOverride?: (tacticalOverride: MatchTacticalPlan) => void
+  /** Writes the team's standing tactical plan (Pizarra). */
+  readonly onUpdateTeamPlan?: (plan: MatchTacticalPlan) => void
   readonly onSaveDesignerPlay?: (play: SavedPlay) => void
   readonly onDeleteDesignerPlay?: (playId: string) => void
   readonly onSaveDesignerPlaybook?: (playbook: Playbook) => void
@@ -122,13 +114,14 @@ export function TacticsPcbPage({
   const gamePlanKey = nextGame === undefined || team === undefined ? undefined : `${nextGame.id}:${team.id}`
   const persistedMatchups = useMemo(() => (world === undefined || gamePlanKey === undefined ? [] : world.gamePlansByKey[gamePlanKey]?.matchups ?? []), [world, gamePlanKey])
   const persistedTacticalOverride = useMemo(() => (world === undefined || gamePlanKey === undefined ? undefined : world.gamePlansByKey[gamePlanKey]?.tacticalOverride as MatchTacticalPlan | undefined), [world, gamePlanKey])
+  const teamPlan = useMemo(() => (world === undefined || team === undefined ? undefined : world.tacticalPlansByTeamId[team.id]?.instructions as MatchTacticalPlan | undefined), [world, team])
   const savedPlays = useMemo(() => (world === undefined ? [] : Object.values(world.savedPlaysById)), [world])
   const playbooks = useMemo(() => (world === undefined ? [] : Object.values(world.playbooksById)), [world])
-  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{(keepDesignerMounted || tab === 'board') && <div className="ct-unified-pane" hidden={tab !== 'board'}><PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); if (team) window.localStorage.setItem(`pcbasket.tactics.roles.${team.id}`, JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} /></div>}{(keepDesignerMounted || tab === 'designer') && <div className="ct-unified-pane" hidden={tab !== 'designer'}><PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={designerPlayerIds} creatorMode={creatorMode}
-  onLabSlotAssign={(slot, playerId) => { if (roster.some(player => player.id === playerId)) onLineupSlotChange?.(slot, playerId as PlayerId) }} /></div>}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
+  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{(keepDesignerMounted || tab === 'board') && <div className="ct-unified-pane" hidden={tab !== 'board'}><PcbTacticsBoard onPlanChange={onUpdateTeamPlan} plan={teamPlan} onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); if (team) window.localStorage.setItem(`pcbasket.tactics.roles.${team.id}`, JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} /></div>}{(keepDesignerMounted || tab === 'designer') && <div className="ct-unified-pane" hidden={tab !== 'designer'}><PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} labWorld={world} labRoster={roster} labDefaultPlayerIds={designerPlayerIds} creatorMode={creatorMode}
+  onLabSlotAssign={(slot, playerId) => { if (roster.some(player => player.id === playerId)) onLineupSlotChange?.(slot, playerId as PlayerId) }} /></div>}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
 }
 
-function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
+function Control({ label, options, value, onChange, disabled = false }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void; disabled?: boolean }) { return <label className="pcb-tactics__control">{label}<select disabled={disabled} onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
 
 /**
  * Real next-opponent defensive matchup assignment (Issue #9). No fake scouting players/opponent
@@ -586,15 +579,13 @@ function Plays({
   }
   return <main className="pcb-tactics__plays"><header><div><h2>Catálogo de Jugadas</h2><small>{savedPlays.length} jugadas</small></div><button className="is-primary" onClick={() => setModal(true)} type="button">+ Nueva jugada</button></header><div className="pcb-tactics__play-list">{savedPlays.length === 0 && <p>Sin jugadas guardadas. Usa el Diseñador o crea una aquí.</p>}{savedPlays.map((play) => <article className={selected === play.id ? 'is-selected' : ''} key={play.id} onClick={() => setSelected(play.id)}><div><b>{play.name}</b><small>Set · Halfcourt · {play.createdAt}</small></div><button onClick={(event) => { event.stopPropagation(); onDeletePlay?.(play.id); if (selected === play.id) setSelected(null) }} type="button">Eliminar</button></article>)}</div>{modal && <Modal title="Nueva jugada" onClose={() => setModal(false)}><label>Nombre<input autoFocus onChange={(event) => setName(event.target.value)} value={name} /></label><footer><button onClick={() => setModal(false)} type="button">Cancelar</button><button className="is-primary" onClick={create} type="button">Crear</button></footer></Modal>}</main>
 }
-const DEFAULT_TACTICAL_PLAN: MatchTacticalPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } }
-const rotationOptions = ['Estándar', 'Corta', 'Profunda']
+const DEFAULT_TACTICAL_PLAN: MatchTacticalPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0, pickAndRollCoverage: 'switch' } }
+const PACE_LEVEL_LABELS = ['Muy lento', 'Lento', 'Equilibrado', 'Rápido', 'Máximo ritmo'] as const
+const DEFENSE_PRESET_OPTIONS = TACTICAL_DEFENSE_OPTIONS.map((option) => option.label)
 /**
- * Match Plan (Issue #9 blocker 7): the pace/coverage overrides here are real - they drive the
- * live coaching plan (`onChange`, consumed by `startLiveMatch`) - and "Guardar plan" now also
- * persists them as this specific upcoming game's real `TeamGamePlan.tacticalOverride`, the same
- * canonical record Matchups writes to. Notes and the rotation-preset label remain explicitly
- * session-only scratch inputs with no canonical backing; there is no fake "saved" confirmation for
- * them - only the tactical-override save gets a confirmation, and only while it is actually current.
+ * Match Plan: the instructions for the user's next game, applied on the spot through GameWorld (`TeamGamePlan.tacticalOverride`) on
+ * top of the team's standing plan. Every control here is an instruction Match Next executes (pace, defensive preset, pick-and-roll
+ * coverage, featured player); the effective plan shown is the one the match preparation resolves.
  */
 function MatchPlan({
   world,
@@ -603,7 +594,6 @@ function MatchPlan({
   onReset,
   gameKey,
   persistedTacticalOverride,
-  onSaveTacticalOverride,
 }: {
   readonly world?: GameWorld
   readonly plan?: MatchTacticalPlan
@@ -611,34 +601,26 @@ function MatchPlan({
   readonly onReset?: () => void
   readonly gameKey?: string
   readonly persistedTacticalOverride?: MatchTacticalPlan
-  readonly onSaveTacticalOverride?: (tacticalOverride: MatchTacticalPlan) => void
 }) {
   const [notes, setNotes] = useState('')
-  const [rotation, setRotation] = useState('Estándar')
   const [scoutingOpen, setScoutingOpen] = useState(false)
-  const [savedKey, setSavedKey] = useState<string | undefined>(undefined)
-  // Precedence (Issue #9 blocker 4): current unsaved editing state (`plan`, once the user has
-  // touched a control this mount) → persisted game-specific TeamGamePlan.tacticalOverride →
-  // team/base/default plan. `rehydratedKey` tracks which game's persisted override has already
-  // been applied as the starting point, so re-rendering with the same game never clobbers a
-  // subsequent in-session edit, but reopening Tactics for a game (or switching to a different
-  // upcoming game) does rehydrate from what was actually saved.
-  const [rehydratedKey, setRehydratedKey] = useState<string | undefined>(undefined)
-  if (gameKey !== rehydratedKey) {
-    setRehydratedKey(gameKey)
-    if (persistedTacticalOverride !== undefined) onChange?.(persistedTacticalOverride)
-  }
-  const activePlan = plan ?? persistedTacticalOverride ?? DEFAULT_TACTICAL_PLAN
   const nextGame = world === undefined ? undefined : getNextUserGame(world)
   const userTeam = world === undefined ? undefined : getUserTeam(world)
   const opponentTeam = world === undefined || nextGame === undefined || userTeam === undefined
     ? undefined
     : world.teams[nextGame.homeTeamId === userTeam.id ? nextGame.awayTeamId : nextGame.homeTeamId]
-  const paceLabel = paceOptions.find((option) => option.value === activePlan.pace)?.label ?? 'Equilibrado'
-  const coverageLabel = coverageOptions.find((option) => option.value === coveragePresetFor(activePlan.defense))?.label ?? 'Drop'
-  // The save confirmation is honest only while the plan currently applied matches what was
-  // actually persisted for this specific game; a game change or a further edit invalidates it.
-  const isCurrentlySaved = savedKey === gameKey && persistedTacticalOverride !== undefined && JSON.stringify(persistedTacticalOverride) === JSON.stringify(activePlan)
-  return <main className="pcb-tactics__match"><header><div><h2>Plan de Partido</h2><small>Preparación · sesión temporal</small></div><span>{opponentTeam === undefined ? 'Sin próximo rival programado' : opponentTeam.name}</span><button onClick={() => { setNotes(''); setRotation('Estándar'); setSavedKey(undefined); onReset?.() }} type="button">Reset</button><button className="is-primary" disabled={gameKey === undefined} onClick={() => { onSaveTacticalOverride?.(activePlan); setSavedKey(gameKey) }} type="button">Guardar plan</button></header>{isCurrentlySaved && <p className="pcb-tactics__notice">Overrides de ritmo/cobertura guardados para el próximo partido.</p>}<div className="pcb-tactics__match-grid"><section><h3>{opponentTeam === undefined ? 'Sin rival' : opponentTeam.name}</h3><dl><div><dt>Amenaza principal</dt><dd>Sin datos de scouting</dd></div><div><dt>Fortaleza</dt><dd>Sin datos de scouting</dd></div><div><dt>Debilidad</dt><dd>Sin datos de scouting</dd></div></dl><button onClick={() => setScoutingOpen(true)} type="button">Ver scouting</button></section><section><h3>Overrides</h3><Control label="Ritmo" onChange={(value) => { const option = paceOptions.find((item) => item.label === value); if (option !== undefined) onChange?.({ ...activePlan, pace: option.value }) }} options={paceOptions.map((option) => option.label)} value={paceLabel} /><Control label="Cobertura P&R" onChange={(value) => { const option = coverageOptions.find((item) => item.label === value); if (option !== undefined) onChange?.({ ...activePlan, defense: defensePresets[option.value] }) }} options={coverageOptions.map((option) => option.label)} value={coverageLabel} /><Control label="Rotación" onChange={setRotation} options={rotationOptions} value={rotation} /></section><section><h3>Notas del cuerpo técnico</h3><small>Notas temporales de esta sesión - no se guardan.</small><textarea onChange={(event) => setNotes(event.target.value)} value={notes} /><button onClick={() => navigator.clipboard?.writeText(notes)} type="button">Copiar plan</button></section></div>{scoutingOpen && <Modal onClose={() => setScoutingOpen(false)} title={`Scouting · ${opponentTeam === undefined ? 'Sin rival' : opponentTeam.name}`}><p>No hay informe de scouting disponible todavía.</p><footer><button onClick={() => setScoutingOpen(false)} type="button">Cerrar</button></footer></Modal>}</main>
+  const standing = world === undefined || userTeam === undefined ? undefined : world.tacticalPlansByTeamId[userTeam.id]?.instructions as MatchTacticalPlan | undefined
+  const base = standing ?? DEFAULT_TACTICAL_PLAN
+  const resolved: MatchTacticalPlan = persistedTacticalOverride === undefined ? base : { ...base, ...persistedTacticalOverride, shotProfile: { ...base.shotProfile, ...persistedTacticalOverride.shotProfile }, defense: { ...base.defense, ...persistedTacticalOverride.defense } }
+  const activePlan = plan ?? resolved
+  const roster = world === undefined || userTeam === undefined ? [] : getTeamRoster(world, userTeam.id)
+  const presetIndex = TACTICAL_DEFENSE_OPTIONS.findIndex((option) => option.interior === activePlan.defense.interior && option.perimeter === activePlan.defense.perimeter)
+  const hasOverride = persistedTacticalOverride !== undefined
+  const disabled = gameKey === undefined || onChange === undefined
+  return <main className="pcb-tactics__match"><header><div><h2>Plan de Partido</h2><small>{hasOverride ? 'Ajuste activo para el próximo partido' : 'Sin ajuste: se aplica el plan del equipo'}</small></div><span>{opponentTeam === undefined ? 'Sin próximo rival programado' : opponentTeam.name}</span><button disabled={!hasOverride || onReset === undefined} onClick={() => onReset?.()} type="button">Quitar ajuste del partido</button></header><p className="pcb-tactics__notice" role="status">Los cambios se aplican al instante y se guardan en la partida. Solo se muestran instrucciones que el motor de partidos ejecuta.</p><div className="pcb-tactics__match-grid"><section><h3>{opponentTeam === undefined ? 'Sin rival' : opponentTeam.name}</h3><dl><div><dt>Amenaza principal</dt><dd>Sin datos de scouting</dd></div><div><dt>Fortaleza</dt><dd>Sin datos de scouting</dd></div><div><dt>Debilidad</dt><dd>Sin datos de scouting</dd></div></dl><button onClick={() => setScoutingOpen(true)} type="button">Ver scouting</button></section><section><h3>Instrucciones del partido</h3>
+    <Control label="Ritmo" onChange={(value) => { const level = PACE_LEVEL_LABELS.indexOf(value as typeof PACE_LEVEL_LABELS[number]) - 2; if (level >= -2) onChange?.({ ...activePlan, pace: level as TacticalLevel }) }} options={PACE_LEVEL_LABELS} value={PACE_LEVEL_LABELS[activePlan.pace + 2] ?? 'Equilibrado'} disabled={disabled} />
+    <Control label="Esquema defensivo" onChange={(value) => { const option = TACTICAL_DEFENSE_OPTIONS.find((item) => item.label === value); if (option !== undefined) onChange?.({ ...activePlan, defense: { ...activePlan.defense, interior: option.interior, perimeter: option.perimeter } }) }} options={DEFENSE_PRESET_OPTIONS} value={TACTICAL_DEFENSE_OPTIONS[presetIndex]?.label ?? 'Individual'} disabled={disabled} />
+    <Control label="Cobertura P&R" onChange={(value) => { const option = PICK_AND_ROLL_COVERAGE_OPTIONS.find((item) => item.label === value); if (option !== undefined) onChange?.({ ...activePlan, defense: { ...activePlan.defense, pickAndRollCoverage: option.value } }) }} options={PICK_AND_ROLL_COVERAGE_OPTIONS.map((option) => option.label)} value={PICK_AND_ROLL_COVERAGE_OPTIONS.find((option) => option.value === (activePlan.defense.pickAndRollCoverage ?? 'switch'))?.label ?? 'Switch'} disabled={disabled} />
+    <label className="pcb-tactics__control">Jugador destacado<select disabled={disabled} onChange={(event) => { const { featuredPlayerId: _removed, ...rest } = activePlan; onChange?.(event.target.value === '' ? rest : { ...rest, featuredPlayerId: event.target.value as PlayerId }) }} value={activePlan.featuredPlayerId ?? ''}><option value="">Ninguno</option>{roster.map((player) => <option key={player.id} value={player.id}>{player.firstName} {player.lastName} · {player.basketball.primaryPosition}</option>)}</select></label></section><section><h3>Notas del cuerpo técnico</h3><small>Notas temporales de esta sesión - no se guardan.</small><textarea onChange={(event) => setNotes(event.target.value)} value={notes} /></section></div>{scoutingOpen && <Modal onClose={() => setScoutingOpen(false)} title={`Scouting · ${opponentTeam === undefined ? 'Sin rival' : opponentTeam.name}`}><p>No hay informe de scouting disponible todavía.</p><footer><button onClick={() => setScoutingOpen(false)} type="button">Cerrar</button></footer></Modal>}</main>
 }
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) { return <div className="pcb-tactics__modal" onMouseDown={onClose}><section onMouseDown={(event) => event.stopPropagation()}><header><h3>{title}</h3><button onClick={onClose} type="button">×</button></header>{children}</section></div> }

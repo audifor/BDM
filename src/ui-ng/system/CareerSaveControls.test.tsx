@@ -63,3 +63,15 @@ describe('Courtside career persistence controls', () => {
     await screen.findByText('Native save write failed')
   })
 })
+
+describe('F1 · guardado durante un partido', () => {
+  it('rechaza guardar y cargar mientras hay un partido en directo y lo explica', () => {
+    useGameStore.setState({ world: createConfiguredGame({ universeId: 'acb-2026-27' }), liveMatchActive: true })
+    render(<CareerSaveControls />)
+    expect(screen.getByRole('button', { name: 'Guardar partida' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Cargar partida' })).toBeDisabled()
+    expect(screen.getByText(/Hay un partido en curso/)).toBeInTheDocument()
+    expect(native.save).not.toHaveBeenCalled()
+    useGameStore.setState({ liveMatchActive: false })
+  })
+})

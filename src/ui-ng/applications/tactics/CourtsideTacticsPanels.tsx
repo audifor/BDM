@@ -7,6 +7,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { Player } from '@/domain/player'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { createDefaultTacticalPlan } from '@/engine/match'
+import { classifyLineupCandidate } from '@/engine/tactics/LineupAvailability'
 import { useGameStore } from '@/stores/gameStore'
 import { autoAssignDefensiveMatchups } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
 
@@ -259,15 +260,21 @@ function RotationsPanel({ world, teamId, onOpenPlayer }: { world: GameWorld; tea
           <input aria-label="Buscar jugador para rotación" value={query} onChange={e => setQuery(e.target.value)} placeholder="Nombre o posición"/>
         </label>
         <div className="ct-roster-list" aria-label="Selección de jugadores para rotación">
-          {visibleRoster.map(player => <button key={player.id} type="button"
-            className={'ct-roster-item' + (inRotation.has(player.id) ? ' is-selected' : '')}
-            aria-pressed={inRotation.has(player.id)}
-            aria-label={(inRotation.has(player.id) ? 'Retirar ' : 'Convocar ') + nameOf(player)}
-            onClick={() => togglePlayer(player)}>
-            <span className="ct-pos">{player.basketball.primaryPosition}</span>
-            <span className="ct-roster-name">{nameOf(player)}</span>
-            <span className="ct-roster-status">{inRotation.has(player.id) ? '✓' : '+'}</span>
-          </button>)}
+          {visibleRoster.map(player => {
+            const availability = classifyLineupCandidate(world, teamId, player.id)
+            const blocked = !availability.selectable && !inRotation.has(player.id)
+            return <button key={player.id} type="button"
+              className={'ct-roster-item' + (inRotation.has(player.id) ? ' is-selected' : '') + (blocked ? ' is-unavailable' : '')}
+              aria-pressed={inRotation.has(player.id)}
+              aria-label={(inRotation.has(player.id) ? 'Retirar ' : 'Convocar ') + nameOf(player)}
+              disabled={blocked}
+              title={blocked ? availability.detail : undefined}
+              onClick={() => togglePlayer(player)}>
+              <span className="ct-pos">{player.basketball.primaryPosition}</span>
+              <span className="ct-roster-name">{nameOf(player)}</span>
+              <span className="ct-roster-status">{blocked ? (availability.reason === 'INJURED' ? 'LESIONADO' : 'NO ELEGIBLE') : inRotation.has(player.id) ? '✓' : '+'}</span>
+            </button>
+          })}
           {visibleRoster.length === 0 && <Empty text="No hay jugadores que coincidan con la búsqueda."/>}
         </div>
         {selectionError && <p className="ct-hint" role="alert">{selectionError}</p>}

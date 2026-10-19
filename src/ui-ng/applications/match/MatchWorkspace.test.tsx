@@ -34,12 +34,14 @@ describe('MatchWorkspace', () => {
     const scheduledId = Object.values(useGameStore.getState().world!.games).find((game) => game.status === 'scheduled')!.id
     mountMatch()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Play match' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Jugar partido' }))
 
     expect(document.querySelector('[data-ng-region="match-live"]')).not.toBeNull()
     expect(document.querySelector('[data-me-engine="match-next"]')).not.toBeNull()
     expect(document.querySelector('.match-court')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Pausar partido' })).toBeInTheDocument()
+    // A watched match is not part of GameWorld, so the career controls refuse to save or load meanwhile.
+    expect(useGameStore.getState().liveMatchActive).toBe(true)
     expect(useMatchViewerStore.getState().simulation).toBeNull()
     expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('scheduled')
   })
@@ -49,13 +51,13 @@ describe('MatchWorkspace', () => {
     const scheduledId = Object.values(useGameStore.getState().world!.games).find((game) => game.status === 'scheduled')!.id
     mountMatch()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Instant result' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Simulación rápida' }))
 
     expect(document.querySelector('[data-ng-region="match-live"]')).toBeNull()
     // The first async frame may already have reported its current period.
     // Both messages mean that the same ME-NEXT simulation is actively running.
-    expect(await screen.findByRole('status')).toHaveTextContent(/Simulando (?:resultado )?ME-NEXT/)
-    expect(screen.getByRole('button', { name: 'Instant result' })).toBeDisabled()
+    expect(await screen.findByRole('status')).toHaveTextContent(/Simulando el partido/)
+    expect(screen.getByRole('button', { name: 'Simulación rápida' })).toBeDisabled()
     expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('scheduled')
   })
 })

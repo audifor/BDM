@@ -34,6 +34,8 @@ export function RosterWorkspace() {
   const world = useGameStore(state=>state.world)
   const setLineupSlot = useGameStore(state=>state.setLineupSlot)
   const clearLineupSlot = useGameStore(state=>state.clearLineupSlot)
+  const lineupNotice = useGameStore(state=>state.lineupNotice)
+  const clearLineupNotice = useGameStore(state=>state.clearLineupNotice)
   const { openEntity, teamId: navTeamId } = useNgWorkspaceNavigation()
   const teamId = navTeamId ?? readNgWorkspaceNavigation().teamId
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -161,6 +163,7 @@ export function RosterWorkspace() {
           {managerStatus!==null&&<RosterManagerRibbon status={managerStatus} priorities={managerPriorities}
             onDepth={()=>setTab('profundidad')} onPlanning={()=>setTab('planificar')}
             onBriefing={()=>setTab('briefing')}/>}
+          {lineupNotice!==null&&<p className="tactics-workspace__notice" role="alert">{lineupNotice} <button type="button" onClick={clearLineupNotice}>Entendido</button></p>}
           <RosterV4Controls selectedCount={selectedRowIds.length} onOpenInspector={()=>setInspectorOpen(true)}/>
           <div className="roster-v4__table-pane">
             <ScrollRegion className="roster-workspace__scroll" onScroll={persistScroll} ref={scrollRef}>
@@ -184,6 +187,7 @@ export function RosterWorkspace() {
           </div>
         </>}
         {tab==='profundidad'&&<section className="roster-v4__tab-panel" aria-label="Profundidad de plantilla">
+          {lineupNotice!==null&&<p className="tactics-workspace__notice" role="alert">{lineupNotice} <button type="button" onClick={clearLineupNotice}>Entendido</button></p>}
           {depthChart===null?<p>Mapa de profundidad no disponible.</p>:<RosterCourtsideDepth
             model={depthChart} onOpenPlayer={openPlayer} selectedPlayerId={inspectedPlayer?.id}
             onLineupSlotChange={canEditLineup?(slot,playerId)=>setLineupSlot(slot,playerId):undefined}

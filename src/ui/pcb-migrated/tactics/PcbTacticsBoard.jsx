@@ -36,48 +36,32 @@ const SUITABILITY_MATRIX = {
   C: { PG: 0, SG: 0, SF: 20, PF: 85, C: 100 },
 };
 
-const SPACING_LAYOUTS = {
-  "4-Out 1-In (Estandar)": { PG: { x: 50, y: 80 }, SG: { x: 15, y: 60 }, SF: { x: 85, y: 60 }, PF: { x: 25, y: 35 }, C: { x: 50, y: 25 } },
-  "5-Out (Todos Abiertos)": { PG: { x: 50, y: 82 }, SG: { x: 15, y: 65 }, SF: { x: 85, y: 65 }, PF: { x: 5, y: 25 }, C: { x: 95, y: 25 } },
-  "3-Out 2-In (Torres)": { PG: { x: 50, y: 80 }, SG: { x: 20, y: 65 }, SF: { x: 80, y: 65 }, PF: { x: 35, y: 25 }, C: { x: 65, y: 25 } },
-  "Overload (Sobrecarga)": { PG: { x: 60, y: 80 }, SG: { x: 85, y: 60 }, SF: { x: 85, y: 30 }, PF: { x: 65, y: 30 }, C: { x: 20, y: 40 } },
-  "Horns (Cuernos)": { PG: { x: 50, y: 75 }, SG: { x: 5, y: 15 }, SF: { x: 95, y: 15 }, PF: { x: 35, y: 50 }, C: { x: 65, y: 50 } },
-  "Triangle (Triangulo)": { PG: { x: 30, y: 75 }, SG: { x: 80, y: 50 }, SF: { x: 90, y: 15 }, PF: { x: 60, y: 30 }, C: { x: 15, y: 30 } },
-};
+const BOARD_LAYOUT = { PG: { x: 50, y: 80 }, SG: { x: 15, y: 60 }, SF: { x: 85, y: 60 }, PF: { x: 25, y: 35 }, C: { x: 50, y: 25 } };
 
-const TACTIC_OPTIONS = {
-  pace: ["Muy Lento", "Lento", "Equilibrado", "Rapido", "Seven Seconds"],
-  focus: ["Equilibrado", "Perimetro", "Poste Bajo", "Pick & Roll", "Aislamiento"],
-  freedom: ["Rigido", "Disciplinado", "Creativo", "Libertad Total"],
-  defenseType: ["Hombre a Hombre", "Zona 2-3", "Zona 3-2", "Box-and-1", "Presion"],
-  pnrDefense: ["Drop", "Switch", "Hedge", "Blitz", "Ice"],
-  postDefense: ["1vs1", "3/4 Delante", "Ayuda Bote", "2vs1 (Trap)"],
-  transition: ["Cargar Rebote Of.", "Equilibrado", "Balance Defensivo"],
-  playbook: ["Motion Offense", "Pick & Roll Heavy", "Triangle", "Princeton", "Iso-Heavy"],
-  spacing: Object.keys(SPACING_LAYOUTS),
-  passingRisk: ["Seguro", "Normal", "Arriesgado"],
-};
+// Only what Match Next executes is editable here (MatchTacticalPlan): pace, shot profile, defensive preset, pick-and-roll
+// coverage and the featured player. Every other Courtside setting is shown as not connected, never as a working control.
+const PACE_LABELS = ["Muy lento", "Lento", "Equilibrado", "Rápido", "Máximo ritmo"];
+const SHOT_LEVEL_LABELS = ["Evitar", "Menos", "Normal", "Más", "Priorizar"];
+const SHOT_PROFILE_CONTROLS = [
+  { key: "threePoint", title: "VOLUMEN TRIPLES", icon: (color) => <Zap size={16} color={color} />, color: "#f472b6" },
+  { key: "rim", title: "ATAQUE AL ARO", icon: (color) => <Target size={16} color={color} />, color: "#22c55e" },
+  { key: "midRange", title: "MEDIA DISTANCIA", icon: (color) => <Crosshair size={16} color={color} />, color: "#facc15" },
+];
+const DEFENSE_PRESETS = [
+  { label: "Individual", interior: 0, perimeter: 0 },
+  { label: "Proteger pintura", interior: 2, perimeter: -1 },
+  { label: "Presión perimetral", interior: -1, perimeter: 2 },
+];
+const COVERAGE_OPTIONS = [
+  { value: "switch", label: "Switch" },
+  { value: "drop", label: "Drop" },
+  { value: "hedge", label: "Hedge" },
+  { value: "blitz", label: "Blitz" },
+];
+const DEFAULT_TEAM_PLAN = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0, pickAndRollCoverage: "switch" } };
 
 const SLOT_IDS = ["PG", "SG", "SF", "PF", "C"];
 const BENCH_SLOT_IDS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"];
-
-const defaultTactics = {
-  pace: 2,
-  focus: "Equilibrado",
-  freedom: 1,
-  defenseType: "Hombre a Hombre",
-  pnrDefense: "Drop",
-  postDefense: "1vs1",
-  transition: 2,
-  aggression: 50,
-  rimProtect: 50,
-  playbook: "Motion Offense",
-  spacing: "4-Out 1-In (Estandar)",
-  passingRisk: 1,
-  pnrFrequency: 50,
-  offRebound: 30,
-  threePoint: 50,
-};
 
 const readJSON = (key, fallback) => {
   try {
@@ -114,10 +98,8 @@ const calcRating = (player) => {
   return Math.round(Number(player?.current_ability || player?.rating || 50));
 };
 
-export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear, onOpenPlayer }) {
-  const storagePrefix = `pcbasket.tactics.board.${teamId || "default"}`;
+export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear, onOpenPlayer, plan, onPlanChange }) {
   const rolesKey = `pcbasket.tactics.roles.${teamId || "default"}`;
-  const tacticsKey = `${storagePrefix}.config`;
 
   const [starters, setStarters] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
   const [bench, setBench] = useState({ B1: null, B2: null, B3: null, B4: null, B5: null, B6: null, B7: null });
@@ -126,8 +108,8 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   const [dragSource, setDragSource] = useState(null);
   const [activePanel, setActivePanel] = useState("ATAQUE");
   const [contextMenu, setContextMenu] = useState(null);
-  const [tactics, setTactics] = useState(defaultTactics);
-  const [justSaved, setJustSaved] = useState(false);
+  const tacticalPlan = plan ?? DEFAULT_TEAM_PLAN;
+  const updatePlan = (patch) => { if (typeof onPlanChange === "function") onPlanChange({ ...tacticalPlan, ...patch }); };
 
   const rosterPlayers = useMemo(() => {
     if (!Array.isArray(roster)) return [];
@@ -150,11 +132,6 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       };
     });
   }, [roster, tacticalRoles, rolesKey]);
-
-  useEffect(() => {
-    const savedTactics = readJSON(tacticsKey, null);
-    if (savedTactics) setTactics({ ...defaultTactics, ...savedTactics });
-  }, [tacticsKey]);
 
   useEffect(() => {
     if (!rosterPlayers.length) return;
@@ -187,10 +164,6 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
     setBench(nextBench);
     setUnassigned(nextUnassigned);
   }, [rosterPlayers]);
-
-  useEffect(() => {
-    if (tactics) writeJSON(tacticsKey, tactics);
-  }, [tactics, tacticsKey]);
 
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
@@ -355,7 +328,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
     return starters[contextMenu.targetId];
   };
 
-  const getPositionCoords = (posId) => (SPACING_LAYOUTS[tactics.spacing] || SPACING_LAYOUTS["4-Out 1-In (Estandar)"])[posId];
+  const getPositionCoords = (posId) => BOARD_LAYOUT[posId];
 
   const teamEfficiency = useMemo(() => {
     const filled = Object.entries(starters).filter(([_, p]) => p !== null);
@@ -612,116 +585,56 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
                   type="range"
                   min="0"
                   max="4"
-                  value={tactics.pace}
-                  onChange={(e) => setTactics({ ...tactics, pace: parseInt(e.target.value, 10) })}
+                  aria-label="Ritmo"
+                  value={tacticalPlan.pace + 2}
+                  disabled={!onPlanChange}
+                  onChange={(e) => updatePlan({ pace: parseInt(e.target.value, 10) - 2 })}
                 />
-                <div className="tactics-board-control-value">{TACTIC_OPTIONS.pace[tactics.pace]}</div>
+                <div className="tactics-board-control-value">{PACE_LABELS[tacticalPlan.pace + 2]}</div>
               </TacticalControl>
-              <TacticalControl title="ENFOQUE PRINCIPAL" icon={<Target size={16} color="#fbbf24" />}>
+              <TacticalControl title="JUGADOR DESTACADO" icon={<Target size={16} color="#fbbf24" />}>
                 <select
-                  value={tactics.focus}
-                  onChange={(e) => setTactics({ ...tactics, focus: e.target.value })}
+                  aria-label="Jugador destacado"
+                  value={tacticalPlan.featuredPlayerId ?? ""}
+                  disabled={!onPlanChange}
+                  onChange={(e) => {
+                    const { featuredPlayerId: _removed, ...rest } = tacticalPlan;
+                    if (typeof onPlanChange === "function") onPlanChange(e.target.value === "" ? rest : { ...rest, featuredPlayerId: e.target.value });
+                  }}
                 >
-                  {TACTIC_OPTIONS.focus.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
+                  <option value="">Ninguno</option>
+                  {rosterPlayers.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} · {p.position}</option>
                   ))}
                 </select>
+                <div className="tactics-board-control-value">El ataque le busca más veces cuando está en pista.</div>
               </TacticalControl>
-              <TacticalControl title="LIBERTAD CREATIVA" icon={<Lock size={16} color="#c084fc" />}>
-                <div className="tactics-board-btn-group">
-                  {TACTIC_OPTIONS.freedom.map((f, i) => (
-                    <button
-                      key={f}
-                      className={tactics.freedom === i ? "active" : ""}
-                      onClick={() => setTactics({ ...tactics, freedom: i })}
-                      title={f}
-                    >
-                      {["RIG", "DIS", "CRE", "LIB"][i]}
-                    </button>
-                  ))}
-                </div>
-              </TacticalControl>
+              <UnconnectedControl title="ENFOQUE PRINCIPAL" icon={<Target size={16} color="#fbbf24" />} />
+              <UnconnectedControl title="LIBERTAD CREATIVA" icon={<Lock size={16} color="#c084fc" />} />
             </>
           )}
 
           {activePanel === "ATAQUE" && (
             <>
-              <TacticalControl title="SISTEMA (PLAYBOOK)" icon={<LayoutGrid size={16} color="#22c55e" />}>
-                <select
-                  value={tactics.playbook}
-                  onChange={(e) => setTactics({ ...tactics, playbook: e.target.value })}
-                >
-                  {TACTIC_OPTIONS.playbook.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </TacticalControl>
-              <TacticalControl title="ESPACIADO (SPACING)" icon={<LayoutGrid size={16} color="#fbbf24" />}>
-                <select
-                  value={tactics.spacing}
-                  onChange={(e) => setTactics({ ...tactics, spacing: e.target.value })}
-                >
-                  {TACTIC_OPTIONS.spacing.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </TacticalControl>
-              <TacticalControl title="FRECUENCIA P&R" icon={<Repeat size={16} color="#a5f3fc" />}>
-                <div className="tactics-board-range">
+              {SHOT_PROFILE_CONTROLS.map(({ key, title, icon, color }) => (
+                <TacticalControl key={key} title={title} icon={icon(color)}>
                   <input
                     type="range"
                     min="0"
-                    max="100"
-                    value={tactics.pnrFrequency}
-                    onChange={(e) => setTactics({ ...tactics, pnrFrequency: parseInt(e.target.value, 10) })}
+                    max="4"
+                    aria-label={title}
+                    value={tacticalPlan.shotProfile[key] + 2}
+                    disabled={!onPlanChange}
+                    onChange={(e) => updatePlan({ shotProfile: { ...tacticalPlan.shotProfile, [key]: parseInt(e.target.value, 10) - 2 } })}
                   />
-                  <span>{tactics.pnrFrequency}%</span>
-                </div>
-              </TacticalControl>
-              <TacticalControl title="VOLUMEN TRIPLES" icon={<Zap size={16} color="#f472b6" />}>
-                <div className="tactics-board-range">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={tactics.threePoint}
-                    onChange={(e) => setTactics({ ...tactics, threePoint: parseInt(e.target.value, 10) })}
-                  />
-                  <span>{tactics.threePoint}%</span>
-                </div>
-              </TacticalControl>
-              <TacticalControl title="RIESGO EN EL PASE" icon={<Crosshair size={16} color="#facc15" />}>
-                <div className="tactics-board-btn-group">
-                  {TACTIC_OPTIONS.passingRisk.map((p, i) => (
-                    <button
-                      key={p}
-                      className={tactics.passingRisk === i ? "active" : ""}
-                      onClick={() => setTactics({ ...tactics, passingRisk: i })}
-                      title={p}
-                    >
-                      {["SEG", "NOR", "ARR"][i]}
-                    </button>
-                  ))}
-                </div>
-              </TacticalControl>
-              <TacticalControl title="REBOTE OFENSIVO" icon={<Anchor size={16} color="#ef4444" />}>
-                <div className="tactics-board-range">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={tactics.offRebound}
-                    onChange={(e) => setTactics({ ...tactics, offRebound: parseInt(e.target.value, 10) })}
-                  />
-                  <span>{tactics.offRebound}%</span>
-                </div>
-              </TacticalControl>
+                  <div className="tactics-board-control-value">{SHOT_LEVEL_LABELS[tacticalPlan.shotProfile[key] + 2]}</div>
+                </TacticalControl>
+              ))}
+              <UnconnectedControl title="SISTEMA (PLAYBOOK)" icon={<LayoutGrid size={16} color="#22c55e" />} />
+              <UnconnectedControl title="ESPACIADO (SPACING)" icon={<LayoutGrid size={16} color="#fbbf24" />} />
+              <UnconnectedControl title="FRECUENCIA P&R" icon={<Repeat size={16} color="#a5f3fc" />} />
+              <UnconnectedControl title="RIESGO EN EL PASE" icon={<Crosshair size={16} color="#facc15" />} />
+              <UnconnectedControl title="REBOTE OFENSIVO" icon={<Anchor size={16} color="#ef4444" />} />
             </>
           )}
 
@@ -729,89 +642,49 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
             <>
               <TacticalControl title="ESQUEMA DEFENSIVO" icon={<Shield size={16} color="#ef4444" />}>
                 <select
-                  value={tactics.defenseType}
-                  onChange={(e) => setTactics({ ...tactics, defenseType: e.target.value })}
+                  aria-label="Esquema defensivo"
+                  value={DEFENSE_PRESETS.findIndex((o) => o.interior === tacticalPlan.defense.interior && o.perimeter === tacticalPlan.defense.perimeter)}
+                  disabled={!onPlanChange}
+                  onChange={(e) => {
+                    const preset = DEFENSE_PRESETS[parseInt(e.target.value, 10)];
+                    if (preset) updatePlan({ defense: { ...tacticalPlan.defense, interior: preset.interior, perimeter: preset.perimeter } });
+                  }}
                 >
-                  {TACTIC_OPTIONS.defenseType.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
+                  {DEFENSE_PRESETS.map((o, index) => (
+                    <option key={o.label} value={index}>{o.label}</option>
                   ))}
                 </select>
               </TacticalControl>
               <TacticalControl title="DEFENSA P&R" icon={<ArrowLeftRight size={16} color="#fbbf24" />}>
                 <select
-                  value={tactics.pnrDefense}
-                  onChange={(e) => setTactics({ ...tactics, pnrDefense: e.target.value })}
+                  aria-label="Defensa del bloqueo directo"
+                  value={tacticalPlan.defense.pickAndRollCoverage ?? "switch"}
+                  disabled={!onPlanChange}
+                  onChange={(e) => updatePlan({ defense: { ...tacticalPlan.defense, pickAndRollCoverage: e.target.value } })}
                 >
-                  {TACTIC_OPTIONS.pnrDefense.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
+                  {COVERAGE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </TacticalControl>
-              <TacticalControl title="DEFENSA AL POSTE" icon={<Scale size={16} color="#a5f3fc" />}>
-                <select
-                  value={tactics.postDefense}
-                  onChange={(e) => setTactics({ ...tactics, postDefense: e.target.value })}
-                >
-                  {TACTIC_OPTIONS.postDefense.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </TacticalControl>
-              <TacticalControl title="TRANSICION DEFENSIVA" icon={<ArrowLeftRight size={16} color="#c084fc" />}>
-                <input
-                  type="range"
-                  min="0"
-                  max="2"
-                  value={tactics.transition}
-                  onChange={(e) => setTactics({ ...tactics, transition: parseInt(e.target.value, 10) })}
-                />
-                <div className="tactics-board-control-value">{TACTIC_OPTIONS.transition[tactics.transition]}</div>
-              </TacticalControl>
-              <TacticalControl title="AGRESIVIDAD" icon={<Flame size={16} color="#ef4444" />}>
-                <div className="tactics-board-range">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={tactics.aggression}
-                    onChange={(e) => setTactics({ ...tactics, aggression: parseInt(e.target.value, 10) })}
-                  />
-                  <span>{tactics.aggression}%</span>
-                </div>
-              </TacticalControl>
-              <TacticalControl title="PROTECCION DE ARO" icon={<ShieldAlert size={16} color="#4ade80" />}>
-                <div className="tactics-board-range">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={tactics.rimProtect}
-                    onChange={(e) => setTactics({ ...tactics, rimProtect: parseInt(e.target.value, 10) })}
-                  />
-                  <span>{tactics.rimProtect}%</span>
-                </div>
-              </TacticalControl>
+              <UnconnectedControl title="DEFENSA AL POSTE" icon={<Scale size={16} color="#a5f3fc" />} />
+              <UnconnectedControl title="TRANSICION DEFENSIVA" icon={<ArrowLeftRight size={16} color="#c084fc" />} />
+              <UnconnectedControl title="AGRESIVIDAD" icon={<Flame size={16} color="#ef4444" />} />
+              <UnconnectedControl title="PROTECCION DE ARO" icon={<ShieldAlert size={16} color="#4ade80" />} />
             </>
           )}
         </div>
         <div className="tactics-board-footer">
+          <p className="tactics-board-footer__status" role="status">
+            {onPlanChange ? "Plan del equipo guardado en la partida. Se aplica a cada encuentro salvo el ajuste de Plan de Partido." : "Sin partida activa."}
+          </p>
           <button
             className="tactics-board-save"
-            onClick={() => {
-              writeJSON(tacticsKey, tactics);
-              saveStarters(starters);
-              setJustSaved(true);
-              setTimeout(() => setJustSaved(false), 2000);
-            }}
+            disabled={!onPlanChange}
+            onClick={() => { if (typeof onPlanChange === "function") onPlanChange(DEFAULT_TEAM_PLAN); }}
             type="button"
           >
-            {justSaved ? "AJUSTES GUARDADOS" : "GUARDAR AJUSTES"}
+            RESTABLECER PLAN
           </button>
         </div>
       </div>
@@ -852,7 +725,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
               </button>
             )) : <p className="tactics-board-context-empty">Sin roles tácticos para esta posición.</p>}
             <p className="tactics-board-context-note">
-              Encaje estimado con los atributos reales del jugador. No es una probabilidad de éxito.
+              Encaje estimado con los atributos reales del jugador. No es una probabilidad de éxito. El rol y la tarea son notas de pizarra: el motor de partidos todavía no los ejecuta.
             </p>
           </div>
           <div className="tactics-board-context-section">
@@ -870,6 +743,16 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
         </div>
       )}
     </div>
+  );
+}
+
+function UnconnectedControl({ title, icon }) {
+  return (
+    <TacticalControl title={title} icon={icon}>
+      <div className="tactics-board-control-value is-unconnected" data-engine-support="none">
+        SIN EFECTO EN EL PARTIDO · el motor todavía no lo ejecuta
+      </div>
+    </TacticalControl>
   );
 }
 

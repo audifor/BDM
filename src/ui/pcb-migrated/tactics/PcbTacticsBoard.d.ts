@@ -6,5 +6,8 @@ declare const PcbTacticsBoard: (props: {
   readonly onLineupSlotChange?: (slot: import('@/domain/tactics').LineupSlot, playerId: import('@/domain/ids').PlayerId) => void
   readonly onLineupSlotClear?: (slot: import('@/domain/tactics').LineupSlot) => void
   readonly onOpenPlayer?: (playerId: import('@/domain/ids').PlayerId) => void
+  /** The team's standing tactical plan (canonical, persisted in GameWorld). */
+  readonly plan?: import('@/engine/match').MatchTacticalPlan
+  readonly onPlanChange?: (plan: import('@/engine/match').MatchTacticalPlan) => void
 }) => import('react').ReactNode
 export default PcbTacticsBoard

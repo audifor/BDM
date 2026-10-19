@@ -5,7 +5,10 @@ import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
-import { getTeamLineup } from '@/domain/world'
+import { getTeamLineup, updateGameWorld } from '@/domain/world'
+import { addDays } from '@/domain/date'
+import { injuryIdFromString } from '@/domain/ids'
+import { createInjury } from '@/domain/injury'
 import { getLineupAssignments } from '@/domain/tactics'
 import { rebalanceRotationSlider } from '@/ui-ng/applications/tactics/CourtsideTacticsPanels'
 import { useGameStore } from '@/stores/gameStore'
@@ -99,7 +102,7 @@ describe('TacticsWorkspace', () => {
     expect(court.querySelector('g[stroke*="--ct-draw-court"]')).toBeTruthy()
   })
 
-  it('keeps all six offensive settings and the save action accessible on Pizarra', () => {
+  it('keeps every Courtside Pizarra setting visible but only the ones Match Next executes are operable', () => {
     mountTacticsWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'ATAQUE' }))
     for (const heading of [
@@ -108,12 +111,29 @@ describe('TacticsWorkspace', () => {
     ]) {
       expect(screen.getByText(heading)).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: 'GUARDAR AJUSTES' })).toBeInTheDocument()
+    // Executed by the engine: shot profile. Not executed: the other four, declared as such instead of faking a control.
+    expect(screen.getByLabelText('VOLUMEN TRIPLES')).toBeEnabled()
+    expect(document.querySelectorAll('[data-engine-support="none"]')).toHaveLength(5)
+    expect(screen.queryByRole('button', { name: 'GUARDAR AJUSTES' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'DEFENSA' }))
     expect(screen.getByText('PROTECCION DE ARO')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'GUARDAR AJUSTES' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Defensa del bloqueo directo')).toBeEnabled()
     fireEvent.click(screen.getByRole('button', { name: 'GENERAL' }))
     expect(screen.getByText('LIBERTAD CREATIVA')).toBeInTheDocument()
+  })
+
+  it('writes the Pizarra tactical plan to GameWorld at once, where the match preparation reads it', () => {
+    const { team } = mountTacticsWorkspace()
+    fireEvent.click(screen.getByRole('button', { name: 'GENERAL' }))
+    fireEvent.change(screen.getByLabelText('Ritmo'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'ATAQUE' }))
+    fireEvent.change(screen.getByLabelText('VOLUMEN TRIPLES'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'DEFENSA' }))
+    fireEvent.change(screen.getByLabelText('Esquema defensivo'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Defensa del bloqueo directo'), { target: { value: 'hedge' } })
+    const saved = useGameStore.getState().world!.tacticalPlansByTeamId[team.id]!.instructions
+    expect(saved).toMatchObject({ pace: 2, shotProfile: { threePoint: 2 }, defense: { interior: 2, perimeter: -1, pickAndRollCoverage: 'hedge' } })
+    expect(useTacticalPlanStore.getState().hasExplicitPlan).toBe(false)
   })
 
   it('keeps the Designer court operable with a Courtside action and step workspace', () => {
@@ -269,6 +289,22 @@ describe('TacticsWorkspace', () => {
     const player = world.players[team.rosterPlayerIds[0]!]!
     fireEvent.click(screen.getByRole('button', { name: `${player.firstName} ${player.lastName}` }))
     expect(new URL(window.location.href).searchParams.get('playerId')).toBe(player.id)
+  })
+
+  it('does not let an injured player into the rotation and tells the user why', () => {
+    let world = createNewGame()
+    const team = getUserTeam(world)!
+    const hurt = world.players[team.rosterPlayerIds[0]!]!
+    world = updateGameWorld(world, { injuries: [createInjury({ id: injuryIdFromString('f1-tactics'), playerId: hurt.id, kind: 'ankleSprain', severity: 'minor', injuredOn: world.currentDate, expectedReturnDate: addDays(world.currentDate, 15) })] })
+    mountTacticsWorkspace(world)
+    fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+    const button = screen.getByRole('button', { name: `Convocar ${hurt.firstName} ${hurt.lastName}` })
+    expect(button).toBeDisabled()
+    expect(button).toHaveTextContent('LESIONADO')
+    // The store refuses it too (any other entry point, e.g. Plantilla), with a visible notice instead of a silent change.
+    useGameStore.getState().setLineupSlot('PG', hurt.id)
+    expect(useGameStore.getState().lineupNotice).toContain('Lesionado')
+    expect(getTeamLineup(useGameStore.getState().world!, team.id).starters.PG).toBeUndefined()
   })
 
   it('persists actual P&R coverage, rather than mislabeling paint emphasis as switch', () => {

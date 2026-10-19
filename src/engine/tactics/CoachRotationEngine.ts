@@ -1,7 +1,7 @@
 import type { Player } from '@/domain/player'
 import type { BasketballPosition } from '@/domain/primitives'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { TeamLineup, TeamRotationIntent } from '@/domain/tactics'
+import { BENCH_SLOTS, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
 import type { StaffPerson } from '@/domain/staff'
 import type { CoachRpgProfile } from '@/domain/coachRpg'
 import type { MatchTacticalPlan } from '@/engine/match'
@@ -83,10 +83,20 @@ export function createCoachRotationPlan(input: CoachRotationInput): CoachRotatio
   })).sort((a, b) => b.fit - a.fit || String(a.playerId).localeCompare(String(b.playerId)))
   const shortRotation = input.coach?.rpg?.professionalTraits.some((trait) => String(trait) === 'shortRotationCoach') ?? false
   const strongDepth = rotationOrder.filter((item) => item.fit >= 52).length
-  const rotationDepth = Math.min(available.length, Math.max(7, Math.min(shortRotation ? 8 : 10, strongDepth || 8)))
-  const minuteTargets = validMinuteIntent(input.rotationIntent?.minutesByPeriod, available, input.regulationPeriodMinutes)
+  // The bench the user arranged (B1 first) is the rotation: those available players come before the fit-ranked remainder, so the
+  // bench order chosen in Plantilla/Pizarra decides who gets the bench minutes, and the rotation is at least as deep as that bench.
+  const savedBench = input.respectSavedLineup
+    ? BENCH_SLOTS.map((slot) => input.savedLineup.bench[slot]).filter((playerId): playerId is PlayerId => playerId !== undefined && available.includes(playerId) && !startingLineup.includes(playerId))
+    : []
+  const rotationDepth = Math.min(available.length, Math.max(7, Math.min(shortRotation ? 8 : 10, strongDepth || 8), Math.min(12, 5 + savedBench.length)))
+  const rotationPool = [...savedBench, ...rotationOrder.map((item) => item.playerId).filter((playerId) => !savedBench.includes(playerId))]
+  // Saved minutes are an allocation over the lineup the user had when saving: once that lineup changed (a planned player left the
+  // active twelve), they no longer describe this team and the staff plans the minutes instead (the match preparation reports it).
+  const activeTwelve = input.respectSavedLineup ? new Set<PlayerId>([...COACH_ROTATION_POSITIONS.map((position) => input.savedLineup.starters[position]), ...BENCH_SLOTS.map((slot) => input.savedLineup.bench[slot])].filter((playerId): playerId is PlayerId => playerId !== undefined)) : undefined
+  const describesLineup = activeTwelve === undefined || Object.keys(input.rotationIntent?.minutesByPeriod ?? {}).every((playerId) => activeTwelve.has(playerId as PlayerId))
+  const minuteTargets = describesLineup && validMinuteIntent(input.rotationIntent?.minutesByPeriod, available, input.regulationPeriodMinutes)
     ? input.rotationIntent!.minutesByPeriod as Readonly<Record<PlayerId, readonly number[]>>
-    : allocateMinuteTargets(rotationOrder.slice(0, rotationDepth).map((item) => item.playerId), startingLineup, roleFitByPlayerId, input.regulationPeriodMinutes)
+    : allocateMinuteTargets(savedBench.length === 0 ? rotationOrder.slice(0, rotationDepth).map((item) => item.playerId) : rotationPool.slice(0, rotationDepth), startingLineup, roleFitByPlayerId, input.regulationPeriodMinutes)
   const rotationInstructions = (input.rotationIntent?.instructions ?? []).filter((instruction) => instruction.period >= 1
     && instruction.period <= input.regulationPeriodMinutes.length
     && Number.isInteger(instruction.period)
