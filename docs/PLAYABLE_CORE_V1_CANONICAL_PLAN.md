@@ -63,7 +63,19 @@ La liga ACB es el **universo piloto**, no un motor monoliga. Reglas, calendarios
 
 **Trabajo incluido:** avanzar días; calendario/inbox de hechos canónicos; entrenamiento colectivo e individual y su ejecución; lesiones, recuperación y disponibilidad; staff/delegación básica; próximo partido coherente con las decisiones previas.
 
-**PASS:** recorrer 30 días con varios partidos, ejecutar al menos un entrenamiento y un escenario controlado de lesión, usar una delegación y guardar/cargar a mitad del recorrido. Sin días, eventos o partidos duplicados; las decisiones producen efectos verificables.
+**PASS:** recorrer 30 días con varios partidos, ejecutar al menos un entrenamiento y un escenario controlado de lesión, usar una delegación y guardar/cargar a mitad del recorrido. Sin días, eventos o partidos duplicados. **Además, es obligatoria una comparación contrafactual de gestión activa frente a gestión automática**, con diferencias observables causadas por decisiones reales y no por bonificaciones inventadas.
+
+**Prueba de impacto de gestión de F2 (incluida en F2, sin subfase):**
+1. Clonar el mismo `GameWorld` inicial ACB, misma fecha, calendario y configuración de simulación en dos ejecuciones de 30 días. Registrar seed y estado de origen.
+2. **A: gestión automática/no intervención**. Mantener quintetos, tácticas, entrenamiento y delegación iniciales; usar exclusivamente los automatismos existentes. No bloquear artificialmente el avance ni suprimir IA real.
+3. **B: gestión activa**. Aplicar mediante Courtside decisiones concretas de entrenamiento colectivo/individual, descansos y rotaciones según disponibilidad, más al menos una decisión operativa/delegación de staff. Registrar acciones y fechas.
+4. Comparar resultados deportivos y **variables intermedias**: sesiones ejecutadas, estímulo de desarrollo y cambios de atributos si corresponde, minutos, fatiga/recuperación, elegibilidad, lesiones/riesgo con evidencia, recomendaciones ejecutadas, estadísticas individuales/colectivas y resultados de partidos.
+5. La comparación debe atribuir cambios a la cadena **decisión → ejecución canónica → cambio persistente → posible consecuencia deportiva**. Guardar/cargar ambos mundos y comprobar que se conservan diferencias significativas cuando existan.
+6. Mantener condiciones equivalentes y semillas reproducibles; si cambia el consumo de aleatoriedad, no presentar diferencias de marcadores o lesiones como causalidad demostrada. Usar pruebas controladas del mecanismo y, si hace falta, varias semillas para distinguir variación aleatoria de efectos genuinos.
+7. **No exigir ganar más partidos** ni producir una diferencia de marcador prefijada. La gestión mala también puede perjudicar. Una diferencia solo de UI, texto, contadores artificiales o resultado aleatorio no acredita impacto de gestión.
+8. **FAIL F2** si las decisiones de gestión elegidas no tienen efectos canónicos medibles o no se puede trazar ninguna consecuencia. Corregir el cableado dentro de F2, sin nuevos programas ni subfases.
+
+**Evidencia exigida:** tabla A/B al día 0 y día 30, decisiones ejecutadas, diferencias cuantificadas y tests que prueben causalidad y persistencia.
 
 ### F3 · Mercado, contratos y finanzas operativas
 
