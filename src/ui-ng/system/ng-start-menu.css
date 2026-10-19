@@ -136,3 +136,6 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+.ng-career-save { margin-left:auto; display:grid; gap:4px; text-align:right; }
+.ng-career-save > div { display:flex; gap:6px; }
+.ng-career-save [role='status'] { max-width:280px; font-size:11px; white-space:normal; }

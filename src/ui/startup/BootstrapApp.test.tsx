@@ -72,6 +72,14 @@ describe('New Game World DB Spain ACB flow', () => {
 
   afterEach(cleanup)
 
+  it('offers the 18-club ACB pilot by default without reading an external database', () => {
+    render(<BootstrapApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('acb-2026-27')
+    expect(within(screen.getByLabelText('TEAM')).getAllByRole('option')).toHaveLength(18)
+    expect(mocks.discoverWorldDbSpainSelection).not.toHaveBeenCalled()
+  })
+
   it('lists 18 canonical teams and sends the selected team through async creation into the normal world store', async () => {
     let finishCreation!: (world: object) => void
     const createdWorld = { marker: 'world-db-gameworld' }
@@ -79,6 +87,7 @@ describe('New Game World DB Spain ACB flow', () => {
     render(<BootstrapApp />)
 
     fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbSpain' } })
     const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS') as HTMLSelectElement
     const options = within(teamSelect).getAllByRole('option') as HTMLOptionElement[]
     expect(options.filter((option) => option.value !== '')).toHaveLength(18)
@@ -109,6 +118,7 @@ describe('New Game World DB Spain ACB flow', () => {
     render(<BootstrapApp />)
 
     fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbSpain' } })
     const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS')
     fireEvent.change(teamSelect, { target: { value: teams[0]!.key } })
     fillCoachIdentity()

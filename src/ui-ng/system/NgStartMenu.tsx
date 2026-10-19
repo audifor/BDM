@@ -3,6 +3,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { getUserTeam } from '@/engine/calendar'
 import { resolveGameCapabilities } from '@/ui/gameContext'
 import { CourtsideTaskbarIcon, CourtsideGlyph } from '@/ui-ng/system/CourtsideGlyph'
+import { CareerSaveControls } from './CareerSaveControls'
 import {
   filterStartMenuApps,
   startMenuAppLabel,
@@ -132,7 +133,7 @@ export function NgStartMenu({ onClose }: { readonly onClose: () => void }) {
       <footer className="ng-start-menu__footer">
         <span className="ng-start-menu__avatar">BDM</span>
         <span>{team?.name??'Basket Dynasty Manager'} <small>{world?.currentDate??''}</small></span>
-        <span className="ng-start-menu__footer-right">COURTSIDE</span>
+        <CareerSaveControls />
       </footer>
     </section>
   </div>
