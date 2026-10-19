@@ -113,6 +113,9 @@ describe('daily result batch (WSR2.1)', () => {
     let seed = 300
     const day = advanceGameDayWithResult(start, () => seed++, ['userGame'], { simulationDetail: mixed })
     expect(day.status).toBe('COMPLETED')
+    // Structural comparison before any JSON key-order comparison: if this fails,
+    // investigate the exact sporting stat/log field lost by Save V4.
+    expect(roundTrip(day.world).matchStatLogsByGameId).toEqual(day.world.matchStatLogsByGameId)
     // Inherited (pre-WSR2.1, already on a fresh world): the save format does not reproduce a few derived domains exactly.
     const inheritedLoss = lost(start)
     const afterBatchLoss = lost(day.world)
