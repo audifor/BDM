@@ -96,7 +96,19 @@ describe('daily result batch (WSR2.1)', () => {
 
   it('a batched day saves and reloads like any world (no domain lost beyond the inherited round-trip gaps) and keeps advancing', () => {
     const roundTrip = (world: GameWorld) => deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, '2026-10-05T00:00:00.000Z'))))
-    const lost = (world: GameWorld) => { const reloaded = roundTrip(world); return Object.keys({ ...world, ...reloaded }).filter((key) => JSON.stringify((world as unknown as Record<string, unknown>)[key]) !== JSON.stringify((reloaded as unknown as Record<string, unknown>)[key])) }
+    // Save V4 stores match logs as a collection. Reload reindexes by gameId, so
+    // insertion order of the record is not sporting data. Compare sorted gameIds
+    // without relaxing the existing deep-equality assertion on every match log.
+    const stableStatLogs = (record: unknown) =>
+      Object.entries(record as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))
+    const lost = (world: GameWorld) => {
+      const reloaded = roundTrip(world)
+      const source = world as unknown as Record<string, unknown>
+      const loaded = reloaded as unknown as Record<string, unknown>
+      return Object.keys({ ...source, ...loaded }).filter((key) => key === 'matchStatLogsByGameId'
+        ? JSON.stringify(stableStatLogs(source[key])) !== JSON.stringify(stableStatLogs(loaded[key]))
+        : JSON.stringify(source[key]) !== JSON.stringify(loaded[key]))
+    }
     const start = withShortGameFormat(createNewGame())
     let seed = 300
     const day = advanceGameDayWithResult(start, () => seed++, ['userGame'], { simulationDetail: mixed })
