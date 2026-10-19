@@ -1,0 +1,41 @@
+name: Courtside main regressions
+on:
+  push:
+    branches: [fix/courtside-main-five-regressions-20261019]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-and-scouting:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Navigation, finance, scouting assignment
+        run: >-
+          npm test -- --maxWorkers=2 --testTimeout=30000
+          src/app/scouting/ScoutingOperationsService.addressability.test.ts
+          src/ui-ng/system/startMenuCatalog.courtside.test.ts
+          src/ui-ng/system/NgStartMenu.test.tsx
+          src/ui-ng/applications/scouting/ScoutingWorkspace.test.tsx
+  save-batch:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Daily batch simulation and Save V4 roundtrip diagnostics
+        run: npm test -- --maxWorkers=1 --testTimeout=600000 src/app/game/dailyResultBatch.test.ts
