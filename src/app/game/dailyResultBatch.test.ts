@@ -102,7 +102,9 @@ describe('daily result batch (WSR2.1)', () => {
     const day = advanceGameDayWithResult(start, () => seed++, ['userGame'], { simulationDetail: mixed })
     expect(day.status).toBe('COMPLETED')
     // Inherited (pre-WSR2.1, already on a fresh world): the save format does not reproduce a few derived domains exactly.
-    expect(lost(day.world).every((key) => lost(start).includes(key))).toBe(true)
+    const inheritedLoss = lost(start)
+    const afterBatchLoss = lost(day.world)
+    expect(afterBatchLoss.filter((key) => !inheritedLoss.includes(key)), `New Save V4 mismatch after daily batch: ${afterBatchLoss.filter((key) => !inheritedLoss.includes(key)).join(', ')}`).toEqual([])
     const reloaded = roundTrip(day.world)
     expect(reloaded.matchStatLogsByGameId).toEqual(day.world.matchStatLogsByGameId)
     expect(reloaded.careerFatigueByPlayerId).toEqual(day.world.careerFatigueByPlayerId)
