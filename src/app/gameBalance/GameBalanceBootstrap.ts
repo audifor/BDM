@@ -147,7 +147,7 @@ function governanceShape(kind: GameBalanceEcosystemKind, gender: string) {
 
 export function gameBalanceBodyId(organizationId: string, kind: GovernanceBodyKind): string { return gameBalanceId('body', organizationId, kind.toLowerCase()) }
 export function gameBalanceInstitutionId(organizationId: string): string { return gameBalanceId('institution', organizationId) }
-export const GAME_BALANCE_DELEGATED_DECISIONS = ['FACILITIES', 'CAPITAL_EXPENDITURE'] as const
+export const GAME_BALANCE_DELEGATED_DECISIONS = ['FACILITIES', 'CAPITAL_EXPENDITURE', 'PLAYER_CONTRACT_SIGNING'] as const
 
 export const GAME_BALANCE_CATALOG_CALIBRATION = Object.freeze({ modelId: BDM_GAME_BALANCE_V1_ID, evidenceId: gameBalanceId('calibration', 'v1'), authorizedBy: BDM_GAME_BALANCE_V1_AUTHORIZATION })
 

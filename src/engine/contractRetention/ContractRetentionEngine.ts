@@ -1,3 +1,4 @@
+import { salaryRulesInForce } from '@/engine/salary/SalaryRulesInForce'
 import { addDays, type GameDate } from '@/domain/date'
 import { getContractYearCompensation, getPlayerContractStatus } from '@/domain/contract'
 import { freezeRetentionTerms, retentionNegotiationIdFor, type ContractRetentionNegotiation, type RetentionNegotiationRound, type RetentionNegotiationStatus, type RetentionPlayerResponse, type RetentionResponseReasonCode, type RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
@@ -418,9 +419,7 @@ function retentionSecurityAdjustment(terms: RetentionTermSet): number {
 }
 
 function applicableSalaryRules(world: GameWorld, teamId: TeamId, date: GameDate) {
-  return Object.values(world.seasons).filter((season) => season.startDate <= date && date <= season.endDate
-    && (season.participantTeamIds ?? world.competitions[season.competitionId]?.participantTeamIds ?? []).includes(teamId))
-    .map((season) => world.salaryRulesBySeasonId[season.id]).filter((rules): rules is NonNullable<typeof rules> => rules !== undefined)
+  return salaryRulesInForce(world, teamId, date)
 }
 
 function validateOpenContext(world: GameWorld, negotiation: ContractRetentionNegotiation): ContractRetentionNegotiation['terminalReason'] | undefined {

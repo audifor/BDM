@@ -54,6 +54,24 @@ describe('CF6 budget and forecasting', () => {
     expect(row).toMatchObject({ committedMinorUnits: 10_000_000, commitmentVarianceMinorUnits: 2_000_000 })
   })
 
+  it('B/CF5 (F3): each guaranteed contract-year is attributed to exactly ONE fiscal period, the one containing its recognition date', () => {
+    const team = input.teams![0]!
+    const player = input.players![0]!
+    // A 3-year contract that starts on 1 July does not fit a September fiscal year: its year-1 entry (1 Jul 2031) is recognized in the
+    // 2030-31 period and its year-2 entry (1 Jul 2032) in 2031-32. A fiscal period must never be charged for both.
+    const contract = createPlayerContract({ id: contractIdFromString('contract:f3:july-start'), playerId: player.id, teamId: team.id, kind: 'standard', term: { startsOn: '2031-07-01' as never, expiresOn: '2034-07-01' as never }, compensation: { annualSalary: 100_000 } })
+    const fiscal = (startsOn: string, endsOn: string, id: string) => {
+      const budget = createFinancialBudget({ id, organizationId, currencyCode: 'EUR', period: createFinancialPlanningPeriod({ kind: 'FISCAL_YEAR', startsOn, endsOn }), status: 'APPROVED', label: id, createdOn: '2030-01-01', approval: { authorityKind: 'GOVERNANCE', authorityId: 'governance:budget', approvedOn: '2030-01-01', provenance: source }, provenance: source })
+      return { budget, line: expenseLine(budget.id, 50_000_000, 'PLAYER_SALARY') }
+    }
+    const previous = fiscal('2030-09-01', '2031-08-31', 'budget:f3:2030-31')
+    const current = fiscal('2031-09-01', '2032-08-31', 'budget:f3:2031-32')
+    const next = fiscal('2032-09-01', '2033-08-31', 'budget:f3:2032-33')
+    const world = createGameWorld({ ...input, contracts: [contract], financialBudgets: [previous.budget, current.budget, next.budget], budgetLines: [previous.line, current.line, next.line] })
+    const committed = (budgetId: string) => getBudgetComparison(world, budgetId, '2031-10-01')[0]!.committedMinorUnits
+    expect([committed(previous.budget.id), committed(current.budget.id), committed(next.budget.id)]).toEqual([10_000_000, 10_000_000, 10_000_000])
+  })
+
   it('C: reports projected over-budget without changing cash', () => {
     const budget = approvedBudget('budget:cf6:over', 10_000_000)
     const line = expenseLine(budget.id)

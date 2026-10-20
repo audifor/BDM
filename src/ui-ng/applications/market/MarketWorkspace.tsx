@@ -4,7 +4,7 @@ import { assessPlayerContractSigningReadiness } from '@/app/governance'
 import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence'
 import { assessFormalOfferPreparation } from '@/engine/marketIntelligence'
 import { resolveGovernanceDecisionRights } from '@/domain/governance'
-import { type PlayerId } from '@/domain/ids'
+import { type PlayerId, type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
@@ -19,6 +19,10 @@ import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspa
 import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard'
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
+import { MarketNeedsStrip } from '@/ui-ng/applications/market/MarketNeedsStrip'
+import { MarketViabilityPanel } from '@/ui-ng/applications/market/MarketViabilityPanel'
+import { buildMarketViability } from '@/ui-ng/applications/market/marketViability'
+import { buildMarketOperationsHistory } from '@/ui-ng/applications/market/marketOperationsHistory'
 import { getMarketSalarySummary, marketMinorUnitsToMajor } from './marketFinancialSummary'
 import { addMarketTarget, archiveMarketTarget, getMarketTargetsForTeam, reviewMarketTarget, setMarketTargetNote, setMarketTargetPriority } from '@/app/market/MarketTargetService'
 import type { MarketTargetPriority } from '@/domain/market/MarketTarget'
@@ -26,6 +30,7 @@ import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import './market-courtside-v3.css'
 import './market-unified-navigation.css'
+import './market-viability.css'
 
 type MarketTab = 'explore' | 'targets' | 'scouting' | 'operations'
 const MARKET_TABS: readonly { readonly id: MarketTab; readonly label: string }[] = [
@@ -45,6 +50,11 @@ function marketActorLabel(world: GameWorld, actor: NegotiationResponsibleActor |
   return history?.kind === 'appointment' ? `${name} · ${STAFF_ROLE_LABELS[history.roleId]}` : name
 }
 
+function knownMarketTerms(world: GameWorld, organizationId: string, playerId: string): { readonly salary?: number; readonly years?: number } {
+  const entry = world.marketKnowledge.filter((item) => item.organizationId === organizationId && item.playerId === playerId).sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]
+  return { ...(entry?.expectedSalary === undefined ? {} : { salary: entry.expectedSalary }), ...(entry?.expectedYears === undefined ? {} : { years: entry.expectedYears }) }
+}
+
 export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { readonly initialWorld?: GameWorld; readonly initialTab?: MarketTab; readonly onOpenScouting?: () => void } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const contactFreeAgent = useGameStore((state) => state.contactFreeAgent)
@@ -53,6 +63,8 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
   const startFreeAgentSigningGovernance = useGameStore((state) => state.startFreeAgentSigningGovernance)
   const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
   const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
+  const marketNotice = useGameStore((state) => state.marketNotice)
+  const clearMarketNotice = useGameStore((state) => state.clearMarketNotice)
   const [activeTab, setActiveTab] = useState<MarketTab>(() => {
     if (typeof window === 'undefined') return initialTab
     const params = new URLSearchParams(window.location.search)
@@ -65,6 +77,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
   const [targetsView, setTargetsView] = useState<'tracking' | 'planning'>(() =>
     typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('marketTargetsView') === 'planning' || new URLSearchParams(window.location.search).get('marketTab') === 'planning')
       ? 'planning' : 'tracking')
+  const [searchPosition, setSearchPosition] = useState<string>('ALL')
   const [comparisonIds, setComparisonIds] = useState<readonly PlayerId[]>([])
   const requestScoutingAssignment = useGameStore((state) => state.requestScoutingAssignment)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
@@ -143,9 +156,12 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
       <MarketOperationsBar world={world} teamId={team.id}
         onOpenScouting={() => setActiveTab('scouting')}
         onOpenFreeAgents={() => { setSearchPreset('FREE'); setActiveTab('explore') }} />
+      {marketNotice !== null ? <p className={`market-notice is-${marketNotice.kind}`} role={marketNotice.kind === 'error' ? 'alert' : 'status'} data-testid="market-notice">{marketNotice.text} <button type="button" aria-label="Cerrar aviso" onClick={clearMarketNotice}>×</button></p> : null}
+      {activeTab === 'explore' ? <MarketNeedsStrip world={world} teamId={team.id} onSearch={(position) => { setSearchPreset('FREE'); setSearchPosition(position ?? 'ALL') }} /> : null}
       {activeTab === 'targets' ? <nav className="market-target-views" aria-label="Vistas de objetivos"><button type="button" aria-pressed={targetsView === 'tracking'} onClick={() => setTargetsView('tracking')}>Seguimiento</button><button type="button" aria-pressed={targetsView === 'planning'} onClick={() => setTargetsView('planning')}>Planificación</button></nav> : null}
       {(activeTab === 'explore' || activeTab === 'targets' && targetsView === 'tracking') ? <MarketTalentBoard
-        key={activeTab === 'explore' ? searchPreset : 'targets'}
+        key={activeTab === 'explore' ? `${searchPreset}:${searchPosition}` : 'targets'}
+        initialPosition={activeTab === 'explore' ? searchPosition : 'ALL'}
         world={world} teamId={team.id} mode={activeTab}
         initialContractFilter={activeTab === 'explore' ? searchPreset : 'ALL'}
         comparisonIds={comparisonIds} onToggleComparison={toggleComparison}
@@ -176,6 +192,8 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
             <NgMetric label="Tiro" value={evaluate(selected, 'shooting')} />
             <NgMetric label="Creación" value={evaluate(selected, 'creation')} />
           </dl>
+          {(() => { const known = knownMarketTerms(world, team.organizationId, selected.id)
+            return <MarketViabilityPanel viability={buildMarketViability(world, team.id, { ...(known.salary === undefined ? {} : { annualSalary: known.salary }), ...(known.years === undefined ? {} : { years: known.years }) })} /> })()}
           <FreeAgentOfferActions offer={offers.find((item) => item.playerId === selected.id)}
             onContact={() => { const offer = offers.find((item) => item.playerId === selected.id)
               if (offer !== undefined) { contactFreeAgent(team.id, selected.id, offer.sourceProposalId); setSelectedId(undefined); setActiveTab('operations') } }} />
@@ -206,14 +224,20 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
           const approved = new Set(signing.approvedBodyIds)
           return (
             <article key={negotiation.id} className="market-negotiations__entry" data-negotiation-id={negotiation.id}><details className="market-negotiations__details"><summary><span className="market-negotiations__person">{player === undefined ? negotiation.playerId : `${player.firstName} ${player.lastName}`}</span><span className="market-negotiations__state">{negotiation.status}</span><span className="market-negotiations__sum">{negotiation.salary === undefined ? "Sin oferta" : `${formatMoney(negotiation.salary)} / ${negotiation.years} años`}</span><span className="market-negotiations__date">{negotiation.startedOn}</span><span className="market-negotiations__chevron">▾</span></summary><div className="market-negotiations__body">
+              {!['SIGNED', 'CLOSED', 'WITHDRAWN', 'REJECTED', 'EXPIRED', 'DECLINED'].includes(negotiation.status) && (() => {
+                const known = knownMarketTerms(world, team.organizationId, negotiation.playerId)
+                const salary = 'salary' in negotiation && negotiation.salary !== undefined ? negotiation.salary : preparation?.salaryProposal?.amount ?? known.salary
+                const years = 'salary' in negotiation && negotiation.years !== undefined ? negotiation.years : preparation?.termProposalYears ?? known.years
+                return <MarketViabilityPanel viability={buildMarketViability(world, team.id, { ...(salary === undefined ? {} : { annualSalary: salary }), ...(years === undefined ? {} : { years }) })} label="Viabilidad económica de esta operación" />
+              })()}
               <p>Contact: {negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
               {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn) !== undefined && <p>Contact handled by: {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn)}</p>}
               {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn) !== undefined && <p>Offer submitted by: {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn)}</p>}
               <p>Negotiation: {negotiation.status}{'salary' in negotiation && negotiation.salary !== undefined ? ` · ${formatMoney(negotiation.salary)} / ${negotiation.years} years` : ''}</p>
-              {negotiation.status === 'CONTACTED' && negotiation.contactResponse?.outcome === 'OPEN_TO_TALKS' && preparation !== undefined && (
+              {negotiation.status === 'CONTACTED' && negotiation.contactResponse?.outcome === 'OPEN_TO_TALKS' && (
                 <>
-                  <p>Offer preparation: {preparation.readiness}{preparation.blockers.length > 0 ? ` · ${preparation.blockers.join(', ')}` : ''}</p>
-                  {preparation.readiness === 'READY_TO_SUBMIT_OFFER' && <button onClick={() => submitFreeAgentOffer(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Submit prepared offer</button>}
+                  <p>Offer preparation: {preparation === undefined ? 'NOT_CURRENT · the club can no longer recommend this approach (see the economic viability above)' : `${preparation.readiness}${preparation.blockers.length > 0 ? ` · ${preparation.blockers.join(', ')}` : ''}`}</p>
+                  <button className={preparation?.readiness === 'READY_TO_SUBMIT_OFFER' ? undefined : 'is-blocked'} onClick={() => submitFreeAgentOffer(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Submit prepared offer</button>
                 </>
               )}
               {negotiation.status === 'COUNTERED' && negotiation.salary !== undefined && (
@@ -240,6 +264,9 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
               {decision !== undefined && approverBodyIds.filter((bodyId) => !approved.has(bodyId)).map((bodyId) => (
                 <button key={bodyId} onClick={() => recordFreeAgentSigningDecision(decision.id, 'APPROVED', bodyId)} type="button">Approve signing ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>
               ))}
+              {decision !== undefined && signing.status !== 'SIGNED' && signing.status !== 'ALREADY_SIGNED' && !['REJECTED', 'VETOED', 'WITHDRAWN'].includes(signing.status) && proposerBodyIds.slice(0, 1).map((bodyId) => (
+                <button key={`cancel:${bodyId}`} onClick={() => recordFreeAgentSigningDecision(decision.id, 'WITHDRAWN', bodyId)} type="button">Cancel signing (withdraw the proposal)</button>
+              ))}
               {decision !== undefined && signing.status === 'APPROVED' && team.coachId === world.userCoachId && (
                 <button onClick={() => completeFreeAgentSigning(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Complete signing</button>
               )}
@@ -248,6 +275,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
             </div></details></article>
           )
         })}
+        <MarketOperationsHistory world={world} teamId={team.id} />
       </section> : null}
     </NgHoloShell>
   )
@@ -266,4 +294,14 @@ function FreeAgentOfferActions({ offer, onContact }: {
       ? <button onClick={onContact} type="button">Contact player</button>
       : <p>Contact blocker: {offer.blockers.join(', ') || offer.contactAuthority.blockers.join(', ') || 'Current proposal is unavailable.'}</p>}
   </div>
+}
+
+function MarketOperationsHistory({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
+  const rows = buildMarketOperationsHistory(world, teamId)
+  return <section className="market-history" aria-label="Historial de operaciones" data-testid="market-history">
+    <header><strong>HISTORIAL DE OPERACIONES</strong><small>{rows.length} ejecutadas</small></header>
+    {rows.length === 0 ? <p className="ng-canon__empty">Aún no se ha ejecutado ninguna operación: una oferta o una negociación no cuenta hasta que se firma.</p> : <ul>
+      {rows.map((row) => <li key={row.id} data-operation-kind={row.kind}><time>{row.date}</time><b>{row.kind.replace('_', ' ')}</b><span>{row.subject}</span><small>{row.summary}</small></li>)}
+    </ul>}
+  </section>
 }

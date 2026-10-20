@@ -1,0 +1,41 @@
+.market-viability {display:grid;gap:7px;margin:11px 0;padding:11px 13px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s2,#1e1a28);}
+.market-viability>header {display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.market-viability>header strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.market-viability__verdict {font:700 13px var(--cs-font-display,inherit);padding:2px 10px;border-radius:99px;border:1px solid var(--cs-line2);}
+.market-viability__verdict.is-viable {color:var(--cs-positive,#5cf29a);border-color:var(--cs-positive,#5cf29a);}
+.market-viability__verdict.is-not_viable {color:var(--cs-negative,#ff5470);border-color:var(--cs-negative,#ff5470);}
+.market-viability__verdict.is-unknown {color:var(--cs-text3,#8b8399);}
+.market-viability dl {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px;margin:0;}
+.market-viability dl>div {display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dotted var(--cs-line,rgba(255,255,255,.08));padding:2px 0;}
+.market-viability dt {color:var(--cs-text3,#8b8399);}
+.market-viability dd {margin:0;font-weight:700;text-align:right;}
+.market-viability__reasons {margin:0;padding-left:16px;font-size:12px;color:var(--cs-text2,#c7c1d6);}
+@media(max-width:720px){.market-viability dl{grid-template-columns:1fr}}
+.market-needs {display:grid;gap:6px;margin:0 0 9px;padding:9px 12px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s1,#17141f);}
+.market-needs>header {display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.market-needs>header strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.market-needs>header small {color:var(--cs-text3,#8b8399);font-size:11px;}
+.market-needs ul {list-style:none;margin:0;padding:0;display:grid;gap:4px;}
+.market-needs li {display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dotted var(--cs-line,rgba(255,255,255,.08));padding:3px 0;}
+.market-needs li small {display:block;color:var(--cs-text3,#8b8399);font-size:10px;}
+.market-needs li button {border:1px solid var(--cs-orange,#ff6a2b);border-radius:99px;background:transparent;color:var(--cs-text);font:700 12px var(--cs-font-display,inherit);padding:3px 11px;white-space:nowrap;}
+.market-needs li em {color:var(--cs-text3,#8b8399);font-size:11px;}
+.market-needs__empty {margin:0;color:var(--cs-text3,#8b8399);font-size:12px;}
+.market-notice {display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;padding:8px 12px;border-radius:9px;font-size:12px;border:1px solid var(--cs-line2);}
+.market-notice.is-info {border-color:var(--cs-positive,#5cf29a);}
+.market-notice.is-error {border-color:var(--cs-negative,#ff5470);color:var(--cs-text);}
+.market-notice button {border:0;background:none;color:var(--cs-text);font:700 18px var(--cs-font-display,inherit);}
+.market-history {margin-top:14px;padding:10px 12px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s1,#17141f);}
+.market-history>header {display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.market-history>header strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.market-history>header small {color:var(--cs-text3,#8b8399);font-size:11px;}
+.market-history ul {list-style:none;margin:0;padding:0;display:grid;gap:3px;}
+.market-history li {display:grid;grid-template-columns:90px 110px minmax(120px,1fr) minmax(0,2fr);gap:8px;font-size:12px;border-bottom:1px dotted var(--cs-line,rgba(255,255,255,.08));padding:3px 0;}
+.market-history li time {color:var(--cs-text3,#8b8399);}
+.market-history li small {color:var(--cs-text2,#c7c1d6);}
+.market-negotiations__body button.is-blocked {opacity:.75;border-style:dashed;}
+@media(max-width:720px){.market-history li{grid-template-columns:1fr}}
+.staff-contract-actions {display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 10px;padding:9px 12px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s1,#17141f);font-size:12px;}
+.staff-contract-actions>strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.staff-contract-actions>button {margin-left:auto;border:1px solid var(--cs-negative,#ff5470);border-radius:99px;background:transparent;color:var(--cs-text);font:700 12px var(--cs-font-display,inherit);padding:3px 12px;}
+.staff-contract-actions>small {flex-basis:100%;color:var(--cs-text3,#8b8399);}

@@ -1,0 +1,394 @@
+{
+  "platform": "Windows Tauri debug executable, embedded production frontend (no Vite)",
+  "exe": "C:/BDM/src-tauri/target/debug/bdm.exe",
+  "userSaveSha256Before": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "startingSave": {
+    "date": "2026-09-26",
+    "userContracts": 16,
+    "contractIds": 241,
+    "uniqueContractIds": 241,
+    "signed": [],
+    "negotiations": [],
+    "transactions": [],
+    "uniqueTransactions": 0,
+    "transactionCount": 0,
+    "executedEvents": 0,
+    "retention": [],
+    "reservations": 20,
+    "completedGames": 1,
+    "statLogs": 1,
+    "marketTargets": 0,
+    "userLineupStarters": {}
+  },
+  "offer": "Libre SG-01 [sintético] CONTACTED Sin oferta 2026-09-26 ▾ VIABILIDAD ECONÓMICA DE ESTA OPERACIÓN Viable Presupuesto salarial autorizado 10.70M Compromisos de jugadores en el ejercicio 9.13M Margen realmente disponible 1.57M Tesorería (no es margen salarial) 39.32M Salario anual del contrato 230K Duración 3 años Compromiso total del contrato 690K Margen tras la operación 1.34M Tope salarial No aplica: esta competición no define tope salarial Dentro del margen salarial autorizado y con tesorería suficiente. Contact: Awaiting player response · Response: OPEN_TO_TALKS Contact handled by: User Nego",
+  "refusal": " la operación: no hay margen salarial autorizado suficiente (una autorización no es dinero en caja, y la caja no sustituye a la autorización). Motivo: INSUFFICIENT_AUTHORIZED_HEADROOM:INSUFFICIENT_AUTHORIZED_HEADROOM.\n×\n\nOPERACIONES\n2 registradas\nTodas\nEn curs",
+  "agreed": "Libre SG-01 [sintético] ACCEPTED 230K / 3 años 2026-09-26 ▾ VIABILIDAD ECONÓMICA DE ESTA OPERACIÓN Viable Presupuesto salarial autorizado 10.70M Compromisos de jugadores en el ejercicio 9.13M Margen realmente disponible 1.57M Tesorería (no es margen salarial) 39.32M Salario anual del contrato 230K Duración 3 años Compromiso total del contrato 690K Margen tras la operación 1.34M Tope salarial No ap",
+  "signing": {
+    "playerId": "acb-free-agent-player-sg-01",
+    "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+    "salary": 230000,
+    "years": 3
+  },
+  "marginAfterSigning": "1.34M",
+  "participation": {
+    "gameId": "schedule-acb-season-2026-27-game-0029",
+    "minutes": 9
+  },
+  "afterReload": {
+    "payloadSha256": "c8b67d1c5984f1dbff6c8fc76680a3701a9e33825d0e9ffdc7ae427f32c41732",
+    "payloadIdenticalAfterRestart": true,
+    "date": "2026-10-17",
+    "userContracts": 17,
+    "contractIds": 242,
+    "uniqueContractIds": 242,
+    "signed": [
+      {
+        "playerId": "acb-free-agent-player-sg-01",
+        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+        "salary": 230000,
+        "years": 3
+      }
+    ],
+    "negotiations": [
+      "acb-free-agent-player-sg-03:CONTACTED",
+      "acb-free-agent-player-sg-01:SIGNED"
+    ],
+    "transactions": [
+      "signedFreeAgent:acb-free-agent-player-sg-01"
+    ],
+    "uniqueTransactions": 1,
+    "transactionCount": 1,
+    "executedEvents": 1,
+    "retention": [],
+    "reservations": 27,
+    "completedGames": 28,
+    "statLogs": 28,
+    "marketTargets": 1,
+    "userLineupStarters": {
+      "SG": "acb-free-agent-player-sg-01"
+    }
+  },
+  "afterContinue": {
+    "date": "2026-10-31",
+    "userContracts": 17,
+    "contractIds": 242,
+    "uniqueContractIds": 242,
+    "signed": [
+      {
+        "playerId": "acb-free-agent-player-sg-01",
+        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+        "salary": 230000,
+        "years": 3
+      }
+    ],
+    "negotiations": [
+      "acb-free-agent-player-sg-03:CONTACTED",
+      "acb-free-agent-player-sg-01:SIGNED"
+    ],
+    "transactions": [
+      "signedFreeAgent:acb-free-agent-player-sg-01"
+    ],
+    "uniqueTransactions": 1,
+    "transactionCount": 1,
+    "executedEvents": 1,
+    "retention": [],
+    "reservations": 24,
+    "completedGames": 45,
+    "statLogs": 45,
+    "marketTargets": 1,
+    "userLineupStarters": {
+      "SG": "acb-free-agent-player-sg-01"
+    }
+  },
+  "july": {
+    "date": "2027-07-02",
+    "userContracts": 16,
+    "contractIds": 241,
+    "uniqueContractIds": 241,
+    "signed": [],
+    "negotiations": [],
+    "transactions": [],
+    "uniqueTransactions": 0,
+    "transactionCount": 0,
+    "executedEvents": 0,
+    "retention": [
+      {
+        "playerId": "acb-player-mba-03",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mba-07",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mba-10",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mob-09",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-spb-09",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-spb-12",
+        "status": "ACCEPTED"
+      }
+    ],
+    "reservations": 1,
+    "completedGames": 306,
+    "statLogs": 306,
+    "marketTargets": 0,
+    "userLineupStarters": {},
+    "earliestExpiry": "2028-07-01"
+  },
+  "renewalCandidate": {
+    "playerId": "acb-player-ucm-02",
+    "name": "Jonah Radebaugh",
+    "contractId": "contract:acb-player-ucm-02:acb-team-ucm:2026-07-01",
+    "expiresOn": "2028-07-01",
+    "annualSalary": 700000
+  },
+  "renewal": {
+    "successor": "contract:retention-successor:retention:acb-team-ucm:acb-player-ucm-02:contract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01:retention-open%3Aacb-team-ucm%3Acontract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01%3A2027-07-02",
+    "term": {
+      "startsOn": "2028-07-01",
+      "expiresOn": "2030-07-01"
+    },
+    "annualSalary": 700000
+  },
+  "release": {
+    "player": "Juani Marcos",
+    "transactions": [
+      "released:acb-player-ucm-03"
+    ]
+  },
+  "july2": {
+    "date": "2027-09-30",
+    "userContracts": 17,
+    "contractIds": 242,
+    "uniqueContractIds": 242,
+    "signed": [],
+    "negotiations": [],
+    "transactions": [
+      "released:acb-player-ucm-03"
+    ],
+    "uniqueTransactions": 1,
+    "transactionCount": 1,
+    "executedEvents": 1,
+    "retention": [
+      {
+        "playerId": "acb-player-mba-03",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mba-07",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mba-10",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-mob-09",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-spb-09",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-spb-12",
+        "status": "ACCEPTED"
+      },
+      {
+        "playerId": "acb-player-ucm-02",
+        "status": "ACCEPTED",
+        "execution": "SIGNED",
+        "successor": "contract:retention-successor:retention:acb-team-ucm:acb-player-ucm-02:contract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01:retention-open%3Aacb-team-ucm%3Acontract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01%3A2027-07-02"
+      }
+    ],
+    "reservations": 1,
+    "completedGames": 315,
+    "statLogs": 315,
+    "marketTargets": 0,
+    "userLineupStarters": {}
+  },
+  "steps": [
+    {
+      "id": 1,
+      "title": "NEW GAME ACB 2026/27 con UCAM Murcia y primer partido disputado (carrera nueva, Save V4 nativo)",
+      "result": "PASS",
+      "ms": 25380,
+      "detail": {
+        "date": "2026-09-26",
+        "userContracts": 16,
+        "freeAgentMarketTruth": 15
+      }
+    },
+    {
+      "id": 2,
+      "title": "Consultar Roster: 16 jugadores y su composición por posición",
+      "result": "PASS",
+      "ms": 3875,
+      "detail": {
+        "guards": [
+          "Dylan Ennis",
+          "Wilhelm Falk"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "Identificar una necesidad de plantilla y entrar en Mercado Courtside",
+      "result": "PASS",
+      "ms": 6245,
+      "detail": {
+        "need": "SG (titular y suplente de nivel bajo)",
+        "margenPresupuesto": "1.57M"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Buscar agentes libres desde la necesidad, añadir un objetivo persistente y consultar el expediente",
+      "result": "PASS",
+      "ms": 7455,
+      "detail": {
+        "margin": "1.57M",
+        "precioEsperado": "Desconocido hasta contactar"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Contactar: SG-01 (operación principal) y SG-03 (candidato caro, para el rechazo por presupuesto)",
+      "result": "PASS",
+      "ms": 16549
+    },
+    {
+      "id": 6,
+      "title": "Avanzar hasta el 3 oct: el agente responde; presentar la oferta preparada de SG-01 (condiciones del jugador, viabilidad visible)",
+      "result": "PASS",
+      "ms": 19620
+    },
+    {
+      "id": 7,
+      "title": "Operación inválida por presupuesto: SG-03 acepta hablar pero su precio supera el margen; Finance rechaza la oferta con motivo",
+      "result": "PASS",
+      "ms": 8120
+    },
+    {
+      "id": 8,
+      "title": "Disputar el 3 oct, avanzar al 10 oct: el jugador acepta; iniciar la aprobación de Governance de la firma",
+      "result": "PASS",
+      "ms": 25700
+    },
+    {
+      "id": 9,
+      "title": "Disputar el 10 oct; el consejo aprueba al día siguiente; completar la firma",
+      "result": "PASS",
+      "ms": 35530
+    },
+    {
+      "id": 10,
+      "title": "Ver al jugador en la plantilla y comprobar contrato y presupuesto actualizados",
+      "result": "PASS",
+      "ms": 14898,
+      "detail": {
+        "salary": 230000,
+        "term": {
+          "startsOn": "2026-10-17",
+          "expiresOn": "2029-10-17"
+        },
+        "marginAfter": "1.34M"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Incorporarlo a una rotación válida (titular SG)",
+      "result": "PASS",
+      "ms": 10544
+    },
+    {
+      "id": 12,
+      "title": "Disputar el partido del 17 oct y comprobar su participación real",
+      "result": "PASS",
+      "ms": 10950,
+      "detail": {
+        "gameId": "schedule-acb-season-2026-27-game-0029",
+        "minutes": 9
+      }
+    },
+    {
+      "id": 13,
+      "title": "Historial de operaciones: la firma consta una sola vez, con sus condiciones",
+      "result": "PASS",
+      "ms": 6513,
+      "detail": {
+        "history": "HISTORIAL DE OPERACIONES 1 ejecutadas 2026-10-17 FICHAJE Libre SG-01 [sintético] Agente libre · 230.000 / año · 3 año(s) · hasta 2029-10-17"
+      }
+    },
+    {
+      "id": 14,
+      "title": "Guardar, cerrar BDM, cargar: contratos, plantilla, finanzas e historial idénticos",
+      "result": "PASS",
+      "ms": 25673,
+      "detail": {
+        "payloadIdentical": true
+      }
+    },
+    {
+      "id": 15,
+      "title": "Continuar varios días sin duplicar operaciones",
+      "result": "PASS",
+      "ms": 30614,
+      "detail": {
+        "completedGames": 45,
+        "userContracts": 17
+      }
+    },
+    {
+      "id": 16,
+      "title": "Segunda carrera (Save V4 generado con el arnés: simulación real hasta el 2 jul 2027): contratos próximos a vencer y ventana de renovación abierta",
+      "result": "PASS",
+      "ms": 20973,
+      "detail": {
+        "playerId": "acb-player-ucm-02",
+        "name": "Jonah Radebaugh",
+        "contractId": "contract:acb-player-ucm-02:acb-team-ucm:2026-07-01",
+        "expiresOn": "2028-07-01",
+        "annualSalary": 700000
+      }
+    },
+    {
+      "id": 17,
+      "title": "Renovar: abrir negociación, ofrecer, el jugador acepta, el consejo aprueba y se firma el sucesor sin solapar el contrato vigente",
+      "result": "PASS",
+      "ms": 256390,
+      "detail": {
+        "successor": "contract:retention-successor:retention:acb-team-ucm:acb-player-ucm-02:contract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01:retention-open%3Aacb-team-ucm%3Acontract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01%3A2027-07-02",
+        "term": {
+          "startsOn": "2028-07-01",
+          "expiresOn": "2030-07-01"
+        },
+        "annualSalary": 700000
+      }
+    },
+    {
+      "id": 18,
+      "title": "Liberar a un jugador por el flujo existente: se explican las obligaciones garantizadas que sobreviven",
+      "result": "PASS",
+      "ms": 18842
+    },
+    {
+      "id": 19,
+      "title": "Guardar, cerrar y cargar la segunda carrera; continuar sin duplicar la renovación ni la baja",
+      "result": "PASS",
+      "ms": 67317
+    }
+  ],
+  "consoleErrors": [],
+  "userSaveSha256After": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "userSaveRestored": true
+}

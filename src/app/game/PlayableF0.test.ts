@@ -13,6 +13,7 @@ import { createConfiguredGameAsync } from './createConfiguredGame'
 import { advanceGameDay } from './advanceGameDay'
 import { continueGameAsync } from './ContinueFlow'
 import { createInlineMatchRunner } from '@/app/matchNext/MatchSimulationRunner'
+import { isAcbSyntheticFreeAgentId } from './AcbSyntheticFreeAgentPool'
 
 const coach = {
   firstName: 'Elena', lastName: 'Piloto', dateOfBirth: '1990-01-01', gender: 'female',
@@ -30,8 +31,12 @@ describe('F0 playable ACB career', () => {
     expect(world.coaches[world.userCoachId]).toMatchObject({ firstName: coach.firstName, lastName: coach.lastName })
     expect(Object.values(world.teams)).toHaveLength(18)
     const rosterIds = Object.values(world.teams).flatMap(team => team.rosterPlayerIds)
-    expect(new Set(rosterIds).size).toBe(Object.keys(world.players).length)
-    expect(rosterIds).toHaveLength(Object.keys(world.players).length)
+    // Every rostered player sits on exactly one roster; the only unsigned players are the 15 identified synthetic free agents (F3).
+    const unsigned = Object.keys(world.players).filter(id => !rosterIds.includes(id as never))
+    expect(unsigned).toHaveLength(15)
+    expect(unsigned.every(isAcbSyntheticFreeAgentId)).toBe(true)
+    expect(new Set(rosterIds).size).toBe(rosterIds.length)
+    expect(rosterIds).toHaveLength(Object.keys(world.players).length - 15)
     const season = world.seasons[world.currentSeasonId]!
     const games = Object.values(world.games)
     expect(games).toHaveLength(306)

@@ -358,7 +358,8 @@ export function assessPlayerContractSigningReadiness(world: GameWorld, teamId: T
   const workflowStatus = workflowStatusForDecision(decisionStatus)
   let status: PlayerContractSigningWorkflowStatus = !accepted ? negotiation?.status === 'SIGNED' ? 'ALREADY_SIGNED' : 'NOT_ACCEPTED' : 'REQUIRES_APPROVAL'
   let blocker: string | undefined = !accepted ? 'NEGOTIATION_NOT_ACCEPTED' : undefined
-  if (accepted && (team === undefined || negotiation?.teamId !== teamId || negotiation.organizationId !== team.organizationId || negotiation.sourceProposalId === undefined || negotiation.sourceProposalId.trim() === '')) { status = 'STALE'; blocker = 'NEGOTIATION_TEAM_OR_PROPOSAL_CHANGED' }
+  if (negotiation?.status === 'SIGNED') { status = 'ALREADY_SIGNED'; blocker = undefined }
+  else if (accepted && (team === undefined || negotiation?.teamId !== teamId || negotiation.organizationId !== team.organizationId || negotiation.sourceProposalId === undefined || negotiation.sourceProposalId.trim() === '')) { status = 'STALE'; blocker = 'NEGOTIATION_TEAM_OR_PROPOSAL_CHANGED' }
   else if (accepted && institutions.length !== 1) { status = 'UNKNOWN'; blocker = institutions.length === 0 ? 'GOVERNANCE_INSTITUTION_UNAVAILABLE' : 'GOVERNANCE_INSTITUTION_AMBIGUOUS' }
   else if (accepted && currentRights !== undefined && (currentRights.proposerBodyIds.length === 0 || currentRights.approverBodyIds.length === 0)) { status = 'UNKNOWN'; blocker = 'SIGNING_PROPOSER_OR_APPROVER_AUTHORITY_UNMAPPED' }
   else if (decisionStatus === 'REJECTED' || decisionStatus === 'VETOED' || decisionStatus === 'WITHDRAWN') { status = workflowStatus; blocker = `SIGNING_DECISION_${decisionStatus}` }
@@ -491,4 +492,46 @@ function workflow(
   signing?: FreeAgentSigningResult,
 ): PlayerContractSigningWorkflowResult {
   return { status, world, ...(decision === undefined ? {} : { decision }), ...(decision === undefined ? {} : { decisionStatus: deriveGovernanceDecisionStatus(eventsForDecision(world, decision.id), requiredApproverBodyIds) }), ...(requiredApproverBodyIds === undefined ? {} : { requiredApproverBodyIds }), ...(approvedBodyIds === undefined ? {} : { approvedBodyIds }), ...(signing === undefined ? {} : { signing }), reason }
+}
+
+/**
+ * Board processor for the manager's club (BDM_GAME_BALANCE_V1). The Board is a Governance body whose appointees are simulated
+ * people; like the Facilities Board it acts only through the same canonical command a human uses
+ * (`recordPlayerContractSigningDecisionEvent`: the actor must be an active appointee of a body holding APPROVE, every event cites
+ * its grants). Rule: a pending signing/retention decision is considered the first Calendar day AFTER it was requested; it is
+ * approved when canonical Finance still allows the agreed salary today, and rejected otherwise. It never signs: execution stays
+ * the explicit act of the signing executor. Seats held by the user are never decided here. Deterministic and idempotent.
+ */
+export function processBoardPlayerContractSigningDecisions(world: GameWorld): GameWorld {
+  let current = world
+  const decisions = Object.values(world.governanceDecisionsById)
+    .filter((decision) => decision.decisionType === 'PLAYER_CONTRACT_SIGNING' && decision.subject.kind === 'GENERIC')
+    .sort((a, b) => a.id.localeCompare(b.id))
+  for (const decision of decisions) {
+    if (decision.proposedOn >= current.currentDate || decision.subject.kind !== 'GENERIC') continue
+    const institution = current.governanceInstitutionsById[decision.institutionId]
+    const team = institution === undefined ? undefined : institution.teamIds.map((id) => current.teams[id]).find((item) => item?.coachId === current.userCoachId)
+    if (team === undefined) continue
+    const events = eventsForDecision(current, decision.id)
+    const required = proposalRights(current, decision).approverBodyIds
+    const status = deriveGovernanceDecisionStatus(events, required)
+    if (status !== 'PROPOSED' && status !== 'REVIEW_STARTED' && status !== 'APPROVED') continue
+    const bodyId = required.find((id) => !approvedBodies(events, required).includes(id))
+    if (bodyId === undefined) continue
+    const appointment = Object.values(current.governanceAppointmentsById)
+      .filter((item) => item.bodyId === bodyId && item.startedOn <= current.currentDate && (item.endedOn === undefined || item.endedOn >= current.currentDate))
+      .sort((a, b) => a.id.localeCompare(b.id))[0]
+    if (appointment === undefined || (appointment.actor.kind === 'COACH' && appointment.actor.id === current.userCoachId)) continue
+    const reference = decision.subject.referenceId
+    const retention = reference.startsWith('retention:')
+    const salary = retention ? current.retentionNegotiationsById[reference.slice('retention:'.length)]?.acceptedTerms?.salary : (() => { const item = current.negotiationsById[reference]; return item !== undefined && 'salary' in item ? item.salary : undefined })()
+    if (salary === undefined) continue
+    const finance = evaluateTeamGameplayFinancialDecision(current, {
+      teamId: team.id, action: retention ? 'PLAYER_RETENTION' : 'PLAYER_SIGNING', legacyAnnualAmountMajorUnits: salary,
+      effectiveDate: current.currentDate, sourceAuthority: 'PLAYER_CONTRACT_SIGNING_BOARD', sourceEntityId: reference,
+    })
+    const outcome = recordPlayerContractSigningDecisionEvent(current, { decisionId: decision.id, kind: finance.allowed ? 'APPROVED' : 'REJECTED', bodyId, actor: appointment.actor })
+    if (outcome.world !== current) current = outcome.world
+  }
+  return current
 }

@@ -6,6 +6,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { DynamicsToneDot, DynamicsTonePair } from '@/ui-ng/applications/staff/DynamicsToneDot'
 import { StaffPersonIdentityBand } from '@/ui-ng/applications/staff/StaffPersonIdentityBand'
+import { StaffContractActions } from '@/ui-ng/applications/staff/StaffContractActions'
 import { buildStaffPersonWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffPersonWorkspaceModel'
 import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
 import {
@@ -119,6 +120,7 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
         }
       >
         <ScrollRegion className="staff-person__scroll">
+          <StaffContractActions staffId={staffId} />
           {activeView === 'overview' ? (
             <OverviewView
               model={model}

@@ -13,6 +13,8 @@ import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/
 import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { positionEvidenceKeys } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
 import type { ScoutingKnowledgeRow } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
+import { MarketViabilityPanel } from './MarketViabilityPanel'
+import { buildMarketViability } from './marketViability'
 import './market-talent-board.css'
 
 type Mode = 'explore' | 'targets'
@@ -21,6 +23,7 @@ interface Props {
   readonly teamId: TeamId
   readonly mode: Mode
   readonly initialContractFilter?: 'ALL' | 'FREE'
+  readonly initialPosition?: string
   readonly targets: readonly MarketTarget[]
   readonly onAddTarget: (id: PlayerId) => string | null
   readonly onArchiveTarget: (id: PlayerId) => string | null
@@ -62,7 +65,7 @@ function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWor
   </div>
 }
 
-export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', initialPosition = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [visibleLimit, setVisibleLimit] = useState(120)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -71,7 +74,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const [actionError, setActionError] = useState<string | null>(null)
   const [noteEdit, setNoteEdit] = useState<{ id: PlayerId; text: string } | null>(null)
   const changeTarget = (action: () => string | null) => { const message = action(); setActionError(message) }
-  const [position, setPosition] = useState<string>('ALL')
+  const [position, setPosition] = useState<string>(initialPosition)
   const [contractStatus, setContractStatus] = useState<'ALL' | 'FREE' | 'ROSTERED' | 'EXPIRING_3' | 'EXPIRING_6' | 'EXPIRING_12'>(initialContractFilter)
   const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'ACTIVE' | 'UNSCOUTED'>('ALL')
   const [minimumAge, setMinimumAge] = useState('')
@@ -223,6 +226,10 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
           <div className="market-talent__subheading"><strong>Informes registrados</strong><small>{activeReports.length} mostrados</small></div>
           {activeReports.length === 0 ? <p className="market-talent__empty">Sin informes registrados para este jugador.</p> :
             <div className="market-talent__reports">{activeReports.map((report) => <div key={report.id}><b>{report.missionLabel}</b><span>{report.evaluatorName} · {report.createdLabel}</span><small>Confianza {report.confidenceLabel}</small></div>)}</div>}
+          {isPlayerFreeAgent(world, selected.playerId) ? (() => {
+            const known = world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId && entry.playerId === selected.playerId).sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]
+            return <MarketViabilityPanel viability={buildMarketViability(world, teamId, { ...(known?.expectedSalary === undefined ? {} : { annualSalary: known.expectedSalary }), ...(known?.expectedYears === undefined ? {} : { years: known.expectedYears }) })} />
+          })() : null}
           <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => setScoutingTarget(selected.playerId)} type="button" disabled={selected.activeAssignment !== null}>{selected.activeAssignment === null ? 'Solicitar informe' : 'Observación en curso'}</button>
             {isPlayerFreeAgent(world, selected.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(selected.playerId)} type="button">Contactar agente libre</button> : null}
             <button className="market-cs__secondary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Ficha completa</button></div>

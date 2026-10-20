@@ -4,6 +4,7 @@ import { getContractYearCompensation, getPlayerContractStatus } from '@/domain/c
 import { getContractFinancialScheduleAmounts } from '@/domain/finance'
 import { getUserTeam } from '@/engine/calendar'
 import { assessContractRelease } from '@/app/market/ContractReleaseService'
+import { assessRetentionEligibility } from '@/engine/contractRetention/ContractRetentionEngine'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds'
 import { useGameStore } from '@/stores/gameStore'
 import { RetentionPanel } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
@@ -20,6 +21,12 @@ const SECTIONS = [
 ] as const
 
 type SectionId = (typeof SECTIONS)[number]['id']
+
+/** Remaining contract duration in whole years and months (the manager reads "2 a 9 m", never a raw date difference). */
+function remainingLabel(from: string, to: string): string {
+  const months = Math.max(0, (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7)) - (to.slice(8, 10) < from.slice(8, 10) ? 1 : 0))
+  return `${Math.floor(months / 12)} a ${months % 12} m`
+}
 
 function playerName(world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>, playerId: string) {
   const player = world.players[playerId as keyof typeof world.players]
@@ -78,7 +85,7 @@ export function ContractsWorkspace() {
           background:'color-mix(in srgb, var(--cs-lime, #bedc38) 8%, transparent)',
         } : undefined}>
         <td><button type="button" onClick={() => navigateToPlayer(contract.playerId)}>{player?.firstName ?? 'Unknown'} {player?.lastName ?? ''}</button><div>{player?.basketball.primaryPosition ?? '?'}</div></td>
-        <td>{contractStatus}<div>Through {contract.term.expiresOn}</div></td>
+        <td>{contractStatus}<div>Through {contract.term.expiresOn}</div>{status === 'active' && <><div data-testid="contract-remaining">Remaining {remainingLabel(world.currentDate, contract.term.expiresOn)}</div><div>{renewalWindowLabel(world, team.id, contract.id, contract.term.expiresOn)}</div><div data-testid="contract-continuity">Future guaranteed years (not yet recognised): {continuityCost(world, contract.id).toLocaleString('es-ES')}</div></>}</td>
         <td>{compensation.cashSalary.toLocaleString()} contract units{cappedSalary ? ` ? cap ${compensation.capHit.toLocaleString()}` : ''}<div>{compensation.guaranteedAmount.toLocaleString()} guaranteed</div></td>
         <td>{successor !== undefined ? `Future successor starts ${successor.term.startsOn}` : predecessor !== undefined ? `Successor of contract ending ${predecessor.term.expiresOn}` : 'No successor'}<div>{signedOn === undefined ? 'No recorded signing date' : `Signed ${signedOn}`}</div>{retentionExecution?.governanceDecisionId !== undefined && <div>Governance: {retentionExecution.governanceDecisionId}</div>}</td>
         <td>{review?.decision?.replaceAll('_', ' ') ?? 'No intent'}{rolePromise !== undefined && <div>Role promise active</div>}{negotiation !== undefined && <div>Negotiating</div>}{team.coachId === world.userCoachId && <div><select aria-label={`Planning intent for ${playerName(world, contract.playerId)}`} value={review?.decision ?? ''} onChange={(event) => { if (event.target.value) decideReview(team.id, contract.id, event.target.value as 'PURSUE_EXTENSION' | 'ALLOW_EXPIRY' | 'REVIEW_RELEASE' | 'DEFER') }}><option value="">Set intent</option><option value="PURSUE_EXTENSION">Pursue extension</option><option value="ALLOW_EXPIRY">Allow expiry</option><option value="REVIEW_RELEASE">Review release</option><option value="DEFER">Defer</option></select></div>}</td>
@@ -102,4 +109,20 @@ export function ContractsWorkspace() {
       return <article className="ng-canon__panel" key={contract.id}><h3>{playerName(world, contract.playerId)} · {contract.term.startsOn}–{contract.term.expiresOn}</h3><p>{contract.termination === undefined ? getPlayerContractStatus(contract, world.currentDate) === 'scheduled' ? 'Signed for future' : getPlayerContractStatus(contract, world.currentDate) : `Released ${contract.termination.terminatedOn}`}{contract.predecessorContractId === undefined ? '' : ` · predecessor ${contract.predecessorContractId}`}</p>{transactions.map((item) => <p key={item.id}>{item.kind.replaceAll(/([A-Z])/g, ' $1').toLowerCase()} · {item.occurredOn}</p>)}</article>
     })}</section>}
   </NgHoloShell>
+}
+
+/** Guaranteed Finance obligations still ahead for a contract (major units): what continuing with it costs, from the canonical schedule. */
+function continuityCost(world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>, contractId: string): number {
+  return getContractFinancialScheduleAmounts(world, { contractId: contractId as never, includeConditional: false })
+    .filter((entry) => compareGameDates(entry.effectiveOn, world.currentDate) >= 0).reduce((sum, entry) => sum + entry.amountMinorUnits, 0) / 100
+}
+
+function renewalWindowLabel(world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>, teamId: string, contractId: string, expiresOn: string): string {
+  const eligibility = assessRetentionEligibility(world, teamId as never, contractId as never)
+  if (eligibility.eligible) return 'Renewal window open'
+  if (eligibility.reasons.includes('RETENTION_WINDOW_CLOSED')) {
+    const opens = new Date(Date.parse(expiresOn) - (eligibility.retentionWindowDays ?? 365) * 86_400_000).toISOString().slice(0, 10)
+    return `Renewal window opens ${opens}`
+  }
+  return `Renewal unavailable: ${eligibility.reasons.join(', ').toLowerCase().replaceAll('_', ' ')}`
 }

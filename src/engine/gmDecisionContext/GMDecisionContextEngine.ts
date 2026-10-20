@@ -63,7 +63,15 @@ const RESPONSIBILITY_KINDS: readonly ResponsibilityKind[] = ['recommendSignings'
 const SORTED_OPTION_KINDS: readonly GMResponseOptionKind[] = ['INTERNAL_ROLE_REALLOCATION', 'INTERNAL_DEVELOPMENT', 'EXTERNAL_ACQUISITION', 'SHORT_TERM_COVER', 'CONTRACT_RETENTION_REVIEW', 'SUCCESSION_PLANNING', 'OUTGOING_MARKET_REVIEW', 'FINANCIAL_CONTAINMENT', 'SCOUTING_EXPANSION', 'WAIT_AND_MONITOR']
 
 /** Pure, shared user/AI projection. It does not invoke market advice, persist, or mutate the world. */
-export function assessGMDecisionContext(world: GameWorld, teamId: TeamId, onDate: GameDate = world.currentDate): GMDecisionContext {
+export interface GMDecisionContextOptions {
+  /**
+   * User-directed planning: the human manager is the planner, so every detected need yields response options. The default
+   * importance filter (critical/high severity or imminent urgency) stays the threshold for autonomous AI planning.
+   */
+  readonly includeAllDetectedNeeds?: boolean
+}
+
+export function assessGMDecisionContext(world: GameWorld, teamId: TeamId, onDate: GameDate = world.currentDate, contextOptions: GMDecisionContextOptions = {}): GMDecisionContext {
   const team = world.teams[teamId]
   if (team === undefined) throw new RangeError(`Unknown Team ${teamId}`)
   const knowledgePerspective: ClubNeedsKnowledgePerspective = team.coachId === world.userCoachId ? 'USER_ANALYTICS' : 'ORGANIZATION_KNOWLEDGE'
@@ -73,7 +81,7 @@ export function assessGMDecisionContext(world: GameWorld, teamId: TeamId, onDate
   const decisionParticipants = resolveParticipants(world, teamId)
   const externalKnowledgeReadiness = marketKnowledgeReadiness(world, teamId)
   const options = needsAssessment.needs
-    .filter((need) => isImportantNeed(need, strategy))
+    .filter((need) => contextOptions.includeAllDetectedNeeds === true ? need.kind !== 'FINANCIAL_PRESSURE' : isImportantNeed(need, strategy))
     .flatMap((need) => buildOptions(world, teamId, need, strategy, decisionParticipants, externalKnowledgeReadiness, needsAssessment.financialContext, strategyAssessment, onDate))
     .sort((a, b) => a.needId.localeCompare(b.needId) || a.priority - b.priority || SORTED_OPTION_KINDS.indexOf(a.kind) - SORTED_OPTION_KINDS.indexOf(b.kind) || a.id.localeCompare(b.id))
   return Object.freeze({ teamId, asOfDate: onDate, strategy, financialPressure: strategyAssessment.financialPressure, boardPressure: strategyAssessment.boardPressure, governancePressure: strategyAssessment.governancePressure, needsAssessment, decisionParticipants, decisionMakerStatus: decisionParticipants.length > 0 ? 'ASSIGNED' : 'ORGANIZATIONAL_FALLBACK', externalKnowledgeReadiness, options: Object.freeze(options) })
