@@ -28,6 +28,13 @@ export function progressPlayerTransferNegotiations(world: GameWorld): GameWorld 
       continue
     }
 
+    // The Board (or the proposer himself) closed the authorization request against the transfer: it cannot be executed any more.
+    if (transfer.governanceDecisionId !== undefined && Object.values(current.governanceDecisionEventsById).some((event) => event.decisionId === transfer.governanceDecisionId
+      && (event.kind === 'REJECTED' || event.kind === 'VETOED' || event.kind === 'WITHDRAWN'))) {
+      current = replaceTransfer(current, { ...transfer, status: 'CLOSED', closedOn: current.currentDate, closeReason: 'GOVERNANCE_REJECTED' })
+      continue
+    }
+
     const clubRound = currentClubRound(transfer)
     if (transfer.clubStatus === 'AWAITING_CLUB_RESPONSE' && clubRound !== undefined && clubRound.response === undefined && clubRound.proposedOn < current.currentDate) {
       const answer = deriveSellerClubResponse(current, transfer)

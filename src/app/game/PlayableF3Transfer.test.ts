@@ -334,6 +334,10 @@ describe('F3 adendo · C · traspaso negociado entre clubes de un jugador con co
     const denied = executePlayerTransfer(f3World(), asked.id)
     expect(denied.status).toBe('GOVERNANCE_DENIED')
     expect(f3Transfer(asked.id)!.status).toBe('IN_PROGRESS')
+    // The next day the denied request closes the negotiation for good: it cannot be executed afterwards either.
+    f3AdvanceDay()
+    expect(f3Transfer(asked.id)).toMatchObject({ status: 'CLOSED', closeReason: 'GOVERNANCE_REJECTED' })
+    expect(executePlayerTransfer(f3World(), asked.id).status).toBe('NOT_AGREED')
     expect(rosterIds(f3World(), buyerId)).not.toContain(first!)
     expectSoundWorld(f3World())
     // (c) The proposer withdraws his own request: nothing executes either.
@@ -347,6 +351,8 @@ describe('F3 adendo · C · traspaso negociado entre clubes de un jugador con co
     f3AdvanceDay()
     const withdrawn = executePlayerTransfer(f3World(), other.id)
     expect(withdrawn.status).toBe('GOVERNANCE_DENIED')
+    f3AdvanceDay()
+    expect(f3Transfer(other.id)).toMatchObject({ status: 'CLOSED', closeReason: 'GOVERNANCE_REJECTED' })
     expect(rosterIds(f3World(), buyerId)).not.toContain(second!)
     expect(f3Transfer(other.id)!.execution).toBeUndefined()
     expectSoundWorld(f3World())

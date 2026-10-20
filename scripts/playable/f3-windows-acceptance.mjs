@@ -43,7 +43,7 @@ let app
 const shot = (name) => cdp.screenshot(join(OUT, `${name}.png`))
 const only2 = process.env.F3_ONLY_JULY === '1' // iterate career 2 only
 const step = async (id, title, action) => {
-  if (only2 && id < 16) return
+  if (only2 && id < 30) return
   const started = Date.now()
   try {
     const detail = await action()
@@ -256,7 +256,7 @@ try {
     for (const name of ['Libre SG-01', 'Libre SG-03']) {
       await cdp.click('button', name); await sleep(700)
       await cdp.click('button', 'Contactar agente libre'); await sleep(800)
-      assert((await text()).includes('VIABILIDAD ECONÓMICA') && (await text()).includes('Contact readiness: READY_TO_CONTACT'), 'The contact dialog states the economics and that contact is ready')
+      assert((await text()).includes('VIABILIDAD ECONÓMICA') && (await text()).includes('Contact player') && /necesidad detectada/.test(await text()), 'The contact dialog states the economics and says whether a squad need recommends him (a recommendation, not a requirement)')
       await shot(`05-contact-${name.slice(-5)}`)
       await cdp.click('button', 'Contact player'); await sleep(1200)
       await cdp.click('button', '=BUSCAR JUGADORES'); await sleep(500)
@@ -273,9 +273,9 @@ try {
     await continueTo('03 OCT 2026')
     const row = await openOperation('Libre SG-01')
     assert(row.includes('OPEN_TO_TALKS') || row.includes('Response: OPEN_TO_TALKS'), `SG-01 must have answered the contact: ${row.slice(0, 300)}`)
-    assert(row.includes('READY_TO_SUBMIT_OFFER') && row.includes('VIABILIDAD ECONÓMICA DE ESTA OPERACIÓN') && row.includes('Viable'), 'The prepared offer is ready and economically viable')
+    assert(row.includes('TU OFERTA') && row.includes('VIABILIDAD ECONÓMICA DE TU OFERTA') && row.includes('Viable') && row.includes('no admite otra fecha de inicio'), 'The manager writes his own offer (salary, years, role), economically viable, with the unsupported start date declared')
     await shot('06-offer-ready')
-    await clickInRow('article.market-negotiations__entry', 'Libre SG-01', 'Submit prepared offer')
+    await clickInRow('article.market-negotiations__entry', 'Libre SG-01', 'Presentar oferta')
     assert((await text()).includes('Oferta presentada'), 'The submission is confirmed to the manager')
     evidence.offer = row.slice(0, 600)
   })
@@ -284,7 +284,7 @@ try {
     const row = await openOperation('Libre SG-03')
     assert(row.includes('No viable') && row.includes('margen salarial'), `SG-03's price must be shown as not viable: ${row.slice(0, 400)}`)
     await shot('07a-not-viable')
-    await clickInRow('article.market-negotiations__entry', 'Libre SG-03', 'Submit prepared offer')
+    await clickInRow('article.market-negotiations__entry', 'Libre SG-03', 'Presentar oferta')
     const body = await text()
     assert(body.includes('Finance rechaza la operación'), 'Finance must refuse the offer and say why')
     assert((await operationState('Libre SG-03')) === 'CONTACTED', 'The refused offer must not change the negotiation')
@@ -404,9 +404,235 @@ try {
     return { completedGames: f.completedGames, userContracts: f.userContracts }
   })
 
+  if (process.env.F3_SKIP_TRANSFER !== '1') {
+    // ------------------------------------------------------------------ transfer of a contracted player between two ACB clubs (addendum)
+    const save0 = readSave()
+    const transferPlayerId = process.env.F3_TRANSFER_PLAYER ?? 'acb-player-vbc-13'
+    const nameOf = (id) => { const p = save0.payload.players.find((x) => x.id === id); return `${p.firstName} ${p.lastName}` }
+    const transferName = nameOf(transferPlayerId)
+    const sellerTeamId = save0.payload.teams.find((t) => t.rosterPlayerIds.includes(transferPlayerId)).id
+    const sellerName = save0.payload.teams.find((t) => t.id === sellerTeamId).name
+    const FIRST_PROPOSAL = Number(process.env.F3_TRANSFER_FIRST_PROPOSAL ?? 100000)
+    const PLAYER_SALARY = Number(process.env.F3_TRANSFER_SALARY ?? 110000)
+    const PLAYER_YEARS = Number(process.env.F3_TRANSFER_YEARS ?? 2)
+    const cashOf = (save, organizationId) => {
+      const accounts = new Map(save.payload.financialAccounts.filter((a) => a.organizationId === organizationId && /cash/i.test(`${a.id} ${a.accountType ?? ''} ${a.role ?? ''}`)).map((a) => [a.id, a]))
+      let cash = 0
+      for (const t of save.payload.financialTransactions) for (const posting of t.postings) if (accounts.has(posting.accountId)) cash += (posting.direction === 'DEBIT' ? 1 : -1) * posting.amount.minorUnits
+      return cash
+    }
+    const orgOf = (save, teamId) => save.payload.teams.find((t) => t.id === teamId).organizationId
+    const transferRecord = (save) => (save.payload.playerTransferNegotiations ?? []).find((n) => n.playerId === transferPlayerId)
+    const dateSignature = () => cdp.evaluate(`(document.body.innerText.match(/\\b\\d{2} [A-ZÉÁ]{3,4} \\d{4}\\b/g) ?? []).join('|')`)
+    /** Plays the user's game of the day (quick simulation) and continues to the next match day. */
+    const playAndContinue = async () => {
+      await cdp.click('button', '=Home'); await sleep(1200)
+      if ((await cdp.buttons()).includes('MATCH')) { const game = await quickSimUserGame(gameIds); gameIds.push(game.gameId); await cdp.click('button', '=Home'); await sleep(1000) }
+      const before = await dateSignature()
+      await cdp.click('button', 'CONTINUE')
+      await cdp.waitFor(`(document.body.innerText.match(/\\b\\d{2} [A-ZÉÁ]{3,4} \\d{4}\\b/g) ?? []).join('|') !== ${JSON.stringify(before)} && [...document.querySelectorAll('button')].some((b) => b.innerText.trim() === 'MATCH')`, { timeout: 300000, label: 'next match day' })
+      await sleep(1500)
+    }
+    const transferRow = (name) => cdp.evaluate(`(() => { const row = [...document.querySelectorAll('article.market-transfers__entry')].find((el) => el.innerText.includes(${JSON.stringify(name)})); return row ? row.innerText.replace(/\\s+/g, ' ').slice(0, 2400) : null })()`)
+    let evidenceTransfer = { player: transferName, playerId: transferPlayerId, seller: sellerName }
+    evidence.transfer = evidenceTransfer
+
+    await step(16, 'Abrir la partida ACB 2026/27 en curso y consultar el mercado global: jugadores con contrato de toda la liga, con filtros de vencimiento y disposición a negociar', async () => {
+      await openMarketTab('BUSCAR JUGADORES')
+      await cdp.setField('Contrato', 'ROSTERED'); await sleep(900)
+      const body = await text()
+      const count = Number(body.match(/BUSCAR JUGADORES · (\d+)/)?.[1] ?? 0)
+      assert(count > 100, `The global market must list the contracted players of the whole league, got ${count}`)
+      assert(await has('Vence antes de') || (await cdp.evaluate(`!!document.querySelector('[aria-label="Vence antes de"]')`)), 'The contract-expiry filter exists')
+      await shot('16-global-market')
+      return { jugadoresVisibles: count }
+    })
+
+    await step(17, 'Encontrar un jugador contratado por otro equipo (búsqueda por nombre)', async () => {
+      await cdp.setField('Buscar', transferName); await sleep(900)
+      const body = await text()
+      assert(body.includes(transferName) && body.includes(sellerName.split(' ').slice(-1)[0]), `${transferName} (${sellerName}) must be found in the global search`)
+      await cdp.click('button', transferName); await sleep(900)
+      assert((await text()).includes('COMPRA A OTRO CLUB'), 'The inspector offers the purchase from his club')
+      await shot('17-found')
+    })
+
+    await step(18, 'Abrir su ficha → Contrato: club propietario y vencimiento conocidos, sin precio del vendedor y sin acciones ficticias', async () => {
+      await cdp.click('button', 'Ficha completa'); await sleep(2500)
+      await cdp.click('button', '=CONTRACT'); await sleep(1500)
+      const body = await text()
+      assert(body.includes('COMPRA A OTRO CLUB') && body.includes(sellerName), 'The contract tab shows the owner club and the purchase')
+      assert(body.includes('Contrato conocido hasta') && body.includes('Autorización para compensaciones'), 'The known contract end and the compensation authorization are shown')
+      assert(!body.includes('PLANNED RPG FEATURE') && !body.includes('PREVIEW ONLY'), 'No action that looks available but is not wired')
+      evidence.transferDossier = body.slice(body.indexOf('COMPRA A OTRO CLUB'), body.indexOf('COMPRA A OTRO CLUB') + 700).replace(/\s+/g, ' ')
+      await shot('18-player-sheet-contract')
+    })
+
+    await step(19, 'Negociar una compensación con su club desde la ficha (oferta ≠ pago: no se mueve nada)', async () => {
+      const before = readSave()
+      await cdp.setField('Compensación que propones al club', String(FIRST_PROPOSAL)); await sleep(500)
+      await cdp.click('button', 'Contactar con el club y proponer'); await sleep(1500)
+      assert((await text()).includes('Propuesta enviada al club'), 'The proposal is confirmed to the manager')
+      await openMarketTab('OPERACIONES')
+      const row = await transferRow(transferName)
+      assert(row !== null && row.includes('Esperando la respuesta del club'), `The negotiation with the club is open: ${row}`)
+      await shot('19-proposal-sent')
+      await saveGame()
+      const after = readSave()
+      const record = transferRecord(after)
+      assert(record?.status === 'IN_PROGRESS' && record.clubRounds[0].fee === FIRST_PROPOSAL, 'The proposal is persisted with its compensation')
+      assert(after.payload.contracts.length === before.payload.contracts.length && after.payload.playerTransactions.length === before.payload.playerTransactions.length, 'An offer is not a movement')
+      assert(cashOf(after, orgOf(after, 'acb-team-ucm')) === cashOf(before, orgOf(before, 'acb-team-ucm')), 'An offer is not a payment')
+    })
+
+    await step(20, 'Disputar el partido; el club responde con una contraoferta; alcanzar el acuerdo entre clubes (aceptar su compensación)', async () => {
+      await playAndContinue()
+      await openMarketTab('OPERACIONES')
+      const row = await transferRow(transferName)
+      assert(row !== null && row.includes('El club contraoferta') && row.includes('El club pide'), `The seller must counter with its price: ${row}`)
+      await shot('20a-club-counter')
+      await clickInRow('article.market-transfers__entry', transferName, 'Aceptar la compensación del club')
+      const after = await transferRow(transferName)
+      assert(after.includes('Acuerdo entre clubes') && after.includes('Compensación acordada entre clubes'), `The clubs agree: ${after}`)
+      await shot('20b-clubs-agree')
+      evidenceTransfer.clubCounter = row.slice(0, 500)
+    })
+
+    await step(21, 'Negociar el contrato con el jugador: salario, años y rol propios (la fecha de inicio declarada como no soportada)', async () => {
+      const row = await transferRow(transferName)
+      assert(row.includes('TU OFERTA') && row.includes('no admite otra fecha de inicio'), 'The manager writes his own offer to the player')
+      await cdp.evaluate(`(() => { const form = [...document.querySelectorAll('article.market-transfers__entry')].find((el) => el.innerText.includes(${JSON.stringify(transferName)})).querySelector('form'); const set = (label, value) => { const input = [...form.querySelectorAll('label')].find((l) => l.innerText.toUpperCase().startsWith(label)).querySelector('input,select'); const proto = input instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })) }; set('SALARIO', ${JSON.stringify(String(PLAYER_SALARY))}); set('AÑOS', ${JSON.stringify(String(PLAYER_YEARS))}); set('ROL', 'ROTATION') })()`)
+      await sleep(900)
+      await shot('21a-player-offer')
+      await clickInRow('article.market-transfers__entry', transferName, 'Presentar oferta al jugador')
+      assert((await text()).includes('Oferta presentada al jugador'), 'The offer to the player is confirmed')
+      await shot('21b-player-offer-sent')
+    })
+
+    await step(22, 'Disputar el partido; el jugador acepta; solicitar la autorización de Governance', async () => {
+      await playAndContinue()
+      await openMarketTab('OPERACIONES')
+      let row = await transferRow(transferName)
+      if (row.includes('El jugador contraoferta')) { await clickInRow('article.market-transfers__entry', transferName, 'Aceptar la contraoferta del jugador'); row = await transferRow(transferName) }
+      assert(row.includes('Acuerdo con el jugador') && row.includes('Condiciones acordadas con el jugador') && row.includes('Sin solicitar'), `The player agrees and the authorization is still pending: ${row}`)
+      assert(row.includes('Finance la autoriza') && row.includes('VIABILIDAD ECONÓMICA DEL SALARIO'), 'The economic viability of salary and compensation is visible')
+      await shot('22a-player-agreed')
+      await clickInRow('article.market-transfers__entry', transferName, 'Solicitar autorización')
+      assert((await text()).includes('Autorización del traspaso solicitada'), 'The request to the Board is confirmed')
+      evidenceTransfer.playerAgreement = row.slice(0, 700)
+    })
+
+    let beforeExecution
+    await step(23, 'Disputar el partido; el consejo autoriza; completar el traspaso', async () => {
+      await playAndContinue()
+      await openMarketTab('OPERACIONES')
+      const row = await transferRow(transferName)
+      assert(row.includes('Autorizada') || row.includes('Completar traspaso'), `The Board must have authorized: ${row}`)
+      await shot('23a-board-authorized')
+      await saveGame()
+      beforeExecution = readSave()
+      await clickInRow('article.market-transfers__entry', transferName, 'Completar traspaso')
+      assert((await text()).includes('Traspaso completado'), 'The transfer is confirmed')
+      await saveGame()
+      const record = transferRecord(readSave())
+      assert(record?.status === 'EXECUTED', `The transfer is executed and persisted: ${JSON.stringify(record)}`.slice(0, 500))
+      evidenceTransfer.record = record
+      await shot('23b-transfer-completed')
+    })
+
+    await step(24, 'Verificar al jugador en la plantilla del club comprador', async () => {
+      await openApp('ROSTER')
+      assert((await text()).includes(transferName), 'The signed player appears on the buyer roster')
+      await shot('24-buyer-roster')
+      const save = readSave()
+      assert(save.payload.teams.find((t) => t.id === 'acb-team-ucm').rosterPlayerIds.includes(transferPlayerId), 'The saved roster of the buyer includes him')
+    })
+
+    await step(25, 'Verificar que desaparece de la plantilla del club vendedor (y que ya no es un objetivo del mercado)', async () => {
+      const save = readSave()
+      assert(!save.payload.teams.find((t) => t.id === sellerTeamId).rosterPlayerIds.includes(transferPlayerId), 'He is no longer on the seller roster')
+      assert(save.payload.teams.filter((t) => t.rosterPlayerIds.includes(transferPlayerId)).length === 1, 'He belongs to exactly one roster')
+      await openMarketTab('BUSCAR JUGADORES')
+      await cdp.setField('Buscar', transferName); await sleep(900)
+      assert(/BUSCAR JUGADORES · 0/.test(await text()), 'He is no longer listed among the other clubs\' players')
+      await shot('25-gone-from-seller')
+    })
+
+    await step(26, 'Verificar contratos, presupuesto y movimientos económicos de AMBOS clubes', async () => {
+      const after = readSave()
+      const record = transferRecord(after)
+      const sellerOrg = orgOf(after, sellerTeamId), buyerOrg = orgOf(after, 'acb-team-ucm')
+      const oldContract = after.payload.contracts.find((c) => c.id === record.sellerContractId)
+      const newContract = after.payload.contracts.find((c) => c.id === record.execution.buyerContractId)
+      assert(oldContract.termination?.reason === 'transferred' && oldContract.teamId === sellerTeamId, 'The seller contract is terminated as transferred')
+      assert(newContract.teamId === 'acb-team-ucm' && newContract.compensation.annualSalary === PLAYER_SALARY, 'The buyer contract carries the agreed salary')
+      assert(after.payload.contracts.filter((c) => c.playerId === transferPlayerId && !c.termination && c.term.expiresOn > after.payload.currentDate).length === 1, 'Exactly one valid contract')
+      const movement = after.payload.playerTransactions.filter((t) => t.kind === 'transferred' && t.playerId === transferPlayerId)
+      assert(movement.length === 1 && movement[0].fromTeamId === sellerTeamId && movement[0].toTeamId === 'acb-team-ucm', 'One transfer recorded in the history of both clubs')
+      const fee = record.agreedFee * 100
+      const buyerDelta = cashOf(after, buyerOrg) - cashOf(beforeExecution, buyerOrg)
+      const sellerDelta = cashOf(after, sellerOrg) - cashOf(beforeExecution, sellerOrg)
+      assert(buyerDelta === -fee && sellerDelta === fee, `Compensation leaves the buyer and reaches the seller, nothing else: ${buyerDelta} / ${sellerDelta} / ${fee}`)
+      const expenses = after.payload.expenseRecognitions.filter((e) => e.organizationId === buyerOrg && e.category === 'TRANSFER_FEE')
+      const revenues = after.payload.revenueRecognitions.filter((e) => e.organizationId === sellerOrg && e.category === 'TRANSFER_BUYOUT')
+      assert(expenses.length === 1 && revenues.length === 1, 'Expense recognised by the buyer, revenue by the seller')
+      await openMarketTab('BUSCAR JUGADORES')
+      const margin = await budgetText()
+      assert(margin === '1.23M', `The salary margin falls by the new salary (1.34M - 110,000), got ${margin}`)
+      await openApp('FINANCES', 'GESTIÓN DEL CLUB')
+      await sleep(1500)
+      await shot('26-finances')
+      evidenceTransfer.economics = { feeMinorUnits: fee, buyerCashDelta: buyerDelta, sellerCashDelta: sellerDelta, marginAfter: margin, buyerContract: newContract.id, sellerContract: oldContract.id }
+      return evidenceTransfer.economics
+    })
+
+    await step(27, 'Ponerlo en una rotación válida (titular de su posición)', async () => {
+      await openApp('ROSTER')
+      await cdp.click('button', `Rotación ${transferName}`); await sleep(400)
+      const position = nameOf(transferPlayerId) && readSave().payload.players.find((p) => p.id === transferPlayerId).basketball.primaryPosition
+      await cdp.click('[role=menuitemradio]', `TITULAR ${position}`); await sleep(800)
+      await shot('27-rotation')
+      await saveGame()
+      assert(readSave().payload.lineups.find((l) => l.teamId === 'acb-team-ucm').starters[position] === transferPlayerId, 'The saved lineup starts him')
+    })
+
+    await step(28, 'Disputar un partido en el que puede participar y comprobar su participación real (y que ya no juega para su club anterior)', async () => {
+      await playAndContinue()
+      await cdp.click('button', '=Home'); await sleep(800)
+      const save = readSave()
+      const lastGame = save.payload.games.filter((g) => g.status === 'completed' && (g.homeTeamId === 'acb-team-ucm' || g.awayTeamId === 'acb-team-ucm')).sort((a, b) => b.date.localeCompare(a.date))[0]
+      const afterTransferGames = save.payload.games.filter((g) => g.status === 'completed' && (g.homeTeamId === 'acb-team-ucm' || g.awayTeamId === 'acb-team-ucm') && g.date >= transferRecord(save).execution.executedOn)
+      assert(afterTransferGames.length > 0, 'At least one match after the transfer')
+      const played = afterTransferGames.map((g) => save.payload.matchStatLogs.find((log) => log.gameId === g.id).playerLines.find((l) => l.playerId === transferPlayerId)).filter(Boolean)
+      assert(played.length > 0 && played.every((l) => l.stats.secondsPlayed > 0), `The transferred player must play minutes for his new club, got ${played.length}`)
+      const sellerLines = save.payload.games.filter((g) => g.status === 'completed' && g.date >= transferRecord(save).execution.executedOn && (g.homeTeamId === sellerTeamId || g.awayTeamId === sellerTeamId))
+        .map((g) => save.payload.matchStatLogs.find((log) => log.gameId === g.id).playerLines.find((l) => l.playerId === transferPlayerId && l.teamId === sellerTeamId)).filter(Boolean)
+      assert(sellerLines.length === 0, 'He does not play for the seller any more')
+      evidenceTransfer.participation = { gameId: lastGame.id, minutes: Math.round(played[0].stats.secondsPlayed / 6) / 10 }
+      await shot('28-participation')
+    })
+
+    await step(29, 'Guardar, cerrar BDM, cargar y verificar continuidad exacta (traspaso, contratos, plantillas, finanzas e historial)', async () => {
+      await saveGame()
+      const before = readSave()
+      const hashBefore = normalizedPayloadHash(before)
+      await closeApp()
+      await launch()
+      await cdp.click('button', 'CONTINUE'); await sleep(3500)
+      await saveGame()
+      const after = readSave()
+      assert(normalizedPayloadHash(after) === hashBefore, 'The payload must be identical after closing and loading')
+      assert(transferRecord(after).status === 'EXECUTED', 'The executed transfer survives')
+      await openMarketTab('OPERACIONES')
+      assert((await text()).includes('Completada') && (await cdp.evaluate(`document.querySelector('[data-testid="market-history"]').innerText`)).includes('TRASPASO'), 'Market still shows the transfer and its history after loading')
+      await shot('29-reloaded')
+      evidenceTransfer.afterReload = { payloadSha256: hashBefore, payloadIdenticalAfterRestart: true }
+    })
+  }
+
   if (JULY !== undefined) {
     // ------------------------------------------------------------------ career 2
-    await step(16, 'Segunda carrera (Save V4 generado con el arnés: simulación real hasta el 2 jul 2027): contratos próximos a vencer y ventana de renovación abierta', async () => {
+    await step(30, 'Segunda carrera (Save V4 generado con el arnés: simulación real hasta el 2 jul 2027): contratos próximos a vencer y ventana de renovación abierta', async () => {
       await closeApp()
       copyFileSync(JULY, SAVE)
       await launch()
@@ -429,7 +655,7 @@ try {
       return evidence.renewalCandidate
     })
 
-    await step(17, 'Renovar: abrir negociación, ofrecer, el jugador acepta, el consejo aprueba y se firma el sucesor sin solapar el contrato vigente', async () => {
+    await step(31, 'Renovar: abrir negociación, ofrecer, el jugador acepta, el consejo aprueba y se firma el sucesor sin solapar el contrato vigente', async () => {
       const name = evidence.renewalCandidate.name
       await clickInRow('article', name, 'Open negotiation')
       await cdp.setValue(`[aria-label=${JSON.stringify(`${name} retention years`)}]`, 2)
@@ -459,7 +685,7 @@ try {
       return evidence.renewal
     })
 
-    await step(18, 'Liberar a un jugador por el flujo existente: se explican las obligaciones garantizadas que sobreviven', async () => {
+    await step(32, 'Liberar a un jugador por el flujo existente: se explican las obligaciones garantizadas que sobreviven', async () => {
       await openApp('CONTRACTS', 'GESTIÓN DEL CLUB')
       await selectSection('RELEASE / RISK', 'Release and risk')
       const releaseName = 'Juani Marcos'
@@ -476,7 +702,7 @@ try {
       evidence.release = { player: releaseName, transactions: f.transactions.filter((t) => t.startsWith('released')) }
     })
 
-    await step(19, 'Guardar, cerrar y cargar la segunda carrera; continuar sin duplicar la renovación ni la baja', async () => {
+    await step(33, 'Guardar, cerrar y cargar la segunda carrera; continuar sin duplicar la renovación ni la baja', async () => {
       const before = readSave()
       const hashBefore = normalizedPayloadHash(before)
       await closeApp()
@@ -515,7 +741,7 @@ try {
   writeFileSync(join(OUT, 'windows-acceptance.json'), JSON.stringify(evidence, null, 2))
   console.log(`user save restored: ${evidence.userSaveRestored}`)
   const failed = steps.filter((entry) => entry.result === 'FAIL')
-  const expected = JULY === undefined ? 15 : 19
+  const expected = JULY === undefined ? 29 : 33
   console.log(failed.length === 0 && steps.length >= expected ? 'WINDOWS ACCEPTANCE: PASS' : 'WINDOWS ACCEPTANCE: FAIL')
   process.exitCode = failed.length === 0 && steps.length >= expected ? 0 : 1
 }
