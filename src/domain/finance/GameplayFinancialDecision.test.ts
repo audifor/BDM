@@ -49,6 +49,7 @@ describe('BS16M-A gameplay finance gateway', () => {
       MARKET_OFFER: 'PLAYER_SALARY',
       PLAYER_RETENTION: 'PLAYER_SALARY',
       STAFF_HIRING: 'STAFF_SALARY',
+      TRANSFER_FEE: 'TRANSFER_FEE',
     })
     const { world, teamId } = fundedClub()
     expect(decision(world, teamId, 'PLAYER_SIGNING').category).toBe('PLAYER_SALARY')

@@ -348,7 +348,6 @@ describe('F3 adendo · C · traspaso negociado entre clubes de un jugador con co
     const decisionId = f3Transfer(other.id)!.governanceDecisionId!
     const decision = f3World().governanceDecisionsById[decisionId]!
     f3Store().recordFreeAgentSigningDecision(decisionId, 'WITHDRAWN', decision.proposedByBodyId)
-    f3AdvanceDay()
     const withdrawn = executePlayerTransfer(f3World(), other.id)
     expect(withdrawn.status).toBe('GOVERNANCE_DENIED')
     f3AdvanceDay()
