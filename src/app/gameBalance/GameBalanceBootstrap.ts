@@ -147,7 +147,7 @@ function governanceShape(kind: GameBalanceEcosystemKind, gender: string) {
 
 export function gameBalanceBodyId(organizationId: string, kind: GovernanceBodyKind): string { return gameBalanceId('body', organizationId, kind.toLowerCase()) }
 export function gameBalanceInstitutionId(organizationId: string): string { return gameBalanceId('institution', organizationId) }
-export const GAME_BALANCE_DELEGATED_DECISIONS = ['FACILITIES', 'CAPITAL_EXPENDITURE'] as const
+export const GAME_BALANCE_DELEGATED_DECISIONS = ['FACILITIES', 'CAPITAL_EXPENDITURE', 'PLAYER_CONTRACT_SIGNING'] as const
 
 export const GAME_BALANCE_CATALOG_CALIBRATION = Object.freeze({ modelId: BDM_GAME_BALANCE_V1_ID, evidenceId: gameBalanceId('calibration', 'v1'), authorizedBy: BDM_GAME_BALANCE_V1_AUTHORIZATION })
 
@@ -310,7 +310,7 @@ export function applyGameBalanceBootstrap(world: GameWorld): GameWorld {
         const provenance = { kind: 'GAME_BALANCE_PRESET', id: BDM_GAME_BALANCE_V1_ID }
         budgets.push(createFinancialBudget({
           id: budgetId, organizationId, currencyCode: market.currencyCode, period: { kind: 'FISCAL_YEAR', startsOn: period.startsOn, endsOn: period.endsOn }, fiscalPeriodId: String(period.id), status: 'APPROVED',
-          label: 'Salary authorization plus BDM_GAME_BALANCE_V1 facility authorization', createdOn: world.currentDate,
+          label: 'Salary authorization plus BDM_GAME_BALANCE_V1 facility and transfer authorization', createdOn: world.currentDate,
           approval: { authorityKind: 'MANUAL_SYSTEM_ACTION', authorityId: gameBalanceId('authority'), approvedOn: world.currentDate, provenance }, provenance,
         }))
         for (const line of authorization.lines) {
@@ -319,8 +319,9 @@ export function applyGameBalanceBootstrap(world: GameWorld): GameWorld {
             ...(line.teamId === undefined ? {} : { teamId: line.teamId }), ...(line.organizationSectionId === undefined ? {} : { organizationSectionId: line.organizationSectionId }), provenance,
           }))
         }
-        for (const [category, amount] of [['FACILITY', market.facilityAuthorizationMinorUnits[scale.band]], ['FACILITY_DEVELOPMENT', market.capitalAuthorizationMinorUnits[scale.band]]] as const) {
-          budgetLines.push(createBudgetLine({ id: `${budgetId}:${category}`, budgetId, organizationId, category, direction: 'EXPENSE', amount: { currencyCode: market.currencyCode, minorUnits: amount }, teamId: String(team.id), purpose: `${BDM_GAME_BALANCE_V1_ID} facility authorization`, provenance }))
+        for (const [category, amount] of [['FACILITY', market.facilityAuthorizationMinorUnits[scale.band]], ['FACILITY_DEVELOPMENT', market.capitalAuthorizationMinorUnits[scale.band]], ['TRANSFER_FEE', market.transferFeeAuthorizationMinorUnits[scale.band]]] as const) {
+          if (amount <= 0) continue
+          budgetLines.push(createBudgetLine({ id: `${budgetId}:${category}`, budgetId, organizationId, category, direction: 'EXPENSE', amount: { currencyCode: market.currencyCode, minorUnits: amount }, teamId: String(team.id), purpose: category === 'TRANSFER_FEE' ? `${BDM_GAME_BALANCE_V1_ID} transfer compensation authorization` : `${BDM_GAME_BALANCE_V1_ID} facility authorization`, provenance }))
         }
       }
     }

@@ -14,7 +14,9 @@ import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
 import { assessRoutedAcquisitionProposalIntelligence, assessRoutedFreeAgentOfferIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 import { navigateToContracts } from '@/ui-ng/workspace/workspaceApps'
 import { resolveGovernanceDecisionRights } from '@/domain/governance'
-import { assessRetentionBindingTerms } from '@/app/contractRetention/RetentionSigningService'
+import { assessRetentionBindingTerms, executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
+import { salaryRulesInForce } from '@/engine/salary/SalaryRulesInForce'
+import type { GameDate } from '@/domain/date'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -122,7 +124,13 @@ function RetentionContractCard({ world, teamId, contractId, playerName, expiresO
   const retainedTermYear = Math.max(0, ...Object.keys(optionTypesByYear).map(Number), ...Object.keys(guaranteeAmountsByYear).map(Number))
   const editorYearCount = Math.max(validYearCount, retainedTermYear)
   const clauses: ContractClauseProposal[] = playerTradeConsent ? [{ type: 'TRADE_CONSENT_REQUIRED', decisionAuthority: 'PLAYER' }] : []
-  const proposedTerms: RetentionTermSet = { salary: numericSalary, years: numericYears, ...(role === '' ? {} : { role: role as RetentionTermSet['role'] }), ...(numericFee === undefined ? {} : { agentFee: numericFee, agentFeePayer: 'CLUB' }), ...(contractOptions.length === 0 ? {} : { options: contractOptions }), ...(guaranteeTerms.length === 0 ? {} : { guarantees: guaranteeTerms }), ...(incentives.length === 0 ? {} : { incentives }), ...(clauses.length === 0 ? {} : { clauses }) }
+  // F3: in a competition without a salary cap the club's contracts are fully guaranteed; an unspecified guarantee would be materialized as
+  // 0 and leave a contract with no financial obligation, which Finance refuses to sign. So a blank guarantee editor sends the full guarantee.
+  const salaryRules = salaryRulesInForce(world, teamId, expiresOn as GameDate)[0]
+  const uncapped = salaryRules === undefined || salaryRules.capAccounting === undefined || salaryRules.capAccounting === 'NOT_APPLICABLE'
+  const withDefaultGuarantees = (salaryValue: number, yearCount: number) => guaranteeTerms.length > 0 || !uncapped || !Number.isSafeInteger(salaryValue) || yearCount < 1 ? guaranteeTerms : Array.from({ length: yearCount }, (_, index) => ({ year: index + 1, guaranteedAmount: salaryValue }))
+  const effectiveGuaranteeTerms = withDefaultGuarantees(numericSalary, validYearCount)
+  const proposedTerms: RetentionTermSet = { salary: numericSalary, years: numericYears, ...(role === '' ? {} : { role: role as RetentionTermSet['role'] }), ...(numericFee === undefined ? {} : { agentFee: numericFee, agentFeePayer: 'CLUB' }), ...(contractOptions.length === 0 ? {} : { options: contractOptions }), ...(effectiveGuaranteeTerms.length === 0 ? {} : { guarantees: effectiveGuaranteeTerms }), ...(incentives.length === 0 ? {} : { incentives }), ...(clauses.length === 0 ? {} : { clauses }) }
   const termBlockers = assessRetentionEligibility(world, teamId, contractId, proposedTerms).reasons.filter((reason) => reason !== 'OPEN_NEGOTIATION_EXISTS')
   const submit = () => {
     if (negotiation === undefined || onSubmitOffer === undefined) return
@@ -130,8 +138,9 @@ function RetentionContractCard({ world, teamId, contractId, playerName, expiresO
     const yearsValue = Number(years)
     const feeValue = agentFee === '' ? undefined : Number(agentFee)
     if (!Number.isSafeInteger(salaryValue) || !Number.isSafeInteger(yearsValue) || (feeValue !== undefined && !Number.isSafeInteger(feeValue)) || guaranteeTerms.some((item) => !Number.isSafeInteger(item.guaranteedAmount)) || incentives.some((item) => !Number.isSafeInteger(item.amount) || !Number.isSafeInteger(item.contractYear) || !Number.isSafeInteger(item.minimumGamesPlayed))) return
-    const terms: RetentionTermSet = { salary: salaryValue, years: yearsValue, ...(role === '' ? {} : { role: role as RetentionTermSet['role'] }), ...(feeValue === undefined ? {} : { agentFee: feeValue, agentFeePayer: 'CLUB' }), ...(contractOptions.length === 0 ? {} : { options: contractOptions }), ...(guaranteeTerms.length === 0 ? {} : { guarantees: guaranteeTerms }), ...(incentives.length === 0 ? {} : { incentives }), ...(clauses.length === 0 ? {} : { clauses }) }
-    const clauseKey = encodeURIComponent(JSON.stringify({ options: contractOptions, guarantees: guaranteeTerms, incentives, clauses }))
+    const submittedGuarantees = withDefaultGuarantees(salaryValue, yearsValue)
+    const terms: RetentionTermSet = { salary: salaryValue, years: yearsValue, ...(role === '' ? {} : { role: role as RetentionTermSet['role'] }), ...(feeValue === undefined ? {} : { agentFee: feeValue, agentFeePayer: 'CLUB' }), ...(contractOptions.length === 0 ? {} : { options: contractOptions }), ...(submittedGuarantees.length === 0 ? {} : { guarantees: submittedGuarantees }), ...(incentives.length === 0 ? {} : { incentives }), ...(clauses.length === 0 ? {} : { clauses }) }
+    const clauseKey = encodeURIComponent(JSON.stringify({ options: contractOptions, guarantees: submittedGuarantees, incentives, clauses }))
     onSubmitOffer(teamId, negotiation.id, currentRound, `retention-offer:${negotiation.id}:${currentRound}:${world.currentDate}:${salaryValue}:${yearsValue}:${role}:${feeValue ?? 0}:${clauseKey}`, terms)
   }
   const counterTerms = negotiation?.status === 'PLAYER_COUNTERED' ? negotiation.currentTerms : undefined
@@ -149,6 +158,7 @@ function RetentionContractCard({ world, teamId, contractId, playerName, expiresO
       {negotiation.status === 'ACCEPTED' && negotiation.execution?.status === 'SIGNED' && <div><strong>SIGNED: accepted terms {termLabel(negotiation.acceptedTerms)} created successor contract {negotiation.execution.contractId} on {negotiation.execution.signedOn}.</strong></div>}
       {negotiation.status === 'ACCEPTED' && negotiation.execution === undefined && retentionSigningDenied && <div><strong>SIGNING BLOCKED: PLAYER_CONTRACT_SIGNING Governance denied or withdrew the decision. Agreement remains unsigned.</strong></div>}
       {negotiation.status === 'ACCEPTED' && negotiation.execution === undefined && retentionSigningDecision !== undefined && !retentionSigningDenied && <div><strong>SIGNING PENDING: Governance {retentionSigningApproved ? 'approval is recorded; execution is pending' : 'approval is required'}. Agreement remains unsigned.</strong></div>}
+      {negotiation.status === 'ACCEPTED' && negotiation.execution === undefined && retentionSigningApproved && !retentionSigningDenied && (() => { const check = executeAcceptedRetentionAgreement(world, negotiation.id); return check.status === 'SIGNED' ? null : <div role="alert"><strong>EXECUTION CHECK: {check.status.replaceAll('_', ' ')}{check.reason === undefined ? '' : ` · ${check.reason.replaceAll('_', ' ').toLowerCase()}`}. The agreement stays unsigned until this holds.</strong></div> })()}
       {negotiation.status === 'ACCEPTED' && negotiation.execution === undefined && retentionSigningDecision === undefined && bindingTerms?.supported !== false && <div><strong>SIGNING BLOCKED: accepted terms have not produced an authorized signing decision. Agreement remains unsigned.</strong></div>}
       {negotiation.status === 'ACCEPTED' && bindingTerms?.supported === false && <p>Signing blocked: accepted terms include options, incentives, clauses, or fee treatment that cannot currently be represented in a binding contract ({bindingTerms.reason}).</p>}
       {negotiation.status === 'ACCEPTED' && negotiation.execution === undefined && retentionSigningDecision === undefined && canAct && onRequestSigning !== undefined && bindingTerms?.supported !== false && proposerBodies.map((bodyId) => <button key={bodyId} type="button" onClick={() => onRequestSigning(teamId, negotiation.id, bodyId)}>Request signing approval ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>)}

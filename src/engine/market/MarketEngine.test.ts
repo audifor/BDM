@@ -34,8 +34,8 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     const contacted=updateGameWorld(world,{negotiations:[contact]})
     const answered=progressNegotiationContactResponses(contacted)
     expect(answered.negotiationsById[contact.id]).toMatchObject({status:'CONTACTED',contactResponse:{outcome:'OPEN_TO_TALKS',respondedOn:world.currentDate,marketSignalId:`market-signal:contact-response:${contact.id}`}})
-    expect(answered.marketSignalsById[`market-signal:contact-response:${contact.id}`]).toMatchObject({organizationId:team.organizationId,playerInterest:72,expectedSalary:1_250_000,source:'CLUB_CONTACT',reliability:.9})
-    expect(answered.marketSignalsById[`market-signal:contact-response:${contact.id}`]).not.toHaveProperty('expectedYears')
+    // F3: a player who agrees to talk states the asking term together with the asking salary; without any producer of the expected term no formal offer could ever be prepared in a real game.
+    expect(answered.marketSignalsById[`market-signal:contact-response:${contact.id}`]).toMatchObject({organizationId:team.organizationId,playerInterest:72,expectedSalary:1_250_000,expectedYears:3,source:'CLUB_CONTACT',reliability:.9})
     expect(getMarketKnowledge(answered.marketKnowledge,team.organizationId,playerId)).toMatchObject({playerInterest:72,expectedSalary:1_250_000,source:'CLUB_CONTACT',confidence:90,assessedAt:world.currentDate})
     expect(getMarketKnowledge(answered.marketKnowledge,source.organizationId,playerId)).toBeUndefined()
     expect(progressNegotiationContactResponses(contacted)).toEqual(answered)
@@ -164,7 +164,7 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     const repeated=progressFormalOfferResponses(due)
     const countered=first.negotiationsById[setup.contact.id]!
     expect(countered).toMatchObject({status:'COUNTERED',round:1,years:2,playerResponse:{outcome:'COUNTERED',respondedOn:due.currentDate,origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
-    expect(countered.salary).toBe(agentCounter(opened.negotiationsById[setup.contact.id]!,offerAgent).salary)
+    expect(countered.salary).toBe(Math.max(agentCounter(opened.negotiationsById[setup.contact.id]!,offerAgent).salary??0,reality.expectedSalary))
     expect(countered.roundHistory?.[0]).toMatchObject({round:0,offer:{salary:650_000,years:2},playerResponse:{outcome:'COUNTERED',origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
     expect(countered).not.toHaveProperty('role')
     expect(countered).not.toHaveProperty('agentFee')

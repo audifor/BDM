@@ -257,7 +257,11 @@ function buildAmountEntries(world: GameWorld, source: SourceContract, query: Con
   // financial start when it declares one (a career can begin before the Season that its salaries start with),
   // and on the term start otherwise, which keeps production payroll semantics unchanged.
   const scheduleStartsOn = source.sourceContractType === 'PLAYER' ? source.contract.term.startsOn : staffFinancialScheduleStartsOn(source.contract)
-  const periods = annualPeriods(scheduleStartsOn, contractEnd)
+  // A transferred contract passes its remaining years to the buying club's new contract: the selling club owes no contract year that
+  // starts on or after the transfer. Years already recognised stay (the model recognises each contract year on its start date); a
+  // released contract keeps its guaranteed years because releasing a player is not handing his contract to anyone.
+  const transferredOn = source.sourceContractType === 'PLAYER' && source.contract.termination?.reason === 'transferred' ? source.contract.termination.terminatedOn : undefined
+  const periods = annualPeriods(scheduleStartsOn, contractEnd).filter((period) => transferredOn === undefined || compareGameDates(period.startsOn, transferredOn) < 0)
   return Object.freeze(periods.flatMap((period, yearIndex) => {
     const compensation = source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
     const guaranteed = compensation.guaranteedAmount

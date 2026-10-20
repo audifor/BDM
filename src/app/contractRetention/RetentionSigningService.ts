@@ -6,6 +6,7 @@ import { createGovernanceDecisionEvent, resolveGovernanceDecisionEventAuthorityG
 import { assessActiveContractRosterIntegrity } from '@/engine/market/RosterContractIntegrity'
 import { hasContinuousContractSuccessor } from '@/engine/clubNeeds/ContractRosterPlanning'
 import { materializeBindingContractCompensation } from '@/engine/salary'
+import { salaryRulesInForce } from '@/engine/salary/SalaryRulesInForce'
 import { resolveSigningExecutionAuthority } from '@/engine/market'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
@@ -61,11 +62,7 @@ export function executeAcceptedRetentionAgreement(world: GameWorld, negotiationI
   let expiresOn
   try { expiresOn = addYears(predecessor.term.expiresOn, negotiation.acceptedTerms.years) }
   catch { return result('ILLEGAL_COMPENSATION', world, negotiation.id, 'SUCCESSOR_TERM_DATES_INVALID', predecessor.id) }
-  const applicableRules = Object.values(world.seasons)
-    .filter((season) => season.startDate <= predecessor.term.expiresOn && season.endDate >= predecessor.term.expiresOn
-      && (season.participantTeamIds ?? world.competitions[season.competitionId]?.participantTeamIds ?? []).includes(team.id))
-    .sort((left, right) => left.startDate.localeCompare(right.startDate) || left.id.localeCompare(right.id))
-    .map((season) => world.salaryRulesBySeasonId[season.id]).find((rules) => rules !== undefined)
+  const applicableRules = salaryRulesInForce(world, team.id, predecessor.term.expiresOn)[0]
   const bindingTerms = assessRetentionBindingTerms(negotiation.acceptedTerms)
   if (!bindingTerms.supported) return result('UNSUPPORTED_BINDING_TERM', world, negotiation.id, bindingTerms.reason, predecessor.id, undefined, undefined, 'UNSUPPORTED_BINDING_TERM')
   const compensation = materializeBindingContractCompensation(world, player, team, {
@@ -172,4 +169,22 @@ function createRetentionAgentFeeCommitment(world: GameWorld, teamId: TeamId, pla
 
 function result(status: RetentionSigningStatus, world: GameWorld, negotiationId: string, reason?: string, predecessorContractId?: ContractId, contractId?: ContractId, governanceDecisionId?: string, compensationStatus?: string, financeStatus?: RetentionSigningResult['financeStatus'], successorStatus?: RetentionSigningResult['successorStatus']): RetentionSigningResult {
   return { status, world, negotiationId, ...(predecessorContractId === undefined ? {} : { predecessorContractId }), ...(contractId === undefined ? {} : { contractId }), ...(governanceDecisionId === undefined ? {} : { governanceDecisionId }), ...(compensationStatus === undefined ? {} : { compensationStatus }), ...(financeStatus === undefined ? {} : { financeStatus }), ...(successorStatus === undefined ? {} : { successorStatus }), ...(reason === undefined ? {} : { reason }) }
+}
+
+/**
+ * Daily completion of the user's accepted renewals whose `PLAYER_CONTRACT_SIGNING` decision the Board has fully approved. It is the same
+ * binding transition the Contracts screen runs when the user records the last approval (`executeAcceptedRetentionAgreement`): no second
+ * path, no extra authority. A renewal whose Finance, roster or Governance check no longer holds simply stays unsigned and visible.
+ */
+export function executeBoardApprovedRetentionAgreements(world: GameWorld): GameWorld {
+  let current = world
+  for (const negotiation of Object.values(world.retentionNegotiationsById).sort((a, b) => a.id.localeCompare(b.id))) {
+    if (negotiation.status !== 'ACCEPTED' || negotiation.execution !== undefined || negotiation.acceptedTerms === undefined) continue
+    const team = current.teams[negotiation.teamId]
+    if (team?.coachId === undefined || team.coachId !== current.userCoachId) continue
+    if (resolvePlayerContractSigningGovernance(current, team.id, `retention:${negotiation.id}`).status !== 'AUTHORIZED') continue
+    const signing = executeAcceptedRetentionAgreement(current, negotiation.id)
+    if (signing.status === 'SIGNED') current = signing.world
+  }
+  return current
 }

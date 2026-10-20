@@ -1,0 +1,121 @@
+{
+  "window": {
+    "from": "2026-09-27",
+    "to": "2026-10-27",
+    "days": 30,
+    "userGames": [
+      "2026-10-03",
+      "2026-10-10",
+      "2026-10-17",
+      "2026-10-24"
+    ]
+  },
+  "operation": {
+    "player": "acb-free-agent-player-sg-01",
+    "log": [
+      {
+        "day": 1,
+        "date": "2026-09-27",
+        "action": "contactFreeAgent",
+        "detail": "acb-free-agent-player-sg-01"
+      },
+      {
+        "day": 2,
+        "date": "2026-09-28",
+        "action": "submitFreeAgentOffer",
+        "detail": "acb-free-agent-player-sg-01 230000 x 3"
+      },
+      {
+        "day": 3,
+        "date": "2026-09-29",
+        "action": "startFreeAgentSigningGovernance",
+        "detail": "acb-free-agent-player-sg-01"
+      },
+      {
+        "day": 4,
+        "date": "2026-09-30",
+        "action": "completeFreeAgentSigning",
+        "detail": "acb-free-agent-player-sg-01"
+      },
+      {
+        "day": 5,
+        "date": "2026-10-01",
+        "action": "setLineupSlot",
+        "detail": "SG <- acb-free-agent-player-sg-01"
+      }
+    ],
+    "signedOn": "2026-09-30",
+    "annualSalary": 230000,
+    "term": {
+      "startsOn": "2026-09-30",
+      "expiresOn": "2029-09-30"
+    }
+  },
+  "contracts": {
+    "A": 241,
+    "B": 242
+  },
+  "roster": {
+    "A": 16,
+    "B": 17
+  },
+  "marginSalaryEUR": {
+    "day0": 1570000,
+    "A": 1570000,
+    "B": 1340000
+  },
+  "minutesOfSignedPlayer": [
+    {
+      "date": "2026-10-03",
+      "opponent": "acb-team-vbc",
+      "minutes": 26.9,
+      "score": "93-82"
+    },
+    {
+      "date": "2026-10-10",
+      "opponent": "acb-team-jov",
+      "minutes": 28.3,
+      "score": "86-83"
+    },
+    {
+      "date": "2026-10-17",
+      "opponent": "acb-team-bre",
+      "minutes": 28.6,
+      "score": "94-101"
+    },
+    {
+      "date": "2026-10-24",
+      "opponent": "acb-team-rmb",
+      "minutes": 39.9,
+      "score": "89-95"
+    }
+  ],
+  "userResultsA": [
+    {
+      "date": "2026-10-03",
+      "score": "85-108"
+    },
+    {
+      "date": "2026-10-10",
+      "score": "92-83"
+    },
+    {
+      "date": "2026-10-17",
+      "score": "85-98"
+    },
+    {
+      "date": "2026-10-24",
+      "score": "91-99"
+    }
+  ],
+  "history": [
+    {
+      "id": "transaction:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+      "date": "2026-09-30",
+      "kind": "FICHAJE",
+      "playerId": "acb-free-agent-player-sg-01",
+      "subject": "Libre SG-01 [sintético]",
+      "summary": "Agente libre · 230.000 / año · 3 año(s) · hasta 2029-09-30"
+    }
+  ]
+}

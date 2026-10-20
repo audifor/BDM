@@ -25,7 +25,7 @@ export function assessRoutedFreeAgentOfferIntelligence(world: GameWorld, teamId:
 }
 
 function assessUserDirectedTargets(world: GameWorld, teamId: TeamId, selectedPlayerId?: PlayerId, requestedPlanId?: string): readonly { readonly proposal: ReturnType<typeof selectAcquisitionProposal>; readonly workflow: GMWorkflowDecision }[] {
-  const context = assessGMDecisionContext(world, teamId)
+  const context = assessGMDecisionContext(world, teamId, world.currentDate, { includeAllDetectedNeeds: true })
   const acquisitionOptions = context.options.filter((option) => option.kind === 'EXTERNAL_ACQUISITION' && option.planningEligibility === 'SELECTABLE')
   const requestedNeedId = requestedPlanId?.startsWith(`user-market-intent:${teamId}:`) ? requestedPlanId.slice(`user-market-intent:${teamId}:`.length) : undefined
   const options = acquisitionOptions.filter((option) => requestedNeedId === undefined || option.needId === requestedNeedId)

@@ -37,6 +37,11 @@ export interface GameBalanceMarket {
   readonly facilityAuthorizationMinorUnits: Readonly<Record<GameBalanceScaleBand, number>>
   /** Annual CAPITAL_EXPENDITURE-class FACILITY investment authorization per scale band (minor units). */
   readonly capitalAuthorizationMinorUnits: Readonly<Record<GameBalanceScaleBand, number>>
+  /**
+   * Annual TRANSFER_FEE authorization per scale band (minor units): permission to pay compensation to selling clubs for contracted
+   * players. Permission to spend, never cash and never the salary budget; zero means this market has no transfer compensation.
+   */
+  readonly transferFeeAuthorizationMinorUnits: Readonly<Record<GameBalanceScaleBand, number>>
   /** Base price per work kind (minor units). The relative order of these figures is the balance: see WORK_KIND_ORDER. */
   readonly basePriceMinorUnits: Readonly<Record<GameBalanceWorkKind, number>>
   /** Base price per capital investment kind (minor units): renovation < replacement < expansion. */
@@ -59,6 +64,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     openingTreasuryMinorUnits: Object.freeze({ SMALL: 3_600_000_000, MEDIUM: 4_200_000_000, LARGE: 5_000_000_000 }),
     facilityAuthorizationMinorUnits: Object.freeze({ SMALL: 60_000_000, MEDIUM: 80_000_000, LARGE: 100_000_000 }),
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 400_000_000, MEDIUM: 600_000_000, LARGE: 900_000_000 }),
+    transferFeeAuthorizationMinorUnits: Object.freeze({ SMALL: 150_000_000, MEDIUM: 200_000_000, LARGE: 300_000_000 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 1_200_000, PREVENTIVE_MAINTENANCE: 2_000_000, MINOR_REPAIR: 4_000_000, MINOR_REPLACEMENT: 9_000_000, MAJOR_REPAIR: 18_000_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 100_000_000, REPLACEMENT: 200_000_000, EXPANSION: 280_000_000 }),
     servicePriceMinorUnits: 600_000,
@@ -68,6 +74,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     openingTreasuryMinorUnits: Object.freeze({ SMALL: 4_000_000_000, MEDIUM: 4_800_000_000, LARGE: 5_600_000_000 }),
     facilityAuthorizationMinorUnits: Object.freeze({ SMALL: 100_000_000, MEDIUM: 130_000_000, LARGE: 160_000_000 }),
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 700_000_000, MEDIUM: 1_000_000_000, LARGE: 1_300_000_000 }),
+    transferFeeAuthorizationMinorUnits: Object.freeze({ SMALL: 0, MEDIUM: 0, LARGE: 0 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 1_800_000, PREVENTIVE_MAINTENANCE: 3_000_000, MINOR_REPAIR: 6_000_000, MINOR_REPLACEMENT: 13_500_000, MAJOR_REPAIR: 27_000_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 150_000_000, REPLACEMENT: 300_000_000, EXPANSION: 420_000_000 }),
     servicePriceMinorUnits: 900_000,
@@ -77,6 +84,7 @@ export const GAME_BALANCE_MARKETS: Readonly<Record<GameBalanceEcosystemKind, Gam
     openingTreasuryMinorUnits: Object.freeze({ SMALL: 300_000_000, MEDIUM: 400_000_000, LARGE: 500_000_000 }),
     facilityAuthorizationMinorUnits: Object.freeze({ SMALL: 12_000_000, MEDIUM: 16_000_000, LARGE: 20_000_000 }),
     capitalAuthorizationMinorUnits: Object.freeze({ SMALL: 90_000_000, MEDIUM: 130_000_000, LARGE: 180_000_000 }),
+    transferFeeAuthorizationMinorUnits: Object.freeze({ SMALL: 0, MEDIUM: 0, LARGE: 0 }),
     basePriceMinorUnits: Object.freeze({ ROUTINE_MAINTENANCE: 480_000, PREVENTIVE_MAINTENANCE: 800_000, MINOR_REPAIR: 1_600_000, MINOR_REPLACEMENT: 3_600_000, MAJOR_REPAIR: 7_200_000 }),
     investmentPriceMinorUnits: Object.freeze({ RENOVATION: 40_000_000, REPLACEMENT: 80_000_000, EXPANSION: 112_000_000 }),
     servicePriceMinorUnits: 240_000,

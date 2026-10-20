@@ -7,3 +7,4 @@ export type { BindingCapTreatment, BindingCompensationFailure, BindingCompensati
 export { buildContractServiceTimeCreditsForCompletedSeason, contractServiceTimeCreditId, creditContractServiceTimeForCompletedSeason, getContractServiceTime } from './ContractServiceTime'
 export type { ContractServiceTimeResult } from './ContractServiceTime'
 export { createRookieContract } from './RookieContracts'
+export { salaryRulesInForce } from './SalaryRulesInForce'

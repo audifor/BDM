@@ -33,6 +33,9 @@ import { ensureCanonicalFinanceFoundation, provisionEconomicSources, resolveOrga
 import { applyGameBalanceBootstrap, gameBalanceOpeningEconomicStates } from '@/app/gameBalance/GameBalanceBootstrap'
 import type { BdmGameBalancePreset } from '@/app/gameBalance/BdmGameBalanceV1'
 import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
+import { initializeFreeAgentMarketTruth } from '@/engine/market/FreeAgentMarketTruth'
+import { createAcbSyntheticFreeAgents } from './AcbSyntheticFreeAgentPool'
+import { createAcbDemoSalaryRulesV1 } from './AcbDemoSalaryRules'
 import { createAcbDemoEconomicProfileV1 } from './AcbDemoEconomicPolicy'
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy'
 
@@ -52,6 +55,11 @@ export interface CreateAcbTestGameOptions {
   readonly careerStartDate?: GameDate
   readonly coachRpgPreset?: CoachRpgPreset
   readonly gameBalance?: BdmGameBalancePreset
+  /**
+   * Playable career only (F3): adds the identified synthetic unsigned players (and their hidden market truth) so the free-agent market
+   * is not empty, and the explicit uncapped ACB demo SalaryRules so contracts can be renewed.
+   */
+  readonly playableMarket?: boolean
 }
 
 /**
@@ -98,6 +106,8 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       })
     }),
   )
+
+  const syntheticFreeAgents = options.playableMarket === true ? createAcbSyntheticFreeAgents({ seed: ACB_SEED, currentDate, nationalityId: UNKNOWN_COUNTRY_ID }) : []
 
   const teams = ACB_2026_27_TEAMS.map((definition) => {
     const definitionIndex = ACB_2026_27_TEAMS.findIndex((team) => team.key === definition.key)
@@ -177,7 +187,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       userCoachId: USER_COACH_ID,
       countries,
       coaches,
-      players,
+      players: [...players, ...syntheticFreeAgents],
       teams,
       competitions: [competition],
       ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'ACB Test Ecosystem', kind: 'fibaLike', category: 'men' })],
@@ -192,10 +202,12 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       staffReputationProfilesByStaffId,
       staffContracts: [...staffContracts, ...coachStaffContracts],
       coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
+      ...(options.playableMarket === true ? { salaryRulesBySeasonId: { [season.id]: createAcbDemoSalaryRulesV1(season.id) } } : {}),
     })
 
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
+  world = initializeFreeAgentMarketTruth(world, syntheticFreeAgents.map((player) => player.id))
   world = ensureTestGameOrganizationKnowledge(world)
   const prepared = initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
   // BDM Annual Authorization Continuity Policy V1 (see AnnualAuthorizationContinuityPolicy.ts): the ACB Demo

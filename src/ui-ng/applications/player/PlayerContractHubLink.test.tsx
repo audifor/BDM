@@ -87,11 +87,12 @@ describe('Player contract integration', () => {
     expect(screen.getByText('74%')).toBeInTheDocument()
     expect(screen.queryByText('Financial Schedule')).not.toBeInTheDocument()
     expect(screen.queryByText('Contract Detail')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /DIRECT CONTACT/ }))
-    expect(screen.getByText(/A personal relationship may help/)).toBeInTheDocument()
+    // The contact route is the real one now (the owner club); the unwired previews are gone.
+    expect(screen.queryByRole('button', { name: /DIRECT CONTACT/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/PLANNED RPG FEATURE/)).not.toBeInTheDocument()
   })
 
-  it('replaces four unknown cards with one evidence strip and retains four selectable RPG previews', () => {
+  it('replaces four unknown cards with one evidence strip and no unwired contact-route previews', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
     const outsider = Object.values(world.players).find(player => !userTeam.rosterPlayerIds.includes(player.id))!
@@ -103,13 +104,11 @@ describe('Player contract integration', () => {
     expect(intelligence).toHaveClass('is-unknown')
     expect(intelligence).toHaveTextContent('NO VERIFIED MARKET INTELLIGENCE')
     expect(intelligence.querySelectorAll(':scope > div')).toHaveLength(0)
-    const routes = screen.getByRole('group', { name: 'Contact route preview' })
-    expect(routes.querySelectorAll('button')).toHaveLength(4)
+    expect(screen.queryByRole('group', { name: 'Contact route preview' })).not.toBeInTheDocument()
     expect(screen.queryByText('NO CONTACT HISTORY')).not.toBeInTheDocument()
     expect(screen.getByText(/NO CONTACT HISTORY · Scouting/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /PRIVATE NETWORK/ }))
-    expect(screen.getByText(/Indirect information may be unreliable/)).toBeInTheDocument()
-    expect(screen.getByText(/PLANNED RPG FEATURE/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /PRIVATE NETWORK/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/PLANNED RPG FEATURE/)).not.toBeInTheDocument()
   })
 
   it('protects rival financials, negotiations and role promises from World Truth', () => {
@@ -126,7 +125,7 @@ describe('Player contract integration', () => {
 
     render(<NgWorkspaceNavigationProvider><PlayerWorkspace /></NgWorkspaceNavigationProvider>)
     expect(screen.getByRole('region', { name: 'Authorized market intelligence' })).toBeInTheDocument()
-    expect(screen.getByText('CHOOSE A CONTACT ROUTE')).toBeInTheDocument()
+    expect(screen.getByLabelText('Compra a otro club')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /MANAGE CONTRACT/ })).not.toBeInTheDocument()
     expect(screen.queryByText('Financial snapshot')).not.toBeInTheDocument()
     expect(screen.queryByText('Financial Schedule')).not.toBeInTheDocument()
@@ -134,9 +133,9 @@ describe('Player contract integration', () => {
     expect(screen.getByText('NOT VERIFIED')).toBeInTheDocument()
     expect(screen.queryByText(/Northline Sports|Vertex Sports|Pioneer Sports|Crown Sports/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Financial snapshot/)).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /AGENT CHANNEL/ }))
-    expect(screen.getByText('Intermediary approach')).toBeInTheDocument()
-    expect(screen.getByText(/PLANNED RPG FEATURE/)).toBeInTheDocument()
+    // The purchase panel shows only what the club may know: owner and contract end, never salary or the seller's price.
+    expect(screen.getByTestId('transfer-owner')).toBeInTheDocument()
+    expect(screen.queryByText(/PLANNED RPG FEATURE/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /CONTACT AGENT NOW/ })).not.toBeInTheDocument()
   })
 })

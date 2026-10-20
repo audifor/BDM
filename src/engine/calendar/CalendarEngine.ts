@@ -5,6 +5,8 @@ import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualD
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { progressFormalOfferResponses, progressNegotiationContactResponses, reconcileExpiredPlayerContracts } from '@/engine/market'
+import { progressPlayerTransferNegotiations } from '@/engine/transfer'
+import { ensureFreeAgentMarketTruthForPendingContacts } from '@/engine/market/FreeAgentMarketTruth'
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/ScheduledTrainingEngine'
 import { progressAiTrainingPlanning } from '@/engine/training/TrainingPlanning'
@@ -34,6 +36,8 @@ import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
 import { progressStaffPoliticalCases } from '@/engine/staff/StaffPoliticalCaseEngine'
 import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
 import { processFacilityManagement } from '@/app/facilityMaintenance/FacilityManagement'
+import { processBoardPlayerContractSigningDecisions } from '@/app/governance/PlayerContractSigningGovernanceService'
+import { executeBoardApprovedRetentionAgreements } from '@/app/contractRetention/RetentionSigningService'
 import { advanceFacilitiesConditionFromHistory } from '@/engine/facilities'
 import { expireStaleRetentionNegotiations } from '@/engine/contractRetention/ContractRetentionEngine'
 import { progressAiRetentionNegotiationsWithEvidence, type AiRetentionDecisionEvidence } from '@/engine/contractRetention/AiRetentionEngine'
@@ -140,8 +144,8 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       message: `${decision.reviewIntent ?? 'NO_INTENT'}; ${decision.reasons.join(', ')}`,
       sourceId: decision.negotiationId ?? decision.contractId,
     })))
-    run('MARKET_CONTACT_RESPONSES', current.currentDate, true, progressNegotiationContactResponses, 'Due term-free contact responses are processed after contract reconciliation.')
-    run('MARKET_FORMAL_OFFER_RESPONSES', current.currentDate, true, progressFormalOfferResponses, 'Due formal free-agent offer responses are processed after contact responses.')
+    run('MARKET_CONTACT_RESPONSES', current.currentDate, true, (input) => progressNegotiationContactResponses(ensureFreeAgentMarketTruthForPendingContacts(input)), 'Due term-free contact responses are processed after contract reconciliation.')
+    run('MARKET_FORMAL_OFFER_RESPONSES', current.currentDate, true, (input) => progressPlayerTransferNegotiations(progressFormalOfferResponses(input)), 'Due formal free-agent offer responses are processed after contact responses; due selling-club and player answers of negotiated club-to-club transfers are processed in the same checkpoint.')
     let aiTrainingDecisions: ReturnType<typeof progressAiTrainingPlanning>['decisions'] = []
     run('AI_TRAINING_PLANNING', current.currentDate, isStaffWeeklyCheckpoint(current.currentDate), (input) => {
       const result = progressAiTrainingPlanning(input)
@@ -216,7 +220,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       clubFinanceDiagnostics = application.result.diagnostics
       return application.world
     }, 'Canonical Finance materializes the economic facts whose source already exists: due guaranteed contract payroll (commitment, recognition, payable, ledger posting), plus operating cost, revenue or debt only when the world declares such a source. Obligations stay outstanding because no canonical policy says when a payable is paid.', () => clubFinanceDiagnostics)
-    run('GOVERNANCE', current.currentDate, false, (input) => input, 'Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
+    run('GOVERNANCE', current.currentDate, true, (input) => executeBoardApprovedRetentionAgreements(processBoardPlayerContractSigningDecisions(input)), 'The Board decides pending player contract signing and retention decisions it was asked to review, and fully approved renewals are executed; other Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
     const diagnostics = phases.flatMap((phase) => phase.diagnostics)
     phases.push({ phaseId: 'EVENT_COLLECTION', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: `Collected ${diagnostics.length} phase diagnostic(s) without persisting an event stream.` })
     return { status: 'COMPLETED', world: current, phases: Object.freeze(phases), diagnostics: Object.freeze(diagnostics), seasonPointerChanged: current.currentSeasonId !== original.currentSeasonId }

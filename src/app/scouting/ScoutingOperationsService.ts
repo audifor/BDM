@@ -1,7 +1,7 @@
 import type { GameId, OrganizationId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { ScoutingMission, ScoutingPriority, ScoutingTerritory, ScoutingTerritoryAssignment } from '@/domain/scouting'
 import type { ScoutingTerritoryCoverage } from '@/engine/scouting/ScoutingTerritoryOperations'
-import { getFreeAgents, getNextScheduledGame, type GameWorld } from '@/domain/world'
+import { getCompetitionsForTeam, getFreeAgents, getNextScheduledGame, type GameWorld } from '@/domain/world'
 import { getEligibleScoutingEvaluators, requestScouting, updateScoutingAssignmentPriority as setAssignmentPriority, cancelScoutingAssignment as cancelAssignment } from '@/engine/scouting'
 import { getTeamsInScoutingTerritory } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
@@ -31,6 +31,13 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     ...world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId).map((entry) => entry.playerId),
     ...getFreeAgents(world).map((player) => player.id),
   ])
+  // The rosters of the clubs that compete in the same competition are public in the league: the identity of every player in the
+  // manager's universe is addressable (ratings and willingness are not; those still come only from scouting and market signals).
+  for (const competition of getCompetitionsForTeam(world, teamId)) {
+    for (const participantId of competition.participantTeamIds) {
+      for (const playerId of world.teams[participantId]?.rosterPlayerIds ?? []) ids.add(playerId)
+    }
+  }
   // Publicly scheduled fixtures give the manager legitimate access to the
   // identities of the opposing roster, not to any hidden player ratings.
   // The previous rule only exposed the NEXT opponent and blocked evaluations

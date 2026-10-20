@@ -13,6 +13,9 @@ import { buildScoutingRosterComparison } from '@/ui-ng/applications/player/data/
 import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/buildPlayerScoutingDecision'
 import { positionEvidenceKeys } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
 import type { ScoutingKnowledgeRow } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
+import { MarketViabilityPanel } from './MarketViabilityPanel'
+import { TransferApproachPanel } from './TransferApproachPanel'
+import { buildMarketViability } from './marketViability'
 import './market-talent-board.css'
 
 type Mode = 'explore' | 'targets'
@@ -21,6 +24,7 @@ interface Props {
   readonly teamId: TeamId
   readonly mode: Mode
   readonly initialContractFilter?: 'ALL' | 'FREE'
+  readonly initialPosition?: string
   readonly targets: readonly MarketTarget[]
   readonly onAddTarget: (id: PlayerId) => string | null
   readonly onArchiveTarget: (id: PlayerId) => string | null
@@ -62,7 +66,7 @@ function MarketTargetPositionLens({ world, playerId }: { readonly world: GameWor
   </div>
 }
 
-export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
+export function MarketTalentBoard({ world, teamId, mode, initialContractFilter = 'ALL', initialPosition = 'ALL', targets, onAddTarget, onArchiveTarget, onReviewTarget, onTargetPriority, onTargetNote, comparisonIds, onToggleComparison, onOpenPlayer, onOpenScouting, onOpenOperations, onRequestScouting, onOpenFreeAgent }: Props) {
   const [query, setQuery] = useState('')
   const [visibleLimit, setVisibleLimit] = useState(120)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -71,7 +75,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const [actionError, setActionError] = useState<string | null>(null)
   const [noteEdit, setNoteEdit] = useState<{ id: PlayerId; text: string } | null>(null)
   const changeTarget = (action: () => string | null) => { const message = action(); setActionError(message) }
-  const [position, setPosition] = useState<string>('ALL')
+  const [position, setPosition] = useState<string>(initialPosition)
   const [contractStatus, setContractStatus] = useState<'ALL' | 'FREE' | 'ROSTERED' | 'EXPIRING_3' | 'EXPIRING_6' | 'EXPIRING_12'>(initialContractFilter)
   const [status, setStatus] = useState<'ALL' | 'KNOWN' | 'ACTIVE' | 'UNSCOUTED'>('ALL')
   const [minimumAge, setMinimumAge] = useState('')
@@ -83,6 +87,8 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const [minimumCurrent, setMinimumCurrent] = useState('')
   const [minimumPotential, setMinimumPotential] = useState('')
   const [club, setClub] = useState('')
+  const [expiryBefore, setExpiryBefore] = useState('')
+  const [availability, setAvailability] = useState<'ALL' | 'FREE' | 'OPEN' | 'LISTENING' | 'NOT_FOR_SALE' | 'UNKNOWN'>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
   const model = useMemo(() => buildScoutingWorkspaceModel(world), [world])
   const team = world.teams[teamId]
@@ -102,6 +108,12 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
     for (const item of known) results.set(item.playerId, item.expectedSalary!)
     return results
   })()
+  /** What THIS club legitimately knows about willingness to negotiate; a free agent is by definition available. */
+  const knownAvailability = (playerId: PlayerId): 'FREE' | 'OPEN' | 'LISTENING' | 'NOT_FOR_SALE' | 'UNKNOWN' => {
+    if (isPlayerFreeAgent(world, playerId)) return 'FREE'
+    return world.marketKnowledge.filter((item) => item.organizationId === team.organizationId && item.playerId === playerId && item.availability !== undefined)
+      .sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]?.availability ?? 'UNKNOWN'
+  }
   const expiryHorizon = (months: number) => {
     const [year, month, day] = world.currentDate.split('-').map(Number)
     return new Date(Date.UTC(year!, month! - 1 + months, day!)).toISOString().slice(0, 10)
@@ -128,6 +140,8 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
     (country === '' || row.countryName === country) &&
     (competition === '' || row.competitionName === competition) &&
     (club === '' || row.clubName === club) &&
+    (expiryBefore === '' || (activeContracts.get(row.playerId)?.term.expiresOn !== undefined && activeContracts.get(row.playerId)!.term.expiresOn <= expiryBefore)) &&
+    (availability === 'ALL' || knownAvailability(row.playerId) === availability) &&
     (ratingFiltered === null || ratingFiltered.has(row.playerId)) &&
     (maximumSalary === '' || (salaryKnowledge.get(row.playerId) !== undefined && salaryKnowledge.get(row.playerId)! <= Number(maximumSalary))) &&
     `${row.name} ${row.clubName} ${row.countryName} ${row.competitionName}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
@@ -179,6 +193,11 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
           <label>País<select aria-label="País" value={country} onChange={(event) => setCountry(event.target.value)}><option value="">Todos</option>{countries.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Competición<select aria-label="Competición" value={competition} onChange={(event) => setCompetition(event.target.value)}><option value="">Todas</option>{competitions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Club<select aria-label="Club" value={club} onChange={(event) => setClub(event.target.value)}><option value="">Todos</option>{clubs.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Vence antes de<input aria-label="Vence antes de" type="date" value={expiryBefore} onChange={(event) => setExpiryBefore(event.target.value)} /></label>
+          <label>Disponibilidad para negociar<select aria-label="Disponibilidad para negociar" value={availability} onChange={(event) => setAvailability(event.target.value as typeof availability)}>
+            <option value="ALL">Todas</option><option value="FREE">Libre</option><option value="OPEN">Abierto a ofertas (conocido)</option><option value="LISTENING">Escucha ofertas (conocido)</option>
+            <option value="NOT_FOR_SALE">No está en venta (conocido)</option><option value="UNKNOWN">Sin información</option>
+          </select></label>
           <label>Atributo observado<select aria-label="Atributo observado" value={evaluationDimension} onChange={(event) => setEvaluationDimension(event.target.value as typeof evaluationDimension)}>
             <option value="finishing">Finalización</option><option value="shooting">Tiro</option><option value="creation">Creación</option>
             <option value="perimeterDefense">Defensa exterior</option><option value="interiorDefense">Defensa interior</option>
@@ -223,6 +242,11 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
           <div className="market-talent__subheading"><strong>Informes registrados</strong><small>{activeReports.length} mostrados</small></div>
           {activeReports.length === 0 ? <p className="market-talent__empty">Sin informes registrados para este jugador.</p> :
             <div className="market-talent__reports">{activeReports.map((report) => <div key={report.id}><b>{report.missionLabel}</b><span>{report.evaluatorName} · {report.createdLabel}</span><small>Confianza {report.confidenceLabel}</small></div>)}</div>}
+          {isPlayerFreeAgent(world, selected.playerId) ? (() => {
+            const known = world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId && entry.playerId === selected.playerId).sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]
+            return <MarketViabilityPanel viability={buildMarketViability(world, teamId, { ...(known?.expectedSalary === undefined ? {} : { annualSalary: known.expectedSalary }), ...(known?.expectedYears === undefined ? {} : { years: known.expectedYears }) })} />
+          })() : null}
+          {!isPlayerFreeAgent(world, selected.playerId) && !selected.isOwnRoster ? <TransferApproachPanel world={world} teamId={teamId} playerId={selected.playerId} onProposed={onOpenOperations} /> : null}
           <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => setScoutingTarget(selected.playerId)} type="button" disabled={selected.activeAssignment !== null}>{selected.activeAssignment === null ? 'Solicitar informe' : 'Observación en curso'}</button>
             {isPlayerFreeAgent(world, selected.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(selected.playerId)} type="button">Contactar agente libre</button> : null}
             <button className="market-cs__secondary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Ficha completa</button></div>

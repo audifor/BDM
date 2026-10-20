@@ -637,6 +637,7 @@ function readTransaction(value: unknown) {
     ...(v.toTeamId === undefined ? {} : { toTeamId: teamIdFromString(string(v.toTeamId, 'Player transaction toTeamId')) }),
     ...(v.contractId === undefined ? {} : { contractId: contractIdFromString(string(v.contractId, 'Player transaction contractId')) }),
     ...(v.sourceTradeId === undefined ? {} : { sourceTradeId: string(v.sourceTradeId, 'Player transaction sourceTradeId') }),
+    ...(v.sourceTransferId === undefined ? {} : { sourceTransferId: string(v.sourceTransferId, 'Player transaction sourceTransferId') }),
     ...(provenance === undefined ? {} : { provenance }),
   }
 }

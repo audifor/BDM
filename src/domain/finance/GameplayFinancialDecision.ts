@@ -27,7 +27,7 @@ import { createMoney, type CurrencyCode, type Money } from './FinancialLedger'
  * Placement is Domain and not `src/app` because both `src/engine` (market, retention) and `src/app`
  * (signing services) must consume the same seam, and Engine may never depend on App.
  */
-export type GameplayFinancialActionKind = 'PLAYER_SIGNING' | 'MARKET_OFFER' | 'PLAYER_RETENTION' | 'STAFF_HIRING'
+export type GameplayFinancialActionKind = 'PLAYER_SIGNING' | 'MARKET_OFFER' | 'PLAYER_RETENTION' | 'STAFF_HIRING' | 'TRANSFER_FEE'
 
 /**
  * Gameplay actions never invent a category: player actions are canonical `PLAYER_SALARY`, staff
@@ -39,6 +39,8 @@ export const GAMEPLAY_FINANCIAL_ACTION_CATEGORY: Readonly<Record<GameplayFinanci
   MARKET_OFFER: 'PLAYER_SALARY',
   PLAYER_RETENTION: 'PLAYER_SALARY',
   STAFF_HIRING: 'STAFF_SALARY',
+  /** Compensation to a selling club: its own authorized category, never the salary budget. */
+  TRANSFER_FEE: 'TRANSFER_FEE',
 })
 
 /**
