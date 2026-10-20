@@ -42,8 +42,10 @@ let cdp
 let app
 const shot = (name) => cdp.screenshot(join(OUT, `${name}.png`))
 const only2 = process.env.F3_ONLY_JULY === '1' // iterate career 2 only
+const RESUME = process.env.F3_RESUME_FROM_28 // Save V4 checkpointed after step 27 (iterate steps 28+ only)
 const step = async (id, title, action) => {
   if (only2 && id < 30) return
+  if (RESUME !== undefined && id < 28) return
   const started = Date.now()
   try {
     const detail = await action()
@@ -182,7 +184,7 @@ let signedName
 let signedPlayerId
 
 try {
-  await launch()
+  if (RESUME !== undefined) { copyFileSync(RESUME, SAVE); await launch(); await cdp.click('button', 'CONTINUE'); await cdp.waitFor("document.body.innerText.includes('UCAM MURCIA')", { timeout: 60000 }); await sleep(1500); for (const game of readSave().payload.games.filter((g) => g.status === 'completed' && (g.homeTeamId === 'acb-team-ucm' || g.awayTeamId === 'acb-team-ucm'))) gameIds.push(game.id) } else await launch()
   await step(1, 'NEW GAME ACB 2026/27 con UCAM Murcia y primer partido disputado (carrera nueva, Save V4 nativo)', async () => {
     if (FIXTURE === undefined) {
       await cdp.click('button', 'NEW GAME'); await sleep(500)
@@ -410,7 +412,7 @@ try {
     const transferPlayerId = process.env.F3_TRANSFER_PLAYER ?? 'acb-player-vbc-13'
     const nameOf = (id) => { const p = save0.payload.players.find((x) => x.id === id); return `${p.firstName} ${p.lastName}` }
     const transferName = nameOf(transferPlayerId)
-    const sellerTeamId = save0.payload.teams.find((t) => t.rosterPlayerIds.includes(transferPlayerId)).id
+    const sellerTeamId = (save0.payload.playerTransferNegotiations ?? []).find((n) => n.playerId === transferPlayerId)?.sellerTeamId ?? save0.payload.teams.find((t) => t.rosterPlayerIds.includes(transferPlayerId)).id
     const sellerName = save0.payload.teams.find((t) => t.id === sellerTeamId).name
     const FIRST_PROPOSAL = Number(process.env.F3_TRANSFER_FIRST_PROPOSAL ?? 100000)
     const PLAYER_SALARY = Number(process.env.F3_TRANSFER_SALARY ?? 110000)
@@ -425,13 +427,27 @@ try {
     const transferRecord = (save) => (save.payload.playerTransferNegotiations ?? []).find((n) => n.playerId === transferPlayerId)
     const dateSignature = () => cdp.evaluate(`(document.body.innerText.match(/\\b\\d{2} [A-ZÉÁ]{3,4} \\d{4}\\b/g) ?? []).join('|')`)
     /** Plays the user's game of the day (quick simulation) and continues to the next match day. */
+    /** A due Return-to-Play review stops Continue and offers the Medical resolver: the manager clears the player, as in any real career. */
+    const resolveMedicalIfAny = async () => {
+      for (let guard = 0; guard < 6 && (await cdp.buttons()).includes('MEDICAL'); guard += 1) {
+        await cdp.click('button', '=MEDICAL'); await sleep(2500)
+        if (!(await text()).includes('RETURN-TO-PLAY REVIEW')) break
+        await cdp.click('button', '=CLEAR FOR PLAY'); await sleep(1500)
+        await cdp.click('button', '=Home'); await sleep(1200)
+      }
+    }
     const playAndContinue = async () => {
-      await cdp.click('button', '=Home'); await sleep(1200)
-      if ((await cdp.buttons()).includes('MATCH')) { const game = await quickSimUserGame(gameIds); gameIds.push(game.gameId); await cdp.click('button', '=Home'); await sleep(1000) }
-      const before = await dateSignature()
-      await cdp.click('button', 'CONTINUE')
-      await cdp.waitFor(`(document.body.innerText.match(/\\b\\d{2} [A-ZÉÁ]{3,4} \\d{4}\\b/g) ?? []).join('|') !== ${JSON.stringify(before)} && [...document.querySelectorAll('button')].some((b) => b.innerText.trim() === 'MATCH')`, { timeout: 300000, label: 'next match day' })
-      await sleep(1500)
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        await cdp.click('button', '=Home'); await sleep(1200)
+        await resolveMedicalIfAny()
+        if ((await cdp.buttons()).includes('MATCH')) { const game = await quickSimUserGame(gameIds); gameIds.push(game.gameId); await cdp.click('button', '=Home'); await sleep(1000) }
+        const before = await dateSignature()
+        await cdp.click('button', 'CONTINUE')
+        await cdp.waitFor(`(document.body.innerText.match(/\\b\\d{2} [A-ZÉÁ]{3,4} \\d{4}\\b/g) ?? []).join('|') !== ${JSON.stringify(before)} && [...document.querySelectorAll('button')].some((b) => ['MATCH', 'MEDICAL'].includes(b.innerText.trim()))`, { timeout: 300000, label: 'next match day or medical stop' })
+        await sleep(1500)
+        if ((await cdp.buttons()).includes('MATCH')) return
+      }
+      throw new Error('Continue never reached the next match day')
     }
     const transferRow = (name) => cdp.evaluate(`(() => { const row = [...document.querySelectorAll('article.market-transfers__entry')].find((el) => el.innerText.includes(${JSON.stringify(name)})); return row ? row.innerText.replace(/\\s+/g, ' ').slice(0, 2400) : null })()`)
     let evidenceTransfer = { player: transferName, playerId: transferPlayerId, seller: sellerName }
@@ -594,11 +610,13 @@ try {
       await shot('27-rotation')
       await saveGame()
       assert(readSave().payload.lineups.find((l) => l.teamId === 'acb-team-ucm').starters[position] === transferPlayerId, 'The saved lineup starts him')
+      if (process.env.F3_CHECKPOINT) copyFileSync(SAVE, process.env.F3_CHECKPOINT)
     })
 
     await step(28, 'Disputar un partido en el que puede participar y comprobar su participación real (y que ya no juega para su club anterior)', async () => {
       await playAndContinue()
       await cdp.click('button', '=Home'); await sleep(800)
+      await saveGame()
       const save = readSave()
       const lastGame = save.payload.games.filter((g) => g.status === 'completed' && (g.homeTeamId === 'acb-team-ucm' || g.awayTeamId === 'acb-team-ucm')).sort((a, b) => b.date.localeCompare(a.date))[0]
       const afterTransferGames = save.payload.games.filter((g) => g.status === 'completed' && (g.homeTeamId === 'acb-team-ucm' || g.awayTeamId === 'acb-team-ucm') && g.date >= transferRecord(save).execution.executedOn)

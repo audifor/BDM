@@ -21,21 +21,21 @@
     "userLineupStarters": {}
   },
   "offer": "Libre SG-01 [sintético] CONTACTED Sin oferta 2026-09-26 ▾ VIABILIDAD ECONÓMICA DE ESTA OPERACIÓN Viable Presupuesto salarial autorizado 10.70M Compromisos de jugadores en el ejercicio 9.13M Margen realmente disponible 1.57M Tesorería (no es margen salarial) 39.32M Salario anual del contrato 230K Duración 3 años Compromiso total del contrato 690K Margen tras la operación 1.34M Tope salarial No aplica: esta competición no define tope salarial Dentro del margen salarial autorizado y con tesorería suficiente. Contact: Awaiting player response · Response: OPEN_TO_TALKS Contact handled by: User Nego",
-  "refusal": " la operación: no hay margen salarial autorizado suficiente (una autorización no es dinero en caja, y la caja no sustituye a la autorización). Motivo: INSUFFICIENT_AUTHORIZED_HEADROOM:INSUFFICIENT_AUTHORIZED_HEADROOM.\n×\n\nOPERACIONES\n2 registradas\nTodas\nEn curs",
+  "refusal": " la operación: no hay margen salarial autorizado suficiente (una autorización no es dinero en caja, y la caja no sustituye a la autorización). Motivo: Team cannot afford the formal offer salary (INSUFFICIENT_AUTHORIZED_HEADROOM:INSUFFICIENT_AUTHORIZED_HEADROOM",
   "agreed": "Libre SG-01 [sintético] ACCEPTED 230K / 3 años 2026-09-26 ▾ VIABILIDAD ECONÓMICA DE ESTA OPERACIÓN Viable Presupuesto salarial autorizado 10.70M Compromisos de jugadores en el ejercicio 9.13M Margen realmente disponible 1.57M Tesorería (no es margen salarial) 39.32M Salario anual del contrato 230K Duración 3 años Compromiso total del contrato 690K Margen tras la operación 1.34M Tope salarial No ap",
   "signing": {
     "playerId": "acb-free-agent-player-sg-01",
-    "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+    "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:direct-approach%3Aacb-free-agent-player-sg-01%3A0",
     "salary": 230000,
     "years": 3
   },
   "marginAfterSigning": "1.34M",
   "participation": {
     "gameId": "schedule-acb-season-2026-27-game-0029",
-    "minutes": 9
+    "minutes": 40
   },
   "afterReload": {
-    "payloadSha256": "c8b67d1c5984f1dbff6c8fc76680a3701a9e33825d0e9ffdc7ae427f32c41732",
+    "payloadSha256": "5dce7a471e305c94c658f672ff1fd40e69af469ac519508100f49b79de0a5a36",
     "payloadIdenticalAfterRestart": true,
     "date": "2026-10-17",
     "userContracts": 17,
@@ -44,7 +44,7 @@
     "signed": [
       {
         "playerId": "acb-free-agent-player-sg-01",
-        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:direct-approach%3Aacb-free-agent-player-sg-01%3A0",
         "salary": 230000,
         "years": 3
       }
@@ -76,7 +76,7 @@
     "signed": [
       {
         "playerId": "acb-free-agent-player-sg-01",
-        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:acquisition-attempt%3Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%3Aacquisition-proposal%253Aacb-team-ucm%253Auser-market-intent%253Aacb-team-ucm%253Aacb-team-ucm%253ABENCH_QUALITY_GAP%253ASG%253A%253Aacb-player-ucm-06%253Aacb-free-agent-player-sg-01%253AFREE_AGENT_SIGNING%3A0",
+        "contractId": "contract:signed-free-agent:negotiation:acb-team-ucm:acb-team-ucm:acb-free-agent-player-sg-01:direct-approach%3Aacb-free-agent-player-sg-01%3A0",
         "salary": 230000,
         "years": 3
       }
@@ -100,6 +100,98 @@
       "SG": "acb-free-agent-player-sg-01"
     }
   },
+  "transfer": {
+    "player": "Nate Reuvers",
+    "playerId": "acb-player-vbc-13",
+    "seller": "Valencia Basket",
+    "clubCounter": "Nate Reuvers Traspaso desde Valencia Basket El club contraoferta 1 · Club vendedor: El club contraoferta 2 · Jugador: Pendiente de negociar con el jugador 3 · Autorización del consejo: Sin solicitar 4 · Ejecución: Pendiente Compensaciones propuestas: 100K (contraoferta 133K) El club pide 133K. Aceptar la compensación del club Revisar mi propuesta Enviar propuesta revisada Rechazar y retirar Retirar la operación",
+    "playerAgreement": "Nate Reuvers Traspaso desde Valencia Basket Acuerdo con el jugador 1 · Club vendedor: Acuerdo entre clubes 2 · Jugador: Acuerdo con el jugador 3 · Autorización del consejo: Sin solicitar 4 · Ejecución: Pendiente Compensaciones propuestas: 100K (contraoferta 133K) Compensación acordada entre clubes: 133K (una sola vez; no es salario ni comisión del agente) Ofertas al jugador: 110K × 2 (aceptada) Condiciones acordadas con el jugador: 110K × 2 año(s) · rol prometido ROTATION VIABILIDAD ECONÓMICA DEL SALARIO Viable Presupuesto salarial autorizado 10.70M Compromisos de jugadores en el ejercicio 9.36M Margen realmente disponible 1.34M Tesorería (no es margen salarial) 39.32M Salario anual del cont",
+    "record": {
+      "id": "transfer:acb-team-ucm:acb-player-vbc-13:0",
+      "playerId": "acb-player-vbc-13",
+      "sellerTeamId": "acb-team-vbc",
+      "sellerOrganizationId": "acb-team-vbc",
+      "buyerTeamId": "acb-team-ucm",
+      "buyerOrganizationId": "acb-team-ucm",
+      "sellerContractId": "contract:acb-player-vbc-13:acb-team-vbc:2026-07-01",
+      "openedOn": "2026-10-31",
+      "status": "EXECUTED",
+      "clubStatus": "CLUB_AGREED",
+      "clubRounds": [
+        {
+          "round": 1,
+          "fee": 100000,
+          "proposedOn": "2026-10-31",
+          "response": {
+            "outcome": "COUNTERED",
+            "respondedOn": "2026-11-01",
+            "counterFee": 133000
+          },
+          "buyerAction": {
+            "kind": "ACCEPTED_COUNTER",
+            "on": "2026-11-07"
+          }
+        }
+      ],
+      "playerStatus": "PLAYER_AGREED",
+      "playerRounds": [
+        {
+          "round": 1,
+          "terms": {
+            "salary": 110000,
+            "years": 2,
+            "role": "ROTATION"
+          },
+          "offeredOn": "2026-11-07",
+          "response": {
+            "outcome": "ACCEPTED",
+            "respondedOn": "2026-11-08"
+          }
+        }
+      ],
+      "agreedFee": 133000,
+      "agreedTerms": {
+        "salary": 110000,
+        "years": 2,
+        "role": "ROTATION"
+      },
+      "governanceDecisionId": "decision:player-contract-signing:bdm-balance-v1%3Ainstitution%3Aacb-team-ucm:transfer%3Aacb-team-ucm%3Aacb-player-vbc-13%3A0",
+      "execution": {
+        "executedOn": "2026-11-21",
+        "sellerContractId": "contract:acb-player-vbc-13:acb-team-vbc:2026-07-01",
+        "buyerContractId": "contract:transfer:transfer:acb-team-ucm:acb-player-vbc-13:0",
+        "transactionId": "transaction:transfer:transfer:acb-team-ucm:acb-player-vbc-13:0",
+        "governanceDecisionId": "decision:player-contract-signing:bdm-balance-v1%3Ainstitution%3Aacb-team-ucm:transfer%3Aacb-team-ucm%3Aacb-player-vbc-13%3A0",
+        "currencyCode": "EUR",
+        "feeMinorUnits": 13300000,
+        "financeFactIds": [
+          "expense:authorized:FUTURE_COST_ENGINE:transfer:acb-team-ucm:acb-player-vbc-13:0:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:buyer",
+          "settlement:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:buyer",
+          "financial:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:buyer:payment",
+          "revenue:authorized:FUTURE_REVENUE_ENGINE:transfer:acb-team-ucm:acb-player-vbc-13:0:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:seller",
+          "settlement:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:seller",
+          "financial:transfer-fee:transfer:acb-team-ucm:acb-player-vbc-13:0:seller:collection"
+        ]
+      }
+    },
+    "economics": {
+      "feeMinorUnits": 13300000,
+      "buyerCashDelta": -13300000,
+      "sellerCashDelta": 13300000,
+      "marginAfter": "1.23M",
+      "buyerContract": "contract:transfer:transfer:acb-team-ucm:acb-player-vbc-13:0",
+      "sellerContract": "contract:acb-player-vbc-13:acb-team-vbc:2026-07-01"
+    },
+    "participation": {
+      "gameId": "schedule-acb-season-2026-27-game-0079",
+      "minutes": 7.4
+    },
+    "afterReload": {
+      "payloadSha256": "3694a967d7a1945490dd63fd0cedfb36455840438f7af36e6ee415db03b9a5cc",
+      "payloadIdenticalAfterRestart": true
+    }
+  },
+  "transferDossier": "COMPRA A OTRO CLUB Pendiente de propuesta Club propietario Valencia Basket Contrato conocido hasta 2029-07-01 · 2.7 año(s) Disposición a negociar (lo que sabe tu club) Sin información Autorización para compensaciones 2.00M Ya pagado en el periodo 0K Margen realmente disponible 2.00M Compensación ≠ salario ≠ comisión El salario se negocia después con el jugador Compensación que propones al club El club responde mañana. Una propuesta no es un pago: no se mueve nada hasta cerrar los tres acuerdos (club, jugador y consejo). Contactar con el club y proponer CLUB INTELLIGENCE 0 source events NO CONTACT HISTORY · Scouting can create an authorized information trail. SIMULATION IDLE",
   "july": {
     "date": "2027-07-02",
     "userContracts": 16,
@@ -221,7 +313,7 @@
       "id": 1,
       "title": "NEW GAME ACB 2026/27 con UCAM Murcia y primer partido disputado (carrera nueva, Save V4 nativo)",
       "result": "PASS",
-      "ms": 25380,
+      "ms": 25590,
       "detail": {
         "date": "2026-09-26",
         "userContracts": 16,
@@ -244,7 +336,7 @@
       "id": 3,
       "title": "Identificar una necesidad de plantilla y entrar en Mercado Courtside",
       "result": "PASS",
-      "ms": 6245,
+      "ms": 6274,
       "detail": {
         "need": "SG (titular y suplente de nivel bajo)",
         "margenPresupuesto": "1.57M"
@@ -254,7 +346,7 @@
       "id": 4,
       "title": "Buscar agentes libres desde la necesidad, añadir un objetivo persistente y consultar el expediente",
       "result": "PASS",
-      "ms": 7455,
+      "ms": 7567,
       "detail": {
         "margin": "1.57M",
         "precioEsperado": "Desconocido hasta contactar"
@@ -264,37 +356,37 @@
       "id": 5,
       "title": "Contactar: SG-01 (operación principal) y SG-03 (candidato caro, para el rechazo por presupuesto)",
       "result": "PASS",
-      "ms": 16549
+      "ms": 16655
     },
     {
       "id": 6,
       "title": "Avanzar hasta el 3 oct: el agente responde; presentar la oferta preparada de SG-01 (condiciones del jugador, viabilidad visible)",
       "result": "PASS",
-      "ms": 19620
+      "ms": 19866
     },
     {
       "id": 7,
       "title": "Operación inválida por presupuesto: SG-03 acepta hablar pero su precio supera el margen; Finance rechaza la oferta con motivo",
       "result": "PASS",
-      "ms": 8120
+      "ms": 8278
     },
     {
       "id": 8,
       "title": "Disputar el 3 oct, avanzar al 10 oct: el jugador acepta; iniciar la aprobación de Governance de la firma",
       "result": "PASS",
-      "ms": 25700
+      "ms": 26501
     },
     {
       "id": 9,
       "title": "Disputar el 10 oct; el consejo aprueba al día siguiente; completar la firma",
       "result": "PASS",
-      "ms": 35530
+      "ms": 36090
     },
     {
       "id": 10,
       "title": "Ver al jugador en la plantilla y comprobar contrato y presupuesto actualizados",
       "result": "PASS",
-      "ms": 14898,
+      "ms": 14896,
       "detail": {
         "salary": 230000,
         "term": {
@@ -308,23 +400,23 @@
       "id": 11,
       "title": "Incorporarlo a una rotación válida (titular SG)",
       "result": "PASS",
-      "ms": 10544
+      "ms": 10545
     },
     {
       "id": 12,
       "title": "Disputar el partido del 17 oct y comprobar su participación real",
       "result": "PASS",
-      "ms": 10950,
+      "ms": 10430,
       "detail": {
         "gameId": "schedule-acb-season-2026-27-game-0029",
-        "minutes": 9
+        "minutes": 40
       }
     },
     {
       "id": 13,
       "title": "Historial de operaciones: la firma consta una sola vez, con sus condiciones",
       "result": "PASS",
-      "ms": 6513,
+      "ms": 6706,
       "detail": {
         "history": "HISTORIAL DE OPERACIONES 1 ejecutadas 2026-10-17 FICHAJE Libre SG-01 [sintético] Agente libre · 230.000 / año · 3 año(s) · hasta 2029-10-17"
       }
@@ -333,7 +425,7 @@
       "id": 14,
       "title": "Guardar, cerrar BDM, cargar: contratos, plantilla, finanzas e historial idénticos",
       "result": "PASS",
-      "ms": 25673,
+      "ms": 25916,
       "detail": {
         "payloadIdentical": true
       }
@@ -342,7 +434,7 @@
       "id": 15,
       "title": "Continuar varios días sin duplicar operaciones",
       "result": "PASS",
-      "ms": 30614,
+      "ms": 30397,
       "detail": {
         "completedGames": 45,
         "userContracts": 17
@@ -350,9 +442,104 @@
     },
     {
       "id": 16,
+      "title": "Abrir la partida ACB 2026/27 en curso y consultar el mercado global: jugadores con contrato de toda la liga, con filtros de vencimiento y disposición a negociar",
+      "result": "PASS",
+      "ms": 7221,
+      "detail": {
+        "jugadoresVisibles": 225
+      }
+    },
+    {
+      "id": 17,
+      "title": "Encontrar un jugador contratado por otro equipo (búsqueda por nombre)",
+      "result": "PASS",
+      "ms": 2307
+    },
+    {
+      "id": 18,
+      "title": "Abrir su ficha → Contrato: club propietario y vencimiento conocidos, sin precio del vendedor y sin acciones ficticias",
+      "result": "PASS",
+      "ms": 4977
+    },
+    {
+      "id": 19,
+      "title": "Negociar una compensación con su club desde la ficha (oferta ≠ pago: no se mueve nada)",
+      "result": "PASS",
+      "ms": 14199
+    },
+    {
+      "id": 20,
+      "title": "Disputar el partido; el club responde con una contraoferta; alcanzar el acuerdo entre clubes (aceptar su compensación)",
+      "result": "PASS",
+      "ms": 26461
+    },
+    {
+      "id": 21,
+      "title": "Negociar el contrato con el jugador: salario, años y rol propios (la fecha de inicio declarada como no soportada)",
+      "result": "PASS",
+      "ms": 2403
+    },
+    {
+      "id": 22,
+      "title": "Disputar el partido; el jugador acepta; solicitar la autorización de Governance",
+      "result": "PASS",
+      "ms": 25470
+    },
+    {
+      "id": 23,
+      "title": "Disputar el partido; el consejo autoriza; completar el traspaso",
+      "result": "PASS",
+      "ms": 46821
+    },
+    {
+      "id": 24,
+      "title": "Verificar al jugador en la plantilla del club comprador",
+      "result": "PASS",
+      "ms": 4054
+    },
+    {
+      "id": 25,
+      "title": "Verificar que desaparece de la plantilla del club vendedor (y que ya no es un objetivo del mercado)",
+      "result": "PASS",
+      "ms": 7820
+    },
+    {
+      "id": 26,
+      "title": "Verificar contratos, presupuesto y movimientos económicos de AMBOS clubes",
+      "result": "PASS",
+      "ms": 13001,
+      "detail": {
+        "feeMinorUnits": 13300000,
+        "buyerCashDelta": -13300000,
+        "sellerCashDelta": 13300000,
+        "marginAfter": "1.23M",
+        "buyerContract": "contract:transfer:transfer:acb-team-ucm:acb-player-vbc-13:0",
+        "sellerContract": "contract:acb-player-vbc-13:acb-team-vbc:2026-07-01"
+      }
+    },
+    {
+      "id": 27,
+      "title": "Ponerlo en una rotación válida (titular de su posición)",
+      "result": "PASS",
+      "ms": 11300
+    },
+    {
+      "id": 28,
+      "title": "Disputar un partido en el que puede participar y comprobar su participación real (y que ya no juega para su club anterior)",
+      "result": "PASS",
+      "ms": 24594
+    },
+    {
+      "id": 29,
+      "title": "Guardar, cerrar BDM, cargar y verificar continuidad exacta (traspaso, contratos, plantillas, finanzas e historial)",
+      "result": "PASS",
+      "ms": 27594
+    },
+    {
+      "id": 30,
       "title": "Segunda carrera (Save V4 generado con el arnés: simulación real hasta el 2 jul 2027): contratos próximos a vencer y ventana de renovación abierta",
       "result": "PASS",
-      "ms": 20973,
+      "ms": 20976,
       "detail": {
         "playerId": "acb-player-ucm-02",
         "name": "Jonah Radebaugh",
@@ -362,10 +549,10 @@
       }
     },
     {
-      "id": 17,
+      "id": 31,
       "title": "Renovar: abrir negociación, ofrecer, el jugador acepta, el consejo aprueba y se firma el sucesor sin solapar el contrato vigente",
       "result": "PASS",
-      "ms": 256390,
+      "ms": 252748,
       "detail": {
         "successor": "contract:retention-successor:retention:acb-team-ucm:acb-player-ucm-02:contract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01:retention-open%3Aacb-team-ucm%3Acontract%3Aacb-player-ucm-02%3Aacb-team-ucm%3A2026-07-01%3A2027-07-02",
         "term": {
@@ -376,16 +563,16 @@
       }
     },
     {
-      "id": 18,
+      "id": 32,
       "title": "Liberar a un jugador por el flujo existente: se explican las obligaciones garantizadas que sobreviven",
       "result": "PASS",
-      "ms": 18842
+      "ms": 18365
     },
     {
-      "id": 19,
+      "id": 33,
       "title": "Guardar, cerrar y cargar la segunda carrera; continuar sin duplicar la renovación ni la baja",
       "result": "PASS",
-      "ms": 67317
+      "ms": 67281
     }
   ],
   "consoleErrors": [],

@@ -1,7 +1,7 @@
 # F3 — mercado, contratos y finanzas: una plantilla construida y gestionada desde Courtside
 
 Base: `26886bd0` (`origin/main`, F0 #162, F1 #163 y F2 #164 integrados, 2026-10-20). Rama: `playable/f3`.
-Alcance: exclusivamente F3. El SHA final, la PR y los checks de CI se registran en la PR de F3.
+Alcance: exclusivamente F3, incluido el **adendo** (mercado libre, negociación libre y traspasos entre clubes), dentro de la misma rama y la misma PR. El SHA final, la PR y los checks de CI se registran en la PR de F3.
 
 Plan canónico: [PR #161](https://github.com/audifor/BDM/pull/161) (leído sin convertir propuestas en decisiones). Contratos F0/F1/F2 conservados:
 [F0](F0_CERTIFICATION.md), [F1](F1_CERTIFICATION.md), [F2](F2_CERTIFICATION.md).
@@ -110,21 +110,74 @@ La partida nativa del usuario se respaldó antes y se restauró con SHA-256 idé
 
 La partida nativa del usuario se respaldó antes y se restauró: SHA-256 idéntico (`userSaveRestored: true`).
 
+## Adendo · mercado libre, negociación libre y traspasos entre clubes
+
+Tres limitaciones del primer cierre de F3 se resuelven en la misma rama y la misma PR, sin subfases:
+
+1. **Mercado global.** El manager busca, selecciona y contacta a **cualquier** jugador del universo cargado (nombre, club, posición, edad, nacionalidad, nivel conocido, situación contractual, vencimiento y disposición a negociar conocida). Las plantillas de los clubes de su competición son públicas (identidad direccionable); los atributos y la voluntad siguen llegando sólo por scouting y señales. Las necesidades detectadas son una **recomendación**, nunca un requisito (`contactFreeAgentDirectly`).
+2. **Negociación libre.** Tras la respuesta al contacto, el manager escribe **su** oferta (salario, años, rol prometido); la fecha de inicio se declara no soportada (siempre la de la firma). La respuesta sale del motor de BS10: `derivePlayerTermsResponse` (verdad de mercado oculta + rasgos del agente) acepta lo que alcanza su mínimo real y contraoferta lo que no, **sin bajar nunca del mínimo del jugador**; antes una contraoferta podía quedar por debajo de lo que pedía. La oferta final pasa por Finance, Contracts y Governance.
+3. **Traspasos negociados de jugadores con contrato** (no son agentes libres ni traspasos NBA): `Ficha/Mercado → situación contractual → contactar al club → proponer compensación → respuesta del club → acuerdo entre clubes → negociar con el jugador → Governance → ejecución → plantilla`. Política del vendedor `BDM_TRANSFER_POLICY_V1` (verificable: valoración = salario de mercado × años restantes × 0,5, prima del 25 % a sus dos mejores jugadores, acepta desde su precio, contraoferta a su precio desde el 70 %, rechaza por debajo, nunca vende por debajo de 10 jugadores). **Compensación al club vendedor ≠ salario ≠ comisión del agente ≠ compromisos futuros**: autorización propia `TRANSFER_FEE` (preset de balance, aparte del presupuesto salarial y de la tesorería); el comprador reconoce gasto `TRANSFER_FEE` y lo paga; el vendedor reconoce ingreso `TRANSFER_BUYOUT` y lo cobra; ni se crea ni se destruye dinero. La ejecución (`executePlayerTransfer`) es atómica en ambos clubes (contrato antiguo `transferred`, contrato nuevo, plantillas, rotaciones, historial `transferred` en los dos clubes, RolePromise, ambos libros, evento `EXECUTED`) e idempotente; un rechazo, una autorización denegada o un error de validación devuelven el mundo intacto.
+
+Courtside (sin app ni sección redundante): Mercado → Buscar jugadores (filtros nuevos y panel «Compra a otro club» en el expediente), Ficha del jugador → Contrato (club propietario, vencimiento conocido, autorización de compensaciones; se retiraron las cuatro «rutas de contacto» de vista previa que no hacían nada), Mercado → Operaciones (traspasos: etapas, propuestas y contraofertas, condiciones con el jugador, autorizaciones pendientes, viabilidad económica y estado final) e historial de operaciones. Roster y Finance muestran el resultado con sus pantallas existentes (plantilla, gastos/ingresos y líneas de presupuesto por categoría).
+
+### Tabla adicional de certificación (ambos clubes: comprador y vendedor)
+
+| Escenario | Prueba | Resultado |
+|---|---|---|
+| Agente libre **sin necesidad** detectada recibe contacto, oferta válida, respuesta, autorización y firma | `PlayableF3DirectApproach.test.ts` (el sistema de recomendaciones devuelve siempre vacío) + A1 | PASS |
+| Salario por debajo de lo pedido se evalúa de verdad (contraoferta ≥ su mínimo real, nunca aceptada al precio ofrecido) | `PlayableF3Transfer.test.ts` B1 | PASS |
+| Oferta con años/rol distintos recibe respuesta válida y la firma respeta años y promesa de rol | B2 | PASS |
+| La negociación con un jugador contratado puede empezar con su club; una propuesta no mueve nada ni se duplica | C1 | PASS |
+| El vendedor rechaza → ningún cambio de plantilla, contrato ni dinero | C2 | PASS |
+| El vendedor contraoferta → la propuesta se revisa; su precio sólo se conoce al responder | C3 | PASS |
+| El club acepta pero el jugador rechaza → no hay traspaso | C4 | PASS |
+| Ambos aceptan pero Finance rechaza al ejecutar → ni movimiento ni cargo | C8 | PASS |
+| Governance no pedida / denegada por el consejo / retirada → no hay traspaso; la operación se cierra | C9 | PASS |
+| Todo aceptado y autorizado → traspaso completo en ambos clubes (dos vendedores distintos) | C5 | PASS |
+| Ejecución repetida → ni contratos ni movimientos económicos duplicados | C6 | PASS |
+| Save V4 conserva estado (en curso y ejecutado) e historial de ambos clubes | C7 | PASS |
+| Partido posterior → el jugador pertenece y juega (minutos reales) para el club nuevo y no para el vendedor | C10 | PASS |
+| UI Courtside: mercado global, panel de compra, operación y retirada, acuerdo/autorización/completar, oferta a medida, ficha | `MarketWorkspace.transfer.test.tsx` (6) | PASS |
+| Política del vendedor y calendario de Finance del contrato traspasado | `TransferPolicy.test.ts` (5) | PASS |
+
+### Prueba Windows del adendo (`bdm.exe`, pasos 16–29, sobre la misma carrera de New Game)
+
+Traspaso real de **Nate Reuvers** (Valencia Basket → UCAM Murcia), todo desde la interfaz de Courtside, con partidos jugados entre etapas; dos pasadas completas del script (la primera encontró un aviso médico que detiene CONTINUE y un fallo del propio script al leer el guardado, ya corregidos: el script ahora resuelve la revisión de alta como lo haría el manager). Evidencias: `docs/playable/evidence/f3/16…29*.png`, `windows-acceptance.json` (`transfer`).
+
+| Paso | Qué se comprueba en el exe | Evidencia |
+|---|---|---|
+| 16 | Mercado global: jugadores con contrato de toda la liga (>100), filtros «Vence antes de» y «Disponibilidad para negociar» | `16` |
+| 17 | Encontrar por nombre a un jugador contratado por otro equipo; el expediente ofrece «Compra a otro club» | `17` |
+| 18 | Ficha → Contrato: club propietario, vencimiento conocido, autorización de compensaciones, sin acciones ficticias | `18` |
+| 19 | Proponer 100.000 al club desde la ficha: la operación queda abierta; no cambia ningún contrato, transacción ni saldo | `19` |
+| 20 | Tras el partido el club **contraoferta 133.000**; se acepta: acuerdo entre clubes | `20a`, `20b` |
+| 21 | Oferta al jugador (110.000 × 2 años, rol de rotación; la fecha de inicio declarada no soportada) | `21a`, `21b` |
+| 22 | El jugador acepta; condiciones, viabilidad del salario y de la compensación visibles; se solicita la autorización | `22a` |
+| 23 | El consejo autoriza al día siguiente; **«Completar traspaso»**: ejecución | `23a`, `23b` |
+| 24–25 | Está en la plantilla de UCAM y ya no en la de Valencia Basket (un único roster) | `24`, `25` |
+| 26 | Contrato antiguo `transferred` y contrato nuevo (110.000); **caja del comprador −133.000, caja del vendedor +133.000**, nada más cambia; gasto `TRANSFER_FEE` e ingreso `TRANSFER_BUYOUT`; margen salarial 1,34 M → 1,23 M | `26` |
+| 27–28 | Titular de su posición y partido siguiente: **7,4 minutos reales** con el club nuevo; ninguna línea de box score con el vendedor tras el traspaso | `27`, `28` |
+| 29 | Guardar, cerrar, cargar: payload idéntico y el traspaso `EXECUTED` con su historial | `29` |
+
+La carrera 2 (renovación y baja, ahora pasos 30–33) se repite íntegra y pasa. Partida nativa del usuario respaldada y restaurada (SHA-256 idéntico, `userSaveRestored: true`).
+
 ## Limitaciones reales (declaradas)
 
-- **La primera oferta son las condiciones conocidas del jugador** (política BS10 `MATCH_KNOWN_EXPECTATION`); no se añadió una oferta libre con términos propios. Contraofertas y revisiones existen en el motor y se prueban con fixture, pero en la partida real un jugador que acepta hablar acepta lo que pide. La fórmula de contraoferta del agente (BS10) no se tocó.
-- **Sólo se puede contactar a un agente libre que cubra una necesidad detectada** (diseño BS10): sin necesidad con vía de adquisición no hay propuesta de contacto, y el mercado lo dice («Sin fichaje posible para esta necesidad»). El 1 jul las necesidades de posición de UCAM aún no existen; aparecen tras el primer partido.
-- **Contratos en otro club**: no se presentan como fichaje libre; traspasos, buyouts, cash en traspasos y mercado internacional siguen sin soporte ejecutable y no se simulan.
 - **Liberación de jugadores**: no hay penalización ni indemnización calculable; las obligaciones garantizadas siguen en el calendario de Finance y se listan. **Staff**: el modelo no define indemnización; al rescindir se retira el compromiso restante del contrato y se dice explícitamente.
 - **Renovación en Windows**: la ventana de la plantilla inicial se abre el 2 jul 2027 y «Simulate until date» se detiene en cada decisión médica pendiente. El Save V4 de ese día lo genera el arnés ([`PlayableF3RenewalFixture.test.ts`](../../src/app/game/PlayableF3RenewalFixture.test.ts), 9 meses de simulación diaria real con las altas médicas resueltas y el cambio de temporada), sin ninguna operación de mercado; la renovación, el consejo y la liberación se hacen después a mano en el ejecutable.
 - Las partidas anteriores a F3 no reciben retroactivamente los agentes libres, las reglas salariales ni las concesiones de firma; sólo el New Game ACB.
 - El desarrollo de atributos no se produce en 30 días (se aplica el 1 de julio): la prueba de consecuencias deportivas mide participación, minutos y rotación, no mejora de atributos.
+- **Traspasos (adendo)**: no hay ventanas de traspaso ni requisitos de inscripción en el universo ACB de demostración y no se inventan reglas de federación; no se implementan traspasos NBA ni emparejamiento salarial NBA, buyouts internacionales generalizados, cláusulas de rescisión (el modelo no tiene ninguna: no se muestra ninguna), pagos aplazados, ni que un club de la IA compre jugadores al club del manager. Un traspaso sólo se ejecuta si el comprador es el club del manager.
+- **Fecha de inicio del contrato**: el modelo de contratos no admite otra que la de la firma; el formulario lo declara. El rol prometido sí tiene consecuencia canónica (`RolePromise`, que se rompe al liberar al jugador).
+- **Salario ya reconocido**: el modelo reconoce cada año de contrato en su fecha de inicio; en un traspaso a mitad de año el vendedor conserva el salario del año en curso ya reconocido (no se devuelve nada) y deja de deber los años futuros; el comprador reconoce el primer año de su nuevo contrato al firmar.
+- **Voluntad del jugador**: la verdad oculta de voluntad de los jugadores (sembrada por identificador) hace que una parte de los contratados rechace cualquier traspaso; el manager lo descubre al ofrecerle condiciones, nunca antes.
 
 ## Validación
 
 - Typecheck, build del frontend y compilación Tauri (`tauri build --debug --no-bundle --offline`): PASS. `cargo fmt --check` y `cargo check --offline`: PASS. Sin `Math.random(` en `src/`. Sin imports de React/Zustand/Tauri en `src/domain` ni `src/engine`. Sin cambios en BDM-DB.
 - **Suite global con los parámetros de CI** (`--testTimeout=30000 --hookTimeout=30000 --maxWorkers=2`): **769 archivos y 5.692 tests PASS**, 46 archivos/51 tests omitidos como en `main` (largo horizonte y generador del Save de la prueba Windows, que sólo corre con `F3_RENEWAL_FIXTURE_OUT`), 0 fallos. Los 84 fallos de una primera pasada con los 5 s por defecto eran timeouts por carga; se reprodujeron aislados y pasan con los parámetros de CI, salvo tres regresiones reales (F0, `MarketEngine`, `CalendarEngine`) que se corrigieron en F3 como se explica arriba.
 - Regresiones F0/F1/F2 (`PlayableF0/F1/F2*.test.ts`) y focales de Finance (376 tests de dominio y motor), Governance, retención, calendario, mercado y Save V4: PASS dentro de la suite global.
-- Tests F3: 11 + 15 + 8 (arriba) + 17 unitarias; arnés en `src/app/game/testSupport/PlayableF3*.ts`.
+- Adendo: suite global con los parámetros de CI tras implementarlo: 769 archivos pasan (+ nuevos), 3 archivos con 5 tests desfasados por el propio cambio (mapa de acciones de Finance con `TRANSFER_FEE`; tres tests de la ficha que comprobaban las cuatro «rutas de contacto» de vista previa que se retiran; el cierre de la operación denegada) corregidos y re-ejecutados: subconjunto engine/domain/save/governance/mercado/transfer/ficha/finanzas **449 archivos y 3.631 tests PASS**. `tsc -b` limpio (el typecheck de `tsc --noEmit` sin `-b` no basta: el repositorio usa referencias).
+- Tests F3: 11 + 15 + 8 (arriba) + 17 unitarias; adendo: `PlayableF3Transfer.test.ts` (14), `PlayableF3DirectApproach.test.ts` (1), `MarketWorkspace.transfer.test.tsx` (6), `TransferPolicy.test.ts` (5); arnés en `src/app/game/testSupport/PlayableF3*.ts`.
 - Integridad de Contracts, Governance y Finance: una firma/renovación/baja existe exactamente una vez (contratos, transacciones, eventos `EXECUTED`, reservas), comprobado en el motor y en el Save V4 nativo; sin reservas abiertas propias; el libro mayor no se mueve al firmar.
 - Suite global, CI de GitHub e integración en `main`: ver la PR.
