@@ -39,3 +39,28 @@
 .staff-contract-actions>strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
 .staff-contract-actions>button {margin-left:auto;border:1px solid var(--cs-negative,#ff5470);border-radius:99px;background:transparent;color:var(--cs-text);font:700 12px var(--cs-font-display,inherit);padding:3px 12px;}
 .staff-contract-actions>small {flex-basis:100%;color:var(--cs-text3,#8b8399);}
+.market-transfer {display:grid;gap:7px;margin:11px 0;padding:11px 13px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s2,#1e1a28);}
+.market-transfer>header {display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.market-transfer>header strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.market-transfer dl {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px;margin:0;}
+.market-transfer dl>div {display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dotted var(--cs-line,rgba(255,255,255,.08));padding:2px 0;}
+.market-transfer dt {color:var(--cs-text3,#8b8399);}
+.market-transfer dd {margin:0;font-weight:700;text-align:right;}
+.market-transfer__form {display:grid;gap:6px;}
+.market-transfer__form label {display:grid;gap:3px;font-size:12px;}
+.market-transfer__form input {padding:6px 8px;border:1px solid var(--cs-line2);border-radius:8px;background:var(--cs-s1,#17141f);color:var(--cs-text);}
+.market-transfer__form button,.market-transfers__actions button,.market-custom-offer button {justify-self:start;border:1px solid var(--cs-orange,#ff6a2b);border-radius:99px;background:transparent;color:var(--cs-text);font:700 12px var(--cs-font-display,inherit);padding:4px 13px;}
+.market-transfer__form button:disabled,.market-custom-offer button:disabled {opacity:.5;border-style:dashed;}
+.market-transfer__note {margin:0;font-size:12px;color:var(--cs-text2,#c7c1d6);}
+.market-transfer__warning,.market-transfers__warning {color:var(--cs-negative,#ff5470);font-size:12px;}
+.market-transfers__ok {color:var(--cs-positive,#5cf29a);font-size:12px;}
+.market-transfers {display:grid;gap:8px;margin-top:14px;}
+.market-transfers__entry {border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s1,#17141f);padding:6px 10px;}
+.market-transfers__stages {margin:0 0 6px;padding-left:18px;font-size:12px;display:grid;gap:2px;}
+.market-transfers__stages li.is-done {color:var(--cs-positive,#5cf29a);}
+.market-transfers__actions {display:grid;gap:6px;margin:6px 0;}
+.market-custom-offer {display:grid;gap:6px;margin:8px 0;padding:9px 12px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s2,#1e1a28);}
+.market-custom-offer>strong {font:700 12px var(--cs-font-display,inherit);letter-spacing:.09em;color:var(--cs-orange,#ff6a2b);}
+.market-custom-offer label {display:grid;gap:3px;font-size:12px;}
+.market-custom-offer input,.market-custom-offer select {padding:6px 8px;border:1px solid var(--cs-line2);border-radius:8px;background:var(--cs-s1,#17141f);color:var(--cs-text);}
+@media(max-width:720px){.market-transfer dl{grid-template-columns:1fr}}

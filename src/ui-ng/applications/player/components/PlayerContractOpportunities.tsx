@@ -1,40 +1,10 @@
-import { useState } from 'react'
-
 import type { PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getMarketKnowledge } from '@/domain/market'
 import { getUserTeam } from '@/engine/calendar'
 import { isPlayerFreeAgent } from '@/domain/world'
-import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
-
-type ApproachId = 'club' | 'agent' | 'direct' | 'network'
-const APPROACHES: readonly {
-  readonly id: ApproachId
-  readonly index: string
-  readonly icon: string
-  readonly name: string
-  readonly summary: string
-  readonly avenue: string
-  readonly consequence: string
-  readonly sensitivity: string
-}[] = [
-  { id: 'club', index: '01', icon: '▣', name: 'CLUB CHANNEL', summary: 'Official enquiry',
-    avenue: 'Open a formal conversation with the employing club before approaching a contracted player.',
-    consequence: 'The club may welcome an offer, decline it or remember unwanted pressure.',
-    sensitivity: 'FORMAL ROUTE' },
-  { id: 'agent', index: '02', icon: '◇', name: 'AGENT CHANNEL', summary: 'Intermediary approach',
-    avenue: 'Establish contact through an authorized representative, subject to player and competition rules.',
-    consequence: 'Information may improve, but unauthorized approaches can harm trust or trigger complaints.',
-    sensitivity: 'PERMISSION DEPENDENT' },
-  { id: 'direct', index: '03', icon: '◎', name: 'DIRECT CONTACT', summary: 'Player relationship',
-    avenue: 'An approach to the player personally. Permission depends on contract and competition rules.',
-    consequence: 'A personal relationship may help, but a forbidden approach may create disciplinary exposure.',
-    sensitivity: 'REGULATED' },
-  { id: 'network', index: '04', icon: '✣', name: 'PRIVATE NETWORK', summary: 'Third-party enquiry',
-    avenue: 'Seek information via a genuinely connected acquaintance. No relationship may be invented.',
-    consequence: 'Indirect information may be unreliable, leak or damage professional relationships.',
-    sensitivity: 'UNVERIFIED INTELLIGENCE' },
-]
+import { navigateToMarketTab, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
+import { TransferApproachPanel } from '@/ui-ng/applications/market/TransferApproachPanel'
 
 const SIGNAL_SOURCE: Record<string, string> = {
   AGENT: 'AGENT SOURCE',
@@ -52,7 +22,6 @@ interface Props {
 /** Rival information is exclusively the viewing club's authorized knowledge.
  * Contact routes below are decision previews, never a world mutation. */
 export function PlayerContractOpportunities({ world, playerId, playerName, onScouting }: Props) {
-  const [selectedApproach, setSelectedApproach] = useState<ApproachId>('club')
   const team = world === null ? undefined : getUserTeam(world)
   const knowledge = world !== null && team !== undefined
     ? getMarketKnowledge(world.marketKnowledge, team.organizationId, playerId)
@@ -63,7 +32,6 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
       .sort((a, b) => b.occurredOn.localeCompare(a.occurredOn) || b.id.localeCompare(a.id))
     : []
   const isFreeAgent = world !== null && isPlayerFreeAgent(world, playerId)
-  const chosen = APPROACHES.find(approach => approach.id === selectedApproach)!
   const status = knowledge?.availability === 'OPEN' ? 'OPEN TO OFFERS'
     : knowledge?.availability === 'LISTENING' ? 'MAY LISTEN'
     : knowledge?.availability === 'NOT_FOR_SALE' ? 'NOT FOR SALE'
@@ -76,9 +44,9 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
   return <section className="pc-rpg pc-rpg--v31" data-ng-region="player-contract-opportunities" aria-label={'Contract opportunities: ' + playerName}>
     <header className="pc-rpg__hero">
       <div className="pc-rpg__headline">
-        <span className="pc-rpg__eyebrow">CONTRACT OPPORTUNITIES</span>
-        <h2>BUILD THE APPROACH</h2>
-        <p>Four possible routes. One professional reputation. Each approach has different consequences.</p>
+        <span className="pc-rpg__eyebrow">CONTRACT · {isFreeAgent ? 'FREE AGENT' : 'UNDER CONTRACT WITH ANOTHER CLUB'}</span>
+        <h2>{isFreeAgent ? 'SIGN THIS FREE AGENT' : 'BUY FROM HIS CLUB'}</h2>
+        <p>{isFreeAgent ? 'He has no club: you negotiate with him and his agent.' : 'He has a contract: the only door is the club that holds it. Then you negotiate with him, and your Board must authorize it.'}</p>
       </div>
       <div className="pc-rpg__hero-status">
         <small>MARKET POSITION</small>
@@ -106,34 +74,12 @@ export function PlayerContractOpportunities({ world, playerId, playerName, onSco
     </div>
 
     <section className="pc-rpg__approaches" data-ng-region="contract-contact-routes">
-      <header><span>CHOOSE A CONTACT ROUTE</span><small>PREVIEW ONLY · UNDER-CONTRACT CONTACT RULES NOT YET ACTIVE</small></header>
-      <div className="pc-rpg__approach-grid" role="group" aria-label="Contact route preview">
-        {APPROACHES.map(approach =>
-          <button key={approach.id} type="button" aria-pressed={selectedApproach === approach.id}
-            aria-controls="pc-rpg-selected-route" onClick={() => setSelectedApproach(approach.id)}>
-            <span className="pc-rpg__approach-top"><span className="pc-rpg__approach-icon" aria-hidden="true">{approach.icon}</span>
-              <span className="pc-rpg__approach-index">{approach.index} / 04</span></span>
-            <strong>{approach.name}</strong>
-            <small>{approach.summary}</small>
-            <span className="pc-rpg__approach-flag">{approach.sensitivity}</span>
-          </button>,
-        )}
-      </div>
-      <section id="pc-rpg-selected-route" className="pc-rpg__approach-details" aria-live="polite">
-        <div className="pc-rpg__route-description">
-          <span>SELECTED ROUTE</span>
-          <strong>{chosen.name}</strong>
-          <p>{chosen.avenue}</p>
-        </div>
-        <div className="pc-rpg__risk">
-          <span>POTENTIAL CONSEQUENCES</span>
-          <p>{chosen.consequence}</p>
-        </div>
-        <div className="pc-rpg__route-state">
-          <span>PLANNED RPG FEATURE</span>
-          <small>Preview only. No contact, relationship change or sanction is triggered.</small>
-        </div>
-      </section>
+      {team === undefined || world === null
+        ? null
+        : isFreeAgent
+          ? <div className="market-transfer__note"><p>Es agente libre. Su contacto, tu oferta (salario, años, rol) y su respuesta están en Mercado.</p>
+            <button type="button" onClick={() => navigateToMarketTab('free-agents')}>ABRIR MERCADO DE AGENTES LIBRES ↗</button></div>
+          : <TransferApproachPanel world={world} teamId={team.id} playerId={playerId} onProposed={() => navigateToMarketTab('operations')} />}
     </section>
 
     <section className="pc-rpg__history" data-ng-region="contract-intelligence-history">

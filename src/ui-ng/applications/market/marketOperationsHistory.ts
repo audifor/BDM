@@ -7,7 +7,7 @@ import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
  * staff hirings/departures. Every row is read from the canonical fact that executed it (player transaction, executed retention
  * agreement, staff career history); an offer or a negotiation in progress is NOT an operation and never appears here.
  */
-export type MarketOperationKind = 'FICHAJE' | 'RENOVACION' | 'BAJA' | 'STAFF_ALTA' | 'STAFF_BAJA'
+export type MarketOperationKind = 'FICHAJE' | 'TRASPASO' | 'RENOVACION' | 'BAJA' | 'STAFF_ALTA' | 'STAFF_BAJA'
 export interface MarketOperationRow {
   readonly id: string
   readonly date: string
@@ -30,6 +30,12 @@ export function buildMarketOperationsHistory(world: GameWorld, teamId: TeamId): 
     if (transaction.kind === 'signedFreeAgent' && transaction.toTeamId === teamId) {
       rows.push({ id: transaction.id, date: transaction.occurredOn, kind: 'FICHAJE', playerId: transaction.playerId, subject: playerName(world, transaction.playerId),
         summary: contract === undefined ? 'Agente libre incorporado' : `Agente libre · ${contract.compensation.annualSalary.toLocaleString('es-ES')} / año · ${years(contract.term.startsOn, contract.term.expiresOn)} año(s) · hasta ${contract.term.expiresOn}` })
+    } else if (transaction.kind === 'transferred' && (transaction.toTeamId === teamId || transaction.fromTeamId === teamId)) {
+      const transfer = transaction.sourceTransferId === undefined ? undefined : world.playerTransferNegotiationsById[transaction.sourceTransferId]
+      const incoming = transaction.toTeamId === teamId
+      const other = world.teams[(incoming ? transaction.fromTeamId : transaction.toTeamId)!]?.name ?? 'otro club'
+      rows.push({ id: transaction.id, date: transaction.occurredOn, kind: 'TRASPASO', playerId: transaction.playerId, subject: playerName(world, transaction.playerId),
+        summary: `${incoming ? 'Incorporado desde' : 'Cedido a'} ${other}${transfer?.agreedFee === undefined ? '' : ` · compensación ${transfer.agreedFee.toLocaleString('es-ES')}${incoming ? ' pagada' : ' cobrada'}`}${incoming && contract !== undefined ? ` · contrato ${contract.compensation.annualSalary.toLocaleString('es-ES')} / año hasta ${contract.term.expiresOn}` : ''}` })
     } else if (transaction.kind === 'released' && transaction.fromTeamId === teamId) {
       rows.push({ id: transaction.id, date: transaction.occurredOn, kind: 'BAJA', playerId: transaction.playerId, subject: playerName(world, transaction.playerId),
         summary: contract === undefined ? 'Contrato rescindido' : `Contrato rescindido · salario ${contract.compensation.annualSalary.toLocaleString('es-ES')} / año; las obligaciones garantizadas siguen en Finance` })

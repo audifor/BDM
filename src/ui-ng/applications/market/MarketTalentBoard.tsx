@@ -14,6 +14,7 @@ import { scoutingRosterBenchmarks } from '@/ui-ng/applications/player/data/build
 import { positionEvidenceKeys } from '@/ui-ng/applications/player/data/scoutingPositionEvidence'
 import type { ScoutingKnowledgeRow } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import { MarketViabilityPanel } from './MarketViabilityPanel'
+import { TransferApproachPanel } from './TransferApproachPanel'
 import { buildMarketViability } from './marketViability'
 import './market-talent-board.css'
 
@@ -245,6 +246,7 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
             const known = world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId && entry.playerId === selected.playerId).sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]
             return <MarketViabilityPanel viability={buildMarketViability(world, teamId, { ...(known?.expectedSalary === undefined ? {} : { annualSalary: known.expectedSalary }), ...(known?.expectedYears === undefined ? {} : { years: known.expectedYears }) })} />
           })() : null}
+          {!isPlayerFreeAgent(world, selected.playerId) && !selected.isOwnRoster ? <TransferApproachPanel world={world} teamId={teamId} playerId={selected.playerId} onProposed={onOpenOperations} /> : null}
           <div className="market-talent__inspector-actions"><button className="market-cs__primary" onClick={() => setScoutingTarget(selected.playerId)} type="button" disabled={selected.activeAssignment !== null}>{selected.activeAssignment === null ? 'Solicitar informe' : 'Observación en curso'}</button>
             {isPlayerFreeAgent(world, selected.playerId) ? <button className="market-cs__secondary" onClick={() => onOpenFreeAgent(selected.playerId)} type="button">Contactar agente libre</button> : null}
             <button className="market-cs__secondary" onClick={() => onOpenPlayer(selected.playerId)} type="button">Ficha completa</button></div>

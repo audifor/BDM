@@ -40,7 +40,7 @@ export function CustomOfferForm({ world, teamId, negotiationId, defaultSalary, d
     if (valid) onSubmit({ salary: salaryValue, years: yearsValue, ...(role === '' ? {} : { role }) })
   }}>
     <strong>TU OFERTA</strong>
-    <label>Salario anual<input aria-label={`Salario ofrecido ${negotiationId}`} type="number" min="1" step="1000" value={salary} placeholder="Importe anual" onChange={(event) => setSalary(event.target.value)} /></label>
+    <label>Salario anual<input aria-label={`Salario ofrecido ${negotiationId}`} type="number" min="1" step="1" value={salary} placeholder="Importe anual" onChange={(event) => setSalary(event.target.value)} /></label>
     <label>Años de contrato<input aria-label={`Años ofrecidos ${negotiationId}`} type="number" min="1" max="10" value={years} placeholder="Años" onChange={(event) => setYears(event.target.value)} /></label>
     <label>Rol prometido<select aria-label={`Rol prometido ${negotiationId}`} value={role} onChange={(event) => setRole(event.target.value as NegotiationRole | '')}>
       {ROLES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}

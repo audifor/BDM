@@ -21,6 +21,7 @@ import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningB
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
 import { MarketNeedsStrip } from '@/ui-ng/applications/market/MarketNeedsStrip'
 import { CustomOfferForm } from '@/ui-ng/applications/market/CustomOfferForm'
+import { TransferOperationsSection } from '@/ui-ng/applications/market/TransferOperationsSection'
 import { MarketViabilityPanel } from '@/ui-ng/applications/market/MarketViabilityPanel'
 import { buildMarketViability } from '@/ui-ng/applications/market/marketViability'
 import { buildMarketOperationsHistory } from '@/ui-ng/applications/market/marketOperationsHistory'
@@ -282,6 +283,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
             </div></details></article>
           )
         })}
+        <TransferOperationsSection world={world} teamId={team.id} />
         <MarketOperationsHistory world={world} teamId={team.id} />
       </section> : null}
     </NgHoloShell>
