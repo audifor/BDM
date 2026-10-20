@@ -52,7 +52,7 @@ describe('F3 · Courtside Market: needs, economics and operations', () => {
     expect(panel.textContent).not.toContain('0 €') // an unknown amount is shown as unknown
   })
 
-  it('opens the dossier of a free agent from the search and offers contact only with a current, feasible proposal', () => {
+  it('opens the dossier of a free agent from the search and offers contact whether or not a squad need recommends him', () => {
     const world = career()
     useGameStore.getState().replaceWorld(world)
     render(<MarketWorkspace />)
@@ -62,7 +62,7 @@ describe('F3 · Courtside Market: needs, economics and operations', () => {
     const dialog = screen.getByRole('dialog', { name: 'Contacto con agente libre' })
     expect(within(dialog).getByText('Evaluado')).toBeInTheDocument()
     expect(within(dialog).getByLabelText('Viabilidad económica')).toBeInTheDocument()
-    expect(within(dialog).getByText(/Contact readiness: READY_TO_CONTACT/)).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Contact player' })).toBeInTheDocument()
   })
 
   it('shows the outcome of a command that an authority refused, instead of failing silently', () => {

@@ -5,6 +5,7 @@ import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualD
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { progressFormalOfferResponses, progressNegotiationContactResponses, reconcileExpiredPlayerContracts } from '@/engine/market'
+import { progressPlayerTransferNegotiations } from '@/engine/transfer'
 import { ensureFreeAgentMarketTruthForPendingContacts } from '@/engine/market/FreeAgentMarketTruth'
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/ScheduledTrainingEngine'
@@ -144,7 +145,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
       sourceId: decision.negotiationId ?? decision.contractId,
     })))
     run('MARKET_CONTACT_RESPONSES', current.currentDate, true, (input) => progressNegotiationContactResponses(ensureFreeAgentMarketTruthForPendingContacts(input)), 'Due term-free contact responses are processed after contract reconciliation.')
-    run('MARKET_FORMAL_OFFER_RESPONSES', current.currentDate, true, progressFormalOfferResponses, 'Due formal free-agent offer responses are processed after contact responses.')
+    run('MARKET_FORMAL_OFFER_RESPONSES', current.currentDate, true, (input) => progressPlayerTransferNegotiations(progressFormalOfferResponses(input)), 'Due formal free-agent offer responses are processed after contact responses; due selling-club and player answers of negotiated club-to-club transfers are processed in the same checkpoint.')
     let aiTrainingDecisions: ReturnType<typeof progressAiTrainingPlanning>['decisions'] = []
     run('AI_TRAINING_PLANNING', current.currentDate, isStaffWeeklyCheckpoint(current.currentDate), (input) => {
       const result = progressAiTrainingPlanning(input)

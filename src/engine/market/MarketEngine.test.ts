@@ -164,7 +164,7 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     const repeated=progressFormalOfferResponses(due)
     const countered=first.negotiationsById[setup.contact.id]!
     expect(countered).toMatchObject({status:'COUNTERED',round:1,years:2,playerResponse:{outcome:'COUNTERED',respondedOn:due.currentDate,origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
-    expect(countered.salary).toBe(agentCounter(opened.negotiationsById[setup.contact.id]!,offerAgent).salary)
+    expect(countered.salary).toBe(Math.max(agentCounter(opened.negotiationsById[setup.contact.id]!,offerAgent).salary,reality.expectedSalary))
     expect(countered.roundHistory?.[0]).toMatchObject({round:0,offer:{salary:650_000,years:2},playerResponse:{outcome:'COUNTERED',origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
     expect(countered).not.toHaveProperty('role')
     expect(countered).not.toHaveProperty('agentFee')

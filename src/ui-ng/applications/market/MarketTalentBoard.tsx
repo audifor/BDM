@@ -86,6 +86,8 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
   const [minimumCurrent, setMinimumCurrent] = useState('')
   const [minimumPotential, setMinimumPotential] = useState('')
   const [club, setClub] = useState('')
+  const [expiryBefore, setExpiryBefore] = useState('')
+  const [availability, setAvailability] = useState<'ALL' | 'FREE' | 'OPEN' | 'LISTENING' | 'NOT_FOR_SALE' | 'UNKNOWN'>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | null>(null)
   const model = useMemo(() => buildScoutingWorkspaceModel(world), [world])
   const team = world.teams[teamId]
@@ -105,6 +107,12 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
     for (const item of known) results.set(item.playerId, item.expectedSalary!)
     return results
   })()
+  /** What THIS club legitimately knows about willingness to negotiate; a free agent is by definition available. */
+  const knownAvailability = (playerId: PlayerId): 'FREE' | 'OPEN' | 'LISTENING' | 'NOT_FOR_SALE' | 'UNKNOWN' => {
+    if (isPlayerFreeAgent(world, playerId)) return 'FREE'
+    return world.marketKnowledge.filter((item) => item.organizationId === team.organizationId && item.playerId === playerId && item.availability !== undefined)
+      .sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]?.availability ?? 'UNKNOWN'
+  }
   const expiryHorizon = (months: number) => {
     const [year, month, day] = world.currentDate.split('-').map(Number)
     return new Date(Date.UTC(year!, month! - 1 + months, day!)).toISOString().slice(0, 10)
@@ -131,6 +139,8 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
     (country === '' || row.countryName === country) &&
     (competition === '' || row.competitionName === competition) &&
     (club === '' || row.clubName === club) &&
+    (expiryBefore === '' || (activeContracts.get(row.playerId)?.term.expiresOn !== undefined && activeContracts.get(row.playerId)!.term.expiresOn <= expiryBefore)) &&
+    (availability === 'ALL' || knownAvailability(row.playerId) === availability) &&
     (ratingFiltered === null || ratingFiltered.has(row.playerId)) &&
     (maximumSalary === '' || (salaryKnowledge.get(row.playerId) !== undefined && salaryKnowledge.get(row.playerId)! <= Number(maximumSalary))) &&
     `${row.name} ${row.clubName} ${row.countryName} ${row.competitionName}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
@@ -182,6 +192,11 @@ export function MarketTalentBoard({ world, teamId, mode, initialContractFilter =
           <label>País<select aria-label="País" value={country} onChange={(event) => setCountry(event.target.value)}><option value="">Todos</option>{countries.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Competición<select aria-label="Competición" value={competition} onChange={(event) => setCompetition(event.target.value)}><option value="">Todas</option>{competitions.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Club<select aria-label="Club" value={club} onChange={(event) => setClub(event.target.value)}><option value="">Todos</option>{clubs.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Vence antes de<input aria-label="Vence antes de" type="date" value={expiryBefore} onChange={(event) => setExpiryBefore(event.target.value)} /></label>
+          <label>Disponibilidad para negociar<select aria-label="Disponibilidad para negociar" value={availability} onChange={(event) => setAvailability(event.target.value as typeof availability)}>
+            <option value="ALL">Todas</option><option value="FREE">Libre</option><option value="OPEN">Abierto a ofertas (conocido)</option><option value="LISTENING">Escucha ofertas (conocido)</option>
+            <option value="NOT_FOR_SALE">No está en venta (conocido)</option><option value="UNKNOWN">Sin información</option>
+          </select></label>
           <label>Atributo observado<select aria-label="Atributo observado" value={evaluationDimension} onChange={(event) => setEvaluationDimension(event.target.value as typeof evaluationDimension)}>
             <option value="finishing">Finalización</option><option value="shooting">Tiro</option><option value="creation">Creación</option>
             <option value="perimeterDefense">Defensa exterior</option><option value="interiorDefense">Defensa interior</option>

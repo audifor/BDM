@@ -28,11 +28,14 @@ import { recordContractReviewDecision } from '@/app/contractReview'
 import { openUserContractRetention, respondUserToContractRetentionCounter, submitUserContractRetentionOffer, withdrawUserContractRetention } from '@/app/contractRetention/ContractRetentionService'
 import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
 import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
-import { completeAcceptedFreeAgentSigning, initiatePreferredFreeAgentContact, submitPreparedFreeAgentOffer, respondToNegotiationCounter } from '@/app/marketIntelligence'
+import { completeAcceptedFreeAgentSigning, contactFreeAgentDirectly, initiatePreferredFreeAgentContact, submitCustomFreeAgentOffer, submitPreparedFreeAgentOffer, respondToNegotiationCounter } from '@/app/marketIntelligence'
 import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEvent } from '@/app/governance'
 import { executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
 import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
 import type { ClubCounterDecision } from '@/app/marketIntelligence'
+import type { NegotiationRole } from '@/domain/market'
+import type { TransferPlayerTerms } from '@/domain/transfer'
+import { executePlayerTransfer, proposeTransferCompensation, proposeTransferPlayerTerms, respondToTransferClubCounter, respondToTransferPlayerCounter, startTransferGovernance, withdrawPlayerTransfer, type TransferClubCounterAction, type TransferCommandResult, type TransferPlayerCounterAction } from '@/app/transfer'
 import { type FacilityDevelopmentProjectId, type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
@@ -149,6 +152,18 @@ interface GameStore {
   startNextSeason(): void
   contactFreeAgent(teamId: TeamId, playerId: PlayerId, expectedProposalId: string): void
   submitFreeAgentOffer(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
+  /** Approaches any free agent of the universe; detected needs are never a precondition. */
+  contactFreeAgentDirectly(teamId: TeamId, playerId: PlayerId): void
+  /** Negotiated club-to-club transfer of a CONTRACTED player: every step is an explicit decision of the manager. */
+  proposeTransfer(teamId: TeamId, playerId: PlayerId, fee: number): void
+  respondTransferClubCounter(teamId: TeamId, transferId: string, action: TransferClubCounterAction): void
+  proposeTransferPlayerTerms(teamId: TeamId, transferId: string, terms: TransferPlayerTerms): void
+  respondTransferPlayerCounter(teamId: TeamId, transferId: string, action: TransferPlayerCounterAction): void
+  withdrawTransfer(teamId: TeamId, transferId: string): void
+  startTransferGovernance(teamId: TeamId, transferId: string, proposerBodyId?: string): void
+  completeTransfer(teamId: TeamId, transferId: string): void
+  /** The manager's own formal terms for a directly approached free agent. */
+  submitCustomFreeAgentOffer(teamId: TeamId, negotiationId: string, terms: { salary: number; years: number; role?: NegotiationRole }): void
   decideFreeAgentCounter(teamId: TeamId, negotiationId: string, expectedRound: number, decision: ClubCounterDecision): void
   startFreeAgentSigningGovernance(teamId: TeamId, negotiationId: string, expectedProposalId: string, proposerBodyId?: string): void
   recordFreeAgentSigningDecision(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED' | 'WITHDRAWN', bodyId: string): void
@@ -391,6 +406,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   contactFreeAgent: (teamId, playerId, expectedProposalId) => { const result = initiatePreferredFreeAgentContact(requireWorld(get().world), teamId, expectedProposalId, playerId); if (result.status === 'CREATED') set({ world: result.world, marketNotice: marketInfo('Contacto iniciado: el agente responde mañana.') }); else set({ marketNotice: result.status === 'ALREADY_EXISTS' ? marketInfo('El contacto ya estaba iniciado.') : marketRefusal(result.status, result.reason) }) },
   submitFreeAgentOffer: (teamId, negotiationId, expectedProposalId) => { const result = submitPreparedFreeAgentOffer(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SUBMITTED') set({ world: result.world, marketNotice: marketInfo('Oferta presentada: el jugador y su agente responden mañana.') }); else set({ marketNotice: result.status === 'ALREADY_SUBMITTED' ? marketInfo('La oferta ya estaba presentada.') : offerRefusal(requireWorld(get().world), teamId, negotiationId, result.status, result.reason) }) },
+  proposeTransfer: (teamId, playerId, fee) => applyTransferCommand(set, get, proposeTransferCompensation(requireWorld(get().world), { buyerTeamId: teamId, playerId, fee }), 'Propuesta enviada al club: responde mañana.'),
+  respondTransferClubCounter: (teamId, transferId, action) => applyTransferCommand(set, get, respondToTransferClubCounter(requireWorld(get().world), { teamId, transferId, action }), 'Respuesta al club registrada.'),
+  proposeTransferPlayerTerms: (teamId, transferId, terms) => applyTransferCommand(set, get, proposeTransferPlayerTerms(requireWorld(get().world), { teamId, transferId, terms }), 'Oferta presentada al jugador: responde mañana.'),
+  respondTransferPlayerCounter: (teamId, transferId, action) => applyTransferCommand(set, get, respondToTransferPlayerCounter(requireWorld(get().world), { teamId, transferId, action }), 'Respuesta al jugador registrada.'),
+  withdrawTransfer: (teamId, transferId) => applyTransferCommand(set, get, withdrawPlayerTransfer(requireWorld(get().world), { teamId, transferId }), 'Has retirado la operación: no se ha movido ni cobrado nada.'),
+  startTransferGovernance: (teamId, transferId, proposerBodyId) => { const result = startTransferGovernance(requireWorld(get().world), { teamId, transferId, ...(proposerBodyId === undefined ? {} : { proposerBodyId }) }); if (result.status === 'PROPOSED') set({ world: result.world, marketNotice: marketInfo('Autorización del traspaso solicitada al consejo: se resuelve en el siguiente día.') }); else set({ marketNotice: marketRefusal(result.status, result.reason) }) },
+  completeTransfer: (teamId, transferId) => { const result = executePlayerTransfer(requireWorld(get().world), transferId); if (result.status === 'EXECUTED') set({ world: result.world, marketNotice: marketInfo('Traspaso completado: el jugador ya pertenece a tu plantilla.') }); else set({ marketNotice: result.status === 'ALREADY_EXECUTED' ? marketInfo('El traspaso ya estaba completado.') : marketRefusal(result.status, result.reason) }) },
+  contactFreeAgentDirectly: (teamId, playerId) => { const result = contactFreeAgentDirectly(requireWorld(get().world), teamId, playerId); if (result.status === 'CREATED') set({ world: result.world, marketNotice: marketInfo('Contacto iniciado: el agente responde mañana.') }); else set({ marketNotice: result.status === 'ALREADY_EXISTS' ? marketInfo('El contacto ya estaba iniciado.') : marketRefusal(result.status, result.reason) }) },
+  submitCustomFreeAgentOffer: (teamId, negotiationId, terms) => { const result = submitCustomFreeAgentOffer(requireWorld(get().world), { teamId, negotiationId, ...terms }); if (result.status === 'SUBMITTED') set({ world: result.world, marketNotice: marketInfo('Oferta presentada: el jugador y su agente responden mañana.') }); else set({ marketNotice: result.status === 'ALREADY_SUBMITTED' ? marketInfo('La oferta ya estaba presentada.') : marketRefusal(result.status, result.reason) }) },
   decideFreeAgentCounter: (teamId, negotiationId, expectedRound, decision) => { const result = respondToNegotiationCounter(requireWorld(get().world), { teamId, negotiationId, expectedRound, decision }); if (result.status === 'APPLIED' || result.status === 'PLAYER_NOT_FREE_AGENT') set({ world: result.world, marketNotice: result.status === 'APPLIED' ? marketInfo('Respuesta a la contraoferta registrada.') : marketRefusal(result.status) }); else set({ marketNotice: marketRefusal(result.status, 'reason' in result ? result.reason : undefined) }) },
   startFreeAgentSigningGovernance: (teamId, negotiationId, expectedProposalId, proposerBodyId) => { const result = startUserPlayerContractSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId, ...(proposerBodyId === undefined ? {} : { proposerBodyId }) }); if (result.status === 'PROPOSED') set({ world: result.world, marketNotice: marketInfo('Aprobación de la firma solicitada al consejo: se resuelve en el siguiente día.') }); else set({ marketNotice: marketRefusal(result.status, result.reason) }) },
   recordFreeAgentSigningDecision: (decisionId, kind, bodyId) => { const world = requireWorld(get().world); const result = recordPlayerContractSigningDecisionEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } }); let next = result.world; const decision = next.governanceDecisionsById[decisionId]; if (result.status === 'APPROVED' && decision?.subject.kind === 'GENERIC' && decision.subject.referenceId.startsWith('retention:')) next = executeAcceptedRetentionAgreement(next, decision.subject.referenceId.slice('retention:'.length)).world; if (next !== world) set({ world: next, marketNotice: marketInfo(result.status === 'APPROVED' ? 'Aprobación registrada.' : 'Decisión registrada.') }); else set({ marketNotice: marketRefusal(result.status, result.reason) }) },
@@ -822,6 +846,12 @@ function offerRefusal(world: GameWorld, teamId: TeamId, negotiationId: string, s
     if (!decision.allowed) return marketRefusal('FINANCIAL_BLOCK', gameplayFinancialBlockReason(decision))
   }
   return marketRefusal(status, reason)
+}
+
+type StoreSet = (partial: Partial<GameStore>) => void
+function applyTransferCommand(set: StoreSet, _get: () => GameStore, result: TransferCommandResult, success: string): void {
+  if (result.status === 'APPLIED') set({ world: result.world, marketNotice: marketInfo(success) })
+  else set({ marketNotice: result.status === 'ALREADY_APPLIED' ? marketInfo('La operación ya estaba registrada.') : marketRefusal(result.status, result.reason) })
 }
 
 function requireWorld(world: GameWorld | null): GameWorld {

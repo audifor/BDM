@@ -64,6 +64,7 @@ import { createPlayerContract, getPlayerContractStatus, type PlayerContract } fr
 import { createContractServiceTimeBaseline, createContractServiceTimeCredit, type ContractServiceTimeBaseline, type ContractServiceTimeCredit } from '@/domain/contract/ContractServiceTime'
 import { createContractReviewDecision, type ContractReviewDecision, type ContractReviewDecisionId } from '@/domain/contract/ContractReviewDecision'
 import { createRetentionNegotiation, type ContractRetentionNegotiation } from '@/domain/contract/ContractRetentionNegotiation'
+import { createPlayerTransferNegotiation, type PlayerTransferNegotiation } from '@/domain/transfer'
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialReservation, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createFinancingAgreement, createFinancingDrawdown, createCapitalContribution, validateFinancingAgreementCollections, validateCapitalContributionCollections, validateCompetitionDistributionFacts, createCompetitionDistributionFact, type DebtInstrument, type FinancingAgreement, type FinancingDrawdown, type CapitalContribution, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialReservation, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement, assertOrganizationFinanceAccountShape } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
@@ -258,6 +259,8 @@ export interface GameWorld {
   readonly marketSignalsById: Readonly<Record<string, MarketSignal>>
   readonly negotiationsById: Readonly<Record<string, ContractNegotiation>>
   readonly retentionNegotiationsById: Readonly<Record<string, ContractRetentionNegotiation>>
+  /** Negotiated club-to-club transfers of contracted players (the single transfer authority; free agents never appear here). */
+  readonly playerTransferNegotiationsById: Readonly<Record<string, PlayerTransferNegotiation>>
   readonly rolePromisesById: Readonly<Record<string, RolePromise>>
   readonly staffPeopleById: Readonly<Record<StaffPersonId, StaffPerson>>
   readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
@@ -558,6 +561,7 @@ export interface CreateGameWorldInput {
   marketSignals?: readonly MarketSignal[]
   negotiations?: readonly ContractNegotiation[]
   retentionNegotiations?: readonly ContractRetentionNegotiation[]
+  playerTransferNegotiations?: readonly PlayerTransferNegotiation[]
   rolePromises?: readonly RolePromise[]
   staffPeople?: readonly StaffPerson[]
   teamStaffAssignments?: readonly TeamStaffAssignment[]
@@ -897,7 +901,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     marketTargetsById: indexById((input.marketTargets ?? []).map(createMarketTarget), 'Market target'),
     organizationPlayerAwarenessById: indexById((input.organizationPlayerAwareness ?? []).map(createOrganizationPlayerAwareness), 'Organization player awareness'),
     organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
-    agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), retentionNegotiationsById: indexById((input.retentionNegotiations ?? []).map(createRetentionNegotiation), 'Retention negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
+    agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), retentionNegotiationsById: indexById((input.retentionNegotiations ?? []).map(createRetentionNegotiation), 'Retention negotiation'), playerTransferNegotiationsById: indexById((input.playerTransferNegotiations ?? []).map(createPlayerTransferNegotiation), 'Player transfer negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
     staffPeopleById: indexById(staffPeople, 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
     responsibilitiesById: indexById(input.responsibilities ?? [], 'Responsibility'),
@@ -1338,6 +1342,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   playerRegistrations: 'playerRegistrationsById', collegeRulesets: 'collegeRulesetsById', playerEnrollments: 'playerEnrollmentsById', collegeEligibilityAssessments: 'collegeEligibilityAssessmentsById', transferPortalRulesets: 'transferPortalRulesetsById', transferPortalEntries: 'transferPortalEntriesById', athleticsAidAgreements: 'athleticsAidAgreementsById', institutionBenefitsCaps: 'institutionBenefitsCapsById', settlementBenefitsAgreements: 'settlementBenefitsAgreementsById',
   contractReviewDecisions: 'contractReviewDecisionsById',
   retentionNegotiations: 'retentionNegotiationsById',
+  playerTransferNegotiations: 'playerTransferNegotiationsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', financingAgreements: 'financingAgreementsById', financingDrawdowns: 'financingDrawdownsById', capitalContributions: 'capitalContributionsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
@@ -1361,6 +1366,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   contractServiceTimeCredits: (value) => indexById((value as readonly ContractServiceTimeCredit[]).map(createContractServiceTimeCredit), 'Contract service-time credit'),
   contractReviewDecisions: (value) => indexById((value as readonly ContractReviewDecision[]).map(createContractReviewDecision), 'Contract review decision'),
   retentionNegotiations: (value) => indexById((value as readonly ContractRetentionNegotiation[]).map(createRetentionNegotiation), 'Retention negotiation'),
+  playerTransferNegotiations: (value) => indexById((value as readonly PlayerTransferNegotiation[]).map(createPlayerTransferNegotiation), 'Player transfer negotiation'),
   financialBudgets: (value) => indexById((value as readonly FinancialBudget[]).map(createFinancialBudget), 'Financial budget'),
   budgetLines: (value) => indexById((value as readonly BudgetLine[]).map(createBudgetLine), 'Budget line'),
   budgetRevisions: (value) => indexById((value as readonly BudgetRevision[]).map(createBudgetRevision), 'Budget revision'),
@@ -1781,6 +1787,34 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
     }
   })
 
+  scope.run('25b:playerTransferNegotiationsById', () => {
+    const active = new Set<string>()
+    for (const transfer of Object.values(world.playerTransferNegotiationsById)) {
+      requireEntity(world.players, transfer.playerId, `Transfer ${transfer.id} Player`)
+      const seller = requireEntity(world.teams, transfer.sellerTeamId, `Transfer ${transfer.id} seller Team`)
+      const buyer = requireEntity(world.teams, transfer.buyerTeamId, `Transfer ${transfer.id} buyer Team`)
+      if (seller.organizationId !== transfer.sellerOrganizationId || buyer.organizationId !== transfer.buyerOrganizationId) throw new GameWorldValidationError(`Transfer ${transfer.id} organizations do not match its clubs`)
+      const sellerContract = requireEntity(world.contractsById, transfer.sellerContractId, `Transfer ${transfer.id} seller contract`)
+      if (sellerContract.playerId !== transfer.playerId || sellerContract.teamId !== transfer.sellerTeamId) throw new GameWorldValidationError(`Transfer ${transfer.id} seller contract does not belong to the seller club and player`)
+      if (transfer.status === 'IN_PROGRESS') {
+        const key = `${transfer.buyerTeamId}:${transfer.playerId}`
+        if (active.has(key)) throw new GameWorldValidationError(`Player ${transfer.playerId} has more than one active transfer negotiation for club ${transfer.buyerTeamId}`)
+        active.add(key)
+      }
+      if (transfer.status === 'EXECUTED') {
+        const execution = transfer.execution!
+        const buyerContract = requireEntity(world.contractsById, execution.buyerContractId, `Transfer ${transfer.id} buyer contract`)
+        const transaction = requireEntity(world.playerTransactionsById, playerTransactionIdFromString(execution.transactionId), `Transfer ${transfer.id} transaction`)
+        if (buyerContract.playerId !== transfer.playerId || buyerContract.teamId !== transfer.buyerTeamId
+          || sellerContract.termination?.reason !== 'transferred' || sellerContract.termination.terminatedOn !== execution.executedOn
+          || transaction.kind !== 'transferred' || transaction.fromTeamId !== transfer.sellerTeamId || transaction.toTeamId !== transfer.buyerTeamId
+          || transaction.sourceTransferId !== transfer.id || transaction.contractId !== buyerContract.id) {
+          throw new GameWorldValidationError(`Transfer ${transfer.id} execution does not match the contracts and the transaction it produced`)
+        }
+      }
+    }
+  })
+
   const rosteredPlayerIds = new Set<PlayerId>()
   const assignedCoachIds = new Set<CoachId>()
 
@@ -1994,6 +2028,10 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
       if (transaction.fromTeamId) requireEntity(world.teams, transaction.fromTeamId, `Transaction ${transaction.id} from Team`)
       if (transaction.toTeamId) requireEntity(world.teams, transaction.toTeamId, `Transaction ${transaction.id} to Team`)
       if (transaction.contractId) requireEntity(world.contractsById, transaction.contractId, `Transaction ${transaction.id} Contract`)
+      if (transaction.kind === 'transferred') {
+        if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined || transaction.sourceTransferId === undefined) throw new GameWorldValidationError(`Transfer transaction ${transaction.id} requires both clubs, the new contract and its negotiation`)
+        if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Transfer transaction ${transaction.id} contract belongs to another player`)
+      }
       if (transaction.kind === 'traded') {
         if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined) throw new GameWorldValidationError(`Trade transaction ${transaction.id} requires both teams and the transferred contract`)
         if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Trade transaction ${transaction.id} contract belongs to another player`)
@@ -2866,6 +2904,10 @@ function assertPlayerContractSigningEffect(world: GameWorld, decision: Governanc
     assertRetentionContractSigningEffect(world, decision, effectiveOn, decision.subject.referenceId.slice('retention:'.length))
     return
   }
+  if (decision.subject.referenceId.startsWith('transfer:')) {
+    assertTransferContractSigningEffect(world, decision, effectiveOn, decision.subject.referenceId)
+    return
+  }
   const negotiation = world.negotiationsById[decision.subject.referenceId]
   if (negotiation === undefined || negotiation.status !== 'SIGNED' || !('salary' in negotiation)
     || negotiation.signedGovernanceDecisionId !== decision.id || negotiation.signedOn !== effectiveOn
@@ -2913,6 +2955,30 @@ function assertPlayerContractSigningEffect(world: GameWorld, decision: Governanc
     }
   } else if (feeCommitments.length > 0) {
     throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has an unagreed agent-fee commitment`)
+  }
+}
+
+function assertTransferContractSigningEffect(world: GameWorld, decision: GovernanceDecision, effectiveOn: GameDate, transferId: string): void {
+  const transfer = world.playerTransferNegotiationsById[transferId]
+  const execution = transfer?.execution
+  if (transfer === undefined || transfer.status !== 'EXECUTED' || execution === undefined || transfer.agreedTerms === undefined
+    || execution.governanceDecisionId !== decision.id || execution.executedOn !== effectiveOn) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its executed transfer agreement`)
+  }
+  const contract = requireEntity(world.contractsById, execution.buyerContractId, `Transfer ${transfer.id} buyer contract`)
+  const institution = requireEntity(world.governanceInstitutionsById, decision.institutionId, `Transfer decision ${decision.id} institution`)
+  const terms = transfer.agreedTerms
+  if (!institution.teamIds.includes(transfer.buyerTeamId)
+    || contract.id !== contractIdFromString(`contract:transfer:${transfer.id}`)
+    || contract.playerId !== transfer.playerId || contract.teamId !== transfer.buyerTeamId || contract.term.startsOn !== effectiveOn
+    || contract.term.expiresOn !== addYears(effectiveOn, terms.years) || contract.compensation.annualSalary !== terms.salary
+    || !validCurrentContractRosterEffect(world, contract, transfer.buyerTeamId)) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} transfer contract does not match the agreed terms`)
+  }
+  const rolePromise = world.rolePromisesById[`role-promise:signed-transfer:${transfer.id}`]
+  if ((terms.role === undefined && rolePromise !== undefined) || (terms.role !== undefined && (rolePromise === undefined || rolePromise.playerId !== transfer.playerId
+    || rolePromise.teamOrganizationId !== transfer.buyerOrganizationId || rolePromise.role !== terms.role || rolePromise.acceptedOn !== effectiveOn))) {
+    throw new GameWorldValidationError(`Transfer ${transfer.id} has an invalid RolePromise effect`)
   }
 }
 

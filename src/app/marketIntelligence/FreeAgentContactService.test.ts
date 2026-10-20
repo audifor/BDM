@@ -379,7 +379,7 @@ function withAiCounteredOffer() {
   const reality = submitted.world.marketRealityByPlayerId[contact.playerId]!
   const due = updateGameWorld(submitted.world, {
     currentDate: addDays(submitted.world.currentDate, 1),
-    marketReality: [...Object.values(submitted.world.marketRealityByPlayerId).filter((item) => item.playerId !== contact.playerId), { ...reality, expectedSalary: submitted.negotiation.salary + 300_000 }],
+    marketReality: [...Object.values(submitted.world.marketRealityByPlayerId).filter((item) => item.playerId !== contact.playerId), { ...reality, expectedSalary: submitted.negotiation.salary + 20_000 }],
   })
   const counterWorld = progressFormalOfferResponses(due)
   const counter = counterWorld.negotiationsById[contact.id]

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { assessPlayerContractSigningReadiness } from '@/app/governance'
-import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence'
+import { assessRoutedFreeAgentOfferIntelligence, isDirectApproachNegotiation } from '@/app/marketIntelligence'
 import { assessFormalOfferPreparation } from '@/engine/marketIntelligence'
 import { resolveGovernanceDecisionRights } from '@/domain/governance'
 import { type PlayerId, type TeamId } from '@/domain/ids'
@@ -11,7 +11,7 @@ import { getPlayerAge, type Player } from '@/domain/player'
 import { getFreeAgents, getOrganizationKnowledge, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
-import type { NegotiationResponsibleActor } from '@/domain/market'
+import { isActiveNegotiation, type NegotiationResponsibleActor } from '@/domain/market'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
@@ -20,6 +20,7 @@ import { MarketTalentBoard } from '@/ui-ng/applications/market/MarketTalentBoard
 import { MarketPlanningBoard } from '@/ui-ng/applications/market/MarketPlanningBoard'
 import { MarketOperationsBar } from '@/ui-ng/applications/market/MarketOperationsBar'
 import { MarketNeedsStrip } from '@/ui-ng/applications/market/MarketNeedsStrip'
+import { CustomOfferForm } from '@/ui-ng/applications/market/CustomOfferForm'
 import { MarketViabilityPanel } from '@/ui-ng/applications/market/MarketViabilityPanel'
 import { buildMarketViability } from '@/ui-ng/applications/market/marketViability'
 import { buildMarketOperationsHistory } from '@/ui-ng/applications/market/marketOperationsHistory'
@@ -59,6 +60,8 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
   const contactFreeAgent = useGameStore((state) => state.contactFreeAgent)
   const submitFreeAgentOffer = useGameStore((state) => state.submitFreeAgentOffer)
+  const contactFreeAgentDirectly = useGameStore((state) => state.contactFreeAgentDirectly)
+  const submitCustomFreeAgentOffer = useGameStore((state) => state.submitCustomFreeAgentOffer)
   const decideFreeAgentCounter = useGameStore((state) => state.decideFreeAgentCounter)
   const startFreeAgentSigningGovernance = useGameStore((state) => state.startFreeAgentSigningGovernance)
   const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
@@ -194,9 +197,8 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
           </dl>
           {(() => { const known = knownMarketTerms(world, team.organizationId, selected.id)
             return <MarketViabilityPanel viability={buildMarketViability(world, team.id, { ...(known.salary === undefined ? {} : { annualSalary: known.salary }), ...(known.years === undefined ? {} : { years: known.years }) })} /> })()}
-          <FreeAgentOfferActions offer={offers.find((item) => item.playerId === selected.id)}
-            onContact={() => { const offer = offers.find((item) => item.playerId === selected.id)
-              if (offer !== undefined) { contactFreeAgent(team.id, selected.id, offer.sourceProposalId); setSelectedId(undefined); setActiveTab('operations') } }} />
+          <FreeAgentOfferActions world={world} teamId={team.id} playerId={selected.id} recommended={offers.some((item) => item.playerId === selected.id && item.outcome === 'FREE_AGENT_OFFER')}
+            onContact={() => { contactFreeAgentDirectly(team.id, selected.id); setSelectedId(undefined); setActiveTab('operations') }} />
         </section>
       </div> : null}
       {activeTab === 'operations' ? <section aria-label="Free-agent negotiations" className="market-negotiations">
@@ -235,7 +237,12 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
               {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn) !== undefined && <p>Offer submitted by: {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn)}</p>}
               <p>Negotiation: {negotiation.status}{'salary' in negotiation && negotiation.salary !== undefined ? ` · ${formatMoney(negotiation.salary)} / ${negotiation.years} years` : ''}</p>
               {negotiation.status === 'CONTACTED' && negotiation.contactResponse?.outcome === 'OPEN_TO_TALKS' && (
-                <>
+                isDirectApproachNegotiation(negotiation)
+                  ? <CustomOfferForm world={world} teamId={team.id} negotiationId={negotiation.id}
+                    {...(knownMarketTerms(world, team.organizationId, negotiation.playerId).salary === undefined ? {} : { defaultSalary: knownMarketTerms(world, team.organizationId, negotiation.playerId).salary })}
+                    {...(knownMarketTerms(world, team.organizationId, negotiation.playerId).years === undefined ? {} : { defaultYears: knownMarketTerms(world, team.organizationId, negotiation.playerId).years })}
+                    onSubmit={(terms) => submitCustomFreeAgentOffer(team.id, negotiation.id, terms)} />
+                  : <>
                   <p>Offer preparation: {preparation === undefined ? 'NOT_CURRENT · the club can no longer recommend this approach (see the economic viability above)' : `${preparation.readiness}${preparation.blockers.length > 0 ? ` · ${preparation.blockers.join(', ')}` : ''}`}</p>
                   <button className={preparation?.readiness === 'READY_TO_SUBMIT_OFFER' ? undefined : 'is-blocked'} onClick={() => submitFreeAgentOffer(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Submit prepared offer</button>
                 </>
@@ -281,18 +288,18 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
   )
 }
 
-function FreeAgentOfferActions({ offer, onContact }: {
-  readonly offer: ReturnType<typeof assessRoutedFreeAgentOfferIntelligence>[number] | undefined
+function FreeAgentOfferActions({ world, teamId, playerId, recommended, onContact }: {
+  readonly world: GameWorld
+  readonly teamId: TeamId
+  readonly playerId: PlayerId
+  readonly recommended: boolean
   readonly onContact: () => void
 }) {
-  const activeContact = offer?.existingNegotiation
+  const activeContact = Object.values(world.negotiationsById).find((item) => item.teamId === teamId && item.playerId === playerId && isActiveNegotiation(item))
   if (activeContact !== undefined) return <p>Contact status: {activeContact.status}</p>
-  if (offer === undefined) return <p>Contact unavailable: this player is not in the current feasible BS10 acquisition recommendations.</p>
   return <div>
-    <p>Contact readiness: {offer.contactReadiness}</p>
-    {offer.contactReadiness === 'READY_TO_CONTACT'
-      ? <button onClick={onContact} type="button">Contact player</button>
-      : <p>Contact blocker: {offer.blockers.join(', ') || offer.contactAuthority.blockers.join(', ') || 'Current proposal is unavailable.'}</p>}
+    <p>{recommended ? 'Encaja con una necesidad detectada de la plantilla.' : 'No responde a una necesidad detectada: las necesidades son una recomendación, no un requisito.'}</p>
+    <button onClick={onContact} type="button">Contact player</button>
   </div>
 }
 

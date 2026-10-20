@@ -177,15 +177,44 @@ export function deriveFormalOfferResponse(world: GameWorld, negotiationId: strin
   const negotiation = world.negotiationsById[negotiationId]
   if (negotiation?.status !== 'OPEN' || (negotiation.offerSubmittedOn !== undefined && negotiation.offerSubmittedOn >= date)) return undefined
   if (!isPlayerFreeAgent(world, negotiation.playerId)) return undefined
-  const reality = world.marketRealityByPlayerId[negotiation.playerId]
-  if (reality === undefined || !Number.isSafeInteger(reality.expectedSalary) || reality.expectedSalary < 1) return undefined
-  if (negotiation.salary >= reality.expectedSalary) return { outcome: 'ACCEPTED', respondedOn: date, origin: 'PLAYER' }
+  return derivePlayerTermsResponse(world, negotiation, date)
+}
 
-  const agent = negotiation.agentId === undefined
-    ? agentForPlayer(world, negotiation.playerId)
-    : world.agentsById[negotiation.agentId]
+export interface PlayerTermsProposal {
+  readonly playerId: PlayerId
+  readonly salary: number
+  readonly years: number
+  readonly role?: NegotiationRole
+  readonly agentFee?: number
+  readonly agentId?: import('@/domain/ids').AgentId
+  readonly round?: number
+}
+
+/**
+ * The single player/agent answer to proposed terms, from the hidden MarketReality and the agent's own negotiation traits. It is the
+ * engine behind free-agent offers AND behind the player stage of a club-to-club transfer: terms at or above the player's real ask are
+ * accepted; below it the representative counters (never under the real ask); a player without representation rejects. No probability
+ * is invented here: willingness and expectations are the seeded market truth, the pressure comes from the agent's abilities.
+ */
+export function derivePlayerTermsResponse(world: GameWorld, proposal: PlayerTermsProposal, date: GameDate): DerivedFormalOfferResponse | undefined {
+  const reality = world.marketRealityByPlayerId[proposal.playerId]
+  if (reality === undefined || !Number.isSafeInteger(reality.expectedSalary) || reality.expectedSalary < 1) return undefined
+  if (proposal.salary >= reality.expectedSalary) return { outcome: 'ACCEPTED', respondedOn: date, origin: 'PLAYER' }
+
+  const agent = proposal.agentId === undefined
+    ? agentForPlayer(world, proposal.playerId)
+    : world.agentsById[proposal.agentId]
   if (agent === undefined) return { outcome: 'REJECTED', respondedOn: date, origin: 'PLAYER' }
-  const counter = agentCounter(negotiation, agent)
+  const asNegotiation = {
+    id: 'terms-proposal', organizationId: '' as OrganizationId, playerId: proposal.playerId, status: 'OPEN' as const,
+    salary: proposal.salary, years: proposal.years, round: proposal.round ?? 0,
+    ...(proposal.role === undefined ? {} : { role: proposal.role }),
+    ...(proposal.agentFee === undefined ? {} : { agentFee: proposal.agentFee }),
+  } satisfies ContractNegotiation
+  const pressured = agentCounter(asNegotiation, agent)
+  // The agent never counters below the player's real ask: an offer under the ask is answered with that ask (or more), so a counter
+  // can always be accepted knowing it satisfies the player, and a below-ask offer is never silently accepted at the offered price.
+  const counter = pressured.status === 'COUNTERED' && pressured.salary < reality.expectedSalary ? { ...pressured, salary: reality.expectedSalary } : pressured
   if (counter.status !== 'COUNTERED' || !Number.isSafeInteger(counter.salary) || counter.salary < 1 || counter.salary > 100_000_000
     || (counter.agentFee !== undefined && (!Number.isSafeInteger(counter.agentFee) || counter.agentFee < 0))) {
     return { outcome: 'REJECTED', respondedOn: date, origin: 'PLAYER' }
