@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import type { PlayerId, TeamId } from '@/domain/ids'
@@ -20,6 +20,8 @@ import { createF3Day0, f3AdvanceDay, f3AdvanceDays, f3SignFirstViable, f3Store, 
  * F3 · mercado, contratos y finanzas sobre la partida real de New Game ACB 2026/27 (UCAM Murcia, tras el primer partido). Cada decisión
  * es una acción del store de Courtside; los días pasan por la frontera diaria de producción. Nada se escribe en el mundo a mano.
  */
+// These tests play real days (matches, Board, signing) on a 16-club league: slow runners need more than the 30 s CI default, as the F2 suites do.
+vi.setConfig({ testTimeout: 600_000, hookTimeout: 900_000 })
 const savedAt = '2026-10-27T09:00:00.000Z'
 const memoryRepository = (): GameSaveRepository & { file: string } => {
   const repository = { file: '', save: async (json: string) => { repository.file = json }, load: async () => repository.file, getInfo: async () => ({ savedAt }) }

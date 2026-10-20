@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { getPlayerContractStatus } from '@/domain/contract'
 import { addYears, parseGameDate } from '@/domain/date'
 import { getContractFinancialSchedule } from '@/domain/finance'
@@ -25,6 +25,8 @@ import { createF3Day0, f3AdvanceDay, f3AdvanceDays, f3SignFirstViable, f3SignFre
  * Los escenarios que el mundo no produce por sí solo (una contraoferta, una autorización reducida) usan fixtures canónicas
  * complementarias, identificadas como tales en cada test; el resto son acciones del store y días reales.
  */
+// These tests play real days (matches, Board, signing) on a 16-club league: slow runners need more than the 30 s CI default, as the F2 suites do.
+vi.setConfig({ testTimeout: 600_000, hookTimeout: 900_000 })
 const savedAt = '2026-10-27T09:00:00.000Z'
 const memoryRepository = (): GameSaveRepository & { file: string } => {
   const repository = { file: '', save: async (json: string) => { repository.file = json }, load: async () => repository.file, getInfo: async () => ({ savedAt }) }
