@@ -1,0 +1,559 @@
+{
+  "platform": "Windows Tauri debug executable, embedded production frontend (no Vite)",
+  "exe": "C:/BDM/src-tauri/target/debug/bdm.exe",
+  "userSaveSha256Before": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "startingSave": {
+    "payloadSha256": "70b12b7f45dc8a4491a08eb3a193339a71d014b2ab5ce70ce0426cb25a04d301",
+    "completedGames": 1,
+    "userGames": [
+      "2026-09-26 76-102"
+    ],
+    "uniqueCompletedGames": 1,
+    "statLogs": 1,
+    "userSessionsCompleted": 0,
+    "userSessionDates": [],
+    "userSessionModules": [],
+    "uniqueSessions": 0,
+    "sessionsWithoutEvidence": 0,
+    "positiveFatigueDeltas": 0,
+    "negativeFatigueDeltas": 0,
+    "stimulusEvents": 6410,
+    "uniqueStimulusEvents": 6410,
+    "userCohesion": 50,
+    "responsibilities": [],
+    "delegationOutcomes": 0
+  },
+  "afterFirstWeek": {
+    "completedGames": 9,
+    "userGames": [
+      "2026-09-26 76-102"
+    ],
+    "uniqueCompletedGames": 9,
+    "statLogs": 9,
+    "userSessionsCompleted": 5,
+    "userSessionDates": [
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01"
+    ],
+    "userSessionModules": [
+      "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+      "2026-09-28 team Defensive System->Defensive System",
+      "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+      "2026-09-30 team Offensive System->Offensive System",
+      "2026-10-01 team Active Recovery->Active Recovery"
+    ],
+    "uniqueSessions": 5,
+    "sessionsWithoutEvidence": 0,
+    "positiveFatigueDeltas": 49,
+    "negativeFatigueDeltas": 16,
+    "stimulusEvents": 7123,
+    "uniqueStimulusEvents": 7123,
+    "userCohesion": 54,
+    "responsibilities": [
+      "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+    ],
+    "delegationOutcomes": 1
+  },
+  "medicalFatigueByPlayer": {
+    "medical profile for Jonah Radebaugh": 3.4,
+    "medical profile for Howard Sant-Roos": 2.4,
+    "medical profile for Kaiser Gates": 0.6,
+    "medical profile for David DeJulius": 0,
+    "medical profile for Dylan Ennis": 0,
+    "medical profile for Emmanuel Cate": 0,
+    "medical profile for Jean-Marc Pansa": 0,
+    "medical profile for Juani Marcos": 0,
+    "medical profile for Marcis Steinbergs": 0,
+    "medical profile for Michael Forrest": 0,
+    "medical profile for Moussa Diagne": 0,
+    "medical profile for Rubén López de la Torre": 0,
+    "medical profile for Sander Raieste": 0,
+    "medical profile for Souley Boum": 0,
+    "medical profile for Toni Nakic": 0,
+    "medical profile for Wilhelm Falk": 0
+  },
+  "rotationDecision": {
+    "tired": "Jonah Radebaugh",
+    "tiredFatigue": 3.42,
+    "fresh": "Emmanuel Cate",
+    "freshFatigue": 0,
+    "lineup": [
+      "Emmanuel Cate",
+      "Howard Sant-Roos",
+      "Souley Boum",
+      "Kaiser Gates",
+      "Jean-Marc Pansa"
+    ]
+  },
+  "game1": {
+    "gameId": "schedule-acb-season-2026-27-game-0011",
+    "score": [
+      72,
+      74
+    ]
+  },
+  "game2": {
+    "gameId": "schedule-acb-season-2026-27-game-0019",
+    "score": [
+      94,
+      73
+    ]
+  },
+  "standingsRow": [
+    "3",
+    "2",
+    "1",
+    "249",
+    "242",
+    "+7",
+    ".667"
+  ],
+  "midWindow": {
+    "payloadSha256": "a0f8e567a03845960206dde2c06cd72ad4e357d405884129dfff1ca6df82fe95",
+    "payloadIdenticalAfterRestart": true,
+    "completedGames": 19,
+    "userGames": [
+      "2026-09-26 76-102",
+      "2026-10-03 72-74",
+      "2026-10-10 94-73"
+    ],
+    "uniqueCompletedGames": 19,
+    "statLogs": 19,
+    "userSessionsCompleted": 10,
+    "userSessionDates": [
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09"
+    ],
+    "userSessionModules": [
+      "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+      "2026-09-28 team Defensive System->Defensive System",
+      "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+      "2026-09-30 team Offensive System->Offensive System",
+      "2026-10-01 team Active Recovery->Active Recovery",
+      "2026-10-05 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-06 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-07 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-08 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-09 team Three-Point Shooting->Three-Point Shooting"
+    ],
+    "uniqueSessions": 10,
+    "sessionsWithoutEvidence": 0,
+    "positiveFatigueDeltas": 129,
+    "negativeFatigueDeltas": 16,
+    "stimulusEvents": 7901,
+    "uniqueStimulusEvents": 7901,
+    "userCohesion": 54,
+    "responsibilities": [
+      "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+    ],
+    "delegationOutcomes": 1
+  },
+  "game3": {
+    "gameId": "schedule-acb-season-2026-27-game-0029",
+    "score": [
+      80,
+      84
+    ]
+  },
+  "game4": {
+    "gameId": "schedule-acb-season-2026-27-game-0039",
+    "score": [
+      60,
+      109
+    ]
+  },
+  "finalSave": {
+    "payloadSha256": "604a7eb59d7ea12b62cabe9991380b0724f8e34e414efb99dc225bfe64c1115c",
+    "completedGames": 45,
+    "userGames": [
+      "2026-09-26 76-102",
+      "2026-10-03 72-74",
+      "2026-10-10 94-73",
+      "2026-10-17 80-84",
+      "2026-10-24 60-109"
+    ],
+    "uniqueCompletedGames": 45,
+    "statLogs": 45,
+    "userSessionsCompleted": 23,
+    "userSessionDates": [
+      "2026-09-27",
+      "2026-09-28",
+      "2026-09-29",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-11",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+      "2026-10-15",
+      "2026-10-16",
+      "2026-10-18",
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-25"
+    ],
+    "userSessionModules": [
+      "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+      "2026-09-28 team Defensive System->Defensive System",
+      "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+      "2026-09-30 team Offensive System->Offensive System",
+      "2026-10-01 team Active Recovery->Active Recovery",
+      "2026-10-05 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-06 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-07 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-08 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-09 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-11 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-12 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-13 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-14 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-15 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-16 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-18 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-19 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-20 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-21 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-22 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-23 team Three-Point Shooting->Three-Point Shooting",
+      "2026-10-25 team Three-Point Shooting->Three-Point Shooting"
+    ],
+    "uniqueSessions": 23,
+    "sessionsWithoutEvidence": 0,
+    "positiveFatigueDeltas": 337,
+    "negativeFatigueDeltas": 16,
+    "stimulusEvents": 9838,
+    "uniqueStimulusEvents": 9838,
+    "userCohesion": 54,
+    "responsibilities": [
+      "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+    ],
+    "delegationOutcomes": 1
+  },
+  "steps": [
+    {
+      "id": 1,
+      "title": "Cargar una partida F1 válida (carrera ACB creada, primer partido disputado, guardada y recargada tras reiniciar)",
+      "result": "PASS",
+      "ms": 34044
+    },
+    {
+      "id": 2,
+      "title": "Periodo seleccionado y calendario: próximos encuentros del club desde Home y el calendario",
+      "result": "PASS",
+      "ms": 122,
+      "detail": {
+        "window": "2026-09-26 → 2026-10-26 (30 días)",
+        "userFixtures": [
+          "03 OCT Valencia Basket",
+          "10 OCT Asisa Joventut",
+          "17 OCT Río Breogán",
+          "24 OCT Real Madrid"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "Training Studio: programar entrenamientos (sesión de equipo, táctica, recuperación) y generar semanas automáticas",
+      "result": "PASS",
+      "ms": 20915
+    },
+    {
+      "id": 4,
+      "title": "Objetivo individual: asignar un ejercicio a un jugador y fijar su objetivo de desarrollo",
+      "result": "PASS",
+      "ms": 2911,
+      "detail": {
+        "player": "David DeJulius"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Staff: delegar el desarrollo individual en un responsable (Asignaciones)",
+      "result": "PASS",
+      "ms": 9394,
+      "detail": {
+        "candidate": "SA Staff119 assistantCoach-istantCoach1 ASSISTANT COACH Coaching 92 · Tactical 8",
+        "row": "Assign Individual Development Staff119 assistantCoach-istantCoach1 OK ASIGNAR / CAMBIAR ↗"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Training > Staff refleja la delegación canónica (herramientas detalladas)",
+      "result": "PASS",
+      "ms": 6877
+    },
+    {
+      "id": 7,
+      "title": "Avanzar varios días (CONTINUE hasta el primer partido, 3 de octubre) y comprobar que las sesiones programadas se ejecutaron",
+      "result": "PASS",
+      "ms": 16152,
+      "detail": {
+        "completedGames": 9,
+        "userGames": [
+          "2026-09-26 76-102"
+        ],
+        "uniqueCompletedGames": 9,
+        "statLogs": 9,
+        "userSessionsCompleted": 5,
+        "userSessionDates": [
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30",
+          "2026-10-01"
+        ],
+        "userSessionModules": [
+          "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+          "2026-09-28 team Defensive System->Defensive System",
+          "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+          "2026-09-30 team Offensive System->Offensive System",
+          "2026-10-01 team Active Recovery->Active Recovery"
+        ],
+        "uniqueSessions": 5,
+        "sessionsWithoutEvidence": 0,
+        "positiveFatigueDeltas": 49,
+        "negativeFatigueDeltas": 16,
+        "stimulusEvents": 7123,
+        "uniqueStimulusEvents": 7123,
+        "userCohesion": 54,
+        "responsibilities": [
+          "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+        ],
+        "delegationOutcomes": 1
+      }
+    },
+    {
+      "id": 8,
+      "title": "Consecuencias en Training (RESULTADOS) y Medical (fatiga) coherentes con las sesiones",
+      "result": "PASS",
+      "ms": 8454,
+      "detail": {
+        "medicalAverageFatigue": 0.4,
+        "players": 16
+      }
+    },
+    {
+      "id": 9,
+      "title": "Rotaciones según disponibilidad y fatiga: guardar quinteto y banquillo descansando al titular más cargado",
+      "result": "PASS",
+      "ms": 19285,
+      "detail": {
+        "tired": "Jonah Radebaugh",
+        "tiredFatigue": 3.42,
+        "fresh": "Emmanuel Cate",
+        "freshFatigue": 0,
+        "lineup": [
+          "Emmanuel Cate",
+          "Howard Sant-Roos",
+          "Souley Boum",
+          "Kaiser Gates",
+          "Jean-Marc Pansa"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "title": "Disputar el primer partido de la ventana (3 oct) y comprobar que el quinteto guardado abre el acta",
+      "result": "PASS",
+      "ms": 6906,
+      "detail": {
+        "gameId": "schedule-acb-season-2026-27-game-0011",
+        "score": [
+          72,
+          74
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "title": "Continuar hasta el segundo partido (10 oct) con el plan semanal ejecutado y disputarlo",
+      "result": "PASS",
+      "ms": 18346
+    },
+    {
+      "id": 12,
+      "title": "Resultados y clasificación en Competition",
+      "result": "PASS",
+      "ms": 8094
+    },
+    {
+      "id": 13,
+      "title": "Guardar y cerrar; volver a cargar y comprobar que todo se conserva",
+      "result": "PASS",
+      "ms": 18128,
+      "detail": {
+        "completedGames": 19,
+        "userGames": [
+          "2026-09-26 76-102",
+          "2026-10-03 72-74",
+          "2026-10-10 94-73"
+        ],
+        "uniqueCompletedGames": 19,
+        "statLogs": 19,
+        "userSessionsCompleted": 10,
+        "userSessionDates": [
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09"
+        ],
+        "userSessionModules": [
+          "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+          "2026-09-28 team Defensive System->Defensive System",
+          "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+          "2026-09-30 team Offensive System->Offensive System",
+          "2026-10-01 team Active Recovery->Active Recovery",
+          "2026-10-05 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-06 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-07 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-08 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-09 team Three-Point Shooting->Three-Point Shooting"
+        ],
+        "uniqueSessions": 10,
+        "sessionsWithoutEvidence": 0,
+        "positiveFatigueDeltas": 129,
+        "negativeFatigueDeltas": 16,
+        "stimulusEvents": 7901,
+        "uniqueStimulusEvents": 7901,
+        "userCohesion": 54,
+        "responsibilities": [
+          "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+        ],
+        "delegationOutcomes": 1
+      }
+    },
+    {
+      "id": 14,
+      "title": "Cargar y continuar hasta completar los 30 días: partidos del 17 y 24 de octubre y fecha final 26 de octubre",
+      "result": "PASS",
+      "ms": 43122
+    },
+    {
+      "id": 15,
+      "title": "Sin sesiones, eventos ni encuentros duplicados al terminar los 30 días (Save V4 nativo)",
+      "result": "PASS",
+      "ms": 4879,
+      "detail": {
+        "completedGames": 45,
+        "userGames": [
+          "2026-09-26 76-102",
+          "2026-10-03 72-74",
+          "2026-10-10 94-73",
+          "2026-10-17 80-84",
+          "2026-10-24 60-109"
+        ],
+        "uniqueCompletedGames": 45,
+        "statLogs": 45,
+        "userSessionsCompleted": 23,
+        "userSessionDates": [
+          "2026-09-27",
+          "2026-09-28",
+          "2026-09-29",
+          "2026-09-30",
+          "2026-10-01",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-11",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-18",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-25"
+        ],
+        "userSessionModules": [
+          "2026-09-27 individual Three-Point Shooting->Defensive Awareness",
+          "2026-09-28 team Defensive System->Defensive System",
+          "2026-09-29 team Three-Point Shooting->Three-Point Shooting",
+          "2026-09-30 team Offensive System->Offensive System",
+          "2026-10-01 team Active Recovery->Active Recovery",
+          "2026-10-05 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-06 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-07 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-08 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-09 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-11 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-12 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-13 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-14 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-15 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-16 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-18 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-19 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-20 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-21 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-22 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-23 team Three-Point Shooting->Three-Point Shooting",
+          "2026-10-25 team Three-Point Shooting->Three-Point Shooting"
+        ],
+        "uniqueSessions": 23,
+        "sessionsWithoutEvidence": 0,
+        "positiveFatigueDeltas": 337,
+        "negativeFatigueDeltas": 16,
+        "stimulusEvents": 9838,
+        "uniqueStimulusEvents": 9838,
+        "userCohesion": 54,
+        "responsibilities": [
+          "assignIndividualDevelopment:delegated:acb-staff-sandbox-v1:team:acb-team-ucm:assistantCoach:1"
+        ],
+        "delegationOutcomes": 1
+      }
+    },
+    {
+      "id": 16,
+      "title": "Las decisiones siguen reflejándose en Courtside tras guardar, cerrar y cargar",
+      "result": "PASS",
+      "ms": 23854,
+      "detail": {
+        "delegation": "Assign Individual Development Staff119 assistantCoach-istantCoach1 OK ASIGNAR / CAMBIAR ↗",
+        "completedSessions": 23
+      }
+    },
+    {
+      "id": 17,
+      "title": "Aviso médico → decisión: una revisión de alta vencida detiene Continue, enruta a Medical, se resuelve y el jugador vuelve al partido",
+      "result": "PASS",
+      "ms": 26041,
+      "detail": {
+        "clearedOn": "2026-10-07"
+      }
+    }
+  ],
+  "consoleErrors": [],
+  "userSaveSha256After": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "userSaveRestored": true
+}

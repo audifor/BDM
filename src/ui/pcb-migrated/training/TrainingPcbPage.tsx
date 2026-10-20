@@ -9,7 +9,7 @@ import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
 import { isTrainingStaffRoleEligible, type StaffRoleId } from "@/domain/staff";
-import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
+import { RESPONSIBILITY_KIND_LABELS, RESPONSIBILITY_MODE_LABELS, STAFF_ROLE_LABELS, getTeamResponsibilityPresentation } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
 import { TRAINING_CATALOG, sessionsForTrainingWeek, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
@@ -127,10 +127,10 @@ const LOAD_TRAINING_COLUMNS: readonly PrecisionDivColumn[] = [
   { id: "ESTADO", label: "ESTADO", width: 160 },
 ];
 const STAFF_TRAINING_COLUMNS: readonly PrecisionDivColumn[] = [
-  { id: "staff", label: "Staff", width: 260 },
+  { id: "staff", label: "Responsable", width: 260 },
   { id: "role", label: "Rol", width: 210 },
-  { id: "area", label: "Área", width: 220 },
-  { id: "group", label: "Grupo", width: 220 },
+  { id: "area", label: "Función", width: 260 },
+  { id: "group", label: "Modo", width: 180 },
 ];
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
@@ -1252,19 +1252,17 @@ function Bar({ value }: { readonly value: number }) {
 function StaffAssignments({ world }: { readonly world?: GameWorld }) {
   const grid = usePrecisionDivGrid("ng-training-staff", STAFF_TRAINING_COLUMNS);
   const team = world === undefined ? undefined : getUserTeam(world);
-  const responsibilities = world !== undefined && team !== undefined ? world.trainingResponsibilitiesByTeamId[team.id] : undefined;
-  const rows = responsibilities === undefined
+  // The canonical authority is `responsibilitiesById` (Staff > Asignaciones); the legacy `trainingResponsibilitiesByTeamId` map is retired.
+  const rows = world === undefined || team === undefined
     ? []
-    : (Object.entries(responsibilities) as [string, string][])
-      .filter(([, staffId]) => staffId !== undefined)
-      .map(([role, staffId]) => ({ role, staff: world?.staffPeopleById[staffId as never] }))
-      .filter((row): row is { readonly role: string; readonly staff: NonNullable<typeof row.staff> } => row.staff !== undefined);
+    : getTeamResponsibilityPresentation(world, team.id).filter((item) => item.domain === "training");
+  const delegated = rows.filter((row) => row.holderStaffId !== undefined).length;
   return (
     <main className="pcb-training__bento">
       <section className="pcb-training__card">
         <header className="pcb-training__card-head">
           <h2>Staff Assignments</h2>
-          <span>{rows.length === 0 ? "Sin datos de plantilla técnica" : `${rows.length} asignaciones`}</span>
+          <span>{rows.length === 0 ? "Sin datos de plantilla técnica" : `${delegated} de ${rows.length} funciones delegadas · se cambian en Staff › Asignaciones`}</span>
         </header>
         <div className="pcb-training__table pcb-training__staff ng-precision-grid">
           <div className="is-head" style={grid.style}>
@@ -1281,15 +1279,15 @@ function StaffAssignments({ world }: { readonly world?: GameWorld }) {
           {rows.length === 0 ? (
             <p>No hay asignaciones de staff disponibles todavía.</p>
           ) : (
-            rows.map(({ role, staff }) => {
+            rows.map((row) => {
               const cells: Record<string, ReactNode> = {
-                staff: <b>{staff.identity.firstName} {staff.identity.lastName}</b>,
-                role: <span>{role}</span>,
-                area: <span>Entrenamiento</span>,
-                group: <span>{team?.name ?? "—"}</span>,
+                staff: <b>{row.holderName ?? "Sin responsable"}</b>,
+                role: <span>{row.holderRole === undefined ? "—" : STAFF_ROLE_LABELS[row.holderRole]}</span>,
+                area: <span>{RESPONSIBILITY_KIND_LABELS[row.kind]}</span>,
+                group: <span>{RESPONSIBILITY_MODE_LABELS[row.mode]}</span>,
               };
               return (
-                <div key={role} style={grid.style}>
+                <div key={row.kind} style={grid.style}>
                   {grid.ordered.map((column) => (
                     <Fragment key={column.id}>{cells[column.id]}</Fragment>
                   ))}
