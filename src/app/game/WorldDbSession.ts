@@ -8,7 +8,7 @@ import {
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
-import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
+import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import {
   createWorldCompetitionCatalog,
   requireWorldCompetitionFormat,
@@ -150,6 +150,11 @@ export class WorldDbSessionV1 {
   }
 
   async bootstrapGameWorld(selection: WorldDbGameBootstrapSelectionV1, calendarPolicy?: CompetitionCalendarPolicy): Promise<GameWorld> {
+    return (await this.bootstrapGameWorldWithSlice(selection, calendarPolicy)).world
+  }
+
+  /** Same bootstrap, also returning the loaded slice (contracts, finance and professionals the GameWorld does not hold). */
+  async bootstrapGameWorldWithSlice(selection: WorldDbGameBootstrapSelectionV1, calendarPolicy?: CompetitionCalendarPolicy, referenceDate?: string): Promise<{ readonly world: GameWorld; readonly slice: WorldDbGameBootstrapSliceV1 }> {
     this.requireOpen()
     const catalog = await this.discoverSelectionCatalog()
     validateWorldDbGameBootstrapSelectionV1(catalog, selection)
@@ -160,7 +165,7 @@ export class WorldDbSessionV1 {
     }
     if (slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error(`World DB bootstrap competition season mismatch: expected ${selection.competitionSeasonId}, received ${slice.season.competitionSeasonId}`)
     const format = requireWorldCompetitionFormat(this.requireCatalog(), selection.competitionSeasonId)
-    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format, calendarPolicy)
+    return { world: bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format, calendarPolicy, referenceDate), slice }
   }
 
   /**

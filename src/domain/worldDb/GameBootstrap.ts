@@ -87,6 +87,41 @@ export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonl
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
 export interface WorldDbGameBootstrapRosterAssignmentV1 { readonly rosterId: string; readonly teamId: string; readonly playerId: string; readonly status: string }
 
+/** A World DB staff role BDM has no equivalent for. Reported, never mapped to another role. */
+export interface WorldDbGameBootstrapUnmappedStaffAssignmentV1 { readonly assignmentId: string; readonly personId: string; readonly teamId: string; readonly roleCode: string }
+export interface WorldDbGameBootstrapContractTermV1 { readonly seasonLabel: string; readonly termType: string; readonly amountCents: number; readonly guaranteedCents: number }
+/** Employment contract of a loaded player or staff member; money in minor units of `currencyCode`. */
+export interface WorldDbGameBootstrapContractV1 {
+  readonly contractId: string
+  readonly kind: 'PLAYER' | 'STAFF'
+  readonly personId: string
+  readonly organizationId: string
+  readonly teamId: string
+  readonly status: string
+  readonly signedOn: string | null
+  readonly effectiveFrom: string
+  readonly effectiveTo: string
+  readonly currencyCode: string
+  readonly terms: readonly WorldDbGameBootstrapContractTermV1[]
+}
+export interface WorldDbGameBootstrapOrganizationFinanceV1 {
+  readonly organizationId: string
+  readonly currencyCode: string
+  readonly openingCashCents: number | null
+  readonly openingOn: string | null
+  readonly budgets: readonly { readonly budgetType: string; readonly seasonLabel: string; readonly amountCents: number }[]
+  readonly revenueStreams: readonly { readonly streamType: string; readonly annualAmountCents: number }[]
+  readonly annualExpenseCommitmentsCents: number
+}
+/** People of the universe BDM has no runtime actor for yet; carried so the import loses nothing. */
+export interface WorldDbGameBootstrapProfessionalsV1 {
+  readonly executives: readonly { readonly assignmentId: string; readonly personId: string; readonly organizationId: string; readonly roleCode: string }[]
+  readonly agentRepresentations: readonly { readonly agentPersonId: string; readonly clientPersonId: string; readonly status: string }[]
+  readonly agentCount: number
+  readonly officialCount: number
+  readonly mediaCount: number
+}
+
 /** Persisted fixtures are optional. Spain 2025-26 currently has none; the app derives B04 games. */
 export interface WorldDbGameBootstrapMatchV1 { readonly matchId: string; readonly scheduledAt: string | null; readonly playedAt: string | null; readonly status: 'SCHEDULED' | 'COMPLETED' | string; readonly homeTeamId: string; readonly awayTeamId: string; readonly homeScore?: number | null; readonly awayScore?: number | null }
 
@@ -110,6 +145,11 @@ export interface WorldDbGameBootstrapSliceV1 {
   readonly staffAssignments: readonly WorldDbGameBootstrapStaffAssignmentV1[]
   readonly rosterAssignments: readonly WorldDbGameBootstrapRosterAssignmentV1[]
   readonly matches: readonly WorldDbGameBootstrapMatchV1[]
+  /** Added by the multi-competition universe import; absent in earlier native payloads. */
+  readonly unmappedStaffAssignments?: readonly WorldDbGameBootstrapUnmappedStaffAssignmentV1[]
+  readonly contracts?: readonly WorldDbGameBootstrapContractV1[]
+  readonly finance?: readonly WorldDbGameBootstrapOrganizationFinanceV1[]
+  readonly professionals?: WorldDbGameBootstrapProfessionalsV1
 }
 
 export function validateWorldDbGameBootstrapSelectionV1(catalog: import('./SelectionCatalog').WorldDbSelectionCatalogV1, selection: WorldDbGameBootstrapSelectionV1): void {
@@ -172,10 +212,34 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
     ...((value.players as Record<string, unknown>[]).map((entry) => entry.personId as string)),
     ...((value.staffProfiles as Record<string, unknown>[]).map((entry) => entry.personId as string)),
   ])
-  for (const person of value.persons as Record<string, unknown>[]) if (profiledPersonIds.has(person.personId as string) && (person.gender === undefined || person.dateOfBirth === undefined || !isRecord(person.physical))) throw new TypeError(`World DB bootstrap profiled person is incomplete: ${String(person.personId)}`)
+  for (const person of value.persons as Record<string, unknown>[]) if (profiledPersonIds.has(person.personId as string) && (person.gender === undefined || person.dateOfBirth === undefined || ((value.players as Record<string, unknown>[]).some((player) => player.personId === person.personId) && !isRecord(person.physical)))) throw new TypeError(`World DB bootstrap profiled person is incomplete: ${String(person.personId)}`)
   assertArray(value.staffAssignments, 'staffAssignments', (entry) => { for (const field of ['assignmentId', 'staffId', 'teamId', 'roleCode', 'assignedOn'] as const) requireText(entry[field], `World DB bootstrap staff assignment ${field}`) }, 'assignmentId')
   assertArray(value.rosterAssignments, 'rosterAssignments', (entry) => { for (const field of ['rosterId', 'teamId', 'playerId', 'status'] as const) requireText(entry[field], `World DB bootstrap roster assignment ${field}`) }, undefined)
   assertArray(value.matches, 'matches', (entry) => { for (const field of ['matchId', 'status', 'homeTeamId', 'awayTeamId'] as const) requireText(entry[field], `World DB bootstrap match ${field}`) }, 'matchId')
+  assertArray(value.unmappedStaffAssignments ?? [], 'unmappedStaffAssignments', (entry) => { for (const field of ['assignmentId', 'personId', 'teamId', 'roleCode'] as const) requireText(entry[field], `World DB bootstrap unmapped staff ${field}`) }, 'assignmentId')
+  assertArray(value.contracts ?? [], 'contracts', (entry) => {
+    for (const field of ['contractId', 'personId', 'organizationId', 'teamId', 'status', 'effectiveFrom', 'effectiveTo', 'currencyCode'] as const) requireText(entry[field], `World DB bootstrap contract ${field}`)
+    if (entry.kind !== 'PLAYER' && entry.kind !== 'STAFF') throw new TypeError(`World DB bootstrap contract kind is unsupported: ${String(entry.kind)}`)
+    requireNullableText(entry.signedOn, 'World DB bootstrap contract signedOn')
+    if (!Array.isArray(entry.terms) || entry.terms.length === 0) throw new TypeError(`World DB bootstrap contract has no compensation terms: ${String(entry.contractId)}`)
+    for (const term of entry.terms as unknown[]) {
+      if (!isRecord(term)) throw new TypeError('World DB bootstrap contract term must be an object')
+      requireText(term.seasonLabel, 'World DB bootstrap contract term season')
+      requireText(term.termType, 'World DB bootstrap contract term type')
+      if (!Number.isSafeInteger(term.amountCents) || (term.amountCents as number) < 0 || !Number.isSafeInteger(term.guaranteedCents) || (term.guaranteedCents as number) < 0) throw new TypeError('World DB bootstrap contract term amounts must be non-negative integer minor units')
+    }
+  }, 'contractId')
+  assertArray(value.finance ?? [], 'finance', (entry) => {
+    for (const field of ['organizationId', 'currencyCode'] as const) requireText(entry[field], `World DB bootstrap finance ${field}`)
+    requireNullableInteger(entry.openingCashCents, 'World DB bootstrap opening cash')
+    requireNullableText(entry.openingOn, 'World DB bootstrap opening date')
+    if (!Array.isArray(entry.budgets) || !Array.isArray(entry.revenueStreams) || !Number.isSafeInteger(entry.annualExpenseCommitmentsCents)) throw new TypeError('World DB bootstrap finance is incomplete')
+  }, 'organizationId')
+  if (value.professionals !== undefined) {
+    requireRecord(value.professionals, 'World DB bootstrap professionals')
+    for (const field of ['executives', 'agentRepresentations'] as const) if (!Array.isArray(value.professionals[field])) throw new TypeError(`World DB bootstrap professionals ${field} must be an array`)
+    for (const field of ['agentCount', 'officialCount', 'mediaCount'] as const) if (!Number.isSafeInteger(value.professionals[field])) throw new TypeError(`World DB bootstrap professionals ${field} must be an integer`)
+  }
   if (value.physicalContent !== undefined) {
     requireRecord(value.physicalContent, 'World DB physical content')
     assertArray(value.physicalContent.places, 'physical places', (entry) => {

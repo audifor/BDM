@@ -1,3 +1,4 @@
+import type { WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import { addDays } from '@/domain/date'
 import { EMPTY_HUMAN_SIMULATION, readHumanSimulation } from '@/domain/hrpg/HumanSimulation'
 import { validateHumanSimulationWorld } from '@/domain/hrpg/validateHumanSimulationWorld'
@@ -141,6 +142,8 @@ import { createPlayerRegistration, createTeamPathwayRelation, type PlayerRegistr
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
 export interface GameWorld {
+  /** Immutable import evidence; runtime projections never replace the source vectors or monetary terms. */
+  readonly worldDbUniverseSource?: WorldDbGameBootstrapSliceV1
   readonly humanSimulation: import('@/domain/hrpg/HumanSimulation').HumanSimulationState
   readonly schemaVersion: typeof GAME_WORLD_SCHEMA_VERSION
   readonly currentDate: GameDate
