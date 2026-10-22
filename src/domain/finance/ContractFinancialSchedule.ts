@@ -16,7 +16,8 @@ import {
 import { type GameWorld } from '@/domain/world'
 import { createAuthorizedEconomicEvent, processContractEconomicEvent, type EconomicEventAdapterResult, type EconomicEventAdapterOptions } from './EconomicEventAdapters'
 import { legacyMajorUnitsToMoney } from './FinanceCurrencyPolicy'
-import { createCurrencyCode, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
+import { createCurrencyCode, createMoney, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
+import type { WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import { getExpenseRecognitionsAsOfDate, getExpenseRecognitionsBetween } from './RecognitionQueries'
 import { getPayableRemaining } from './Treasury'
 import type { ExpenseRecognition } from './Recognition'
@@ -233,20 +234,22 @@ type SourceContract =
   | { readonly sourceContractType: 'STAFF'; readonly contract: StaffContract; readonly contractId: string; readonly beneficiaryId: string; readonly teamId: TeamId; readonly category: 'STAFF_SALARY' }
 
 function buildEntries(world: GameWorld, source: SourceContract, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleEntry[] {
-  const amounts = buildAmountEntries(world, source, query)
+  const imported = world.worldDbUniverseSource?.contracts?.find(contract => contract.contractId === source.contractId)
+  const amounts = buildAmountEntries(world, source, query, imported)
   if (amounts.length === 0) return Object.freeze([])
   const organizationId = world.teams[source.teamId]?.organizationId
   if (organizationId === undefined) throw new Error(`Contract financial schedule Team ${source.teamId} is missing`)
   const currencyCode = resolveCurrencyCode(world, organizationId, query.currencyCode)
+  if (imported !== undefined && imported.currencyCode !== currencyCode) throw new RangeError('Imported contract currency does not match its organization')
   return Object.freeze(amounts.map((entry) => {
     const { amountMinorUnits, ...rest } = entry
     // Legacy contract terms are whole major currency units; the canonical schedule is minor units, so every
     // contract amount crosses the single conversion boundary instead of being cast 1:1 (BS16G).
-    return Object.freeze({ ...rest, amount: legacyMajorUnitsToMoney(amountMinorUnits, currencyCode) })
+    return Object.freeze({ ...rest, amount: imported === undefined ? legacyMajorUnitsToMoney(amountMinorUnits, currencyCode) : createMoney({ currencyCode, minorUnits: amountMinorUnits }) })
   }))
 }
 
-function buildAmountEntries(world: GameWorld, source: SourceContract, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleAmountEntry[] {
+function buildAmountEntries(world: GameWorld, source: SourceContract, query: ContractFinancialScheduleQuery, imported?: NonNullable<WorldDbGameBootstrapSliceV1['contracts']>[number]): readonly ContractFinancialScheduleAmountEntry[] {
   const organizationId = world.teams[source.teamId]?.organizationId
   if (organizationId === undefined) throw new Error(`Contract financial schedule Team ${source.teamId} is missing`)
   const contractEnd = source.sourceContractType === 'PLAYER'
@@ -262,8 +265,18 @@ function buildAmountEntries(world: GameWorld, source: SourceContract, query: Con
   // released contract keeps its guaranteed years because releasing a player is not handing his contract to anyone.
   const transferredOn = source.sourceContractType === 'PLAYER' && source.contract.termination?.reason === 'transferred' ? source.contract.termination.terminatedOn : undefined
   const periods = annualPeriods(scheduleStartsOn, contractEnd).filter((period) => transferredOn === undefined || compareGameDates(period.startsOn, transferredOn) < 0)
+  const importedYears = new Map<string, { cashSalary: number; guaranteedAmount: number }>()
+  for (const term of imported?.terms ?? []) {
+    if (!term.termType.toUpperCase().includes('BASE')) continue
+    const year = importedYears.get(term.seasonLabel) ?? { cashSalary: 0, guaranteedAmount: 0 }
+    importedYears.set(term.seasonLabel, { cashSalary: year.cashSalary + term.amountCents, guaranteedAmount: year.guaranteedAmount + term.guaranteedCents })
+  }
+  const exactYears = [...importedYears.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => value)
   return Object.freeze(periods.flatMap((period, yearIndex) => {
-    const compensation = source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
+    const compensation = imported === undefined
+      ? source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
+      : exactYears[yearIndex]
+    if (compensation === undefined) throw new RangeError(`Imported contract has no exact compensation for year ${yearIndex + 1}: ${source.contractId}`)
     const guaranteed = compensation.guaranteedAmount
     const conditionalSurvives = source.sourceContractType !== 'PLAYER' || source.contract.termination === undefined
       || compareGameDates(period.endsOn, source.contract.termination.terminatedOn) <= 0

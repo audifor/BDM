@@ -12,7 +12,7 @@ import { createPlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 import { createSeason } from '@/domain/season'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { createSportsEcosystem } from '@/domain/ecosystem'
-import { coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, personIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
+import { contractIdFromString, coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, personIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffRoleFamily } from '@/domain/staff'
 import { createTeam } from '@/domain/team'
 import { createOrganization, createOrganizationSection } from '@/domain/organization'
@@ -20,6 +20,8 @@ import { organizationIdFromString, organizationSectionIdFromString } from '@/dom
 import { createOrganizationOwnership } from '@/domain/ownership'
 import { createOrganizationInvestorInterest } from '@/domain/investment/OrganizationInvestorInterest'
 import { createGame, type Game } from '@/domain/game'
+import { createPlayerContract, type ContractYearCompensation, type PlayerContract } from '@/domain/contract'
+import { createStaffContract, staffContractIdFromString, type StaffContract } from '@/domain/staffContract'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, createGameWorld, type GameWorld, type WorldDbCompetitionRuntimeBundlePin } from '@/domain/world'
 import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from '@/engine/competition/schedule'
@@ -30,21 +32,50 @@ import { projectWorldDbPhysicalContent } from './WorldDbPhysicalContent'
 const ROLE_FAMILIES: Readonly<Record<string, StaffRoleFamily>> = {
   headCoach: 'coaching', assistantCoach: 'coaching', playerDevelopmentCoach: 'coaching',
   physiotherapist: 'medical', regionalScout: 'scouting', strengthConditioningCoach: 'performance', recruitingCoordinator: 'recruiting',
+  performanceCoach: 'performance', teamDoctor: 'medical', analyticsStaff: 'basketballOperations',
 }
 
-/** DDL-12 stores the complete 80-value Staff source vector without semantic labels. The runtime
- * StaffProfile has the certified 13-key interface, so this adapter uses a stable non-overlapping
- * bucket mean. It is a projection only; no source values are invented or persisted to World DB. */
+const isBaseSalaryTerm = (termType: string): boolean => termType.toUpperCase().includes('BASE')
+const dateOf = (value: string): string => value.slice(0, 10)
+const wholeCurrency = (cents: number): number => Math.round(cents / 100)
+
+/** World DB money is exact minor units; BDM's player contract keeps whole currency units, so cents round half up. */
+function mapPlayerContract(source: WorldDbGameBootstrapSliceV1['contracts'] extends readonly (infer C)[] | undefined ? C : never, playerId: string): PlayerContract {
+  const bySeason = new Map<string, { base: number; guaranteed: number }>()
+  for (const term of source.terms) {
+    if (!isBaseSalaryTerm(term.termType)) continue
+    const entry = bySeason.get(term.seasonLabel) ?? { base: 0, guaranteed: 0 }
+    bySeason.set(term.seasonLabel, { base: entry.base + term.amountCents, guaranteed: entry.guaranteed + term.guaranteedCents })
+  }
+  const seasons = [...bySeason.entries()].sort(([left], [right]) => left.localeCompare(right))
+  if (seasons.length === 0) throw new Error(`World DB player contract has no base salary term: ${source.contractId}`)
+  const years: ContractYearCompensation[] = seasons.map(([, value]) => ({ cashSalary: wholeCurrency(value.base), guaranteedAmount: Math.min(wholeCurrency(value.guaranteed), wholeCurrency(value.base)), capTreatment: { policy: 'NOT_APPLICABLE' } }))
+  return createPlayerContract({
+    id: contractIdFromString(source.contractId), playerId: playerIdFromString(playerId), teamId: teamIdFromString(source.teamId), kind: 'standard',
+    term: { startsOn: parseGameDate(dateOf(source.effectiveFrom)), expiresOn: parseGameDate(dateOf(source.effectiveTo)) },
+    compensation: { annualSalary: years[0]!.cashSalary, years },
+  })
+}
+
+function mapStaffContract(source: NonNullable<WorldDbGameBootstrapSliceV1['contracts']>[number], staffId: string): StaffContract {
+  const base = source.terms.filter((term) => isBaseSalaryTerm(term.termType)).sort((left, right) => left.seasonLabel.localeCompare(right.seasonLabel))[0]
+  if (base === undefined) throw new Error(`World DB staff contract has no base salary term: ${source.contractId}`)
+  return createStaffContract({ id: staffContractIdFromString(source.contractId), staffId: staffPersonIdFromString(staffId), teamId: teamIdFromString(source.teamId), kind: 'standard', term: { startsOn: parseGameDate(dateOf(source.effectiveFrom)), expiresOn: parseGameDate(dateOf(source.effectiveTo)) }, compensation: { annualSalary: base.amountCents / 100 } })
+}
+
+/** Semantic projection for BDM's existing staff runtime; the complete STAFF80 remains in the source slice. */
 function projectStaffAttributes(source: Readonly<Record<string, number>>): StaffPerson['professional']['attributes'] {
-  const sourceKeys = Object.keys(source).sort()
-  if (sourceKeys.length !== 80 || sourceKeys.some((key, index) => key !== `STAFF_ATTRIBUTE_${String(index + 1).padStart(2, '0')}`)) throw new RangeError('World DB Staff source attributes must contain STAFF_ATTRIBUTE_01..80')
-  const result = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key, index) => {
-    const start = Math.floor(index * sourceKeys.length / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length)
-    const end = Math.floor((index + 1) * sourceKeys.length / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length)
-    const values = sourceKeys.slice(start, end).map((sourceKey) => source[sourceKey]!)
-    return [key, Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)]
-  }))
-  return result as StaffPerson['professional']['attributes']
+  const keys: Record<string, string> = { coaching:'SKILL_TEACHING', tacticalKnowledge:'TACTICAL_VISION', playerDevelopment:'INDIVIDUAL_DEVELOPMENT_PLANS', talentEvaluation:'TALENT_IDENTIFICATION', potentialEvaluation:'TALENT_PROJECTION', medicalKnowledge:'CLINICAL_ASSESSMENT', rehabilitation:'REHABILITATION_PLANNING', analysis:'DATA_INTERPRETATION', leadership:'STAFF_COORDINATION', communication:'COMMUNICATION', motivation:'MOTIVATION', discipline:'PROFESSIONALISM', adaptability:'SYSTEM_ADAPTATION' }
+  const legacyKeys = Object.keys(source).sort()
+  if (legacyKeys.length === 80 && legacyKeys.every((key, index) => key === `STAFF_ATTRIBUTE_${String(index + 1).padStart(2, '0')}`)) {
+    // Compatibility for the earlier explicit ordinal STAFF80 contract, never for unknown keys.
+    return Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key, index) => {
+      const group = legacyKeys.slice(Math.floor(index * 80 / 13), Math.floor((index + 1) * 80 / 13))
+      return [key, Math.round(group.reduce((sum, code) => sum + source[code]!, 0) / group.length)]
+    })) as StaffPerson['professional']['attributes']
+  }
+  if (Object.keys(source).length !== 80 || STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.some(key => !Number.isFinite(source[keys[key]!])) ) throw new RangeError('World DB Staff source must contain the complete semantic STAFF80')
+  return Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map(key => [key, source[keys[key]!]!])) as StaffPerson['professional']['attributes']
 }
 
 const DEVELOPMENT_MAP: Readonly<Record<string, readonly string[]>> = {
@@ -52,7 +83,7 @@ const DEVELOPMENT_MAP: Readonly<Record<string, readonly string[]>> = {
   OFF_BALL_OFFENSE: ['creation'], DEFENSE_REBOUNDING: ['defense', 'rebounding'], PHYSICAL: ['physical'], MENTAL: ['mental'],
 }
 
-export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy): GameWorld {
+export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy, referenceDate?: string): GameWorld {
   assertWorldDbGameBootstrapSliceV1(slice)
   const physicalContent = projectWorldDbPhysicalContent(slice.physicalContent)
   assertSelectionMatchesSlice(slice, selection)
@@ -80,7 +111,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
       gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
       basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ...(source.positionFamiliarity === undefined ? {} : { positionFamiliarity: source.positionFamiliarity }), ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
       bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
-      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.startDate),
+      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, referenceDate ?? slice.season.startDate),
     })
   })
   const staffAssignments = slice.staffAssignments.map((assignment) => {
@@ -90,10 +121,10 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const staff = slice.staffProfiles.map((source) => {
     const person = personById.get(source.personId)
     if (person === undefined) throw new Error(`World DB bootstrap staff person is missing: ${source.personId}`)
-    const profilePerson = requireProfilePerson(person, source.personId)
+    if (person.gender === undefined || person.dateOfBirth === undefined) throw new Error(`World DB staff identity is incomplete: ${source.personId}`)
     const assignments = slice.staffAssignments.filter((assignment) => assignment.staffId === source.staffId)
     const marketRole = assignments[0]?.roleCode
-    return createStaffPerson({ id: staffPersonIdFromString(source.staffId), personId: source.personId as never, identity: { firstName: person.firstName, lastName: person.lastName, dateOfBirth: parseGameDate(profilePerson.dateOfBirth), nationality: person.nationalityIds[0] }, professional: { attributes: projectStaffAttributes(source.attributes) }, ...(marketRole === undefined ? {} : { marketRole: marketRole as never, roleFamily: ROLE_FAMILIES[marketRole] }), specialismIds: source.specialismIds })
+    return createStaffPerson({ id: staffPersonIdFromString(source.staffId), personId: source.personId as never, identity: { firstName: person.firstName, lastName: person.lastName, dateOfBirth: parseGameDate(person.dateOfBirth), nationality: person.nationalityIds[0] }, professional: { attributes: projectStaffAttributes(source.attributes) }, ...(marketRole === undefined ? {} : { marketRole: marketRole as never, roleFamily: ROLE_FAMILIES[marketRole] }), specialismIds: source.specialismIds })
   })
   const selectedTeam = slice.teams.find((team) => team.teamId === selection.teamId)!
   const selectedHeadCoachAssignment = staffAssignments.find((assignment) => assignment.teamId === selectedTeam.teamId && assignment.role === 'headCoach')
@@ -102,8 +133,8 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   if (selectedHeadCoachStaff === undefined || selectedHeadCoachStaff.personId === undefined) throw new Error('World DB selected head coach staff profile is missing')
   const selectedHeadCoachPerson = personById.get(selectedHeadCoachStaff.personId)
   if (selectedHeadCoachPerson === undefined) throw new Error('World DB selected head coach Person is missing')
-  const selectedHeadCoachProfile = requireProfilePerson(selectedHeadCoachPerson, selectedHeadCoachStaff.personId)
-  const coach = createCoach({ id: coachIdFromString(`worlddb:coach:${selectedTeam.teamId}`), personId: selectedHeadCoachStaff.personId as never, staffProfileId: selectedHeadCoachStaff.id, firstName: selectedHeadCoachPerson.firstName, lastName: selectedHeadCoachPerson.lastName, gender: selectedHeadCoachProfile.gender, nationalityId: countryIdFromString(selectedHeadCoachPerson.nationalityIds[0]!) })
+  if (selectedHeadCoachPerson.gender === undefined) throw new Error('World DB selected coach gender is missing')
+  const coach = createCoach({ id: coachIdFromString(`worlddb:coach:${selectedTeam.teamId}`), personId: selectedHeadCoachStaff.personId as never, staffProfileId: selectedHeadCoachStaff.id, firstName: selectedHeadCoachPerson.firstName, lastName: selectedHeadCoachPerson.lastName, gender: selectedHeadCoachPerson.gender, nationalityId: countryIdFromString(selectedHeadCoachPerson.nationalityIds[0]!) })
   // One canonical WorldDB PERSON score is projected to each BDM profile identity.
   // The current GameWorld keys personalities by Coach/Player/Staff profile ID.
   // Unknown legacy PERSON values still fall back to existing generator unchanged.
@@ -125,14 +156,32 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const organizationInvestorInterests = (slice.organizationInvestorInterest ?? []).map((record) => createOrganizationInvestorInterest({ id: record.interestId, organizationId: record.organizationId, investor: record.investorKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.investorId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.investorId) }, interestType: record.interestType, status: record.status, openedOn: record.openedOn, closedOn: record.closedOn }))
   const playerRepertoireByPlayerId = Object.fromEntries(slice.players.flatMap((source) => source.repertoire === undefined ? [] : [[source.playerId, createPlayerRepertoire({ ...source.repertoire, playerId: source.playerId })]]))
   const coachRpgProfilesByCoachId = { [coach.id]: createInitialCoachRpgProfile() }
+  // Real contracts of the universe replace BDM's default back-fill; a contract whose person is not loaded is a broken relation.
+  const playerPersonIdSet = new Set(slice.players.map((player) => player.personId))
+  const staffIdByPersonId = new Map(staff.map((member) => [String(member.personId), String(member.id)]))
+  const contracts: PlayerContract[] = []
+  const staffContracts: StaffContract[] = []
+  for (const contract of slice.contracts ?? []) {
+    if (contract.kind === 'PLAYER') {
+      if (!playerPersonIdSet.has(contract.personId)) throw new Error(`World DB contract references a player that is not loaded: ${contract.contractId}`)
+      contracts.push(mapPlayerContract(contract, contract.personId))
+    } else {
+      const staffId = staffIdByPersonId.get(contract.personId)
+      if (staffId === undefined) throw new Error(`World DB contract references a staff member that is not loaded: ${contract.contractId}`)
+      staffContracts.push(mapStaffContract(contract, staffId))
+    }
+  }
   const baseWorld = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities, coachRpgProfilesByCoachId })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
-  const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
   const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
-  const games = importedGames.length === generatedGames.length
+  // A generated universe supplies its own simulated calendar. A partial sourced format must
+  // not force another calendar or be relabelled COMPLETE to pass the executable-format gate.
+  const expectedGames = teams.length * (teams.length - 1) * competition.rules.schedule.meetingsPerPair / 2
+  const games = importedGames.length === expectedGames
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
-    : generatedGames
-  const world = createGameWorld({ playerRepertoireByPlayerId, ...physicalContent, currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities, coachRpgProfilesByCoachId })
+    : generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
+  const employment = ensureStaffEmploymentStructure(baseWorld)
+  const world = createGameWorld({ staffEmploymentByStaffId: employment.staffEmploymentByStaffId, staffCareerHistoryByStaffId: employment.staffCareerHistoryByStaffId, playerRepertoireByPlayerId, ...physicalContent, ...(contracts.length === 0 ? {} : { contracts }), ...(staffContracts.length === 0 ? {} : { staffContracts }), currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments, personalitiesByPersonId: importedPersonalities, coachRpgProfilesByCoachId })
   const withStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(world)))
   return attachWorldDbCompetitionRuntime(withStaffCareer, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
 }
@@ -147,7 +196,6 @@ function requireProfilePerson(person: WorldDbGameBootstrapSliceV1['persons'][num
 }
 
 function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, meetingsPerPair: number): Game[] {
-  const expectedRounds = (teamCount - 1) * meetingsPerPair
   const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
   if (games.length !== expectedGames) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedGames} games; found ${games.length}`)
   const rounds = new Map<string, Game[]>()
@@ -157,9 +205,10 @@ function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, mee
     const key = [game.homeTeamId, game.awayTeamId].sort().join(':')
     pairs.set(key, [...(pairs.get(key) ?? []), game])
   }
-  if (rounds.size !== expectedRounds) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedRounds} rounds; found ${rounds.size}`)
+  // A round may span several dates and an odd-sized league has byes.
   for (const [date, round] of rounds) {
-    if (round.length !== teamCount / 2 || new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== teamCount) throw new RangeError(`RealWorldSpain round ${date} is incomplete or contains a duplicate team`)
+    const participants = round.flatMap((game) => [game.homeTeamId, game.awayTeamId])
+    if (new Set(participants).size !== participants.length) throw new RangeError(`World DB calendar has a team scheduled twice on ${date}`)
   }
   for (const pair of pairs.values()) {
     if (pair.length !== meetingsPerPair || (meetingsPerPair === 2 && (pair[0]!.homeTeamId !== pair[1]!.awayTeamId || pair[0]!.awayTeamId !== pair[1]!.homeTeamId))) throw new RangeError('RealWorldSpain round-robin schedule has an incomplete or unbalanced matchup')

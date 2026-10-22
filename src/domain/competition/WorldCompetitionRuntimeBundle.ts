@@ -6,11 +6,14 @@ import { parseWorldCompetitionInitialScoreDocument, type WorldCompetitionInitial
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION = 1 as const
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_HASH_ALGORITHM = 'BLAKE3' as const
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_ID = 'bdm-phase1-competition-runtime-v1' as const
+/** The generated-universe bundle (WorldDB generator) has the same shape; its content is the formats of that universe only. */
+export const WORLD_COMPETITION_UNIVERSE_BUNDLE_CONTENT_ID = 'bdm-universe-competition-runtime-v1' as const
+export const WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_IDS = [WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_ID, WORLD_COMPETITION_UNIVERSE_BUNDLE_CONTENT_ID] as const
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_WORLD_DB_SCHEMA = 'DDL-PHASE1-A' as const
 
 export interface WorldCompetitionRuntimeBundle {
   readonly bundleSchemaVersion: typeof WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION
-  readonly contentId: typeof WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_ID
+  readonly contentId: typeof WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_IDS[number]
   readonly contentHashAlgorithm: typeof WORLD_COMPETITION_RUNTIME_BUNDLE_HASH_ALGORITHM
   readonly contentHash: string
   readonly worldDbSchema: typeof WORLD_COMPETITION_RUNTIME_BUNDLE_WORLD_DB_SCHEMA
@@ -22,7 +25,7 @@ export interface WorldCompetitionRuntimeBundle {
 export function parseWorldCompetitionRuntimeBundle(value: unknown): WorldCompetitionRuntimeBundle {
   const raw = record(value, 'competition runtime bundle')
   if (raw.bundle_schema_version !== WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION) throw new RangeError(`Unsupported competition runtime bundle schema version: ${String(raw.bundle_schema_version)}`)
-  const contentId = enumValue(raw.content_id, [WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_ID] as const, 'content_id')
+  const contentId = enumValue(raw.content_id, WORLD_COMPETITION_RUNTIME_BUNDLE_CONTENT_IDS, 'content_id')
   const contentHashAlgorithm = enumValue(raw.content_hash_algorithm, [WORLD_COMPETITION_RUNTIME_BUNDLE_HASH_ALGORITHM] as const, 'content_hash_algorithm')
   const contentHash = text(raw.content_hash, 'content_hash').toLowerCase()
   if (!/^[a-f0-9]{64}$/.test(contentHash)) throw new TypeError('content_hash must be a 64-character BLAKE3 hex digest')

@@ -11,6 +11,7 @@ import { BdmOsNg } from '@/ui-ng/BdmOsNg'
 import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
+import { UniverseImport } from './UniverseImport'
 
 export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
@@ -59,7 +60,7 @@ export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | '
     }
   }
 
-  return <StartScreen canLoad={hasSave} isStarting={isStartingGame} message={message} onLoad={() => void loadGame()} onStart={startGame} />
+  return <><UniverseImport onLoaded={(loaded) => { clearMatch(); resetTacticalPlan(); replaceWorld(loaded) }} /><StartScreen canLoad={hasSave} isStarting={isStartingGame} message={message} onLoad={() => void loadGame()} onStart={startGame} /></>
 }
 
 function StartScreen({

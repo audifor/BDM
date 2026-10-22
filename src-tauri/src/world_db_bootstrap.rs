@@ -191,6 +191,90 @@ pub struct WorldDbGameBootstrapStaffAssignmentV1 {
     role_code: String,
     assigned_on: String,
 }
+/// A staff role of the World DB that BDM has no equivalent for (team delegate, sport psychologist…).
+/// Reported, never mapped to a different role and never dropped silently.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbUnmappedStaffAssignmentV1 {
+    assignment_id: String,
+    person_id: String,
+    team_id: String,
+    role_code: String,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbContractTermV1 {
+    season_label: String,
+    term_type: String,
+    amount_cents: i64,
+    guaranteed_cents: i64,
+}
+/// Employment contract of a loaded player or staff member, money in minor units of its currency.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbContractV1 {
+    contract_id: String,
+    kind: String,
+    person_id: String,
+    organization_id: String,
+    team_id: String,
+    status: String,
+    signed_on: Option<String>,
+    effective_from: String,
+    effective_to: String,
+    currency_code: String,
+    terms: Vec<WorldDbContractTermV1>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbBudgetV1 {
+    budget_type: String,
+    season_label: String,
+    amount_cents: i64,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbRevenueStreamV1 {
+    stream_type: String,
+    annual_amount_cents: i64,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbOrganizationFinanceV1 {
+    organization_id: String,
+    currency_code: String,
+    opening_cash_cents: Option<i64>,
+    opening_on: Option<String>,
+    budgets: Vec<WorldDbBudgetV1>,
+    revenue_streams: Vec<WorldDbRevenueStreamV1>,
+    annual_expense_commitments_cents: i64,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbExecutiveV1 {
+    assignment_id: String,
+    person_id: String,
+    organization_id: String,
+    role_code: String,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbAgentRepresentationV1 {
+    agent_person_id: String,
+    client_person_id: String,
+    status: String,
+}
+/// People of the universe that BDM does not yet turn into runtime actors (no domain for them):
+/// carried so the import is lossless and an app can show what exists.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbProfessionalsV1 {
+    executives: Vec<WorldDbExecutiveV1>,
+    agent_representations: Vec<WorldDbAgentRepresentationV1>,
+    agent_count: i64,
+    official_count: i64,
+    media_count: i64,
+}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapRosterAssignmentV1 {
@@ -233,6 +317,10 @@ pub struct WorldDbGameBootstrapSliceV1 {
     staff_assignments: Vec<WorldDbGameBootstrapStaffAssignmentV1>,
     roster_assignments: Vec<WorldDbGameBootstrapRosterAssignmentV1>,
     matches: Vec<WorldDbGameBootstrapMatchV1>,
+    unmapped_staff_assignments: Vec<WorldDbUnmappedStaffAssignmentV1>,
+    contracts: Vec<WorldDbContractV1>,
+    finance: Vec<WorldDbOrganizationFinanceV1>,
+    professionals: WorldDbProfessionalsV1,
 }
 
 pub fn load_game_bootstrap_slice_v1(
@@ -269,7 +357,13 @@ pub fn load_game_bootstrap_slice_v1(
             .or(ecosystem_gender.as_deref()),
     );
     let season = query_season(&connection, competition_season_id)?;
-    let teams = query_teams(&connection, ecosystem_id, &gender)?;
+    let mut teams = query_teams(&connection, ecosystem_id, &gender)?;
+    // A universe generated for some competitions only: ecosystem members that have no players at
+    // all were not generated and are not part of this world. A team with 1-4 players still fails.
+    let generated = teams_with_players(&connection, &teams)?;
+    if generated.len() >= 2 && generated.len() < teams.len() {
+        teams.retain(|team| generated.contains(&team.team_id));
+    }
     if teams.len() < 2 {
         return Err(
             "World DB bootstrap ecosystem membership requires at least two teams".to_owned(),
@@ -324,7 +418,8 @@ pub fn load_game_bootstrap_slice_v1(
             "World DB bootstrap player is assigned to more than one selected roster".to_owned(),
         );
     }
-    let staff_assignments = query_staff_assignments(&connection, &team_ids, &season.start_date)?;
+    let (staff_assignments, unmapped_staff_assignments) =
+        query_staff_assignments(&connection, &team_ids, &season.start_date)?;
     validate_head_coaches(&staff_assignments, &team_ids)?;
     let staff_ids: Vec<String> = staff_assignments
         .iter()
@@ -368,6 +463,16 @@ pub fn load_game_bootstrap_slice_v1(
     let countries = query_countries(&connection, &teams, &persons)?;
     let matches = query_matches(&connection, competition_season_id)?;
     let physical_content = crate::world_db_facilities::load(&connection, &team_ids)?;
+    let contracts = query_contracts(
+        &connection,
+        &players,
+        &staff_profiles,
+        &roster_assignments,
+        &staff_assignments,
+        &teams,
+    )?;
+    let finance = query_finance(&connection, &organization_ids)?;
+    let professionals = query_professionals(&connection, &organization_ids, &player_ids)?;
     Ok(WorldDbGameBootstrapSliceV1 {
         physical_content,
         schema_version: 1,
@@ -408,6 +513,269 @@ pub fn load_game_bootstrap_slice_v1(
         staff_assignments,
         roster_assignments,
         matches,
+        unmapped_staff_assignments,
+        contracts,
+        finance,
+        professionals,
+    })
+}
+
+fn has_table(connection: &Connection, name: &str) -> bool {
+    connection
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?1",
+            [name],
+            |row| row.get::<_, i64>(0),
+        )
+        .map(|n| n > 0)
+        .unwrap_or(false)
+}
+
+fn teams_with_players(
+    connection: &Connection,
+    teams: &[WorldDbGameBootstrapTeamV1],
+) -> Result<BTreeSet<String>, String> {
+    let mut found = BTreeSet::new();
+    let mut statement = connection.prepare("SELECT COUNT(*) FROM roster r JOIN roster_membership rm ON rm.roster_id=r.roster_id WHERE r.team_id=?1 AND UPPER(r.roster_type_code)='PRIMARY_TEAM' AND UPPER(r.status)='ACTIVE' AND r.valid_to IS NULL AND UPPER(rm.membership_type_code)='PLAYER' AND UPPER(rm.roster_status_code)='ACTIVE' AND rm.valid_to IS NULL").map_err(|error| format!("Unable to prepare World DB generated-team query: {error}"))?;
+    for team in teams {
+        let count: i64 = statement
+            .query_row([&team.team_id], |row| row.get(0))
+            .map_err(|error| format!("Unable to count World DB team players: {error}"))?;
+        if count > 0 {
+            found.insert(team.team_id.clone());
+        }
+    }
+    Ok(found)
+}
+
+fn cents(value: f64) -> i64 {
+    (value * 100.0).round() as i64
+}
+
+/// Employment contracts of the loaded players and staff. Absent contract tables mean "none".
+fn query_contracts(
+    connection: &Connection,
+    players: &[WorldDbGameBootstrapPlayerV1],
+    staff: &[WorldDbGameBootstrapStaffV1],
+    rosters: &[WorldDbGameBootstrapRosterAssignmentV1],
+    staff_assignments: &[WorldDbGameBootstrapStaffAssignmentV1],
+    teams: &[WorldDbGameBootstrapTeamV1],
+) -> Result<Vec<WorldDbContractV1>, String> {
+    if !(has_table(connection, "contract")
+        && has_table(connection, "contract_party")
+        && has_table(connection, "contract_compensation_term"))
+    {
+        return Ok(Vec::new());
+    }
+    let team_of_player: BTreeMap<&str, &str> = rosters
+        .iter()
+        .map(|r| (r.player_id.as_str(), r.team_id.as_str()))
+        .collect();
+    let team_of_staff: BTreeMap<String, &str> = staff_assignments
+        .iter()
+        .map(|a| (a.staff_id.clone(), a.team_id.as_str()))
+        .collect();
+    let mut people: BTreeMap<String, (&str, &str)> = BTreeMap::new();
+    for player in players {
+        if let Some(team) = team_of_player.get(player.person_id.as_str()) {
+            people.insert(player.person_id.clone(), ("PLAYER", team));
+        }
+    }
+    for member in staff {
+        if let Some(team) = team_of_staff.get(&member.staff_id) {
+            people.insert(member.person_id.clone(), ("STAFF", team));
+        }
+    }
+    let organization_of_team: BTreeMap<&str, &str> = teams
+        .iter()
+        .map(|t| (t.team_id.as_str(), t.organization_id.as_str()))
+        .collect();
+    let mut contract_statement = connection.prepare("SELECT c.contract_id,c.status,c.signed_on,c.effective_from,c.effective_to,c.currency_code,pe.party_id FROM contract_party pp JOIN contract c ON c.contract_id=pp.contract_id JOIN contract_party pe ON pe.contract_id=c.contract_id AND pe.party_role='EMPLOYER' AND pe.party_kind='ORGANIZATION' WHERE pp.party_role='EMPLOYEE' AND pp.party_kind='PERSON' AND pp.party_id=?1 AND UPPER(c.status)='ACTIVE' ORDER BY c.contract_id").map_err(|error| format!("Unable to prepare World DB contract query: {error}"))?;
+    let mut term_statement = connection.prepare("SELECT season_label,term_type,amount,COALESCE(guaranteed_amount,0) FROM contract_compensation_term WHERE contract_id=?1 ORDER BY season_label,term_type").map_err(|error| format!("Unable to prepare World DB contract term query: {error}"))?;
+    let mut out = Vec::new();
+    for (person_id, (kind, team_id)) in &people {
+        let rows = contract_statement
+            .query_map([person_id], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, String>(4)?,
+                    row.get::<_, String>(5)?,
+                    row.get::<_, String>(6)?,
+                ))
+            })
+            .map_err(|error| format!("Unable to query World DB contracts: {error}"))?
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(|error| format!("Unable to decode World DB contract: {error}"))?;
+        for (contract_id, status, signed_on, from, to, currency, organization) in rows {
+            if organization_of_team.get(team_id) != Some(&organization.as_str()) {
+                return Err(format!(
+                    "World DB contract employer is not the organization of the team: {contract_id}"
+                ));
+            }
+            let terms = term_statement
+                .query_map([&contract_id], |row| {
+                    Ok(WorldDbContractTermV1 {
+                        season_label: row.get(0)?,
+                        term_type: row.get(1)?,
+                        amount_cents: cents(row.get::<_, f64>(2)?),
+                        guaranteed_cents: cents(row.get::<_, f64>(3)?),
+                    })
+                })
+                .map_err(|error| format!("Unable to query World DB contract terms: {error}"))?
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .map_err(|error| format!("Unable to decode World DB contract term: {error}"))?;
+            out.push(WorldDbContractV1 {
+                contract_id,
+                kind: (*kind).to_owned(),
+                person_id: person_id.clone(),
+                organization_id: organization,
+                team_id: (*team_id).to_owned(),
+                status,
+                signed_on,
+                effective_from: from,
+                effective_to: to,
+                currency_code: currency,
+                terms,
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// Opening cash (cash account postings), budgets, revenue streams and commitments per organization.
+fn query_finance(
+    connection: &Connection,
+    organization_ids: &[String],
+) -> Result<Vec<WorldDbOrganizationFinanceV1>, String> {
+    if !has_table(connection, "financial_account") {
+        return Ok(Vec::new());
+    }
+    let mut out = Vec::new();
+    for organization in organization_ids {
+        let account: Option<(String, String, String)> = connection.query_row("SELECT financial_account_id,currency_code,COALESCE(opened_on,'') FROM financial_account WHERE owner_kind='ORGANIZATION' AND owner_id=?1 AND account_type LIKE '%CASH' AND closed_on IS NULL ORDER BY financial_account_id LIMIT 1", [organization], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?))).optional().map_err(|error| format!("Unable to query World DB cash account: {error}"))?;
+        let Some((account_id, currency, opened_on)) = account else {
+            continue;
+        };
+        let opening: Option<f64> = if has_table(connection, "financial_posting") {
+            connection.query_row("SELECT SUM(CASE WHEN UPPER(direction)='DEBIT' THEN amount ELSE -amount END) FROM financial_posting WHERE financial_account_id=?1", [&account_id], |row| row.get(0)).map_err(|error| format!("Unable to query World DB cash postings: {error}"))?
+        } else {
+            None
+        };
+        let budgets = if has_table(connection, "budget") {
+            let mut statement = connection.prepare("SELECT budget_type,season_label,amount FROM budget WHERE owner_kind='ORGANIZATION' AND owner_id=?1 ORDER BY season_label,budget_type").map_err(|error| format!("Unable to prepare World DB budget query: {error}"))?;
+            let rows = statement
+                .query_map([organization], |row| {
+                    Ok(WorldDbBudgetV1 {
+                        budget_type: row.get(0)?,
+                        season_label: row.get(1)?,
+                        amount_cents: cents(row.get::<_, f64>(2)?),
+                    })
+                })
+                .map_err(|error| format!("Unable to query World DB budgets: {error}"))?
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .map_err(|error| format!("Unable to decode World DB budget: {error}"))?;
+            rows
+        } else {
+            Vec::new()
+        };
+        let revenue_streams = if has_table(connection, "revenue_stream") {
+            let mut statement = connection.prepare("SELECT stream_type,expected_annual_amount FROM revenue_stream WHERE organization_id=?1 ORDER BY stream_type").map_err(|error| format!("Unable to prepare World DB revenue query: {error}"))?;
+            let rows = statement
+                .query_map([organization], |row| {
+                    Ok(WorldDbRevenueStreamV1 {
+                        stream_type: row.get(0)?,
+                        annual_amount_cents: cents(row.get::<_, f64>(1)?),
+                    })
+                })
+                .map_err(|error| format!("Unable to query World DB revenue streams: {error}"))?
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .map_err(|error| format!("Unable to decode World DB revenue stream: {error}"))?;
+            rows
+        } else {
+            Vec::new()
+        };
+        let commitments: f64 = if has_table(connection, "expense_commitment") {
+            connection.query_row("SELECT COALESCE(SUM(expected_annual_amount),0) FROM expense_commitment WHERE organization_id=?1", [organization], |row| row.get(0)).map_err(|error| format!("Unable to query World DB commitments: {error}"))?
+        } else {
+            0.0
+        };
+        out.push(WorldDbOrganizationFinanceV1 {
+            organization_id: organization.clone(),
+            currency_code: currency,
+            opening_cash_cents: opening.map(cents),
+            opening_on: if opened_on.is_empty() {
+                None
+            } else {
+                Some(opened_on)
+            },
+            budgets,
+            revenue_streams,
+            annual_expense_commitments_cents: cents(commitments),
+        });
+    }
+    Ok(out)
+}
+
+fn count_table(connection: &Connection, table: &str) -> i64 {
+    if !has_table(connection, table) {
+        return 0;
+    }
+    connection
+        .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+            row.get(0)
+        })
+        .unwrap_or(0)
+}
+
+fn query_professionals(
+    connection: &Connection,
+    organization_ids: &[String],
+    player_ids: &[String],
+) -> Result<WorldDbProfessionalsV1, String> {
+    let mut executives = Vec::new();
+    for organization in organization_ids {
+        let mut statement = connection.prepare("SELECT assignment_id,person_id,organization_id,role_code FROM staff_role_assignment WHERE organization_id=?1 AND team_id IS NULL AND UPPER(assignment_status_code)='ACTIVE' AND ended_on IS NULL ORDER BY role_code,assignment_id").map_err(|error| format!("Unable to prepare World DB executive query: {error}"))?;
+        let rows = statement
+            .query_map([organization], |row| {
+                Ok(WorldDbExecutiveV1 {
+                    assignment_id: row.get(0)?,
+                    person_id: row.get(1)?,
+                    organization_id: row.get(2)?,
+                    role_code: row.get(3)?,
+                })
+            })
+            .map_err(|error| format!("Unable to query World DB executives: {error}"))?
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(|error| format!("Unable to decode World DB executive: {error}"))?;
+        executives.extend(rows);
+    }
+    let mut agent_representations = Vec::new();
+    if has_table(connection, "agent_representation") {
+        let mut statement = connection.prepare("SELECT agent_person_id,client_person_id,representation_status_code FROM agent_representation WHERE client_person_id=?1 ORDER BY agent_person_id").map_err(|error| format!("Unable to prepare World DB representation query: {error}"))?;
+        for player in player_ids {
+            let rows = statement
+                .query_map([player], |row| {
+                    Ok(WorldDbAgentRepresentationV1 {
+                        agent_person_id: row.get(0)?,
+                        client_person_id: row.get(1)?,
+                        status: row.get(2)?,
+                    })
+                })
+                .map_err(|error| format!("Unable to query World DB representations: {error}"))?
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .map_err(|error| format!("Unable to decode World DB representation: {error}"))?;
+            agent_representations.extend(rows);
+        }
+    }
+    Ok(WorldDbProfessionalsV1 {
+        executives,
+        agent_representations,
+        agent_count: count_table(connection, "agent"),
+        official_count: count_table(connection, "official"),
+        media_count: count_table(connection, "media_person"),
     })
 }
 
@@ -1159,11 +1527,16 @@ fn query_string_column(
         .map_err(|error| format!("Unable to decode World DB string: {error}"))
 }
 
+type StaffAssignmentRows = (
+    Vec<WorldDbGameBootstrapStaffAssignmentV1>,
+    Vec<WorldDbUnmappedStaffAssignmentV1>,
+);
+
 fn query_staff_assignments(
     connection: &Connection,
     team_ids: &[String],
     assigned_on: &str,
-) -> Result<Vec<WorldDbGameBootstrapStaffAssignmentV1>, String> {
+) -> Result<StaffAssignmentRows, String> {
     let csv = placeholders(team_ids.len());
     let sql = format!("SELECT assignment_id,person_id,team_id,role_code,COALESCE(started_on,?1) FROM staff_role_assignment WHERE team_id IN ({csv}) AND UPPER(assignment_status_code)='ACTIVE' AND ended_on IS NULL ORDER BY team_id,role_code,assignment_id");
     let assigned_on_owned = assigned_on.to_owned();
@@ -1178,24 +1551,37 @@ fn query_staff_assignments(
         .map_err(|error| format!("Unable to prepare World DB staff assignment query: {error}"))?;
     let rows = statement
         .query_map(rusqlite::params_from_iter(params), |row| {
-            let assignment_id: String = row.get(0)?;
-            let person_id: String = row.get(1)?;
-            let team_id: String = row.get(2)?;
-            let role: String = row.get(3)?;
-            Ok(WorldDbGameBootstrapStaffAssignmentV1 {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+            ))
+        })
+        .map_err(|error| format!("Unable to query World DB staff assignments: {error}"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("Unable to decode World DB staff assignment: {error}"))?;
+    let mut mapped = Vec::new();
+    let mut unmapped = Vec::new();
+    for (assignment_id, person_id, team_id, role, assigned_on) in rows {
+        match map_staff_role(&role) {
+            Ok(role_code) => mapped.push(WorldDbGameBootstrapStaffAssignmentV1 {
                 assignment_id,
                 staff_id: format!("staff:{person_id}"),
                 team_id,
-                role_code: map_staff_role(&role).map_err(|_| rusqlite::Error::InvalidQuery)?,
-                assigned_on: row.get(4)?,
-            })
-        })
-        .map_err(|error| format!("Unable to query World DB staff assignments: {error}"))?;
-    rows.collect::<rusqlite::Result<Vec<_>>>().map_err(|error| {
-        format!(
-            "Unable to decode World DB staff assignment (unknown role or malformed row): {error}"
-        )
-    })
+                role_code,
+                assigned_on,
+            }),
+            Err(()) => unmapped.push(WorldDbUnmappedStaffAssignmentV1 {
+                assignment_id,
+                person_id,
+                team_id,
+                role_code: role,
+            }),
+        }
+    }
+    Ok((mapped, unmapped))
 }
 fn query_staff(
     connection: &Connection,
@@ -1239,6 +1625,9 @@ fn map_staff_role(role: &str) -> Result<String, ()> {
         "PHYSIOTHERAPIST" => "physiotherapist",
         "PLAYER_DEVELOPMENT_COACH" => "playerDevelopmentCoach",
         "SCOUT" => "regionalScout",
+        "PERFORMANCE_COACH" => "performanceCoach",
+        "TEAM_DOCTOR" => "teamDoctor",
+        "DATA_ANALYST" => "analyticsStaff",
         "STRENGTH_CONDITIONING_COACH" => "strengthConditioningCoach",
         "RECRUITING_COORDINATOR" => "recruitingCoordinator",
         _ => return Err(()),
@@ -1264,7 +1653,7 @@ fn query_matches(
     connection: &Connection,
     competition_season_id: &str,
 ) -> Result<Vec<WorldDbGameBootstrapMatchV1>, String> {
-    let sql="SELECT DISTINCT m.match_id,m.scheduled_at,m.played_at,m.status,m.home_team_id,m.away_team_id,m.home_score,m.away_score FROM match m JOIN game_fixture_realization r ON r.match_id=m.match_id JOIN competition_fixture f ON f.competition_fixture_id=r.competition_fixture_id WHERE f.competition_season_id=?1 AND UPPER(m.status) IN ('SCHEDULED','COMPLETED') ORDER BY m.match_id";
+    let sql="SELECT DISTINCT m.match_id,m.scheduled_at,m.played_at,m.status,m.home_team_id,m.away_team_id,m.home_score,m.away_score FROM match m LEFT JOIN game_fixture_realization r ON r.match_id=m.match_id LEFT JOIN competition_fixture f ON f.competition_fixture_id=r.competition_fixture_id WHERE (m.competition_season_id=?1 OR f.competition_season_id=?1) AND UPPER(m.status) IN ('SCHEDULED','COMPLETED') ORDER BY m.match_id";
     let mut statement = connection
         .prepare(sql)
         .map_err(|error| format!("Unable to prepare World DB match query: {error}"))?;
@@ -1592,10 +1981,11 @@ mod tests {
             18
         );
         assert_eq!(slice.roster_assignments.len(), 270);
-        assert!(
-            slice.matches.is_empty(),
-            "this smoke expects B04-derived games for the current DB"
-        );
+        // Canonical scheduled matches are consumable even without fixture realization rows.
+        assert!(slice
+            .matches
+            .iter()
+            .all(|game| !game.home_team_id.is_empty() && !game.away_team_id.is_empty()));
         if let Some(output_path) = std::env::var_os("BDM_WORLD_DB_SLICE_JSON") {
             let json = serde_json::to_vec_pretty(&slice).expect("serialize slice");
             std::fs::write(output_path, json).expect("write smoke slice outside the DB");
@@ -1675,5 +2065,101 @@ mod tests {
         assert!(query_person_runtime_personality(&connection, "person:bad")
             .unwrap_err()
             .contains("out of 0..100"));
+    }
+
+    #[test]
+    fn probe_universe_bootstrap_from_env() {
+        let Ok(path) = std::env::var("BDM_P3_WORLD_DB") else {
+            return;
+        };
+        let selected = std::env::var("BDM_P3_EDITIONS").ok();
+        let wanted = |season: &str| {
+            selected
+                .as_ref()
+                .is_none_or(|list| list.split(',').any(|s| s == season))
+        };
+        let connection =
+            Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+        let mut statement = connection.prepare("SELECT DISTINCT a.competition_ecosystem_id, cs.competition_season_id FROM ecosystem_competition_assignment a JOIN competition_season cs ON cs.competition_id=a.competition_id ORDER BY 1,2").unwrap();
+        let pairs: Vec<(String, String)> = statement
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect();
+        if let Ok(dir) = std::env::var("BDM_P3_EXPORT_DIR") {
+            let dir = Path::new(&dir);
+            let write = |name: String, value: serde_json::Value| {
+                std::fs::write(dir.join(name), serde_json::to_vec(&value).unwrap()).unwrap()
+            };
+            write(
+                "info.json".into(),
+                serde_json::to_value(crate::world_db_session::inspect_database_v1(&path).unwrap())
+                    .unwrap(),
+            );
+            write(
+                "catalog.json".into(),
+                serde_json::to_value(
+                    crate::world_db_selection::load_selection_catalog_v1(&path).unwrap(),
+                )
+                .unwrap(),
+            );
+            let seasons: Vec<String> = connection
+                .prepare("SELECT competition_season_id FROM competition_season ORDER BY 1")
+                .unwrap()
+                .query_map([], |r| r.get(0))
+                .unwrap()
+                .map(|r| r.unwrap())
+                .collect();
+            for season in seasons {
+                if !wanted(&season) {
+                    continue;
+                }
+                let key = season.replace(':', "_");
+                if let Ok(bundle) = crate::world_db::load_competition_bundle_v1(&path, &season) {
+                    write(
+                        format!("bundle__{key}.json"),
+                        serde_json::to_value(bundle).unwrap(),
+                    );
+                }
+                if let Ok(matches) =
+                    crate::world_db_matches::load_match_realizations_v1(&path, &season)
+                {
+                    write(
+                        format!("matches__{key}.json"),
+                        serde_json::to_value(matches).unwrap(),
+                    );
+                }
+            }
+        }
+        for (ecosystem, season) in pairs {
+            if !wanted(&season) {
+                continue;
+            }
+            match load_game_bootstrap_slice_v1(&path, &season, &ecosystem) {
+                Ok(slice) => {
+                    println!("PROBE OK  {ecosystem} {season} teams={} players={} staff={} contracts={} finance={} unmapped={}", slice.teams.len(), slice.players.len(), slice.staff_profiles.len(), slice.contracts.len(), slice.finance.len(), slice.unmapped_staff_assignments.len());
+                    // Real-data bridge for the TypeScript suites: the exact JSON the Tauri command returns.
+                    if let Ok(dir) = std::env::var("BDM_P3_EXPORT_DIR") {
+                        let name = format!(
+                            "{}__{}.json",
+                            ecosystem.replace(':', "_"),
+                            season.replace(':', "_")
+                        );
+                        std::fs::write(
+                            Path::new(&dir).join(name),
+                            serde_json::to_vec(&slice).unwrap(),
+                        )
+                        .unwrap();
+                    }
+                }
+                Err(error) => {
+                    assert!(
+                        selected.is_none(),
+                        "Selected universe import failed: {error}"
+                    );
+                    println!("PROBE ERR {ecosystem} {season}: {error}");
+                }
+            }
+        }
     }
 }
