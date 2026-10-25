@@ -1,3 +1,4 @@
+pub mod db04_catalog_adapter;
 mod world_db;
 mod world_db_bootstrap;
 mod world_db_facilities;
