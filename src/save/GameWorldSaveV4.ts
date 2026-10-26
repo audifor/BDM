@@ -4,6 +4,7 @@ import { EMPTY_HUMAN_SIMULATION, readHumanSimulation, type HumanSimulationState 
 import { createEquippedRehabilitationAct, type EquippedRehabilitationAct } from '@/domain/injury/EquippedRehabilitationAct'
 import type { RehabilitationEquipmentEvidence } from '@/domain/facilities/RehabilitationEquipmentEvidence'
 import { validateGameWorld } from '@/domain/world'
+import { readWorldDbV2Provenance, type WorldDbV2Provenance } from '@/domain/world/WorldDbCompetitionRuntime'
 import { createScheduledTrainingSession } from '@/domain/training'
 import { validatePhysicalAllocations } from '@/domain/facilities/validatePhysicalAllocations'
 import { createPhysicalAllocation, type PhysicalAllocation } from '@/domain/facilities/PhysicalAllocation'
@@ -111,6 +112,7 @@ import {
 } from './GameWorldSaveV3'
 
 export interface WorldDbCompetitionRuntimeSaveV4 {
+  readonly worldDbV2?: WorldDbV2Provenance
   readonly competitionRuntimeBundle: {
     readonly contentId: string
     readonly contentHash: string
@@ -2214,6 +2216,7 @@ function serializeWorldDbCompetitionRuntimeV4(
     competitionRuntimeBundle: pin === null ? null : Object.freeze({ ...pin }),
     competitionPlanIds: runtime.competitionPlanIds,
     competitionSeasonIds: runtime.competitionSeasonIds,
+    ...(runtime.worldDbV2 === undefined ? {} : {worldDbV2:runtime.worldDbV2}),
   })
 }
 
@@ -2225,12 +2228,13 @@ function parseWorldDbCompetitionRuntimeV4(value: unknown): WorldDbCompetitionRun
   )
   exactKeys(
     runtime,
-    hasRuntimeBundlePin
+    (hasRuntimeBundlePin
       ? ['competitionRuntimeBundle', 'competitionPlanIds', 'competitionSeasonIds']
-      : ['competitionPlanIds', 'competitionSeasonIds'],
+      : ['competitionPlanIds', 'competitionSeasonIds']).concat('worldDbV2' in runtime ? ['worldDbV2'] : []),
     'World DB competition runtime V4',
   )
   return createWorldDbCompetitionRuntime({
+    ...('worldDbV2' in runtime ? {worldDbV2:readWorldDbV2Provenance(runtime.worldDbV2)} : {}),
     competitionRuntimeBundle: hasRuntimeBundlePin
       ? parseRuntimeBundlePin(runtime.competitionRuntimeBundle)
       : null,

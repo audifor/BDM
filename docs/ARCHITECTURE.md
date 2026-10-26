@@ -252,6 +252,18 @@ derived projections with no persisted date index. The user team is derived throu
 
 ## First playable prototype
 
+The PBM WorldDB V2 pilot is a separate New Game source. Its Tauri bridge reuses the
+frozen Runtime V1 read-only source/selection adapter, then projects complete native
+bootstrap DTOs into `WorldDbSessionV1` and the existing `GameWorld` bootstrap. Original
+PBM club/person IDs remain intact; the immutable ACB rule-template identity maps to
+the PBM competition through explicit provenance. Missing sporting profiles use the
+existing canonical BDM generators, identified as generated. The normal MatchEngine,
+calendar, Courtside store and Save V4 own all subsequent state. Physical paths and
+connections remain external; an optional, strictly validated Save V4 provenance
+record retains only the frozen input content hash, logical aliases, date, seed and
+generation policy. The pilot Tauri identifier and optional named save profiles isolate
+its state from existing native saves. See `docs/playable/WORLDDB_V2_PLAYABLE_01.md`.
+
 The World DB bootstrap path is `WorldDbSessionV1.bootstrapGameWorld`: it validates a
 canonical ecosystem/competition/season/team selection, asks the native repository for
 that ecosystem's B02 Team memberships, canonical `roster`/`roster_membership` players,

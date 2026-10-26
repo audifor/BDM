@@ -1,0 +1,82 @@
+{
+  "passed": true,
+  "steps": [
+    {
+      "name": "Open native BDM, select V2/date/competition/club, enter Courtside",
+      "status": "PASS",
+      "ms": 8130,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n04 OCT 2025\nMATCH\nCZ\n\nCasademont Zaragoza\n\nPRÓXIMO PARTIDO\n▾\n\nVS\n\n04 OCT 2025 · LIGA ENDESA · PBM V2\n\nTemporada\n2025-2026 · fictional PBM snapshot\nEstado\nscheduled\nABRIR PARTIDO\nVER CALENDARIO\nRB\n\nRío Breogán\n\nDINÁMICAS DEL CHOQUE\n▾\nCasademont Zaragoza\nRío Breogán\n70\nFUERZA\n64\n50\nCOHESIÓN\n50\n50\nMORAL\n50\n0-0\nBALANCE\n0-0\n7º\nPOSICIÓN\n12º\nPRÓXIMOS PARTIDOS\n▾\n\n34 partidos pendientes · temporada actual\n\nRío Breogán\nLiga Endesa · PBM V2\n04 OCT 2025\nCASA\nDreamland Gran Canaria\nLiga Endesa · PBM V2\n11 OCT 2025\nCASA\nSaski Baskonia\nLiga Endesa · PBM V2\n18 OCT 2025\nCASA\nSurne Bilbao Basket\nLiga Endesa · PBM V2\n25 OCT 2025\nFUERA\nUCAM Murcia\nLiga Endesa · PBM V2\n01 NOV 2025\nFUERA\nCB San Pablo Burgos\nLiga Endesa · PBM V2\n08 NOV 2025\nFUERA\nFC Barcelona Bàsquet\nLiga Endesa · PBM V2\n15 NOV 2025\nFUERA\nValencia Basket\nLiga Endesa · PBM V2\n22 NOV 2025\nFUERA\nLa Laguna Tenerife\nLiga Endesa · PBM V2\n29 NOV 2025\nFUERA\nMoraBanc Andorra\nLiga Endesa · PBM V2\n06 DEC 2025\nFUERA\nJoventut Badalona\nLiga Endesa · PBM V2\n13 DEC 2025\nFUERA\nBàsquet Girona\nLiga Endesa · PBM V2\n20 DEC 2025\nFUERA\nBax"
+    },
+    {
+      "name": "Original PBM roster and attributes in existing player application",
+      "status": "PASS",
+      "ms": 3271,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n04 OCT 2025\nMATCH\nJOAQUIN\nRODRIGUEZ\nCasademont Zaragoza\nURU\nAGE\n26\nDOB\n14 JUN 1999\nPOSITION\nSF\nPRIMARY\n198\ncm\nHEIGHT\n99\nkg\nWEIGHT\n206\ncm\nWINGSPAN\nAVAILABLE\nTRAYECTORIA ▾\nMORALE\nStable\nFATIGUE\n0%\nINJURY RISK\nLow · 0\nOVERVIEW\nATTRIBUTES\nPERFORMANCE\nDEVELOPMENT\nCONTRACT\nMEDICAL\nSCOUTING REPORT\nHISTORY\nCATEGORY PROFILES\nSelect a category to explore\nShooting\n40\nFinishing\n38\nBall Handling\n45\nPlaymaking\n45\nOff-Ball\n43\nDefense / Rebounding\n40\nPhysical\n42\nMental\n44\nFOCUS TRACKER\n0 / 3 · LOCAL\n\nMark attributes with ☆ to watch them across categories. Saved only on this device.\n\n+ WATCH SELECTED ATTRIBUTE\nATTRIBUTE PROFILE\n8 family radar · click an axis to explore\nJugador\n+ COMPARAR\nSHOOT\n40\nFIN\n38\nHANDLE\n45\nPLAY\n45\nOFF\n43\nDEF\n40\nPHYS\n42\nMENT\n44\nSHOOTING\nPerfil de la familia seleccionada · 0 a 100\nJugador\n40\n\nAñade referencias con + Comparar para analizar esta familia sin saturar el radar.\n\nSHOOTING ATTRIBUTES\nOnly the selected family is shown\nSearch attributes\nAll\nStrengths\nWeaknesses\nWatching\nImproved\nDeclined\nATTRIBUTE\nRATING\nTEAM AVG\nLEAGUE AVG\nPERCENTILE\nPROFILE\nContested Shooting\n44\n63.0\n60.9\n13th\n☆\nFree Throw\n43\n62.1\n59.1\n17th\n☆\nMidrange Pullup\n42\n62.3\n60.2\n12th\n☆\nDeep Shooting\n41\n62.1\n62.3\n7th\n☆\nMovement Shooting\n41\n62.1\n62.3\n7th\n☆\nThree Point Pullup\n41\n62.1\n62.3\n7th\n☆\nThree Point Static\n41\n62.1\n62.3\n7th\n☆\nShot Touch\n36\n61.3\n59.4\n3rd\n☆\nLong Midrange\n34\n62.8\n60.3\n3rd\n☆\nShort Midrange\n34\n62.8\n60.3\n3rd\n☆\nFREE THROW\nShooting\n☆ Watch attribute\nRATING\n43\nPERCENTILE\n17th\nTEAM AVG\n62.1\nLEAGUE AVG\n59.1\nPOSITION AVG\n58.8\n\nPercentile is the share of rivalling rosters this value beats; the player never counts in their own sample. Position average covers 47 rival SF players.\n\nEVOLUCIÓN PENDIENTE\n\nTodavía no se ha registrado ningún cambio entre temporadas. No se dibuja una tendencia inexistente.\n\nSIMULATION IDLE"
+    },
+    {
+      "name": "Existing competition and schedule applications",
+      "status": "PASS",
+      "ms": 4132,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n04 OCT 2025\nMATCH\nCOMPETITION\nLiga Endesa · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\nCALENDARIO\nPRÓXIMOS\nRESULTADOS\nCLASIFICACIÓN\nESTADÍSTICAS\nLiga Endesa · PBM V2\nMostrar\nTodos\nMi equipo\nANTERIOR\nOCTUBRE 2025\nSIGUIENTE\n\nMIS PARTIDOS\nHITOS\nENTRENAMIENTO\n\nL\nM\nX\nJ\nV\nS\nD\n29\n30\n1\n2\n3\n4\nCasademont Zaragoza\nPendiente\nRío Breogán\nInicio · Liga Endesa · PBM V2\n5\n6\n7\n8\n9\n10\n11\nCasademont Zaragoza\nPendiente\nDreamland Gran Canaria\n12\n13\n14\n15\n16\n17\n18\nCasademont Zaragoza\nPendiente\nSaski Baskonia\n19\n20\n21\n22\n23\n24\n25\nSurne Bilbao Basket\nPendiente\nCasademont Zaragoza\n26\n27\n28\n29\n30\n31\n1\n2\n3\n4\n5\n6\n7\n8\n9\nSIMULATION IDLE"
+    },
+    {
+      "name": "Real MatchViewer and MatchEngine, final score and statistics",
+      "status": "PASS",
+      "ms": 5399,
+      "detail": "\t4\t+1\nDevin Robinson\nPF\n\t4:53\t0\t0/1\t0/0\t0/0\t3\t0\t0\t0\t0\t2\t-7\nMiguel Gonzalez\nSF\n\t3:09\t0\t0/0\t0/0\t0/0\t1\t0\t1\t1\t0\t0\t+2\nYoussouf Traore\nSF\n\t1:10\t5\t2/2\t1/1\t0/0\t0\t0\t0\t0\t0\t0\t+4\nD.J. Stephens\nSG\n\t0:35\t0\t0/1\t0/1\t0/0\t0\t0\t0\t0\t0\t0\t+1\nJoaquin Rodriguez\nSF\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nMarco Spissu\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nTrae Bell-Haynes\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nJoel Soriano\nC\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nEquipo\t200:00\t75\t31/76\t10/34\t3/4\t47\t11\t6\t3\t12\t15\t\nRÍO BREOGÁN\nJugador\tMIN\tPTS\tTC\t3P\tTL\tREB\tAST\tROB\tTAP\tPÉR\tFP\t+/-\nErik Quintela\nPG · TITULAR\n\t40:00\t28\t10/21\t4/11\t4/5\t10\t4\t1\t0\t3\t2\t+6\nBakary Dibba\nPF · TITULAR\n\t39:37\t2\t1/1\t0/0\t0/0\t11\t0\t2\t0\t1\t2\t+6\nAleksandar Aranitovic\nSG · TITULAR\n\t39:25\t19\t7/23\t2/12\t3/3\t12\t7\t3\t2\t1\t1\t+7\nJordan Sakho\nC · TITULAR\n\t39:09\t10\t3/10\t2/6\t2/3\t9\t5\t3\t1\t1\t0\t+7\nDewayne Russell\nPG · TITULAR\n\t38:50\t21\t7/26\t6/19\t1/2\t5\t3\t1\t0\t1\t3\t+10\nArturs Kurucs\nPG\n\t1:10\t1\t0/1\t0/1\t1/2\t0\t0\t0\t0\t0\t0\t-4\nDanko Brankovic\nC\n\t0:51\t0\t0/0\t0/0\t0/0\t1\t0\t0\t0\t0\t0\t-1\nDominik Mavra\nSG\n\t0:35\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t-1\nDragan Apic\nPF\n\t0:23\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nKeandre Cook\nSG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nFrancisco Alonso\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nMihajlo Andric\nSF\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nEquipo\t200:00\t81\t28/82\t14/49\t11/15\t48\t19\t10\t3\t7\t8\t\n\nLIGA ENDESA · PBM V2 · 11 OCT 2025 · EN CASA\n\nCasademont Zaragoza\n0-1\nVS\nDreamland Gran Canaria\n0-0\n\n4 periodos de 10′ · prórroga si hay empate. Tú eres Casademont Zaragoza; el rival es Dreamland Gran Canaria.\n\nTU QUINTETO INICIAL\nElegido por el entrenador\nPG\nErik Stevenson\n32′\nSG\nLucas Langarita\n32′\nSF\nYoussouf Traore\n32′\nPF\nJaime Fernandez\n32′\nC\nBojan Dubljevic\n32′\nCAMBIAR EN PLANTILLA\nBANQUILLO Y ROTACIÓN\nMinutos del cuerpo técnico\nSF\nMiguel Gonzalez\n16′\nPF\nDevin Robinson\n12′\nSG\nD.J. Stephens\n8′\nC\nJoel Soriano\n4′\n\nSin minutos previstos: Joaquin Rodriguez, Marco Spissu, Trae Bell-Haynes.\n\nLos cambios los ejecuta el cuerpo técnico en las paradas: toma estos minutos como objetivo y los ajusta por posición, fatiga y faltas; el motor no admite sustituciones manuales en directo.\n\nNO DISPONIBLES\n1\nSF\nSantiago Yusta\nLESIONADO\nPLAN TÁCTICO\nPlan del equipo\nRITMO\nEquilibrado\nTRIPLES\nNormal\nATAQUE AL ARO\nNormal\nMEDIA DISTANCIA\nNormal\nESQUEMA DEFENSIVO\nIndividual\nDEFENSA DEL BLOQUEO\nSwitch\nJUGADOR DESTACADO\nNinguno\nEMPAREJAMIENTOS\nAutomáticos\nCAMBIAR EN TÁCTICAS\nQUINTETO RIVAL PREVISTO\nDreamland Gran Canaria\nPG\nAndrew Albicy\nSG\nNicolás Brussino\nPF\nKur Kuath\nPF\nEric Vila\nC\nMike Tobey\nSIMULATION IDLE"
+    },
+    {
+      "name": "Updated standings, calendar and native Save V4",
+      "status": "PASS",
+      "ms": 3663,
+      "detail": {
+        "completed": [
+          {
+            "id": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007",
+            "result": {
+              "homeScore": 75,
+              "awayScore": 81
+            }
+          }
+        ],
+        "date": "2025-10-04",
+        "visibleStanding": [
+          "1",
+          "0",
+          "1",
+          "75",
+          "81",
+          "-6",
+          ".000"
+        ]
+      }
+    },
+    {
+      "name": "Advance next day using Courtside CONTINUE",
+      "status": "PASS",
+      "ms": 12191,
+      "detail": "2025-10-05"
+    },
+    {
+      "name": "Close BDM, reopen, load native save, continue exactly",
+      "status": "PASS",
+      "ms": 8982,
+      "detail": "2025-10-06"
+    },
+    {
+      "name": "Independent second native career, no source or first-save changes",
+      "status": "PASS",
+      "ms": 10979,
+      "detail": {
+        "firstSave": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158\\main.json",
+        "secondSave": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158-b\\main.json"
+      }
+    }
+  ],
+  "exe": "C:\\BDM-worktrees\\worlddb-v2-01\\src-tauri\\target\\debug\\bdm.exe",
+  "masterSha256Before": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "masterSha256After": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "originalSaveSha256Before": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "originalSaveSha256After": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+  "consoleErrors": []
+}

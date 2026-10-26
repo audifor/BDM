@@ -17,6 +17,76 @@ use std::{
 };
 use tauri::Manager;
 
+#[tauri::command]
+async fn world_db_v2(app: tauri::AppHandle, mut request: Value) -> Result<Value, String> {
+    let method = request
+        .get("method")
+        .and_then(Value::as_str)
+        .ok_or("Missing WorldDB V2 method")?;
+    if method != "discover" && method != "build" {
+        return Err("Unsupported WorldDB V2 method".to_owned());
+    }
+    if method == "build" {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_nanos();
+        let directory = app
+            .path()
+            .app_data_dir()
+            .map_err(|e| e.to_string())?
+            .join("worlddb-v2");
+        fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
+        request["output"] = Value::String(
+            directory
+                .join(format!("universe-{nonce}.sqlite"))
+                .to_string_lossy()
+                .into_owned(),
+        );
+    }
+    tauri::async_runtime::spawn_blocking(move || run_world_db_v2_bridge(request))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn run_world_db_v2_bridge(request: Value) -> Result<Value, String> {
+    #[cfg(windows)]
+    use std::os::windows::process::CommandExt;
+    use std::process::{Command, Stdio};
+    let mut command =
+        Command::new(std::env::var("BDM_PYTHON").unwrap_or_else(|_| "python".to_owned()));
+    command
+        .args([
+            "-B",
+            "-c",
+            include_str!("../resources/worlddb_v2_bridge.py"),
+        ])
+        .env("PYTHONUTF8", "1")
+        .env("PYTHONIOENCODING", "utf-8")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(windows)]
+    command.creation_flags(0x08000000);
+    let mut child = command
+        .spawn()
+        .map_err(|e| format!("WorldDB V2 requires Python and Runtime V1: {e}"))?;
+    child
+        .stdin
+        .take()
+        .ok_or("Missing bridge stdin")?
+        .write_all(request.to_string().as_bytes())
+        .map_err(|e| e.to_string())?;
+    let output = child.wait_with_output().map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(format!(
+            "WorldDB V2: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    serde_json::from_slice(&output.stdout).map_err(|e| format!("Invalid WorldDB V2 response: {e}"))
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SaveInfoV1 {
@@ -127,7 +197,22 @@ fn save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .path()
         .app_data_dir()
         .map_err(|error| format!("Unable to find application data directory: {error}"))?;
-    Ok(app_data.join("saves").join("main.json"))
+    let directory = app_data.join("saves");
+    match std::env::var("BDM_SAVE_PROFILE")
+        .ok()
+        .filter(|p| !p.is_empty())
+    {
+        Some(profile) => {
+            if !profile
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+            {
+                return Err("BDM_SAVE_PROFILE accepts only letters, digits, '-' and '_'".to_owned());
+            }
+            Ok(directory.join("profiles").join(profile).join("main.json"))
+        }
+        None => Ok(directory.join("main.json")),
+    }
 }
 
 fn validate_envelope_json(text: &str) -> Result<Value, String> {
@@ -230,6 +315,7 @@ extern "system" {
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            world_db_v2,
             save_game_v1,
             load_game_v1,
             get_save_info_v1,

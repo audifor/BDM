@@ -11,6 +11,8 @@ import { BdmOsNg } from '@/ui-ng/BdmOsNg'
 import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
+import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
+import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
 
 export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
@@ -92,6 +94,19 @@ function StartScreen({
   const [worldDbTeams, setWorldDbTeams] = useState<readonly WorldDbSpainTeamOption[]>([])
   const [worldDbLoading, setWorldDbLoading] = useState(false)
   const [worldDbError, setWorldDbError] = useState<string | null>(null)
+  const [sourceRoot,setSourceRoot]=useState('C:\\BDM_DB\\WORLDDB_PBM')
+  const [v2Date,setV2Date]=useState('2025-07-01')
+  const [v2Seed,setV2Seed]=useState('bdm-worlddb-v2-pilot')
+  const [v2Pilot,setV2Pilot]=useState<WorldDbV2Pilot|null>(null)
+  const [v2Error,setV2Error]=useState<string|null>(null)
+  const [v2Loading,setV2Loading]=useState(false)
+  useEffect(()=>{
+    if(!setupOpen||universeId!==WORLD_DB_V2_UNIVERSE_ID)return
+    let active=true
+    setV2Pilot(null);setV2Error(null);setV2Loading(true);setTeamKey('')
+    void discoverWorldDbV2(sourceRoot).then(p=>{if(active)setV2Pilot(p)}).catch(e=>{if(active)setV2Error(String(e))}).finally(()=>{if(active)setV2Loading(false)})
+    return ()=>{active=false}
+  },[setupOpen,universeId,sourceRoot])
 
   useEffect(() => {
     if (!setupOpen || universeId !== WORLD_DB_SPAIN_UNIVERSE_ID) {
@@ -127,8 +142,8 @@ function StartScreen({
     else if (nextId !== WORLD_DB_SPAIN_UNIVERSE_ID) setTeamKey('')
   }
 
-  const availableTeams = universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
-  const worldDbReady = universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
+  const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? v2Pilot?.teams??[] : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
+  const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? !v2Loading&&v2Pilot!==null&&v2Error===null&&v2Date.length===10&&v2Seed.trim().length>0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
   const coachCreatorSupported = true
   const coachIdentityReady = !coachCreatorSupported || (firstName.trim().length > 0 && lastName.trim().length > 0 && dateOfBirth.length === 10)
 
@@ -166,13 +181,21 @@ function StartScreen({
           </select>
         </label>
         <p className="bdm-universe-description">{selectedUniverse.description}</p>
+        {universeId===WORLD_DB_V2_UNIVERSE_ID&&<>
+          <label className="bdm-start-field"><span>WORLDDB SOURCE FOLDER</span><input value={sourceRoot} disabled={isStarting} onChange={e=>setSourceRoot(e.target.value)}/></label>
+          <label className="bdm-start-field"><span>START DATE</span><input type="date" value={v2Date} disabled={isStarting} onChange={e=>setV2Date(e.target.value)}/></label>
+          <label className="bdm-start-field"><span>WORLD SEED</span><input value={v2Seed} disabled={isStarting} onChange={e=>setV2Seed(e.target.value)}/></label>
+          <label className="bdm-start-field"><span>COMPETITION</span><select disabled={isStarting||v2Pilot===null}><option>{v2Pilot?.name??'Liga Endesa · checking original rosters'}</option></select></label>
+          <p className="bdm-universe-description">PBM reference: 1 July 2025. This starts a new fictional season; no historical results are imported. Sporting profiles and opening economy are BDM-generated. Other competitions are unavailable until their native integration is certified.</p>
+          {v2Loading&&<p role="status">Checking WorldDB V2...</p>}{v2Error&&<p role="alert">{v2Error}</p>}
+        </>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && (worldDbLoading || isStarting) && <p aria-live="polite" className="bdm-world-db-status" role="status">Cargando World Database...</p>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && worldDbError !== null && <p className="bdm-start-message">{worldDbError}</p>}
         {availableTeams.length > 0 && (
           <label className="bdm-start-field">
             <span>{universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? `TEAM - ${availableTeams.length} CANONICAL OPTIONS` : 'TEAM'}</span>
             <select disabled={isStarting} value={teamKey} onChange={(event) => setTeamKey(event.target.value)}>
-              {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && <option disabled value="">CHOOSE A TEAM</option>}
+              {(universeId === WORLD_DB_SPAIN_UNIVERSE_ID||universeId===WORLD_DB_V2_UNIVERSE_ID) && <option disabled value="">CHOOSE A TEAM</option>}
               {availableTeams.map((team) => <option key={team.key} value={team.key}>{team.name} · {team.code}</option>)}
             </select>
           </label>
@@ -258,6 +281,7 @@ function StartScreen({
         ) : null}
         <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
+          ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed}}:{}),
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
           ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, nationalityCountryCode, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>
