@@ -63,6 +63,8 @@ export function attachWorldDbCompetitionRuntime(
 }
 
 export interface WorldDbV2Provenance {
+  readonly contracts?: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY'
+  readonly freeAgents?: 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60'
   readonly masterSha256: string
   readonly sourceDate: string
   readonly startDate: string
@@ -78,7 +80,9 @@ export function readWorldDbV2Provenance(value: unknown): WorldDbV2Provenance {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid WorldDB V2 provenance')
   const v=value as Record<string,unknown>
   const keys=['masterSha256','sourceDate','startDate','seed','sourceCompetitionId','nativeCompetitionId','fictional','profiles','economy']
-  if (Object.keys(v).length!==keys.length || keys.some(k=>!(k in v))) throw new TypeError('Incomplete WorldDB V2 provenance')
+  if (Object.keys(v).some(k=>!keys.includes(k)&&k!=='contracts'&&k!=='freeAgents') || keys.some(k=>!(k in v))) throw new TypeError('Incomplete WorldDB V2 provenance')
+  if(v.contracts!==undefined&&v.contracts!=='BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY')throw new TypeError('Invalid WorldDB V2 contracts provenance')
+  if(v.freeAgents!==undefined&&v.freeAgents!=='ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60')throw new TypeError('Invalid WorldDB V2 free agents provenance')
   for(const key of keys.filter(k=>k!=='fictional'))if(typeof v[key]!=='string'||!v[key])throw new TypeError('Invalid WorldDB V2 provenance '+key)
   if(!/^[a-f0-9]{64}$/.test(String(v.masterSha256))||!/^\d{4}-\d{2}-\d{2}$/.test(String(v.sourceDate))||!/^\d{4}-\d{2}-\d{2}$/.test(String(v.startDate))||v.fictional!==true||v.profiles!=='BDM_GENERATED_CANONICAL'||v.economy!=='BDM_GAME_BALANCE_NOT_PBM')throw new TypeError('Invalid WorldDB V2 provenance policy')
   parseGameDate(String(v.sourceDate))

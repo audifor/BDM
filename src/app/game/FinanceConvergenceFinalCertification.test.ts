@@ -377,6 +377,9 @@ describe('BS16M-B2 certification — legacy consumer audit', () => {
       ['engine/world/TeamFinancesGenerator.ts', 'SEED_GENERATION'],
       ['engine/coach/CoachSpecialization.ts', 'SEED_AND_STATE'],
       ['app/game/createNewGame.ts', 'SEED_GENERATION'],
+      // PBM identities use the same initial budget generator, materialized immediately
+      // into canonical Finance authorization; no affordability decision reads this seed.
+      ['app/game/WorldDbV2Game.ts', 'SEED_GENERATION'],
       ['save/GameWorldSaveV1.ts', 'MIGRATION'],
       ['save/GameWorldSaveV3.ts', 'MIGRATION'],
       // Documentation of what the legacy numbers are.

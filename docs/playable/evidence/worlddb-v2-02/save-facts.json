@@ -1,0 +1,22 @@
+{
+  "second_edition_profile": "qa-continuity-02-1793007318238",
+  "second_edition_date": "2026-10-14",
+  "clubs": 18,
+  "players": 315,
+  "pbm_player_ids": 315,
+  "old_completed": 328,
+  "new_completed": 9,
+  "total_fixtures": 634,
+  "champion": "pbm:DYN_equipe:50",
+  "annual_cycle": {
+    "lastAppliedCycleId": "annual-development:2026"
+  },
+  "rating_histories": 315,
+  "youth_cohorts": 94,
+  "fiscal_periods": 36,
+  "fiscal_period_statuses": [
+    "OPEN"
+  ],
+  "financial_budgets": 54,
+  "formal_automatic_accounting_close": "NOT_IMPLEMENTED_BY_EXISTING_AUTHORITIES"
+}

@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "source": ".worlddb-v2\\season-02-1793001862531\\season-complete.json",
+  "regular_games": 306,
+  "postseason_games": 22,
+  "actas": 328,
+  "exact_engine_games": 328,
+  "per_club_regular": 34,
+  "standings_match_all_recorded_scores": true,
+  "unique_directed_pairs": 306,
+  "champion": "pbm:DYN_equipe:50",
+  "champion_source": "postseason",
+  "completed_on": "2026-06-26",
+  "injuries": 119,
+  "scheduled_training_sessions": 1861,
+  "development_stimulus_events": 26594,
+  "expense_recognitions": 254
+}

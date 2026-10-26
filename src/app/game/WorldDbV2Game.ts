@@ -1,11 +1,15 @@
 import referenceBundle from '@/data/worlddb-v2/competition-runtime.json';
 import { parseWorldCompetitionRuntimeBundle } from '@/domain/competition';
 import { parseGameDate } from '@/domain/date';
-import { countryIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids';
+import { countryIdFromString, playerIdFromString, personIdFromString, teamIdFromString } from '@/domain/ids';
+import { createPerson } from '@/domain/person';
 import { calculateAge, createPlayer } from '@/domain/player';
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog';
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff';
-import { attachWorldDbCompetitionRuntime, type GameWorld } from '@/domain/world';
+import { attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world';
+import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGenerator';
+import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment';
+import { createAcbDemoSalaryRulesV1 } from './AcbDemoSalaryRules';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -119,9 +123,21 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
         if (userCoachCreation)
             world = appointCreatedUserCoachToWorldDbClub(world, teamIdFromString(teamId), userCoachCreation);
         world = ensureUserClubBoardState(world);
+        const freePlayers = (snapshot.freeAgents ?? []).map(entity => {
+            const r = entity.reference_data, id = playerIdFromString(entity.entity_id), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
+            const position = positions[aptitude.reduce((best, key, i) => Number(r[key] ?? 0) > Number(r[aptitude[best]!] ?? 0) ? i : best, 0)]!;
+            const ratings = generateCanonicalRatings(seed, id, position), bio = generatePlayerBio(id, position, day);
+            return createPlayer({ id, personId: personIdFromString(id), firstName: String(r.joueur_prenom), lastName: String(r.joueur_nom), gender: 'male', nationalityId: countryIdFromString(country(Number(r.nationalite))), basketball: { primaryPosition: position, ratings }, bio: { ...bio, dateOfBirth: parseGameDate(dob(r)), heightCm: r.taille > 0 ? r.taille : bio.heightCm, weightKg: r.poids > 0 ? r.poids : bio.weightKg, dominantHand: Number(r.main_gauche) > Number(r.main_droite) ? 'LEFT' : 'RIGHT', measurementProvenance: { wingspanCm: 'generated', standingReachCm: 'generated', dominantHand: 'sourced' } }, development: generateCanonicalDevelopmentProfile(seed, id, ratings, calculateAge(parseGameDate(dob(r)), day)) });
+        });
+        world = updateGameWorld(world, { players: [...Object.values(world.players), ...freePlayers], persons: [...Object.values(world.personsById), ...freePlayers.map(p => createPerson({ id: personIdFromString(p.id), firstName: p.firstName, lastName: p.lastName, gender: p.gender, dateOfBirth: p.bio.dateOfBirth, nationalityIds: [p.nationalityId], physical: { heightCm: p.bio.heightCm, weightKg: p.bio.weightKg, wingspanCm: p.bio.wingspanCm, standingReachCm: p.bio.standingReachCm }, profileRefs: [{ kind: 'player', profileId: p.id }] }))] });
+        // Synthetic native obligations, generated before Finance classifies payroll and budgets.
+        // PBM contract records remain reference-only in the immutable master.
+        world = updateGameWorld(world, { contracts: Object.values(world.teams).flatMap(team => team.rosterPlayerIds.map(id => generateInitialPlayerContract(world.players[id]!, team.id, day))) });
+        // Reuse F3's fictional uncapped contract policy, never assert real ACB economic rules.
+        world = updateGameWorld(world, { salaryRulesBySeasonId: { ...world.salaryRulesBySeasonId, [world.currentSeasonId!]: createAcbDemoSalaryRulesV1(world.currentSeasonId!) }, teamFinances: ensureTeamFinances({ currentDate: day, teams: Object.values(world.teams), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId) }) });
         const openingEconomicStates = gameBalanceOpeningEconomicStates(world, id => { const r = resolveOrganizationCurrency(world, id); return r.status === 'RESOLVED' ? String(r.currencyCode) : null; });
         world = applyGameBalanceBootstrap(ensureCanonicalFinanceFoundation(world, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world), openingEconomicStates }));
-        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: 'pbm:DYN_championnat:5', nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM' } });
+        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: 'pbm:DYN_championnat:5', nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents: 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const }) } });
         return world;
     }
     finally {

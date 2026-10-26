@@ -1,0 +1,159 @@
+{
+  "milestone": "BDM WORLDDB V2-02",
+  "status": "PARTIAL_GLOBAL",
+  "functional_career_status": "PASS",
+  "client_date": "2026-10-26",
+  "client_timezone": "Europe/Madrid",
+  "recorded_at_utc": "2026-10-26T10:16:00.480338+00:00",
+  "branch": "playable/worlddb-v2-02",
+  "base_commit": "b78c778fec5fe6e511100be9adcb24531d9563b6",
+  "pr167": {
+    "status": "MERGED",
+    "certified_commit": "0158086c17a2690a341ae5a7b51101b1ed4548c2",
+    "merge_commit": "b78c778fec5fe6e511100be9adcb24531d9563b6"
+  },
+  "functional_blocks": {
+    "regular_season": "PASS",
+    "postseason": "PASS",
+    "sporting_close": "PASS",
+    "next_edition_first_round": "PASS",
+    "contracts_and_player_market": "PASS",
+    "native_save_load_and_continue": "PASS",
+    "fiscal_period_and_authorization_rollover": "PASS"
+  },
+  "validation": {
+    "all_required_local_checks_passed": true,
+    "vitest": {
+      "command": "npm test -- --maxWorkers=6 --testTimeout=180000 --hookTimeout=600000 --reporter=verbose",
+      "files_passed": 775,
+      "files_skipped": 48,
+      "tests_passed": 5727,
+      "tests_skipped": 53,
+      "failed": 0,
+      "duration_seconds": 2336.26,
+      "skip_note": "Existing optional audit suites plus two explicit long-running PBM acceptance tests; both PBM long tests were executed separately."
+    },
+    "long_pbm_tests": {
+      "season_passed": 1,
+      "continuity_passed": 1
+    },
+    "focused_pbm": {
+      "passed": 9,
+      "failed": 0,
+      "additional_contract_expiry_boundary_market_suite_passed": 5
+    },
+    "rust": {
+      "passed": 18,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "frontend_and_embedded_native_build": "PASS",
+    "cargo_fmt": "PASS",
+    "cargo_check_offline": "PASS",
+    "finance_legacy_consumer_audit": {
+      "passed": 13,
+      "failed": 0,
+      "initial_full_run_issue": "PBM bootstrap budget seed needed SEED_GENERATION classification; fixed and confirmed by final entire suite. No affordability rule or assertion removed."
+    },
+    "native_ui": {
+      "passed_stages": 14,
+      "method": "Actual Tauri executable, rendered Courtside controls via project CDP harness. Per-stage acceptance resumed from real native saves; no GameWorld injection or mocked commands.",
+      "evidence": "native-acceptance.json"
+    }
+  },
+  "source_master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "protected": {
+    "frozen_delivery_checks": 54,
+    "all_passed": true,
+    "previous_native_saves_unchanged": 3,
+    "pilot_executable_unchanged": true,
+    "original_bdm_checkout": {
+      "branch": "playable/f4",
+      "pending_status_entries": 27,
+      "modified_by_this_task": false
+    },
+    "btw_modified": false
+  },
+  "sporting": {
+    "regular_completed": 306,
+    "per_club": 34,
+    "postseason_completed": 22,
+    "actas": 328,
+    "champion": "pbm:DYN_equipe:50",
+    "champion_name": "Real Madrid",
+    "champion_source": "postseason",
+    "new_schedule": 306,
+    "new_edition_completed": 9
+  },
+  "population": {
+    "original_roster_players": 255,
+    "selected_original_free_agents": 60,
+    "total_players": 315,
+    "free_agent_policy": "ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60",
+    "initial_contracts": "BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY"
+  },
+  "coverage": {
+    "total": 102,
+    "PLAYABLE": 1,
+    "COMPATIBLE": 0,
+    "PENDING": 2,
+    "UNSUPPORTED": 99
+  },
+  "limits": [
+    {
+      "block": "Formal automatic accounting period close",
+      "status": "UNSUPPORTED_BY_EXISTING_AUTHORITY",
+      "integration_point": "domain/finance/FinancialLedger.ts defines OPEN/CLOSED; domain/finance/FinanceActivation.ts materializes successor periods and authorizations but has no automatic closing command. Historical periods remain OPEN; date-scoped authorizations and sporting close are certified."
+    },
+    {
+      "block": "General PBM staff hiring and release workflow",
+      "status": "NOT_CERTIFIED",
+      "note": "The native custom-coach appointment replaces the original coach; no general staff-market journey is claimed."
+    },
+    {
+      "block": "Further competitions",
+      "status": "PENDING_OR_UNSUPPORTED",
+      "note": "France Betclic Elite and Italy Serie A have shipped formats and 16 participants but need PBM selection/projector connections and native certification."
+    },
+    {
+      "block": "Second full season, BTW, historical reconstruction",
+      "status": "NOT_CERTIFIED"
+    }
+  ],
+  "executable": {
+    "path": "artifacts/bdm.exe",
+    "bytes": 25075712,
+    "sha256": "5635979f3e9afec05bfbc8bccd91a1ac26f7a2f592d40c6a2d548f06af766f97"
+  },
+  "tested_worktree_sha256": {
+    "src-tauri/resources/worlddb_v2_bridge.py": "c32fc7a259b0e336f867e1131ce74019e364d9573a69051ee8733e5782d4ab3c",
+    "src/app/game/WorldDbV2Game.ts": "ba6aab66c3b9e22be2f9ee74c6b9ae36d3d9bc6069571f20eced116c7b23d644",
+    "src/domain/world/WorldDbCompetitionRuntime.ts": "0c0ea302e0d63839edac36b3956546de661784b5c8a8a4495382c0beaff59f4c",
+    "src/tauri/TauriWorldDbV2.ts": "67c59bca3b58c1388cb56973d7f3f83ec6801a652cfb369de0976033a91fb4cd",
+    "src/app/game/FinanceConvergenceFinalCertification.test.ts": "872311a320f38835884eab2deb0a28f98e901c70fb3ddf1ccf598a9ef0b2315a",
+    "src/app/game/WorldDbV2Market.test.ts": "2ef5e9ff840ccde7bb56297b6783de48204dec2b47db746b5f4435d5cfbeba23",
+    "src/app/game/WorldDbV2Season.test.ts": "790c2703e3e52fe5a8438242747037b5de3205d92321fc213d4163b5abe7b1a1",
+    "src/app/game/WorldDbV2Continuity.test.ts": "a11f71c281373ef6931381fae8b7498dd0426b372e49fc293497f35d612832ef",
+    "scripts/playable/cdp.mjs": "2f54b4cf69187ca729395a6dcda567f31a0dfca49798021c8fa0734c2936c8b7",
+    "scripts/playable/worlddb-v2-02-windows.mjs": "0734b2d3897030fa7efc80a2d0ca0143a9ac77a69580bcc014f57bacf7a979ae",
+    "scripts/playable/worlddb-v2-02-native-continuity.mjs": "e9ce17f5bd5e5c4ed592ea935e548fefe62b294114b2c64c5819bd2b82625be6",
+    "scripts/playable/worlddb-v2-compatibility.py": "c7dff2d40f4a33bc5a8049f72e8f02a1c0e0233fc2c992bd1277a52310b5525f",
+    "scripts/playable/worlddb-v2-season-audit.py": "71d7ab8ca3fce7c749c131ae0147dc4f813b9b98a79cf2c67ad8f9dbb5b95923",
+    "docs/playable/WORLDDB_V2_02.md": "7702026dee036833c4ec102c2f1d0e58d9d0b6bcfd262ad925a6724e66b5bf1c"
+  },
+  "local_logs_sha256": {
+    ".worlddb-v2-02-suite-final.log": "437c911312b4ca3c3e5d86bbd8215adfa371dbc7a7f91b6c4fd70815f1aaaa20",
+    ".worlddb-v2-02-season-final.log": "34f0005018ef7ec972505b47cdb40d01b5984aa406fa028a26cf21f7386f6dbd",
+    ".worlddb-v2-02-continuity.log": "1a0b67c87129b4c93bdedcc270d20bb6a606d324e1fbbef35e4367564bf46a8d",
+    ".worlddb-v2-02-market-boundary.log": "054c1ad2278e1f81acc4b8da67eb5982c6c0223f1121521ec15c1ebee07f3769",
+    ".worlddb-v2-02-focal-final.log": "ce8945f5802e54961a416a719875536184b5823516d5de2e1294625a61fd4869",
+    ".worlddb-v2-02-finance-audit.log": "b6922c5985c22601115e1497e9b67b51bb69e1783115bed54f3ca351c324e86b",
+    ".worlddb-v2-02-rust.log": "41318e99b156ef05e26933182d10a12554003781d8ba60164ef84a524364a012",
+    ".worlddb-v2-02-typecheck-final.log": "8c87a613e4e4fd2593999d66be7afc70b22965949e98c2079571bce647207aec",
+    ".worlddb-v2-02-native-build.log": "371ab413b5f38e46b3ddca9b01b1fc9a7b8ecfcc69307c9ddeb275dd1b60ec8f",
+    ".worlddb-v2-02-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".worlddb-v2-02-cargo-check.log": "226c86a84816b13d39dc3037c9c19f685fa05144682a6d8fbf95baf8f6872a8d",
+    ".worlddb-v2-02-native-continuity.log": "bbfcb7a706cead7ea317309faf325a952bba09a3d3b3a6018b2cc4b7a85dadbd",
+    ".worlddb-v2-02-windows-final-continue.log": "9861d93c6b79cf3df21806b85281f9b8e9373b0c831a3c866e17227148f82026"
+  }
+}
