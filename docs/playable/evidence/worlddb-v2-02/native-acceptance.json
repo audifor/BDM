@@ -1,0 +1,290 @@
+{
+  "method": "Actual Tauri executable, rendered Courtside controls via project CDP harness. Per-stage acceptance resumed from real native saves; no GameWorld injection or mocked commands.",
+  "passed_stages": 14,
+  "stages": [
+    {
+      "name": "new-game",
+      "status": "PASS",
+      "ms": 6704,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n01 JUL 2025\nCONTINUE\nCZ\n\nCasademont Zaragoza\n\nPRÓXIMO PARTIDO\n▾\n\nVS\n\n04 OCT 2025 · LIGA ENDESA · PBM V2\n\nTemporada\n2025-2026 · ",
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006471106"
+    },
+    {
+      "name": "contact-original-free-agent",
+      "status": "PASS",
+      "ms": 3654,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n01 JUL 2025\nCONTINUE\nMERCADO\nMercado\n60 LIBRES · 0 OBJETIVOS · 2.17M DISPONIBLES\nBUSCAR JUGADORES\nOBJETIVOS\nSCOUTING\nOPERACIONES\nPRESUPUESTO\n2.17M\nJugadores\n↗\nSCOUTING\n0 staff\n0 sobrecargados\nMi departamento\nContratar scout\nAsignar misiones\n\nContacto iniciado: el agente responde mañana.\n×\n\nOPERACIONES\n1 registradas\nTodas\nEn curso\nCerradas\nSerge Konan\nCONTACTED\nSin oferta\n2025-07-01\n▾\nVIABILIDAD ECONÓMICA DE ESTA OPERACIÓN\nPendiente de datos\nPresupuesto salarial autorizado\n12.90M\nCompromisos de jugadores en el ejercicio\n10.73M\nMargen realmente disponible\n2.17M\nTesorería (no es margen salarial)\nDesconocido\nSalario anual del contrato\nDesconocido\nDuración\nDesconocida\nCompromiso total del contrato\nDesconocido\nMargen tras la operación\nDesconocido\nTope salarial\nNo aplica: esta competición no define tope salarial\nEl salario que pide el jugador aún es desconocido: contacta con su agente. No se estima ni se supone cero.\n\nContact: Awaiting player response · Response: Pending\n\nContact handled by: User\n\nNegotiation: CONTACTED\n\nHISTORIAL DE OPERACIONES\n2 ejecutadas\n2025-07-01\nSTAFF BAJA\nJesus Ramirez\nSalida del club (fired)\n2025-07-01\nSTAFF ALTA\nLucia Certificacion\nContratado como HEAD COACH\nSIMULATION IDLE",
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006471106"
+    },
+    {
+      "name": "custom-offer",
+      "status": "PASS",
+      "ms": 6057,
+      "detail": "BDM\nCZ\nCASADEMONT ZARAGOZA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n02 JUL 2025\nCONTINUE\nMERCADO\nMercado\n60 LIBRES · 0 OBJETIVOS · 2.17M DISPONIBLES\nBUSCAR JUGADORES\nOBJETIVOS\nSCOUTING\nOPERACIONES\nPRESUPUESTO\n2.17M\nJugadores\n↗\nSCOUTING\n0 staff\n0 sobrecargados\nMi departamento\nContratar scout\nAsignar misiones\n\nOferta presentada: el jugador y su agente responden mañana.\n×\n\nOPERACIONES\n1 registradas\nTodas\nEn curso\nCerradas\nSerge Konan\nOPEN\n110K / 1 años\n2025-07-01\n▾\nVIABILIDAD ECONÓMICA DE ESTA OPERACIÓN\nViable\nPresupuesto salarial autorizado\n12.90M\nCompromisos de jugadores en el ejercicio\n10.73M\nMargen realmente disponible\n2.17M\nTesorería (no es margen salarial)\n42.00M\nSalario anual del contrato\n110K\nDuración\n1 año\nCompromiso total del contrato\n110K\nMargen tras la operación\n2.06M\nTope salarial\nNo aplica: esta competición no define tope salarial\nDentro del margen salarial autorizado y con tesorería suficiente.\n\nContact: CONTACTED · Response: OPEN_TO_TALKS\n\nContact handled by: User\n\nOffer submitted by: User\n\nNegotiation: OPEN · 110K / 1 years\n\nHISTORIAL DE OPERACIONES\n2 ejecutadas\n2025-07-01\nSTAFF BAJA\nJesus Ramirez\nSalida del club (fired)\n2025-07-01\nSTAFF ALTA\nLucia Certificacion\nContratado como HEAD COACH\nSIMULATION IDLE",
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006471106"
+    },
+    {
+      "name": "signing-governance",
+      "status": "PASS",
+      "ms": 12323,
+      "detail": {
+        "contract": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:direct-approach%3Apbm%3ADYN_joueur%3A100027992%3A0",
+          "playerId": "pbm:DYN_joueur:100027992",
+          "teamId": "pbm:DYN_equipe:41",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-07-04",
+            "expiresOn": "2026-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "financeTransactions": 18
+      },
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006471106"
+    },
+    {
+      "name": "reopen-native-signing",
+      "status": "PASS",
+      "ms": 5307,
+      "detail": {
+        "date": "2025-10-04",
+        "contracts": 258
+      },
+      "profile": "qa-market-02-final-1793008165280",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793008472277"
+    },
+    {
+      "name": "renew-original-signing",
+      "status": "PASS",
+      "ms": 7195,
+      "detail": {
+        "predecessor": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:direct-approach%3Apbm%3ADYN_joueur%3A100027992%3A0",
+          "playerId": "pbm:DYN_joueur:100027992",
+          "teamId": "pbm:DYN_equipe:41",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-07-04",
+            "expiresOn": "2026-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "successor": {
+          "id": "contract:retention-successor:retention:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:contract%3Asigned-free-agent%3Anegotiation%3Apbm%253ADYN_equipe%253A41%253Aorganization%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100027992%3Adirect-approach%253Apbm%253ADYN_joueur%253A100027992%253A0:retention-open%3Apbm%3ADYN_equipe%3A41%3Acontract%3Asigned-free-agent%3Anegotiation%3Apbm%253ADYN_equipe%253A41%253Aorganization%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100027992%3Adirect-approach%253Apbm%253ADYN_joueur%253A100027992%253A0%3A2025-07-04",
+          "playerId": "pbm:DYN_joueur:100027992",
+          "teamId": "pbm:DYN_equipe:41",
+          "kind": "standard",
+          "predecessorContractId": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:direct-approach%3Apbm%3ADYN_joueur%3A100027992%3A0",
+          "term": {
+            "startsOn": "2026-07-04",
+            "expiresOn": "2028-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000,
+            "years": [
+              {
+                "cashSalary": 110000,
+                "guaranteedAmount": 110000,
+                "capTreatment": {
+                  "policy": "NOT_APPLICABLE"
+                }
+              },
+              {
+                "cashSalary": 110000,
+                "guaranteedAmount": 110000,
+                "capTreatment": {
+                  "policy": "NOT_APPLICABLE"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006544318"
+    },
+    {
+      "name": "release-original-player",
+      "status": "PASS",
+      "ms": 4407,
+      "detail": {
+        "playerId": "pbm:DYN_joueur:100003955"
+      },
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006626520"
+    },
+    {
+      "name": "negotiate-club-transfer",
+      "status": "PASS",
+      "ms": 20350,
+      "detail": {
+        "id": "transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0",
+        "playerId": "pbm:DYN_joueur:100006654",
+        "sellerTeamId": "pbm:DYN_equipe:10257",
+        "sellerOrganizationId": "pbm:DYN_equipe:10257:organization",
+        "buyerTeamId": "pbm:DYN_equipe:41",
+        "buyerOrganizationId": "pbm:DYN_equipe:41:organization",
+        "sellerContractId": "contract:pbm:DYN_joueur:100006654:pbm:DYN_equipe:10257:2025-07-01",
+        "openedOn": "2025-07-05",
+        "status": "EXECUTED",
+        "clubStatus": "CLUB_AGREED",
+        "clubRounds": [
+          {
+            "round": 1,
+            "fee": 100000,
+            "proposedOn": "2025-07-05",
+            "response": {
+              "outcome": "ACCEPTED",
+              "respondedOn": "2025-07-06"
+            }
+          }
+        ],
+        "playerStatus": "PLAYER_AGREED",
+        "playerRounds": [
+          {
+            "round": 1,
+            "terms": {
+              "salary": 105000,
+              "years": 2
+            },
+            "offeredOn": "2025-07-06",
+            "response": {
+              "outcome": "ACCEPTED",
+              "respondedOn": "2025-07-07"
+            }
+          }
+        ],
+        "agreedFee": 100000,
+        "agreedTerms": {
+          "salary": 105000,
+          "years": 2
+        },
+        "governanceDecisionId": "decision:player-contract-signing:bdm-balance-v1%3Ainstitution%3Apbm%3ADYN_equipe%3A41%3Aorganization:transfer%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100006654%3A0",
+        "execution": {
+          "executedOn": "2025-07-08",
+          "sellerContractId": "contract:pbm:DYN_joueur:100006654:pbm:DYN_equipe:10257:2025-07-01",
+          "buyerContractId": "contract:transfer:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0",
+          "transactionId": "transaction:transfer:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0",
+          "governanceDecisionId": "decision:player-contract-signing:bdm-balance-v1%3Ainstitution%3Apbm%3ADYN_equipe%3A41%3Aorganization:transfer%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100006654%3A0",
+          "currencyCode": "EUR",
+          "feeMinorUnits": 10000000,
+          "financeFactIds": [
+            "expense:authorized:FUTURE_COST_ENGINE:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:buyer",
+            "settlement:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:buyer",
+            "financial:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:buyer:payment",
+            "revenue:authorized:FUTURE_REVENUE_ENGINE:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:seller",
+            "settlement:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:seller",
+            "financial:transfer-fee:transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100006654:0:seller:collection"
+          ]
+        }
+      },
+      "profile": "qa-market-02-1793006471106",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793006703070"
+    },
+    {
+      "name": "advance-managed-career-to-first-game",
+      "status": "PASS",
+      "ms": 2549,
+      "detail": {
+        "date": "04 OCT 2025",
+        "days": 0
+      },
+      "profile": "qa-market-02-final-1793008165280",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793008326923"
+    },
+    {
+      "name": "signed-original-in-native-lineup-and-match-engine",
+      "status": "PASS",
+      "ms": 17261,
+      "detail": {
+        "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007",
+        "line": {
+          "playerId": "pbm:DYN_joueur:100027992",
+          "teamId": "pbm:DYN_equipe:41",
+          "opponentTeamId": "pbm:DYN_equipe:465",
+          "isHome": true,
+          "started": true,
+          "stats": {
+            "playerId": "pbm:DYN_joueur:100027992",
+            "secondsPlayed": 1247,
+            "points": 0,
+            "fieldGoalsMade": 0,
+            "fieldGoalsAttempted": 0,
+            "twoPointMade": 0,
+            "twoPointAttempted": 0,
+            "threePointMade": 0,
+            "threePointAttempted": 0,
+            "freeThrowsMade": 0,
+            "freeThrowsAttempted": 0,
+            "offensiveRebounds": 0,
+            "defensiveRebounds": 1,
+            "rebounds": 1,
+            "assists": 0,
+            "steals": 3,
+            "blocks": 0,
+            "turnovers": 0,
+            "foulsCommitted": 3,
+            "plusMinus": 7
+          }
+        }
+      },
+      "profile": "qa-market-02-final-1793008165280",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793008326923"
+    },
+    {
+      "name": "close-reopen-managed-career-and-continue",
+      "status": "PASS",
+      "ms": 19099,
+      "detail": {
+        "date": "2025-10-05",
+        "contracts": 258,
+        "completed": 9
+      },
+      "profile": "qa-market-02-final-1793008165280",
+      "local_evidence": ".worlddb-v2\\native-market-02-1793008472277"
+    },
+    {
+      "name": "load-certified-second-edition",
+      "status": "PASS",
+      "detail": {
+        "currentSeasonId": "generated-season-0001",
+        "previousChampion": "pbm:DYN_equipe:50",
+        "oldGames": 328,
+        "newCompleted": 9,
+        "date": "2026-10-12"
+      },
+      "profile": "qa-continuity-02-1793007318238",
+      "local_evidence": ".worlddb-v2\\native-continuity-02-1793007318238"
+    },
+    {
+      "name": "advance-second-edition-and-save",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-13",
+        "clubs": 18
+      },
+      "profile": "qa-continuity-02-1793007318238",
+      "local_evidence": ".worlddb-v2\\native-continuity-02-1793007318238"
+    },
+    {
+      "name": "close-reopen-and-continue-second-edition",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-14",
+        "history": 1
+      },
+      "profile": "qa-continuity-02-1793007318238",
+      "local_evidence": ".worlddb-v2\\native-continuity-02-1793007318238"
+    }
+  ],
+  "scope_note": "The season was simulated by the canonical application test. Windows resumes its certified second-edition Save V4. Market operations were driven in Windows; prematch saves were copied only into new QA profiles for control-automation retries."
+}

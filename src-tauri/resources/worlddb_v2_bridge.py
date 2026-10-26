@@ -34,6 +34,25 @@ def main():
     config=dict(game='BDM',start_date=request['startDate'],countries=[8],competitions=['DYN_championnat:5'],population='original',seed=request['seed'])
     manifest=build(target,config,master)
     with Universe(target,master) as u:
+        # Runtime V1 deliberately activates only club-bound people. Activate a bounded,
+        # seed-stable original Spanish free-agent pool in this game-owned overlay.
+        # Never change Runtime V1 or manufacture new people.
+        import hashlib
+        from datetime import date
+        from runtime import validate_birth, ref
+        day=date.fromisoformat(request['startDate'])
+        candidates=[]
+        for row in u.c.execute('SELECT * FROM world.DYN_joueur WHERE team_id=0 AND is_alive=1 AND retraite=0 AND sexe=0 AND nationalite=8'):
+            born=validate_birth(dict(row),day)
+            if born is None:continue
+            age=day.year-born.year-((day.month,day.day)<(born.month,born.day))
+            if 18<=age<=40:candidates.append(row['joueur_id'])
+        candidates.sort(key=lambda key:hashlib.sha256((request['seed']+':free-agent:'+str(key)).encode()).hexdigest())
+        selected=candidates[:60]
+        for key in selected:
+            u.c.execute("INSERT INTO R_entity VALUES (?,'person','DYN_joueur',?,NULL,1,NULL)",(ref('DYN_joueur',key),str(key)))
+        u.c.commit()
+        free_agents=[u.get(ref('DYN_joueur',key)) for key in selected]
         clubs=u.query('club',10000)
         from runtime import decode
         places={};facilities={};usages=[]
@@ -45,7 +64,8 @@ def main():
                 places[place_id]=dict(placeId=place_id,name=decode(city['nom_ville_en'] or city['nom_ville_fr']),placeType='CITY',parentPlaceId=None,latitude=city['latitude'],longitude=city['longitude'])
                 facilities[facility_id]=dict(facilityId=facility_id,name=f['name_arena'],placeId=place_id,capacity=f['capacity'] if f['capacity'] and f['capacity']>0 else None)
                 usages.append(dict(usageId=facility_id+':'+club['entity_id'],teamId=club['entity_id'],facilityId=facility_id,usageType='home',validFrom=None,validTo=None))
-        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=u.query('person',10000),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
+        people=[p for p in u.query('person',10000) if p['parent_id'] is not None]
+        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=people,freeAgents=free_agents,freeAgentSelection=dict(eligibleOriginals=len(candidates),selected=len(selected),policy='ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60'),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
 
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8')

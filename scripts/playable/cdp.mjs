@@ -8,7 +8,7 @@ export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 export async function launchApp(exePath, port, env = {}) {
   const child = spawn(exePath, [], {
     env: { ...process.env, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-allow-origins=*`, ...env },
-    stdio: 'ignore', detached: false,
+    stdio: env.BDM_NATIVE_DIAGNOSTICS === '1' ? 'inherit' : 'ignore', detached: false,
   })
   child.on('error', (error) => { throw error })
   let targets
@@ -29,6 +29,7 @@ export async function connect(webSocketUrl) {
   await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject })
   let nextId = 1
   const pending = new Map()
+  socket.onclose = () => { for (const {reject} of pending.values()) reject(new Error('Native WebView2 connection closed')); pending.clear() }
   const consoleErrors = []
   socket.onmessage = (message) => {
     const data = JSON.parse(message.data)

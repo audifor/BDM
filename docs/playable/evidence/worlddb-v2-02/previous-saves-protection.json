@@ -1,0 +1,18 @@
+{
+  "acceptance-1792960023158": {
+    "sha256": "54b8a7e2c5bfb69d812ff5623fed6dffd1eb606ee0cdbe28ed354a5b1670a0a8",
+    "unchanged": true
+  },
+  "acceptance-1792960023158-b": {
+    "sha256": "e794ecd1d7f086fae413bb8347557908f324408c2d45af4cb1cf17c4531c0d72",
+    "unchanged": true
+  },
+  "original-native-save": {
+    "sha256": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+    "unchanged": true
+  },
+  "pilot-executable": {
+    "sha256": "9c2235202d9f8eac1a594fdd5fdf028215ef150df5bb6eca3507a95a3291c0e3",
+    "unchanged": true
+  }
+}

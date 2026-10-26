@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "signing": [
+    {
+      "playerId": "pbm:DYN_joueur:100027992",
+      "status": "SIGNED",
+      "log": [
+        "2025-07-01 direct contact",
+        "2025-07-02 contact answer OPEN_TO_TALKS",
+        "2025-07-02 offer 110000 x 1",
+        "2025-07-03 answer ACCEPTED",
+        "2025-07-04 signed"
+      ]
+    }
+  ],
+  "renewal": {
+    "negotiationId": "retention:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:contract%3Asigned-free-agent%3Anegotiation%3Apbm%253ADYN_equipe%253A41%253Aorganization%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100027992%3Adirect-approach%253Apbm%253ADYN_joueur%253A100027992%253A0:pbm-renewal",
+    "successorId": "contract:retention-successor:retention:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100027992:contract%3Asigned-free-agent%3Anegotiation%3Apbm%253ADYN_equipe%253A41%253Aorganization%3Apbm%253ADYN_equipe%253A41%3Apbm%253ADYN_joueur%253A100027992%3Adirect-approach%253Apbm%253ADYN_joueur%253A100027992%253A0:pbm-renewal"
+  },
+  "release": {
+    "playerId": "pbm:DYN_joueur:100003955",
+    "contractId": "contract:pbm:DYN_joueur:100003955:pbm:DYN_equipe:41:2025-07-01"
+  },
+  "transfer": [
+    {
+      "playerId": "pbm:DYN_joueur:100006654",
+      "status": "EXECUTED",
+      "log": [
+        "2025-07-01 proposal 100000",
+        "2025-07-02 club CLUB_AGREED",
+        "2025-07-02 playerOffer 105000 x 2",
+        "2025-07-03 player PLAYER_AGREED",
+        "2025-07-03 governance started",
+        "2025-07-04 board decided DECISION_PRESENT",
+        "2025-07-04 executed"
+      ]
+    }
+  ],
+  "negative": {
+    "denied": {
+      "status": "STOPPED",
+      "playerId": "pbm:DYN_joueur:100012436",
+      "stoppedAt": "OFFER_REFUSED:Finance rechaza la operación: no hay margen salarial autorizado suficiente (una autorización no es dinero en caja, y la caja no sustituye a la autorización). Motivo: Team cannot afford the formal offer salary (INSUFFICIENT_AUTHORIZED_HEADROOM:INSUFFICIENT_AUTHORIZED_HEADROOM).",
+      "log": [
+        "2025-07-01 direct contact",
+        "2025-07-02 contact answer OPEN_TO_TALKS"
+      ],
+      "negotiationId": "negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100012436:direct-approach%3Apbm%3ADYN_joueur%3A100012436%3A0"
+    },
+    "refused": {
+      "status": "STOPPED",
+      "playerId": "pbm:DYN_joueur:100021148",
+      "stoppedAt": "CONTACT_ANSWER:NOT_INTERESTED",
+      "log": [
+        "2025-07-01 direct contact",
+        "2025-07-02 contact answer NOT_INTERESTED"
+      ],
+      "negotiationId": "negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100021148:direct-approach%3Apbm%3ADYN_joueur%3A100021148%3A0"
+    }
+  }
+}

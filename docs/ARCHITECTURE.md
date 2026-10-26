@@ -264,6 +264,14 @@ record retains only the frozen input content hash, logical aliases, date, seed a
 generation policy. The pilot Tauri identifier and optional named save profiles isolate
 its state from existing native saves. See `docs/playable/WORLDDB_V2_PLAYABLE_01.md`.
 
+V2-02 completes the PBM new-game inputs with the existing initial-contract and
+team-budget generators, immediately materializing Finance authorization and the
+unchanged F3 fictional contract policy. A seed-stable pool of at most 60 compatible
+original PBM free agents supplements the selected rosters. Save V4's optional PBM
+provenance marks these contracts as generated; old saves are not silently changed.
+The existing season, postseason, annual development and Finance authorities own
+all continuation. See `docs/playable/WORLDDB_V2_02.md` for certification and limits.
+
 The World DB bootstrap path is `WorldDbSessionV1.bootstrapGameWorld`: it validates a
 canonical ecosystem/competition/season/team selection, asks the native repository for
 that ecosystem's B02 Team memberships, canonical `roster`/`roster_membership` players,
