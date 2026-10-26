@@ -1,0 +1,4 @@
+PASS ESP load-certified-second-edition
+PASS ESP advance-second-edition-and-save
+PASS ESP close-reopen-and-continue-second-edition
+{"out":"C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-ESP-1793023244536","profile":"qa-continuity-03-ESP-1793023244537"}

@@ -9,7 +9,7 @@ export const WORLD_DB_V2_UNIVERSE_ID = 'worldDbV2' as const
 export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID | typeof WORLD_DB_V2_UNIVERSE_ID
 
 export interface NewGameConfiguration {
-  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string}
+  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string;readonly competitionId?:string}
   readonly universeId?: NewGameUniverseId
   readonly userTeamKey?: string
   readonly coachRpgPreset?: CoachRpgPreset

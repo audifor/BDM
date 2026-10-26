@@ -1,0 +1,89 @@
+{
+  "competition": "pbm:DYN_championnat:10",
+  "profile": "qa-multileague-ITA-1793021442290",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-multileague-ITA-1793021442290\\main.json",
+  "steps": [
+    {
+      "name": "native-new-game-league-club",
+      "status": "PASS",
+      "detail": {
+        "club": "pbm:DYN_equipe:1413",
+        "teams": 16,
+        "competition": "competition:ITA:serie-a"
+      }
+    },
+    {
+      "name": "original-roster",
+      "status": "PASS",
+      "detail": "BDM\nTS\nTRAPANI SHARK\nPBM identities · BDM-generated profiles\nLBA SERIE A · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n01 JUL 2025\nMATCH\nROSTER\nTrapani Shark · LBA Serie A · PBM V2 · 2025-2026 · fictional PBM snapshot\nPLANTILLA\nPROFUNDIDAD\nBRIEFING\nPLANIFICAR\nJUGADORES EN PLANTILLA\n9\nSIN LESIÓN ACTUAL\n9 / 9\nVENCIMIENTOS REGISTRADOS\n0\nSELECCIÓN ACTIVA\n0\nTU DESPACHO\n0/5\nQUINTETO\n0/7\nBANQUILLO\n0\nASIGNADOS CON LESIÓN\n—\nPLAN DE PUESTOS\nVISTAS ★\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nDEFENSA\nFÍSICO\nTODAS LAS VISTAS ▾\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nMANEJO\nCREACIÓN\nSIN BALÓN\nDEFENSA\nFÍSICO\nMENTAL\nCONTRATOS\nDESARROLLO\nPERSONALIDAD\n+ NUEVA VISTA\nGUARDAR VISTA\nGESTIONAR\nFILTROS RÁPIDOS\nPOSICIÓN\nTodas\nPG\nSG\nSF\nPF\nC\nLESIONES\nTodos\nSin lesión actual\nLesionados\nEDAD\nSin límite\nHasta 21\nHasta 23\nHasta 25\nHasta 30\nPRESENCIA\nTodos vinculados\nEn plantilla\nFuera (con vínculo)\nCONTRATO\nTodos\nVence esta temporada\nMás allá temporada\nSin contrato\n≡ FILTRO AVANZADO\nLIMPIAR\nPLANTILLA / GENERAL\n0 seleccionado(s)\nINSPECTOR ↗\n≡ COLUMNAS\n↔ Deslizar · Redimensionar · Reordenar\nJUGADOR\n\t\nPOS\n\t\nEDAD\n\t\nROL\n\t\nEST\n\t\nALT\n\t\nPESO\n\t\nFATIGA\n\t\nCONTRATO\n\nFabrizio Pugliatti\tSG\t21\t\nSin rol\n⌄\n\tOK\t200 cm\t77 kg\t0\t$1M\nJordan Ford\tPG\t27\t\nSin rol\n⌄\n\tOK\t185 cm\t79 kg\t0\t$2M\nRyan Arcidiacono\tPG\t31\t\nSin rol\n⌄\n\tOK\t190 cm\t85 kg\t0\t$150K\nJ.D. Notae\tPG\t26\t\nSin rol\n⌄\n\tOK\t188 cm\t86 kg\t0\t$350K\nTimmy Allen\tSF\t25\t\nSin rol\n⌄\n\tOK\t198 cm\t95 kg\t0\t$110K\nMatt Hurt\tSF\t25\t\nSin rol\n⌄\n\tOK\t206 cm\t97 kg\t0\t$110K\nAlessandro Cappelletti\tPG\t29\t\nSin rol\n⌄\n\tOK\t186 cm\t82 kg\t0\t$370K\nAmar Alibegovic\tPF\t30\t\nSin rol\n⌄\n\tOK\t206 cm\t109 kg\t0\t$460K\nRiccardo Rossato\tPG\t28\t\nSin rol\n⌄\n\tOK\t190 cm\t85 kg\t0\t$200K\nSIMULATION IDLE"
+    },
+    {
+      "name": "real-match-acta-standings",
+      "status": "PASS",
+      "detail": {
+        "id": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0001",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01",
+        "competitionId": "competition:ITA:serie-a",
+        "date": "2025-07-01",
+        "homeTeamId": "pbm:DYN_equipe:1413",
+        "awayTeamId": "pbm:DYN_equipe:66",
+        "stakes": "regular",
+        "competitionStageKey": "REGULAR",
+        "status": "completed",
+        "result": {
+          "homeScore": 111,
+          "awayScore": 117
+        }
+      }
+    },
+    {
+      "name": "contact-offer-governance-sign",
+      "status": "PASS",
+      "detail": {
+        "candidate": {
+          "playerId": "pbm:DYN_joueur:100058620",
+          "name": "Luca Vesnaver",
+          "status": "SIGNED",
+          "log": [
+            "2025-07-01 direct contact",
+            "2025-07-02 contact answer OPEN_TO_TALKS",
+            "2025-07-02 offer 110000 x 1",
+            "2025-07-03 answer ACCEPTED",
+            "2025-07-04 signed"
+          ]
+        },
+        "contract": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A1413%3Aorganization:pbm%3ADYN_equipe%3A1413:pbm%3ADYN_joueur%3A100058620:direct-approach%3Apbm%3ADYN_joueur%3A100058620%3A0",
+          "playerId": "pbm:DYN_joueur:100058620",
+          "teamId": "pbm:DYN_equipe:1413",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-07-04",
+            "expiresOn": "2026-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "financialProfiles": 16
+      }
+    },
+    {
+      "name": "renew-original-contract",
+      "status": "PASS",
+      "detail": {
+        "playerId": "pbm:DYN_joueur:100058620"
+      }
+    },
+    {
+      "name": "close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-07-06",
+        "contracts": 205,
+        "completed": 8
+      }
+    }
+  ],
+  "consoleErrors": []
+}

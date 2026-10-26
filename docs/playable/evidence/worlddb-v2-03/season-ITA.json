@@ -1,0 +1,781 @@
+{
+  "passed": true,
+  "regularGames": 240,
+  "perClub": 30,
+  "competition": "pbm:DYN_championnat:10",
+  "postseason": {
+    "regularSeasonComplete": true,
+    "seeds": [
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2072",
+        "seed": 1
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:4067",
+        "seed": 2
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2052",
+        "seed": 3
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2064",
+        "seed": 4
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:498",
+        "seed": 5
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:60",
+        "seed": 6
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:1413",
+        "seed": 7
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:62",
+        "seed": 8
+      }
+    ],
+    "bracketPlan": {
+      "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+      "variantKey": "MAIN",
+      "fixtures": [
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2072",
+              "seed": 1
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:62",
+              "seed": 8
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2064",
+              "seed": 4
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:498",
+              "seed": 5
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 3,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:4067",
+              "seed": 2
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:1413",
+              "seed": 7
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 4,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2052",
+              "seed": 3
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:60",
+              "seed": 6
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:FINAL:1",
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2"
+            }
+          ]
+        }
+      ],
+      "fixtureIdsByNodeKey": {
+        "QUARTERFINALS": [
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1",
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2",
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3",
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4"
+        ],
+        "SEMIFINALS": [
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1",
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2"
+        ],
+        "FINAL": [
+          "worldcf:edition:ITA:serie-a:2025-26:MAIN:FINAL:1"
+        ]
+      }
+    },
+    "resolvedFixtures": [
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2072",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:62",
+            "seed": 8
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2064",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:498",
+            "seed": 5
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 3,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4067",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:1413",
+            "seed": 7
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 4,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2052",
+            "seed": 3
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:60",
+            "seed": 6
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2072",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2064",
+            "seed": 4
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4067",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2052",
+            "seed": 3
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:FINAL:1",
+        "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "FINAL",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2072",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4067",
+            "seed": 2
+          }
+        ]
+      }
+    ],
+    "readyFixtures": [],
+    "outcomes": [
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:2072",
+        "loserEntryId": "pbm:DYN_equipe:62"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:2064",
+        "loserEntryId": "pbm:DYN_equipe:498"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3",
+        "winnerEntryId": "pbm:DYN_equipe:4067",
+        "loserEntryId": "pbm:DYN_equipe:1413"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4",
+        "winnerEntryId": "pbm:DYN_equipe:2052",
+        "loserEntryId": "pbm:DYN_equipe:60"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:2072",
+        "loserEntryId": "pbm:DYN_equipe:2064"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:4067",
+        "loserEntryId": "pbm:DYN_equipe:2052"
+      },
+      {
+        "fixtureId": "worldcf:edition:ITA:serie-a:2025-26:MAIN:FINAL:1",
+        "winnerEntryId": "pbm:DYN_equipe:2072",
+        "loserEntryId": "pbm:DYN_equipe:4067"
+      }
+    ],
+    "seriesByFixtureId": {
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2072",
+          "secondEntryId": "pbm:DYN_equipe:62",
+          "priorityEntryId": "pbm:DYN_equipe:2072",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:62"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:62"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:62",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:62",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:62"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2072",
+          "loserEntryId": "pbm:DYN_equipe:62",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2064",
+          "secondEntryId": "pbm:DYN_equipe:498",
+          "priorityEntryId": "pbm:DYN_equipe:2064",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2064",
+              "awayEntryId": "pbm:DYN_equipe:498"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2064",
+              "awayEntryId": "pbm:DYN_equipe:498"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:498",
+              "awayEntryId": "pbm:DYN_equipe:2064"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:498",
+              "awayEntryId": "pbm:DYN_equipe:2064"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2064",
+              "awayEntryId": "pbm:DYN_equipe:498"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2064",
+          "loserEntryId": "pbm:DYN_equipe:498",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:4067",
+          "secondEntryId": "pbm:DYN_equipe:1413",
+          "priorityEntryId": "pbm:DYN_equipe:4067",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:1413"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:1413"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:1413",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:1413",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:1413"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:4067",
+          "loserEntryId": "pbm:DYN_equipe:1413",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:4": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2052",
+          "secondEntryId": "pbm:DYN_equipe:60",
+          "priorityEntryId": "pbm:DYN_equipe:2052",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2052",
+              "awayEntryId": "pbm:DYN_equipe:60"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2052",
+              "awayEntryId": "pbm:DYN_equipe:60"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:60",
+              "awayEntryId": "pbm:DYN_equipe:2052"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:60",
+              "awayEntryId": "pbm:DYN_equipe:2052"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2052",
+              "awayEntryId": "pbm:DYN_equipe:60"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2052",
+          "loserEntryId": "pbm:DYN_equipe:60",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2072",
+          "secondEntryId": "pbm:DYN_equipe:2064",
+          "priorityEntryId": "pbm:DYN_equipe:2072",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:2064"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:2064"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2064",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2064",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:2064"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2072",
+          "loserEntryId": "pbm:DYN_equipe:2064",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:4067",
+          "secondEntryId": "pbm:DYN_equipe:2052",
+          "priorityEntryId": "pbm:DYN_equipe:4067",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:2052"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:2052"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2052",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2052",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:2052"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:4067",
+          "loserEntryId": "pbm:DYN_equipe:2052",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ITA:serie-a:2025-26:MAIN:FINAL:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ITA:serie-a:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2072",
+          "secondEntryId": "pbm:DYN_equipe:4067",
+          "priorityEntryId": "pbm:DYN_equipe:2072",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:FINAL:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:FINAL:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:FINAL:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:FINAL:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:4067",
+              "awayEntryId": "pbm:DYN_equipe:2072"
+            },
+            {
+              "gameId": "worldseries:edition:ITA:serie-a:2025-26:MAIN:FINAL:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2072",
+              "awayEntryId": "pbm:DYN_equipe:4067"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2072",
+          "loserEntryId": "pbm:DYN_equipe:4067",
+          "nextGame": null
+        }
+      }
+    },
+    "championTeamId": "pbm:DYN_equipe:2072",
+    "lifecycleDiagnostic": null
+  },
+  "transition": {
+    "sourceSeasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01",
+    "targetSeasonId": "generated-season-0001",
+    "competitionId": "competition:ITA:serie-a",
+    "participantDerivation": "seasonSnapshot",
+    "schedule": {
+      "kind": "generated",
+      "fixtureCount": 240
+    },
+    "linkedCompetitionSeasonIds": [],
+    "annualHooksExecuted": [
+      "contractReconciliation",
+      "aiRosterMaintenance",
+      "boardStateRollover",
+      "clubStrategicReview",
+      "gmPlanWorkflowReview"
+    ],
+    "diagnostics": [],
+    "repairReports": []
+  },
+  "decisions": [
+    {
+      "date": "2025-09-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0057:pbm:DYN_joueur:78316"
+    },
+    {
+      "date": "2026-06-16",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g1:pressure"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g1:performance"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g2:pressure"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g2:performance"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g3:pressure"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g3:performance"
+    },
+    {
+      "date": "2026-06-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:10:2025-07-01:worldcf:edition:ITA:serie-a:2025-26:MAIN:QUARTERFINALS:3:g3:pbm:DYN_joueur:100056777"
+    }
+  ],
+  "currentDate": "2026-07-01"
+}

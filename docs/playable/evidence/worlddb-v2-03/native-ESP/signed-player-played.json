@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "playerId": "pbm:DYN_joueur:242698",
+  "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0010",
+  "date": "2025-10-11",
+  "line": {
+    "playerId": "pbm:DYN_joueur:242698",
+    "teamId": "pbm:DYN_equipe:10257",
+    "opponentTeamId": "pbm:DYN_equipe:51",
+    "isHome": true,
+    "started": true,
+    "stats": {
+      "playerId": "pbm:DYN_joueur:242698",
+      "secondsPlayed": 454,
+      "points": 0,
+      "fieldGoalsMade": 0,
+      "fieldGoalsAttempted": 0,
+      "twoPointMade": 0,
+      "twoPointAttempted": 0,
+      "threePointMade": 0,
+      "threePointAttempted": 0,
+      "freeThrowsMade": 0,
+      "freeThrowsAttempted": 0,
+      "offensiveRebounds": 0,
+      "defensiveRebounds": 0,
+      "rebounds": 0,
+      "assists": 0,
+      "steals": 0,
+      "blocks": 0,
+      "turnovers": 1,
+      "foulsCommitted": 1,
+      "plusMinus": -12
+    }
+  }
+}

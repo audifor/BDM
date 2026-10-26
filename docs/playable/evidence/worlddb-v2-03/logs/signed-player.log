@@ -1,0 +1,18 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2Multileague.test.ts -t reopens the Windows signing --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ESP' creates a real roster, plays a match, signs an original free agent and persists
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'FRA' creates a real roster, plays a match, signs an original free agent and persists
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ITA' creates a real roster, plays a match, signs an original free agent and persists
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'ESP' reopens the Windows signing, fields it and persists its real acta 5856ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'FRA' reopens the Windows signing, fields it and persists its real acta 5582ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'ITA' reopens the Windows signing, fields it and persists its real acta 4738ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 3 skipped (6)
+   Start at  14:49:10
+   Duration  26.24s (transform 7.87s, setup 0ms, import 9.84s, tests 16.18s, environment 0ms)

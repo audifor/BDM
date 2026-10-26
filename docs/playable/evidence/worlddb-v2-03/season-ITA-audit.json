@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "regularGames": 240,
+  "playoffGames": 29,
+  "totalActas": 269,
+  "championId": "pbm:DYN_equipe:2072",
+  "championName": "Bertram  Derthona Tortona",
+  "allCompleted": true,
+  "uniqueGameIds": true,
+  "allResultScoresMatchActas": true,
+  "allActaPlayerAndTeamReferencesValid": true,
+  "sourceSave": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793020886622\\season-complete.json",
+  "sourceSaveSha256": "c5a7583529b9ca3ee6cc319e3226ed2584ff9fe29a3de2c51febce46463366cd"
+}

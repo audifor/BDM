@@ -1,0 +1,102 @@
+{
+  "milestone": "BDM WORLDDB V2-03",
+  "recorded_at_utc": "2026-10-26T14:09:48.465937+00:00",
+  "branch": "playable/worlddb-v2-03",
+  "base_commit": "4c8919fef50823f422f3166d61f886e183ba6357",
+  "native_career_acceptance": "PASS_ESP_FRA_ITA",
+  "full_delivery_status": "PARTIAL_FRENCH_SEASON_BLOCKED",
+  "season_and_continuity": {
+    "ESP": {
+      "regular": 306,
+      "postseason": 20,
+      "champion": "Saski Baskonia",
+      "full_season": "PASS",
+      "second_edition_games": 9,
+      "domain_continuity": "PASS",
+      "windows_second_edition": "PASS"
+    },
+    "ITA": {
+      "regular": 240,
+      "postseason": 29,
+      "champion": "Bertram Derthona Tortona",
+      "full_season": "PASS",
+      "second_edition_games": 8,
+      "domain_continuity": "PASS",
+      "windows_second_edition": "PASS"
+    },
+    "FRA": {
+      "regular_completed": 232,
+      "regular_scheduled": 240,
+      "full_season": "BLOCKED_POSTSEASON_CONTRACT",
+      "postseason": "NOT_COMPLETED",
+      "continuity": "NOT_CERTIFIED",
+      "failure_date": "2026-01-20",
+      "failure": "Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26"
+    }
+  },
+  "validation": {
+    "global": {
+      "command": "npm test -- --maxWorkers=6 --testTimeout=180000 --hookTimeout=600000 --reporter=verbose",
+      "files_passed": 776,
+      "files_skipped": 48,
+      "tests_passed": 5730,
+      "tests_skipped": 56,
+      "failed": 0,
+      "duration_seconds": 2799.68,
+      "exit_code": 0,
+      "skip_note": "Optional audit suites and opt-in long PBM tests. Season/continuity/native consumers executed separately."
+    },
+    "focused_pbm": {
+      "passed": 12,
+      "failed": 0
+    },
+    "native_signing_match_consumers": {
+      "passed": 3,
+      "failed": 0
+    },
+    "long_season_tests": {
+      "ESP": "PASS",
+      "ITA": "PASS",
+      "FRA": "EXPECTED_BLOCK_BOUNDARY_ASSERTED_NOT_SEASON_PASS"
+    },
+    "continuity_tests": {
+      "ESP": "PASS",
+      "ITA": "PASS"
+    },
+    "rust": {
+      "passed": 18,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "cargo_fmt": "PASS",
+    "cargo_check_offline": {
+      "status": "PASS",
+      "explicit_cargo_exit_code": 0
+    },
+    "embedded_windows_build": "PASS",
+    "native_windows_steps": {
+      "ESP": 6,
+      "FRA": 6,
+      "ITA": 6
+    },
+    "native_windows_second_edition_steps": {
+      "ESP": 3,
+      "ITA": 3
+    }
+  },
+  "coverage": {
+    "PLAYABLE": 3,
+    "READY_TO_CONNECT": 0,
+    "NEEDS_MAPPING": 99,
+    "BLOCKED": 0,
+    "scope": "Native career creation/play/management/persistence; full lifecycle certified separately."
+  },
+  "protection": {
+    "master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+    "source_checks_passed": 54,
+    "prior_native_profiles_unchanged": 13,
+    "f4_status_entries_unchanged": 27,
+    "binary_sha256": "b9abb6ab196f65e55acc5ad26cea51855b213fcb738a0500753a1376cfeb7fa4"
+  },
+  "ci": "PR must remain unmerged while checks are pending or failed."
+}

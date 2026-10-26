@@ -1,0 +1,24 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2Multileague.test.ts src/app/game/WorldDbV2Playable.test.ts src/app/game/WorldDbV2Market.test.ts --maxWorkers=2 --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > opens 255 generated playable contracts, preserves PBM identities and imports an original eligible free-agent pool reproducibly 5254ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > contacts, negotiates salary/term/role, obtains Governance/Finance approval and signs an original free agent once 648ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > renews the PBM signing through retention and Board, then releases through the actual financial authority 1067ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > negotiates club compensation and player terms, executes a PBM transfer atomically and refuses replay 574ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > rejects ineligible contact, a duplicate contract, unaffordable offer and a real player refusal without changing canonical rosters 94ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > validates real native DTOs, immutable rules bundle and all original identities/rosters 70ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > plays the real user match, registers statistics/standings, advances time and resumes native Save V4 45051ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > accepts the PBM reference date and a different fictional start without importing results 657ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > rejects incomplete native provenance instead of weakening Save V4 validation 41ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ESP' creates a real roster, plays a match, signs an original free agent and persists 47108ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'FRA' creates a real roster, plays a match, signs an original free agent and persists 40965ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ITA' creates a real roster, plays a match, signs an original free agent and persists 40074ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  14:44:26
+   Duration  158.81s (transform 21.93s, setup 0ms, import 30.19s, tests 194.43s, environment 0ms)

@@ -28,7 +28,7 @@ export async function createConfiguredGameAsync(
   if (options.universeId === WORLD_DB_V2_UNIVERSE_ID) {
     if(!options.worldDbV2)throw new Error('WorldDB V2 source, date and seed are required')
     const { createWorldDbV2Game } = await import('./WorldDbV2Game')
-    return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation)
+    return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
   }
   if (options.universeId === WORLD_DB_SPAIN_UNIVERSE_ID) {
     return createWorldDbSpainGame(options.userTeamKey ?? '', access, BDM_GAME_BALANCE_V1, options.userCoachCreation)

@@ -15,13 +15,16 @@ it.skipIf(process.env.BDM_WORLDDB_CONTINUITY!=='1')('resumes the certified PBM s
   const source=process.env.BDM_WORLDDB_SUCCESSOR ?? readdirSync(dir).filter(p=>p.startsWith('season-02-')).sort().reverse().map(p=>resolve(dir,p,'successor.json')).find(p=>existsSync(p))!
   expect(source).toBeTruthy()
   let world=deserializeGameWorldSaveV4(JSON.parse(readFileSync(source,'utf-8')))
-  const out=resolve(dir,'continuity-02-'+Date.now());mkdirSync(out,{recursive:true})
+  const out=resolve(dir,'continuity-03-'+Date.now());mkdirSync(out,{recursive:true})
   const oldSeason=world.currentSeasonId!, next=Object.values(world.seasons).find(s=>s.id!==oldSeason)!
   const oldGames=Object.values(world.games).filter(g=>g.seasonId===oldSeason)
   const oldHistory=world.seasonHistoryBySeasonId[oldSeason]!, clubs=Object.keys(world.teams).sort()
   const identities=Object.keys(world.players).filter(id=>id.startsWith('pbm:')).sort()
-  expect(oldGames).toHaveLength(328);expect(oldGames.every(g=>g.status==='completed')).toBe(true)
-  expect(oldHistory.championTeamId).toBe('pbm:DYN_equipe:50')
+  const teamCount=Object.keys(world.teams).length
+  expect(oldGames.filter(g=>g.stakes==='regular')).toHaveLength(teamCount*(teamCount-1))
+  expect(oldGames.every(g=>g.status==='completed')).toBe(true)
+  expect(oldHistory.championSource).toBe('postseason')
+  expect(clubs).toContain(oldHistory.championTeamId)
   const decisions:unknown[]=[]
   let nextPlayed=false
   for(let day=0;day<200;day++){
@@ -60,5 +63,5 @@ it.skipIf(process.env.BDM_WORLDDB_CONTINUITY!=='1')('resumes the certified PBM s
   const continued=advanceGameDayWithResult(reopened,()=>123456)
   expect(continued.status).toMatch(/COMPLETED|BREAKPOINT_AFTER_PROCESSING/)
   writeFileSync(resolve(out,'continued.json'),JSON.stringify(serializeGameWorldV4(continued.world,'2026-10-26T12:00:00Z')))
-  writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({passed:true,source,oldGames:328,oldChampion:oldHistory.championTeamId,nextSeason:next.id,newGames:played.length,date:continued.world.currentDate,clubs:clubs.length,pbmPlayers:identities.length,decisions,annualCycle:world.worldAnnualDevelopmentCycle},null,2))
+  writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({passed:true,source,oldGames:oldGames.length,oldChampion:oldHistory.championTeamId,nextSeason:next.id,newGames:played.length,date:continued.world.currentDate,clubs:clubs.length,pbmPlayers:identities.length,decisions,annualCycle:world.worldAnnualDevelopmentCycle},null,2))
 },3_600_000)

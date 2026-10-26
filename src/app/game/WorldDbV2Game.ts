@@ -9,7 +9,8 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff';
 import { attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world';
 import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGenerator';
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment';
-import { createAcbDemoSalaryRulesV1 } from './AcbDemoSalaryRules';
+import { createGeneratedProfessionalSalaryRulesV1 } from './GeneratedProfessionalSalaryRules';
+import { worldDbV2Competition, worldDbV2Calendar, worldDbV2SeasonEnd } from './WorldDbV2Competitions';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -23,14 +24,10 @@ import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalo
 import { assertWorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog';
 import { WorldDbSessionV1 } from './WorldDbSession';
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository';
-import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars';
 import { gameBalanceOpeningEconomicStates, applyGameBalanceBootstrap } from '@/app/gameBalance/GameBalanceBootstrap';
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy';
 import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment';
 import type { UserCoachCreationInput } from './UserCoachCreator';
-const COMPETITION = 'competition:ESP:liga-endesa';
-const EDITION = 'edition:ESP:liga-endesa:2025-26';
-const ECOSYSTEM = 'ecosystem:ESP:acb';
 const bundle = parseWorldCompetitionRuntimeBundle(referenceBundle);
 const pick = (value: Readonly<Record<string, number>>, keys: readonly string[]) => Object.fromEntries(keys.map(k => [k, value[k]!]));
 const dob = (r: Record<string, any>) => `${r.annee_naissance}-${String(r.mois_naissance).padStart(2, '0')}-${String(r.jour_naissance).padStart(2, '0')}`;
@@ -44,8 +41,9 @@ const developmentDomains = ['shooting', 'finishing', 'creation', 'passing', 'cre
  * persisted separately. PBM club/person IDs are preserved exactly in their runtime namespaces. */
 export function projectWorldDbV2(snapshot: WorldDbV2Snapshot): WorldDbGameBootstrapSliceV1 {
     const day = parseGameDate(snapshot.manifest.configuration.start_date), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
-    const year = Number(day.slice(0, 4)) + (day.slice(5) > '10-04' ? 1 : 0);
-    const calendar = spainAcbCalendarForStartYear(year);
+    const config = worldDbV2Competition(snapshot.competitions[0]?.entity_id);
+    const year = Number(day.slice(0, 4)) + (config.calendar === 'SPAIN_ACB_EXISTING' && day.slice(5) > '10-04' ? 1 : 0);
+    const { nativeCompetitionId: COMPETITION, editionId: EDITION, ecosystemId: ECOSYSTEM } = config;
     const countries = snapshot.countries.map(e => ({ countryId: e.entity_id, name: String(e.reference_data.nom_pays), code: String(e.reference_data.abreviation) }));
     const countryIds = new Set(countries.map(c => c.countryId));
     const teams = snapshot.clubs.map(e => ({ teamId: e.entity_id, name: String(e.reference_data.nom_equipe), countryId: e.parent_id!, gender: e.reference_data.sexe === 1 ? 'female' as const : 'male' as const, organizationId: e.entity_id + ':organization', organizationSectionId: e.entity_id + ':section' }));
@@ -88,13 +86,14 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot): WorldDbGameBootst
         if (players.filter(p => snapshot.people.find(e => e.entity_id === p.playerId)?.parent_id === team.teamId).length < 5)
             throw new Error(`PBM pilot roster incomplete: ${team.teamId}`);
     }
-    const result: WorldDbGameBootstrapSliceV1 = { schemaVersion: 1, source: { databaseId: 'worlddb-v2-projection:' + snapshot.manifest.master.sha256, schemaId: bundle.worldDbSchema }, ecosystem: { ecosystemId: ECOSYSTEM, name: 'PBM Spain · BDM ACB rules', kind: 'fibaLike', category: 'men' }, competition: { competitionId: COMPETITION, name: 'Liga Endesa · PBM V2', gender: 'male', ecosystemId: ECOSYSTEM }, season: { competitionSeasonId: EDITION, seasonId: 'worlddb-v2:season:' + day, label: `${year}-${year + 1} · fictional PBM snapshot`, startDate: day, endDate: calendar.seasonWindow.endDate, provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries, teams, persons, players, staffProfiles, staffAssignments, organizations: teams.map(t => ({ organizationId: t.organizationId, entityId: t.teamId, legalName: t.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null })), organizationSections: teams.map(t => ({ sectionId: t.organizationSectionId, organizationId: t.organizationId, sport: 'BASKETBALL', gender: 'MALE', categoryScope: 'SENIOR', canonicalName: t.name, validFrom: null, validTo: null })), rosterAssignments: players.map(p => ({ rosterId: 'pbm:roster:' + p.playerId, teamId: snapshot.people.find(e => e.entity_id === p.playerId)!.parent_id!, playerId: p.playerId, status: 'ACTIVE' })), matches: [] };
+    const result: WorldDbGameBootstrapSliceV1 = { schemaVersion: 1, source: { databaseId: 'worlddb-v2-projection:' + snapshot.manifest.master.sha256, schemaId: bundle.worldDbSchema }, ecosystem: { ecosystemId: ECOSYSTEM, name: config.name + ' PBM ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: COMPETITION, name: config.name + ' · PBM V2', gender: 'male', ecosystemId: ECOSYSTEM }, season: { competitionSeasonId: EDITION, seasonId: 'worlddb-v2:season:' + (config.countryCode === 'ESP' ? '' : config.sourceCompetitionId + ':') + day, label: `${year}-${year + 1} · fictional PBM snapshot`, startDate: day, endDate: worldDbV2SeasonEnd(config, day), provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries, teams, persons, players, staffProfiles, staffAssignments, organizations: teams.map(t => ({ organizationId: t.organizationId, entityId: t.teamId, legalName: t.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null })), organizationSections: teams.map(t => ({ sectionId: t.organizationSectionId, organizationId: t.organizationId, sport: 'BASKETBALL', gender: 'MALE', categoryScope: 'SENIOR', canonicalName: t.name, validFrom: null, validTo: null })), rosterAssignments: players.map(p => ({ rosterId: 'pbm:roster:' + p.playerId, teamId: snapshot.people.find(e => e.entity_id === p.playerId)!.parent_id!, playerId: p.playerId, status: 'ACTIVE' })), matches: [] };
     const sourced = { ...result, physicalContent: snapshot.physicalContent };
     assertWorldDbGameBootstrapSliceV1(sourced);
     return sourced;
 }
 export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1): WorldDatabaseRepository {
-    const catalog: WorldDbSelectionCatalogV1 = { schemaVersion: 1, source: slice.source, ecosystems: [{ ecosystemId: ECOSYSTEM, code: 'WORLDDB_V2_PILOT', name: 'PBM WorldDB V2', gender: 'male' }], levels: [], units: [], competitionAssignments: [{ assignmentId: 'worlddb-v2:acb', ecosystemId: ECOSYSTEM, competitionId: COMPETITION, competitionName: slice.competition.name, levelId: null, unitId: null, roleType: 'LEAGUE' }], competitionSeasons: [{ competitionSeasonId: EDITION, competitionId: COMPETITION, seasonId: slice.season.seasonId, competitionName: slice.competition.name, editionNumber: null }], teamMemberships: slice.teams.map(t => ({ membershipId: 'worlddb-v2:membership:' + t.teamId, ecosystemId: ECOSYSTEM, teamId: t.teamId, teamName: t.name, levelId: null, membershipStatus: 'ACTIVE', validFrom: null, validTo: null })), teamUnitMemberships: [] };
+    const COMPETITION = slice.competition.competitionId, EDITION = slice.season.competitionSeasonId, ECOSYSTEM = slice.ecosystem.ecosystemId;
+    const catalog: WorldDbSelectionCatalogV1 = { schemaVersion: 1, source: slice.source, ecosystems: [{ ecosystemId: ECOSYSTEM, code: 'WORLDDB_V2_PILOT', name: 'PBM WorldDB V2', gender: 'male' }], levels: [], units: [], competitionAssignments: [{ assignmentId: 'worlddb-v2:' + COMPETITION, ecosystemId: ECOSYSTEM, competitionId: COMPETITION, competitionName: slice.competition.name, levelId: null, unitId: null, roleType: 'LEAGUE' }], competitionSeasons: [{ competitionSeasonId: EDITION, competitionId: COMPETITION, seasonId: slice.season.seasonId, competitionName: slice.competition.name, editionNumber: null }], teamMemberships: slice.teams.map(t => ({ membershipId: 'worlddb-v2:membership:' + t.teamId, ecosystemId: ECOSYSTEM, teamId: t.teamId, teamName: t.name, levelId: null, membershipStatus: 'ACTIVE', validFrom: null, validTo: null })), teamUnitMemberships: [] };
     assertWorldDbSelectionCatalogV1(catalog);
     return {
         async inspectDatabase() { return { schemaVersion: 1, source: slice.source, competitionSeasonIds: [EDITION] }; },
@@ -110,15 +109,10 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
     const session = new WorldDbSessionV1({ repository, databasePath: 'worlddb-v2:projection', runtimeBundlePath: 'worlddb-v2:rules-template' });
     await session.open();
     try {
-        const day = parseGameDate(snapshot.manifest.configuration.start_date), year = Number(day.slice(0, 4)) + (day.slice(5) > '10-04' ? 1 : 0);
-        const baseCalendar = spainAcbCalendarForStartYear(year);
-        // A shifted fictional edition preserves the reference cadence relative to its opening
-        // date. Keeping the 2025 weekdays literally can push round 34 outside the shifted window.
-        // This changes calendar inputs only; the existing scheduler and sporting rules stay intact.
-        const weekday = (date: string) => new Date(date + 'T00:00:00Z').getUTCDay();
-        const shift = weekday(baseCalendar.regularSeasonWindow.startDate) - weekday(spainAcbCalendarForStartYear(2025).regularSeasonWindow.startDate);
-        const rotate = (dayOfWeek: number) => (dayOfWeek + shift + 7) % 7;
-        const calendar = { ...baseCalendar, seasonWindow: { startDate: day, endDate: slice.season.endDate as typeof day }, specialCompetitionWindows: [], regularSeasonCadence: { ...baseCalendar.regularSeasonCadence, preferredWeekdays: baseCalendar.regularSeasonCadence.preferredWeekdays.map(rotate), midweekWeekdays: baseCalendar.regularSeasonCadence.midweekWeekdays.map(rotate) } };
+        const day = parseGameDate(snapshot.manifest.configuration.start_date);
+        const config = worldDbV2Competition(snapshot.competitions[0]?.entity_id);
+        const { nativeCompetitionId: COMPETITION, editionId: EDITION, ecosystemId: ECOSYSTEM } = config;
+        const calendar = worldDbV2Calendar(config, day);
         let world = await session.bootstrapGameWorld({ source: slice.source, ecosystemId: ECOSYSTEM, competitionId: COMPETITION, competitionSeasonId: EDITION, teamId }, calendar);
         if (userCoachCreation)
             world = appointCreatedUserCoachToWorldDbClub(world, teamIdFromString(teamId), userCoachCreation);
@@ -134,16 +128,19 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
         // PBM contract records remain reference-only in the immutable master.
         world = updateGameWorld(world, { contracts: Object.values(world.teams).flatMap(team => team.rosterPlayerIds.map(id => generateInitialPlayerContract(world.players[id]!, team.id, day))) });
         // Reuse F3's fictional uncapped contract policy, never assert real ACB economic rules.
-        world = updateGameWorld(world, { salaryRulesBySeasonId: { ...world.salaryRulesBySeasonId, [world.currentSeasonId!]: createAcbDemoSalaryRulesV1(world.currentSeasonId!) }, teamFinances: ensureTeamFinances({ currentDate: day, teams: Object.values(world.teams), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId) }) });
-        const openingEconomicStates = gameBalanceOpeningEconomicStates(world, id => { const r = resolveOrganizationCurrency(world, id); return r.status === 'RESOLVED' ? String(r.currencyCode) : null; });
-        world = applyGameBalanceBootstrap(ensureCanonicalFinanceFoundation(world, { authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world), openingEconomicStates }));
-        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: 'pbm:DYN_championnat:5', nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents: 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const }) } });
+        world = updateGameWorld(world, { salaryRulesBySeasonId: { ...world.salaryRulesBySeasonId, [world.currentSeasonId!]: createGeneratedProfessionalSalaryRulesV1(world.currentSeasonId!) }, teamFinances: ensureTeamFinances({ currentDate: day, teams: Object.values(world.teams), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId) }) });
+        // The selected fictional professional universe explicitly provisions EUR via
+        // Finance's existing authority. PBM salary units are never converted here.
+        const explicitOrganizationCurrencies = Object.values(world.teams).map(team => ({ organizationId: String(team.organizationId), currencyCode: config.currencyCode }));
+        const openingEconomicStates = gameBalanceOpeningEconomicStates(world, id => { const r = resolveOrganizationCurrency(world, id, explicitOrganizationCurrencies); return r.status === 'RESOLVED' ? String(r.currencyCode) : null; });
+        world = applyGameBalanceBootstrap(ensureCanonicalFinanceFoundation(world, { explicitOrganizationCurrencies, authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world), openingEconomicStates }));
+        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: config.sourceCompetitionId, nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents: config.countryCode === 'ESP' ? 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const : 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60' as const }) } });
         return world;
     }
     finally {
         session.close();
     }
 }
-export async function createWorldDbV2Game(sourceRoot: string, startDate: string, seed: string, teamId: string, userCoachCreation?: UserCoachCreationInput) {
-    return createWorldDbV2GameFromSnapshot(await buildWorldDbV2(sourceRoot, startDate, seed), teamId, userCoachCreation);
+export async function createWorldDbV2Game(sourceRoot: string, startDate: string, seed: string, teamId: string, userCoachCreation?: UserCoachCreationInput, competitionId?: string) {
+    return createWorldDbV2GameFromSnapshot(await buildWorldDbV2(sourceRoot, startDate, seed, competitionId), teamId, userCoachCreation);
 }
