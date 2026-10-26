@@ -63,6 +63,7 @@ export interface WorldDbGameBootstrapPersonV1 {
   /** Optional existing WorldDB PERSON scores; exact eight-key BDM runtime projection. */
   readonly personality?: Personality['values']
   readonly physical?: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
+  readonly measurementProvenance?: import('@/domain/player').PlayerBio['measurementProvenance']
 }
 export interface WorldDbGameBootstrapDevelopmentDimensionV1 { readonly dimensionCode: string; readonly ceiling: number; readonly growthRate: number; readonly declineSensitivity: number }
 export interface WorldDbGameBootstrapPlayerV1 {

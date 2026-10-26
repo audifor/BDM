@@ -1,4 +1,5 @@
 import type { GameWorld } from './GameWorld'
+import { parseGameDate } from '@/domain/date'
 
 export interface WorldDbCompetitionRuntimeBundlePin {
   readonly contentId: string
@@ -7,6 +8,7 @@ export interface WorldDbCompetitionRuntimeBundlePin {
 }
 
 export interface WorldDbCompetitionRuntime {
+  readonly worldDbV2?: WorldDbV2Provenance
   /**
    * Optional only for transitional callers created before #91. Canonical Save V4 always writes an
    * explicit pin or null, and attachWorldDbCompetitionRuntime preserves an existing pin when omitted.
@@ -31,6 +33,7 @@ export function createWorldDbCompetitionRuntime(
   value: Partial<WorldDbCompetitionRuntime> = EMPTY_WORLD_DB_COMPETITION_RUNTIME,
 ): WorldDbCompetitionRuntime {
   return Object.freeze({
+    ...(value.worldDbV2 === undefined ? {} : { worldDbV2: readWorldDbV2Provenance(value.worldDbV2) }),
     competitionRuntimeBundle: normalizeRuntimeBundlePin(value.competitionRuntimeBundle ?? null),
     competitionPlanIds: Object.freeze([...(value.competitionPlanIds ?? [])]),
     competitionSeasonIds: Object.freeze([...(value.competitionSeasonIds ?? [])]),
@@ -50,12 +53,37 @@ export function attachWorldDbCompetitionRuntime(
     ...world,
     worldDbCompetitionRuntime: createWorldDbCompetitionRuntime({
       ...runtime,
+      worldDbV2: runtime.worldDbV2 ?? world.worldDbCompetitionRuntime?.worldDbV2,
       competitionRuntimeBundle:
         runtime.competitionRuntimeBundle === undefined
           ? currentPin
           : runtime.competitionRuntimeBundle,
     }),
   })
+}
+
+export interface WorldDbV2Provenance {
+  readonly masterSha256: string
+  readonly sourceDate: string
+  readonly startDate: string
+  readonly seed: string
+  readonly sourceCompetitionId: string
+  readonly nativeCompetitionId: string
+  readonly fictional: true
+  readonly profiles: 'BDM_GENERATED_CANONICAL'
+  readonly economy: 'BDM_GAME_BALANCE_NOT_PBM'
+}
+
+export function readWorldDbV2Provenance(value: unknown): WorldDbV2Provenance {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid WorldDB V2 provenance')
+  const v=value as Record<string,unknown>
+  const keys=['masterSha256','sourceDate','startDate','seed','sourceCompetitionId','nativeCompetitionId','fictional','profiles','economy']
+  if (Object.keys(v).length!==keys.length || keys.some(k=>!(k in v))) throw new TypeError('Incomplete WorldDB V2 provenance')
+  for(const key of keys.filter(k=>k!=='fictional'))if(typeof v[key]!=='string'||!v[key])throw new TypeError('Invalid WorldDB V2 provenance '+key)
+  if(!/^[a-f0-9]{64}$/.test(String(v.masterSha256))||!/^\d{4}-\d{2}-\d{2}$/.test(String(v.sourceDate))||!/^\d{4}-\d{2}-\d{2}$/.test(String(v.startDate))||v.fictional!==true||v.profiles!=='BDM_GENERATED_CANONICAL'||v.economy!=='BDM_GAME_BALANCE_NOT_PBM')throw new TypeError('Invalid WorldDB V2 provenance policy')
+  parseGameDate(String(v.sourceDate))
+  parseGameDate(String(v.startDate))
+  return Object.freeze({...v}) as unknown as WorldDbV2Provenance
 }
 
 /**

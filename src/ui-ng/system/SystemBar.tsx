@@ -90,7 +90,7 @@ export function SystemBar({
           <span aria-hidden="true" className="ng-system-bar__club-crest">{userTeam?.name?.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() ?? 'BD'}</span>
           <span className="ng-system-bar__club-identity">
             <span className="ng-system-bar__club">{userTeam?.name ?? 'No team loaded'}</span>
-            <small className="ng-system-bar__role">Entrenador principal</small>
+            <small className="ng-system-bar__role" title={world?.worldDbCompetitionRuntime?.worldDbV2 === undefined ? undefined : 'PBM: club and person identities, birth dates, available height/weight and arena references. BDM-generated: sporting profiles, reach measurements, development and opening economy. Fictional season.'}>{world?.worldDbCompetitionRuntime?.worldDbV2 === undefined ? 'Entrenador principal' : 'PBM identities · BDM-generated profiles'}</small>
           </span>
         </span>
       </div>

@@ -27,3 +27,5 @@ PCB/backend/data/dev.sqlite-wal
 vite-os3.err
 
 **/backend/data/dev.sqlite*
+# New pilot state and acceptance evidence; never source databases or previous native saves.
+.worlddb-v2/

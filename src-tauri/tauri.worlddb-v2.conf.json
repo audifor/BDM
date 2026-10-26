@@ -1,0 +1,5 @@
+{
+  "identifier": "com.bdm.worlddbv2.pilot",
+  "build": {"beforeDevCommand": "npm run dev -- --port 1435", "devUrl": "http://localhost:1435"},
+  "app": {"windows": [{"title": "Basketball Dynasty Manager · WorldDB V2", "width": 1280, "height": 800, "minWidth": 1024, "minHeight": 640, "maximized": true, "dragDropEnabled": false}]}
+}

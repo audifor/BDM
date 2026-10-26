@@ -1,0 +1,102 @@
+{
+  "milestone": "BDM PLAYABLE 01",
+  "status": "PASS_PILOT",
+  "certification_client_date": "2026-10-26",
+  "client_timezone": "Europe/Madrid",
+  "recorded_at_utc": "2026-10-26T07:24:00.063643+00:00",
+  "branch": "playable/worlddb-v2-01",
+  "base_commit": "c1905549d87ca1a11797ae5cadc348e2ccf557c9",
+  "source_master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "automated": {
+    "vitest": {
+      "command": "npm test -- --maxWorkers=6 --testTimeout=180000 --hookTimeout=600000 --reporter=verbose",
+      "test_files_passed": 774,
+      "test_files_skipped": 46,
+      "tests_passed": 5722,
+      "tests_skipped": 51,
+      "failed": 0,
+      "duration_seconds": 2622.29,
+      "new_pbm_integration_tests_passed": 4,
+      "skipped_note": "Existing opt-in/disabled audit suites; all four new PBM integration tests executed."
+    },
+    "rust_tests": {
+      "passed": 18,
+      "failed": 0
+    },
+    "source_protection": {
+      "passed": 54,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "frontend_build": "PASS",
+    "cargo_fmt_check": "PASS",
+    "cargo_check_offline": "PASS",
+    "native_embedded_frontend_build": "PASS"
+  },
+  "native_ui": {
+    "passed_steps": 8,
+    "failed_steps": 0,
+    "method": "Actual Windows Tauri executable, embedded production frontend, project WebView2/CDP controls; no GameWorld injection or mocked native commands",
+    "screenshots_visually_reviewed": [
+      "player-attributes.png",
+      "competition-after.png",
+      "match-report.png",
+      "reopened.png"
+    ],
+    "console_errors": [],
+    "acceptance_file": "native-acceptance.json",
+    "save_facts_file": "native-save-facts.json",
+    "local_evidence": ".worlddb-v2/windows-1792960023158"
+  },
+  "pilot": {
+    "source_competition_id": "pbm:DYN_championnat:5",
+    "native_rule_template_competition_id": "competition:ESP:liga-endesa",
+    "clubs": 18,
+    "original_players": 255,
+    "scheduled_games_at_initialization": 306,
+    "native_person_records_including_user_coach": 307,
+    "dates_tested": [
+      "2025-07-01",
+      "2025-10-04",
+      "2032-07-01"
+    ],
+    "historical": false
+  },
+  "protected": {
+    "worlddb_v1_pbm_v2_runtime_v1_intact": true,
+    "previous_native_save_intact": true,
+    "original_bdm_checkout_dirty_work_preserved": true,
+    "btw_modified": false
+  },
+  "limits": [
+    "One complete participant/roster pilot; other competitions are not exposed as integrated.",
+    "Full season through champion and all regulatory tie cases are not certified by this milestone.",
+    "Sporting profiles and opening economy are generated through existing BDM authorities; PBM rating and money scales are not arbitrarily converted.",
+    "Original PBM contracts are not redated; native renewal/transfer coverage for those contract-less rosters is not claimed."
+  ],
+  "executable": {
+    "path": "src-tauri/target/debug/bdm.exe",
+    "bytes": 25073664,
+    "sha256": "9c2235202d9f8eac1a594fdd5fdf028215ef150df5bb6eca3507a95a3291c0e3"
+  },
+  "tested_worktree_sha256": {
+    "scripts/playable/worlddb-v2-verify-sources.py": "d4ebff98b32938911072950a001af63dccd779bd3e73ad0592dae8fbdfbb1dcf",
+    "scripts/playable/worlddb-v2-windows-acceptance.mjs": "212d2f8190d2c5a8e2a822a7be2932670b2f3be455082a4aeef7650797b9503e",
+    "src-tauri/resources/worlddb_v2_bridge.py": "0946d6a23813ad6289391d9dbd38da3701f105937c5c3eb82a31062042477b1d",
+    "src-tauri/src/lib.rs": "219f65d78d30607a5631030e135edc8cfe945d0a8aa6c6a5f1b119c1f128e493",
+    "src-tauri/tauri.worlddb-v2.conf.json": "3d75d67aedc08f9fdb134df18b0e228c1ba3e8dfe3891fd38615609d8f784712",
+    "src/app/game/NewGameUniverseCatalog.ts": "13e5e7df0e12b16c3978d4f77fe4bad66d682ae450a9d17a4ef7b6253a6b4b5d",
+    "src/app/game/WorldDbGameBootstrap.ts": "6f12973569b67dc9e27ab74531d01d0b2f172be522e9593018a13a938f170b55",
+    "src/app/game/WorldDbV2Game.ts": "9e97265149fc940566971997b980798fb64ffc7e546612080fb844f42edf94cd",
+    "src/app/game/WorldDbV2Playable.test.ts": "12c25fe08e8be10f45c3e9e1560a77ec5db971776a4aaa2c3a2c679729c8b17a",
+    "src/app/game/createConfiguredGame.ts": "e1b2586807c37d6ef997d79bd9b00601ea7604524bd78af353dbf2a182991641",
+    "src/data/worlddb-v2/competition-runtime.json": "40cf736bb9a8d2cf375f6474560c9a99a433a36aba91ae107b4132887cd927d2",
+    "src/domain/world/WorldDbCompetitionRuntime.ts": "6df097c4703250288723ac3aee5cecf91880eb80310680a7934dd131c394f750",
+    "src/domain/worldDb/GameBootstrap.ts": "50dc49ee39864720d281f48f3beac8b4257ad1e16738c2e6b329efdb901e6b93",
+    "src/save/GameWorldSaveV4.ts": "98b7d5169814fc32aec56acbb24b43643c54db5339e706d89ece83dda5fb75d4",
+    "src/tauri/TauriWorldDbV2.ts": "206ef5ee87eea8fe8f72cf1522bb91df55c70e744e93ebec6840b3e16684bfab",
+    "src/ui-ng/system/SystemBar.tsx": "7fc49b09616a75e32ba70ff00521d5e0c83ce562359396d13097c405a5bee349",
+    "src/ui/startup/BootstrapApp.tsx": "3e8e7198be4306c07c82fb0cdaf896244f7cb74c0e2b4c5faf807434086e022c",
+    "start-worlddb-v2.cmd": "92eccace9a81878fa93863bc963af708bcb0a3a58a040608cdf5c27c64e50d38"
+  }
+}

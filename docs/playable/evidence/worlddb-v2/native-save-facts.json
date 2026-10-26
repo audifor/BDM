@@ -1,0 +1,46 @@
+{
+  "partida-a": {
+    "schema_version": 4,
+    "current_date": "2025-10-06",
+    "teams": 18,
+    "players": 255,
+    "person_records": 307,
+    "games": 306,
+    "completed_games": 9,
+    "sha256": "54b8a7e2c5bfb69d812ff5623fed6dffd1eb606ee0cdbe28ed354a5b1670a0a8",
+    "bytes": 2782993,
+    "source": {
+      "masterSha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+      "sourceDate": "2025-07-01",
+      "startDate": "2025-10-04",
+      "seed": "bdm-ui-v2-pilot",
+      "sourceCompetitionId": "pbm:DYN_championnat:5",
+      "nativeCompetitionId": "competition:ESP:liga-endesa",
+      "fictional": true,
+      "profiles": "BDM_GENERATED_CANONICAL",
+      "economy": "BDM_GAME_BALANCE_NOT_PBM"
+    }
+  },
+  "partida-b": {
+    "schema_version": 4,
+    "current_date": "2032-07-01",
+    "teams": 18,
+    "players": 255,
+    "person_records": 307,
+    "games": 306,
+    "completed_games": 0,
+    "sha256": "e794ecd1d7f086fae413bb8347557908f324408c2d45af4cb1cf17c4531c0d72",
+    "bytes": 1719271,
+    "source": {
+      "masterSha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+      "sourceDate": "2025-07-01",
+      "startDate": "2032-07-01",
+      "seed": "bdm-ui-v2-pilot",
+      "sourceCompetitionId": "pbm:DYN_championnat:5",
+      "nativeCompetitionId": "competition:ESP:liga-endesa",
+      "fictional": true,
+      "profiles": "BDM_GENERATED_CANONICAL",
+      "economy": "BDM_GAME_BALANCE_NOT_PBM"
+    }
+  }
+}

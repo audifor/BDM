@@ -4,10 +4,12 @@ import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } fro
 
 export const WORLD_DB_SPAIN_UNIVERSE_ID = 'worldDbSpain' as const
 export const NCAA_SIMULATED_UNIVERSE_ID = 'ncaaSimulated' as const
+export const WORLD_DB_V2_UNIVERSE_ID = 'worldDbV2' as const
 
-export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID
+export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID | typeof WORLD_DB_V2_UNIVERSE_ID
 
 export interface NewGameConfiguration {
+  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string}
   readonly universeId?: NewGameUniverseId
   readonly userTeamKey?: string
   readonly coachRpgPreset?: CoachRpgPreset
@@ -25,6 +27,7 @@ export interface NewGameUniverseOption {
 }
 
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
+  {id:WORLD_DB_V2_UNIVERSE_ID,label:'WORLDDB V2 · PBM',description:'Original PBM clubs and identities; BDM-generated sporting profiles and economy. Fictional new season using the existing ACB rules. Pilot: Liga Endesa only.',isTest:false,teams:[]},
   {
     id: NCAA_SIMULATED_UNIVERSE_ID,
     label: 'NCAA DEVELOPMENT · SIMULATED',
