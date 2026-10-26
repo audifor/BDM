@@ -1,0 +1,5 @@
+[
+  {"sourceCompetitionId":"pbm:DYN_championnat:5","currencyCode":"EUR","countryId":8,"countryCode":"ESP","name":"Liga Endesa","nativeCompetitionId":"competition:ESP:liga-endesa","editionId":"edition:ESP:liga-endesa:2025-26","ecosystemId":"ecosystem:ESP:acb","teamCount":18,"calendar":"SPAIN_ACB_EXISTING"},
+  {"sourceCompetitionId":"pbm:DYN_championnat:2","currencyCode":"EUR","countryId":1,"countryCode":"FRA","name":"Betclic Élite","nativeCompetitionId":"competition:FRA:betclic-elite","editionId":"edition:FRA:betclic-elite:2025-26","ecosystemId":"ecosystem:FRA:lnb","teamCount":16,"calendar":"FORMAT_DERIVED_SIMULATION"},
+  {"sourceCompetitionId":"pbm:DYN_championnat:10","currencyCode":"EUR","countryId":3,"countryCode":"ITA","name":"LBA Serie A","nativeCompetitionId":"competition:ITA:serie-a","editionId":"edition:ITA:serie-a:2025-26","ecosystemId":"ecosystem:ITA:lba","teamCount":16,"calendar":"FORMAT_DERIVED_SIMULATION"}
+]

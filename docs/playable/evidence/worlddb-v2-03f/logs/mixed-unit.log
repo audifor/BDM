@@ -1,0 +1,23 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/engine/competition/WorldCompetitionMixedPostseason.test.ts --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch +0 without admitting eliminated entries 3ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > refuses an undeclared loser route and a premature outcome 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > unions supported ranking routes while checking every bound and selector 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > shares the single-game authority: explicit host, one decisive result, no duplicate games 48ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  16:37:42
+   Duration  5.65s (transform 4.30s, setup 0ms, import 5.40s, tests 57ms, environment 0ms)

@@ -1,0 +1,22 @@
+PASS 2026-06-16 load-certified-phase
+PASS 2026-06-16 native-decisive-match-acta
+PASS 2026-06-16 progress-and-project-fixtures
+{"out":"C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548","profile":"qa-france-03f-1793029619548"}
+node : file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/cdp.mjs:105
+En línea: 2 Carácter: 128
++ ... y-in.json'; node scripts/playable/worlddb-v2-03f-postseason-windows.m ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/BDM-...ble/cdp.mjs:105:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+      throw new Error(`Timed out waiting for: ${label}`)
+            ^
+
+Error: Timed out waiting for: document.querySelector('.ng-system-bar__date')?.innerText!=="18 JUN 2026"
+    at Object.waitFor (file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/cdp.mjs:105:13)
+    at async day (file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/worlddb-v2-03f-postseason-windows.mjs:21:187)
+    at async file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/worlddb-v2-03f-postseason-windows.mjs:29:151
+    at async step (file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/worlddb-v2-03f-postseason-windows.mjs:22:47)
+    at async file:///C:/BDM-worktrees/worlddb-v2-03/scripts/playable/worlddb-v2-03f-postseason-windows.mjs:29:2
+
+Node.js v24.12.0

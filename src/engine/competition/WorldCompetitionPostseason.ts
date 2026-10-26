@@ -9,7 +9,7 @@ import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from 
 import { evaluateWorldCompetitionSeriesV1, instantiateWorldCompetitionSeriesV1, type WorldCompetitionSeriesPlanV1, type WorldCompetitionSeriesStateV1 } from './WorldCompetitionSeries'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
 import { resolveWorldCompetitionVirtualFixturesV1, selectWorldCompetitionHigherSeedV1, type WorldCompetitionResolvedVirtualFixtureV1, type WorldCompetitionVirtualFixtureOutcomeV1 } from './WorldCompetitionVirtualFixtureResolver'
-import { getWorldCompetitionSingleEliminationState, materializeDependentCompetitionSeasons, materializeWorldCompetitionSingleElimination } from './WorldCompetitionSingleElimination'
+import { getWorldCompetitionSingleEliminationState, materializeDependentCompetitionSeasons, materializeWorldCompetitionSingleElimination, singleGameFixture, singleGameFixtureOutcome } from './WorldCompetitionSingleElimination'
 
 export interface CompetitionPostseasonSeriesStateV1 {
   readonly plan: WorldCompetitionSeriesPlanV1
@@ -59,6 +59,11 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
     const resolution = resolveWorldCompetitionVirtualFixturesV1(bracketPlan, outcomes)
     let addedOutcome = false
     for (const fixture of resolution.readyFixtures) {
+      if(requireNode(format,fixture.nodeKey).contest?.formatType==='SINGLE_GAME'){
+        const outcome=singleGameFixtureOutcome(world,season.id,fixture)
+        if(outcome){outcomes.push(outcome);addedOutcome=true}
+        continue
+      }
       const series = evaluateFixtureSeries(world, season.id, format, fixture)
       seriesByFixtureId[fixture.fixtureId] = series
       if (!series.state.completed) continue
@@ -82,7 +87,7 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
   throw new Error(`Competition postseason progression did not converge: ${format.competitionSeasonId}`)
 }
 
-/** Idempotently creates only the next physical game required by each resolved series. */
+/** Idempotently creates only the next physical game required by each resolved contest. */
 export function materializeCompetitionPostseason(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
@@ -92,6 +97,10 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
   const variant = requireCompetitionFormatVariant(season.worldCompetitionFormat)
   if (!variant.nodes.some((node) => node.role === 'REGULAR_SEASON')) return materializeWorldCompetitionSingleElimination(world, seasonId, state)
   const additions = state.readyFixtures.flatMap((fixture) => {
+    if(requireNode(season.worldCompetitionFormat!,fixture.nodeKey).contest?.formatType==='SINGLE_GAME'){
+      const existing=Object.values(world.games).some(g=>g.seasonId===season.id&&g.postseasonFixtureId===fixture.fixtureId)
+      return existing?[]:[singleGameFixture(world,season.id,fixture)]
+    }
     const series = state.seriesByFixtureId[fixture.fixtureId]
     if (series === undefined || series.state.completed || series.state.nextGame === null) return []
     const next = series.state.nextGame
@@ -177,16 +186,20 @@ function evaluateFixtureSeries(world: GameWorld, seasonId: keyof GameWorld['seas
   return Object.freeze({ plan, state })
 }
 
-function selectQualifiedEntries(standings: readonly FinalStandingLine[], incomingEdges: readonly { readonly selector: string; readonly rankFrom?: number; readonly rankTo?: number; readonly count?: number }[], competitionSeasonId: string): WorldCompetitionSeededEntryV1[] {
+export function selectQualifiedEntries(standings: readonly FinalStandingLine[], incomingEdges: readonly { readonly selector: string; readonly rankFrom?: number; readonly rankTo?: number; readonly count?: number }[], competitionSeasonId: string): WorldCompetitionSeededEntryV1[] {
+  if(incomingEdges.some(e=>e.selector!=='RANK_RANGE'&&e.selector!=='TOP_N'))throw new Error(`Unsupported regular-season qualification selector: ${competitionSeasonId}`)
   const selectors = incomingEdges.filter((edge) => edge.selector === 'RANK_RANGE' || edge.selector === 'TOP_N')
-  if (selectors.length !== 1) throw new Error(`Competition format requires exactly one rank-based playoff qualification rule: ${competitionSeasonId}`)
-  const rule = selectors[0]!
+  if (selectors.length === 0) throw new Error(`Competition format requires a rank-based playoff qualification rule: ${competitionSeasonId}`)
+  const entries=new Map<string,WorldCompetitionSeededEntryV1>()
+  for(const rule of selectors){
   const rankFrom = rule.selector === 'TOP_N' ? 1 : rule.rankFrom
   const rankTo = rule.selector === 'TOP_N' ? rule.count : rule.rankTo
   if (rankFrom === undefined || rankTo === undefined || rankFrom < 1 || rankTo < rankFrom) throw new Error(`Competition format has invalid playoff qualification bounds: ${competitionSeasonId}`)
   const qualified = standings.filter((line) => line.position >= rankFrom && line.position <= rankTo)
   if (qualified.length !== rankTo - rankFrom + 1) throw new Error(`Competition standings cannot satisfy playoff qualification bounds: ${competitionSeasonId}`)
-  return qualified.map((line) => Object.freeze({ competitionSeasonEntryId: line.teamId, seed: line.position }))
+  for(const line of qualified)entries.set(line.teamId,Object.freeze({ competitionSeasonEntryId: line.teamId, seed: line.position }))
+  }
+  return [...entries.values()].sort((a,b)=>a.seed-b.seed)
 }
 
 function terminalChampion(nodes: readonly WorldCompetitionFormatNode[], edges: readonly { readonly from: string; readonly selector: string }[], outcomes: readonly WorldCompetitionVirtualFixtureOutcomeV1[]): TeamId | null {

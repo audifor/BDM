@@ -1,0 +1,89 @@
+{
+  "competition": "pbm:DYN_championnat:5",
+  "profile": "qa-multileague-ESP-1793021831632",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-multileague-ESP-1793021831632\\main.json",
+  "steps": [
+    {
+      "name": "native-new-game-league-club",
+      "status": "PASS",
+      "detail": {
+        "club": "pbm:DYN_equipe:10257",
+        "teams": 18,
+        "competition": "competition:ESP:liga-endesa"
+      }
+    },
+    {
+      "name": "original-roster",
+      "status": "PASS",
+      "detail": "BDM\nBG\nBÀSQUET GIRONA\nPBM identities · BDM-generated profiles\nLIGA ENDESA · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n04 OCT 2025\nMATCH\nROSTER\nBàsquet Girona · Liga Endesa · PBM V2 · 2025-2026 · fictional PBM snapshot\nPLANTILLA\nPROFUNDIDAD\nBRIEFING\nPLANIFICAR\nJUGADORES EN PLANTILLA\n13\nSIN LESIÓN ACTUAL\n13 / 13\nVENCIMIENTOS REGISTRADOS\n0\nSELECCIÓN ACTIVA\n0\nTU DESPACHO\n0/5\nQUINTETO\n0/7\nBANQUILLO\n0\nASIGNADOS CON LESIÓN\n—\nPLAN DE PUESTOS\nVISTAS ★\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nDEFENSA\nFÍSICO\nTODAS LAS VISTAS ▾\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nMANEJO\nCREACIÓN\nSIN BALÓN\nDEFENSA\nFÍSICO\nMENTAL\nCONTRATOS\nDESARROLLO\nPERSONALIDAD\n+ NUEVA VISTA\nGUARDAR VISTA\nGESTIONAR\nFILTROS RÁPIDOS\nPOSICIÓN\nTodas\nPG\nSG\nSF\nPF\nC\nLESIONES\nTodos\nSin lesión actual\nLesionados\nEDAD\nSin límite\nHasta 21\nHasta 23\nHasta 25\nHasta 30\nPRESENCIA\nTodos vinculados\nEn plantilla\nFuera (con vínculo)\nCONTRATO\nTodos\nVence esta temporada\nMás allá temporada\nSin contrato\n≡ FILTRO AVANZADO\nLIMPIAR\nPLANTILLA / GENERAL\n0 seleccionado(s)\nINSPECTOR ↗\n≡ COLUMNAS\n↔ Deslizar · Redimensionar · Reordenar\nJUGADOR\n\t\nPOS\n\t\nEDAD\n\t\nROL\n\t\nEST\n\t\nALT\n\t\nPESO\n\t\nFATIGA\n\t\nCONTRATO\n\nMaximo Fjellerup\tSG\t27\t\nSin rol\n⌄\n\tOK\t196 cm\t82 kg\t0\t$1M\nJose Vildoza\tPG\t29\t\nSin rol\n⌄\n\tOK\t191 cm\t85 kg\t0\t$660K\nSander Hollanders\tSG\t24\t\nSin rol\n⌄\n\tOK\t194 cm\t99 kg\t0\t$250K\nGuillem Ferrando\tPG\t23\t\nSin rol\n⌄\n\tOK\t186 cm\t92 kg\t0\t$490K\nMartinas Geben\tC\t30\t\nSin rol\n⌄\n\tOK\t208 cm\t107 kg\t0\t$1M\nMark Hughes\tSG\t28\t\nSin rol\n⌄\n\tOK\t193 cm\t93 kg\t0\t$950K\nJosep Busquets\tSG\t26\t\nSin rol\n⌄\n\tOK\t197 cm\t95 kg\t0\t$150K\nOtis Livingston\tPG\t28\t\nSin rol\n⌄\n\tOK\t180 cm\t76 kg\t0\t$120K\nNikola Maric\tPF\t26\t\nSin rol\n⌄\n\tOK\t208 cm\t111 kg\t0\t$2M\nJuan Fernandez\tC\t22\t\nSin rol\n⌄\n\tOK\t209 cm\t100 kg\t0"
+    },
+    {
+      "name": "real-match-acta-standings",
+      "status": "PASS",
+      "detail": {
+        "id": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0001",
+        "seasonId": "worlddb-v2:season:2025-10-04",
+        "competitionId": "competition:ESP:liga-endesa",
+        "date": "2025-10-04",
+        "homeTeamId": "pbm:DYN_equipe:10257",
+        "awayTeamId": "pbm:DYN_equipe:52",
+        "stakes": "regular",
+        "competitionStageKey": "REGULAR",
+        "status": "completed",
+        "result": {
+          "homeScore": 96,
+          "awayScore": 89
+        }
+      }
+    },
+    {
+      "name": "contact-offer-governance-sign",
+      "status": "PASS",
+      "detail": {
+        "candidate": {
+          "playerId": "pbm:DYN_joueur:242698",
+          "name": "José Antonio Antonio Marco",
+          "status": "SIGNED",
+          "log": [
+            "2025-10-04 direct contact",
+            "2025-10-05 contact answer OPEN_TO_TALKS",
+            "2025-10-05 offer 110000 x 1",
+            "2025-10-06 answer ACCEPTED",
+            "2025-10-07 signed"
+          ]
+        },
+        "contract": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A10257%3Aorganization:pbm%3ADYN_equipe%3A10257:pbm%3ADYN_joueur%3A242698:direct-approach%3Apbm%3ADYN_joueur%3A242698%3A0",
+          "playerId": "pbm:DYN_joueur:242698",
+          "teamId": "pbm:DYN_equipe:10257",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-10-07",
+            "expiresOn": "2026-10-07"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "financialProfiles": 18
+      }
+    },
+    {
+      "name": "renew-original-contract",
+      "status": "PASS",
+      "detail": {
+        "playerId": "pbm:DYN_joueur:242698"
+      }
+    },
+    {
+      "name": "close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-10-09",
+        "contracts": 257,
+        "completed": 9
+      }
+    }
+  ],
+  "consoleErrors": []
+}

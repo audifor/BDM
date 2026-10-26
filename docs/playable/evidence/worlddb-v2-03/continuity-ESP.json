@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793020897433\\successor.json",
+  "oldGames": 326,
+  "oldChampion": "pbm:DYN_equipe:42",
+  "nextSeason": "generated-season-0001",
+  "newGames": 9,
+  "date": "2026-10-12",
+  "clubs": 18,
+  "pbmPlayers": 315,
+  "decisions": [],
+  "annualCycle": {
+    "lastAppliedCycleId": "annual-development:2026"
+  }
+}

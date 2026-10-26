@@ -1,0 +1,271 @@
+{
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\before-close.json",
+  "profile": "qa-france-03f-1793030033940",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-france-03f-1793030033940\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-phase",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-18",
+        "clubs": 16,
+        "regularCompleted": 240
+      }
+    },
+    {
+      "name": "native-decisive-match-acta",
+      "status": "PASS",
+      "detail": {
+        "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+        "competitionId": "competition:FRA:betclic-elite",
+        "date": "2026-06-18",
+        "homeTeamId": "pbm:DYN_equipe:21",
+        "awayTeamId": "pbm:DYN_equipe:1",
+        "stakes": "elimination",
+        "competitionStageKey": "QUARTERFINALS",
+        "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+        "postseasonGameNo": 1,
+        "status": "completed",
+        "result": {
+          "homeScore": 79,
+          "awayScore": 78
+        }
+      }
+    },
+    {
+      "name": "progress-and-project-fixtures",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-20",
+        "postseason": [
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_7_8",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 74,
+              "awayScore": 95
+            }
+          },
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:29",
+            "awayTeamId": "pbm:DYN_equipe:8",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_9_10",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 80,
+              "awayScore": 88
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:20",
+            "awayTeamId": "pbm:DYN_equipe:16",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 97,
+              "awayScore": 112
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:4",
+            "awayTeamId": "pbm:DYN_equipe:10",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 108,
+              "awayScore": 100
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:21",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 79,
+              "awayScore": 78
+            }
+          },
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-17",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:8",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_FINAL",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 96,
+              "awayScore": 74
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:9",
+            "awayTeamId": "pbm:DYN_equipe:5",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 88,
+              "awayScore": 90
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-19",
+            "homeTeamId": "pbm:DYN_equipe:1",
+            "awayTeamId": "pbm:DYN_equipe:21",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 101,
+              "awayScore": 88
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-19",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:9",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 90,
+              "awayScore": 84
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-19",
+            "homeTeamId": "pbm:DYN_equipe:16",
+            "awayTeamId": "pbm:DYN_equipe:20",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 84,
+              "awayScore": 110
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-19",
+            "homeTeamId": "pbm:DYN_equipe:10",
+            "awayTeamId": "pbm:DYN_equipe:4",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 73,
+              "awayScore": 75
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-20",
+            "homeTeamId": "pbm:DYN_equipe:21",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-20",
+            "homeTeamId": "pbm:DYN_equipe:20",
+            "awayTeamId": "pbm:DYN_equipe:16",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          }
+        ],
+        "actas": 251
+      }
+    },
+    {
+      "name": "close-reopen-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-21",
+        "completed": 253
+      }
+    }
+  ],
+  "consoleErrors": []
+}

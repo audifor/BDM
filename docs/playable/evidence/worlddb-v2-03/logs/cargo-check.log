@@ -1,0 +1,8 @@
+cargo :    Compiling bdm v0.1.0 (C:\BDM-worktrees\worlddb-v2-03\src-tauri)
+En línea: 2 Carácter: 74
++ ... ri\target'; cargo check --offline --manifest-path src-tauri/Cargo.tom ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling bd...2-03\src-tauri):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.91s

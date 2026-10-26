@@ -1,0 +1,89 @@
+{
+  "competition": "pbm:DYN_championnat:2",
+  "profile": "qa-multileague-FRA-1793021230900",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-multileague-FRA-1793021230900\\main.json",
+  "steps": [
+    {
+      "name": "native-new-game-league-club",
+      "status": "PASS",
+      "detail": {
+        "club": "pbm:DYN_equipe:1",
+        "teams": 16,
+        "competition": "competition:FRA:betclic-elite"
+      }
+    },
+    {
+      "name": "original-roster",
+      "status": "PASS",
+      "detail": "BDM\nÉC\nÉLAN CHALON\nPBM identities · BDM-generated profiles\nBETCLIC ÉLITE · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n01 JUL 2025\nMATCH\nROSTER\nÉlan Chalon · Betclic Élite · PBM V2 · 2025-2026 · fictional PBM snapshot\nPLANTILLA\nPROFUNDIDAD\nBRIEFING\nPLANIFICAR\nJUGADORES EN PLANTILLA\n14\nSIN LESIÓN ACTUAL\n14 / 14\nVENCIMIENTOS REGISTRADOS\n0\nSELECCIÓN ACTIVA\n0\nTU DESPACHO\n0/5\nQUINTETO\n0/7\nBANQUILLO\n0\nASIGNADOS CON LESIÓN\n—\nPLAN DE PUESTOS\nVISTAS ★\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nDEFENSA\nFÍSICO\nTODAS LAS VISTAS ▾\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nMANEJO\nCREACIÓN\nSIN BALÓN\nDEFENSA\nFÍSICO\nMENTAL\nCONTRATOS\nDESARROLLO\nPERSONALIDAD\n+ NUEVA VISTA\nGUARDAR VISTA\nGESTIONAR\nFILTROS RÁPIDOS\nPOSICIÓN\nTodas\nPG\nSG\nSF\nPF\nC\nLESIONES\nTodos\nSin lesión actual\nLesionados\nEDAD\nSin límite\nHasta 21\nHasta 23\nHasta 25\nHasta 30\nPRESENCIA\nTodos vinculados\nEn plantilla\nFuera (con vínculo)\nCONTRATO\nTodos\nVence esta temporada\nMás allá temporada\nSin contrato\n≡ FILTRO AVANZADO\nLIMPIAR\nPLANTILLA / GENERAL\n0 seleccionado(s)\nINSPECTOR ↗\n≡ COLUMNAS\n↔ Deslizar · Redimensionar · Reordenar\nJUGADOR\n\t\nPOS\n\t\nEDAD\n\t\nROL\n\t\nEST\n\t\nALT\n\t\nPESO\n\t\nFATIGA\n\t\nCONTRATO\n\nZac Cuthbertson\tSF\t28\t\nSin rol\n⌄\n\tOK\t201 cm\t84 kg\t0\t$2M\nNate Darling\tSG\t26\t\nSin rol\n⌄\n\tOK\t196 cm\t97 kg\t0\t$2M\nMatheo Leray\tPG\t22\t\nSin rol\n⌄\n\tOK\t190 cm\t74 kg\t0\t$170K\nClarence Nadolny\tPG\t24\t\nSin rol\n⌄\n\tOK\t192 cm\t86 kg\t0\t$140K\nJustyn Mutts\tPF\t26\t\nSin rol\n⌄\n\tOK\t201 cm\t100 kg\t0\t$230K\nAkram Naji\tPG\t18\t\nSin rol\n⌄\n\tOK\t195 cm\t82 kg\t0\t$850K\nYanis Tonnellier\tPF\t21\t\nSin rol\n⌄\n\tOK\t215 cm\t104 kg\t0\t$90K\nKlark-Luca Riethauser\tSG\t17\t\nSin rol\n⌄\n\tOK\t201 cm\t90 kg\t0\t$110K\nObinna Anochili-Killen\tPF\t23\t\nSin rol\n⌄\n\tOK\t203 cm\t100 kg\t0\t$240K\nSohann Mendy\tC\t19\t\nSin rol\n⌄\n\tOK\t212 cm\t"
+    },
+    {
+      "name": "real-match-acta-standings",
+      "status": "PASS",
+      "detail": {
+        "id": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0001",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+        "competitionId": "competition:FRA:betclic-elite",
+        "date": "2025-07-01",
+        "homeTeamId": "pbm:DYN_equipe:1",
+        "awayTeamId": "pbm:DYN_equipe:9",
+        "stakes": "regular",
+        "competitionStageKey": "REGULAR_SEASON",
+        "status": "completed",
+        "result": {
+          "homeScore": 93,
+          "awayScore": 89
+        }
+      }
+    },
+    {
+      "name": "contact-offer-governance-sign",
+      "status": "PASS",
+      "detail": {
+        "candidate": {
+          "playerId": "pbm:DYN_joueur:68055",
+          "name": "Quentin Klingelschmitt",
+          "status": "SIGNED",
+          "log": [
+            "2025-07-01 direct contact",
+            "2025-07-02 contact answer OPEN_TO_TALKS",
+            "2025-07-02 offer 110000 x 1",
+            "2025-07-03 answer ACCEPTED",
+            "2025-07-04 signed"
+          ]
+        },
+        "contract": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A1%3Aorganization:pbm%3ADYN_equipe%3A1:pbm%3ADYN_joueur%3A68055:direct-approach%3Apbm%3ADYN_joueur%3A68055%3A0",
+          "playerId": "pbm:DYN_joueur:68055",
+          "teamId": "pbm:DYN_equipe:1",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-07-04",
+            "expiresOn": "2026-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "financialProfiles": 16
+      }
+    },
+    {
+      "name": "renew-original-contract",
+      "status": "PASS",
+      "detail": {
+        "playerId": "pbm:DYN_joueur:68055"
+      }
+    },
+    {
+      "name": "close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-07-06",
+        "contracts": 220,
+        "completed": 8
+      }
+    }
+  ],
+  "consoleErrors": []
+}

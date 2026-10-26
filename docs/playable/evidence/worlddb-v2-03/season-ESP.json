@@ -1,0 +1,758 @@
+{
+  "passed": true,
+  "regularGames": 306,
+  "perClub": 34,
+  "competition": "pbm:DYN_championnat:5",
+  "postseason": {
+    "regularSeasonComplete": true,
+    "seeds": [
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:10257",
+        "seed": 1
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:208",
+        "seed": 2
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:479",
+        "seed": 3
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:52",
+        "seed": 4
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:42",
+        "seed": 5
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:49",
+        "seed": 6
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:41",
+        "seed": 7
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:50",
+        "seed": 8
+      }
+    ],
+    "bracketPlan": {
+      "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+      "variantKey": "MAIN",
+      "fixtures": [
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:10257",
+              "seed": 1
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:50",
+              "seed": 8
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:52",
+              "seed": 4
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:42",
+              "seed": 5
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 3,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:208",
+              "seed": 2
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:41",
+              "seed": 7
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 4,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:479",
+              "seed": 3
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:49",
+              "seed": 6
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:1",
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2"
+            }
+          ]
+        }
+      ],
+      "fixtureIdsByNodeKey": {
+        "QUARTERFINALS": [
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1",
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2",
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3",
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4"
+        ],
+        "SEMIFINALS": [
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1",
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2"
+        ],
+        "FINAL": [
+          "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:1"
+        ]
+      }
+    },
+    "resolvedFixtures": [
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10257",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:50",
+            "seed": 8
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:52",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:42",
+            "seed": 5
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 3,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:208",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:41",
+            "seed": 7
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 4,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:479",
+            "seed": 3
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:49",
+            "seed": 6
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:50",
+            "seed": 8
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:42",
+            "seed": 5
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:208",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:479",
+            "seed": 3
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:1",
+        "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "FINAL",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:42",
+            "seed": 5
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:479",
+            "seed": 3
+          }
+        ]
+      }
+    ],
+    "readyFixtures": [],
+    "outcomes": [
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:50",
+        "loserEntryId": "pbm:DYN_equipe:10257"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:42",
+        "loserEntryId": "pbm:DYN_equipe:52"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3",
+        "winnerEntryId": "pbm:DYN_equipe:208",
+        "loserEntryId": "pbm:DYN_equipe:41"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4",
+        "winnerEntryId": "pbm:DYN_equipe:479",
+        "loserEntryId": "pbm:DYN_equipe:49"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:42",
+        "loserEntryId": "pbm:DYN_equipe:50"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:479",
+        "loserEntryId": "pbm:DYN_equipe:208"
+      },
+      {
+        "fixtureId": "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:1",
+        "winnerEntryId": "pbm:DYN_equipe:42",
+        "loserEntryId": "pbm:DYN_equipe:479"
+      }
+    ],
+    "seriesByFixtureId": {
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:10257",
+          "secondEntryId": "pbm:DYN_equipe:50",
+          "priorityEntryId": "pbm:DYN_equipe:10257",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:10257",
+              "awayEntryId": "pbm:DYN_equipe:50"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:50",
+              "awayEntryId": "pbm:DYN_equipe:10257"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:10257",
+              "awayEntryId": "pbm:DYN_equipe:50"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 0,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:50",
+          "loserEntryId": "pbm:DYN_equipe:10257",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:52",
+          "secondEntryId": "pbm:DYN_equipe:42",
+          "priorityEntryId": "pbm:DYN_equipe:52",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:52",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:52"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:52",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 0,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:42",
+          "loserEntryId": "pbm:DYN_equipe:52",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:208",
+          "secondEntryId": "pbm:DYN_equipe:41",
+          "priorityEntryId": "pbm:DYN_equipe:208",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:208",
+              "awayEntryId": "pbm:DYN_equipe:41"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:41",
+              "awayEntryId": "pbm:DYN_equipe:208"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:208",
+              "awayEntryId": "pbm:DYN_equipe:41"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:208",
+          "loserEntryId": "pbm:DYN_equipe:41",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:4": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:479",
+          "secondEntryId": "pbm:DYN_equipe:49",
+          "priorityEntryId": "pbm:DYN_equipe:479",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:49"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:49",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:49"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:479",
+          "loserEntryId": "pbm:DYN_equipe:49",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:50",
+          "secondEntryId": "pbm:DYN_equipe:42",
+          "priorityEntryId": "pbm:DYN_equipe:42",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:50"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:50"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:50",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:50",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:50"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:42",
+          "loserEntryId": "pbm:DYN_equipe:50",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:208",
+          "secondEntryId": "pbm:DYN_equipe:479",
+          "priorityEntryId": "pbm:DYN_equipe:208",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:208",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:208",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:208"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:208"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:208",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:479",
+          "loserEntryId": "pbm:DYN_equipe:208",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:1": {
+        "plan": {
+          "competitionSeasonId": "edition:ESP:liga-endesa:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:42",
+          "secondEntryId": "pbm:DYN_equipe:479",
+          "priorityEntryId": "pbm:DYN_equipe:479",
+          "games": [
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:42",
+              "awayEntryId": "pbm:DYN_equipe:479"
+            },
+            {
+              "gameId": "worldseries:edition:ESP:liga-endesa:2025-26:MAIN:FINAL:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:479",
+              "awayEntryId": "pbm:DYN_equipe:42"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:42",
+          "loserEntryId": "pbm:DYN_equipe:479",
+          "nextGame": null
+        }
+      }
+    },
+    "championTeamId": "pbm:DYN_equipe:42",
+    "lifecycleDiagnostic": null
+  },
+  "transition": {
+    "sourceSeasonId": "worlddb-v2:season:2025-10-04",
+    "targetSeasonId": "generated-season-0001",
+    "competitionId": "competition:ESP:liga-endesa",
+    "participantDerivation": "seasonSnapshot",
+    "schedule": {
+      "kind": "generated",
+      "fixtureCount": 306
+    },
+    "linkedCompetitionSeasonIds": [],
+    "annualHooksExecuted": [
+      "contractReconciliation",
+      "aiRosterMaintenance",
+      "boardStateRollover",
+      "clubStrategicReview",
+      "gmPlanWorkflowReview"
+    ],
+    "diagnostics": [],
+    "repairReports": []
+  },
+  "decisions": [
+    {
+      "date": "2025-10-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007:pbm:DYN_joueur:62011"
+    },
+    {
+      "date": "2025-10-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0027:pbm:DYN_joueur:100057546"
+    },
+    {
+      "date": "2026-02-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0180:pbm:DYN_joueur:100040487"
+    },
+    {
+      "date": "2026-04-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0213:pbm:DYN_joueur:100057546"
+    },
+    {
+      "date": "2026-05-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100012194"
+    },
+    {
+      "date": "2026-05-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100040487"
+    },
+    {
+      "date": "2026-05-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0293:pbm:DYN_joueur:900321"
+    },
+    {
+      "date": "2026-06-02",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g1:pressure"
+    },
+    {
+      "date": "2026-06-03",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g1:performance"
+    },
+    {
+      "date": "2026-06-04",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g2:pressure"
+    },
+    {
+      "date": "2026-06-05",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g2:performance"
+    },
+    {
+      "date": "2026-06-06",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g3:pressure"
+    },
+    {
+      "date": "2026-06-07",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:2025-10-04:worldcf:edition:ESP:liga-endesa:2025-26:MAIN:QUARTERFINALS:3:g3:performance"
+    }
+  ],
+  "currentDate": "2026-06-25"
+}

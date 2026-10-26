@@ -219,6 +219,7 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
       if (unresolvedIntegrity !== undefined) throw Object.assign(new Error(unresolvedIntegrity.diagnostics[0]?.message ?? 'Roster/contract integrity could not be reconciled.'), { phaseId: activePhaseId, kind: 'INVARIANT_VIOLATION' as const })
     }
 
+    activePhaseId = 'MATCH_RESOLUTION'
     const matches = getScheduledGamesToday(current)
     const matchStart = performance.now()
     const lineupReports: WorldRepairReport[] = []

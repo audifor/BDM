@@ -1,0 +1,32 @@
+[
+  {
+    "command": [
+      "cargo",
+      "fmt",
+      "--check",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "cargo",
+      "check",
+      "--offline",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--manifest-path",
+      "src-tauri/Cargo.toml"
+    ],
+    "exit_code": 0
+  }
+]

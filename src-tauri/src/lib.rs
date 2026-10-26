@@ -19,6 +19,9 @@ use tauri::Manager;
 
 #[tauri::command]
 async fn world_db_v2(app: tauri::AppHandle, mut request: Value) -> Result<Value, String> {
+    request["competitionCatalog"] =
+        serde_json::from_str(include_str!("../../src/data/worlddb-v2/competitions.json"))
+            .map_err(|e| e.to_string())?;
     let method = request
         .get("method")
         .and_then(Value::as_str)

@@ -26,7 +26,7 @@ export interface WorldCompetitionVirtualFixtureResolutionV1 {
   readonly completedFixtureIds: readonly string[]
 }
 
-/** Resolves deterministic bracket participants while preserving original seed identity. */
+/** Resolves bracket participants and explicit qualification slots, preserving entry identities. */
 export function resolveWorldCompetitionVirtualFixturesV1(
   plan: WorldCompetitionFixedBracketPlanV1,
   outcomes: readonly WorldCompetitionVirtualFixtureOutcomeV1[],
@@ -44,13 +44,14 @@ export function resolveWorldCompetitionVirtualFixturesV1(
 
   const seedByEntryId = buildSeedIndex(plan.fixtures)
   const validatedOutcomes = new Map<string, WorldCompetitionVirtualFixtureOutcomeV1>()
+  const resolvedById = new Map<string, WorldCompetitionResolvedVirtualFixtureV1>()
   const resolvedFixtures: WorldCompetitionResolvedVirtualFixtureV1[] = []
   const readyFixtures: WorldCompetitionResolvedVirtualFixtureV1[] = []
   const completedFixtureIds: string[] = []
 
   for (const fixture of plan.fixtures) {
-    const left = resolveParticipant(fixture.participants[0], validatedOutcomes, seedByEntryId)
-    const right = resolveParticipant(fixture.participants[1], validatedOutcomes, seedByEntryId)
+    const left = resolveParticipant(fixture.participants[0], validatedOutcomes, seedByEntryId, resolvedById)
+    const right = resolveParticipant(fixture.participants[1], validatedOutcomes, seedByEntryId, resolvedById)
     const declaredOutcome = outcomeByFixtureId.get(fixture.fixtureId)
 
     if (left === null || right === null) {
@@ -60,6 +61,7 @@ export function resolveWorldCompetitionVirtualFixturesV1(
     if (left.competitionSeasonEntryId === right.competitionSeasonEntryId) throw new Error(`Virtual fixture resolves the same entry on both sides: ${fixture.fixtureId}`)
 
     const resolved = freezeResolvedFixture(fixture, left, right)
+    resolvedById.set(fixture.fixtureId,resolved)
     resolvedFixtures.push(resolved)
     if (declaredOutcome === undefined) {
       readyFixtures.push(resolved)
@@ -100,13 +102,16 @@ function resolveParticipant(
   ref: WorldCompetitionFixtureParticipantRefV1,
   validatedOutcomes: ReadonlyMap<string, WorldCompetitionVirtualFixtureOutcomeV1>,
   seedByEntryId: ReadonlyMap<string, number>,
+  resolvedById: ReadonlyMap<string, WorldCompetitionResolvedVirtualFixtureV1>,
 ): WorldCompetitionResolvedParticipantV1 | null {
   if (ref.kind === 'ENTRY') return Object.freeze({ competitionSeasonEntryId: ref.competitionSeasonEntryId, seed: ref.seed })
   const outcome = validatedOutcomes.get(ref.fixtureId)
   if (outcome === undefined) return null
-  const seed = seedByEntryId.get(outcome.winnerEntryId)
-  if (seed === undefined) throw new Error(`Winner has no canonical bracket seed: ${outcome.winnerEntryId}`)
-  return Object.freeze({ competitionSeasonEntryId: outcome.winnerEntryId, seed })
+  const entryId=ref.kind==='LOSER_OF_FIXTURE'?outcome.loserEntryId:outcome.winnerEntryId
+  // A declared destination slot supersedes the source rank; subsequent rounds carry that slot.
+  const seed = ref.qualificationSeed ?? resolvedById.get(ref.fixtureId)?.participants.find(p=>p.competitionSeasonEntryId===entryId)?.seed ?? seedByEntryId.get(entryId)
+  if (seed === undefined) throw new Error(`Outcome has no canonical bracket seed: ${entryId}`)
+  return Object.freeze({ competitionSeasonEntryId: entryId, seed })
 }
 
 function freezeResolvedFixture(

@@ -8,7 +8,7 @@ import type { WorldCompetitionFormatDocument, WorldCompetitionFormatNode, WorldC
 import { calculateStandings } from './standings'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from './WorldCompetitionCalendar'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
-import { resolveWorldCompetitionVirtualFixturesV1, type WorldCompetitionVirtualFixtureOutcomeV1 } from './WorldCompetitionVirtualFixtureResolver'
+import { resolveWorldCompetitionVirtualFixturesV1, selectWorldCompetitionHigherSeedV1, type WorldCompetitionResolvedVirtualFixtureV1, type WorldCompetitionVirtualFixtureOutcomeV1 } from './WorldCompetitionVirtualFixtureResolver'
 import type { CompetitionLifecycleDiagnosticV1, CompetitionPostseasonStateV1 } from './WorldCompetitionPostseason'
 
 /** Builds progression for a single-elimination edition qualified from another competition season. */
@@ -43,33 +43,42 @@ export function getWorldCompetitionSingleEliminationState(world: GameWorld, seas
 export function materializeWorldCompetitionSingleElimination(world: GameWorld, seasonId: keyof GameWorld['seasons'], state: CompetitionPostseasonStateV1): GameWorld {
   const season = world.seasons[seasonId]!
   const participantsWorld = setSeasonParticipants(world, seasonId, state.seeds.map((entry) => teamIdFromString(entry.competitionSeasonEntryId)))
-  const format = season.worldCompetitionFormat!
-  const variant = requireCompetitionFormatVariant(format)
-  const calendar = deriveCompetitionSeasonWindows(season.startDate, season.endDate, format, season.calendarPolicy)
-  const additions = state.readyFixtures.map((fixture) => {
-    const node = requireNode(variant.nodes, fixture.nodeKey)
-    if (node.contest?.formatType !== 'SINGLE_GAME') throw new Error(`Knockout node must be SINGLE_GAME: ${node.key}`)
-    const stageStart = calendar.postseasonStartByNodeKey[node.key]
-    if (stageStart === undefined) throw new Error(`Competition node has no allocated calendar window: ${node.key}`)
-    const existing = Object.values(participantsWorld.games).find((game) => game.seasonId === season.id && game.postseasonFixtureId === fixture.fixtureId)
-    if (existing !== undefined) return undefined
-    return createGame({
-      id: gameIdFromString(`competition-game:${fixture.fixtureId}`),
-      seasonId: season.id,
-      competitionId: season.competitionId,
-      date: stageStart,
-      homeTeamId: teamIdFromString(fixture.participants[0].competitionSeasonEntryId),
-      awayTeamId: teamIdFromString(fixture.participants[1].competitionSeasonEntryId),
-      ...(node.hosting?.ruleType === 'NEUTRAL' ? { neutralSite: true } : {}),
-      status: 'scheduled',
-      result: null,
-      stakes: node.role === 'FINAL' ? 'final' : 'elimination',
-      competitionStageKey: node.key,
-      postseasonFixtureId: fixture.fixtureId,
-      postseasonGameNo: 1,
-    })
-  }).filter((game): game is NonNullable<typeof game> => game !== undefined)
+  const additions=state.readyFixtures
+    .filter(fixture=>!Object.values(participantsWorld.games).some(game=>game.seasonId===seasonId&&game.postseasonFixtureId===fixture.fixtureId))
+    .map(fixture=>singleGameFixture(participantsWorld,seasonId,fixture))
   return additions.length === 0 ? participantsWorld : updateGameWorld(participantsWorld, { games: [...Object.values(participantsWorld.games), ...additions] })
+}
+
+/** Shared single-game authority for mixed postseason graphs and knockout editions. */
+export function singleGameFixture(world: GameWorld, seasonId: keyof GameWorld['seasons'], fixture: WorldCompetitionResolvedVirtualFixtureV1) {
+  const season=world.seasons[seasonId]!,variant=requireCompetitionFormatVariant(season.worldCompetitionFormat!)
+  const node=requireNode(variant.nodes,fixture.nodeKey)
+  if(node.contest?.formatType!=='SINGLE_GAME')throw new Error(`Knockout node must be SINGLE_GAME: ${node.key}`)
+  const [first,second]=fixture.participants
+  const home=node.hosting?.ruleType==='HIGHER_SEED'?selectWorldCompetitionHigherSeedV1(fixture.participants):first
+  if(node.hosting && !['HIGHER_SEED','NEUTRAL','ASSIGNED_HOST'].includes(node.hosting.ruleType))throw new Error(`Unsupported single-game hosting: ${node.key}`)
+  if(node.hosting?.ruleType==='ASSIGNED_HOST'&&node.hosting.priorityBasis!=='FIRST_PARTICIPANT')throw new Error(`Assigned host requires explicit FIRST_PARTICIPANT binding: ${node.key}`)
+  const away=home===first?second:first
+  const calendar=deriveCompetitionSeasonWindows(season.startDate,season.endDate,season.worldCompetitionFormat,season.calendarPolicy)
+  const date=calendar.postseasonStartByNodeKey[node.key]
+  if(!date)throw new Error(`Competition node has no allocated calendar window: ${node.key}`)
+  return createGame({id:gameIdFromString(`competition-game:${fixture.fixtureId}`),seasonId:season.id,competitionId:season.competitionId,date,
+    homeTeamId:teamIdFromString(home.competitionSeasonEntryId),awayTeamId:teamIdFromString(away.competitionSeasonEntryId),
+    ...(node.hosting?.ruleType==='NEUTRAL'?{neutralSite:true}:{}),status:'scheduled',result:null,
+    stakes:node.role==='FINAL'?'final':'elimination',competitionStageKey:node.key,postseasonFixtureId:fixture.fixtureId,postseasonGameNo:1})
+}
+
+export function singleGameFixtureOutcome(world: GameWorld, seasonId: keyof GameWorld['seasons'], fixture: WorldCompetitionResolvedVirtualFixtureV1): WorldCompetitionVirtualFixtureOutcomeV1|null {
+ const expected=singleGameFixture(world,seasonId,fixture)
+ const games=Object.values(world.games).filter(g=>g.seasonId===seasonId&&g.postseasonFixtureId===fixture.fixtureId)
+ if(games.length>1)throw new Error(`Duplicate single-game fixture: ${fixture.fixtureId}`)
+ const game=games[0]
+ if(!game)return null
+ if(game.homeTeamId!==expected.homeTeamId||game.awayTeamId!==expected.awayTeamId||game.postseasonGameNo!==1||game.competitionStageKey!==fixture.nodeKey)throw new Error(`Single-game fixture metadata conflicts with format: ${fixture.fixtureId}`)
+ if(game.status!=='completed')return null
+ if(game.result.homeScore===game.result.awayScore)throw new Error(`Single-game fixture requires a winner: ${fixture.fixtureId}`)
+ const winnerEntryId=game.result.homeScore>game.result.awayScore?game.homeTeamId:game.awayTeamId
+ return {fixtureId:fixture.fixtureId,winnerEntryId,loserEntryId:winnerEntryId===game.homeTeamId?game.awayTeamId:game.homeTeamId}
 }
 
 export function materializeDependentCompetitionSeasons(world: GameWorld, sourceSeasonId: keyof GameWorld['seasons']): GameWorld {

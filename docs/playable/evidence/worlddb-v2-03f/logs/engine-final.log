@@ -1,0 +1,34 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/engine/competition/WorldCompetitionMixedPostseason.test.ts src/engine/competition/WorldCompetitionFixedBracket.test.ts src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts src/engine/competition/WorldCompetitionSeries.test.ts --maxWorkers=2 --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > materializes explicit seed pairings, explicit semifinal paths and the unambiguous final 5ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > accepts the canonical dash-form matchups alias used by league playoff documents 1ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > fails rather than inventing a multi-fixture winner path 1ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > rejects missing or duplicate seeds 1ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > instantiates explicit hosting pattern relative to the declared priority participant 2ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > advances sequentially and stops immediately when the series is clinched 1ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > rejects gaps, unknown games, ties and results after a clinch 1ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > preserves original seeds through winner progression 5ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > rejects impossible or premature outcomes 1ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > rejects duplicate and unknown fixture outcomes 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch +0 without admitting eliminated entries 4ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch 1 without admitting eliminated entries 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch +0 without admitting eliminated entries 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch +0 without admitting eliminated entries 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > refuses an undeclared loser route and a premature outcome 2ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > carries explicit playoff-slot seeds through the semifinals and final without changing entry identities 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > unions supported ranking routes while checking every bound and selector 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > shares the single-game authority: explicit host, one decisive result, no duplicate games 71ms
+
+ Test Files  4 passed (4)
+      Tests  22 passed (22)
+   Start at  16:56:58
+   Duration  9.04s (transform 7.33s, setup 0ms, import 9.16s, tests 107ms, environment 0ms)

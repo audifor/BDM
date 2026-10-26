@@ -1,0 +1,51 @@
+{
+  "original-native-save": {
+    "path": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.app\\saves\\main.json",
+    "sha256": "c5532df3f7b1f1a1faf59ec5897dc8973ccd6ca79229eaf09ef43d582d722630",
+    "unchanged": true
+  },
+  "pilot-executable": {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-01\\src-tauri\\target\\debug\\bdm.exe",
+    "sha256": "9c2235202d9f8eac1a594fdd5fdf028215ef150df5bb6eca3507a95a3291c0e3",
+    "unchanged": true
+  },
+  "acceptance-1792960023158": {
+    "path": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158\\main.json",
+    "sha256": "54b8a7e2c5bfb69d812ff5623fed6dffd1eb606ee0cdbe28ed354a5b1670a0a8",
+    "unchanged": true
+  },
+  "acceptance-1792960023158-b": {
+    "path": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158-b\\main.json",
+    "sha256": "e794ecd1d7f086fae413bb8347557908f324408c2d45af4cb1cf17c4531c0d72",
+    "unchanged": true
+  },
+  "v2-02-executable": {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-02\\artifacts\\bdm.exe",
+    "sha256": "5635979f3e9afec05bfbc8bccd91a1ac26f7a2f592d40c6a2d548f06af766f97",
+    "unchanged": true
+  },
+  "v2-03-executable": {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\artifacts\\bdm.exe",
+    "sha256": "b9abb6ab196f65e55acc5ad26cea51855b213fcb738a0500753a1376cfeb7fa4"
+  },
+  "prior-native-profile-inventory": {
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792957246088\\main.json": "a82ab096df0502adaae3cd503032234b9edde4dfaa43303948628a0e076b7f3b",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792957359080\\main.json": "8c0640738ad7ae710547aa13571b57b41552d3fac1230b8cf219e4a17cd1857b",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792957359080-b\\main.json": "34ffd0046f14f9f94938d21facc86922b9f597c998736e015b2396128772196c",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792957960892\\main.json": "5aac78e35cb1810f7ceb51584793ce2d9813678780fcf25442a5999462ee38cd",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792957960892-b\\main.json": "6ce879122664674b706239fe0ed16aa15026f2e650fb8989d8f0f738bc315a8e",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792959360517\\main.json": "0fa9ec1c14788825d45a3f9309a0a40e415880c2e39ca4555acf1a29125e0a1c",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792959360517-b\\main.json": "e0905b855f97c206fca749197b9358a09cbd0312e1c8bfe7950809142b84da57",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158\\main.json": "54b8a7e2c5bfb69d812ff5623fed6dffd1eb606ee0cdbe28ed354a5b1670a0a8",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\acceptance-1792960023158-b\\main.json": "e794ecd1d7f086fae413bb8347557908f324408c2d45af4cb1cf17c4531c0d72",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-continuity-02-1793007318238\\main.json": "ebabc5ceb8d08cc50902d1544efb3ea50ac0cdf1660a6f75e3ba6dd485d1b60a",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-market-02-1793006471106\\main.json": "47d369c8396c8749236089fc671bafbf793eceb78590de04adcd6f46c2e38a99",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-market-02-final-1793008165280\\main.json": "b5f881334271f02d3c04c56256a039f5b53aebf1b8564cf0df749ddfe999d79a",
+    "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-market-02-replay-1793007663082\\main.json": "3d69e80c245fff266328f7cce30fc793e53da44e6d9ba8b36798d130c103f1ca"
+  },
+  "f4-status": {
+    "branch": "playable/f4",
+    "lines": 27,
+    "status": " M docs/ARCHITECTURE.md\n M src/app/game/WorldDbGameBootstrap.test.ts\n M src/app/game/createAcbTestGame.ts\n M src/domain/competition/CompetitionRules.ts\n M src/domain/season/Season.ts\n M src/domain/season/calculateStandings.ts\n M src/domain/season/index.ts\n M src/domain/world/GameWorld.ts\n M src/engine/board/BoardEngine.test.ts\n M src/engine/board/BoardEngine.ts\n M src/engine/competition/WorldCompetitionPostseason.ts\n M src/engine/competition/standings/Standings.test.ts\n M src/engine/training/TrainingPlanning.ts\n M src/save/GameWorldSaveV1.ts\n M src/ui-ng/applications/competition/CompetitionWorkspace.tsx\n M src/ui-ng/applications/competition/buildCompetitionWorkspaceModel.ts\n M src/ui-ng/applications/home/HomeWorkspace.tsx\n?? docs/playable/F4_CERTIFICATION.md\n?? scripts/playable/f4-windows-acceptance.mjs\n?? src/app/game/AcbCompetitionEdition.ts\n?? src/app/game/PlayableF4.test.ts\n?? src/app/game/PlayableF4Checkpoint.test.ts\n?? src/app/game/PlayableF4Season.test.ts\n?? src/app/game/PlayableF4Training.test.ts\n?? src/data/competition-formats/\n?? src/ui-ng/applications/competition/CompetitionPostseasonPanel.test.tsx\n?? src/ui-ng/applications/competition/CompetitionPostseasonPanel.tsx\n"
+  }
+}

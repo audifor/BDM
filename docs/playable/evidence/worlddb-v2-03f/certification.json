@@ -1,0 +1,98 @@
+{
+  "milestone": "BDM WORLDDB V2-03F",
+  "recorded_at_utc": "2026-10-26T16:33:10.246475+00:00",
+  "branch": "playable/worlddb-v2-03",
+  "parent_commit": "dfbf71326413ec672db75e15284470d20a4f5f6e",
+  "pr": 169,
+  "status": "PASS_SPORTING_AND_NATIVE_PHASES",
+  "France": {
+    "regular": 240,
+    "play_in": 3,
+    "series_playoff_games": 22,
+    "actas": 265,
+    "champion": "Boulazac Basket Dordogne",
+    "champion_id": "pbm:DYN_equipe:20",
+    "closed": "PASS",
+    "successor_fixtures": 240,
+    "successor_games_played": 8,
+    "save_reload_continue": "PASS",
+    "old_232_results_and_actas_unchanged": true
+  },
+  "regressions": {
+    "ESP": {
+      "status": "PASS",
+      "games": 326,
+      "all_fixture_ids_dates_venues_scores_identical": true
+    },
+    "ITA": {
+      "status": "PASS",
+      "games": 269,
+      "all_fixture_ids_dates_venues_scores_identical": true
+    },
+    "focused_three_leagues_and_market": {
+      "passed": 12,
+      "failed": 0
+    },
+    "engine_specific": {
+      "passed": 22,
+      "failed": 0,
+      "includes": "SERIES, SINGLE_GAME, WINNER, LOSER, TOP_N/RANK_RANGE, 8 play-in outcomes, playoff-slot priority propagation"
+    }
+  },
+  "validation": {
+    "global": {
+      "files_passed": 777,
+      "files_skipped": 49,
+      "tests_passed": 5741,
+      "tests_skipped": 58,
+      "failed": 0,
+      "duration_seconds": 2490.4,
+      "note": "The additional playoff-slot priority case was added after this file ran in the global suite; it passed in the separate final 22-case engine suite."
+    },
+    "typecheck": "PASS",
+    "build_windows_embedded_frontend": "PASS",
+    "rust": {
+      "passed": 18,
+      "failed": 0,
+      "fmt_exit": 0,
+      "check_offline_exit": 0,
+      "test_offline_exit": 0
+    }
+  },
+  "windows": {
+    "old_232_recovery": {
+      "status": "PASS",
+      "steps": 4,
+      "profile": "qa-france-03f-1793031821044"
+    },
+    "play_in": {
+      "status": "PASS_MATCH_AND_PROGRESSION",
+      "first_run_steps_passed": 3,
+      "first_run_last_step": "QA_ADVANCE_STOPPED_AT_PENDING_USER_GAME",
+      "profile": "qa-france-03f-1793029619548"
+    },
+    "quarterfinals_and_reload": {
+      "status": "PASS",
+      "steps": 4,
+      "profile": "qa-france-03f-1793030033940",
+      "manual_cdp_press_actions": true
+    },
+    "second_edition": {
+      "status": "PASS",
+      "steps": 3,
+      "profile": "qa-continuity-03-FRA-1793030889915"
+    },
+    "scope": "Real native phase acceptance, not the entire season replayed through Windows. Full season and first successor round certified by automated production-engine consumers.",
+    "graphical_bracket_panel": "NOT_PRESENT_IN_MAIN; logical bracket, materialized fixtures and native competition lists verified; F4 untouched."
+  },
+  "protected": {
+    "master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+    "source_checks_passed": 54,
+    "pinned_files_unchanged": 23,
+    "f4_status_unchanged": true,
+    "binary_sha256": "f9b8d4eb4bb178782d186404d49c32428f0e6f39718d1a8ad3b71e0509209beb",
+    "binary_path": "C:\\BDM-worktrees\\worlddb-v2-03\\artifacts\\bdm.exe"
+  },
+  "unaccredited_sporting_assumptions": [],
+  "ci": "Keep PR open and unmerged until the new commit checks finish successfully."
+}

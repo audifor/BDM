@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "regularGames": 306,
+  "playoffGames": 20,
+  "totalActas": 326,
+  "championId": "pbm:DYN_equipe:42",
+  "championName": "Saski Baskonia",
+  "allCompleted": true,
+  "uniqueGameIds": true,
+  "allResultScoresMatchActas": true,
+  "allActaPlayerAndTeamReferencesValid": true,
+  "sourceSave": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793020897433\\season-complete.json",
+  "sourceSaveSha256": "cad83c55f3058618d72b1990c18cd1c1c13df0e6d2d64382338acaec5ee587e4"
+}

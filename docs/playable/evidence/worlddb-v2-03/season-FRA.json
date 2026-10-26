@@ -1,0 +1,26 @@
+{
+  "status": "BLOCKED_POSTSEASON_CONTRACT",
+  "seasonComplete": false,
+  "regularCompleted": 232,
+  "regularExpected": 240,
+  "competition": "pbm:DYN_championnat:2",
+  "champion": null,
+  "failure": {
+    "kind": "TECHNICAL_FAILURE",
+    "phaseId": "PRE_MATCH_SELF_HEALING",
+    "message": "Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26"
+  },
+  "decisions": [
+    {
+      "date": "2025-09-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0073:pbm:DYN_joueur:100064444"
+    },
+    {
+      "date": "2025-11-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0145:pbm:DYN_joueur:38005"
+    }
+  ],
+  "currentDate": "2026-01-20"
+}

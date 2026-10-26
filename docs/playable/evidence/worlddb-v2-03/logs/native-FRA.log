@@ -1,0 +1,7 @@
+PASS FRA native-new-game-league-club
+PASS FRA original-roster
+PASS FRA real-match-acta-standings
+PASS FRA contact-offer-governance-sign
+PASS FRA renew-original-contract
+PASS FRA close-load-continue
+{"out":"C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-03-FRA-1793021230900","profile":"qa-multileague-FRA-1793021230900"}

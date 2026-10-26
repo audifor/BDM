@@ -1,0 +1,113 @@
+{
+  "ESP": {
+    "runtimeCountsBeforeBoundedFreeAgentActivation": {
+      "country": 47,
+      "competition": 1,
+      "club": 18,
+      "person": 306,
+      "generated_people": 0,
+      "source_people_anchors": 306,
+      "membership_rows": 18
+    },
+    "runtimeIssues": [
+      {
+        "issue_id": "253525193b7c6bee721c7c2602aad31c2607ed6909d96e3f00aaaee8b5b9a866",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":488,\"table\":\"DYN_joueur_attributes\"}"
+      },
+      {
+        "issue_id": "5d5348f38487e4c8114f768e93edbc673018af330055579a83ffe1c168df7568",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":10656,\"table\":\"DYN_joueur_langue\"}"
+      },
+      {
+        "issue_id": "6b917efc957da1aa97beb281d9e0a2be38c6621c64cf5d4e2ca5bbde1d1f3710",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":1,\"table\":\"DYN_joueur_cursus\"}"
+      }
+    ],
+    "freeAgentSelection": {
+      "eligibleOriginals": 707,
+      "selected": 60,
+      "policy": "ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60"
+    },
+    "sourceSnapshot": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\multileague-03-ESP-1793022296853\\snapshot.json"
+  },
+  "FRA": {
+    "runtimeCountsBeforeBoundedFreeAgentActivation": {
+      "country": 36,
+      "competition": 1,
+      "club": 16,
+      "person": 282,
+      "generated_people": 0,
+      "source_people_anchors": 282,
+      "membership_rows": 16
+    },
+    "runtimeIssues": [
+      {
+        "issue_id": "253525193b7c6bee721c7c2602aad31c2607ed6909d96e3f00aaaee8b5b9a866",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":488,\"table\":\"DYN_joueur_attributes\"}"
+      },
+      {
+        "issue_id": "5d5348f38487e4c8114f768e93edbc673018af330055579a83ffe1c168df7568",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":10656,\"table\":\"DYN_joueur_langue\"}"
+      },
+      {
+        "issue_id": "6b917efc957da1aa97beb281d9e0a2be38c6621c64cf5d4e2ca5bbde1d1f3710",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":1,\"table\":\"DYN_joueur_cursus\"}"
+      }
+    ],
+    "freeAgentSelection": {
+      "eligibleOriginals": 1071,
+      "selected": 60,
+      "policy": "ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60"
+    },
+    "sourceSnapshot": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\multileague-03-FRA-1793022343960\\snapshot.json"
+  },
+  "ITA": {
+    "runtimeCountsBeforeBoundedFreeAgentActivation": {
+      "country": 27,
+      "competition": 1,
+      "club": 16,
+      "person": 259,
+      "generated_people": 0,
+      "source_people_anchors": 259,
+      "membership_rows": 16
+    },
+    "runtimeIssues": [
+      {
+        "issue_id": "253525193b7c6bee721c7c2602aad31c2607ed6909d96e3f00aaaee8b5b9a866",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":488,\"table\":\"DYN_joueur_attributes\"}"
+      },
+      {
+        "issue_id": "5d5348f38487e4c8114f768e93edbc673018af330055579a83ffe1c168df7568",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":10656,\"table\":\"DYN_joueur_langue\"}"
+      },
+      {
+        "issue_id": "6b917efc957da1aa97beb281d9e0a2be38c6621c64cf5d4e2ca5bbde1d1f3710",
+        "severity": "inherited",
+        "code": "PBM_ORPHAN_DETAIL",
+        "details_json": "{\"impact\":\"Orphan detail is never selected as a person; retained in master only\",\"rows\":1,\"table\":\"DYN_joueur_cursus\"}"
+      }
+    ],
+    "freeAgentSelection": {
+      "eligibleOriginals": 1428,
+      "selected": 60,
+      "policy": "ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60"
+    },
+    "sourceSnapshot": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\multileague-03-ITA-1793022384927\\snapshot.json"
+  }
+}

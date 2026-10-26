@@ -34,5 +34,5 @@ export interface WorldDbV2Snapshot {
     readonly people: readonly WorldDbV2Entity[];
     readonly competitions: readonly WorldDbV2Entity[];
 }
-export const discoverWorldDbV2 = (sourceRoot: string) => invoke<WorldDbV2Pilot>('world_db_v2', { request: { method: 'discover', sourceRoot } });
-export const buildWorldDbV2 = (sourceRoot: string, startDate: string, seed: string) => invoke<WorldDbV2Snapshot>('world_db_v2', { request: { method: 'build', sourceRoot, startDate, seed } });
+export const discoverWorldDbV2 = (sourceRoot: string, competitionId?: string) => invoke<WorldDbV2Pilot>('world_db_v2', { request: { method: 'discover', sourceRoot, competitionId } });
+export const buildWorldDbV2 = (sourceRoot: string, startDate: string, seed: string, competitionId?: string) => invoke<WorldDbV2Snapshot>('world_db_v2', { request: { method: 'build', sourceRoot, startDate, seed, competitionId } });

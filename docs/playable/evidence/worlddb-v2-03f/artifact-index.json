@@ -1,0 +1,257 @@
+[
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\acceptance.json",
+    "bytes": 29949,
+    "sha256": "60954e4a5f758ec9bbf9e7e40e77eb77fc5f56c6491408450ae7d921e85c61a9"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\midseason.json",
+    "bytes": 31471913,
+    "sha256": "8d5fa0fb2071f3a7bc41c3ab2477efad095fb6ed70f67536b3f198f69d2593d8"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\opening.json",
+    "bytes": 27347995,
+    "sha256": "f90008c373c934673137fc52fed6b1b514473561c46ca68fd47f3bbc202f7f5d"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\progress.json",
+    "bytes": 86,
+    "sha256": "091ca0f6ed4cac8603705816b65e4c815a85cd988b19778f6aabaf5acfea6555"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\regular-complete.json",
+    "bytes": 27761884,
+    "sha256": "56362ac78f57987668542e7cd856f8e335a02016da75db2826a7398eb4e2c0dc"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\season-complete.json",
+    "bytes": 37111930,
+    "sha256": "a17e38a7ec66a9f11694cf622e4ac8ef887ba46940b36f8fe1c36dc552378e8e"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\successor.json",
+    "bytes": 37193893,
+    "sha256": "e84a4ec932ad2c76931f6eef41c22223d51a41ff6d9a9b942afc91009f3af927"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\acceptance.json",
+    "bytes": 24800,
+    "sha256": "366bf45da411b77faabbe2083f363e1b33a63d8c4e039d38e0764efd8dee2581"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\opening.json",
+    "bytes": 36006029,
+    "sha256": "19dec0bac9dea93fe2122e906b9c3f687c7c47f9e61ed94e52e88a21d5ae714d"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\progress.json",
+    "bytes": 86,
+    "sha256": "86b178d5a02a2895e6501b16b39b1a0ff7ffc8fa5bb25301b6b62f4bce4aeb11"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\regular-complete.json",
+    "bytes": 36090506,
+    "sha256": "e00211b7db4981a735754a79223525878f02c960f2a25c9ba91815df9a52026f"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\season-complete.json",
+    "bytes": 38576396,
+    "sha256": "4610940c3dc695a356ad64615bb31eda9bdccbf47d0fe7d718bfbd9dbf1f7052"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ESP-1793029869045\\successor.json",
+    "bytes": 38674722,
+    "sha256": "72bf4a9de49360a5af0e1e60f0fc65c3e68cd328dc03c6ec8da63258d54dbe75"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\acceptance.json",
+    "bytes": 26952,
+    "sha256": "5de9753f406ebccb05db557cd76737ca6798e3f9b0e54a7ffcb63e908382aded"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\midseason.json",
+    "bytes": 30001477,
+    "sha256": "88ac5ca07f2b6ca68f9a222f3a7a08349778ffeb237edbab8ca18de206036281"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\opening.json",
+    "bytes": 26413667,
+    "sha256": "498d4b95a084eae6adf49c7d49d16f6f27b9ea44141a8987f16cfb6efb13088a"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\progress.json",
+    "bytes": 86,
+    "sha256": "de2815bbcc22b6d1ec54db0058b224c0d3f7a139b36861e9b562b2fd67280f30"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\regular-complete.json",
+    "bytes": 26426497,
+    "sha256": "c4a465a6283287532d72cbf8e8b4173674b989c38e29373445ca318f1d0c248a"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\season-complete.json",
+    "bytes": 38146042,
+    "sha256": "ff0abb3910632bb9abf477e219129d0584c0ffdff2e9a9ba4a188f1a01a3932c"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-ITA-1793029881528\\successor.json",
+    "bytes": 38223293,
+    "sha256": "91f22283bbc64c153a06a53de0f7e0cd6bf08b59d57f0c78f128cf4f87aa47f3"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\continuity-03-1793029043853\\acceptance.json",
+    "bytes": 396,
+    "sha256": "de4323af818800b527d5a04d9476dee687f2b17eed5b5cd994ed79fc34d496ba"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\continuity-03-1793029043853\\continued.json",
+    "bytes": 41093964,
+    "sha256": "501804148d3b45b2f715eb3884995ff04ae59926991638c12a20405cd7d1af69"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\continuity-03-1793029043853\\progress.json",
+    "bytes": 63,
+    "sha256": "3c0e92c61adf5bed9671833a48832bef20783ea3e72a17c05c46cd531563cf74"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\continuity-03-1793029043853\\second-season.json",
+    "bytes": 41074233,
+    "sha256": "c82e90e84545e6547b5bfcb551dccea9cac6cb6a2bddfd5ea88a2f202b3dd109"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\france-phases-03f-1793029342252\\before-play-in.json",
+    "bytes": 34773707,
+    "sha256": "2ddc528eda4a5868d31e33e5119d706010e01ddfc8d142fb33798da6a5814011"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\france-phases-03f-1793029342252\\before-playoffs.json",
+    "bytes": 35137231,
+    "sha256": "19622010e495a69feca066a03b8998029b2c194832a4fea058c88e9b472fa0d0"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\acceptance.json",
+    "bytes": 10934,
+    "sha256": "f7196f47ad4d6c72fd4ed34a1d7b0dd21e35788e55f9533b705fbdd3a7a2c57e"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\before-close.json",
+    "bytes": 35085674,
+    "sha256": "ecbdc493d4ec3f850ada478a6d812b674cb6b79011faf6002fd280034b212e46"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\loaded.json",
+    "bytes": 34773711,
+    "sha256": "6f7836a09f4c217ec7dd4fe41ca4447cd8dce37751f03e62c22535fd7712fe27"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\played.json",
+    "bytes": 34812301,
+    "sha256": "101c822b44941c02b43f36f209aa2009881cd88cfe38fe5126f6b807e0fd7c66"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\progressed.json",
+    "bytes": 35085674,
+    "sha256": "9ebfd28fe29256705fcf12cee672ed1ce7d2bec88412e1cbb13461db0d15febf"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793029619548\\reopened.json",
+    "bytes": 35085674,
+    "sha256": "22e6a85d93300781cf2e8aa456caad738d8916651cee908cbbc4f4b18865c638"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\acceptance.json",
+    "bytes": 11930,
+    "sha256": "9652a8ea31d18ade4e1500c46a8d121d09c684813aec164167614997422d203a"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\before-close.json",
+    "bytes": 35779621,
+    "sha256": "5a28e01c62ff709ce42cca36afcef6f1a9271b83dfe72f7c6bb3a9f0347e3b8d"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\continued.json",
+    "bytes": 35928179,
+    "sha256": "7ec1832abd1dd7dadfa1f30df3779a4c391c5b6ffd9f6a6ff82b415e3b0b8fed"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\loaded.json",
+    "bytes": 35085674,
+    "sha256": "536892c35c32e9464e58e7a306e813d8adcc4badc13581c6e6143c8d34e131e0"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\played.json",
+    "bytes": 35129684,
+    "sha256": "81e297232cff3195d7292d1768330e5ffabcdb6606e81ac84e4165037b79e3e9"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\progressed.json",
+    "bytes": 35779621,
+    "sha256": "296cdfea32532f083b2c17aa48ffb343150b34a221212749cde58f7257e96423"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793030033940\\reopened.json",
+    "bytes": 35779621,
+    "sha256": "95b53996d1dfdd06b1c899ce1d783e34ec4c90b29af770cb89a28cc741ad5917"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\acceptance.json",
+    "bytes": 4329,
+    "sha256": "111df58f0a9939335e210432014fee95ff3b38ffafa690c72863555e3119e1ca"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\before-close.json",
+    "bytes": 27756456,
+    "sha256": "037bace2acfe21ee4e9c7dc5996a76398a39caa5e48b197340c50391ea535b74"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\continued.json",
+    "bytes": 27832945,
+    "sha256": "a24fdac9dc9c4b5a68944ab362fd5633242b11905743e07b3ce58f5b0bb63455"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\loaded.json",
+    "bytes": 27347999,
+    "sha256": "5cf6e17a726f4359cf26ef3cab4086aa87dc87a3034770e5eb07731d0f3abeb7"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\played.json",
+    "bytes": 27384099,
+    "sha256": "3f30d3f79fcf91bfdf92373fd3371e15b1a6dca83842fb526551cb183d670965"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\progressed.json",
+    "bytes": 27756456,
+    "sha256": "346d0faa7c72159db9369a3cbd11d7656019f577b965555bc8bc6269fde07ea8"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-france-03f-1793031821044\\reopened.json",
+    "bytes": 27756456,
+    "sha256": "25fa9dfb49ed14e050a38611e9ba52b49cc48dc3bdd6badefbba689b2e57f791"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915\\acceptance.json",
+    "bytes": 966,
+    "sha256": "33ff1b4e8a4325717243af37d4f9e622c0884889ee6e8caf92d603f10732e4b0"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915\\continued.json",
+    "bytes": 41187643,
+    "sha256": "19aef458118660f2f19160281f522b03dcfdddb30cb35596d4941e2487088951"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915\\final.json",
+    "bytes": 41212562,
+    "sha256": "028cc6717f8b63446f1922358c38cc27c7867c5f52c2caef836b66811fb9eab2"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915\\loaded.json",
+    "bytes": 41093968,
+    "sha256": "7f0508e986084fd61fb3d738d319ba6d18b2ba36b6dfb7ef6932e659a9737fd1"
+  },
+  {
+    "path": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915\\reopened.json",
+    "bytes": 41187643,
+    "sha256": "619313aee6d05277eb10cbd9015ffb29db4cadc31999b490fb2fcd865f732c9a"
+  }
+]

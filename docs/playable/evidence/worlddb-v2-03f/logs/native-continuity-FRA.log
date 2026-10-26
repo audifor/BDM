@@ -1,0 +1,4 @@
+PASS FRA load-certified-second-edition
+PASS FRA advance-second-edition-and-save
+PASS FRA close-reopen-and-continue-second-edition
+{"out":"C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\native-continuity-03-FRA-1793030889915","profile":"qa-continuity-03-FRA-1793030889915"}

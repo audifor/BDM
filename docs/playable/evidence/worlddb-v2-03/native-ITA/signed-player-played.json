@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "playerId": "pbm:DYN_joueur:100058620",
+  "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0009",
+  "date": "2025-07-08",
+  "line": {
+    "playerId": "pbm:DYN_joueur:100058620",
+    "teamId": "pbm:DYN_equipe:1413",
+    "opponentTeamId": "pbm:DYN_equipe:62",
+    "isHome": true,
+    "started": true,
+    "stats": {
+      "playerId": "pbm:DYN_joueur:100058620",
+      "secondsPlayed": 2400,
+      "points": 0,
+      "fieldGoalsMade": 0,
+      "fieldGoalsAttempted": 0,
+      "twoPointMade": 0,
+      "twoPointAttempted": 0,
+      "threePointMade": 0,
+      "threePointAttempted": 0,
+      "freeThrowsMade": 0,
+      "freeThrowsAttempted": 0,
+      "offensiveRebounds": 0,
+      "defensiveRebounds": 5,
+      "rebounds": 5,
+      "assists": 1,
+      "steals": 2,
+      "blocks": 2,
+      "turnovers": 2,
+      "foulsCommitted": 4,
+      "plusMinus": -4
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "regular": 240,
+  "playIn": 3,
+  "seriesPlayoffGames": 22,
+  "totalActas": 265,
+  "original232ResultsAndActasUnchanged": true,
+  "champion": "Boulazac Basket Dordogne",
+  "championId": "pbm:DYN_equipe:20",
+  "allScoresMatchActas": true,
+  "allPlayerAndTeamReferencesValid": true,
+  "originalClubIdentitiesPreserved": true,
+  "sourceSave": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793028749378\\season-complete.json",
+  "sourceSaveSha256": "a17e38a7ec66a9f11694cf622e4ac8ef887ba46940b36f8fe1c36dc552378e8e"
+}

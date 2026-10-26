@@ -1,0 +1,49 @@
+{
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793020875866\\before-failure.json",
+  "date": "2026-01-20",
+  "completed": 232,
+  "scheduled": 8,
+  "regularSeasonComplete": false,
+  "failure": {
+    "kind": "TECHNICAL_FAILURE",
+    "phaseId": "PRE_MATCH_SELF_HEALING",
+    "message": "Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26"
+  },
+  "phases": [
+    {
+      "phaseId": "PRE_ADVANCE_VALIDATION",
+      "order": 1,
+      "date": "2026-01-20",
+      "ran": true,
+      "worldChanged": false,
+      "diagnostics": [],
+      "summary": "BS2 permits this day transition.",
+      "elapsedMs": 0.02
+    },
+    {
+      "phaseId": "PRE_MATCH_SELF_HEALING",
+      "order": 2,
+      "date": "2026-01-20",
+      "ran": true,
+      "worldChanged": false,
+      "diagnostics": [],
+      "summary": "No roster or contract repair was needed for today’s scheduled teams.",
+      "elapsedMs": 1.92
+    },
+    {
+      "phaseId": "PRE_MATCH_SELF_HEALING",
+      "order": 3,
+      "date": "2026-01-20",
+      "ran": true,
+      "worldChanged": false,
+      "diagnostics": [
+        {
+          "code": "TECHNICAL_FAILURE",
+          "message": "Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26"
+        }
+      ],
+      "summary": "Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26"
+    }
+  ],
+  "stack": "Error: Competition format requires exactly one rank-based playoff qualification rule: edition:FRA:betclic-elite:2025-26\n    at selectQualifiedEntries (C:/BDM-worktrees/worlddb-v2-03/src/engine/competition/WorldCompetitionPostseason.ts:182:37)\n    at getCompetitionPostseasonState (C:/BDM-worktrees/worlddb-v2-03/src/engine/competition/WorldCompetitionPostseason.ts:53:17)\n    at materializeCompetitionPostseason (C:/BDM-worktrees/worlddb-v2-03/src/engine/competition/WorldCompetitionPostseason.ts:90:17)\n    at applyMatchResult (C:/BDM-worktrees/worlddb-v2-03/src/engine/match/MatchResultApplication.ts:65:31)\n    at applyCompletedMatchChain (C:/BDM-worktrees/worlddb-v2-03/src/app/matchNext/applyMatchNextResult.ts:44:22)\n    at C:/BDM-worktrees/worlddb-v2-03/src/app/matchNext/applyMatchNextResult.ts:30:56\n    at withSingleWorldValidation (C:/BDM-worktrees/worlddb-v2-03/src/domain/world/GameWorld.ts:1064:19)\n    at completeResolvedMatch (C:/BDM-worktrees/worlddb-v2-03/src/app/matchNext/applyMatchNextResult.ts:30:10)\n    at completeMatchNext (C:/BDM-worktrees/worlddb-v2-03/src/app/matchNext/applyMatchNextResult.ts:35:10)\n    at MatchNextEnginePort.complete (C:/BDM-worktrees/worlddb-v2-03/src/app/matchNext/MatchNextEnginePort.ts:50:12)"
+}

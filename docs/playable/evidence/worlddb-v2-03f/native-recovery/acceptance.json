@@ -1,0 +1,110 @@
+{
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\season-03-FRA-1793020875866\\before-failure.json",
+  "profile": "qa-france-03f-1793031821044",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-france-03f-1793031821044\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-phase",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-01-20",
+        "clubs": 16,
+        "regularCompleted": 232
+      }
+    },
+    {
+      "name": "native-decisive-match-acta",
+      "status": "PASS",
+      "detail": {
+        "id": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0233",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+        "competitionId": "competition:FRA:betclic-elite",
+        "date": "2026-01-20",
+        "homeTeamId": "pbm:DYN_equipe:10",
+        "awayTeamId": "pbm:DYN_equipe:1",
+        "stakes": "regular",
+        "competitionStageKey": "REGULAR_SEASON",
+        "status": "completed",
+        "result": {
+          "homeScore": 101,
+          "awayScore": 91
+        }
+      }
+    },
+    {
+      "name": "progress-and-project-fixtures",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-01-22",
+        "postseason": [
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_7_8",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:29",
+            "awayTeamId": "pbm:DYN_equipe:8",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_9_10",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:20",
+            "awayTeamId": "pbm:DYN_equipe:16",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:4",
+            "awayTeamId": "pbm:DYN_equipe:10",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          }
+        ],
+        "actas": 240
+      }
+    },
+    {
+      "name": "close-reopen-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-01-23",
+        "completed": 240
+      }
+    }
+  ],
+  "consoleErrors": []
+}

@@ -1,0 +1,35 @@
+{
+  "profile": "qa-continuity-03-ESP-1793023244537",
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\continuity-03-1793022582134\\continued.json",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-continuity-03-ESP-1793023244537\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-second-edition",
+      "status": "PASS",
+      "detail": {
+        "currentSeasonId": "generated-season-0001",
+        "previousChampion": "pbm:DYN_equipe:42",
+        "oldGames": 326,
+        "newCompleted": 9,
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "name": "advance-second-edition-and-save",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-13",
+        "clubs": 18
+      }
+    },
+    {
+      "name": "close-reopen-and-continue-second-edition",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-14",
+        "history": 1
+      }
+    }
+  ],
+  "consoleErrors": []
+}

@@ -1,0 +1,13 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2FranceRecovery.test.ts --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/app/game/WorldDbV2FranceRecovery.test.ts > reproduces the certified French pre-match failure without declaring regular season complete 40088ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:21:33
+   Duration  45.82s (transform 4.51s, setup 0ms, import 5.58s, tests 40.09s, environment 0ms)
