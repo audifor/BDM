@@ -11,6 +11,7 @@ import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGene
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment';
 import { createGeneratedProfessionalSalaryRulesV1 } from './GeneratedProfessionalSalaryRules';
 import { worldDbV2Competition, worldDbV2Calendar, worldDbV2SeasonEnd } from './WorldDbV2Competitions';
+import { bindWorldDbV2FrenchFormat } from './WorldDbV2FrenchFormatBinding';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -135,7 +136,7 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
         const openingEconomicStates = gameBalanceOpeningEconomicStates(world, id => { const r = resolveOrganizationCurrency(world, id, explicitOrganizationCurrencies); return r.status === 'RESOLVED' ? String(r.currencyCode) : null; });
         world = applyGameBalanceBootstrap(ensureCanonicalFinanceFoundation(world, { explicitOrganizationCurrencies, authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world), openingEconomicStates }));
         world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: config.sourceCompetitionId, nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents: config.countryCode === 'ESP' ? 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const : 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60' as const }) } });
-        return world;
+        return bindWorldDbV2FrenchFormat(world);
     }
     finally {
         session.close();

@@ -1,0 +1,161 @@
+{
+  "source": "C:\\BDM-worktrees\\worlddb-v2-03\\.worlddb-v2\\france-phases-03f-1793029342252\\before-play-in.json",
+  "profile": "qa-france-03f-1793029619548",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-france-03f-1793029619548\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-phase",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-16",
+        "clubs": 16,
+        "regularCompleted": 240
+      }
+    },
+    {
+      "name": "native-decisive-match-acta",
+      "status": "PASS",
+      "detail": {
+        "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+        "competitionId": "competition:FRA:betclic-elite",
+        "date": "2026-06-16",
+        "homeTeamId": "pbm:DYN_equipe:5",
+        "awayTeamId": "pbm:DYN_equipe:1",
+        "stakes": "elimination",
+        "competitionStageKey": "PLAY_IN_7_8",
+        "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+        "postseasonGameNo": 1,
+        "status": "completed",
+        "result": {
+          "homeScore": 74,
+          "awayScore": 95
+        }
+      }
+    },
+    {
+      "name": "progress-and-project-fixtures",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-18",
+        "postseason": [
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_7_8",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 74,
+              "awayScore": 95
+            }
+          },
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-16",
+            "homeTeamId": "pbm:DYN_equipe:29",
+            "awayTeamId": "pbm:DYN_equipe:8",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_9_10",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 80,
+              "awayScore": 88
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:20",
+            "awayTeamId": "pbm:DYN_equipe:16",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:4",
+            "awayTeamId": "pbm:DYN_equipe:10",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:21",
+            "awayTeamId": "pbm:DYN_equipe:1",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-17",
+            "homeTeamId": "pbm:DYN_equipe:5",
+            "awayTeamId": "pbm:DYN_equipe:8",
+            "stakes": "elimination",
+            "competitionStageKey": "PLAY_IN_FINAL",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 96,
+              "awayScore": 74
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+            "competitionId": "competition:FRA:betclic-elite",
+            "date": "2026-06-18",
+            "homeTeamId": "pbm:DYN_equipe:9",
+            "awayTeamId": "pbm:DYN_equipe:5",
+            "stakes": "elimination",
+            "competitionStageKey": "QUARTERFINALS",
+            "postseasonFixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+            "postseasonGameNo": 1,
+            "status": "scheduled",
+            "result": null
+          }
+        ],
+        "actas": 243
+      }
+    },
+    {
+      "name": "close-reopen-continue",
+      "status": "FAIL",
+      "error": "Error: Timed out waiting for: document.querySelector('.ng-system-bar__date')?.innerText!==\"18 JUN 2026\"",
+      "text": "BDM\nÉC\nÉLAN CHALON\nPBM identities · BDM-generated profiles\nBETCLIC ÉLITE · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n18 JUN 2026\nMATCH\nPARTIDO\nÉlan Chalon vs JL Bourg\nBETCLIC ÉLITE · PBM V2 · FUERA\nJUGAR PARTIDO\nSIMULACIÓN RÁPIDA\nSIMULAR OTROS PARTIDOS DEL DÍA\nAVANZAR UN DÍA\n\nBETCLIC ÉLITE · PBM V2 · HOY · FUERA\n\nJL Bourg\n23-7\nVS\nÉlan Chalon\n15-15\n\n4 periodos de 10′ · prórroga si hay empate. Tú eres Élan Chalon; el rival es JL Bourg.\n\nTU QUINTETO INICIAL\nElegido por el entrenador\nPG\nClarence Nadolny\n32′\nPF\nYanis Tonnellier\n32′\nPF\nLionel Gaudoux\n32′\nPF\nJustyn Mutts\n32′\nC\nSohann Mendy\n32′\nCAMBIAR EN PLANTILLA\nBANQUILLO Y ROTACIÓN\nMinutos del cuerpo técnico\nPG\nAkram Naji\n12′\nSG\nKlark-Luca Riethauser\n12′\nPG\nJeremiah Hill\n8′\nSF\nZac Cuthbertson\n4′\nPG\nMatheo Leray\n4′\n\nSin minutos previstos: Nate Darling, Obinna Anochili-Killen, Jelani Kante, Yohan Choupas.\n\nLos cambios los ejecuta el cuerpo técnico en las paradas: toma estos minutos como objetivo y los ajusta por posición, fatiga y faltas; el motor no admite sustituciones manuales en directo.\n\nNO DISPONIBLES\n0\n\nToda la plantilla está disponible.\n\nPLAN TÁCTICO\nPlan del equipo\nRITMO\nEquilibrado\nTRIPLES\nNormal\nATAQUE AL ARO\nNormal\nMEDIA DISTANCIA\nNormal\nESQUEMA DEFENSIVO\nIndividual\nDEFENSA DEL BLOQUEO\nSwitch\nJUGADOR DESTACADO\nNinguno\nEMPAREJAMIENTOS\nAutomáticos\nCAMBIAR EN TÁCTICAS\nQUINTETO RIVAL PREVISTO\nJL Bourg\nPG\nJuwan Ekanga-Ehawa\nSG\nAdam Mokoka\nPG\nAssemian Moularé\nPF\nAhmad Dekaki\nSG\nAntony Labanca\n\nACTA · BETCLIC ÉLITE · PBM V2 · 2026-06-16\n\nBCM Gravelines Dunkerque\n74\n–\n95\nÉlan Chalon\nVICTORIA\nJugado en directo\nBCM GRAVELINES DUNKERQUE\nJugador\tMIN\tPTS\tTC\t3P\tTL\tREB\tAST\tROB\tTAP\tPÉR\tFP\t+/-\nNoa Boigne\nPG · TITULAR\n\t40:00\t12\t5/10\t2/5\t0/0\t13\t5\t1\t0\t3\t1\t-21\nChris Babb\nSG · TITULAR\n\t40:00\t9\t3/11\t2/8\t1/1\t3\t2\t2\t0\t0\t1\t-21\nGauthier Denis\nSG · TITULAR\n\t36:01\t12\t4/11\t2/6\t2/2\t7\t2\t0\t0\t0\t1\t-21\nSoren Bracq\nPG · TITULAR\n\t32:53\t30\t11/25\t7/13\t1/2\t5\t2\t3\t1\t3\t2\t-13\nDavid Joplin\nPF · TITULAR\n\t24:28\t11\t4/10\t0/1\t3/3\t3\t2\t1\t0\t5\t1\t-9\nValentin Chery\nPF\n\t15:32\t0\t0/2\t0/2\t0/0\t7\t1\t1\t1\t3\t1\t-12\nLouka Letailleur\nSF\n\t7:07\t0\t0/0\t0/0\t0/0\t0\t1\t0\t0\t1\t1\t-8\nAdrien Guermeur\nSG\n\t3:59\t0\t0/1\t0/1\t0/0\t0\t0\t0\t0\t0\t0\t0\nRomain Valakou\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nVafessa Fofana\nSF\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nMike Lewis\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nEdon Maxhuni\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nTajuan Agee\nPF\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nEquipo\t200:00\t74\t27/70\t13/36\t7/8\t38\t15\t8\t2\t15\t8\t\nÉLAN CHALON\nJugador\tMIN\tPTS\tTC\t3P\tTL\tREB\tAST\tROB\tTAP\tPÉR\tFP\t+/-\nJustyn Mutts\nPF · TITULAR\n\t40:00\t26\t10/25\t6/19\t0/0\t6\t5\t4\t1\t2\t2\t+21\nSohann Mendy\nC · TITULAR\n\t40:00\t7\t2/8\t1/7\t2/2\t12\t2\t3\t1\t0\t3\t+21\nYanis Tonnellier\nPF · TITULAR\n\t34:52\t24\t10/20\t2/9\t2/2\t8\t1\t2\t0\t0\t1\t+21\nLionel Gaudoux\nPF · TITULAR\n\t32:53\t7\t3/7\t1/4\t0/0\t10\t2\t2\t0\t2\t2\t+13\nClarence Nadolny\nPG · TITULAR\n\t24:35\t23\t9/14\t5/7\t0/0\t7\t5\t2\t0\t5\t2\t+9\nAkram Naji\nPG\n\t15:25\t5\t2/5\t1/2\t0/0\t0\t4\t1\t0\t0\t0\t+12\nZac Cuthbertson\nSF\n\t7:07\t0\t0/1\t0/0\t0/0\t2\t4\t1\t0\t0\t0\t+8\nKlark-Luca Riethauser\nSG\n\t5:08\t3\t1/2\t1/2\t0/0\t0\t0\t0\t0\t0\t0\t0\nNate Darling\nSG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nMatheo Leray\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nObinna Anochili-Killen\nPF\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nJelani Kante\nSG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nJeremiah Hill\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nYohan Choupas\nPG\n\t0:00\t0\t0/0\t0/0\t0/0\t0\t0\t0\t0\t0\t0\t0\nEquipo\t200:00\t95\t37/82\t17/50\t4/4\t45\t23\t15\t2\t9\t10\t\nSIMULATION IDLE"
+    }
+  ],
+  "consoleErrors": []
+}

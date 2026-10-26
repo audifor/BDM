@@ -1,0 +1,13 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2Continuity.test.ts --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/app/game/WorldDbV2Continuity.test.ts > resumes the certified PBM successor, advances its real annual lifecycle and plays its first round without resetting history 29317ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:37:14
+   Duration  36.87s (transform 5.91s, setup 0ms, import 7.36s, tests 29.32s, environment 0ms)

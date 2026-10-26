@@ -1,0 +1,14 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2FranceRecovery.test.ts -t captures real lifecycle --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ↓ src/app/game/WorldDbV2FranceRecovery.test.ts > recovers the certified French 232/240 save and completes the final regular round atomically
+ ✓ src/app/game/WorldDbV2FranceRecovery.test.ts > captures real lifecycle checkpoints for independent Windows play-in and playoff acceptance 44049ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  16:42:07
+   Duration  57.06s (transform 10.25s, setup 0ms, import 12.73s, tests 44.05s, environment 0ms)

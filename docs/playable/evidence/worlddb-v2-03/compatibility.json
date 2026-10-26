@@ -735,7 +735,7 @@
       ],
       "native_format_id": "competition:FRA:betclic-elite",
       "status": "PLAYABLE",
-      "lifecycle": "BLOCKED_POSTSEASON_CONTRACT",
+      "lifecycle": "COMPLETE_SEE_SEPARATE_CONTINUITY",
       "evidence": "Native NEW GAME, original roster, MatchEngine, acta/standings, canonical Finance/Governance signing, renewal and Save V4 reopen certified.",
       "native_evidence": "native-FRA\\acceptance.json"
     },

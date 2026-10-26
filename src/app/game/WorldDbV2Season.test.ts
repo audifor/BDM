@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createWorldDbV2GameFromSnapshot } from './WorldDbV2Game'
 import { advanceGameDayWithResult } from './advanceGameDay'
@@ -14,6 +14,7 @@ import { startNextSeasonTransitionFor } from './startNextSeason'
 import { validateGameWorld } from '@/domain/world'
 import { serializeGameWorldV4, deserializeGameWorldSaveV4 } from '@/save/GameWorldSaveV4'
 import { projectPersistentWorldTruth } from '@/save/persistentWorldTruth'
+import { loadSavedGame } from '@/app/save/GameSaveService'
 import { worldDbV2Competition } from './WorldDbV2Competitions'
 
 // Explicit long-running acceptance: production day boundary and exact MatchEngine for every fixture.
@@ -21,11 +22,14 @@ it.skipIf(process.env.BDM_WORLDDB_SEASON !== '1')('WorldDB V2 complete PBM seaso
   const config=worldDbV2Competition(process.env.BDM_WORLDDB_COMPETITION)
   const regularGames=config.teamCount*(config.teamCount-1), perClub=2*(config.teamCount-1)
   const out=resolve('.worlddb-v2/season-03-'+config.countryCode+'-'+Date.now()); mkdirSync(out,{recursive:true})
+  const resume=process.env.BDM_WORLDDB_RESUME
+  let world=resume?await loadSavedGame({getInfo:async()=>null,load:async()=>readFileSync(resume,'utf8'),save:async()=>{throw Error('Read-only certified source')}}):await (async()=>{
   const raw=execFileSync(process.env.BDM_PYTHON ?? 'python',['-B','src-tauri/resources/worlddb_v2_bridge.py'],{input:JSON.stringify({method:'build',sourceRoot:process.env.WORLDDB_SOURCE_ROOT ?? 'C:/BDM_DB/WORLDDB_PBM',output:resolve(out,'universe.sqlite'),competitionId:config.sourceCompetitionId,startDate:config.countryCode==='ESP'?'2025-10-04':'2025-07-01',seed:'worlddb-v2-season-03'}),encoding:'utf-8',maxBuffer:128*1024*1024})
   writeFileSync(resolve(out,'snapshot.json'),raw)
   const snapshot=JSON.parse(raw)
-  let world=await createWorldDbV2GameFromSnapshot(snapshot,config.countryCode==='ESP'?'pbm:DYN_equipe:41':snapshot.clubs[0].entity_id)
-  const season=world.currentSeasonId!, originalIds=Object.keys(world.teams).sort(), regularIds=Object.keys(world.games)
+  return await createWorldDbV2GameFromSnapshot(snapshot,config.countryCode==='ESP'?'pbm:DYN_equipe:41':snapshot.clubs[0].entity_id)
+  })()
+  const season=world.currentSeasonId!, originalIds=Object.keys(world.teams).sort(), regularIds=Object.values(world.games).filter(g=>g.stakes==='regular').map(g=>g.id)
   const decisions: unknown[]=[]
   useGameStore.getState().replaceWorld(world)
   const checkpoint=(name:string)=>{
@@ -56,13 +60,7 @@ it.skipIf(process.env.BDM_WORLDDB_SEASON !== '1')('WorldDB V2 complete PBM seaso
     if(result.status==='FAILED'||result.status==='BREAKPOINT_PREVENTED'){
       writeFileSync(resolve(out,'failure.json'),JSON.stringify({date:world.currentDate,status:result.status,failure:result.failure,breakpoints:result.breakpointBefore,phases:result.phases},null,2))
       checkpoint('before-failure')
-      if(config.countryCode==='FRA' && result.failure?.message.startsWith('Competition format requires exactly one rank-based playoff qualification rule:')){
-        // Certify the observed unsupported boundary, never a completed French season.
-        expect(world.seasonHistoryBySeasonId[season]).toBeUndefined()
-        expect(regularIds.filter(id=>world.games[id as never]!.status==='completed')).toHaveLength(regularGames-config.teamCount/2)
-        writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({status:'BLOCKED_POSTSEASON_CONTRACT',seasonComplete:false,regularCompleted:regularGames-config.teamCount/2,regularExpected:regularGames,competition:config.sourceCompetitionId,champion:null,failure:result.failure,decisions,currentDate:world.currentDate},null,2))
-        return
-      }
+
     }
     expect(result.status,JSON.stringify({date:world.currentDate,failure:result.failure,breakpoint:result.breakpointBefore.breakpoint})).toMatch(/COMPLETED|BREAKPOINT_AFTER_PROCESSING/)
     world=result.world;useGameStore.getState().replaceWorld(world)

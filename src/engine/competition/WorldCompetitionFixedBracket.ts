@@ -7,7 +7,8 @@ export interface WorldCompetitionSeededEntryV1 {
 
 export type WorldCompetitionFixtureParticipantRefV1 =
   | Readonly<{ kind: 'ENTRY'; competitionSeasonEntryId: string; seed: number }>
-  | Readonly<{ kind: 'WINNER_OF_FIXTURE'; fixtureId: string }>
+  | Readonly<{ kind: 'WINNER_OF_FIXTURE'; fixtureId: string; qualificationSeed?: number }>
+  | Readonly<{ kind: 'LOSER_OF_FIXTURE'; fixtureId: string; qualificationSeed?: number }>
 
 /** A virtual fixture is one competitive contest/matchup. SERIES contests may expand into several physical games later. */
 export interface WorldCompetitionVirtualFixtureV1 {
@@ -46,6 +47,7 @@ export function instantiateWorldCompetitionFixedBracketV1(
   const nodeByKey = new Map(variant.nodes.map((node) => [node.key, node] as const))
   const incomingWinnerSources = new Map<string, string[]>()
   for (const edge of variant.edges) {
+    if(edge.payload.playoff_seed!==undefined&&(!Number.isInteger(edge.payload.playoff_seed)||Number(edge.payload.playoff_seed)<1))throw new Error(`Invalid qualified playoff seed: ${edge.from}->${edge.to}`)
     if (!nodeByKey.has(edge.from) || !nodeByKey.has(edge.to)) throw new Error(`Invalid competition edge ${edge.from}->${edge.to}`)
     if (edge.selector !== 'WINNER') continue
     const sources = incomingWinnerSources.get(edge.to) ?? []
@@ -61,7 +63,10 @@ export function instantiateWorldCompetitionFixedBracketV1(
     const pairings = stringArray(node.pairing?.payload, 'pairings')
     const matchups = stringArray(node.pairing?.payload, 'matchups')
     if (pairings.length > 0 && matchups.length > 0) throw new Error(`Fixed bracket node ${node.key} declares both pairings and matchups`)
-    const directPairings = pairings.length > 0 ? pairings : matchups
+    const singular = node.pairing?.payload.pairing
+    if (singular !== undefined && typeof singular !== 'string') throw new Error(`Invalid singular bracket pairing: ${node.key}`)
+    if (singular !== undefined && (pairings.length || matchups.length)) throw new Error(`Ambiguous bracket pairing: ${node.key}`)
+    const directPairings = singular === undefined ? pairings.length > 0 ? pairings : matchups : [singular]
     const paths = stringArray(node.pairing?.payload, 'paths')
     const hasIncomingWinners = (incomingWinnerSources.get(node.key)?.length ?? 0) > 0
     const candidate = node.pairing?.type === 'FIXED_BRACKET' || directPairings.length > 0 || paths.length > 0 || node.teamCount === 2 || hasIncomingWinners
@@ -71,12 +76,32 @@ export function instantiateWorldCompetitionFixedBracketV1(
 
     if (directPairings.length > 0) {
       participants = directPairings.map((pairing) => {
+        const outcomePair = /^(WINNER|LOSER)_(\d+)_(\d+)_VS_(WINNER|LOSER)_(\d+)_(\d+)$/.exec(pairing)
+        if (outcomePair) {
+          const refs = [1,4].map(offset=>{
+            const source=fixtureBySeedPair.get(seedPairKey(Number(outcomePair[offset+1]),Number(outcomePair[offset+2])))
+            if (!source) throw new Error(`Unknown outcome pairing in ${node.key}: ${pairing}`)
+            const selector=outcomePair[offset]!
+            if (!variant.edges.some(e=>e.from===source.nodeKey&&e.to===node.key&&e.selector===selector)) throw new Error(`Undeclared ${selector} edge into ${node.key}`)
+            return Object.freeze({kind:selector==='WINNER'?'WINNER_OF_FIXTURE' as const:'LOSER_OF_FIXTURE' as const,fixtureId:source.fixtureId})
+          })
+          return Object.freeze(refs) as unknown as readonly [WorldCompetitionFixtureParticipantRefV1,WorldCompetitionFixtureParticipantRefV1]
+        }
         const [leftSeed, rightSeed] = parseSeedPair(pairing)
-        const left = requireSeed(entryBySeed, leftSeed)
-        const right = requireSeed(entryBySeed, rightSeed)
+        const qualifiedRef=(seed:number):WorldCompetitionFixtureParticipantRefV1=>{
+          const edges=variant.edges.filter(e=>e.to===node.key&&e.payload.playoff_seed===seed)
+          if (edges.length>1) throw new Error(`Duplicate qualified seed ${seed} in ${node.key}`)
+          if (edges.length===1) {
+            const edge=edges[0]!,sources=fixturesByNodeKey[edge.from]??[]
+            if(sources.length!==1||(edge.selector!=='WINNER'&&edge.selector!=='LOSER'))throw new Error(`Qualified seed ${seed} requires one outcome fixture`)
+            return Object.freeze({kind:edge.selector==='WINNER'?'WINNER_OF_FIXTURE':'LOSER_OF_FIXTURE',fixtureId:sources[0]!.fixtureId,qualificationSeed:seed})
+          }
+          const entry=requireSeed(entryBySeed,seed)
+          return Object.freeze({kind:'ENTRY',competitionSeasonEntryId:entry.competitionSeasonEntryId,seed:entry.seed})
+        }
         return Object.freeze([
-          Object.freeze({ kind: 'ENTRY' as const, competitionSeasonEntryId: left.competitionSeasonEntryId, seed: left.seed }),
-          Object.freeze({ kind: 'ENTRY' as const, competitionSeasonEntryId: right.competitionSeasonEntryId, seed: right.seed }),
+          qualifiedRef(leftSeed),
+          qualifiedRef(rightSeed),
         ]) as readonly [WorldCompetitionFixtureParticipantRefV1, WorldCompetitionFixtureParticipantRefV1]
       })
     } else if (paths.length > 0) {
@@ -121,7 +146,10 @@ export function instantiateWorldCompetitionFixedBracketV1(
     fixtures.push(...nodeFixtures)
     fixturesByNodeKey[node.key] = nodeFixtures
 
-    for (const fixture of nodeFixtures) {
+    for (const [index,fixture] of nodeFixtures.entries()) {
+      if(directPairings[index] && /^(\d+)(?:_VS_|-)(\d+)$/.test(directPairings[index]!)){
+        const [left,right]=parseSeedPair(directPairings[index]!);fixtureBySeedPair.set(seedPairKey(left,right),fixture)
+      }
       const direct = fixture.participants
       if (direct[0].kind === 'ENTRY' && direct[1].kind === 'ENTRY') {
         fixtureBySeedPair.set(seedPairKey(direct[0].seed, direct[1].seed), fixture)

@@ -1,0 +1,27 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2Multileague.test.ts src/app/game/WorldDbV2Playable.test.ts src/app/game/WorldDbV2Market.test.ts --maxWorkers=2 --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ESP' creates a real roster, plays a match, signs an original free agent and persists 56255ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > validates real native DTOs, immutable rules bundle and all original identities/rosters 92ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > plays the real user match, registers statistics/standings, advances time and resumes native Save V4 51062ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > accepts the PBM reference date and a different fictional start without importing results 727ms
+ ✓ src/app/game/WorldDbV2Playable.test.ts > WorldDB V2 · complete PBM league through the real Courtside store and MatchEngine > rejects incomplete native provenance instead of weakening Save V4 validation 45ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > opens 255 generated playable contracts, preserves PBM identities and imports an original eligible free-agent pool reproducibly 5199ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > contacts, negotiates salary/term/role, obtains Governance/Finance approval and signs an original free agent once 639ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > renews the PBM signing through retention and Board, then releases through the actual financial authority 999ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > negotiates club compensation and player terms, executes a PBM transfer atomically and refuses replay 591ms
+ ✓ src/app/game/WorldDbV2Market.test.ts > PBM originals: real F3 contractual and transfer workflows > rejects ineligible contact, a duplicate contract, unaffordable offer and a real player refusal without changing canonical rosters 98ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'FRA' creates a real roster, plays a match, signs an original free agent and persists 37566ms
+ ✓ src/app/game/WorldDbV2Multileague.test.ts > one PBM adapter, three real league formats > 'ITA' creates a real roster, plays a match, signs an original free agent and persists 33918ms
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'ESP' reopens the Windows signing, fields it and persists its real acta
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'FRA' reopens the Windows signing, fields it and persists its real acta
+ ↓ src/app/game/WorldDbV2Multileague.test.ts > saved native PBM signings are eligible in MatchEngine > 'ITA' reopens the Windows signing, fields it and persists its real acta
+
+ Test Files  3 passed (3)
+      Tests  12 passed | 3 skipped (15)
+   Start at  16:47:10
+   Duration  140.40s (transform 19.41s, setup 0ms, import 27.48s, tests 198.83s, environment 0ms)

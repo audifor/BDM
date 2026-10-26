@@ -1,0 +1,13 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2Season.test.ts --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/app/game/WorldDbV2Season.test.ts > WorldDB V2 complete PBM season, postseason and successor through canonical authorities 188752ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:51:06
+   Duration  203.59s (transform 11.86s, setup 0ms, import 14.53s, tests 188.75s, environment 0ms)

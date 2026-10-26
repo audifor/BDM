@@ -110,6 +110,9 @@ for comp in catalog['competitions']:
     notes = special.get(comp['key'], 'PBM participants and raw phases recorded. PGM candidates remain unverified. Reconcile identity, gender/category, participants, phase graph, hosting and engine contract before projecting a career.')
     if config:
         season_path = target / ('season-' + config['countryCode'] + '.json')
+        supplemental = target.parent / 'worlddb-v2-03f' / ('season-' + config['countryCode'] + '.json')
+        if supplemental.exists():
+            season_path = supplemental
         if season_path.exists():
             season_proof = json.loads(season_path.read_text(encoding='utf-8'))
             lifecycle = 'COMPLETE_SEE_SEPARATE_CONTINUITY' if season_proof.get('passed') else season_proof.get('status', 'NOT_CERTIFIED')

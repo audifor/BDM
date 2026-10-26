@@ -1,5 +1,7 @@
 **BDM WorldDB V2-03 — integración multiliga**
 
+Actualización: el bloqueo francés descrito en este informe histórico se ha resuelto en [V2-03F](WORLDDB_V2_03F_FRANCE_CERTIFICATION.md). Esa certificación posterior acredita temporada completa, continuidad y aceptación nativa por tramos; las evidencias originales siguientes se conservan como línea base.
+
 Base: `4c8919fef50823f422f3166d61f886e183ba6357`. Rama aislada: `playable/worlddb-v2-03`. Las carreras nativas de España, Francia e Italia superan crear partida, consultar plantilla original, disputar un partido con MatchEngine, consultar acta/clasificación, fichar con Finance/Governance, renovar y guardar/cerrar/reabrir/continuar. Las tres ligas usan el mismo adaptador. La temporada francesa completa queda bloqueada, con evidencia separada; el PASS de jugabilidad inicial no implica continuidad ilimitada.
 
 **Implementación y procedencia**

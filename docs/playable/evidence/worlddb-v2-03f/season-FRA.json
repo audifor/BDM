@@ -1,0 +1,871 @@
+{
+  "passed": true,
+  "regularGames": 240,
+  "perClub": 30,
+  "competition": "pbm:DYN_championnat:2",
+  "postseason": {
+    "regularSeasonComplete": true,
+    "seeds": [
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:9",
+        "seed": 1
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:21",
+        "seed": 2
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:4",
+        "seed": 3
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:20",
+        "seed": 4
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:16",
+        "seed": 5
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:10",
+        "seed": 6
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:5",
+        "seed": 7
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:1",
+        "seed": 8
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:29",
+        "seed": 9
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+        "seed": 10
+      }
+    ],
+    "bracketPlan": {
+      "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+      "variantKey": "MAIN",
+      "fixtures": [
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "PLAY_IN_7_8",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:5",
+              "seed": 7
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:1",
+              "seed": 8
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "PLAY_IN_9_10",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:29",
+              "seed": 9
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+              "seed": 10
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "PLAY_IN_FINAL",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "LOSER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:9",
+              "seed": 1
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+              "qualificationSeed": 8
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:20",
+              "seed": 4
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:16",
+              "seed": 5
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 3,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:21",
+              "seed": 2
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+              "qualificationSeed": 7
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 4,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:4",
+              "seed": 3
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:10",
+              "seed": 6
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:1",
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2"
+            }
+          ]
+        }
+      ],
+      "fixtureIdsByNodeKey": {
+        "PLAY_IN_7_8": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1"
+        ],
+        "PLAY_IN_9_10": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1"
+        ],
+        "PLAY_IN_FINAL": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1"
+        ],
+        "QUARTERFINALS": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4"
+        ],
+        "SEMIFINALS": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1",
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2"
+        ],
+        "FINAL": [
+          "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:1"
+        ]
+      }
+    },
+    "resolvedFixtures": [
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "PLAY_IN_7_8",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:5",
+            "seed": 7
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:1",
+            "seed": 8
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "PLAY_IN_9_10",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:29",
+            "seed": 9
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+            "seed": 10
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "PLAY_IN_FINAL",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:5",
+            "seed": 7
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+            "seed": 10
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:9",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+            "seed": 8
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:20",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:16",
+            "seed": 5
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 3,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:21",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:1",
+            "seed": 7
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 4,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4",
+            "seed": 3
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10",
+            "seed": 6
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:8",
+            "seed": 8
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:20",
+            "seed": 4
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:21",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10",
+            "seed": 6
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:1",
+        "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+        "variantKey": "MAIN",
+        "nodeKey": "FINAL",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:20",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10",
+            "seed": 6
+          }
+        ]
+      }
+    ],
+    "readyFixtures": [],
+    "outcomes": [
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1",
+        "winnerEntryId": "pbm:DYN_equipe:1",
+        "loserEntryId": "pbm:DYN_equipe:5"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_9_10:1",
+        "winnerEntryId": "pbm:DYN_equipe:8",
+        "loserEntryId": "pbm:DYN_equipe:29"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:20",
+        "loserEntryId": "pbm:DYN_equipe:16"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4",
+        "winnerEntryId": "pbm:DYN_equipe:10",
+        "loserEntryId": "pbm:DYN_equipe:4"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_FINAL:1",
+        "winnerEntryId": "pbm:DYN_equipe:8",
+        "loserEntryId": "pbm:DYN_equipe:5"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3",
+        "winnerEntryId": "pbm:DYN_equipe:21",
+        "loserEntryId": "pbm:DYN_equipe:1"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:8",
+        "loserEntryId": "pbm:DYN_equipe:9"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:10",
+        "loserEntryId": "pbm:DYN_equipe:21"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:20",
+        "loserEntryId": "pbm:DYN_equipe:8"
+      },
+      {
+        "fixtureId": "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:1",
+        "winnerEntryId": "pbm:DYN_equipe:20",
+        "loserEntryId": "pbm:DYN_equipe:10"
+      }
+    ],
+    "seriesByFixtureId": {
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:20",
+          "secondEntryId": "pbm:DYN_equipe:16",
+          "priorityEntryId": "pbm:DYN_equipe:20",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:16"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:16",
+              "awayEntryId": "pbm:DYN_equipe:20"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:16"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:20",
+          "loserEntryId": "pbm:DYN_equipe:16",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:4": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:4",
+          "secondEntryId": "pbm:DYN_equipe:10",
+          "priorityEntryId": "pbm:DYN_equipe:4",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:4",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:10",
+              "awayEntryId": "pbm:DYN_equipe:4"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:4",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:10",
+          "loserEntryId": "pbm:DYN_equipe:4",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:21",
+          "secondEntryId": "pbm:DYN_equipe:1",
+          "priorityEntryId": "pbm:DYN_equipe:21",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:21",
+              "awayEntryId": "pbm:DYN_equipe:1"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:1",
+              "awayEntryId": "pbm:DYN_equipe:21"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:21",
+              "awayEntryId": "pbm:DYN_equipe:1"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:21",
+          "loserEntryId": "pbm:DYN_equipe:1",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 3,
+          "winsRequired": 2,
+          "firstEntryId": "pbm:DYN_equipe:9",
+          "secondEntryId": "pbm:DYN_equipe:8",
+          "priorityEntryId": "pbm:DYN_equipe:9",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:9",
+              "awayEntryId": "pbm:DYN_equipe:8"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:8",
+              "awayEntryId": "pbm:DYN_equipe:9"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:9",
+              "awayEntryId": "pbm:DYN_equipe:8"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:8",
+          "loserEntryId": "pbm:DYN_equipe:9",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:21",
+          "secondEntryId": "pbm:DYN_equipe:10",
+          "priorityEntryId": "pbm:DYN_equipe:21",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:21",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:21",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:10",
+              "awayEntryId": "pbm:DYN_equipe:21"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:10",
+              "awayEntryId": "pbm:DYN_equipe:21"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:21",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:10",
+          "loserEntryId": "pbm:DYN_equipe:21",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:8",
+          "secondEntryId": "pbm:DYN_equipe:20",
+          "priorityEntryId": "pbm:DYN_equipe:20",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:8"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:8"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:8",
+              "awayEntryId": "pbm:DYN_equipe:20"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:8",
+              "awayEntryId": "pbm:DYN_equipe:20"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:8"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:20",
+          "loserEntryId": "pbm:DYN_equipe:8",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:1": {
+        "plan": {
+          "competitionSeasonId": "edition:FRA:betclic-elite:2025-26",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:20",
+          "secondEntryId": "pbm:DYN_equipe:10",
+          "priorityEntryId": "pbm:DYN_equipe:20",
+          "games": [
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:10",
+              "awayEntryId": "pbm:DYN_equipe:20"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:10",
+              "awayEntryId": "pbm:DYN_equipe:20"
+            },
+            {
+              "gameId": "worldseries:edition:FRA:betclic-elite:2025-26:MAIN:FINAL:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:20",
+              "awayEntryId": "pbm:DYN_equipe:10"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:20",
+          "loserEntryId": "pbm:DYN_equipe:10",
+          "nextGame": null
+        }
+      }
+    },
+    "championTeamId": "pbm:DYN_equipe:20",
+    "lifecycleDiagnostic": null
+  },
+  "transition": {
+    "sourceSeasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01",
+    "targetSeasonId": "generated-season-0001",
+    "competitionId": "competition:FRA:betclic-elite",
+    "participantDerivation": "seasonSnapshot",
+    "schedule": {
+      "kind": "generated",
+      "fixtureCount": 240
+    },
+    "linkedCompetitionSeasonIds": [],
+    "annualHooksExecuted": [
+      "contractReconciliation",
+      "aiRosterMaintenance",
+      "boardStateRollover",
+      "clubStrategicReview",
+      "gmPlanWorkflowReview"
+    ],
+    "diagnostics": [],
+    "repairReports": []
+  },
+  "decisions": [
+    {
+      "date": "2026-01-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0217:pbm:DYN_joueur:38005"
+    },
+    {
+      "date": "2026-06-16",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1:pressure"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-game:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:PLAY_IN_7_8:1:performance"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1:pressure"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1:performance"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g2:pressure"
+    },
+    {
+      "date": "2026-06-20",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g2:performance"
+    },
+    {
+      "date": "2026-06-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:2:2025-07-01:worldcf:edition:FRA:betclic-elite:2025-26:MAIN:QUARTERFINALS:3:g1:pbm:DYN_joueur:100064444"
+    }
+  ],
+  "currentDate": "2026-06-29"
+}

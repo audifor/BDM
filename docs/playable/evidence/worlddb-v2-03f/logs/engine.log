@@ -1,0 +1,23 @@
+
+> bdm@0.1.0 test
+> vitest run --passWithNoTests src/app/game/WorldDbV2FranceRecovery.test.ts src/engine/competition/WorldCompetitionFixedBracket.test.ts src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts src/engine/competition/WorldCompetitionSeries.test.ts --maxWorkers=2 --reporter=verbose
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-03
+
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > materializes explicit seed pairings, explicit semifinal paths and the unambiguous final 3ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > accepts the canonical dash-form matchups alias used by league playoff documents 0ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > fails rather than inventing a multi-fixture winner path 1ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > rejects missing or duplicate seeds 0ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > preserves original seeds through winner progression 3ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > rejects impossible or premature outcomes 1ms
+ ✓ src/engine/competition/WorldCompetitionVirtualFixtureResolver.test.ts > WorldCompetitionVirtualFixtureResolver v3 > rejects duplicate and unknown fixture outcomes 0ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > instantiates explicit hosting pattern relative to the declared priority participant 2ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > advances sequentially and stops immediately when the series is clinched 1ms
+ ✓ src/engine/competition/WorldCompetitionSeries.test.ts > WorldCompetitionSeries > rejects gaps, unknown games, ties and results after a clinch 1ms
+ ✓ src/app/game/WorldDbV2FranceRecovery.test.ts > recovers the certified French 232/240 save and completes the final regular round atomically 22026ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  16:30:27
+   Duration  28.59s (transform 5.42s, setup 0ms, import 6.75s, tests 22.04s, environment 0ms)
