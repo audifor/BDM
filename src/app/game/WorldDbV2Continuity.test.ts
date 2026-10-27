@@ -27,9 +27,9 @@ it.skipIf(process.env.BDM_WORLDDB_CONTINUITY!=='1')('resumes the certified PBM s
   expect(clubs).toContain(oldHistory.championTeamId)
   const decisions:unknown[]=[]
   let nextPlayed=false
-  for(let day=0;day<200;day++){
-    useGameStore.getState().replaceWorld(world)
-    for(const b of evaluateSimulationBreakpoints(world).candidates.filter(b=>b.level==='ACTION_REQUIRED'||b.level==='BLOCKING')){
+  const resolveRequiredDecisions=(current:typeof world)=>{
+    useGameStore.getState().replaceWorld(current)
+    for(const b of evaluateSimulationBreakpoints(current).candidates.filter(b=>b.level==='ACTION_REQUIRED'||b.level==='BLOCKING')){
       if(b.reason==='userGame')continue
       if(b.reason==='mediaOpportunity')useGameStore.getState().skipMedia(b.sourceId)
       else if(b.reason==='coachJobOffer')useGameStore.getState().declineUserCoachOffer(b.sourceId)
@@ -37,9 +37,12 @@ it.skipIf(process.env.BDM_WORLDDB_CONTINUITY!=='1')('resumes the certified PBM s
         const r=useGameStore.getState().reviewReturnToPlay(b.sourceId as never,'CLEAR_FOR_PLAY')
         if(!r.ok)useGameStore.getState().reviewReturnToPlay(b.sourceId as never,'CONTINUE_RECOVERY')
       }else throw Error('Continuity blocked: '+JSON.stringify(b))
-      decisions.push({date:world.currentDate,reason:b.reason,id:b.sourceId})
+      decisions.push({date:current.currentDate,reason:b.reason,id:b.sourceId})
     }
-    world=useGameStore.getState().world!
+    return useGameStore.getState().world!
+  }
+  for(let day=0;day<200;day++){
+    world=resolveRequiredDecisions(world)
     let i=0;const result=advanceGameDayWithResult(world,()=>hashStringToSeed(`continuity-02:${world.currentDate}:${i++}`))
     expect(result.status,JSON.stringify({date:world.currentDate,failure:result.failure,breakpoint:result.breakpointBefore.breakpoint})).toMatch(/COMPLETED|BREAKPOINT_AFTER_PROCESSING/)
     world=result.world
@@ -60,8 +63,11 @@ it.skipIf(process.env.BDM_WORLDDB_CONTINUITY!=='1')('resumes the certified PBM s
   const save=serializeGameWorldV4(world,'2026-10-26T12:00:00Z');writeFileSync(resolve(out,'second-season.json'),JSON.stringify(save))
   const reopened=deserializeGameWorldSaveV4(JSON.parse(readFileSync(resolve(out,'second-season.json'),'utf-8')))
   expect(projectPersistentWorldTruth(reopened)).toEqual(projectPersistentWorldTruth(world))
-  const continued=advanceGameDayWithResult(reopened,()=>123456)
+  // Persisted mandatory post-match decisions still require the user's existing
+  // actions after reload; loading must not silently mark them as answered.
+  const requiredAfterLoad=evaluateSimulationBreakpoints(reopened).candidates.filter(b=>b.level==='ACTION_REQUIRED'||b.level==='BLOCKING')
+  const continued=advanceGameDayWithResult(resolveRequiredDecisions(reopened),()=>123456)
   expect(continued.status).toMatch(/COMPLETED|BREAKPOINT_AFTER_PROCESSING/)
   writeFileSync(resolve(out,'continued.json'),JSON.stringify(serializeGameWorldV4(continued.world,'2026-10-26T12:00:00Z')))
-  writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({passed:true,source,oldGames:oldGames.length,oldChampion:oldHistory.championTeamId,nextSeason:next.id,newGames:played.length,date:continued.world.currentDate,clubs:clubs.length,pbmPlayers:identities.length,decisions,annualCycle:world.worldAnnualDevelopmentCycle},null,2))
+  writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({passed:true,source,oldGames:oldGames.length,oldChampion:oldHistory.championTeamId,nextSeason:next.id,newGames:played.length,date:continued.world.currentDate,clubs:clubs.length,pbmPlayers:identities.length,requiredAfterLoad,decisions,annualCycle:world.worldAnnualDevelopmentCycle},null,2))
 },3_600_000)

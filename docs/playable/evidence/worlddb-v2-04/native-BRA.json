@@ -1,0 +1,89 @@
+{
+  "competition": "pbm:DYN_championnat:109",
+  "profile": "qa-multileague-BRA-1793040282230",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-multileague-BRA-1793040282230\\main.json",
+  "steps": [
+    {
+      "name": "native-new-game-league-club",
+      "status": "PASS",
+      "detail": {
+        "club": "pbm:DYN_equipe:10774",
+        "teams": 20,
+        "competition": "competition:BRA:nbb"
+      }
+    },
+    {
+      "name": "original-roster",
+      "status": "PASS",
+      "detail": "BDM\nLU\nLUVIX UNIÃO CORINTHIANS\nPBM identities · BDM-generated profiles\nNBB · PBM V2\n2025-2026 · FICTIONAL PBM SNAPSHOT\n01 JUL 2025\nMATCH\nROSTER\nLuvix União Corinthians · NBB · PBM V2 · 2025-2026 · fictional PBM snapshot\nPLANTILLA\nPROFUNDIDAD\nBRIEFING\nPLANIFICAR\nJUGADORES EN PLANTILLA\n11\nSIN LESIÓN ACTUAL\n11 / 11\nVENCIMIENTOS REGISTRADOS\n0\nSELECCIÓN ACTIVA\n0\nTU DESPACHO\n0/5\nQUINTETO\n0/7\nBANQUILLO\n0\nASIGNADOS CON LESIÓN\n—\nPLAN DE PUESTOS\nVISTAS ★\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nDEFENSA\nFÍSICO\nTODAS LAS VISTAS ▾\nGENERAL\nESTADÍSTICAS\nTIRO\nFINALIZACIÓN\nMANEJO\nCREACIÓN\nSIN BALÓN\nDEFENSA\nFÍSICO\nMENTAL\nCONTRATOS\nDESARROLLO\nPERSONALIDAD\n+ NUEVA VISTA\nGUARDAR VISTA\nGESTIONAR\nFILTROS RÁPIDOS\nPOSICIÓN\nTodas\nPG\nSG\nSF\nPF\nC\nLESIONES\nTodos\nSin lesión actual\nLesionados\nEDAD\nSin límite\nHasta 21\nHasta 23\nHasta 25\nHasta 30\nPRESENCIA\nTodos vinculados\nEn plantilla\nFuera (con vínculo)\nCONTRATO\nTodos\nVence esta temporada\nMás allá temporada\nSin contrato\n≡ FILTRO AVANZADO\nLIMPIAR\nPLANTILLA / GENERAL\n0 seleccionado(s)\nINSPECTOR ↗\n≡ COLUMNAS\n↔ Deslizar · Redimensionar · Reordenar\nJUGADOR\n\t\nPOS\n\t\nEDAD\n\t\nROL\n\t\nEST\n\t\nALT\n\t\nPESO\n\t\nFATIGA\n\t\nCONTRATO\n\nAndre Bresolin\tSG\t38\t\nSin rol\n⌄\n\tOK\t195 cm\t98 kg\t0\t$120K\nNate Barnes\tPG\t35\t\nSin rol\n⌄\n\tOK\t182 cm\t84 kg\t0\t$440K\nDevon Scott\tPF\t31\t\nSin rol\n⌄\n\tOK\t206 cm\t113 kg\t0\t$1M\nDavid Rossetto\tPG\t32\t\nSin rol\n⌄\n\tOK\t184 cm\t83 kg\t0\t$100K\nFabricio Verissimo\tPG\t27\t\nSin rol\n⌄\n\tOK\t192 cm\t75 kg\t0\t$840K\nRenan Silveira\tPG\t21\t\nSin rol\n⌄\n\tOK\t188 cm\t91 kg\t0\t$1M\nGabriel Coelho\tPG\t22\t\nSin rol\n⌄\n\tOK\t191 cm\t90 kg\t0\t$130K\nRafael Hettsheimeir\tC\t39\t\nSin rol\n⌄\n\tOK\t210 cm\t90 kg\t0\t$1M\nJeremy Hollowell\tSF\t31\t\nSin rol\n⌄\n\tOK\t203 cm\t99 kg\t0\t$90K\nCarlton Guyton\tSG\t34\t\nSin rol\n⌄\n\tOK\t193 cm\t82 "
+    },
+    {
+      "name": "real-match-acta-standings",
+      "status": "PASS",
+      "detail": {
+        "id": "derived-simulation-from-b04:edition:BRA:nbb:2026:0001",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+        "competitionId": "competition:BRA:nbb",
+        "date": "2025-07-01",
+        "homeTeamId": "pbm:DYN_equipe:10774",
+        "awayTeamId": "pbm:DYN_equipe:4100",
+        "stakes": "regular",
+        "competitionStageKey": "CLASSIFICATION",
+        "status": "completed",
+        "result": {
+          "homeScore": 90,
+          "awayScore": 83
+        }
+      }
+    },
+    {
+      "name": "contact-offer-governance-sign",
+      "status": "PASS",
+      "detail": {
+        "candidate": {
+          "playerId": "pbm:DYN_joueur:100062871",
+          "name": "Victor Roussenq",
+          "status": "SIGNED",
+          "log": [
+            "2025-07-01 direct contact",
+            "2025-07-02 contact answer OPEN_TO_TALKS",
+            "2025-07-02 offer 110000 x 1",
+            "2025-07-03 answer ACCEPTED",
+            "2025-07-04 signed"
+          ]
+        },
+        "contract": {
+          "id": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A10774%3Aorganization:pbm%3ADYN_equipe%3A10774:pbm%3ADYN_joueur%3A100062871:direct-approach%3Apbm%3ADYN_joueur%3A100062871%3A0",
+          "playerId": "pbm:DYN_joueur:100062871",
+          "teamId": "pbm:DYN_equipe:10774",
+          "kind": "standard",
+          "term": {
+            "startsOn": "2025-07-04",
+            "expiresOn": "2026-07-04"
+          },
+          "compensation": {
+            "annualSalary": 110000
+          }
+        },
+        "financialProfiles": 20
+      }
+    },
+    {
+      "name": "renew-original-contract",
+      "status": "PASS",
+      "detail": {
+        "playerId": "pbm:DYN_joueur:100062871"
+      }
+    },
+    {
+      "name": "close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-07-06",
+        "contracts": 240,
+        "completed": 10
+      }
+    }
+  ],
+  "consoleErrors": []
+}

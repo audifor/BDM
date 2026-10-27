@@ -1,0 +1,1026 @@
+{
+  "master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "total": 102,
+  "competitions": [
+    {
+      "source_id": "pbm:DYN_championnat:2",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 282,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:3",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 312,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:5",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 306,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:10",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 259,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:11",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 304,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:12",
+      "passed": true,
+      "population": {
+        "clubs": 13,
+        "people": 223,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:13",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 236,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:15",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 277,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:16",
+      "passed": true,
+      "population": {
+        "clubs": 9,
+        "people": 139,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:17",
+      "passed": true,
+      "population": {
+        "clubs": 17,
+        "people": 262,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:18",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 176,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:19",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 244,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:21",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 273,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:22",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 281,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:24",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 250,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:29",
+      "passed": true,
+      "population": {
+        "clubs": 28,
+        "people": 394,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:32",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 182,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:36",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 146,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:39",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 161,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:40",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 157,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:41",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 250,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:42",
+      "passed": true,
+      "population": {
+        "clubs": 56,
+        "people": 616,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:44",
+      "passed": true,
+      "population": {
+        "clubs": 30,
+        "people": 505,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:45",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 184,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:47",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 408,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:49",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 348,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:59",
+      "passed": true,
+      "population": {
+        "clubs": 17,
+        "people": 236,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:61",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 308,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:65",
+      "passed": true,
+      "population": {
+        "clubs": 15,
+        "people": 238,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:66",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 188,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:68",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 169,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:69",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 223,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:70",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 181,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:71",
+      "passed": true,
+      "population": {
+        "clubs": 353,
+        "people": 4292,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:75",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 184,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:76",
+      "passed": true,
+      "population": {
+        "clubs": 9,
+        "people": 145,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:77",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 271,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:78",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 142,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:79",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 155,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:80",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 173,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:81",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 221,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:84",
+      "passed": true,
+      "population": {
+        "clubs": 9,
+        "people": 133,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:85",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 318,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:86",
+      "passed": true,
+      "population": {
+        "clubs": 15,
+        "people": 212,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:87",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 173,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:88",
+      "passed": true,
+      "population": {
+        "clubs": 15,
+        "people": 197,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:89",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 178,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:90",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 182,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:93",
+      "passed": true,
+      "population": {
+        "clubs": 19,
+        "people": 255,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:94",
+      "passed": true,
+      "population": {
+        "clubs": 31,
+        "people": 31,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:107",
+      "passed": true,
+      "population": {
+        "clubs": 53,
+        "people": 889,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:108",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 169,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:109",
+      "passed": true,
+      "population": {
+        "clubs": 20,
+        "people": 298,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:110",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 185,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:111",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 200,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:112",
+      "passed": true,
+      "population": {
+        "clubs": 28,
+        "people": 372,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:113",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 179,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:114",
+      "passed": true,
+      "population": {
+        "clubs": 26,
+        "people": 406,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:115",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 26,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:116",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 158,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:117",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 183,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:118",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 244,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:119",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 151,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:120",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 170,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:121",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 220,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:123",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 170,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:125",
+      "passed": true,
+      "population": {
+        "clubs": 27,
+        "people": 419,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:129",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 170,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:133",
+      "passed": true,
+      "population": {
+        "clubs": 8,
+        "people": 104,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:134",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 186,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:139",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 170,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:142",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 181,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:146",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 198,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:148",
+      "passed": true,
+      "population": {
+        "clubs": 8,
+        "people": 118,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:150",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 183,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:154",
+      "passed": true,
+      "population": {
+        "clubs": 11,
+        "people": 49,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:155",
+      "passed": true,
+      "population": {
+        "clubs": 6,
+        "people": 9,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:156",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 44,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:157",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 24,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:159",
+      "passed": true,
+      "population": {
+        "clubs": 8,
+        "people": 17,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:166",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 176,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:167",
+      "passed": true,
+      "population": {
+        "clubs": 14,
+        "people": 48,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:168",
+      "passed": true,
+      "population": {
+        "clubs": 18,
+        "people": 295,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:170",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 164,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:171",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 229,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:172",
+      "passed": true,
+      "population": {
+        "clubs": 16,
+        "people": 239,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:173",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 183,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:174",
+      "passed": true,
+      "population": {
+        "clubs": 17,
+        "people": 258,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:175",
+      "passed": true,
+      "population": {
+        "clubs": 4,
+        "people": 66,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:176",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 22,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:177",
+      "passed": true,
+      "population": {
+        "clubs": 12,
+        "people": 179,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:178",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 148,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:180",
+      "passed": true,
+      "population": {
+        "clubs": 26,
+        "people": 429,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:186",
+      "passed": true,
+      "population": {
+        "clubs": 38,
+        "people": 591,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:187",
+      "passed": true,
+      "population": {
+        "clubs": 6,
+        "people": 81,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:188",
+      "passed": true,
+      "population": {
+        "clubs": 6,
+        "people": 57,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:190",
+      "passed": true,
+      "population": {
+        "clubs": 7,
+        "people": 109,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:191",
+      "passed": true,
+      "population": {
+        "clubs": 13,
+        "people": 196,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:192",
+      "passed": true,
+      "population": {
+        "clubs": 10,
+        "people": 142,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:195",
+      "passed": true,
+      "population": {
+        "clubs": 7,
+        "people": 123,
+        "free_agents": 60
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:198",
+      "passed": true,
+      "population": {
+        "clubs": 7,
+        "people": 109,
+        "free_agents": 0
+      },
+      "error": null
+    },
+    {
+      "source_id": "pbm:DYN_championnat:199",
+      "passed": true,
+      "population": {
+        "clubs": 5,
+        "people": 72,
+        "free_agents": 60
+      },
+      "error": null
+    }
+  ]
+}

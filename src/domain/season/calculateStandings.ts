@@ -3,6 +3,7 @@ import type { GameWorld } from '@/domain/world'
 import type { GameDate } from '@/domain/date'
 import type { FinalStandingLine } from './SeasonHistory'
 import { isRegularSeasonGame } from './RegularSeasonScope'
+import { rankClassificationMiniLeague } from './classificationMiniLeague'
 
 /** Pure domain projection of completed game results for one season. */
 export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameWorld['seasons'], throughDate?: GameDate): FinalStandingLine[] {
@@ -18,7 +19,14 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
     home.played += 1; away.played += 1; home.pointsFor += result.homeScore; home.pointsAgainst += result.awayScore; away.pointsFor += result.awayScore; away.pointsAgainst += result.homeScore
     if (result.homeScore > result.awayScore) { home.wins += 1; away.losses += 1 } else { away.wins += 1; home.losses += 1 }
   }
-  return entries.map((entry) => ({ ...entry, position: 0, pointDifference: entry.pointsFor - entry.pointsAgainst }))
+  const rows = entries.map((entry) => ({ ...entry, position: 0, pointDifference: entry.pointsFor - entry.pointsAgainst }))
+  const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+  if (variant?.seeding?.basis.some(b => typeof b === 'object' && b !== null && !Array.isArray(b) && b.type === 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1')) {
+    const regular = Object.values(world.games).filter(g => g.seasonId === seasonId && isRegularSeasonGame(season, g))
+    const completed = regular.filter(g => g.status === 'completed' && (throughDate === undefined || g.date <= throughDate))
+    return rankClassificationMiniLeague(rows, completed.map(g => ({ homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, homeScore: g.result!.homeScore, awayScore: g.result!.awayScore })), regular.length > 0 && completed.length === regular.length)
+  }
+  return rows
     .sort((a, b) => compareStandingEntries(a, b, competition.rules.standings.tiebreakers))
     .map((entry, index) => ({ ...entry, position: index + 1 }))
 }

@@ -35,7 +35,10 @@ def main():
         return dict(competitionId=selected_id,name=candidate['name'],teams=teams,minimumOriginalRoster=min(counts),masterSha256=catalog['master_sha256'])
     if request['method']!='build':raise ValueError('Unknown bridge method')
     target = Path(request['output']).resolve()
-    config=dict(game='BDM',start_date=request['startDate'],countries=[selection['countryId']],competitions=[source_key],population='original',seed=request['seed'])
+    # PBM country=0 identifies cross-border selections. Runtime V1 already
+    # supports all country references with an explicit competition selection;
+    # that does not activate clubs from other competitions.
+    config=dict(game='BDM',start_date=request['startDate'],countries=[selection['countryId']] if selection['countryId'] else 'all',competitions=[source_key],population='original',seed=request['seed'])
     manifest=build(target,config,master)
     with Universe(target,master) as u:
         # Runtime V1 deliberately activates only club-bound people. Activate a bounded,

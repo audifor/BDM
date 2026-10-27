@@ -2,10 +2,12 @@
 import {copyFileSync,existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {connect,launchApp,sleep} from './cdp.mjs'
-const source=process.env.BDM_FRANCE_NATIVE_PHASE
-if(!source)throw Error('BDM_FRANCE_NATIVE_PHASE must name a real certified phase save')
+import {resolveNativeMedical,resolveNativePress} from './worlddb-v2-native-decisions.mjs'
+const source=process.env.BDM_WORLDDB_NATIVE_PHASE??process.env.BDM_FRANCE_NATIVE_PHASE
+if(!source)throw Error('BDM_WORLDDB_NATIVE_PHASE must name a real certified phase save')
 const initial=JSON.parse(readFileSync(source,'utf8')),phase=initial.payload.currentDate
-const profile='qa-france-03f-'+Date.now(),out=resolve('.worlddb-v2/native-france-03f-'+Date.now())
+const country=initial.payload.worldDbCompetitionRuntime.worldDbV2.nativeCompetitionId.split(':')[1]
+const profile='qa-postseason-'+country+'-'+Date.now(),out=resolve('.worlddb-v2/native-phase-04-'+country+'-'+Date.now())
 const folder=join(process.env.APPDATA,'com.bdm.worlddbv2.pilot/saves/profiles',profile),savePath=join(folder,'main.json')
 if(existsSync(savePath))throw Error('Profile exists')
 mkdirSync(out,{recursive:true});mkdirSync(folder,{recursive:true});copyFileSync(source,savePath)
@@ -34,16 +36,27 @@ function verifyLoaded(payload){
 let app,c;const steps=[]
 const assert=(value,message)=>{if(!value)throw Error(message)}
 async function launch(){app=await launchApp(resolve('artifacts/bdm.exe'),9560,{BDM_SAVE_PROFILE:profile,WEBVIEW2_USER_DATA_FOLDER:join(out,'webview')});c=await connect(app.page.webSocketDebuggerUrl);await c.waitFor("document.body?.innerText.includes('NEW GAME')",{timeout:60000});await c.click('button','=CONTINUE');await c.waitFor("!!document.querySelector('[aria-label=\"Abrir menú de inicio BDM\"]')",{timeout:60000})}
-async function open(name,group='Partidos y competición'){await c.click('button','Abrir menú de inicio BDM');await c.click('button','='+group);await c.click('button','='+name);await sleep(800)}
-async function save(name){await c.click('button','Abrir menú de inicio BDM');await c.click('button','GUARDAR PARTIDA');await c.waitFor("document.body?.innerText.includes('Partida guardada.')",{timeout:60000});await c.click('button','Abrir menú de inicio BDM');const value=JSON.parse(readFileSync(savePath,'utf8'));writeFileSync(join(out,name+'.json'),JSON.stringify(value));return value}
-async function press(){await open('Press','Mundo y narrativa');for(let n=0;n<10&&await c.locate('button','=Delegate answer');n++)await c.click('button','=Delegate answer')}
+async function menu(){await c.click('button','Abrir menú de inicio BDM');await sleep(300);if(!await c.locate('button','GUARDAR PARTIDA')){await c.click('button','Abrir menú de inicio BDM');await sleep(300)}}
+async function open(name,group='Partidos y competición'){await menu();await c.click('button','='+group);await c.click('button','='+name);await sleep(800)}
+async function save(name){await menu();await c.click('button','GUARDAR PARTIDA');await c.waitFor("document.body?.innerText.includes('Partida guardada.')",{timeout:60000});await c.click('button','Abrir menú de inicio BDM');const value=JSON.parse(readFileSync(savePath,'utf8'));writeFileSync(join(out,name+'.json'),JSON.stringify(value));return value}
+async function press(){await resolveNativePress(c,open,out)}
+async function medical(){await resolveNativeMedical(c,open,out)}
+async function playNative(){
+ await c.click('button.mp-action--primary')
+ try{await c.waitFor("!!document.querySelector('[data-ng-region=\"match-live\"]')",{timeout:5000})}
+ catch{await c.click('button.mp-action--primary');await c.waitFor("!!document.querySelector('[data-ng-region=\"match-live\"]')",{timeout:60000})}
+ await c.screenshot(join(out,'live.png'));await c.click('button','Simular final')
+ await c.waitFor("[...document.querySelectorAll('button')].some(b=>b.innerText.trim().toLowerCase()==='continuar')",{timeout:300000})
+ await c.click('button','=Continuar');await c.waitFor("!!document.querySelector('[aria-label=\"Acta del partido\"]')",{timeout:60000})
+}
 async function day(){
- await press();await open('MATCH')
+ await medical();await press();await open('MATCH')
  if(await c.locate('button','=SIMULACIÓN RÁPIDA')){
-  await c.click('button','=SIMULACIÓN RÁPIDA')
-  await c.waitFor("![...document.querySelectorAll('button')].some(b=>b.innerText.trim().toUpperCase()==='SIMULACIÓN RÁPIDA')",{timeout:300000})
+  // Exercise the watched MatchEngine path and wait for its actual acta before
+  // opening another workspace. The native certificate does not cover Quick Sim.
+  await playNative()
   // A played match can create a new mandatory post-match Press interaction.
-  await press();await open('MATCH')
+  await medical();await press();await open('MATCH')
  }
  const before=await c.evaluate("document.querySelector('.ng-system-bar__date').innerText")
  await c.click('button','AVANZAR UN DÍA')
@@ -53,7 +66,7 @@ async function step(name,fn){try{const detail=await fn();await c.screenshot(join
 try{
  await launch()
  await step('load-certified-phase',async()=>{const v=await save('loaded');verifyLoaded(v.payload);await open('COMPETITION');await c.click('button,[role=tab]','=Clasificación');return {date:v.payload.currentDate,clubs:v.payload.teams.length,regularCompleted:v.payload.games.filter(g=>g.stakes==='regular'&&g.status==='completed').length}})
- await step('native-decisive-match-acta',async()=>{await press();await open('MATCH');await c.click('button.mp-action--primary');try{await c.waitFor("!!document.querySelector('[data-ng-region=\"match-live\"]')",{timeout:5000})}catch{await c.click('button.mp-action--primary');await c.waitFor("!!document.querySelector('[data-ng-region=\"match-live\"]')",{timeout:60000})}await c.screenshot(join(out,'live.png'));await c.click('button','Simular final');await c.waitFor("[...document.querySelectorAll('button')].some(b=>b.innerText.trim().toLowerCase()==='continuar')",{timeout:300000});await c.click('button','=Continuar');await c.waitFor("!!document.querySelector('[aria-label=\"Acta del partido\"]')",{timeout:60000});const v=await save('played');const added=v.payload.games.filter(g=>g.status==='completed'&&!initial.payload.games.some(old=>old.id===g.id&&old.status==='completed'));assert(added.length===1,'Expected exactly one native user result');assert(v.payload.matchStatLogs.some(l=>l.gameId===added[0].id),'Missing acta');return added[0]})
+ await step('native-decisive-match-acta',async()=>{await press();await open('MATCH');await playNative();const v=await save('played');const added=v.payload.games.filter(g=>g.status==='completed'&&!initial.payload.games.some(old=>old.id===g.id&&old.status==='completed'));assert(added.length===1,'Expected exactly one native user result');assert(v.payload.matchStatLogs.some(l=>l.gameId===added[0].id),'Missing acta');return added[0]})
  await step('progress-and-project-fixtures',async()=>{await day();await day();const v=await save('progressed');assert(v.payload.games.filter(g=>g.status==='completed').length>initial.payload.games.filter(g=>g.status==='completed').length,'No progression');await open('COMPETITION');await c.click('button,[role=tab]','=Resultados');return {date:v.payload.currentDate,postseason:v.payload.games.filter(g=>g.postseasonFixtureId),actas:v.payload.matchStatLogs.length}})
  const checkpoint=await save('before-close');c.close();app.child.kill();await sleep(1800);await launch()
  await step('close-reopen-continue',async()=>{const v=await save('reopened');assert(same(v.payload,checkpoint.payload),'Native reload changed state');await day();const after=await save('continued');return {date:after.payload.currentDate,completed:after.payload.games.filter(g=>g.status==='completed').length}})

@@ -1,0 +1,15 @@
+[
+  {
+    "source_document_sha256":"03bc4731cae82a7355f947854b595bc93d5b006198df8db4e9c8f9d8e0f4ec03",
+    "variant_key":"MAIN",
+    "evidence":"https://lnb.com.br/wp-content/uploads/2025/09/Regulamento-NBB-CAIXA-2025-2026-Versao-Final.pdf | Article 90: higher regular-season rank hosts games 1,4,5. Articles 94-96: 2/1 classification points and recursive mini-table; external draw if unresolved.",
+    "node_additions":{
+      "ROUND_OF_16":{"hosting_priority_basis":"HIGHER_SEED"},
+      "QUARTERFINALS":{"hosting_priority_basis":"HIGHER_SEED"},
+      "SEMIFINALS":{"hosting_priority_basis":"HIGHER_SEED"},
+      "FINAL":{"hosting_priority_basis":"HIGHER_SEED"}
+    },
+    "seeding":{"scheme_type":"RANK_BASED","basis":[{"type":"CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1","source":"LNB NBB 2025-26 Articles 94-96","terminal_tie":"EXTERNAL_DRAW_REQUIRED"}]},
+    "notes_suffix":" Execution binding: hosting priority HIGHER_SEED, verified in the same official regulation Article 90; numbered WINNER references address predecessor fixture order. Fictional PBM population, not historical rosters or official dates. Cross-competition relegation requires a coupled lower division and is not certified by a single-league career."
+  }
+]

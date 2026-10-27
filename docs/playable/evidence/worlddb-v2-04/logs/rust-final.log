@@ -1,0 +1,45 @@
+cargo :    Compiling bdm v0.1.0 (C:\BDM-worktrees\worlddb-v2-04\src-tauri)
+En línea: 5 Carácter: 1
++ cargo test --offline --manifest-path src-tauri/Cargo.toml *> .worlddb ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling bd...2-04\src-tauri):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 30.44s
+     Running unittests src\lib.rs
+(C:/BDM-worktrees/worlddb-v2-01/src-tauri/target\debug\deps\bdm_lib-1e1adb320062740a.exe)
+
+running 18 tests
+test tests::rejects_invalid_envelope ... ok
+test tests::validates_supported_save_envelopes ... ok
+test tests::rejects_missing_runtime_bundle_file ... ok
+test world_db_bootstrap::tests::investor_interest_query_maps_supported_actors_and_allows_zero_rows ... ok
+test world_db_bootstrap::tests::production_spain_slice_smoke_is_opt_in_and_read_only ... ok
+test world_db_bootstrap::tests::canonical_eight_personality_scores_are_imported_without_legacy_replacement ... ok
+test world_db_session::tests::rejects_empty_database_path ... ok
+test world_db_facilities::tests::absent_physical_tables_are_empty_not_generated ... ok
+test world_db_session::tests::rejects_missing_database_file ... ok
+test world_db_bootstrap::tests::player_repertoire_requires_complete_optional_ddl12_extension ... ok
+test world_db_bootstrap::tests::query_positions_preserves_numeric_familiarity_without_promoting_roles ... ok
+test world_db_bootstrap::tests::partial_personality_and_invalid_scores_fail_closed ... ok
+test world_db_bootstrap::tests::bootstrap_projection_reads_canonical_organization_ids_and_records ... ok
+test world_db_bootstrap::tests::native_reader_preserves_all_fifty_semantic_personality_dimensions ... ok
+test world_db_facilities::tests::shared_physical_source_keeps_identity_unknowns_and_raw_dates ... ok
+test world_db_bootstrap::tests::player_repertoire_reads_only_verified_strength_move_usage_and_eight_specialties ... ok
+test world_db_selection::tests::reads_canonical_selection_hierarchy_deterministically ... ok
+test tests::saves_and_replaces_the_same_native_slot ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src\main.rs
+(C:/BDM-worktrees/worlddb-v2-01/src-tauri/target\debug\deps\bdm-f2638dc07e5e8c05.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bdm_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

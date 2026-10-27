@@ -1,5 +1,6 @@
 import referenceBundle from '@/data/worlddb-v2/competition-runtime.json';
-import { parseWorldCompetitionRuntimeBundle } from '@/domain/competition';
+import additionalFormats from '@/data/worlddb-v2/additional-formats.json';
+import { parseWorldCompetitionRuntimeBundle, parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition';
 import { parseGameDate } from '@/domain/date';
 import { countryIdFromString, playerIdFromString, personIdFromString, teamIdFromString } from '@/domain/ids';
 import { createPerson } from '@/domain/person';
@@ -12,6 +13,7 @@ import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment';
 import { createGeneratedProfessionalSalaryRulesV1 } from './GeneratedProfessionalSalaryRules';
 import { worldDbV2Competition, worldDbV2Calendar, worldDbV2SeasonEnd } from './WorldDbV2Competitions';
 import { bindWorldDbV2FrenchFormat } from './WorldDbV2FrenchFormatBinding';
+import { worldDbV2ConnectionBlockers } from './WorldDbV2Connection';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -29,7 +31,10 @@ import { gameBalanceOpeningEconomicStates, applyGameBalanceBootstrap } from '@/a
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy';
 import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment';
 import type { UserCoachCreationInput } from './UserCoachCreator';
-const bundle = parseWorldCompetitionRuntimeBundle(referenceBundle);
+const reference = parseWorldCompetitionRuntimeBundle(referenceBundle);
+// Preserve the frozen bundle identity; supplemental documents retain their own
+// sources in the persisted format. Never relabel a SHA as the bundle's BLAKE3.
+const bundle: WorldCompetitionRuntimeBundle = { ...reference, competitionFormats: [...reference.competitionFormats, ...additionalFormats.map(parseWorldCompetitionFormatDocument)] };
 const pick = (value: Readonly<Record<string, number>>, keys: readonly string[]) => Object.fromEntries(keys.map(k => [k, value[k]!]));
 const dob = (r: Record<string, any>) => `${r.annee_naissance}-${String(r.mois_naissance).padStart(2, '0')}-${String(r.jour_naissance).padStart(2, '0')}`;
 const country = (id: number) => `pbm:DYN_pays:${id}`;
@@ -40,9 +45,8 @@ const developmentDomains = ['shooting', 'finishing', 'creation', 'passing', 'cre
 /** The DDL DTO is an application projection. The raw SQLite remains PBM V2, not a DDL database.
  * Competition/edition keys refer to the unchanged certified rules template; source identity is
  * persisted separately. PBM club/person IDs are preserved exactly in their runtime namespaces. */
-export function projectWorldDbV2(snapshot: WorldDbV2Snapshot): WorldDbGameBootstrapSliceV1 {
+export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config = worldDbV2Competition(snapshot.competitions[0]?.entity_id)): WorldDbGameBootstrapSliceV1 {
     const day = parseGameDate(snapshot.manifest.configuration.start_date), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
-    const config = worldDbV2Competition(snapshot.competitions[0]?.entity_id);
     const year = Number(day.slice(0, 4)) + (config.calendar === 'SPAIN_ACB_EXISTING' && day.slice(5) > '10-04' ? 1 : 0);
     const { nativeCompetitionId: COMPETITION, editionId: EDITION, ecosystemId: ECOSYSTEM } = config;
     const countries = snapshot.countries.map(e => ({ countryId: e.entity_id, name: String(e.reference_data.nom_pays), code: String(e.reference_data.abreviation) }));
@@ -92,7 +96,7 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot): WorldDbGameBootst
     assertWorldDbGameBootstrapSliceV1(sourced);
     return sourced;
 }
-export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1): WorldDatabaseRepository {
+export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1, runtimeBundle = bundle): WorldDatabaseRepository {
     const COMPETITION = slice.competition.competitionId, EDITION = slice.season.competitionSeasonId, ECOSYSTEM = slice.ecosystem.ecosystemId;
     const catalog: WorldDbSelectionCatalogV1 = { schemaVersion: 1, source: slice.source, ecosystems: [{ ecosystemId: ECOSYSTEM, code: 'WORLDDB_V2_PILOT', name: 'PBM WorldDB V2', gender: 'male' }], levels: [], units: [], competitionAssignments: [{ assignmentId: 'worlddb-v2:' + COMPETITION, ecosystemId: ECOSYSTEM, competitionId: COMPETITION, competitionName: slice.competition.name, levelId: null, unitId: null, roleType: 'LEAGUE' }], competitionSeasons: [{ competitionSeasonId: EDITION, competitionId: COMPETITION, seasonId: slice.season.seasonId, competitionName: slice.competition.name, editionNumber: null }], teamMemberships: slice.teams.map(t => ({ membershipId: 'worlddb-v2:membership:' + t.teamId, ecosystemId: ECOSYSTEM, teamId: t.teamId, teamName: t.name, levelId: null, membershipStatus: 'ACTIVE', validFrom: null, validTo: null })), teamUnitMemberships: [] };
     assertWorldDbSelectionCatalogV1(catalog);
@@ -100,18 +104,23 @@ export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1): WorldDa
         async inspectDatabase() { return { schemaVersion: 1, source: slice.source, competitionSeasonIds: [EDITION] }; },
         async loadSelectionCatalog() { return catalog; },
         async loadGameBootstrapSlice() { return slice; },
-        async loadCompetitionRuntimeBundle() { return bundle; },
+        async loadCompetitionRuntimeBundle() { return runtimeBundle; },
         async loadCompetitionSeason() { return { schemaVersion: 1, source: slice.source, competitionSeason: { competitionSeasonId: EDITION, competitionId: COMPETITION, seasonId: slice.season.seasonId, editionNumber: null }, entries: slice.teams.map(t => ({ competitionSeasonEntryId: 'pbm:entry:' + t.teamId, teamId: t.teamId })), structureNodes: [], structureEdges: [], structureEntryAssignments: [], fixtures: [], fixtureSides: [], rulePayloads: {} }; },
         async loadMatchRealizations() { return { schemaVersion: 1, competitionSeasonId: EDITION, matches: [], realizations: [] }; },
     };
 }
-export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapshot, teamId: string, userCoachCreation?: UserCoachCreationInput): Promise<GameWorld> {
-    const slice = projectWorldDbV2(snapshot), repository = worldDbV2Repository(slice);
+export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapshot, teamId: string, userCoachCreation?: UserCoachCreationInput, config = worldDbV2Competition(snapshot.competitions[0]?.entity_id), runtimeBundle = bundle): Promise<GameWorld> {
+    if (config.sourceCompetitionId !== snapshot.competitions[0]?.entity_id) throw Error('PBM competition/config identity mismatch');
+    const format = runtimeBundle.competitionFormats.find(f => f.competitionSeasonId === config.editionId && f.competitionId === config.nativeCompetitionId);
+    if (!format) throw Error('Verified runtime format/edition mapping required: ' + config.sourceCompetitionId);
+    const frozenTemplatePolicy = reference.competitionFormats.some(f => f.competitionSeasonId === format.competitionSeasonId && f.competitionId === format.competitionId);
+    const blockers = worldDbV2ConnectionBlockers(format, snapshot.clubs.length, frozenTemplatePolicy);
+    if (blockers.length) throw Error(blockers.join(' | '));
+    const slice = projectWorldDbV2(snapshot, config), repository = worldDbV2Repository(slice, runtimeBundle);
     const session = new WorldDbSessionV1({ repository, databasePath: 'worlddb-v2:projection', runtimeBundlePath: 'worlddb-v2:rules-template' });
     await session.open();
     try {
         const day = parseGameDate(snapshot.manifest.configuration.start_date);
-        const config = worldDbV2Competition(snapshot.competitions[0]?.entity_id);
         const { nativeCompetitionId: COMPETITION, editionId: EDITION, ecosystemId: ECOSYSTEM } = config;
         const calendar = worldDbV2Calendar(config, day);
         let world = await session.bootstrapGameWorld({ source: slice.source, ecosystemId: ECOSYSTEM, competitionId: COMPETITION, competitionSeasonId: EDITION, teamId }, calendar);

@@ -1,0 +1,91 @@
+{
+  "base": "648647d4dfee283457ab27367e2f51ddeb9ac59f",
+  "branch": "playable/worlddb-v2-04",
+  "global_suite": {
+    "status": "PASS_COMPOSITE",
+    "files": 831,
+    "files_passed": 780,
+    "files_skipped": 51,
+    "tests_passed": 5760,
+    "tests_skipped": 62,
+    "tests_failed": 0,
+    "description": "Four disjoint shards; shard 3 interrupted after 116 completed files, resumed remaining 92 files including its last observed file. The 116 file counts are derived from verbose test records and sequential execution; no shard-3 final summary was produced before interruption.",
+    "shards": {
+      "1": {
+        "files_passed": 191,
+        "files_skipped": 17,
+        "tests_passed": 1434,
+        "tests_skipped": 22,
+        "exit": 0
+      },
+      "2": {
+        "files_passed": 196,
+        "files_skipped": 12,
+        "tests_passed": 1408,
+        "tests_skipped": 15,
+        "exit": 0
+      },
+      "3_completed_before_interrupt": {
+        "files_passed": 116,
+        "tests_passed": 1025,
+        "tests_skipped": 2,
+        "exit": "interrupted"
+      },
+      "3_remaining": {
+        "files_passed": 84,
+        "files_skipped": 8,
+        "tests_passed": 442,
+        "tests_skipped": 8,
+        "exit": 0
+      },
+      "4": {
+        "files_passed": 193,
+        "files_skipped": 14,
+        "tests_passed": 1451,
+        "tests_skipped": 15,
+        "exit": 0
+      }
+    },
+    "logs": "logs/global-shard-*.log",
+    "remaining_file_list": "global-shard-3-remaining.json"
+  },
+  "coverage": {
+    "PLAYABLE": 4,
+    "MAPPED_RESEARCH_ONLY": 29,
+    "NEEDS_MAPPING": 58,
+    "PARTIAL_CONNECTION": 11
+  },
+  "extra_playable_from_second_pass": 0,
+  "odd_round_robin": "CONNECTED_SYNTHETIC_TESTS_ONLY",
+  "odd_focal_tests": {
+    "passed": 37,
+    "files": 4
+  },
+  "rust_tests": {
+    "passed": 18,
+    "failed": 0
+  },
+  "windows_debug_build": "PASS",
+  "windows_executable_sha256": "ddb9cd024c0d307b5746a93216578c79eafe11063478bbc6790bfdd768978ff6",
+  "master_sha256": "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f",
+  "sqlite_integrity_check": "ok",
+  "source_certification": {
+    "passed": true,
+    "complete": false,
+    "reason": "optional random-history policy remains unavailable"
+  },
+  "protected_files": 26,
+  "f4_unchanged": true,
+  "nbb": {
+    "regular_games": 380,
+    "playoff_games": 61,
+    "champion": "Cruzeiro Basquete",
+    "successor_games_played": 10,
+    "windows_acceptance": "PASS_ON_PRIOR_V2_04_BUILD; final odd-round-robin build not separately reaccepted in Windows"
+  },
+  "notes": [
+    "Other partial-format dependencies are not inferred from the odd-team test.",
+    "Existing season and Windows proofs were preserved, not repeated."
+  ],
+  "source_checks": 54
+}

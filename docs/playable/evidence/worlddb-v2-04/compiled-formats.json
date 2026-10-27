@@ -1,0 +1,14 @@
+{
+  "output": "src\\data\\worlddb-v2\\additional-formats.json",
+  "sha256": "c409864067977567664b6dd34342784cf0d2e38741463d3089c84bb2cfdb735a",
+  "documents": [
+    {
+      "source_sha256": "03bc4731cae82a7355f947854b595bc93d5b006198df8db4e9c8f9d8e0f4ec03",
+      "sources": [
+        "C:\\BDM_DB\\worktrees\\competition-format-recovery-v7-20261023\\population\\reference-packs\\competition-formats\\seasons\\BRA\\nbb-caixa\\2025-26.json"
+      ],
+      "evidence": "https://lnb.com.br/wp-content/uploads/2025/09/Regulamento-NBB-CAIXA-2025-2026-Versao-Final.pdf | Article 90: higher regular-season rank hosts games 1,4,5. Articles 94-96: 2/1 classification points and recursive mini-table; external draw if unresolved.",
+      "edition": "edition:BRA:nbb:2026"
+    }
+  ]
+}

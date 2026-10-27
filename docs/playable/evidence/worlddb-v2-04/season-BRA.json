@@ -1,0 +1,2369 @@
+{
+  "passed": true,
+  "regularGames": 380,
+  "perClub": 38,
+  "competition": "pbm:DYN_championnat:109",
+  "postseason": {
+    "regularSeasonComplete": true,
+    "seeds": [
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+        "seed": 1
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2943",
+        "seed": 2
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+        "seed": 3
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2946",
+        "seed": 4
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:4100",
+        "seed": 5
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2948",
+        "seed": 6
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:10774",
+        "seed": 7
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:13443",
+        "seed": 8
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2940",
+        "seed": 9
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2957",
+        "seed": 10
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2951",
+        "seed": 11
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2941",
+        "seed": 12
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2956",
+        "seed": 13
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:4034",
+        "seed": 14
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2944",
+        "seed": 15
+      },
+      {
+        "competitionSeasonEntryId": "pbm:DYN_equipe:2945",
+        "seed": 16
+      }
+    ],
+    "bracketPlan": {
+      "competitionSeasonId": "edition:BRA:nbb:2026",
+      "variantKey": "MAIN",
+      "fixtures": [
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+              "seed": 1
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2945",
+              "seed": 16
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2943",
+              "seed": 2
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2944",
+              "seed": 15
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 3,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+              "seed": 3
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:4034",
+              "seed": 14
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 4,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2946",
+              "seed": 4
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2956",
+              "seed": 13
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 5,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:4100",
+              "seed": 5
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2941",
+              "seed": 12
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 6,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2948",
+              "seed": 6
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2951",
+              "seed": 11
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 7,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:10774",
+              "seed": 7
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2957",
+              "seed": 10
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "fixtureOrder": 8,
+          "participants": [
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:13443",
+              "seed": 8
+            },
+            {
+              "kind": "ENTRY",
+              "competitionSeasonEntryId": "pbm:DYN_equipe:2940",
+              "seed": 9
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 3,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "fixtureOrder": 4,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "fixtureOrder": 2,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3"
+            }
+          ]
+        },
+        {
+          "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:FINAL:1",
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "fixtureOrder": 1,
+          "participants": [
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1"
+            },
+            {
+              "kind": "WINNER_OF_FIXTURE",
+              "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2"
+            }
+          ]
+        }
+      ],
+      "fixtureIdsByNodeKey": {
+        "ROUND_OF_16": [
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+          "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8"
+        ],
+        "QUARTERFINALS": [
+          "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1",
+          "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2",
+          "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3",
+          "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4"
+        ],
+        "SEMIFINALS": [
+          "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1",
+          "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2"
+        ],
+        "FINAL": [
+          "worldcf:edition:BRA:nbb:2026:MAIN:FINAL:1"
+        ]
+      }
+    },
+    "resolvedFixtures": [
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2945",
+            "seed": 16
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2943",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2944",
+            "seed": 15
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 3,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+            "seed": 3
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4034",
+            "seed": 14
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 4,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2946",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2956",
+            "seed": 13
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 5,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:4100",
+            "seed": 5
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2941",
+            "seed": 12
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 6,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2948",
+            "seed": 6
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2951",
+            "seed": 11
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 7,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10774",
+            "seed": 7
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2957",
+            "seed": 10
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "ROUND_OF_16",
+        "fixtureOrder": 8,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:13443",
+            "seed": 8
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2940",
+            "seed": 9
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2940",
+            "seed": 9
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2943",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:10774",
+            "seed": 7
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 3,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+            "seed": 3
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2948",
+            "seed": 6
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "QUARTERFINALS",
+        "fixtureOrder": 4,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2946",
+            "seed": 4
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2941",
+            "seed": 12
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2941",
+            "seed": 12
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "SEMIFINALS",
+        "fixtureOrder": 2,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2943",
+            "seed": 2
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+            "seed": 3
+          }
+        ]
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:FINAL:1",
+        "competitionSeasonId": "edition:BRA:nbb:2026",
+        "variantKey": "MAIN",
+        "nodeKey": "FINAL",
+        "fixtureOrder": 1,
+        "participants": [
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:13442",
+            "seed": 1
+          },
+          {
+            "competitionSeasonEntryId": "pbm:DYN_equipe:2942",
+            "seed": 3
+          }
+        ]
+      }
+    ],
+    "readyFixtures": [],
+    "outcomes": [
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+        "winnerEntryId": "pbm:DYN_equipe:13442",
+        "loserEntryId": "pbm:DYN_equipe:2945"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+        "winnerEntryId": "pbm:DYN_equipe:2943",
+        "loserEntryId": "pbm:DYN_equipe:2944"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+        "winnerEntryId": "pbm:DYN_equipe:2942",
+        "loserEntryId": "pbm:DYN_equipe:4034"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+        "winnerEntryId": "pbm:DYN_equipe:2946",
+        "loserEntryId": "pbm:DYN_equipe:2956"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+        "winnerEntryId": "pbm:DYN_equipe:2941",
+        "loserEntryId": "pbm:DYN_equipe:4100"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+        "winnerEntryId": "pbm:DYN_equipe:2948",
+        "loserEntryId": "pbm:DYN_equipe:2951"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+        "winnerEntryId": "pbm:DYN_equipe:10774",
+        "loserEntryId": "pbm:DYN_equipe:2957"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+        "winnerEntryId": "pbm:DYN_equipe:2940",
+        "loserEntryId": "pbm:DYN_equipe:13443"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:13442",
+        "loserEntryId": "pbm:DYN_equipe:2940"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:2943",
+        "loserEntryId": "pbm:DYN_equipe:10774"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3",
+        "winnerEntryId": "pbm:DYN_equipe:2942",
+        "loserEntryId": "pbm:DYN_equipe:2948"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4",
+        "winnerEntryId": "pbm:DYN_equipe:2941",
+        "loserEntryId": "pbm:DYN_equipe:2946"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1",
+        "winnerEntryId": "pbm:DYN_equipe:13442",
+        "loserEntryId": "pbm:DYN_equipe:2941"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2",
+        "winnerEntryId": "pbm:DYN_equipe:2942",
+        "loserEntryId": "pbm:DYN_equipe:2943"
+      },
+      {
+        "fixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:FINAL:1",
+        "winnerEntryId": "pbm:DYN_equipe:13442",
+        "loserEntryId": "pbm:DYN_equipe:2942"
+      }
+    ],
+    "seriesByFixtureId": {
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:13442",
+          "secondEntryId": "pbm:DYN_equipe:2945",
+          "priorityEntryId": "pbm:DYN_equipe:13442",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2945"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2945",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2945",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2945"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2945"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:13442",
+          "loserEntryId": "pbm:DYN_equipe:2945",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2943",
+          "secondEntryId": "pbm:DYN_equipe:2944",
+          "priorityEntryId": "pbm:DYN_equipe:2943",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2944"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2944",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2944",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2944"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2944"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2943",
+          "loserEntryId": "pbm:DYN_equipe:2944",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2942",
+          "secondEntryId": "pbm:DYN_equipe:4034",
+          "priorityEntryId": "pbm:DYN_equipe:2942",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:4034"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:4034",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:4034",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:4034"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:4034"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2942",
+          "loserEntryId": "pbm:DYN_equipe:4034",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2946",
+          "secondEntryId": "pbm:DYN_equipe:2956",
+          "priorityEntryId": "pbm:DYN_equipe:2946",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2956"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2956",
+              "awayEntryId": "pbm:DYN_equipe:2946"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2956",
+              "awayEntryId": "pbm:DYN_equipe:2946"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2956"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2956"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2946",
+          "loserEntryId": "pbm:DYN_equipe:2956",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:4100",
+          "secondEntryId": "pbm:DYN_equipe:2941",
+          "priorityEntryId": "pbm:DYN_equipe:4100",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:4100",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:4100"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:4100"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:4100",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:4100",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2941",
+          "loserEntryId": "pbm:DYN_equipe:4100",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2948",
+          "secondEntryId": "pbm:DYN_equipe:2951",
+          "priorityEntryId": "pbm:DYN_equipe:2948",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2948",
+              "awayEntryId": "pbm:DYN_equipe:2951"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2951",
+              "awayEntryId": "pbm:DYN_equipe:2948"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2951",
+              "awayEntryId": "pbm:DYN_equipe:2948"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2948",
+              "awayEntryId": "pbm:DYN_equipe:2951"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2948",
+              "awayEntryId": "pbm:DYN_equipe:2951"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2948",
+          "loserEntryId": "pbm:DYN_equipe:2951",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:10774",
+          "secondEntryId": "pbm:DYN_equipe:2957",
+          "priorityEntryId": "pbm:DYN_equipe:10774",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:10774",
+              "awayEntryId": "pbm:DYN_equipe:2957"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2957",
+              "awayEntryId": "pbm:DYN_equipe:10774"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2957",
+              "awayEntryId": "pbm:DYN_equipe:10774"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:10774",
+              "awayEntryId": "pbm:DYN_equipe:2957"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:10774",
+              "awayEntryId": "pbm:DYN_equipe:2957"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:10774",
+          "loserEntryId": "pbm:DYN_equipe:2957",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "ROUND_OF_16",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:13443",
+          "secondEntryId": "pbm:DYN_equipe:2940",
+          "priorityEntryId": "pbm:DYN_equipe:13443",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:13443",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2940",
+              "awayEntryId": "pbm:DYN_equipe:13443"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2940",
+              "awayEntryId": "pbm:DYN_equipe:13443"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:13443",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:13443",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 0,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2940",
+          "loserEntryId": "pbm:DYN_equipe:13443",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:13442",
+          "secondEntryId": "pbm:DYN_equipe:2940",
+          "priorityEntryId": "pbm:DYN_equipe:13442",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2940",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2940",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2940"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 1,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:13442",
+          "loserEntryId": "pbm:DYN_equipe:2940",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2943",
+          "secondEntryId": "pbm:DYN_equipe:10774",
+          "priorityEntryId": "pbm:DYN_equipe:2943",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:10774"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:10774",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:10774",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:10774"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:10774"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2943",
+          "loserEntryId": "pbm:DYN_equipe:10774",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:3": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2942",
+          "secondEntryId": "pbm:DYN_equipe:2948",
+          "priorityEntryId": "pbm:DYN_equipe:2942",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:2948"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2948",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2948",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:2948"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:2948"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2942",
+          "loserEntryId": "pbm:DYN_equipe:2948",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:4": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "QUARTERFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2946",
+          "secondEntryId": "pbm:DYN_equipe:2941",
+          "priorityEntryId": "pbm:DYN_equipe:2946",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:2946"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:2946"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2946",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 2,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2941",
+          "loserEntryId": "pbm:DYN_equipe:2946",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:1": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:13442",
+          "secondEntryId": "pbm:DYN_equipe:2941",
+          "priorityEntryId": "pbm:DYN_equipe:13442",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2941",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2941"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 2,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:13442",
+          "loserEntryId": "pbm:DYN_equipe:2941",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:SEMIFINALS:2": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "SEMIFINALS",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:2943",
+          "secondEntryId": "pbm:DYN_equipe:2942",
+          "priorityEntryId": "pbm:DYN_equipe:2943",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:2943"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:SEMIFINALS:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:2943",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 1,
+          "secondEntryWins": 3,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:2942",
+          "loserEntryId": "pbm:DYN_equipe:2943",
+          "nextGame": null
+        }
+      },
+      "worldcf:edition:BRA:nbb:2026:MAIN:FINAL:1": {
+        "plan": {
+          "competitionSeasonId": "edition:BRA:nbb:2026",
+          "variantKey": "MAIN",
+          "nodeKey": "FINAL",
+          "bestOf": 5,
+          "winsRequired": 3,
+          "firstEntryId": "pbm:DYN_equipe:13442",
+          "secondEntryId": "pbm:DYN_equipe:2942",
+          "priorityEntryId": "pbm:DYN_equipe:13442",
+          "games": [
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:FINAL:g1",
+              "gameNo": 1,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:FINAL:g2",
+              "gameNo": 2,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:FINAL:g3",
+              "gameNo": 3,
+              "homeEntryId": "pbm:DYN_equipe:2942",
+              "awayEntryId": "pbm:DYN_equipe:13442"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:FINAL:g4",
+              "gameNo": 4,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            },
+            {
+              "gameId": "worldseries:edition:BRA:nbb:2026:MAIN:FINAL:g5",
+              "gameNo": 5,
+              "homeEntryId": "pbm:DYN_equipe:13442",
+              "awayEntryId": "pbm:DYN_equipe:2942"
+            }
+          ]
+        },
+        "state": {
+          "firstEntryWins": 3,
+          "secondEntryWins": 0,
+          "completed": true,
+          "winnerEntryId": "pbm:DYN_equipe:13442",
+          "loserEntryId": "pbm:DYN_equipe:2942",
+          "nextGame": null
+        }
+      }
+    },
+    "championTeamId": "pbm:DYN_equipe:13442",
+    "lifecycleDiagnostic": null
+  },
+  "transition": {
+    "sourceSeasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+    "targetSeasonId": "generated-season-0001",
+    "competitionId": "competition:BRA:nbb",
+    "participantDerivation": "seasonSnapshot",
+    "schedule": {
+      "kind": "generated",
+      "fixtureCount": 380
+    },
+    "linkedCompetitionSeasonIds": [],
+    "annualHooksExecuted": [
+      "contractReconciliation",
+      "aiRosterMaintenance",
+      "boardStateRollover",
+      "clubStrategicReview",
+      "gmPlanWorkflowReview"
+    ],
+    "diagnostics": [],
+    "repairReports": []
+  },
+  "decisions": [
+    {
+      "date": "2025-12-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:100004495"
+    },
+    {
+      "date": "2026-02-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-03",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-04",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-05",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-06",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-07",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-08",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-11",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-12",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-14",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0321:pbm:DYN_joueur:100004597"
+    },
+    {
+      "date": "2026-02-17",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-20",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-22",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-26",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-02-28",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-03",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-04",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-05",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-06",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-07",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-08",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-11",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-12",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-14",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-17",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-20",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-22",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-26",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-28",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-29",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-03-31",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-03",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-04",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-05",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-06",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-07",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-08",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-11",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-12",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-14",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-17",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-20",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-22",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-26",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-28",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-29",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-04-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-03",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-04",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-05",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-06",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-07",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-08",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-11",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-12",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-14",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-17",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-20",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-22",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-26",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-28",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-29",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-05-31",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-03",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-04",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-05",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-06",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-07",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-08",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-09",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-11",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g1:pressure"
+    },
+    {
+      "date": "2026-06-11",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-12",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g1:performance"
+    },
+    {
+      "date": "2026-06-12",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g2:pressure"
+    },
+    {
+      "date": "2026-06-12",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-13",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g2:performance"
+    },
+    {
+      "date": "2026-06-13",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g3:pressure"
+    },
+    {
+      "date": "2026-06-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-14",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g3:performance"
+    },
+    {
+      "date": "2026-06-14",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g4:pressure"
+    },
+    {
+      "date": "2026-06-14",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-15",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g4:performance"
+    },
+    {
+      "date": "2026-06-15",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g5:pressure"
+    },
+    {
+      "date": "2026-06-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-16",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g5:performance"
+    },
+    {
+      "date": "2026-06-16",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g1:pressure"
+    },
+    {
+      "date": "2026-06-16",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g1:performance"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g2:pressure"
+    },
+    {
+      "date": "2026-06-17",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g2:performance"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g3:pressure"
+    },
+    {
+      "date": "2026-06-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g3:performance"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g4:pressure"
+    },
+    {
+      "date": "2026-06-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-20",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g4:performance"
+    },
+    {
+      "date": "2026-06-20",
+      "reason": "mediaOpportunity",
+      "id": "media:pre:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g5:pressure"
+    },
+    {
+      "date": "2026-06-20",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-21",
+      "reason": "mediaOpportunity",
+      "id": "media:post:competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:QUARTERFINALS:2:g5:performance"
+    },
+    {
+      "date": "2026-06-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-22",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-23",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-25",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-26",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-28",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    }
+  ],
+  "currentDate": "2026-06-29"
+}

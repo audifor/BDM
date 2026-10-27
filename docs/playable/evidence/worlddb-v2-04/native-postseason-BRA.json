@@ -1,0 +1,440 @@
+{
+  "source": "C:\\BDM-worktrees\\worlddb-v2-04\\.worlddb-v2\\phase-04-1793041094869/ready.json",
+  "profile": "qa-postseason-BRA-1793042111022",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\qa-postseason-BRA-1793042111022\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-phase",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-11",
+        "clubs": 20,
+        "regularCompleted": 380
+      }
+    },
+    {
+      "name": "native-decisive-match-acta",
+      "status": "PASS",
+      "detail": {
+        "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g1",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+        "competitionId": "competition:BRA:nbb",
+        "date": "2026-06-11",
+        "homeTeamId": "pbm:DYN_equipe:10774",
+        "awayTeamId": "pbm:DYN_equipe:2957",
+        "stakes": "elimination",
+        "competitionStageKey": "ROUND_OF_16",
+        "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+        "postseasonGameNo": 1,
+        "status": "completed",
+        "result": {
+          "homeScore": 83,
+          "awayScore": 110
+        }
+      }
+    },
+    {
+      "name": "progress-and-project-fixtures",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-13",
+        "postseason": [
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:13442",
+            "awayTeamId": "pbm:DYN_equipe:2945",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 110,
+              "awayScore": 68
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:2943",
+            "awayTeamId": "pbm:DYN_equipe:2944",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 85,
+              "awayScore": 63
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:2942",
+            "awayTeamId": "pbm:DYN_equipe:4034",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 89,
+              "awayScore": 92
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:2946",
+            "awayTeamId": "pbm:DYN_equipe:2956",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 80,
+              "awayScore": 76
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:4100",
+            "awayTeamId": "pbm:DYN_equipe:2941",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 107,
+              "awayScore": 94
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:2948",
+            "awayTeamId": "pbm:DYN_equipe:2951",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 88,
+              "awayScore": 104
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:10774",
+            "awayTeamId": "pbm:DYN_equipe:2957",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 83,
+              "awayScore": 110
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8:g1",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-11",
+            "homeTeamId": "pbm:DYN_equipe:13443",
+            "awayTeamId": "pbm:DYN_equipe:2940",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+            "postseasonGameNo": 1,
+            "status": "completed",
+            "result": {
+              "homeScore": 83,
+              "awayScore": 48
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2957",
+            "awayTeamId": "pbm:DYN_equipe:10774",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 100,
+              "awayScore": 91
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2945",
+            "awayTeamId": "pbm:DYN_equipe:13442",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 94,
+              "awayScore": 116
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2944",
+            "awayTeamId": "pbm:DYN_equipe:2943",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 58,
+              "awayScore": 83
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:4034",
+            "awayTeamId": "pbm:DYN_equipe:2942",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 88,
+              "awayScore": 87
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2956",
+            "awayTeamId": "pbm:DYN_equipe:2946",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 80,
+              "awayScore": 59
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2941",
+            "awayTeamId": "pbm:DYN_equipe:4100",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 90,
+              "awayScore": 84
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2951",
+            "awayTeamId": "pbm:DYN_equipe:2948",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 99,
+              "awayScore": 93
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8:g2",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-12",
+            "homeTeamId": "pbm:DYN_equipe:2940",
+            "awayTeamId": "pbm:DYN_equipe:13443",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+            "postseasonGameNo": 2,
+            "status": "completed",
+            "result": {
+              "homeScore": 77,
+              "awayScore": 85
+            }
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2957",
+            "awayTeamId": "pbm:DYN_equipe:10774",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:7",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2945",
+            "awayTeamId": "pbm:DYN_equipe:13442",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:1",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2944",
+            "awayTeamId": "pbm:DYN_equipe:2943",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:2",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:4034",
+            "awayTeamId": "pbm:DYN_equipe:2942",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:3",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2956",
+            "awayTeamId": "pbm:DYN_equipe:2946",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:4",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2941",
+            "awayTeamId": "pbm:DYN_equipe:4100",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:5",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2951",
+            "awayTeamId": "pbm:DYN_equipe:2948",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:6",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          },
+          {
+            "id": "competition-postseason:worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01:worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8:g3",
+            "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-07-01",
+            "competitionId": "competition:BRA:nbb",
+            "date": "2026-06-13",
+            "homeTeamId": "pbm:DYN_equipe:2940",
+            "awayTeamId": "pbm:DYN_equipe:13443",
+            "stakes": "elimination",
+            "competitionStageKey": "ROUND_OF_16",
+            "postseasonFixtureId": "worldcf:edition:BRA:nbb:2026:MAIN:ROUND_OF_16:8",
+            "postseasonGameNo": 3,
+            "status": "scheduled",
+            "result": null
+          }
+        ],
+        "actas": 396
+      }
+    },
+    {
+      "name": "close-reopen-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-06-14",
+        "completed": 404
+      }
+    }
+  ],
+  "consoleErrors": []
+}

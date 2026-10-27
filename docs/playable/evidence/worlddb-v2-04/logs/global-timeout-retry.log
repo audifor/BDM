@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-04
+
+
+ Test Files  2 passed (2)
+      Tests  57 passed (57)
+   Start at  20:17:45
+   Duration  516.17s (transform 13.63s, setup 0ms, import 17.10s, tests 497.44s, environment 1.25s)
