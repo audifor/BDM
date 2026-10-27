@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0001",
+  "seed": 12345,
+  "comparison": "complete MatchNextResult deep equality, source versus shipped FAST worker"
+}

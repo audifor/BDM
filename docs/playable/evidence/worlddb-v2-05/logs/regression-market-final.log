@@ -1,0 +1,16 @@
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-05
+
+ ✓ src/app/game/WorldDbV2Universe.test.ts > WorldDB V2 universe selection > requires an active competition 3ms
+ ✓ src/app/game/WorldDbV2Universe.test.ts > WorldDB V2 universe selection > assembles 70 clubs with unique identities, all four exact schedules and Save V4 1080ms
+ ✓ src/app/game/WorldDbV2Universe.test.ts > WorldDB V2 universe selection > rejects duplicate leagues, mismatched sources and clubs outside the active universe 1ms
+ ✓ src/app/game/WorldDbV2Universe.test.ts > WorldDB V2 universe selection > refuses conflicting shared identities instead of overwriting a person or country 172ms
+ ↓ src/app/game/WorldDbV2Universe.test.ts > four leagues evolve in one saved universe, then complete their independent seasons
+ ✓ src/app/scouting/ScoutingOperationsService.addressability.test.ts > Player scouting addressability from public fixtures > allows a later scheduled opponent instead of limiting evaluation to the very next match 1138ms
+ ✓ src/app/scouting/ScoutingOperationsService.addressability.test.ts > Player scouting addressability from public fixtures > submits a real scouting assignment for a public opponent through the existing command authority 934ms
+ ✓ src/app/scouting/ScoutingOperationsService.addressability.test.ts > Player scouting addressability from public fixtures > does not reveal every roster worldwide without knowledge or fixture context 926ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed | 1 skipped (8)
+   Start at  18:33:36
+   Duration  13.71s (transform 6.40s, setup 0ms, import 9.11s, tests 4.26s, environment 0ms)

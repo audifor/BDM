@@ -22,7 +22,8 @@ import { requireUserGameToday, userMatchTacticalPlans } from './playUserGame'
 export type DayResolution = 'FULL' | 'FAST' | 'BACKGROUND'
 
 /** WSR1 seam for the user's simulation-detail setting (persisted settings will be read here; until then the default). */
-export function simulationDetailFor(_world: GameWorld): SimulationDetailSettings {
+export function simulationDetailFor(world: GameWorld): SimulationDetailSettings {
+  if (world.worldDbCompetitionRuntime?.worldDbV2?.activeCompetitionIds) return { ...DEFAULT_SIMULATION_DETAIL, level: 'DETAILED', exactBudgetPerDay: 64 }
   return DEFAULT_SIMULATION_DETAIL
 }
 

@@ -1,0 +1,89 @@
+
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-05
+
+
+
+ ✓ src/app/game/WorldDbV2Universe.test.ts (5 tests | 1 skipped) 1170ms
+
+     ✓ assembles 70 clubs with unique identities, all four exact schedules and Save V4  991ms
+
+ ✓ src/save/GameWorldSaveV4.test.ts (25 tests) 75536ms
+
+   ✓ copies Save history records without requiring a collection-sized JSON string  2146ms
+
+     ✓ retains current scouting knowledge through Save V4  1695ms
+
+     ✓ round-trips NCAA carry-forward rules and defaults pre-BS15F Save V4 payloads to empty  2133ms
+
+     ✓ preserves expired staff contracts instead of inventing renewals during current V4 reload  1333ms
+
+     ✓ keeps legacy V3 staff contract enrichment in the migrated V4 ledger  1476ms
+
+     ✓ preserves Player transaction provenance through Save V4  1349ms
+
+     ✓ round-trips immutable Training Staff role and planned module evidence  1293ms
+
+     ✓ round-trips nonbinding retention incentive proposal terms  1396ms
+
+     ✓ round-trips explicit contract review intent and defaults old V4 saves to none  1618ms
+
+     ✓ writes the required empty runtime for a world created before V4 runtime exists  1252ms
+
+     ✓ continues to read pre-91 V4 runtime payloads without a bundle pin  1301ms
+
+     ✓ round-trips populated competition runtime identities and bundle pin  1265ms
+
+     ✓ round-trips a world with an already-applied annual development cycle, and never leaks it onto an unrelated fresh world  2380ms
+
+     ✓ save/load around the 1 July annual development trigger never re-applies development on reload  41474ms
+
+     ✓ preserves CORE-ORG1 records and BG7 canonical runtime through Save V4  1317ms
+
+     ✓ round-trips BG8A ownership and independent control records through Save V4  1331ms
+
+     ✓ round-trips BG8B ownership transactions and defaults missing transaction collections to empty  1476ms
+
+     ✓ round-trips BG8C interest, capital raise, proposal, execution history and old-V4 defaults  1451ms
+
+     ✓ defaults ownership and control to empty when loading a pre-BG8A V4 payload  1191ms
+
+     ✓ migrates canonical V3 by preserving V3 fields and adding empty runtime state  1107ms
+
+     ✓ continues to read V3 through the V4 reader with an empty runtime projection  1084ms
+
+     ✓ rejects malformed canonical V4 runtime payloads  992ms
+
+     ✓ rejects malformed canonical V4 envelopes  1013ms
+
+     ✓ round-trips minimal per-need GM plan memory  1229ms
+
+     ✓ defaults a pre-plan V4 save to an empty plan collection  1226ms
+
+ ✓ src/ui-ng/applications/competition/CompetitionWorkspace.test.tsx (2 tests) 7068ms
+
+     ✓ opens on the month calendar and keeps the other competition views  1895ms
+
+     ✓ shows top-3 leader cards above the statistics table after a completed match  5172ms
+
+ ✓ src/app/game/CompetitionLifecycleCoordinator.test.ts (6 tests) 4675ms
+
+     ✓ rolls a valid NCAA-like season with its conference snapshot and exactly one next recruiting cycle  2417ms
+
+     ✓ creates and uses a simulated 2045-46 NCAA RecruitingCycle without external calendar data  1849ms
+
+ ✓ src/ui/startup/BootstrapApp.test.tsx (5 tests) 639ms
+
+
+
+ Test Files  5 passed (5)
+
+      Tests  42 passed | 1 skipped (43)
+
+   Start at  12:10:07
+
+   Duration  114.62s (transform 14.20s, setup 0ms, import 22.02s, tests 89.09s, environment 2.55s)
+
+
+
+JSON report written to C:/BDM-worktrees/worlddb-v2-05/.worlddb-v2/focal-results.json

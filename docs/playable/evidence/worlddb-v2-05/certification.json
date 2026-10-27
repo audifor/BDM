@@ -1,0 +1,420 @@
+{
+  "status": "PASS",
+  "completedAt": "2026-10-27T18:48:58.159653+00:00",
+  "branch": "playable/worlddb-v2-05",
+  "pr170": {
+    "mandatoryChecksPassed": 9,
+    "mergedCommit": "dd1a778e11f5e2ba2cd20d3b80a9e350782c0fa2"
+  },
+  "globalRegression": {
+    "passed": true,
+    "files": 835,
+    "passedTests": 5766,
+    "failedTests": 0,
+    "pendingTests": 66,
+    "todoTests": 0,
+    "shards": 4,
+    "overlap": 0,
+    "missingFiles": 0,
+    "command": "npm test -- --shard=N/4 --maxWorkers=1 --testTimeout=60000 --hookTimeout=600000 --reporter=verbose --reporter=json --outputFile=.worlddb-v2/final-shard-N.json"
+  },
+  "previousGlobalRun": {
+    "status": "FAILED",
+    "failedTests": 1,
+    "reason": "Started before the final global-market visibility fix; failed the new universe market assertion. Kept for transparency and superseded by the four complete final-revision shards."
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "viteBuild": "PASS",
+    "tauriWindowsBuild": "PASS",
+    "cargoFmt": "PASS",
+    "cargoCheck": "PASS",
+    "rustTestsPassed": 18,
+    "protectedSourceChecks": 54,
+    "f4FilesUnchanged": 27,
+    "mathRandomOccurrences": 0,
+    "improperDomainEngineImports": 0
+  },
+  "day30": {
+    "passed": true,
+    "leagues": [
+      {
+        "competitionId": "competition:ESP:liga-endesa",
+        "seasonId": "worlddb-v2:season:2025-10-04",
+        "clubs": 18,
+        "completed": 45,
+        "regular": 45,
+        "stats": 45
+      },
+      {
+        "competitionId": "competition:FRA:betclic-elite",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+        "clubs": 16,
+        "completed": 40,
+        "regular": 40,
+        "stats": 40
+      },
+      {
+        "competitionId": "competition:ITA:serie-a",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+        "clubs": 16,
+        "completed": 40,
+        "regular": 40,
+        "stats": 40
+      },
+      {
+        "competitionId": "competition:BRA:nbb",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+        "clubs": 20,
+        "completed": 50,
+        "regular": 50,
+        "stats": 50
+      }
+    ],
+    "days": 30,
+    "meanDayMs": 20081.080613333335,
+    "maxDayMs": 153942.50690000004,
+    "decisions": [
+      {
+        "date": "2025-10-19",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007:pbm:DYN_joueur:62011"
+      },
+      {
+        "date": "2025-10-24",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0027:pbm:DYN_joueur:100057546"
+      }
+    ]
+  },
+  "day30Audit": {
+    "passed": true,
+    "date": "2025-11-03",
+    "saveSha256": "18c750de17ef08a8f3a17e6dc838c7ab8d64233e52da91bbbca9f98cadfdb144",
+    "leagues": [
+      {
+        "competitionId": "competition:ESP:liga-endesa",
+        "clubs": 18,
+        "players": 255,
+        "completed": 45,
+        "fatigued": 244,
+        "injuries": 23
+      },
+      {
+        "competitionId": "competition:FRA:betclic-elite",
+        "clubs": 16,
+        "players": 218,
+        "completed": 40,
+        "fatigued": 218,
+        "injuries": 11
+      },
+      {
+        "competitionId": "competition:ITA:serie-a",
+        "clubs": 16,
+        "players": 203,
+        "completed": 40,
+        "fatigued": 202,
+        "injuries": 11
+      },
+      {
+        "competitionId": "competition:BRA:nbb",
+        "clubs": 20,
+        "players": 238,
+        "completed": 50,
+        "fatigued": 236,
+        "injuries": 22
+      }
+    ]
+  },
+  "seasons": {
+    "passed": true,
+    "leagues": [
+      {
+        "competitionId": "competition:ESP:liga-endesa",
+        "seasonId": "worlddb-v2:season:2025-10-04",
+        "clubs": 18,
+        "completed": 328,
+        "regular": 306,
+        "stats": 328,
+        "champion": "pbm:DYN_equipe:51",
+        "successorId": "generated-season-0001"
+      },
+      {
+        "competitionId": "competition:FRA:betclic-elite",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+        "clubs": 16,
+        "completed": 265,
+        "regular": 240,
+        "stats": 265,
+        "champion": "pbm:DYN_equipe:9",
+        "successorId": "generated-season-0003"
+      },
+      {
+        "competitionId": "competition:ITA:serie-a",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+        "clubs": 16,
+        "completed": 266,
+        "regular": 240,
+        "stats": 266,
+        "champion": "pbm:DYN_equipe:2051",
+        "successorId": "generated-season-0002"
+      },
+      {
+        "competitionId": "competition:BRA:nbb",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+        "clubs": 20,
+        "completed": 438,
+        "regular": 380,
+        "stats": 438,
+        "champion": "pbm:DYN_equipe:2951",
+        "successorId": "generated-season-0004"
+      }
+    ],
+    "date": "2026-10-03",
+    "days": 304,
+    "meanDayMs": 4408.700909210526,
+    "decisions": [
+      {
+        "date": "2026-01-19",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0120:pbm:DYN_joueur:62011"
+      },
+      {
+        "date": "2026-02-18",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0180:pbm:DYN_joueur:100040487"
+      },
+      {
+        "date": "2026-04-10",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0221:pbm:DYN_joueur:100012194"
+      },
+      {
+        "date": "2026-04-13",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0213:pbm:DYN_joueur:100057546"
+      },
+      {
+        "date": "2026-05-15",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100012194"
+      },
+      {
+        "date": "2026-05-21",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0283:pbm:DYN_joueur:87002218"
+      },
+      {
+        "date": "2026-05-27",
+        "reason": "returnToPlayReview",
+        "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100040487"
+      }
+    ]
+  },
+  "continuity": {
+    "passed": true,
+    "leagues": [
+      {
+        "competitionId": "competition:ESP:liga-endesa",
+        "seasonId": "worlddb-v2:season:2025-10-04",
+        "clubs": 18,
+        "completed": 328,
+        "regular": 306,
+        "stats": 328,
+        "champion": "pbm:DYN_equipe:51",
+        "successorId": "generated-season-0001",
+        "successorCompleted": 9
+      },
+      {
+        "competitionId": "competition:FRA:betclic-elite",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+        "clubs": 16,
+        "completed": 265,
+        "regular": 240,
+        "stats": 265,
+        "champion": "pbm:DYN_equipe:9",
+        "successorId": "generated-season-0003",
+        "successorCompleted": 8
+      },
+      {
+        "competitionId": "competition:ITA:serie-a",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+        "clubs": 16,
+        "completed": 266,
+        "regular": 240,
+        "stats": 266,
+        "champion": "pbm:DYN_equipe:2051",
+        "successorId": "generated-season-0002",
+        "successorCompleted": 8
+      },
+      {
+        "competitionId": "competition:BRA:nbb",
+        "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+        "clubs": 20,
+        "completed": 438,
+        "regular": 380,
+        "stats": 438,
+        "champion": "pbm:DYN_equipe:2951",
+        "successorId": "generated-season-0004",
+        "successorCompleted": 10
+      }
+    ],
+    "date": "2026-10-11",
+    "days": 8,
+    "meanDayMs": 12567.7754625,
+    "decisions": []
+  },
+  "market": {
+    "passed": true,
+    "policy": "Existing BDM_TRANSFER_POLICY_V1 and generated contracts, Finance and Governance; no new international registration rules",
+    "attempts": [
+      {
+        "playerId": "pbm:DYN_joueur:100017735",
+        "status": "EXECUTED",
+        "log": [
+          "2025-11-03 proposal 96000",
+          "2025-11-04 club CLUB_AGREED",
+          "2025-11-04 playerOffer 105000 x 2",
+          "2025-11-05 player PLAYER_AGREED",
+          "2025-11-05 governance started",
+          "2025-11-06 board decided DECISION_PRESENT",
+          "2025-11-06 executed"
+        ]
+      }
+    ]
+  },
+  "windowsNewCareer": {
+    "passed": true,
+    "profile": "worlddb-v2-05-native-1793100381712",
+    "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\worlddb-v2-05-native-1793100381712\\main.json",
+    "steps": [
+      {
+        "name": "new-shared-career",
+        "status": "PASS",
+        "detail": {
+          "teams": 70,
+          "competitions": 4,
+          "games": 1166
+        }
+      },
+      {
+        "name": "all-four-leagues-play",
+        "status": "PASS",
+        "detail": {
+          "leagues": [
+            {
+              "id": "competition:ESP:liga-endesa",
+              "completed": 9
+            },
+            {
+              "id": "competition:FRA:betclic-elite",
+              "completed": 8
+            },
+            {
+              "id": "competition:ITA:serie-a",
+              "completed": 8
+            },
+            {
+              "id": "competition:BRA:nbb",
+              "completed": 10
+            }
+          ],
+          "elapsedMs": 27018,
+          "cores": 12
+        }
+      },
+      {
+        "name": "consult-other-competitions",
+        "status": "PASS",
+        "detail": [
+          {
+            "id": "competition:FRA:betclic-elite",
+            "name": "Betclic Élite · PBM V2"
+          },
+          {
+            "id": "competition:ITA:serie-a",
+            "name": "LBA Serie A · PBM V2"
+          },
+          {
+            "id": "competition:ESP:liga-endesa",
+            "name": "Liga Endesa · PBM V2"
+          },
+          {
+            "id": "competition:BRA:nbb",
+            "name": "NBB · PBM V2"
+          }
+        ]
+      },
+      {
+        "name": "global-market-rosters",
+        "status": "PASS",
+        "detail": [
+          "Betclic Élite · PBM V2",
+          "LBA Serie A · PBM V2",
+          "Liga Endesa · PBM V2",
+          "NBB · PBM V2"
+        ]
+      },
+      {
+        "name": "save-close-load-continue",
+        "status": "PASS",
+        "detail": {
+          "date": "2025-10-06",
+          "actas": 35
+        }
+      }
+    ],
+    "consoleErrors": []
+  },
+  "windowsCompleteUniverse": {
+    "passed": true,
+    "certifiedCheckpoint": ".worlddb-v2/universe-05/continued-universe.json",
+    "profile": "worlddb-v2-05-native-1793099982438",
+    "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\worlddb-v2-05-native-1793099982438\\main.json",
+    "steps": [
+      {
+        "name": "load-certified-checkpoint",
+        "status": "PASS",
+        "detail": {
+          "date": "2026-10-11",
+          "actas": 1332
+        }
+      },
+      {
+        "name": "global-market-rosters",
+        "status": "PASS",
+        "detail": [
+          "Betclic Élite · PBM V2",
+          "LBA Serie A · PBM V2",
+          "Liga Endesa · PBM V2",
+          "NBB · PBM V2"
+        ]
+      },
+      {
+        "name": "save-close-load-continue",
+        "status": "PASS",
+        "detail": {
+          "date": "2026-10-12",
+          "actas": 1358
+        }
+      }
+    ],
+    "consoleErrors": []
+  },
+  "artifacts": {
+    "saveVersion": 4,
+    "save": "artifacts\\certified-universe.json",
+    "saveSha256": "bfd431aa8e4ce0bb49138e77921280f895ac81bfae9d3154b67bbb54f8d7b794",
+    "saveBytes": 188025179,
+    "compressedSave": "certified-universe.save.json.gz",
+    "compressedSha256": "fa9dc9d2cf838ede298241722c3a7b2ea449a9f1baa246771b7b072cd8ba6820",
+    "executable": "artifacts/bdm.exe",
+    "executableSha256": "e30d22cf6dc88649fcb1ea9491890fc85f5df98d493a5a0ae73d311e9ba0744b",
+    "nativeProfile": "worlddb-v2-05-native-1793099982438",
+    "nativeProof": "windows-full-universe.json",
+    "firstSeasonGames": 1297,
+    "nextSeasonGames": 35,
+    "competitions": 4,
+    "clubs": 70
+  }
+}

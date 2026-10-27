@@ -8,6 +8,7 @@ import { createTalentCohort } from '@/domain/talent'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateWorld } from '@/engine/world'
+import { initializeBoardState } from '@/engine/board'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { applyMatchResult } from '@/engine/match'
 import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
@@ -25,6 +26,20 @@ import { advanceCompetitionLifecycles, classifyCompetitionLifecycles } from './C
 import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 
 describe('RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover', () => {
+  it('keeps another league\'s board objectives unchanged when one season rolls over', () => {
+    let world = threeIndependentCompetitionsWorld()
+    const [seasonA] = threeSeasonIds(world)
+    const primaryTeams = world.competitions[world.seasons[seasonA]!.competitionId]!.participantTeamIds
+    const foreign = Object.values(world.teams).find(team => team.coachId !== undefined && !primaryTeams.includes(team.id))!
+    expect(foreign).toBeDefined()
+    world = initializeBoardState(world, foreign.id)
+    const before = world.boardStatesByTeamId[foreign.id]
+    expect(before).toBeDefined()
+    world = completeSeason(world, seasonA)
+    const advanced = advanceCompetitionLifecycles(world)
+    expect(advanced.transitions).toHaveLength(1)
+    expect(advanced.world.boardStatesByTeamId[foreign.id]).toEqual(before)
+  })
   it('classifies three independently-calendared competitions as FULLY_SUPPORTED_PRIMARY regardless of currentSeasonId', () => {
     const world = threeIndependentCompetitionsWorld()
     const capabilities = classifyCompetitionLifecycles(world)

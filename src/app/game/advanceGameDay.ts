@@ -1,4 +1,5 @@
 import { withDailyWorldValidation } from './DailyWorldValidation'
+import { advanceCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
 import type { SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { compareGameDates } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
@@ -363,6 +364,13 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
       diagnostics: humans.suppressed ? [{ code: 'HRPG_ADMISSION_LIMIT', message: `${humans.suppressed} situation candidates suppressed by configured capacity limits; canonical source facts remain intact.` }] : [],
       summary: `Examined ${humans.examined} source references; admitted ${humans.admitted} human situations and processed autonomous responses.` })
 
+    if (current.worldDbCompetitionRuntime?.worldDbV2?.activeCompetitionIds) {
+      activePhaseId = 'COMPETITION_LIFECYCLES'
+      const lifecycle = advanceCompetitionLifecycles(current)
+      current = lifecycle.world
+      repairReports.push(...lifecycle.transitions.flatMap(transition => transition.repairReports))
+      phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: lifecycle.transitions.length > 0, diagnostics: [], summary: `Rolled ${lifecycle.transitions.length} completed competition edition(s) independently.` })
+    }
     activePhaseId = 'BREAKPOINT_EVALUATION'
     const afterStart = performance.now()
     const breakpointAfter = evaluateSimulationBreakpoints(current)

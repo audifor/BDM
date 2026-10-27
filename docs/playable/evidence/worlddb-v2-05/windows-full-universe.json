@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "certifiedCheckpoint": ".worlddb-v2/universe-05/continued-universe.json",
+  "profile": "worlddb-v2-05-native-1793099982438",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\worlddb-v2-05-native-1793099982438\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-checkpoint",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-11",
+        "actas": 1332
+      }
+    },
+    {
+      "name": "global-market-rosters",
+      "status": "PASS",
+      "detail": [
+        "Betclic Élite · PBM V2",
+        "LBA Serie A · PBM V2",
+        "Liga Endesa · PBM V2",
+        "NBB · PBM V2"
+      ]
+    },
+    {
+      "name": "save-close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2026-10-12",
+        "actas": 1358
+      }
+    }
+  ],
+  "consoleErrors": []
+}

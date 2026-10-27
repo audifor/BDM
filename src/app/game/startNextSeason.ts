@@ -174,7 +174,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     annualHooksExecuted.push('recruitingCycle', 'transferRuleset', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
   }
   const beforeBoards = next
-  next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
+  next = nextParticipants.reduce((current, teamId) => rolloverBoardState(current, teamId, nextPrimary.id), next)
   if (next !== beforeBoards) annualHooksExecuted.push('boardStateRollover')
   const preseasonTeamIds = [...new Set([...(nextPrimary.participantTeamIds ?? next.competitions[nextPrimary.competitionId]!.participantTeamIds), ...nextLinkedSeasons.flatMap((season) => season.participantTeamIds ?? [])])].sort((left, right) => left.localeCompare(right))
   for (const teamId of preseasonTeamIds) {

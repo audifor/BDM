@@ -1,0 +1,587 @@
+{
+  "numTotalTestSuites": 13,
+  "numPassedTestSuites": 13,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 43,
+  "numPassedTests": 42,
+  "numFailedTests": 0,
+  "numPendingTests": 1,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793099407436,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [],
+          "fullName": "copies Save history records without requiring a collection-sized JSON string",
+          "status": "passed",
+          "title": "copies Save history records without requiring a collection-sized JSON string",
+          "duration": 2146.152,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "BS14B OrganizationKnowledge persistence"
+          ],
+          "fullName": "BS14B OrganizationKnowledge persistence retains current scouting knowledge through Save V4",
+          "status": "passed",
+          "title": "retains current scouting knowledge through Save V4",
+          "duration": 1695.0448999999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "BS15F transfer rules persistence"
+          ],
+          "fullName": "BS15F transfer rules persistence round-trips NCAA carry-forward rules and defaults pre-BS15F Save V4 payloads to empty",
+          "status": "passed",
+          "title": "round-trips NCAA carry-forward rules and defaults pre-BS15F Save V4 payloads to empty",
+          "duration": 2133.198700000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime preserves expired staff contracts instead of inventing renewals during current V4 reload",
+          "status": "passed",
+          "title": "preserves expired staff contracts instead of inventing renewals during current V4 reload",
+          "duration": 1332.8482000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime keeps legacy V3 staff contract enrichment in the migrated V4 ledger",
+          "status": "passed",
+          "title": "keeps legacy V3 staff contract enrichment in the migrated V4 ledger",
+          "duration": 1476.0901999999987,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime preserves Player transaction provenance through Save V4",
+          "status": "passed",
+          "title": "preserves Player transaction provenance through Save V4",
+          "duration": 1348.7510000000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips immutable Training Staff role and planned module evidence",
+          "status": "passed",
+          "title": "round-trips immutable Training Staff role and planned module evidence",
+          "duration": 1292.8402999999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips nonbinding retention incentive proposal terms",
+          "status": "passed",
+          "title": "round-trips nonbinding retention incentive proposal terms",
+          "duration": 1396.1854999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips explicit contract review intent and defaults old V4 saves to none",
+          "status": "passed",
+          "title": "round-trips explicit contract review intent and defaults old V4 saves to none",
+          "duration": 1617.8716000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime writes the required empty runtime for a world created before V4 runtime exists",
+          "status": "passed",
+          "title": "writes the required empty runtime for a world created before V4 runtime exists",
+          "duration": 1251.6111999999976,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime continues to read pre-91 V4 runtime payloads without a bundle pin",
+          "status": "passed",
+          "title": "continues to read pre-91 V4 runtime payloads without a bundle pin",
+          "duration": 1301.239300000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips populated competition runtime identities and bundle pin",
+          "status": "passed",
+          "title": "round-trips populated competition runtime identities and bundle pin",
+          "duration": 1265.440300000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips a world with an already-applied annual development cycle, and never leaks it onto an unrelated fresh world",
+          "status": "passed",
+          "title": "round-trips a world with an already-applied annual development cycle, and never leaks it onto an unrelated fresh world",
+          "duration": 2379.7318000000014,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime save/load around the 1 July annual development trigger never re-applies development on reload",
+          "status": "passed",
+          "title": "save/load around the 1 July annual development trigger never re-applies development on reload",
+          "duration": 41473.919,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime preserves CORE-ORG1 records and BG7 canonical runtime through Save V4",
+          "status": "passed",
+          "title": "preserves CORE-ORG1 records and BG7 canonical runtime through Save V4",
+          "duration": 1317.0267000000022,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips BG8A ownership and independent control records through Save V4",
+          "status": "passed",
+          "title": "round-trips BG8A ownership and independent control records through Save V4",
+          "duration": 1331.224199999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips BG8B ownership transactions and defaults missing transaction collections to empty",
+          "status": "passed",
+          "title": "round-trips BG8B ownership transactions and defaults missing transaction collections to empty",
+          "duration": 1476.2757000000129,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime round-trips BG8C interest, capital raise, proposal, execution history and old-V4 defaults",
+          "status": "passed",
+          "title": "round-trips BG8C interest, capital raise, proposal, execution history and old-V4 defaults",
+          "duration": 1451.403999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime defaults ownership and control to empty when loading a pre-BG8A V4 payload",
+          "status": "passed",
+          "title": "defaults ownership and control to empty when loading a pre-BG8A V4 payload",
+          "duration": 1190.8352999999915,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime migrates canonical V3 by preserving V3 fields and adding empty runtime state",
+          "status": "passed",
+          "title": "migrates canonical V3 by preserving V3 fields and adding empty runtime state",
+          "duration": 1107.2558999999892,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime continues to read V3 through the V4 reader with an empty runtime projection",
+          "status": "passed",
+          "title": "continues to read V3 through the V4 reader with an empty runtime projection",
+          "duration": 1083.816100000011,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime rejects malformed canonical V4 runtime payloads",
+          "status": "passed",
+          "title": "rejects malformed canonical V4 runtime payloads",
+          "duration": 992.3897999999899,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 competition runtime"
+          ],
+          "fullName": "GameWorldSaveV4 competition runtime rejects malformed canonical V4 envelopes",
+          "status": "passed",
+          "title": "rejects malformed canonical V4 envelopes",
+          "duration": 1012.6282999999967,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 GM plan memory"
+          ],
+          "fullName": "GameWorldSaveV4 GM plan memory round-trips minimal per-need GM plan memory",
+          "status": "passed",
+          "title": "round-trips minimal per-need GM plan memory",
+          "duration": 1228.7495999999956,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GameWorldSaveV4 GM plan memory"
+          ],
+          "fullName": "GameWorldSaveV4 GM plan memory defaults a pre-plan V4 save to an empty plan collection",
+          "status": "passed",
+          "title": "defaults a pre-plan V4 save to an empty plan collection",
+          "duration": 1226.2927999999956,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793099419134,
+      "endTime": 1793099494668.2927,
+      "status": "passed",
+      "message": "",
+      "name": "C:/BDM-worktrees/worlddb-v2-05/src/save/GameWorldSaveV4.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover keeps another league's board objectives unchanged when one season rolls over",
+          "status": "passed",
+          "title": "keeps another league's board objectives unchanged when one season rolls over",
+          "duration": 156.1300000000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover classifies three independently-calendared competitions as FULLY_SUPPORTED_PRIMARY regardless of currentSeasonId",
+          "status": "passed",
+          "title": "classifies three independently-calendared competitions as FULLY_SUPPORTED_PRIMARY regardless of currentSeasonId",
+          "duration": 18.80509999999981,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover rolls each of three competitions independently: finishing early does not depend on or disturb the others",
+          "status": "passed",
+          "title": "rolls each of three competitions independently: finishing early does not depend on or disturb the others",
+          "duration": 174.9692,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover does not apply player development when a background (non-current) competition rolls over",
+          "status": "passed",
+          "title": "does not apply player development when a background (non-current) competition rolls over",
+          "duration": 57.066299999999956,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover rolls a valid NCAA-like season with its conference snapshot and exactly one next recruiting cycle",
+          "status": "passed",
+          "title": "rolls a valid NCAA-like season with its conference snapshot and exactly one next recruiting cycle",
+          "duration": 2416.5674,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover"
+          ],
+          "fullName": "RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover creates and uses a simulated 2045-46 NCAA RecruitingCycle without external calendar data",
+          "status": "passed",
+          "title": "creates and uses a simulated 2045-46 NCAA RecruitingCycle without external calendar data",
+          "duration": 1849.2788,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793099513335,
+      "endTime": 1793099518008.2788,
+      "status": "passed",
+      "message": "",
+      "name": "C:/BDM-worktrees/worlddb-v2-05/src/app/game/CompetitionLifecycleCoordinator.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "WorldDB V2 universe selection"
+          ],
+          "fullName": "WorldDB V2 universe selection requires an active competition",
+          "status": "passed",
+          "title": "requires an active competition",
+          "duration": 2.5239999999994325,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "WorldDB V2 universe selection"
+          ],
+          "fullName": "WorldDB V2 universe selection assembles 70 clubs with unique identities, all four exact schedules and Save V4",
+          "status": "passed",
+          "title": "assembles 70 clubs with unique identities, all four exact schedules and Save V4",
+          "duration": 991.1677999999993,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "WorldDB V2 universe selection"
+          ],
+          "fullName": "WorldDB V2 universe selection rejects duplicate leagues, mismatched sources and clubs outside the active universe",
+          "status": "passed",
+          "title": "rejects duplicate leagues, mismatched sources and clubs outside the active universe",
+          "duration": 0.9206000000012864,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "WorldDB V2 universe selection"
+          ],
+          "fullName": "WorldDB V2 universe selection refuses conflicting shared identities instead of overwriting a person or country",
+          "status": "passed",
+          "title": "refuses conflicting shared identities instead of overwriting a person or country",
+          "duration": 173.3718000000008,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "four leagues evolve in one saved universe, then complete their independent seasons",
+          "status": "skipped",
+          "title": "four leagues evolve in one saved universe, then complete their independent seasons",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793099416365,
+      "endTime": 1793099417533.3718,
+      "status": "passed",
+      "message": "",
+      "name": "C:/BDM-worktrees/worlddb-v2-05/src/app/game/WorldDbV2Universe.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "New Game World DB Spain ACB flow"
+          ],
+          "fullName": "New Game World DB Spain ACB flow offers the 18-club ACB pilot by default without reading an external database",
+          "status": "passed",
+          "title": "offers the 18-club ACB pilot by default without reading an external database",
+          "duration": 184.66370000000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "New Game World DB Spain ACB flow"
+          ],
+          "fullName": "New Game World DB Spain ACB flow selects the active leagues together with the club, date and seed",
+          "status": "passed",
+          "title": "selects the active leagues together with the club, date and seed",
+          "duration": 167.26889999999958,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "New Game World DB Spain ACB flow"
+          ],
+          "fullName": "New Game World DB Spain ACB flow lists 18 canonical teams and sends the selected team through async creation into the normal world store",
+          "status": "passed",
+          "title": "lists 18 canonical teams and sends the selected team through async creation into the normal world store",
+          "duration": 107.96340000000009,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "New Game World DB Spain ACB flow"
+          ],
+          "fullName": "New Game World DB Spain ACB flow shows the World DB bootstrap error and does not fall back to the fake ACB universe",
+          "status": "passed",
+          "title": "shows the World DB bootstrap error and does not fall back to the fake ACB universe",
+          "duration": 78.18179999999984,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "New Game World DB Spain ACB flow"
+          ],
+          "fullName": "New Game World DB Spain ACB flow requires a coach identity and forwards a real creator payload for the synthetic ACB game",
+          "status": "passed",
+          "title": "requires a coach identity and forwards a real creator payload for the synthetic ACB game",
+          "duration": 98.96019999999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793099521472,
+      "endTime": 1793099522108.9602,
+      "status": "passed",
+      "message": "",
+      "name": "C:/BDM-worktrees/worlddb-v2-05/src/ui/startup/BootstrapApp.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "CompetitionWorkspace"
+          ],
+          "fullName": "CompetitionWorkspace opens on the month calendar and keeps the other competition views",
+          "status": "passed",
+          "title": "opens on the month calendar and keeps the other competition views",
+          "duration": 1895.115600000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "CompetitionWorkspace"
+          ],
+          "fullName": "CompetitionWorkspace shows top-3 leader cards above the statistics table after a completed match",
+          "status": "passed",
+          "title": "shows top-3 leader cards above the statistics table after a completed match",
+          "duration": 5172.022100000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1793099504849,
+      "endTime": 1793099511916.0222,
+      "status": "passed",
+      "message": "",
+      "name": "C:/BDM-worktrees/worlddb-v2-05/src/ui-ng/applications/competition/CompetitionWorkspace.test.tsx"
+    }
+  ]
+}

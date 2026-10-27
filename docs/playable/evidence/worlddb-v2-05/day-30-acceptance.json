@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "leagues": [
+    {
+      "competitionId": "competition:ESP:liga-endesa",
+      "seasonId": "worlddb-v2:season:2025-10-04",
+      "clubs": 18,
+      "completed": 45,
+      "regular": 45,
+      "stats": 45
+    },
+    {
+      "competitionId": "competition:FRA:betclic-elite",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+      "clubs": 16,
+      "completed": 40,
+      "regular": 40,
+      "stats": 40
+    },
+    {
+      "competitionId": "competition:ITA:serie-a",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+      "clubs": 16,
+      "completed": 40,
+      "regular": 40,
+      "stats": 40
+    },
+    {
+      "competitionId": "competition:BRA:nbb",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+      "clubs": 20,
+      "completed": 50,
+      "regular": 50,
+      "stats": 50
+    }
+  ],
+  "days": 30,
+  "meanDayMs": 20081.080613333335,
+  "maxDayMs": 153942.50690000004,
+  "decisions": [
+    {
+      "date": "2025-10-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007:pbm:DYN_joueur:62011"
+    },
+    {
+      "date": "2025-10-24",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0027:pbm:DYN_joueur:100057546"
+    }
+  ]
+}

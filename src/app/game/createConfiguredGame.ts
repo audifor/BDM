@@ -27,6 +27,10 @@ export async function createConfiguredGameAsync(
 ): Promise<GameWorld> {
   if (options.universeId === WORLD_DB_V2_UNIVERSE_ID) {
     if(!options.worldDbV2)throw new Error('WorldDB V2 source, date and seed are required')
+    if(options.worldDbV2.activeCompetitionIds){
+      const { createWorldDbV2Universe } = await import('./WorldDbV2Universe')
+      return createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.worldDbV2.activeCompetitionIds,options.userCoachCreation)
+    }
     const { createWorldDbV2Game } = await import('./WorldDbV2Game')
     return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
   }

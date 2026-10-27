@@ -1,0 +1,16 @@
+{
+  "saveVersion": 4,
+  "save": "artifacts\\certified-universe.json",
+  "saveSha256": "bfd431aa8e4ce0bb49138e77921280f895ac81bfae9d3154b67bbb54f8d7b794",
+  "saveBytes": 188025179,
+  "compressedSave": "certified-universe.save.json.gz",
+  "compressedSha256": "fa9dc9d2cf838ede298241722c3a7b2ea449a9f1baa246771b7b072cd8ba6820",
+  "executable": "artifacts/bdm.exe",
+  "executableSha256": "e30d22cf6dc88649fcb1ea9491890fc85f5df98d493a5a0ae73d311e9ba0744b",
+  "nativeProfile": "worlddb-v2-05-native-1793099982438",
+  "nativeProof": "windows-full-universe.json",
+  "firstSeasonGames": 1297,
+  "nextSeasonGames": 35,
+  "competitions": 4,
+  "clubs": 70
+}
