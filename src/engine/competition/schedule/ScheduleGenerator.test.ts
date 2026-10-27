@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createCompetition } from '@/domain/competition'
+import { createCompetition, parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { defaultLeagueCompetitionRules } from '@/domain/competition'
 import { addDays } from '@/domain/date'
 import { type Game } from '@/domain/game'
@@ -8,6 +8,7 @@ import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateWorld } from '@/engine/world'
+import { areRegularSeasonGamesComplete } from '../WorldCompetitionPostseason'
 
 import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from './index'
 
@@ -159,6 +160,35 @@ describe('ScheduleGenerator', () => {
 
     expect(() => generateRoundRobinSchedule({ world: oneTeamWorld, seasonId: season.id })).toThrow(RangeError)
     expect(() => generateRoundRobinSchedule({ world: oddTeamWorld, seasonId: season.id })).toThrow(RangeError)
+  })
+
+  it('schedules a verified odd-team round robin with byes and completes only after every game', () => {
+    const { world, competition, season } = createGeneratedWorld()
+    const teamIds = competition.participantTeamIds.slice(0, 7)
+    const format = parseWorldCompetitionFormatDocument({
+      schema_version: '1.0', competition_id: competition.id, competition_season_id: 'test:odd-edition', season_label: 'test', status: 'COMPLETE',
+      variants: [{ key: 'MAIN', nodes: [{ key: 'REGULAR', node_type: 'STAGE', role: 'REGULAR_SEASON', team_count: 7, pairing: { type: 'ROUND_ROBIN', meetings_per_pair: 2 }, opponent_scope: { type: 'ALL_STAGE' } }], edges: [] }],
+      sources: [{ url: 'https://example.com/test-fixture', type: 'SECONDARY' }],
+    })
+    const oddSeason = createSeason({ ...season, participantTeamIds: teamIds, worldCompetitionFormat: format })
+    const oddWorld = recreateWorld(world, { seasons: [oddSeason] })
+    const games = generateRoundRobinSchedule({ world: oddWorld, seasonId: season.id, daysBetweenRounds: 4 })
+    const rounds = groupByDate(games)
+    expect(games).toHaveLength(42)
+    expect(rounds).toHaveLength(14)
+    expect(rounds.every(round => round.length === 3 && new Set(round.flatMap(game => [game.homeTeamId, game.awayTeamId])).size === 6)).toBe(true)
+    expect(new Set(games.map(game => game.id)).size).toBe(42)
+    for (const teamId of teamIds) {
+      expect(rounds.filter(round => !round.some(game => game.homeTeamId === teamId || game.awayTeamId === teamId))).toHaveLength(2)
+      for (const opponent of teamIds.filter(id => id !== teamId)) {
+        const pair = games.filter(game => [game.homeTeamId, game.awayTeamId].includes(teamId) && [game.homeTeamId, game.awayTeamId].includes(opponent))
+        expect(pair).toHaveLength(2)
+        expect(pair[0]!.homeTeamId).toBe(pair[1]!.awayTeamId)
+      }
+    }
+    const completed: Game[] = games.map(game => ({ ...game, status: 'completed', result: { homeScore: 80, awayScore: 70 } }))
+    expect(areRegularSeasonGamesComplete(recreateWorld(oddWorld, { games: completed.slice(1) }), season.id, 'REGULAR')).toBe(false)
+    expect(areRegularSeasonGamesComplete(recreateWorld(oddWorld, { games: completed }), season.id, 'REGULAR')).toBe(true)
   })
 
   it('fails explicitly for a missing season', () => {

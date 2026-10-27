@@ -147,7 +147,7 @@ function requireProfilePerson(person: WorldDbGameBootstrapSliceV1['persons'][num
 }
 
 function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, meetingsPerPair: number): Game[] {
-  const expectedRounds = (teamCount - 1) * meetingsPerPair
+  const expectedRounds = (teamCount - 1 + teamCount % 2) * meetingsPerPair
   const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
   if (games.length !== expectedGames) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedGames} games; found ${games.length}`)
   const rounds = new Map<string, Game[]>()
@@ -159,7 +159,7 @@ function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, mee
   }
   if (rounds.size !== expectedRounds) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedRounds} rounds; found ${rounds.size}`)
   for (const [date, round] of rounds) {
-    if (round.length !== teamCount / 2 || new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== teamCount) throw new RangeError(`RealWorldSpain round ${date} is incomplete or contains a duplicate team`)
+    if (round.length !== Math.floor(teamCount / 2) || new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== 2 * Math.floor(teamCount / 2)) throw new RangeError(`RealWorldSpain round ${date} is incomplete or contains a duplicate team`)
   }
   for (const pair of pairs.values()) {
     if (pair.length !== meetingsPerPair || (meetingsPerPair === 2 && (pair[0]!.homeTeamId !== pair[1]!.awayTeamId || pair[0]!.awayTeamId !== pair[1]!.homeTeamId))) throw new RangeError('RealWorldSpain round-robin schedule has an incomplete or unbalanced matchup')

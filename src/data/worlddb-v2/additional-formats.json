@@ -1,0 +1,187 @@
+[
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:BRA:nbb",
+    "competition_season_id": "edition:BRA:nbb:2026",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "Canonical competition and season IDs are reused from the B04 production seed manifest. Article 99 relegates the bottom two Classification-phase teams to Liga Ouro in the following season. The concrete target season is not linked because no canonical ID for that later edition is currently available. International qualification remains undeclared because its slots and targets are not sufficiently concrete here. Execution binding: hosting priority HIGHER_SEED, verified in the same official regulation Article 90; numbered WINNER references address predecessor fixture order. Fictional PBM population, not historical rosters or official dates. Cross-competition relegation requires a coupled lower division and is not certified by a single-league career.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "NBB CAIXA 2025-26",
+        "nodes": [
+          {
+            "key": "CLASSIFICATION",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 20,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2
+            },
+            "opponent_scope": {
+              "type": "ALL_STAGE"
+            }
+          },
+          {
+            "key": "ROUND_OF_16",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-16",
+                  "2-15",
+                  "3-14",
+                  "4-13",
+                  "5-12",
+                  "6-11",
+                  "7-10",
+                  "8-9"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAAHH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": "QUARTERFINAL",
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_8",
+                  "WINNER_2-WINNER_7",
+                  "WINNER_3-WINNER_6",
+                  "WINNER_4-WINNER_5"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAAHH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": "SEMIFINAL",
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_4",
+                  "WINNER_2-WINNER_3"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAAHH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "specialized_type": "FINAL",
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAAHH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "CLASSIFICATION",
+            "to": "ROUND_OF_16",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 16
+          },
+          {
+            "from": "ROUND_OF_16",
+            "to": "QUARTERFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ],
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "LNB NBB 2025-26 Articles 94-96",
+              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+            }
+          ]
+        }
+      }
+    ],
+    "consequences": [
+      {
+        "variant_key": "MAIN",
+        "source_node": "CLASSIFICATION",
+        "selector": "RANK_RANGE",
+        "rank_from": 19,
+        "rank_to": 20,
+        "type": "RELEGATION",
+        "target_competition_id": "competition:BRA:liga-ouro"
+      }
+    ],
+    "sources": [
+      {
+        "url": "https://lnb.com.br/wp-content/uploads/2025/09/Regulamento-NBB-CAIXA-2025-2026-Versao-Final.pdf",
+        "type": "OFFICIAL",
+        "scope": "competition system, bracket, series lengths, hosting pattern, and Article 99 relegation to Liga Ouro"
+      },
+      {
+        "url": "https://lnb.com.br/noticias/com-20-clubes-nbb-caixa-2025-2026-tera-numero-recorde-de-participantes",
+        "type": "OFFICIAL",
+        "scope": "20 participating clubs"
+      }
+    ]
+  }
+]

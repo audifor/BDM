@@ -1,0 +1,190 @@
+{
+  "capabilities": {
+    "group_stages": {
+      "name": "Asignaciones por grupo y progresión entre grupos",
+      "contract": "La proyección V2 entrega una sola fase global. Los grupos y sus participantes deben provenir de relaciones verificadas; no se asignan por proximidad ni al azar.",
+      "existing": "WorldCompetitionRoundRobin y WorldDbCompetitionBundle representan partes de la estructura; la conexión al GameWorld V2 y la clasificación por grupo están pendientes."
+    },
+    "carryover": {
+      "name": "Arrastre selectivo entre fases",
+      "contract": "Conservar únicamente los resultados indicados por la regla al formar los nuevos grupos.",
+      "existing": "El formato puede describir carryover; la composición de la fase y sus resultados no está conectada al adaptador V2."
+    },
+    "aggregate": {
+      "name": "Eliminatoria a dos mangas y marcador agregado",
+      "contract": "Registrar las dos mangas, sede y resolución del empate agregado según la edición.",
+      "existing": "WorldCompetitionCalendar reserva mangas. La resolución de resultados agregados no está conectada a WorldCompetitionPostseason; reservar fechas no certifica la eliminatoria."
+    },
+    "odd_round_robin": {
+      "name": "Liga con número impar de clubes y descansos",
+      "contract": "Calendario de ida y vuelta con una jornada de descanso por equipo, sin crear un club ficticio.",
+      "existing": "El plan existente de descansos se conecta al generador de Game, validación de calendario, cierre de fase y calendario de siguiente edición. Certificado con pruebas sintéticas; no acredita reglas parciales ni una carrera nativa completa."
+    },
+    "fixed_schedule": {
+      "name": "Calendario fijo o matriz de encuentros",
+      "contract": "Consumir una matriz o calendario verificado para la edición y sus participantes.",
+      "existing": "WorldDbScheduleResolver resuelve asignaciones ya presentes; no demuestra por sí solo una matriz NBA/NBL ni su proyección desde clubes PBM."
+    },
+    "conferences": {
+      "name": "Asignación y clasificación por conferencia",
+      "contract": "Asignar cada club original a su conferencia y aplicar la clasificación y el cuadro de cada una.",
+      "existing": "Hay contratos de membresía y clasificación de conferencia; faltan la correspondencia PBM y la composición específica en el adaptador de carrera."
+    },
+    "classification": {
+      "name": "Política de clasificación y desempates de la edición",
+      "contract": "Conectar la secuencia verificada para esa competición; el perfil NBB no se aplica automáticamente a otras ligas.",
+      "existing": "Hay criterios simples y la miniliga 2/1 conectada para NBB. Los demás perfiles requieren su propia evidencia y enlace estructurado."
+    },
+    "female_projection": {
+      "name": "Proyección femenina y población compatible",
+      "contract": "Proyectar género de competición, clubes, jugadoras y mercado sin cambiar identidades.",
+      "existing": "Dominio y motores admiten género; la proyección V2 y la selección de agentes libres aún usan configuración masculina."
+    },
+    "source_participants": {
+      "name": "Plantilla o candidato de entrenador indispensable",
+      "contract": "Completar la población compatible con procedencia acreditada o una política de generación expresamente configurada.",
+      "existing": "La fuente original se conserva; el constructor actual exige al menos cinco jugadores válidos y un candidato original de entrenador por club."
+    },
+    "market_pool": {
+      "name": "Población compatible para validar el mercado",
+      "contract": "Disponer de agentes originales compatibles o de otra población autorizada; probar una operación real.",
+      "existing": "La selección doméstica reproducible está limitada a 60; país 0 no obtiene agentes mediante ese filtro. Un cero no demuestra ausencia mundial de jugadores."
+    },
+    "conditional_cup": {
+      "name": "Copa o condición que afecta a la liga",
+      "contract": "Conectar los resultados, calendarios y decisiones que condicionan clasificación o encuentros de la competición principal.",
+      "existing": "Existen autoridades para competiciones dependientes; la condición concreta y sus datos deben estar representados y conectados."
+    },
+    "tier_link": {
+      "name": "Ascenso, descenso y admisión entre divisiones",
+      "contract": "Enlazar ediciones y participantes de ambas divisiones y aplicar elegibilidad o licencias documentadas.",
+      "existing": "Existen autoridades de promoción y descenso; la carrera V2 selecciona una sola competición y no inventa participantes de otra división."
+    },
+    "draw_bracket": {
+      "name": "Sorteo y cuadro dependiente",
+      "contract": "Resolver un sorteo o un emparejamiento únicamente cuando sus condiciones y su autoridad estén acreditadas.",
+      "existing": "El bracket fijo resuelve cruces y ganadores explícitos; no deduce un cuadro sorteado ausente."
+    },
+    "source_rules": {
+      "name": "Campos reglamentarios o edición sin reconciliar",
+      "contract": "Completar los campos concretos que la propia fuente declara pendientes y verificar la edición.",
+      "existing": "Los documentos parciales siguen siendo investigación: ni su etiqueta ni reglas de otra liga completan los campos."
+    }
+  },
+  "competitions": {
+    "pbm:DYN_championnat:15": {
+      "dependencies": [
+        "aggregate",
+        "classification",
+        "tier_link"
+      ],
+      "detail": "Documento oficial ProA 2025-26 recuperado; falta exportación de formato y enlace de la final agregada. Licencia condiciona el ascenso."
+    },
+    "pbm:DYN_championnat:29": {
+      "dependencies": [
+        "group_stages",
+        "carryover",
+        "classification",
+        "draw_bracket",
+        "tier_link",
+        "source_rules"
+      ],
+      "detail": "NM1: dos grupos de 14 y fase con arrastre. Faltan cruces exactos de playoffs, desempates completos y sustituciones de ascenso."
+    },
+    "pbm:DYN_championnat:42": {
+      "dependencies": [
+        "group_stages",
+        "classification",
+        "draw_bracket",
+        "tier_link",
+        "source_participants",
+        "source_rules"
+      ],
+      "detail": "NM2: cuatro grupos de 14. Faltan sorteo y desempates; el club PBM 237 no tiene candidato original de entrenador en la selección."
+    },
+    "pbm:DYN_championnat:44": {
+      "dependencies": [
+        "fixed_schedule",
+        "conferences",
+        "classification",
+        "conditional_cup"
+      ],
+      "detail": "NBA: 30 clubes, 82 juegos y dos juegos condicionados por la Copa; falta proyectar calendario, asignaciones de conferencia y clasificación NBA verificadas."
+    },
+    "pbm:DYN_championnat:59": {
+      "dependencies": [
+        "classification",
+        "conditional_cup",
+        "tier_link",
+        "source_rules"
+      ],
+      "detail": "Primera FEB: 17 clubes, 34 jornadas y 32 partidos por club. Faltan enlace de desempates FEB y condiciones de Copa/elegibilidad.",
+      "connected_capabilities": [
+        "odd_round_robin"
+      ]
+    },
+    "pbm:DYN_championnat:69": {
+      "dependencies": [
+        "female_projection",
+        "aggregate",
+        "classification",
+        "conditional_cup",
+        "tier_link",
+        "source_rules"
+      ],
+      "detail": "LF Endesa: 16 clubes, cuartos y semifinales a dos mangas. Art.84.2 FEB está documentado pero no estructurado en este contrato; Copa requiere corte intermedio."
+    },
+    "pbm:DYN_championnat:78": {
+      "dependencies": [
+        "fixed_schedule",
+        "classification",
+        "source_participants",
+        "source_rules"
+      ],
+      "detail": "NBL 2026-27 es parcial: faltan calendario, desempates y confirmación de postseason. El club PBM 1623 tiene cuatro jugadores válidos seleccionados."
+    },
+    "pbm:DYN_championnat:93": {
+      "dependencies": [
+        "classification",
+        "draw_bracket",
+        "conditional_cup",
+        "tier_link",
+        "source_rules"
+      ],
+      "detail": "Argentina: 19 clubes, 36 partidos por club. La fuente no acredita cruces exactos, sede completa de series ni todos los desempates/ascensos.",
+      "connected_capabilities": [
+        "odd_round_robin"
+      ]
+    },
+    "pbm:DYN_championnat:94": {
+      "dependencies": [
+        "fixed_schedule",
+        "conferences",
+        "classification",
+        "conditional_cup",
+        "source_participants",
+        "source_rules"
+      ],
+      "detail": "G League: 31 clubes originales y cero jugadores activos seleccionados. Faltan también asignaciones y reglas de calendario y postseason 2026-27."
+    },
+    "pbm:DYN_championnat:112": {
+      "dependencies": [
+        "group_stages",
+        "aggregate",
+        "classification",
+        "tier_link",
+        "source_rules"
+      ],
+      "detail": "Segunda FEB: dos grupos de 14 y eliminatorias agregadas; dos PDF oficiales discrepan sobre el número de descensos."
+    },
+    "pbm:DYN_championnat:171": {
+      "dependencies": [
+        "group_stages",
+        "classification",
+        "market_pool",
+        "source_rules"
+      ],
+      "detail": "Sudamericana: grupos sucesivos y Final Four; faltan desempates/entrada y confirmación de sede. El filtro doméstico para país 0 seleccionó cero agentes."
+    }
+  }
+}

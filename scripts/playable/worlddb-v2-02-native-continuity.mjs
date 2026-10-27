@@ -2,6 +2,7 @@
 import {copyFileSync,existsSync,mkdirSync,readFileSync,readdirSync,writeFileSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {connect,launchApp,sleep} from './cdp.mjs'
+import {resolveNativeMedical,resolveNativePress} from './worlddb-v2-native-decisions.mjs'
 const root=resolve('.worlddb-v2')
 mkdirSync(root,{recursive:true})
 const run=readdirSync(root).filter(n=>n.startsWith('continuity-02-')).sort().reverse().find(n=>existsSync(join(root,n,'continued.json')))
@@ -18,9 +19,10 @@ const truth=v=>{const x=structuredClone(v);x.staffCareerRuntime.governanceDecisi
 const same=(a,b)=>JSON.stringify(truth(a))===JSON.stringify(truth(b))
 let app,c,checkpoint;const steps=[]
 async function launch(){app=await launchApp(resolve('artifacts/bdm.exe'),9546,{BDM_SAVE_PROFILE:profile,WEBVIEW2_USER_DATA_FOLDER:join(out,'webview')});c=await connect(app.page.webSocketDebuggerUrl);await c.waitFor("document.body?.innerText.includes('NEW GAME')",{timeout:60000});await c.click('button','=CONTINUE');await c.waitFor("!!document.querySelector('[aria-label=\"Abrir menú de inicio BDM\"]')",{timeout:60000})}
-async function open(name){await c.click('button','Abrir menú de inicio BDM');await c.click('button','=Partidos y competición');await c.click('button','='+name);await sleep(800)}
-async function day(){const before=await c.evaluate("document.querySelector('.ng-system-bar__date').innerText");await open('MATCH');await c.click('button','AVANZAR UN DÍA');await c.waitFor(`!!document.querySelector('.ng-system-bar__date')&&document.querySelector('.ng-system-bar__date').innerText!==${JSON.stringify(before)}`,{timeout:120000})}
-async function save(name){await c.click('button','Abrir menú de inicio BDM');await c.click('button','GUARDAR PARTIDA');await c.waitFor("document.body?.innerText.includes('Partida guardada.')",{timeout:60000});await c.click('button','Abrir menú de inicio BDM');const value=JSON.parse(readFileSync(savePath,'utf8'));writeFileSync(join(out,name+'.json'),JSON.stringify(value));return value}
+async function menu(){await c.click('button','Abrir menú de inicio BDM');await sleep(300);if(!await c.locate('button','GUARDAR PARTIDA')){await c.click('button','Abrir menú de inicio BDM');await sleep(300)}}
+async function open(name,group='Partidos y competición'){await menu();await c.click('button','='+group);await c.click('button','='+name);await sleep(800)}
+async function day(){await resolveNativeMedical(c,open,out);await resolveNativePress(c,open,out);const before=await c.evaluate("document.querySelector('.ng-system-bar__date').innerText");await open('MATCH');await c.click('button','AVANZAR UN DÍA');await c.waitFor(`!!document.querySelector('.ng-system-bar__date')&&document.querySelector('.ng-system-bar__date').innerText!==${JSON.stringify(before)}`,{timeout:120000})}
+async function save(name){await menu();await c.click('button','GUARDAR PARTIDA');await c.waitFor("document.body?.innerText.includes('Partida guardada.')",{timeout:60000});await c.click('button','Abrir menú de inicio BDM');const value=JSON.parse(readFileSync(savePath,'utf8'));writeFileSync(join(out,name+'.json'),JSON.stringify(value));return value}
 async function step(name,fn){try{const detail=await fn();await c.screenshot(join(out,name+'.png'));steps.push({name,status:'PASS',detail});console.log('PASS '+country+' '+name)}catch(e){steps.push({name,status:'FAIL',error:String(e),text:await c.bodyText().catch(()=>'<closed>')});throw e}finally{writeFileSync(join(out,'acceptance.json'),JSON.stringify({profile,source,savePath,steps,consoleErrors:c?.consoleErrors??[]},null,2))}}
 try{
  await launch()

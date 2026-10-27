@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "playerId": "pbm:DYN_joueur:100062871",
+  "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0011",
+  "date": "2025-07-08",
+  "line": {
+    "playerId": "pbm:DYN_joueur:100062871",
+    "teamId": "pbm:DYN_equipe:10774",
+    "opponentTeamId": "pbm:DYN_equipe:4036",
+    "isHome": true,
+    "started": true,
+    "stats": {
+      "playerId": "pbm:DYN_joueur:100062871",
+      "secondsPlayed": 603,
+      "points": 0,
+      "fieldGoalsMade": 0,
+      "fieldGoalsAttempted": 1,
+      "twoPointMade": 0,
+      "twoPointAttempted": 0,
+      "threePointMade": 0,
+      "threePointAttempted": 1,
+      "freeThrowsMade": 0,
+      "freeThrowsAttempted": 0,
+      "offensiveRebounds": 0,
+      "defensiveRebounds": 0,
+      "rebounds": 0,
+      "assists": 0,
+      "steals": 0,
+      "blocks": 0,
+      "turnovers": 0,
+      "foulsCommitted": 0,
+      "plusMinus": -6
+    },
+    "shotZones": {
+      "provenance": "OBSERVED",
+      "counts": {
+        "DEEP": {
+          "made": 0,
+          "attempted": 1
+        }
+      }
+    }
+  }
+}

@@ -302,7 +302,7 @@ function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: Re
 
 function regularSeasonRoundCount(world: GameWorld, season: Season, participantCount: number): number {
   const meetingsPerPair = world.competitions[season.competitionId]!.rules.schedule.meetingsPerPair
-  return (participantCount - 1) * meetingsPerPair
+  return (participantCount - 1 + participantCount % 2) * meetingsPerPair
 }
 
 function nextSeasonIds(world: GameWorld, count: number) { let ordinal = 1; const ids = []; while (ids.length < count) { const id = seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`); if (world.seasons[id] === undefined) ids.push(id); ordinal += 1 } return ids }

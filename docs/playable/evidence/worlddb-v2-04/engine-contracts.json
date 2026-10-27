@@ -1,0 +1,65 @@
+{
+  "scope": "Inspected existing contracts, not a claim that documentary schemas implement all corresponding native seasons.",
+  "contracts": [
+    {
+      "family": "round_robin",
+      "path": "src/engine/competition/WorldCompetitionRoundRobin.ts",
+      "worktree_sha256": "fd4fa734e4bcd5f535b18e9c80383b2450826db08b8a435abd4ed70dc95d19c8",
+      "contract": "Existing deterministic pairings, including byes; ALL_STAGE scope. Native career projection remains single regular stage and two meetings."
+    },
+    {
+      "family": "fixed_bracket",
+      "path": "src/engine/competition/WorldCompetitionFixedBracket.ts",
+      "worktree_sha256": "04a272834502c6a2940d5b6d7424f52df8f3438900f74dae737470c0d9c569ea",
+      "contract": "Explicit seed pairs, named outcomes, numbered predecessor winners and an unambiguous final; no unknown paths inferred."
+    },
+    {
+      "family": "series",
+      "path": "src/engine/competition/WorldCompetitionSeries.ts",
+      "worktree_sha256": "44a77b854c3f9265572f8ab54964d32dfe11d22189d444061ea3d5907ba85df5",
+      "contract": "Explicit best-of, wins required and hosting pattern."
+    },
+    {
+      "family": "single_game",
+      "path": "src/engine/competition/WorldCompetitionSingleElimination.ts",
+      "worktree_sha256": "ff499b56543b72d3820c621a849087b0c72810c3a51b5ebc959790182b72ce07",
+      "contract": "Existing single-game realization and dependent qualification contracts."
+    },
+    {
+      "family": "calendar",
+      "path": "src/engine/competition/WorldCompetitionCalendar.ts",
+      "worktree_sha256": "b91497b992cb817acc902ab1af02f1e539dcee36001b917bb7dc987f7ddbb108",
+      "contract": "Reserves windows for series/single/aggregate; reserving aggregate legs does not realize aggregate outcomes."
+    },
+    {
+      "family": "postseason",
+      "path": "src/engine/competition/WorldCompetitionPostseason.ts",
+      "worktree_sha256": "335db860f815b93aaee8807cab8b2d5a9e1cc0bb0c99478c064c95a99ec86f8f",
+      "contract": "Realizes SERIES and SINGLE_GAME; regular qualification from a global standings projection. Conference-qualified NBA progression is not connected here."
+    },
+    {
+      "family": "schedule_resolver",
+      "path": "src/engine/competition/WorldDbScheduleResolver.ts",
+      "worktree_sha256": "566300f9845fc2a757c19394ca0ed348101b9a5e7701e4127a7c6cd51cfca646",
+      "contract": "Read-only B04 allocation/timing resolver; not an 82-game NBA schedule generator."
+    },
+    {
+      "family": "nba_prototype",
+      "path": "src/engine/competition/NbaLikeEcosystem.test.ts",
+      "worktree_sha256": "7aa7a30c65fd102eb5141a5ec0912ecbb3a6966b509713f9f566efcbc3ea8ea7",
+      "contract": "Existing NBA-like ecosystem test uses four franchises. This is not evidence of a 30-team NBA season authority."
+    },
+    {
+      "family": "ncaa_schedule",
+      "path": "src/engine/competition/schedule/NcaaLikeSchedule.ts",
+      "worktree_sha256": "d0a3347ef9828a0e2ec29ac5675b1d8a1895f6c7eb9b305ab6108e4ef8a92413",
+      "contract": "Existing conference schedule contract requires actual memberships; the 353-club PBM umbrella does not provide a verified projection of these assignments."
+    },
+    {
+      "family": "v2_repository",
+      "path": "src/app/game/WorldDbV2Game.ts",
+      "worktree_sha256": "5556b7043cd5206f9ded3dce86ae9e7d2c8bb6cc5cb7d1a6ee9adcfea0d112e0",
+      "contract": "PBM projection uses one selected competition; repository returns no invented group assignments, source fixtures or official calendar slots."
+    }
+  ]
+}

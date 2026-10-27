@@ -1,0 +1,85 @@
+
+> bdm@0.1.0 tauri
+> tauri build --debug --no-bundle --config src-tauri/tauri.worlddb-v2.conf.json
+
+node.exe :         Info Looking up installed tauri packages to check mismatched versions...
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (        Info Lo...hed versions...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+     Running beforeBuildCommand `npm run build`
+
+> bdm@0.1.0 build
+> tsc -b && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1444 modules transformed.
+Export "updateGameWorld" of module "src/domain/world/GameWorld.ts" was reexported through module
+"src/domain/world/index.ts" while both modules are dependencies of each other and will end up in different chunks by
+current Rollup settings. This scenario is not well supported at the moment as it will produce a circular dependency
+between chunks and will likely lead to broken execution order.
+Either change the import in "src/app/game/WorldDbV2Game.ts" to point directly to the exporting module or reconfigure
+"output.manualChunks" to ensure these modules end up in the same chunk.
+rendering chunks...
+computing gzip size...
+dist/index.html                                               0.42 kB │ gzip:     0.28 kB
+dist/assets/large-schedule-O0m2Gq_b.png                       4.13 kB
+dist/assets/large-match-BuiQvtmB.png                          4.34 kB
+dist/assets/large-games-D8eeE_3A.png                          4.71 kB
+dist/assets/ibm-plex-sans-400-CDDApCn2.woff2                 22.59 kB
+dist/assets/ibm-plex-sans-700-Bxkt5Cjx.woff2                 22.83 kB
+dist/assets/barlow-semi-condensed-600-CzIuwFFH.woff2         22.91 kB
+dist/assets/barlow-semi-condensed-700-B9GOc3VQ.woff2         23.20 kB
+dist/assets/ibm-plex-sans-500-6ng42L7E.woff2                 24.18 kB
+dist/assets/ibm-plex-sans-600-CuJfVYMP.woff2                 24.25 kB
+dist/assets/roboto-flex-latin-wght-normal-n-dP9qr2.woff2     34.32 kB
+dist/assets/geist-sans-400-w2QFeScy.woff2                    39.98 kB
+dist/assets/geist-sans-600-DkaAkULY.woff2                    40.95 kB
+dist/assets/geist-sans-500-BO_fXYbm.woff2                    40.96 kB
+dist/assets/geist-sans-700-DORQXWRF.woff2                    41.08 kB
+dist/assets/news-B9YDWN3z.png                                67.67 kB
+dist/assets/trade-center-DGmO9WoG.png                        69.97 kB
+dist/assets/schedule-DUfxb4oj.png                            70.55 kB
+dist/assets/training-BZtmn1IA.png                            71.62 kB
+dist/assets/league-C-EcSIf5.png                              74.38 kB
+dist/assets/roster-CcWIbQDO.png                              74.49 kB
+dist/assets/draft-t9OaySFf.png                               74.62 kB
+dist/assets/settings-Cqvc3fTk.png                            74.62 kB
+dist/assets/team-BHi1SGcs.png                                74.66 kB
+dist/assets/tactics-MIH2qZjK.png                             74.76 kB
+dist/assets/finances-D0EPAnlF.png                            75.21 kB
+dist/assets/inbox-DYdxkmjT.png                               76.07 kB
+dist/assets/barlow-condensed-500-CCxn3Epz.ttf                81.45 kB
+dist/assets/home-fZD-yIog.png                                81.54 kB
+dist/assets/scouting-DECh5wG6.png                            82.27 kB
+dist/assets/barlow-condensed-600-RZZ47rCX.ttf                86.64 kB
+dist/assets/barlow-condensed-700-CQj3XIHL.ttf                87.12 kB
+dist/assets/GT-America-Regular-DH2A7q1G.otf                  92.29 kB
+dist/assets/GT-America-Light-Dxg2FYRX.otf                    93.32 kB
+dist/assets/GT-America-Black-CwsbG6iQ.otf                    96.50 kB
+dist/assets/GT-America-Bold-CpjBHetp.otf                     97.34 kB
+dist/assets/bdm-logo-DLXYf8lX.png                           125.70 kB
+dist/assets/inter-tight-400-BBdFBZlZ.ttf                    298.26 kB
+dist/assets/inter-tight-500-SB3qK8yR.ttf                    301.47 kB
+dist/assets/inter-tight-600-BEW8SBpr.ttf                    302.21 kB
+dist/assets/inter-tight-700-dLsL6w-P.ttf                    302.81 kB
+dist/assets/matchSimulation.worker-Bg5wzGQP.js              888.68 kB
+dist/assets/player-portrait-placeholder-BuPKrK_4.png      1,042.87 kB
+dist/assets/desktop-night-city-CnfJWNS3.png               1,280.80 kB
+dist/assets/match-court-reference-Ch4Xp5-H.png            1,920.96 kB
+dist/assets/index-rrAoG1MN.css                            1,435.37 kB │ gzip:   210.15 kB
+dist/assets/WorldDbV2Game-BK5wmVkJ.js                       291.94 kB │ gzip:    27.22 kB
+dist/assets/index-wVOTE4o9.js                             4,916.09 kB │ gzip: 1,347.25 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking:
+https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 20.02s
+   Compiling bdm v0.1.0 (C:\BDM-worktrees\worlddb-v2-04\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.49s
+       Built application at: C:\BDM-worktrees\worlddb-v2-01\src-tauri\target\debug\bdm.exe

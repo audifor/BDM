@@ -1,0 +1,458 @@
+
+ RUN  v4.1.10 C:/BDM-worktrees/worlddb-v2-04
+
+ ✓ src/domain/world/market.test.ts > keeps retired, rostered and scheduled/active contract Players out of the free-agent query 1226ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > returns eight deterministic zero-game entries for a fully scheduled season 60ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > calculates a single completed game while retaining zero-game teams 24ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > accumulates home and away scores across multiple results 30ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > ranks by wins, point difference, points for, then TeamId 27ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > consumes the competition tiebreaker order 29ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > filters games from another season and ignores scheduled games 20ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > does not mutate the source world and is deterministic 16ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > fails explicitly for a missing season 12ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 jsonEqual > answers exactly what comparing JSON.stringify outputs answers 52ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 session event log > appends in place for the newest state and never changes what an older state sees 1ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 session event log > forks when an older state appends, and trims what a discarded branch wrote 1ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 session event log > publishes exact, sealed histories and copies on append outside a session 1ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 carried action history views > match the whole-history scans under any sequence of appends and replacements 35ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 execution session > FAST and FULL produce the identical result, with full diagnostics 860ms
+ ✓ src/engine/match-next/execution/execution.test.ts > ME-LOCK1.2 execution session > never lets a state that left the session change afterwards 63ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > integrates the partial generation, scheduling, simulation, and application pipeline 87ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > derives valid final standings after simulating a full season 715ms
+ ✓ src/engine/competition/standings/Standings.test.ts > Standings > keeps every entry internally consistent 16ms
+ ✓ src/engine/market/FreeAgentMarketTruth.test.ts > F3 · hidden market truth of free agents > the opening pool is identified, unsigned, deterministic and the only population with a market truth 594ms
+ ✓ src/engine/market/FreeAgentMarketTruth.test.ts > F3 · hidden market truth of free agents > expected terms are the canonical market terms of the player and the willingness varies: nothing is tuned 0ms
+ ✓ src/engine/market/FreeAgentMarketTruth.test.ts > F3 · hidden market truth of free agents > is idempotent and never overwrites an existing truth 0ms
+ ✓ src/engine/market/FreeAgentMarketTruth.test.ts > F3 · hidden market truth of free agents > serves a released player the manager contacts: the truth is derived on the day the answer is due, and only for the manager's own contacts 53ms
+ ✓ src/save/FinancePersistence.test.ts > CF1 finance persistence > round-trips the complete finance surface through Save V4 365ms
+ ✓ src/save/FinancePersistence.test.ts > CF1 finance persistence > loads a pre-CF1 Save V4 payload with empty finance collections 270ms
+ ✓ src/engine/staff/StaffCareerAutonomyEngine.test.ts > StaffCareerAutonomy professional relationship appraisal > uses only directed leadership professional facets; unrelated and legacy profiles stay neutral 532ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > does not impose a nominal SIMULTANEOUS_PLAYERS limit on the real Training owner 78ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > does not impose a nominal SEATS limit on the real Training owner 33ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > preserves nominal SIMULTANEOUS_PLAYERS without treating roster size as comparable operational demand 29ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > preserves nominal SEATS without treating roster size as comparable operational demand 20ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > keeps missing capacity unknown and uses the approved explicit individual assignment as one participant 29ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > shows timetable evidence at 10:30 without allocating a winner 23ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > shows timetable evidence at 11:00 without allocating a winner 24ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > shows timetable evidence at 14:00 without allocating a winner 21ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > observes a real interval crossing midnight without changing either date 22ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > removes shared-use evidence when Team rights expire, retaining the own-team agenda and no Organization inheritance 24ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > does not equate disjoint component rights with access to the same resource 20ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > projects FULL from canonical physical evidence without changing Training 15ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > projects LIMITED from canonical physical evidence without changing Training 17ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > projects OUT_OF_SERVICE from canonical physical evidence without changing Training 21ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > shows scoped work and restoration without spreading closure to another component 16ms
+ ✓ src/app/facilities/FacilityCapacityReadModel.test.ts > BS17D-C factual capacity context without an allocation policy > is reconstructed after Save/reload and repeated reads never mutate any world authority 50ms
+ ✓ src/ui/dataGrid/customView.persistence.test.ts > BDMDataGrid / custom view visibility persistence > hiding a column, saving a custom view, changing config, and reapplying the view keeps the column hidden 231ms
+ ✓ src/ui/dataGrid/customView.persistence.test.ts > BDMDataGrid / custom view visibility persistence > persists the visible (non-hidden) column set to localStorage, not the raw hidden-inclusive order 40ms
+ ✓ src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx > manager selection and confirmation produce a real BS15 visit, persisted demonstration and visible executed result 362ms
+ ✓ src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx > canceling a selected but unconfirmed visit writes no event; Facilities navigation writes no simulation state 176ms
+ ✓ src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx > outage affects only the demonstration; an explicit manager restoration retry completes the same visit activity 149ms
+ ✓ src/ui-ng/applications/recruiting/RecruitingVisitControl.test.tsx > visit without demonstration is optional and unknown context never creates a verified completion 84ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > processes a Contract expense event atomically into commitment, expense, payable and ledger 73ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > reprocesses the same Contract event idempotently and settles without a second expense 45ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > rejects a conflicting replay instead of changing an existing financial consequence 57ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > rejects invalid Contract references, Organization crossings and bad ledger mappings without partial state 45ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > supports commitment-only Contract events without inventing payroll schedules 36ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > processes Competition entitlement into revenue, receivable and cash settlement exactly once 7ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > rejects Competition events outside the Competition authority boundary 1ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > rejects a Competition source entity that does not match its Competition dimension 1ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > records owner funding as equity/cash and never as revenue or operating result 3ms
+ ✓ src/domain/finance/EconomicEventAdapters.test.ts > CF4 economic event adapters > reconciles recognition provenance and rejects an orphan receivable 4ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > non-NCAA ecosystem produces no Recruiting Staff advisory execution 44ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > NCAA + valid recruiting role + advisory prospectIdentification responsibility produces a deterministic outcome 12ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > prospectIdentification recommends a target from the existing bounded ranking, not on the board yet 11ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > recruitingPriorities operates only on the bounded existing board context, and acceptance updates only through addRecruitingBoardEntry 8ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > userControlled produces no Staff-authored recruiting outcome 6ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > does not leak hidden Player truth: recommendation is unaffected by directly mutated ratings unless OrganizationKnowledge changes 7ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > prospectIdentification actually consumes its quality band: high quality always selects the top-ranked target, low quality can select deeper in the ranking 71ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > progressRecruitingAdvisories > prospectIdentification band selection is deterministic: same world + same seed produces the same recruit 5ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > recruitingPriorities canonical ranking/valuation consumption (Wave 4B review Blocker 3B) > uses the canonical rankAiRecruitingTargets ranking, not just raw positional needs: two same-position/need board entries with different organizational valuation can receive different recommended priorities 4ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > recruitingPriorities canonical ranking/valuation consumption (Wave 4B review Blocker 3B) > hidden Player truth mutation without an OrganizationKnowledge change does not alter the priority recommendation 6ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > recruitingPriorities canonical ranking/valuation consumption (Wave 4B review Blocker 3B) > an OrganizationKnowledge change that ranks a recruit #1 via the canonical valuation path upgrades its recommended priority 10ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > recruitingPriorities canonical ranking/valuation consumption (Wave 4B review Blocker 3B) > quality changes the preferred band threshold deterministically: the same rank position reads a stricter priority under high quality than under low quality 8ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > recruitingPriorities canonical ranking/valuation consumption (Wave 4B review Blocker 3B) > does not recommend a change when the current board priority already matches the recommendation 6ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > acceptRecruitingRecommendation > accepting a prospectIdentification recommendation calls the canonical board operation 4ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > acceptRecruitingRecommendation > accepting a recruitEvaluation recommendation consumes canonical capacity/history through the existing action boundary 10ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > acceptRecruitingRecommendation > a stale recommendation (recruit no longer open) fails atomically with no partial mutation 7ms
+ ✓ src/engine/recruiting/RecruitingAdvisory.test.ts > acceptRecruitingRecommendation > never mutates interest/capacity/history/offers directly for recruitEvaluation acceptance — only through the canonical boundary (capacity check) 6ms
+ ✓ src/save/FinancialAuthorizationPersistence.test.ts > BS16D authorization persistence > round-trips an ACTIVE authorization with its period, currency, scope and provenance 53ms
+ ✓ src/save/FinancialAuthorizationPersistence.test.ts > BS16D authorization persistence > preserves available headroom when the authorization is saved together with an OPEN reservation 15ms
+ ✓ src/save/FinancialAuthorizationPersistence.test.ts > BS16D authorization persistence > returns an equivalent decision after load and never duplicates the authorization or the reservation on replay 17ms
+ ✓ src/save/FinancialAuthorizationPersistence.test.ts > BS16D authorization persistence > loads pre-BS16D payloads without budget collections as unprovisioned authorization 17ms
+ ✓ src/save/FinancialAuthorizationPersistence.test.ts > BS16D authorization persistence > persists authorization facts without persisting derived headroom 3ms
+ ✓ src/ui-ng/workspace/WorkspaceErrorBoundary.test.tsx > Courtside error containment > shows a recoverable application error instead of blanking the BDM desktop 113ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period derivation > derives the fiscal year containing the date from the profile start month 4ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period derivation > identifies a period deterministically from the organization and the fiscal-year boundary 1ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period authority > gives a preseason career a valid fiscal period and an active authorization 34ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period authority > keeps one period for one fiscal year and one period per fiscal year, never overlapping 9ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period authority > preserves a pre-BS16G period, reuses it for its fiscal year and never duplicates or rewrites it 4ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period authority > round-trips the fiscal periods through Save V4 without duplicating or reinterpreting them 35ms
+ ✓ src/domain/finance/FinanceFiscalPeriodAuthority.test.ts > BS16G fiscal period authority > keeps a season-anchored world truthful when the career date is inside the season 4ms
+ ✓ src/save/CanonicalFinanceStack.integration.test.ts > BS16 canonical stack integration (A→E) > runs foundation, authorization, decision, reservation, save/load and activation without duplicate state 69ms
+ ✓ src/save/CanonicalFinanceStack.integration.test.ts > BS16 canonical stack integration (A→E) > refuses to overwrite existing canonical currency when the foundation is provisioned twice 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > initializes with empty responsibility collections by default 20ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > rejects a responsibility whose holder is not eligible for the role 5ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > accepts a valid delegated assignment to an eligible scout 4ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > rejects two Responsibility rows of the same kind for the same team 4ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > rejects a delegation outcome referencing a missing Responsibility 5ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > regression: a real StaffPerson can be assigned a non-legacy canonical StaffRoleId (e.g. teamDoctor) and hold a Responsibility that depends on it 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > GameWorld responsibilities > accepts headCoach as the canonical TeamStaffAssignment authority 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > ensureResponsibilityStructure > backfills one Responsibility per team per RESPONSIBILITY_KIND, defaulting to userControlled and vacant 10ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > ensureResponsibilityStructure > is idempotent: running twice produces no additional rows 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > ensureResponsibilityStructure > is a no-op when nothing is missing 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > ensureResponsibilityStructure > preserves an existing delegated assignment untouched 4ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > derives capacity/utilization purely from role assignment when no responsibilities are held 2ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > increases total capacity used as more responsibilities are delegated to the same staff member 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > does not charge inert legacy responsibility rows to workload 3ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > detects overload once capacity used exceeds the seniority-derived limit 2ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > does not persist workload as stored state — it is absent from GameWorld collections 4ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > regression: cannot spoof capacity/seniority — the role is always resolved from the staff member's own active TeamStaffAssignment, never caller-supplied 2ms
+ ✓ src/domain/world/ResponsibilityPersistence.test.ts > calculateStaffWorkload > reports zero capacity for a staff member with no active TeamStaffAssignment, rather than accepting a caller-supplied role 3ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > completes a direct command without a composer 2ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > builds a parameterized command through property, value, scope, and confirmation 1ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > resolves dynamic target options from permitted application context 1ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > produces a handoff after a composition without navigation 0ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > keeps branching in its definition and discards abandoned branch selections on back 0ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > rejects invalid transitions, unavailable actions, and invalid options explicitly 1ms
+ ✓ src/app/entityActions/ComposerEngine.test.ts > generic ComposerEngine > cancels without output and never mutates prior state or GameWorld 75ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > accepts decimal, zero and partial gains but rejects invalid values 2ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > uses a deterministic, increasing attribute cost curve 0ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > consumes sufficient XP sequentially, preserves remainder and never mutates inputs 1ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > converts normalized global progress into development points without altering RPG unlock state 0ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > derives deterministic match XP for both outcomes, with close hard games more formative 1ms
+ ✓ src/engine/coach/CoachExperience.test.ts > Coach experience > awards each involved coach once at result application and tolerates legacy worlds without profiles 71ms
+ ✓ src/engine/media/MediaEngine.test.ts > MediaEngine > does not create media for an ordinary game but creates one for a relevant final 26ms
+ ✓ src/engine/media/MediaEngine.test.ts > MediaEngine > uses former-club narrative context deterministically and deduplicates it 7ms
+ ✓ src/engine/media/MediaEngine.test.ts > MediaEngine > records a response once, allows skipping, and persists media state 31ms
+ ✓ src/save/BudgetForecastingPersistence.test.ts > CF6 V4 budget persistence > round-trips budgets, revisions-compatible lines and forecast assumptions 51ms
+ ✓ src/save/BudgetForecastingPersistence.test.ts > CF6 V4 budget persistence > loads an old V4 payload with absent planning collections as empty 17ms
+ ✓ src/engine/media/MediaAcceptance.test.ts > Hito 064 acceptance > 1,3,8,9,10,13: selects deterministic relevant pre-match coverage without spam and publishes News 34ms
+ ✓ src/engine/media/MediaAcceptance.test.ts > Hito 064 acceptance > 2,4,14: creates post-match coverage from real narrative context without modifying it 5ms
+ ✓ src/engine/media/MediaAcceptance.test.ts > Hito 064 acceptance > 5,6,7,11,12,15: response/skip effects are idempotent and persist with legacy defaults 31ms
+ ✓ src/save/TreasuryPersistence.test.ts > CF2 treasury persistence > round-trips receivables, payables and settlement references without persisting cash projections 65ms
+ ✓ src/save/TreasuryPersistence.test.ts > CF2 treasury persistence > loads old V4 payloads and CF1/legacy saves with empty treasury collections 15ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category PRIZE 2ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category PARTICIPATION_DISTRIBUTION 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category MEDIA_DISTRIBUTION 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category SOLIDARITY 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category REVENUE_SHARE 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category LEAGUE_DISTRIBUTION 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category DEVELOPMENT_PAYMENT 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > accepts only an authorized fact for category OTHER_DISTRIBUTION 0ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > consumes an authorized distribution fact through CF4 and CF3 24ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > routes participation fees through the CF8 operating-cost path 6ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > queries competition fees and preserves source-rule provenance 4ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > supports a linked inter-organization transfer without creating value twice 3ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > rejects unsupported recipient organizations and missing due dates 4ms
+ ✓ src/domain/finance/CompetitionEconomy.test.ts > CF9 competition economy > does not invent a distribution when the Competition fact is absent 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > A: reports favorable expense variance as budget minus actual 18ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > B: uses known commitments independently from actual recognition 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > B/CF5: reads guaranteed payroll commitments from the contract schedule 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > B/CF5 (F3): each guaranteed contract-year is attributed to exactly ONE fiscal period, the one containing its recognition date 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > C: reports projected over-budget without changing cash 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > D/E: keeps budget and Salary Cap separate from cash and cap calculations 3ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > F: preserves approved revision history and exposes the latest version 9ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > G: forecasts actuals plus known commitments plus explicit assumptions only 4ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > H: keeps EUR and USD as separate planning currencies 2ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > I: detects recognized expense categories with no budget line 1ms
+ ✓ src/domain/finance/BudgetForecasting.test.ts > CF6 budget and forecasting > J: validates allocations and explicit approval lifecycle 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch +0 without admitting eliminated entries 3ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 9, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch +0 without admitting eliminated entries 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 7, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 9, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch +0 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > routes winner 8, winner 10, final branch 1 without admitting eliminated entries 0ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > refuses an undeclared loser route and a premature outcome 2ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > carries explicit playoff-slot seeds through the semifinals and final without changing entry identities 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > unions supported ranking routes while checking every bound and selector 1ms
+ ✓ src/engine/competition/WorldCompetitionMixedPostseason.test.ts > mixed postseason graph: actual French qualification vocabulary > shares the single-game authority: explicit host, one decisive result, no duplicate games 50ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > accepts the explicit debt type TERM_LOAN without changing monetary semantics 1ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > accepts the explicit debt type CREDIT_FACILITY without changing monetary semantics 0ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > accepts the explicit debt type OWNER_LOAN without changing monetary semantics 0ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > accepts the explicit debt type BRIDGE_FINANCING without changing monetary semantics 0ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > accepts the explicit debt type OTHER_DEBT without changing monetary semantics 0ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > derives a deterministic debt schedule and keeps principal separate from interest 29ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > is idempotent and rejects principal repayment that exceeds the derived balance 4ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > forecasts debt service without creating ledger transactions 9ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > keeps owner funding, owner loans and distributions explicit 5ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > exposes financing queries from persisted facts and derived ledger consequences 6ms
+ ✓ src/domain/finance/DebtEngine.test.ts > CF9 debt and capital engine > keeps currencies isolated and requires explicit schedule currency 1ms
+ ✓ src/ui/screens/RecruitingScreen.test.ts > RecruitingScreen > renders recruits and the connected action controls for a controlled NCAA program 39ms
+ ✓ src/ui/screens/RecruitingScreen.test.ts > RecruitingScreen > uses read-only presentation outside a controlled NCAA program 7ms
+ ✓ src/domain/finance/FinancialLedger.test.ts > CF1 financial ledger > creates validated integer-minor-unit accounts and rejects invalid money 3ms
+ ✓ src/domain/finance/FinancialLedger.test.ts > CF1 financial ledger > creates immutable balanced transactions and rejects incoherent postings 1ms
+ ✓ src/domain/finance/FinancialLedger.test.ts > CF1 financial ledger > derives temporal, source, dimension and organization-isolated balances from the ledger 32ms
+ ✓ src/domain/finance/FinancialLedger.test.ts > CF1 financial ledger > rejects orphaned financial ownership and preserves prior worlds when updated 4ms
+ ✓ src/domain/finance/FinancialLedger.test.ts > CF1 financial ledger > does not silently rewrite or remove a historical transaction 2ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > states the approved country policy explicitly and has no arbitrary default 2ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > maps only the shipped NBA-like and WNBA-like ecosystems, derived from canonical ids 0ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > resolves an organization currency from its canonical country first 22ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > falls back to the shipped ecosystem policy only when the jurisdiction is unresolved 3ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > never infers currency from club or league names 4ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F currency provisioning policy > reports ambiguity and unknown jurisdiction instead of guessing 4ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F legacy money conversion boundary > converts legacy major units into canonical minor units exactly 0ms
+ ✓ src/domain/finance/FinanceCurrencyPolicy.test.ts > BS16F legacy money conversion boundary > refuses unsupported currencies and invalid amounts instead of inventing precision 1ms
+ ✓ src/domain/world/CompatibilityInteractionBridge.test.ts > WorldDB predisposition to real BDM relationship event bridge > does not create friendship just because personalities fit 25ms
+ ✓ src/domain/world/CompatibilityInteractionBridge.test.ts > WorldDB predisposition to real BDM relationship event bridge > modulates positive and negative lived events differently 6ms
+ ✓ src/domain/world/CompatibilityInteractionBridge.test.ts > WorldDB predisposition to real BDM relationship event bridge > rejects a forecast for another pair and out-of-range numbers 3ms
+ ✓ src/ui/pcb-migrated/tactics/NoIndexBasedLineup.test.ts > no leftover index-based / localStorage-authoritative lineup logic > TacticsPcbPage no longer derives starters from roster array index (index < 5) 4ms
+ ✓ src/ui/pcb-migrated/tactics/NoIndexBasedLineup.test.ts > no leftover index-based / localStorage-authoritative lineup logic > PcbTacticsBoard no longer reads or writes a localStorage-backed starters key 3ms
+ ✓ src/ui/pcb-migrated/tactics/NoIndexBasedLineup.test.ts > no leftover index-based / localStorage-authoritative lineup logic > CanonicalRoster no longer holds a local unpersisted rotation useState map 4ms
+ ✓ src/ui/pcb-migrated/tactics/NoIndexBasedLineup.test.ts > no leftover index-based / localStorage-authoritative lineup logic > TacticsPcbPage no longer reads player.basketball.ratings.finishing/shooting/playmaking/rebounding/athleticism directly 1ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > keeps every dimension independent across positive, negative, zero and multi-dimension deltas 2ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > clamps repeatedly at both boundaries and rejects all non-finite deltas 0ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > stores an immutable event copy, supports every source, and keeps duplicate semantics 0ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > creates independent default profiles and resolves every band boundary 1ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > fully explains reputation requirements and rejects invalid minima 0ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > keeps recent-event sorting and limits immutable 7ms
+ ✓ src/domain/coachReputation/CoachReputationAcceptance.test.ts > Coach reputation final acceptance > keeps match impacts confined to competitive and public standing 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > ranks classification points rather than a borrowed wins-only policy 2ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > head-to-head classification precedes overall scoring 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > restarts the criteria on the remaining tied subset after separating a team 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > uses mini-table difference and then mini-table scoring 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > uses mini-table scoring before overall difference when three teams remain tied 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > falls back to overall difference and scoring after the mini-table is exhausted 0ms
+ ✓ src/domain/season/classificationMiniLeague.test.ts > keeps provisional display stable but never invents a terminal draw outcome 9ms
+ ✓ src/engine/development/PlayerPotentialDevelopment.test.ts > potential development > keeps the factor in range and handles ability above its ceiling 5ms
+ ✓ src/engine/development/PlayerPotentialDevelopment.test.ts > potential development > gives equivalent young players with higher potential at least as much growth 4ms
+ ✓ src/engine/development/PlayerPotentialDevelopment.test.ts > potential development > does not let potential prevent veteran decline 3ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans PROFESSIONAL_CLUB/PRIVATE deterministically 9ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans PROFESSIONAL_CLUB/MEMBER_OWNED deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans PROFESSIONAL_CLUB/MULTISPORT_SECTION deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans NBA_FRANCHISE/OWNERSHIP_GROUP deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans WNBA_FRANCHISE/PRIVATE deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans NCAA_PROGRAM/UNIVERSITY deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans NCAAW_PROGRAM/UNIVERSITY deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > plans FEDERATION/FEDERATION deterministically 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > omits optional slots by default and creates one only when selected 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > reports missing and duplicate IDs deterministically without partial application 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiationCoverage.test.ts > Governance structure instantiation coverage > allows shared parent contexts without cloning parent bodies or fabricating actors 1ms
+ ✓ src/domain/knowledge/OrganizationKnowledge.test.ts > legacy PlayerKnowledge migration > merges shared-organization team records deterministically with bounded uncertainty and legacy provenance 11ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > keeps Professional Club Board pressure separate from Executive development support 9ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > distinguishes NBA rebuild protection from win-now failure 0ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > uses NCAA recruiting/development context and lets a critical compliance incident override it 0ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > uses Federation cycle progress to protect minor form but escalates qualification failure 0ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > records a deterministic history without overwriting prior evaluations and holds minor recovery 1ms
+ ✓ src/domain/governance/GovernanceManagerEvaluationUniverses.test.ts > BG3 universe fixtures > represents political, tenure, and contract evidence without duplicating their systems 0ms
+ ✓ src/domain/governance/GovernanceStructureInstantiation.test.ts > Governance structure instantiation > plans without mutation and applies idempotently without people or authority 10ms
+ ✓ src/domain/governance/GovernanceStructureInstantiation.test.ts > Governance structure instantiation > preserves compatible existing bodies, optional omissions, and conflicts atomically 1ms
+ ✓ src/engine/competition/WorldDbScheduleResolver.test.ts > WorldDbScheduleResolver > resolves historical and current allocation/timing rows by validity interval without interpreting statuses 3ms
+ ✓ src/engine/competition/WorldDbScheduleResolver.test.ts > WorldDbScheduleResolver > lists a local date deterministically by local time, slot order and fixture id 11ms
+ ✓ src/engine/competition/WorldDbScheduleResolver.test.ts > WorldDbScheduleResolver > returns null for an unscheduled fixture and permits an allocated slot without active timing 1ms
+ ✓ src/engine/competition/WorldDbScheduleResolver.test.ts > WorldDbScheduleResolver > rejects overlapping active histories and broken references instead of choosing implicitly 1ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > reports AFFORDABLE_NOW when cash net of commitments and reservations covers the amount 3ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > reports INSUFFICIENT_LIQUIDITY with an explicit funding gap 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > reports REQUIRES_FINANCING when cash is unknown rather than assuming affordability 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > reports FINANCE_PROFILE_UNAVAILABLE without an organization financial profile 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > refuses to compare different currencies without an FX authority 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > excludes foreign-currency reservations instead of silently comparing them 1ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority decision contract > keeps informational budgets non-binding while exposing an explicit authorization limit 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > creates an OPEN reservation with a provenance-derived deterministic id 1ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > is idempotent for a replayed provenance and never consumes capacity twice 1ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > rejects a provenance replay that changes the economics 1ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > allocates independent capacity per provenance and blocks beyond capacity 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > prevents two simultaneous decisions from overspending the same capacity 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > restores capacity after release and stops counting a consumed reservation 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > treats terminal states as deterministic no-ops that never double-adjust capacity 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > keeps reservation provenance organization-scoped so identical business keys cannot collide 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > isolates organizations in cash, commitments and reservations 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > evaluates a second organization in its own currency without conversion 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialAuthority reservation authority > does not double-count capacity once the matching commitment becomes authoritative 0ms
+ ✓ src/domain/finance/FinancialAuthority.test.ts > FinancialReservation value object > rejects malformed reservations and never stores derived currency duplicates 0ms
+ ✓ src/ui-ng/applications/player/components/PerformanceShootingCourtside.test.tsx > Courtside shooting: evidence-only two-zone court > shows actual makes, attempts, volume and field points without invented locations 8ms
+ ✓ src/ui-ng/applications/player/components/PerformanceShootingCourtside.test.tsx > Courtside shooting: evidence-only two-zone court > preserves unavailable efficiency when nobody attempted a field goal 1ms
+ ✓ src/ui-ng/applications/player/components/PerformanceShootingCourtside.test.tsx > Courtside shooting: evidence-only two-zone court > derives the points share from shot values, not attempt share 1ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > gets entities and the user coach by ID 2ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > resolves a team roster and optional coach 1ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > fails explicitly for missing IDs 0ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > resolves seconds-based game clock rules from the competition's own gameFormat, defaulting to FIBA-style 4x10 0ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > resolves a different competition's explicitly configured gameFormat without any ecosystem/brand branching 2ms
+ ✓ src/domain/world/queries.test.ts > GameWorld queries > resolves independent made-basket windows and competition-configured shot-clock values 3ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · skills > projects every canonical skill with derived display metadata 3ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · skills > reports maxed skills without a next rank cost 0ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · skills > reads the next rank cost from the canonical cost table 0ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · perk rarity > classifies perks from canonical type and catalog order without persisting a tier 1ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · perk rarity > describes requirements from the canonical perk catalog 0ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · perk rarity > marks owned perks from canonical state 1ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · summary > summarises progress, points and career focus headroom 0ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · summary > averages the ranks of every canonical skill 0ms
+ ✓ src/ui-ng/applications/coach/coachDevelopmentModel.test.ts > coachDevelopmentModel · failure reasons > translates canonical engine reasons and falls back safely 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > defaults to neutral and uses the canonical bands 2ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > applies immutable signed events, clamps values and ignores a repeated event ID 1ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > exactly 8 canonical facets 1ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > a legacy profile with no dimensions reads all 8 facets as neutral 0, never undefined/error 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > a legacy event with only `delta` (no dimensionDeltas) behaves exactly as before — value moves, facets stay neutral 1ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > a V2 event applies both `value` and facet deltas 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > facet deltas clamp to -100..100 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > an invalid/non-finite facet delta is rejected, and an unknown facet key is rejected 1ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > idempotent by event.id even with dimensionDeltas — reapplying the same id is a no-op 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > relationships are directional: A→B is independent from B→A 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > soft saturation: a facet near the extreme resists a large jump from one more event in the same direction 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > routine professional events (no personalCloseness in dimensionDeltas) never move personalCloseness 0ms
+ ✓ src/domain/relationships/Relationships.test.ts > Relationships > validateRelationshipProfile accepts a profile with materialized dimensions and rejects one with an out-of-range facet 0ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > derives one deterministic profile identity per competition and version 3ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > keeps the approved annual total an invariant of the declared installments 2ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > requires explicit increasing installment dates and canonical currency agreement 1ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > carries the approved collection policy as data, defaulting to no collection at all 0ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > cannot express payroll and cannot reach an unrelated cost family 1ms
+ ✓ src/domain/finance/CompetitionEconomicProfile.test.ts > CompetitionEconomicProfile data authority > keeps a profile for a USD competition representable without any code change 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > resolveMatchKitColors > keeps distinct home/away kits with usable contrast 2ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > resolveMatchKitColors > forces road contrast when brand primaries collide 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > resolveMatchKitColors > flags low kit/court contrast for outline 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > CourtAnimationState > lerps and eases progress 1ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > CourtAnimationState > scales interpolation duration with playback speed 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > CourtAnimationState > retargets from current sample without teleport 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > CourtAnimationState > freezes progress while paused 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > player visual scale CT3.1 tokens > keeps token diameter in readability band on 1080p 1ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > player visual scale CT3.1 tokens > clamps extreme scale values 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > player visual scale CT3.1 tokens > applies subtle depth scaling far < near 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > resolvePlayerFloorState > keeps possession and selection distinct 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > player projection bridge > maps court percent through projection.project 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > sortPlayersByScreenDepth > draws nearer (higher screenY) after farther 0ms
+ ✓ src/ui/match/court/CourtDynamic.test.ts > ballScreenPosition > lifts ball by z while shadow stays on court plane 0ms
+ ✓ src/domain/competition/Competition.test.ts > Competition > creates a valid competition and preserves participants 4ms
+ ✓ src/domain/competition/Competition.test.ts > Competition > validates only deterministic, balanced round-robin rules 1ms
+ ✓ src/domain/competition/Competition.test.ts > Competition > keeps the independent retention eligibility window configurable and positive 0ms
+ ✓ src/domain/competition/Competition.test.ts > Competition > rejects duplicate participants and empty names 1ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > materializes explicit seed pairings, explicit semifinal paths and the unambiguous final 3ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > accepts the canonical dash-form matchups alias used by league playoff documents 0ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > fails rather than inventing a multi-fixture winner path 1ms
+ ✓ src/engine/competition/WorldCompetitionFixedBracket.test.ts > Phase 1 fixed bracket instantiator > rejects missing or duplicate seeds 1ms
+ ✓ src/app/entityActions/playerActions.test.ts > Player action catalog > is one stable product catalog with unique ordered Player roots 2ms
+ ✓ src/app/entityActions/playerActions.test.ts > Player action catalog > keeps the same action IDs across entities and changes only availability 1ms
+ ✓ src/app/entityActions/playerActions.test.ts > Player action catalog > uses the generic ComposerEngine without route or screen input 0ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > keeps only non-zero canonical deltas 2ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > rejects fractional deltas so reconstructed values stay exact 0ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > appends chronologically and replaces an already recorded season 1ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > reconstructs past values by removing every later movement 1ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > returns the current value as the only point when nothing has been recorded 0ms
+ ✓ src/domain/development/PlayerRatingHistory.test.ts > PlayerRatingHistory > gives a transition recorded for the season in progress no point of its own 0ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > explains a stopped Continue that did not advance the date 2ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > reports how far Continue advanced and why it stopped 0ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > turns the loop guard into an explicit failure instead of a silent stop 0ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > names the media and season stops of the canonical breakpoint engine 0ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > reports a simulate-until order that reached its target and one that stopped early 1ms
+ ✓ src/ui/desktop/continueOutcomePresentation.test.ts > career loop outcome presentation > reports a prevented or failed one-day advance, and stays quiet when the day completed 1ms
+ ✓ src/domain/finance/FinancingAgreement.test.ts > BS16L financing agreement authority > is actor-agnostic: an external institution, an in-world Organization or a Person can fund it 3ms
+ ✓ src/domain/finance/FinancingAgreement.test.ts > BS16L financing agreement authority > separates the authorized facility from what has actually been drawn 1ms
+ ✓ src/domain/finance/FinancingAgreement.test.ts > BS16L financing agreement authority > enforces the draw limit against the authorized amount and matches currency exactly 1ms
+ ✓ src/domain/finance/FinancingAgreement.test.ts > BS16L financing agreement authority > keeps agreements and contributions Organization-scoped and rejects self-funding 1ms
+ ✓ src/domain/finance/FinancingAgreement.test.ts > BS16L financing agreement authority > selects only the agreements that may still be drawn on the date 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 1 Newly Promoted 1ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 2 Disappointing Giant 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 3 Near Miss 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 4 Extraordinary Season 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 5 Patient Board 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 6 Impatient Board 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 7 Coach With History 1ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 8 Contextual Relegation 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 9 Promotion 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 10 Championship 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 11 Raised Expectations 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 12 Firing 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 13 No False Firing 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 14 Renewal 0ms
+ ✓ src/engine/board/BoardAcceptance.test.ts > Hito 065 acceptance > 15 Persistence semantics 0ms
+ ✓ src/engine/competition/WorldDbCompetitionRules.test.ts > World DB competition rules projection > indexes scoped rules without knowing the competition 2ms
+ ✓ src/engine/competition/WorldDbCompetitionRules.test.ts > World DB competition rules projection > supports Phase 1 initial-score rules generically 0ms
+ ✓ src/engine/competition/WorldDbCompetitionRules.test.ts > World DB competition rules projection > projects canonical standings and tiebreak policy without interpreting criteria 0ms
+ ✓ src/engine/competition/WorldDbCompetitionRules.test.ts > World DB competition rules projection > keeps absent standings policy families backward compatible 0ms
+ ✓ src/engine/competition/WorldDbCompetitionRules.test.ts > World DB competition rules projection > rejects malformed rule records at the engine boundary 1ms
+ ✓ src/domain/person/Person.test.ts > Person > stores shared human identity once while referencing multiple role profiles 2ms
+ ✓ src/domain/person/Person.test.ts > Person > rejects duplicate profile references and nationalities 0ms
+ ✓ src/domain/person/Person.test.ts > Person > does not accept Coach as a canonical Person profile kind 0ms
+ ✓ src/domain/eligibility/TransferPortal.test.ts > basketball Transfer Portal calendar > opens the 15 consecutive-day window the day after the supplied championship final 2ms
+ ✓ src/domain/eligibility/TransferPortal.test.ts > basketball Transfer Portal calendar > applies the coach announcement delay and Jan. 2 cap 0ms
+ ✓ src/domain/eligibility/TransferPortal.test.ts > basketball Transfer Portal calendar > opens the no-replacement exception on day 31 only inside the permitted championship period 0ms
+ ✓ src/domain/eligibility/TransferPortal.test.ts > basketball Transfer Portal calendar > keeps aid-change notification separate and counts two processing business days 0ms
+ ✓ src/domain/ids/EntityIds.test.ts > entity IDs > creates serializable player and team IDs 4ms
+ ✓ src/domain/ids/EntityIds.test.ts > entity IDs > reconstructs IDs from saved strings 0ms
+ ✓ src/domain/ids/EntityIds.test.ts > entity IDs > rejects empty ID values 0ms
+ ✓ src/domain/ids/EntityIds.test.ts > entity IDs > keeps entity ID types distinct 0ms
+ ✓ src/ui-ng/workspace/workspaceRegistry.test.ts > MX0.4 NG workspace registry truth > resolves every declared workspace app id to exactly one real component 2ms
+ ✓ src/ui-ng/workspace/workspaceRegistry.test.ts > MX0.4 NG workspace registry truth > registers exactly the declared app ids, with no duplicates or unregistered extras 1ms
+ ✓ src/ui-ng/workspace/workspaceRegistry.test.ts > MX0.4 NG workspace registry truth > mounts the canonical workspace for every audited area 0ms
+ ✓ src/ui-ng/workspace/workspaceRegistry.test.ts > MX0.4 NG workspace registry truth > keeps the taskbar and the start menu inside the registry 2ms
+ ✓ src/ui-ng/workspace/workspaceRegistry.test.ts > MX0.4 NG workspace registry truth > resolves every actionable breakpoint route to a registered workspace 1ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > creates a valid coach 2ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > uses deterministic references only through the explicit legacy adapter 0ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > rejects empty names 0ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > rejects the legacy parallel Coach Person id 0ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > requires explicit canonical Person and StaffProfile references 0ms
+ ✓ src/domain/coach/Coach.test.ts > Coach > projects the Coach gameplay profile into the canonical coaching Staff role 0ms
+ ✓ src/app/game/WorldDbV2Connection.test.ts > checks format contracts by data and does not silently turn fixed schedules into round robins 3ms
+ ✓ src/app/game/WorldDbV2Connection.test.ts > keeps group assignment and per-edition population mismatches explicit 0ms
+ ✓ src/app/game/WorldDbV2Connection.test.ts > groups execution capabilities independently of league identity and team count 1ms
+ ✓ src/app/game/WorldDbV2Connection.test.ts > does not borrow default tie-breaks for a new document without a linked classification policy 0ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > generates deterministic, position-bounded bios at the reference date 3ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > uses the bootstrap ranges for PG 1ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > uses the bootstrap ranges for SG 0ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > uses the bootstrap ranges for SF 0ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > uses the bootstrap ranges for PF 0ms
+ ✓ src/engine/world/PlayerBioGenerator.test.ts > PlayerBioGenerator > uses the bootstrap ranges for C 0ms
+ ✓ src/engine/competition/WorldDbFixtureResolver.test.ts > World DB fixture resolution > resolves fixture sides only from explicit destination positions 2ms
+ ✓ src/engine/competition/WorldDbFixtureResolver.test.ts > World DB fixture resolution > leaves a fixture unresolved when progression names only the destination node 0ms
+ ✓ src/engine/competition/WorldDbFixtureResolver.test.ts > World DB fixture resolution > rejects two different entries assigned to the same structure position 1ms
+ ✓ src/engine/competition/WorldDbFixtureResolver.test.ts > World DB fixture resolution > rejects an assignment whose explicit position belongs to another node 0ms
+ ✓ src/engine/competition/WorldDbGameFixtureBinding.test.ts > World DB game fixture binding > supports one physical game realizing multiple competition fixtures 2ms
+ ✓ src/engine/competition/WorldDbGameFixtureBinding.test.ts > World DB game fixture binding > supports multiple physical realizations of one competition fixture 0ms
+ ✓ src/engine/competition/WorldDbGameFixtureBinding.test.ts > World DB game fixture binding > rejects duplicate realization pairs 1ms
+ ✓ src/domain/court/CourtGeometry.test.ts > canonical court geometry > keeps the FIBA court dimensions and basket centers inside the court 1ms
+ ✓ src/domain/court/CourtGeometry.test.ts > canonical court geometry > selects the ecosystem court footprint deterministically 0ms
+ ✓ src/domain/court/CourtGeometry.test.ts > canonical court geometry > uses the selected court arc and straight corner boundary on both sides 0ms
+ ✓ src/domain/worldDb/MatchRealizationBundle.test.ts > World DB B12 match realization bundle > accepts one physical match realizing multiple competition fixtures 2ms
+ ✓ src/domain/worldDb/MatchRealizationBundle.test.ts > World DB B12 match realization bundle > allows the physical match to belong to a different primary competition season 1ms
+ ✓ src/domain/worldDb/MatchRealizationBundle.test.ts > World DB B12 match realization bundle > rejects duplicate matches and orphan realizations 0ms
+ ✓ src/domain/draft/Draft.test.ts > NBA Draft rules by annual cycle > keeps 2026 official annual deadlines separate from simulated future dates 2ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > creates a valid team session 1ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > rejects invalid times, durations and scope/player mismatches 1ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > computes time-to-minutes 0ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > rejects overlapping team sessions for the same team 0ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > accepts non-overlapping team sessions for the same team 0ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > rejects overlapping individual sessions for the same player 0ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > allows overlapping individual sessions for different players 0ms
+ ✓ src/domain/training/TrainingSchedule.test.ts > TrainingSchedule > does not collide across different dates 0ms
+ ✓ src/domain/country/Country.test.ts > Country > creates a valid country 1ms
+ ✓ src/domain/country/Country.test.ts > Country > rejects empty names and codes 0ms
+ ✓ src/engine/salary/SalaryEngine.test.ts > SalaryEngine > uses current-year cap hit plus dead money, not cash or every contract year 1ms
+ ✓ src/engine/salary/SalaryEngine.test.ts > SalaryEngine > calculates progressive tax, floor, aprons and configurable matching 1ms
+ ✓ src/engine/salary/SalaryEngine.test.ts > SalaryEngine > requires an exception over a soft cap and always rejects hard-cap excess 1ms
+ ✓ src/ui-ng/designer/designerMode.test.ts > designerMode > is disabled when import.meta.env.DEV is false even with designer=1 1ms
+ ✓ src/ui-ng/designer/designerMode.test.ts > designerMode > requires designer=1 when import.meta.env.DEV is true 0ms
+ ✓ src/ui-ng/designer/designerMode.test.ts > designerMode > fits the canonical desktop to the available designer rectangle (FIT TO VIEW) 0ms
+ ✓ src/ui-ng/designer/designerMode.test.ts > designerMode > falls back to 1 for non-positive viewport measurements 0ms
+ ✓ src/domain/player/PlayerAge.test.ts > calculateAge > changes exactly on the birthday 1ms
+ ✓ src/domain/player/PlayerAge.test.ts > calculateAge > uses calendar dates without timezone approximation 0ms
+ ✓ src/domain/worldDb/DatabaseInfo.test.ts > WorldDbDatabaseInfoV1 > accepts a compatible database description 2ms
+ ✓ src/domain/worldDb/DatabaseInfo.test.ts > WorldDbDatabaseInfoV1 > rejects duplicate competition seasons 0ms
+ ✓ src/ui/entityActions/useEntityActions.test.ts > EntityActionTarget input boundary > suppresses and stops the native contextmenu event locally 3ms
+ ✓ src/ui-ng/applications/roster/buildRosterDepthChartView.test.ts > buildDepthChartLaneItems > numbers relative depth without role labels when nobody is assigned 2ms
+ ✓ src/ui-ng/applications/roster/buildRosterDepthChartView.test.ts > buildDepthChartLaneItems > inserts BDM role bands only for populated assigned groups 0ms
+ ✓ src/domain/inbox/Inbox.test.ts > Inbox > uses typed actionable items and valid immutable transitions 2ms
+ ✓ src/app/game/testSupport/BS15IFastMatureWorldTriage.test.ts > BS15I deterministic mature-world profile from canonical Save V4 1ms
+ ✓ src/app/game/testSupport/BS15IFastMatureWorldTriage.test.ts > BS15I measured immutable history copy alternatives 0ms
+ ✓ src/app/game/testSupport/BS15IFastMatureWorldTriage.test.ts > BS15I scheduled-session lookup microbenchmark on canonical Save V4 0ms
+ ✓ src/app/game/testSupport/BS15I5YearProfile.test.ts > BS15I five-year continuous/reloaded certification profile 2ms
+ ✓ src/app/game/testSupport/BS15IClosureReplay.test.ts > traces canonical Y5 departures or measures the same seven production days 1ms
+ ✓ src/app/game/testSupport/BS15IPathwayFinalAudit.test.ts > audits final pathway funnels, all unsigned rights, source replacement and international eligibility 2ms
+ ✓ src/app/game/testSupport/BS15IAvailabilityRepro.test.ts > keeps the saved Year 4 professional fixtures playable without changing identity 2ms
+ ✓ src/app/game/testSupport/BS15ICleanY6Baseline.test.ts > proves exact real Y6 load idempotency twice without creating entities 1ms
+ ✓ src/app/game/testSupport/BS15INcaaExitAccounting.test.ts > reconciles retained NCAA exit events without replaying certified years 1ms
+ ✓ src/app/game/testSupport/BS15ICollegeRulesContinuityRepro.test.ts > continues the actual expired NCAA policies through the calendar without changing academic facts 1ms
+ ✓ src/app/game/testSupport/BS15IFinalLongHorizon.test.ts > certifies canonical Y8 through Y30 with rolling recovery and three deep gates 2ms
+ ↓ src/app/game/PlayableF3RenewalFixture.test.ts > F3 renewal fixture (Windows acceptance input) > plays 27 Sep 2026 → 2 Jul 2027 and writes the Save V4
+ ↓ src/app/game/testSupport/BSAllThreeSeasonContinuity.test.ts > BS ALL: three-season continuity through the production path > advances three complete seasons with rollover, development, Facilities, Finance, AI and Save/reload
+ ↓ src/presentation/match-next/audit/bt2/scenarios.test.ts > BT2 scenarios
+ ↓ src/presentation/match-next/audit/bt3/run3.test.ts > BT3S multi-seed soak
+ ↓ src/presentation/match-next/audit/bt4/teams.test.ts > BT4V rosters
+ ↓ src/presentation/match-next/audit/bt42/flow.test.ts > BT4.2 offensive flow audit
+ ↓ src/presentation/match-next/audit/bt7/integration.test.ts > BT7 integration scenarios
+ ↓ src/presentation/match-next/audit/bt6/scenes.test.ts > BT6 scenes
+
+ Test Files  84 passed | 8 skipped (92)
+      Tests  442 passed | 8 skipped (450)
+   Start at  10:51:30
+   Duration  72.35s (transform 28.30s, setup 0ms, import 91.84s, tests 8.72s, environment 26.50s)

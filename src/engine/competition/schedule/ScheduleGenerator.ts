@@ -8,7 +8,8 @@ import {
 } from '@/domain/world'
 import type { SchedulePolicy } from './SchedulePolicy'
 import { scheduleRoundsByCalendar } from './SchedulePolicy'
-import { deriveCompetitionSeasonWindows } from '../WorldCompetitionCalendar'
+import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from '../WorldCompetitionCalendar'
+import { instantiateWorldCompetitionRoundRobinV1 } from '../WorldCompetitionRoundRobin'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -36,10 +37,14 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const season = getSeason(options.world, options.seasonId)
   const competition = getCompetition(options.world, season.competitionId)
   const teamIds = season.participantTeamIds ?? competition.participantTeamIds
-  validateParticipants(teamIds)
+  validateParticipants(teamIds, season.worldCompetitionFormat !== undefined)
 
-  const firstLegRounds = createFirstLegRounds(teamIds)
-  const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
+  const rounds = teamIds.length % 2 === 0
+    ? (() => {
+      const firstLegRounds = createFirstLegRounds(teamIds)
+      return Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
+    })()
+    : createRoundsWithByes(teamIds, season.worldCompetitionFormat!, competition.rules.schedule.meetingsPerPair, options.competitionStageKey)
   const startDate = options.startDate ?? season.startDate
   const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat, season.calendarPolicy)
   const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && (season.worldCompetitionFormat !== undefined || season.calendarPolicy !== undefined) ? scheduleRoundsByCalendar : undefined)
@@ -73,6 +78,19 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
       }),
     )
   })
+}
+
+/** Reuses the format engine's bye-aware pairing plan for a verified odd-sized stage. */
+function createRoundsWithByes(teamIds: readonly TeamId[], format: NonNullable<ReturnType<typeof getSeason>['worldCompetitionFormat']>, meetings: number, stageKey?: string): Matchup[][] {
+  const variant = requireCompetitionFormatVariant(format)
+  const node = stageKey === undefined ? variant.nodes.find(candidate => candidate.role === 'REGULAR_SEASON') : variant.nodes.find(candidate => candidate.key === stageKey)
+  if (node === undefined) throw new Error('Odd round robin requires an explicit regular-season node')
+  if (node.pairing?.meetingsPerPair !== meetings) throw new Error('Odd round robin meetings differ from the competition contract')
+  const plan = instantiateWorldCompetitionRoundRobinV1(format, variant.key, node.key, teamIds.map(id => ({ competitionSeasonEntryId: id })))
+  const byId = new Map(teamIds.map(id => [String(id), id]))
+  const rounds: Matchup[][] = Array.from({ length: plan.roundsPerMeeting * plan.meetingsPerPair }, () => [])
+  for (const fixture of plan.fixtures) rounds[fixture.roundNo - 1]!.push({ homeTeamId: byId.get(fixture.homeEntryId)!, awayTeamId: byId.get(fixture.awayEntryId)! })
+  return rounds
 }
 
 function createFirstLegRounds(teamIds: readonly TeamId[]): Matchup[][] {
@@ -111,12 +129,12 @@ function validateDaysBetweenRounds(value: number): void {
   }
 }
 
-function validateParticipants(teamIds: readonly TeamId[]): void {
+function validateParticipants(teamIds: readonly TeamId[], hasFormat: boolean): void {
   if (teamIds.length < 2) {
     throw new RangeError('Round robin schedules require at least two teams')
   }
-  if (teamIds.length % 2 !== 0) {
-    throw new RangeError('Round robin schedules require an even number of teams')
+  if (teamIds.length % 2 !== 0 && !hasFormat) {
+    throw new RangeError('Odd round robin schedules require an explicit competition format')
   }
 }
 

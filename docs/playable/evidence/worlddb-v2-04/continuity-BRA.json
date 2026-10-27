@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "source": "C:/BDM-worktrees/worlddb-v2-04/.worlddb-v2/season-03-BRA-1793039908022/successor.json",
+  "oldGames": 441,
+  "oldChampion": "pbm:DYN_equipe:13442",
+  "nextSeason": "generated-season-0001",
+  "newGames": 10,
+  "date": "2026-07-03",
+  "clubs": 20,
+  "pbmPlayers": 298,
+  "requiredAfterLoad": [
+    {
+      "level": "ACTION_REQUIRED",
+      "reason": "returnToPlayReview",
+      "sourceKind": "USER_RTP_REVIEW",
+      "sourceId": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336",
+      "effectiveDate": "2026-07-02",
+      "ownership": {
+        "kind": "USER_TEAM",
+        "coachId": "worlddb:coach:pbm:DYN_equipe:10774",
+        "teamId": "pbm:DYN_equipe:10774"
+      },
+      "route": "medical",
+      "actionTarget": {
+        "injuryId": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336",
+        "playerId": "pbm:DYN_joueur:336"
+      },
+      "diagnostic": "Return-to-Play review for injury injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336 is due; clear the player or continue recovery before advancing.",
+      "orderingKey": "1|2026-07-02|9999-12-31|USER_RTP_REVIEW|injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-06-29",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-06-30",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-07-01",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    },
+    {
+      "date": "2026-07-02",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:BRA:nbb:2026:0251:pbm:DYN_joueur:336"
+    }
+  ],
+  "annualCycle": {
+    "lastAppliedCycleId": "annual-development:2026"
+  }
+}

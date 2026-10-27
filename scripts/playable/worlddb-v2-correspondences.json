@@ -1,0 +1,14 @@
+{
+  "pbm:DYN_championnat:15":{"nativeCompetitionId":"competition:DEU:proa","countryCode":"DEU","evidence":"PBM Germany ProA, 18 clubs; reconciled PGM identity competition:DEU:proa. Official 2025-26 SVO sections 73-76 recovered in the 564-row source catalog; series then two-leg aggregate final. No complete runtime export exists in the audited 128 identities; native aggregate realization is not connected. Application country reconciliation for original country 4 only; master country map remains untouched."},
+  "pbm:DYN_championnat:109":{"nativeCompetitionId":"competition:BRA:nbb","evidence":"PBM Brazil NBB, 20 clubs; PGM NBB 2025-26 source and canonical identity; LNB regulation Articles 84-90."},
+  "pbm:DYN_championnat:93":{"nativeCompetitionId":"competition:ARG:liga-nacional","evidence":"PBM Argentina Liga Nacional, 19 clubs; PGM AdC 2025-26 document."},
+  "pbm:DYN_championnat:78":{"nativeCompetitionId":"competition:AUS:nbl","evidence":"PBM Australia NBL, 10 clubs; PGM NBL document. Source edition mismatch remains a separate blocker."},
+  "pbm:DYN_championnat:44":{"nativeCompetitionId":"competition:NAM:nba","evidence":"PBM USA NBA, 30 clubs; canonical NBA source bundle. Conference assignments not inferred."},
+  "pbm:DYN_championnat:94":{"nativeCompetitionId":"competition:NAM:gleague","evidence":"PBM USA G League, 31 clubs; PGM G League document."},
+  "pbm:DYN_championnat:29":{"nativeCompetitionId":"competition:FRA:nm1","evidence":"PBM France Nationale 1, 28 clubs; FFBB NM1 2025-26 document, 2x14 pools."},
+  "pbm:DYN_championnat:42":{"nativeCompetitionId":"competition:FRA:nm2","evidence":"PBM France Nationale 2, 56 clubs; FFBB NM2 2025-26 document, 4x14 pools."},
+  "pbm:DYN_championnat:69":{"nativeCompetitionId":"competition:ESP:lf-endesa","evidence":"PBM Spain Liga Espanola Femenino, 16 clubs; FEB LF Endesa 2025-26 document, 16 clubs. Gender must be preserved before projection."},
+  "pbm:DYN_championnat:59":{"nativeCompetitionId":"competition:ESP:primera-feb","evidence":"PBM Spain Primera FEB, 17 clubs; FEB 2025-26 document."},
+  "pbm:DYN_championnat:112":{"nativeCompetitionId":"competition:ESP:segunda-feb","evidence":"PBM Spain Segunda FEB, 28 clubs; FEB 2025-26 document, 2x14 pools."},
+  "pbm:DYN_championnat:171":{"nativeCompetitionId":"competition:AMERICAS:liga-sudamericana","evidence":"PBM Liga Sudamericana, 16 clubs; FIBA Liga Sudamericana source document. Participant group assignments not inferred."}
+}

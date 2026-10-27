@@ -6,7 +6,11 @@ const configs=JSON.parse(readFileSync('src/data/worlddb-v2/competitions.json','u
 const config=configs.find(c=>c.sourceCompetitionId===(process.env.BDM_NATIVE_COMPETITION??'pbm:DYN_championnat:2'))
 if(!config)throw Error('Unmapped native test competition')
 const records=readdirSync('.worlddb-v2').filter(n=>n.startsWith('multileague-03-'+config.countryCode+'-')).sort().reverse()
-const record=records.map(n=>join('.worlddb-v2',n,'acceptance.json')).find(p=>existsSync(p)&&JSON.parse(readFileSync(p,'utf8')).signed)
+const record=records.map(n=>join('.worlddb-v2',n,'acceptance.json')).find(p=>{
+ if(!existsSync(p))return false
+ const proof=JSON.parse(readFileSync(p,'utf8'))
+ return proof.signed&&proof.sourceCompetitionId===config.sourceCompetitionId
+})
 if(!record)throw Error('Run focal PBM certification first')
 const facts=JSON.parse(readFileSync(record,'utf8')),candidate=facts.attempts.find(a=>a.status==='SIGNED')
 const salary=Number(candidate.log.find(l=>l.includes(' offer ')).match(/offer (\d+)/)[1])

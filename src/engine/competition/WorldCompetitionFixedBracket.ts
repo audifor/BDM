@@ -68,7 +68,9 @@ export function instantiateWorldCompetitionFixedBracketV1(
     if (singular !== undefined && (pairings.length || matchups.length)) throw new Error(`Ambiguous bracket pairing: ${node.key}`)
     const directPairings = singular === undefined ? pairings.length > 0 ? pairings : matchups : [singular]
     const paths = stringArray(node.pairing?.payload, 'paths')
-    const hasIncomingWinners = (incomingWinnerSources.get(node.key)?.length ?? 0) > 0
+    const winnerSources = incomingWinnerSources.get(node.key) ?? []
+    const hasIncomingWinners = winnerSources.length > 0
+    const unambiguousFinal = node.teamCount === undefined && winnerSources.length === 1 && fixturesByNodeKey[winnerSources[0]!]?.length === 2
     const candidate = node.pairing?.type === 'FIXED_BRACKET' || directPairings.length > 0 || paths.length > 0 || node.teamCount === 2 || hasIncomingWinners
     if (!candidate) continue
 
@@ -76,6 +78,21 @@ export function instantiateWorldCompetitionFixedBracketV1(
 
     if (directPairings.length > 0) {
       participants = directPairings.map((pairing) => {
+        // Authoring packs can address the numbered contests of the preceding
+        // round. These numbers are fixture ordinals, never standing seeds.
+        const numbered = /^WINNER_(\d+)-WINNER_(\d+)$/.exec(pairing)
+        if (numbered) {
+          const sources = incomingWinnerSources.get(node.key) ?? []
+          if (sources.length !== 1) throw new Error(`Numbered winner pairing requires one WINNER source: ${node.key}`)
+          const previous = fixturesByNodeKey[sources[0]!] ?? []
+          const refs = [Number(numbered[1]), Number(numbered[2])].map(order => {
+            const source = previous.find(f => f.fixtureOrder === order)
+            if (!source) throw new Error(`Unknown predecessor fixture ${order} in ${node.key}`)
+            return Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: source.fixtureId })
+          })
+          if (refs[0]!.fixtureId === refs[1]!.fixtureId) throw new Error(`Duplicate predecessor fixture in ${node.key}`)
+          return Object.freeze([refs[0]!, refs[1]!] as const)
+        }
         const outcomePair = /^(WINNER|LOSER)_(\d+)_(\d+)_VS_(WINNER|LOSER)_(\d+)_(\d+)$/.exec(pairing)
         if (outcomePair) {
           const refs = [1,4].map(offset=>{
@@ -116,7 +133,7 @@ export function instantiateWorldCompetitionFixedBracketV1(
           Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: second.fixtureId }),
         ]) as readonly [WorldCompetitionFixtureParticipantRefV1, WorldCompetitionFixtureParticipantRefV1]
       })
-    } else if (node.teamCount === 2) {
+    } else if (node.teamCount === 2 || unambiguousFinal) {
       const sources = incomingWinnerSources.get(node.key) ?? []
       if (sources.length !== 1) throw new Error(`Two-team bracket node ${node.key} requires exactly one incoming WINNER source`)
       const sourceFixtures = fixturesByNodeKey[sources[0]!] ?? []

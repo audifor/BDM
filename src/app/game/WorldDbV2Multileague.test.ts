@@ -15,7 +15,7 @@ import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 import { playerIdFromString } from '@/domain/ids'
 vi.setConfig({ testTimeout:900_000 })
 const root=process.env.WORLDDB_SOURCE_ROOT??'C:/BDM_DB/WORLDDB_PBM'
-describe.skipIf(!existsSync(resolve(root,'WORLDDB_UNIFIED_V2/worlddb_bdm_btw_v2.sqlite')))('one PBM adapter, three real league formats',()=>{
+describe.skipIf(!existsSync(resolve(root,'WORLDDB_UNIFIED_V2/worlddb_bdm_btw_v2.sqlite')))('one PBM adapter, configured source formats',()=>{
   it.each(WORLDDB_V2_COMPETITIONS)('$countryCode creates a real roster, plays a match, signs an original free agent and persists',async config=>{
     const out=resolve('.worlddb-v2','multileague-03-'+config.countryCode+'-'+Date.now());mkdirSync(out,{recursive:true})
     const raw=execFileSync(process.env.BDM_PYTHON??'python',['-B','src-tauri/resources/worlddb_v2_bridge.py'],{input:JSON.stringify({method:'build',sourceRoot:root,competitionId:config.sourceCompetitionId,output:resolve(out,'universe.sqlite'),startDate:config.countryCode==='ESP'?'2025-10-04':'2025-07-01',seed:'multileague-03-'+config.countryCode}),encoding:'utf-8',maxBuffer:128*1024*1024})
@@ -29,7 +29,9 @@ describe.skipIf(!existsSync(resolve(root,'WORLDDB_UNIFIED_V2/worlddb_bdm_btw_v2.
     expect(opening.competitions[opening.seasons[opening.currentSeasonId!]!.competitionId]!.id).toBe(config.nativeCompetitionId)
     expect(opening.seasons[opening.currentSeasonId!]!.worldCompetitionFormat?.competitionId).toBe(config.nativeCompetitionId)
     expect(opening.worldDbCompetitionRuntime?.worldDbV2?.sourceCompetitionId).toBe(config.sourceCompetitionId)
-    expect(getFreeAgents(opening)).toHaveLength(60)
+    const poolSize=getFreeAgents(opening).length
+    expect(poolSize).toBe(snapshot.freeAgentSelection!.selected)
+    expect(poolSize).toBe(Math.min(60,snapshot.freeAgentSelection!.eligibleOriginals))
     const truth=initializeFreeAgentMarketTruth(opening,getFreeAgents(opening).map(p=>p.id))
     const candidates=getFreeAgents(truth).filter(p=>truth.marketRealityByPlayerId[p.id]!.playerWillingness>=50).sort((a,b)=>truth.marketRealityByPlayerId[a.id]!.expectedSalary-truth.marketRealityByPlayerId[b.id]!.expectedSalary)
     let signed=false;const attempts=[]
@@ -44,15 +46,18 @@ describe.skipIf(!existsSync(resolve(root,'WORLDDB_UNIFIED_V2/worlddb_bdm_btw_v2.
       expect(projectPersistentWorldTruth(deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(save))))).toEqual(projectPersistentWorldTruth(f3World()))
       signed=true;break
     }
-    writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({sourceCompetitionId:config.sourceCompetitionId,club:snapshot.clubs[0]!.entity_id,nativeCompetitionId:config.nativeCompetitionId,clubs:config.teamCount,rosterPlayers:Object.values(opening.teams).flatMap(t=>t.rosterPlayerIds).length,freeAgents:60,seed:'multileague-03-'+config.countryCode,attempts,signed,matchActas:Object.keys(f3World().matchStatLogsByGameId).length},null,2))
+    writeFileSync(resolve(out,'acceptance.json'),JSON.stringify({sourceCompetitionId:config.sourceCompetitionId,club:snapshot.clubs[0]!.entity_id,nativeCompetitionId:config.nativeCompetitionId,clubs:config.teamCount,rosterPlayers:Object.values(opening.teams).flatMap(t=>t.rosterPlayerIds).length,freeAgents:poolSize,seed:'multileague-03-'+config.countryCode,attempts,signed,matchActas:Object.keys(f3World().matchStatLogsByGameId).length},null,2))
     expect(signed,JSON.stringify(attempts)).toBe(true)
     expect(Object.keys(f3World().matchStatLogsByGameId).length).toBeGreaterThan(0)
   })
 })
 
 describe.skipIf(process.env.BDM_WORLDDB_NATIVE_SIGNING!=='1')('saved native PBM signings are eligible in MatchEngine',()=>{
-  it.each(WORLDDB_V2_COMPETITIONS)('$countryCode reopens the Windows signing, fields it and persists its real acta',config=>{
-    const dir=resolve('.worlddb-v2'),name=readdirSync(dir).filter(n=>n.startsWith('native-03-'+config.countryCode+'-')).sort().at(-1)!
+  it.each(WORLDDB_V2_COMPETITIONS.filter(c=>!process.env.BDM_NATIVE_COMPETITION||c.sourceCompetitionId===process.env.BDM_NATIVE_COMPETITION))('$countryCode reopens the Windows signing, fields it and persists its real acta',config=>{
+    const dir=resolve('.worlddb-v2'),name=readdirSync(dir).filter(n=>{
+      const path=resolve(dir,n,'acceptance.json')
+      return n.startsWith('native-03-'+config.countryCode+'-')&&existsSync(path)&&JSON.parse(readFileSync(path,'utf8')).competition===config.sourceCompetitionId
+    }).sort().at(-1)!
     const out=resolve(dir,name),proof=JSON.parse(readFileSync(resolve(out,'acceptance.json'),'utf-8'))
     const playerId=proof.steps.find((s:{name:string})=>s.name==='contact-offer-governance-sign').detail.candidate.playerId
     f3Store().replaceWorld(deserializeGameWorldSaveV4(JSON.parse(readFileSync(resolve(out,'continued.json'),'utf-8'))))

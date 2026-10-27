@@ -140,15 +140,15 @@ export function areRegularSeasonGamesComplete(world: GameWorld, seasonId: keyof 
   const teamCount = regularNode?.teamCount ?? season?.participantTeamIds?.length
   const meetingsPerPair = regularNode?.pairing?.meetingsPerPair
   if (teamCount !== undefined && meetingsPerPair !== undefined) {
-    const expectedRounds = (teamCount - 1) * meetingsPerPair
+    const expectedRounds = (teamCount - 1 + teamCount % 2) * meetingsPerPair
     const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
     if (games.length !== expectedGames) return false
     const rounds = new Map<string, typeof games>()
     for (const game of games) rounds.set(game.date, [...(rounds.get(game.date) ?? []), game])
     if (rounds.size !== expectedRounds) return false
     for (const round of rounds.values()) {
-      if (round.length !== teamCount / 2) return false
-      if (new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== teamCount) return false
+      if (round.length !== Math.floor(teamCount / 2)) return false
+      if (new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== 2 * Math.floor(teamCount / 2)) return false
     }
   }
   return games.length > 0 && games.every((game) => game.status === 'completed')

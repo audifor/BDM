@@ -27,7 +27,7 @@ export interface NewGameUniverseOption {
 }
 
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
-  {id:WORLD_DB_V2_UNIVERSE_ID,label:'WORLDDB V2 · PBM',description:'Original PBM clubs and identities; BDM-generated sporting profiles and economy. Fictional new season using the existing ACB rules. Pilot: Liga Endesa only.',isTest:false,teams:[]},
+  {id:WORLD_DB_V2_UNIVERSE_ID,label:'WORLDDB V2 · PBM',description:'Original PBM clubs and identities; BDM-generated sporting profiles and economy. Fictional career using the selected competition’s documented native format.',isTest:false,teams:[]},
   {
     id: NCAA_SIMULATED_UNIVERSE_ID,
     label: 'NCAA DEVELOPMENT · SIMULATED',
