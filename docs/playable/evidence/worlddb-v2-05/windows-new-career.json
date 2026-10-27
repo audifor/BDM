@@ -1,0 +1,83 @@
+{
+  "passed": true,
+  "profile": "worlddb-v2-05-native-1793100381712",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\worlddb-v2-05-native-1793100381712\\main.json",
+  "steps": [
+    {
+      "name": "new-shared-career",
+      "status": "PASS",
+      "detail": {
+        "teams": 70,
+        "competitions": 4,
+        "games": 1166
+      }
+    },
+    {
+      "name": "all-four-leagues-play",
+      "status": "PASS",
+      "detail": {
+        "leagues": [
+          {
+            "id": "competition:ESP:liga-endesa",
+            "completed": 9
+          },
+          {
+            "id": "competition:FRA:betclic-elite",
+            "completed": 8
+          },
+          {
+            "id": "competition:ITA:serie-a",
+            "completed": 8
+          },
+          {
+            "id": "competition:BRA:nbb",
+            "completed": 10
+          }
+        ],
+        "elapsedMs": 27018,
+        "cores": 12
+      }
+    },
+    {
+      "name": "consult-other-competitions",
+      "status": "PASS",
+      "detail": [
+        {
+          "id": "competition:FRA:betclic-elite",
+          "name": "Betclic Élite · PBM V2"
+        },
+        {
+          "id": "competition:ITA:serie-a",
+          "name": "LBA Serie A · PBM V2"
+        },
+        {
+          "id": "competition:ESP:liga-endesa",
+          "name": "Liga Endesa · PBM V2"
+        },
+        {
+          "id": "competition:BRA:nbb",
+          "name": "NBB · PBM V2"
+        }
+      ]
+    },
+    {
+      "name": "global-market-rosters",
+      "status": "PASS",
+      "detail": [
+        "Betclic Élite · PBM V2",
+        "LBA Serie A · PBM V2",
+        "Liga Endesa · PBM V2",
+        "NBB · PBM V2"
+      ]
+    },
+    {
+      "name": "save-close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-10-06",
+        "actas": 35
+      }
+    }
+  ],
+  "consoleErrors": []
+}

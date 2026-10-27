@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   clearMatch: vi.fn(),
   resetTacticalPlan: vi.fn(),
   getSaveInfo: vi.fn(),
+  discoverWorldDbV2: vi.fn(),
 }))
 
 vi.mock('@/app/game', async () => {
@@ -38,6 +39,7 @@ vi.mock('@/stores/tacticalPlanStore', () => ({
 vi.mock('@/tauri/TauriGameSaveRepository', () => ({
   tauriGameSaveRepository: { getInfo: mocks.getSaveInfo },
 }))
+vi.mock('@/tauri/TauriWorldDbV2', () => ({ discoverWorldDbV2: mocks.discoverWorldDbV2 }))
 
 vi.mock('@/ui/App', () => ({ App: () => <div>Legacy home</div> }))
 vi.mock('@/ui-ng/BdmOsNg', () => ({ BdmOsNg: () => <div>BDM home</div> }))
@@ -68,6 +70,7 @@ describe('New Game World DB Spain ACB flow', () => {
     mocks.clearMatch.mockReset()
     mocks.resetTacticalPlan.mockReset()
     mocks.getSaveInfo.mockReset().mockResolvedValue(null)
+    mocks.discoverWorldDbV2.mockReset().mockResolvedValue({ teams })
   })
 
   afterEach(cleanup)
@@ -78,6 +81,29 @@ describe('New Game World DB Spain ACB flow', () => {
     expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('acb-2026-27')
     expect(within(screen.getByLabelText('TEAM')).getAllByRole('option')).toHaveLength(18)
     expect(mocks.discoverWorldDbSpainSelection).not.toHaveBeenCalled()
+  })
+
+  it('selects the active leagues together with the club, date and seed', async () => {
+    mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'shared-universe' })
+    render(<BootstrapApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbV2' } })
+    const select = await screen.findByLabelText('TEAM')
+    await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(19))
+    const active = screen.getAllByRole('checkbox') as HTMLInputElement[]
+    expect(active).toHaveLength(4)
+    expect(active.every(input => input.checked)).toBe(true)
+    expect(active[0]!.disabled).toBe(true)
+    fireEvent.click(active[3]!)
+    fireEvent.change(select, { target: { value: teams[0]!.key } })
+    fireEvent.change(screen.getByLabelText('START DATE'), { target: { value: '2025-10-04' } })
+    fireEvent.change(screen.getByLabelText('WORLD SEED'), { target: { value: 'shared-seed' } })
+    fillCoachIdentity()
+    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
+    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith(expect.objectContaining({
+      universeId: 'worldDbV2', userTeamKey: teams[0]!.key,
+      worldDbV2: expect.objectContaining({ startDate: '2025-10-04', seed: 'shared-seed', activeCompetitionIds: ['pbm:DYN_championnat:5', 'pbm:DYN_championnat:2', 'pbm:DYN_championnat:10'] }),
+    })))
   })
 
   it('lists 18 canonical teams and sends the selected team through async creation into the normal world store', async () => {

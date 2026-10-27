@@ -31,9 +31,12 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     ...world.marketKnowledge.filter((entry) => entry.organizationId === team.organizationId).map((entry) => entry.playerId),
     ...getFreeAgents(world).map((player) => player.id),
   ])
-  // The rosters of the clubs that compete in the same competition are public in the league: the identity of every player in the
-  // manager's universe is addressable (ratings and willingness are not; those still come only from scouting and market signals).
-  for (const competition of getCompetitionsForTeam(world, teamId)) {
+  // League rosters are public. In a selected WorldDB universe that includes every active league;
+  // ratings and willingness still require scouting and market signals.
+  const publicCompetitions = world.worldDbCompetitionRuntime?.worldDbV2?.activeCompetitionIds
+    ? Object.values(world.competitions)
+    : getCompetitionsForTeam(world, teamId)
+  for (const competition of publicCompetitions) {
     for (const participantId of competition.participantTeamIds) {
       for (const playerId of world.teams[participantId]?.rosterPlayerIds ?? []) ids.add(playerId)
     }

@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "policy": "Existing BDM_TRANSFER_POLICY_V1 and generated contracts, Finance and Governance; no new international registration rules",
+  "attempts": [
+    {
+      "playerId": "pbm:DYN_joueur:100017735",
+      "status": "EXECUTED",
+      "log": [
+        "2025-11-03 proposal 96000",
+        "2025-11-04 club CLUB_AGREED",
+        "2025-11-04 playerOffer 105000 x 2",
+        "2025-11-05 player PLAYER_AGREED",
+        "2025-11-05 governance started",
+        "2025-11-06 board decided DECISION_PRESENT",
+        "2025-11-06 executed"
+      ]
+    }
+  ]
+}

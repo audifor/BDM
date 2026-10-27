@@ -1,0 +1,7 @@
+PASS load-certified-checkpoint
+
+PASS global-market-rosters
+
+PASS save-close-load-continue
+
+{"out":"C:\\BDM-worktrees\\worlddb-v2-05\\.worlddb-v2\\native-universe-05-1793099982438","profile":"worlddb-v2-05-native-1793099982438"}

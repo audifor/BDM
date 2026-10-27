@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "leagues": [
+    {
+      "competitionId": "competition:ESP:liga-endesa",
+      "seasonId": "worlddb-v2:season:2025-10-04",
+      "clubs": 18,
+      "completed": 328,
+      "regular": 306,
+      "stats": 328,
+      "champion": "pbm:DYN_equipe:51",
+      "successorId": "generated-season-0001",
+      "successorCompleted": 9
+    },
+    {
+      "competitionId": "competition:FRA:betclic-elite",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+      "clubs": 16,
+      "completed": 265,
+      "regular": 240,
+      "stats": 265,
+      "champion": "pbm:DYN_equipe:9",
+      "successorId": "generated-season-0003",
+      "successorCompleted": 8
+    },
+    {
+      "competitionId": "competition:ITA:serie-a",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+      "clubs": 16,
+      "completed": 266,
+      "regular": 240,
+      "stats": 266,
+      "champion": "pbm:DYN_equipe:2051",
+      "successorId": "generated-season-0002",
+      "successorCompleted": 8
+    },
+    {
+      "competitionId": "competition:BRA:nbb",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+      "clubs": 20,
+      "completed": 438,
+      "regular": 380,
+      "stats": 438,
+      "champion": "pbm:DYN_equipe:2951",
+      "successorId": "generated-season-0004",
+      "successorCompleted": 10
+    }
+  ],
+  "date": "2026-10-11",
+  "days": 8,
+  "meanDayMs": 12567.7754625,
+  "decisions": []
+}

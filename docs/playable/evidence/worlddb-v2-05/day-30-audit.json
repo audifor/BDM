@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "date": "2025-11-03",
+  "saveSha256": "18c750de17ef08a8f3a17e6dc838c7ab8d64233e52da91bbbca9f98cadfdb144",
+  "leagues": [
+    {
+      "competitionId": "competition:ESP:liga-endesa",
+      "clubs": 18,
+      "players": 255,
+      "completed": 45,
+      "fatigued": 244,
+      "injuries": 23
+    },
+    {
+      "competitionId": "competition:FRA:betclic-elite",
+      "clubs": 16,
+      "players": 218,
+      "completed": 40,
+      "fatigued": 218,
+      "injuries": 11
+    },
+    {
+      "competitionId": "competition:ITA:serie-a",
+      "clubs": 16,
+      "players": 203,
+      "completed": 40,
+      "fatigued": 202,
+      "injuries": 11
+    },
+    {
+      "competitionId": "competition:BRA:nbb",
+      "clubs": 20,
+      "players": 238,
+      "completed": 50,
+      "fatigued": 236,
+      "injuries": 22
+    }
+  ]
+}

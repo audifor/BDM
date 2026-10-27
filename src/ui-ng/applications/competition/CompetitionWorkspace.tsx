@@ -184,6 +184,7 @@ export function CompetitionWorkspace() {
           aria-label="Competición"
           onChange={(event) => {
             setPreferredCompetitionId(event.target.value as CompetitionId)
+            setOnlyUserTeam(false)
             setMonthOffset(0)
           }}
           value={model.competitionId}

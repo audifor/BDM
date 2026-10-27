@@ -93,6 +93,14 @@ ID. Relationships are references by ID and are validated when the world is creat
 
 Derived data is not persisted when it can be resolved from canonical entities.
 
+WorldDB V2 career creation can assemble the four certified league projections into
+one normalized GameWorld before its clock starts. Source master, date and seed must
+agree; conflicting shared identities fail creation. The optional Save V4 provenance
+field `activeCompetitionIds` records the selected source competitions while legacy
+single-league careers retain their existing contract. This universe uses exact Match
+Next resolution and the existing day boundary, worker pool and independent Competition
+lifecycle coordinator. It adds no sporting engine or cross-league qualification rules.
+
 ## Coach finances and memory
 
 Coach finance profiles are canonical world state. Their financial position is a derived domain projection (cash, net worth, monthly shortfall, runway, security and pressure) for Career and job-offer consumers; it is never duplicated into Memory. Monthly processing remains idempotent per profile/month and continues non-salary income, expenses and debt while a coach is unemployed. Coach employment currently has no compensation, guaranteed-money or bonus contract domain, so no artificial severance or bonus subsystem is modeled here.

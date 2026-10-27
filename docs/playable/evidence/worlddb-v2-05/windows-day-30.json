@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "certifiedCheckpoint": ".worlddb-v2/universe-05/day-30.json",
+  "profile": "worlddb-v2-05-native-1793097991292",
+  "savePath": "C:\\Users\\jorge\\AppData\\Roaming\\com.bdm.worlddbv2.pilot\\saves\\profiles\\worlddb-v2-05-native-1793097991292\\main.json",
+  "steps": [
+    {
+      "name": "load-certified-checkpoint",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-11-03",
+        "actas": 175
+      }
+    },
+    {
+      "name": "save-close-load-continue",
+      "status": "PASS",
+      "detail": {
+        "date": "2025-11-04",
+        "actas": 175
+      }
+    }
+  ],
+  "consoleErrors": []
+}

@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "leagues": [
+    {
+      "competitionId": "competition:ESP:liga-endesa",
+      "seasonId": "worlddb-v2:season:2025-10-04",
+      "clubs": 18,
+      "completed": 328,
+      "regular": 306,
+      "stats": 328,
+      "champion": "pbm:DYN_equipe:51",
+      "successorId": "generated-season-0001"
+    },
+    {
+      "competitionId": "competition:FRA:betclic-elite",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+      "clubs": 16,
+      "completed": 265,
+      "regular": 240,
+      "stats": 265,
+      "champion": "pbm:DYN_equipe:9",
+      "successorId": "generated-season-0003"
+    },
+    {
+      "competitionId": "competition:ITA:serie-a",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+      "clubs": 16,
+      "completed": 266,
+      "regular": 240,
+      "stats": 266,
+      "champion": "pbm:DYN_equipe:2051",
+      "successorId": "generated-season-0002"
+    },
+    {
+      "competitionId": "competition:BRA:nbb",
+      "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+      "clubs": 20,
+      "completed": 438,
+      "regular": 380,
+      "stats": 438,
+      "champion": "pbm:DYN_equipe:2951",
+      "successorId": "generated-season-0004"
+    }
+  ],
+  "date": "2026-10-03",
+  "days": 304,
+  "meanDayMs": 4408.700909210526,
+  "decisions": [
+    {
+      "date": "2026-01-19",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0120:pbm:DYN_joueur:62011"
+    },
+    {
+      "date": "2026-02-18",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0180:pbm:DYN_joueur:100040487"
+    },
+    {
+      "date": "2026-04-10",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0221:pbm:DYN_joueur:100012194"
+    },
+    {
+      "date": "2026-04-13",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0213:pbm:DYN_joueur:100057546"
+    },
+    {
+      "date": "2026-05-15",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100012194"
+    },
+    {
+      "date": "2026-05-21",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0283:pbm:DYN_joueur:87002218"
+    },
+    {
+      "date": "2026-05-27",
+      "reason": "returnToPlayReview",
+      "id": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0263:pbm:DYN_joueur:100040487"
+    }
+  ]
+}
