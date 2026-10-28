@@ -1,4 +1,5 @@
-import type { GameWorld } from '@/domain/world'
+import { withSingleWorldValidation, type GameWorld } from '@/domain/world'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { parseGameDate } from '@/domain/date'
 import { createAcbTestGame } from './createAcbTestGame'
@@ -27,12 +28,17 @@ export async function createConfiguredGameAsync(
 ): Promise<GameWorld> {
   if (options.universeId === WORLD_DB_V2_UNIVERSE_ID) {
     if(!options.worldDbV2)throw new Error('WorldDB V2 source, date and seed are required')
+    let world: GameWorld
     if(options.worldDbV2.activeCompetitionIds){
       const { createWorldDbV2Universe } = await import('./WorldDbV2Universe')
-      return createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.worldDbV2.activeCompetitionIds,options.userCoachCreation)
+      world = await createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.worldDbV2.activeCompetitionIds,options.userCoachCreation)
+    } else {
+      const { createWorldDbV2Game } = await import('./WorldDbV2Game')
+      world = await createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
     }
-    const { createWorldDbV2Game } = await import('./WorldDbV2Game')
-    return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
+    // As in createNewGame, the creation date must run once before the first Advance Day
+    // changes the date. Otherwise every contract anniversary on day zero is skipped.
+    return withSingleWorldValidation(world, initial => processClubFinanceForDate(initial, initial.currentDate).world)
   }
   if (options.universeId === WORLD_DB_SPAIN_UNIVERSE_ID) {
     return createWorldDbSpainGame(options.userTeamKey ?? '', access, BDM_GAME_BALANCE_V1, options.userCoachCreation)

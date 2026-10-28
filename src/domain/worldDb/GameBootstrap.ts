@@ -84,7 +84,7 @@ export interface WorldDbGameBootstrapPlayerV1 {
     readonly basketballSpecializationTraits: readonly { readonly code: string; readonly startedOn: string }[]
   }
 }
-export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes: Readonly<Record<string, number>>; readonly specialismIds: readonly string[] }
+export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes: Readonly<Record<string, number>>; readonly specialismIds: readonly string[]; readonly marketRole?: import('@/domain/staff').StaffRoleId }
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
 export interface WorldDbGameBootstrapRosterAssignmentV1 { readonly rosterId: string; readonly teamId: string; readonly playerId: string; readonly status: string }
 

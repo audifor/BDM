@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { describeTransferGovernance, evaluateTransferFee } from '@/app/transfer'
+import { describeTransferGovernance, evaluateTransferFee, transferFeeAuthorization } from '@/app/transfer'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { currentClubRound, currentPlayerRound, type PlayerTransferNegotiation } from '@/domain/transfer'
 import type { GameWorld } from '@/domain/world'
@@ -8,6 +8,7 @@ import { formatMoney } from '@/ui/formatters'
 import { CustomOfferForm } from './CustomOfferForm'
 import { MarketViabilityPanel } from './MarketViabilityPanel'
 import { buildMarketViability } from './marketViability'
+import { marketMinorUnitsToMajor } from './marketFinancialSummary'
 import './market-viability.css'
 
 const playerName = (world: GameWorld, playerId: PlayerId): string => {
@@ -62,6 +63,8 @@ function TransferEntry({ world, teamId, transfer }: { readonly world: GameWorld;
   const governance = describeTransferGovernance(world, transfer)
   const open = transfer.status === 'IN_PROGRESS'
   const counterFee = clubRound?.response?.counterFee
+  const counterDecision = open && counterFee !== undefined ? evaluateTransferFee(world, teamId, counterFee, transfer.id) : undefined
+  const counterAuthorization = counterDecision === undefined ? undefined : transferFeeAuthorization(world, teamId)
   const revisedValid = revisedFee !== '' && Number.isSafeInteger(Number(revisedFee)) && Number(revisedFee) >= 1
   const agreedTerms = transfer.agreedTerms
   const feeDecision = open && transfer.agreedFee !== undefined ? evaluateTransferFee(world, teamId, transfer.agreedFee, transfer.id) : undefined
@@ -83,7 +86,9 @@ function TransferEntry({ world, teamId, transfer }: { readonly world: GameWorld;
 
         {open && transfer.clubStatus === 'CLUB_COUNTERED' && counterFee !== undefined ? <div className="market-transfers__actions">
           <p>El club pide <b>{formatMoney(counterFee)}</b>.</p>
-          <button type="button" onClick={() => store().respondTransferClubCounter(teamId, transfer.id, { kind: 'ACCEPT_COUNTER' })}>Aceptar la compensación del club</button>
+          <p>Margen disponible para compensaciones: <b>{counterAuthorization?.headroomMinorUnits != null && counterAuthorization.currencyCode !== null ? formatMoney(marketMinorUnitsToMajor(counterAuthorization.headroomMinorUnits, counterAuthorization.currencyCode)) : 'Desconocido'}</b>. Es una partida distinta del salario.</p>
+          {counterDecision?.allowed === false && <p className="market-transfers__warning">Finance no autoriza esta compensación: {counterDecision.reason}.</p>}
+          <button type="button" disabled={counterDecision?.allowed !== true} onClick={() => store().respondTransferClubCounter(teamId, transfer.id, { kind: 'ACCEPT_COUNTER' })}>Aceptar la compensación del club</button>
           <label>Revisar mi propuesta<input aria-label={`Compensación revisada ${transfer.id}`} type="number" min="1" step="1" value={revisedFee} onChange={(event) => setRevisedFee(event.target.value)} /></label>
           <button type="button" disabled={!revisedValid} onClick={() => { store().respondTransferClubCounter(teamId, transfer.id, { kind: 'REVISE', fee: Number(revisedFee) }); setRevisedFee('') }}>Enviar propuesta revisada</button>
           <button type="button" onClick={() => store().respondTransferClubCounter(teamId, transfer.id, { kind: 'DECLINE' })}>Rechazar y retirar</button>

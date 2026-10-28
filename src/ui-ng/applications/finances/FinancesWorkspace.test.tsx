@@ -2,11 +2,13 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, describe, expect, it } from 'vitest'
-import { createGameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld } from '@/domain/world'
+import { createFiscalPeriod, closeFiscalPeriod } from '@/domain/finance'
+import { fiscalPeriodIdFromString } from '@/domain/ids'
 import { createFinancialAccount, createFinancialTransaction, createRevenueRecognition, createFinancialBudget, createBudgetLine, createFinancialPlanningPeriod, createFinanceDecisionProposal } from '@/domain/finance'
 import { createValidGameWorldInput } from '@/domain/world/testFixtures'
 import { FinancesWorkspace } from './FinancesWorkspace'
-import { buildFinanceWorkspaceSection, FINANCE_TABS } from './financeWorkspaceModel'
+import { buildFinanceWorkspaceSection, financeReportingPeriod, FINANCE_TABS } from './financeWorkspaceModel'
 
 afterEach(cleanup)
 
@@ -14,6 +16,18 @@ const world = createGameWorld(createValidGameWorldInput())
 const organizationId = 'team-home'
 
 describe('Finance V2 workspace', () => {
+  it('reports the actual fiscal exercise instead of assuming January to December', () => {
+    const current = updateGameWorld(world, { fiscalPeriods: [createFiscalPeriod({ id: 'fiscal:current', organizationId, label: '2032/33', startsOn: '2032-09-01', endsOn: '2033-08-31' })] })
+    expect(financeReportingPeriod(current, organizationId)).toMatchObject({ kind: 'FISCAL_YEAR', startsOn: '2032-09-01', endsOn: '2033-08-31' })
+  })
+  it('shows the actual closed exercise after the closing authority runs', () => {
+    const id = fiscalPeriodIdFromString('fiscal:previous')
+    const before = updateGameWorld(world, { fiscalPeriods: [createFiscalPeriod({ id, organizationId, label: 'Ejercicio anterior', startsOn: '2031-01-01', endsOn: '2031-12-31' })] })
+    render(<FinancesWorkspace world={closeFiscalPeriod(before, id)} />)
+    fireEvent.click(screen.getByText('Ejercicios y cierres (1)'))
+    expect(screen.getByRole('table', { name: 'Ejercicios fiscales' })).toHaveTextContent('Ejercicio anterior')
+    expect(screen.getByRole('table', { name: 'Ejercicios fiscales' })).toHaveTextContent('Cerrado')
+  })
   it('derives each section from an empty canonical world with honest missing-data states', () => {
     for (const [tab] of FINANCE_TABS) {
       if (tab === 'cap') continue

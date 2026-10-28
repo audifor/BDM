@@ -10,7 +10,7 @@ import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { FinanceCourtsideOverview } from './FinanceCourtsideOverview'
 import { FinanceCourtsideBudget } from './FinanceCourtsideBudget'
 import { financeTableLabel, financeColumnLabel, financeEmptyLabel, financeValueLabel } from './financeCourtsideLabels'
-import { buildFinanceWorkspaceSection, type FinanceSection, type FinanceTable, type FinanceTab } from './financeWorkspaceModel'
+import { buildFinanceWorkspaceSection, financeMoney, type FinanceSection, type FinanceTable, type FinanceTab } from './financeWorkspaceModel'
 import './finance-workspace.css'
 import '@/ui-ng/applications/club/courtside-club-management.css'
 import './finance-courtside.css'
@@ -77,7 +77,7 @@ export function FinancesWorkspace({ world: suppliedWorld }: { readonly world?: G
     <nav className="fc-subnav" aria-label="Apartados de finanzas">
       {group.entries.map(([id, label]) => <button key={id} type="button" className={tab === id ? 'is-active' : ''} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>{label}</button>)}
     </nav>
-    {tab === 'overview' ? <FinanceCourtsideOverview world={world} organizationId={organizationId} currency={reportingCurrency} onNavigate={setTab} /> : <>
+    {tab === 'overview' ? <><FinanceCourtsideOverview world={world} organizationId={organizationId} currency={reportingCurrency} onNavigate={setTab} /><FiscalPeriodHistory world={world} organizationId={organizationId} /></> : <>
       {(tab === 'forecast' || tab === 'valuation') && <div className="fc-context-controls">
         {tab === 'forecast' && <label>Escenario <select aria-label="Forecast scenario" onChange={(event) => setScenario(event.target.value as typeof scenario)} value={scenario}><option value="BASELINE">Normal</option><option value="UPSIDE">Optimista</option><option value="DOWNSIDE">Pesimista</option></select></label>}
         {tab === 'valuation' && <>
@@ -98,6 +98,20 @@ export function FinancesWorkspace({ world: suppliedWorld }: { readonly world?: G
       {tab === 'cap' ? <SalaryCapSection world={world} teamId={team.id} /> : <>{tab === 'budget' && <FinanceCourtsideBudget world={world} organizationId={organizationId} />}{section && <FinanceSectionView section={section} tab={tab} filter={filter} />}</>}
     </>}
   </NgHoloShell>
+}
+
+function FiscalPeriodHistory({ world, organizationId }: { readonly world: GameWorld; readonly organizationId: string }) {
+  const periods = Object.values(world.fiscalPeriodsById).filter(period => period.organizationId === organizationId).sort((a, b) => b.startsOn.localeCompare(a.startsOn))
+  if (periods.length === 0) return null
+  return <details className="fc-extra"><summary>Ejercicios y cierres ({periods.length})</summary>
+    <p>El calendario cierra automáticamente el resultado registrado al terminar cada ejercicio. Caja, deudas y contratos continúan; el cierre no crea ingresos ni impuestos.</p>
+    <table aria-label="Ejercicios fiscales"><thead><tr><th>Ejercicio</th><th>Desde</th><th>Hasta</th><th>Estado</th><th>Resultado cerrado</th></tr></thead><tbody>
+      {periods.map(period => {
+        const closings = Object.values(world.financialTransactionsById).filter(transaction => transaction.organizationId === organizationId && transaction.transactionType === 'FISCAL_PERIOD_CLOSING' && transaction.provenance.id === period.id)
+        return <tr key={period.id}><td>{period.label}</td><td>{period.startsOn}</td><td>{period.endsOn}</td><td>{period.status === 'CLOSED' ? 'Cerrado' : 'Abierto'}</td><td>{period.status === 'OPEN' ? 'Pendiente de cierre' : closings.length === 0 ? 'Sin saldo de resultados' : closings.map(transaction => financeMoney(transaction.postings.filter(posting => world.financialAccountsById[posting.accountId]?.accountType === 'EQUITY').reduce((sum, posting) => sum + (posting.direction === 'CREDIT' ? posting.amount.minorUnits : -posting.amount.minorUnits), 0), transaction.amount.currencyCode)).join(' · ')}</td></tr>
+      })}
+    </tbody></table>
+  </details>
 }
 
 function FinanceSectionView({ section, tab, filter }: { readonly section: FinanceSection; readonly tab: FinanceTab; readonly filter: string }) {

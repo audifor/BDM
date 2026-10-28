@@ -1230,6 +1230,7 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     if (value === undefined) continue
     delete remainingPatch[inputKey]
     if (inputKey === 'financialTransactions') assertFinancialTransactionsAppendOnly(world, value as readonly FinancialTransaction[])
+    if (inputKey === 'fiscalPeriods') assertFiscalPeriodClosuresImmutable(world, value as readonly FiscalPeriod[])
     if (inputKey === 'developmentStimulusEvents') {
       // Historical evidence is already canonical and immutable. Validate only replacements/new records.
       const events = (value as readonly DevelopmentStimulusEvent[]).map((event) =>
@@ -3892,6 +3893,20 @@ function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: reado
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Financial transaction ${existing.id} cannot be removed from the ledger`)
     if (next !== existing && JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Financial transaction ${existing.id} is immutable`)
+  }
+  const closed = Object.values(world.fiscalPeriodsById).filter(period => period.status === 'CLOSED')
+  for (const transaction of nextById.values()) {
+    if (world.financialTransactionsById[transaction.id] !== undefined) continue
+    if (closed.some(period => period.organizationId === transaction.organizationId && period.startsOn <= transaction.effectiveOn && transaction.effectiveOn <= period.endsOn)) throw new GameWorldValidationError(`Financial transaction ${transaction.id} cannot be added to a closed fiscal period`)
+  }
+}
+
+function assertFiscalPeriodClosuresImmutable(world: GameWorld, proposed: readonly FiscalPeriod[]): void {
+  const nextById = new Map(proposed.map(period => [period.id, period]))
+  for (const existing of Object.values(world.fiscalPeriodsById)) {
+    const next = nextById.get(existing.id)
+    if (existing.status !== 'CLOSED' && next?.status !== 'CLOSED') continue
+    if (next === undefined || existing.status === 'CLOSED' && next.status !== 'CLOSED' || JSON.stringify({ ...existing, status: 'CLOSED' }) !== JSON.stringify({ ...next, status: 'CLOSED' })) throw new GameWorldValidationError(`Fiscal period ${existing.id} closing is immutable`)
   }
 }
 

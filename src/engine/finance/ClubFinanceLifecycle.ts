@@ -2,6 +2,7 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { staffFinancialScheduleStartsOn } from '@/domain/staffContract'
 import {
   collectDueReceivablesForDate,
+  closeFiscalPeriod,
   executeFinancingForDate,
   getContractFinancialSchedule,
   getOrganizationFinanceAccounts,
@@ -163,6 +164,12 @@ export function processClubFinanceForDate(world: GameWorld, gameDate: GameDate |
     if (profile === undefined) {
       organizations.push(result(organizationId, null, null, 'FINANCE_PROFILE_UNAVAILABLE', zeroOccurrences(), 0, 'Organization has no canonical finance profile, so no Finance fact can be recorded for it.'))
       continue
+    }
+    // The last day has already run its economic facts. Close each ended exercise once,
+    // independently of competition seasons, before opening/authorizing its successor.
+    for (const period of financeFiscalPeriodsOf(current, organizationId).filter(p => p.status === 'OPEN' && p.endsOn < date && p.endsOn < current.currentDate).sort((a, b) => a.endsOn.localeCompare(b.endsOn) || a.id.localeCompare(b.id))) {
+      current = closeFiscalPeriod(current, period.id)
+      diagnostics.push({ code: 'FISCAL_PERIOD_CLOSED', message: `Recorded result closed for ${period.label}.`, sourceId: period.id })
     }
     // BS16N-R fiscal rollover, before any economic stage reads the period: the first processed GameDate inside a
     // new fiscal year materializes the Organization's canonical fiscal period exactly once, and materializing a

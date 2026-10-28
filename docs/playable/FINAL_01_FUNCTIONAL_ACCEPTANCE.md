@@ -1,0 +1,30 @@
+# FINAL 01 — cierre funcional
+
+Base: `main` posterior a V2-06, `12d926241fda7f2ba3f198083cd61fd480c2fec8`. Rama aislada `release/final-01-functional`; worktree `C:/BDM-worktrees/final-01`.
+
+## Defectos corregidos
+
+1. **NEW GAME omitía la primera nómina.** El arranque WorldDB V2 no ejecutaba Finance en la fecha inicial. Ahora materializa los vencimientos a través del procesador existente. La carrera Windows de cuatro ligas registra 1.089 reconocimientos iniciales en las 70 organizaciones. No se inventan ingresos ni financiación.
+2. **Los contratos firmados durante el día perdían el primer vencimiento al avanzar.** Calendar reconcilia la fecha saliente antes de procesar la entrante. Los identificadores económicos existentes hacen que repetir la fecha no duplique obligaciones, reconocimientos ni pagos. Probado con cuatro altas de staff y contratación de jugadores.
+3. **Ejercicios sin cierre contable.** Finance cierra los periodos terminados, salda exclusivamente los ingresos y gastos registrados contra la cuenta patrimonial existente y abre el siguiente periodo mediante sus autoridades actuales. No cambia caja, deudas ni hechos previos. El cierre es idempotente; los periodos cerrados no se reabren y no admiten nuevos asientos retroactivos. No se modelan impuestos ni distribuciones ficticias.
+4. **Finanzas mostraba el año natural en vez del ejercicio canónico.** Las vistas existentes usan el FiscalPeriod correspondiente a la fecha y permiten consultar ejercicios y cierres dentro de la pantalla actual.
+5. **La carrera PBM sólo incorporaba perfiles de entrenador.** La proyección de partida incorpora las especialidades del personal original y una selección determinista y acotada de personas originales desempleadas. Sus identidades PBM se conservan; sus atributos de juego se generan con el generador existente y se identifican como ficción BDM. Se prueban contratación, asignación, delegación y despido por las autoridades existentes.
+6. **Dos clubes recibían un presidente como entrenador.** Las nuevas carreras eligen un entrenador original desempleado para la designación inicial ficticia de BDM cuando no existe entrenador de origen. Los presidentes siguen siendo personas originales. No se modifica el maestro ni se reescriben partidas existentes.
+7. **Una contraoferta de compensación bloqueada se explicaba como falta de margen salarial.** El mensaje distingue categorías financieras; Operaciones muestra la autorización para compensaciones y desactiva la aceptación cuando Finance la rechaza. La regresión carga el guardado real de la negativa, sin presupuesto simulado.
+8. **Un contacto respondido seguía indicando espera.** Operaciones muestra la respuesta recibida.
+
+## Evidencia y alcance
+
+La aceptación usa el ejecutable Tauri de Windows, WebView2, entradas reales de Courtside y guardados nativos. Los scripts `final-01-windows.mjs` y `final-01-native-season.mjs` no inyectan mundos ni llaman directamente a comandos del store. Las operaciones conservan las negativas legítimas de jugadores, clubes y Finance.
+
+Los guardados y capturas originales de trabajo se conservan en `.worlddb-v2/final-01/windows-1793220122415`. Se seleccionará la evidencia final reproducible en `docs/playable/evidence/final-01` al concluir la certificación.
+
+Se ha jugado un partido completo FULL, con pausa y reanudación; las restantes resoluciones utilizan el MatchEngine y sus workers existentes. El universo es una única partida con Liga Endesa (18), Betclic Élite (16), LBA (16) y NBB (20).
+
+No se cambia MatchEngine, Courtside, Save V4, Runtime V1, bases de datos fuente ni reglas de competición. La única modificación del generador de staff exporta una función ya existente. No se conectan otras competiciones.
+
+La evaluación funcional no demuestra por sí sola diversión ni ventaja competitiva de decisiones manuales. No se atribuyen esas conclusiones a la suite.
+
+## Estado de certificación
+
+En curso: temporada Windows completa, sucesoras, operaciones finales y suite global. Este documento no constituye todavía un PASS.
