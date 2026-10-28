@@ -16,6 +16,20 @@ const playerName = (world: GameWorld, playerId: PlayerId): string => {
   return player === undefined ? 'Jugador' : `${player.firstName} ${player.lastName}`
 }
 
+function feeRefusal(reason: string | null | undefined): string {
+  const messages: Readonly<Record<string, string>> = {
+    INSUFFICIENT_AUTHORIZED_HEADROOM: 'La petición supera el margen autorizado para compensaciones.',
+    INSUFFICIENT_LIQUIDITY: 'La tesorería disponible no cubre el pago al club vendedor.',
+    RESERVED_CAPACITY_CONFLICT: 'Otra operación en curso tiene reservado ese margen.',
+    CURRENCY_MISMATCH: 'La moneda del pago no coincide con la del club.',
+    FINANCE_PROFILE_UNAVAILABLE: 'No hay un perfil financiero disponible para evaluar este pago.',
+    BUDGET_AUTHORIZATION_NOT_MODELLED: 'El club no tiene una autorización para compensaciones.',
+    AUTHORIZATION_OUT_OF_PERIOD: 'La autorización para compensaciones no cubre el ejercicio actual.',
+    REQUIRES_FINANCING: 'El pago necesita financiación que todavía no está autorizada.',
+  }
+  return messages[reason?.split(':')[0] ?? ''] ?? 'No se ha podido autorizar el pago; revisa las finanzas del club.'
+}
+
 const CLUB_TEXT = {
   AWAITING_CLUB_RESPONSE: 'Esperando la respuesta del club (llega mañana)',
   CLUB_COUNTERED: 'El club contraoferta',
@@ -87,7 +101,7 @@ function TransferEntry({ world, teamId, transfer }: { readonly world: GameWorld;
         {open && transfer.clubStatus === 'CLUB_COUNTERED' && counterFee !== undefined ? <div className="market-transfers__actions">
           <p>El club pide <b>{formatMoney(counterFee)}</b>.</p>
           <p>Margen disponible para compensaciones: <b>{counterAuthorization?.headroomMinorUnits != null && counterAuthorization.currencyCode !== null ? formatMoney(marketMinorUnitsToMajor(counterAuthorization.headroomMinorUnits, counterAuthorization.currencyCode)) : 'Desconocido'}</b>. Es una partida distinta del salario.</p>
-          {counterDecision?.allowed === false && <p className="market-transfers__warning">Finance no autoriza esta compensación: {counterDecision.reason}.</p>}
+          {counterDecision?.allowed === false && <p className="market-transfers__warning">Finance no autoriza esta compensación: {feeRefusal(counterDecision.reason)}</p>}
           <button type="button" disabled={counterDecision?.allowed !== true} onClick={() => store().respondTransferClubCounter(teamId, transfer.id, { kind: 'ACCEPT_COUNTER' })}>Aceptar la compensación del club</button>
           <label>Revisar mi propuesta<input aria-label={`Compensación revisada ${transfer.id}`} type="number" min="1" step="1" value={revisedFee} onChange={(event) => setRevisedFee(event.target.value)} /></label>
           <button type="button" disabled={!revisedValid} onClick={() => { store().respondTransferClubCounter(teamId, transfer.id, { kind: 'REVISE', fee: Number(revisedFee) }); setRevisedFee('') }}>Enviar propuesta revisada</button>
@@ -108,7 +122,7 @@ function TransferEntry({ world, teamId, transfer }: { readonly world: GameWorld;
         {open && transfer.playerStatus === 'PLAYER_AGREED' && agreedTerms !== undefined ? <div className="market-transfers__actions">
           <p data-testid="transfer-agreed-terms">Condiciones acordadas con el jugador: <b>{formatMoney(agreedTerms.salary)}</b> × {agreedTerms.years} año(s){agreedTerms.role === undefined ? '' : ` · rol prometido ${agreedTerms.role}`}</p>
           <MarketViabilityPanel viability={buildMarketViability(world, teamId, { annualSalary: agreedTerms.salary, years: agreedTerms.years })} label="Viabilidad económica del salario" />
-          <p className={feeDecision?.allowed === true ? 'market-transfers__ok' : 'market-transfers__warning'}>Compensación: {feeDecision?.allowed === true ? 'Finance la autoriza (autorización propia + tesorería)' : `Finance no la autoriza ahora (${feeDecision?.reason ?? 'sin datos'})`}</p>
+          <p className={feeDecision?.allowed === true ? 'market-transfers__ok' : 'market-transfers__warning'}>Compensación: {feeDecision?.allowed === true ? 'Finance la autoriza (autorización propia + tesorería)' : feeRefusal(feeDecision?.reason)}</p>
           <p data-testid="transfer-governance">Autorización: {GOVERNANCE_TEXT[governance.status]}{governance.pendingBodyNames.length > 0 && governance.status !== 'NOT_REQUESTED' ? ` · pendiente: ${governance.pendingBodyNames.join(', ')}` : ''}</p>
           {governance.status === 'NOT_REQUESTED' ? governance.userProposerBodyIds.map((bodyId) => <button key={bodyId} type="button" onClick={() => store().startTransferGovernance(teamId, transfer.id, bodyId)}>Solicitar autorización ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>) : null}
           {governance.decision !== undefined ? governance.userApproverBodyIds.map((bodyId) => <button key={bodyId} type="button" onClick={() => store().recordFreeAgentSigningDecision(governance.decision!.id, 'APPROVED', bodyId)}>Aprobar ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>) : null}

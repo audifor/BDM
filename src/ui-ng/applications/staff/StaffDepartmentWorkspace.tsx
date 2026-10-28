@@ -143,9 +143,11 @@ function LeagueComparisonColumn({ comparisons }: { readonly comparisons: ReturnT
 function DepartmentPeopleTable({
   onOpenStaff,
   people,
+  currencyCode,
 }: {
   readonly onOpenStaff: (staffPersonId: StaffPersonId) => void
   readonly people: readonly StaffDepartmentPersonRow[]
+  readonly currencyCode: string | undefined
 }) {
   if (people.length === 0) {
     return <p className="staff-workspace__empty">No staff assigned to this department.</p>
@@ -179,7 +181,7 @@ function DepartmentPeopleTable({
           ngCol('contract', 'Contract', (row) => STAFF_CONTRACT_STATUS_LABELS[row.contractStatus], {
             value: (row) => STAFF_CONTRACT_STATUS_LABELS[row.contractStatus],
           }),
-          ngCol('salary', 'Salary', (row) => (row.annualSalary === undefined ? '—' : compactStaffSalary(row.annualSalary)), {
+          ngCol('salary', 'Salary', (row) => (row.annualSalary === undefined ? '—' : compactStaffSalary(row.annualSalary, currencyCode)), {
             numeric: true,
             value: (row) => row.annualSalary,
           }),
@@ -224,7 +226,7 @@ export function StaffDepartmentWorkspace({
       >
         <ScrollRegion className="staff-workspace__scroll">
           <div className="staff-workspace__stack">
-            <DepartmentPeopleTable onOpenStaff={navigateToStaff} people={model.people} />
+            <DepartmentPeopleTable onOpenStaff={navigateToStaff} people={model.people} currencyCode={world.organizationFinancialProfilesById[world.teams[teamId]!.organizationId]?.baseCurrencyCode} />
             <div className="staff-department-detail__grid">
               <RoleColumn roles={model.roles} />
               <PersonStackedAttributes attributes={model.attributes} people={model.people} />

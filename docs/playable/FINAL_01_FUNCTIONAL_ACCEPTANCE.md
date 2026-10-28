@@ -12,6 +12,7 @@ Base: `main` posterior a V2-06, `12d926241fda7f2ba3f198083cd61fd480c2fec8`. Rama
 6. **Dos clubes recibían un presidente como entrenador.** Las nuevas carreras eligen un entrenador original desempleado para la designación inicial ficticia de BDM cuando no existe entrenador de origen. Los presidentes siguen siendo personas originales. No se modifica el maestro ni se reescriben partidas existentes.
 7. **Una contraoferta de compensación bloqueada se explicaba como falta de margen salarial.** El mensaje distingue categorías financieras; Operaciones muestra la autorización para compensaciones y desactiva la aceptación cuando Finance la rechaza. La regresión carga el guardado real de la negativa, sin presupuesto simulado.
 8. **Un contacto respondido seguía indicando espera.** Operaciones muestra la respuesta recibida.
+9. **Staff mostraba dólares en clubes con otra moneda.** La ficha y el departamento usan la moneda financiera del club para el símbolo, sin convertir ni modificar salarios. Las negativas financieras muestran texto legible en lugar de códigos internos.
 
 ## Evidencia y alcance
 

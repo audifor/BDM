@@ -395,8 +395,9 @@ export function getStaffAge(world: GameWorld, staffId: StaffPersonId): number | 
  * decimal places and trim trailing zeros/decimal point, so exact-scale values still render clean
  * (`$1M`, `$65K`) while fractional values keep their precision (`$1.5M`, `$2.25M`).
  */
-export function compactStaffSalary(value: number): string {
-  return value >= 1_000_000 ? `$${trimTrailingZeros(value / 1_000_000)}M` : `$${trimTrailingZeros(value / 1_000)}K`
+export function compactStaffSalary(value: number, currencyCode = 'USD'): string {
+  const symbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find(part => part.type === 'currency')!.value
+  return value >= 1_000_000 ? `${symbol}${trimTrailingZeros(value / 1_000_000)}M` : `${symbol}${trimTrailingZeros(value / 1_000)}K`
 }
 
 function trimTrailingZeros(value: number): string {

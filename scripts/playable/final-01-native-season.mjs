@@ -43,7 +43,7 @@ try {
     if (await c.locate('[aria-label="Simulation progress"]')) throw Error('Native holiday exceeded one hour')
     world = await save('season-native-latest')
     const entry = { before, until, date: world.currentDate, actas: world.matchStatLogs.length, injuries: world.injuries.length,
-      champions: Object.keys(world.seasonHistoryBySeasonId ?? {}).length, periods: world.fiscalPeriods?.filter(p=>p.status==='CLOSED').length }
+      champions: (world.seasonHistory ?? []).filter(season=>season.championTeamId).length, periods: world.fiscalPeriods?.filter(p=>p.status==='CLOSED').length }
     appendFileSync(join(context.out, 'season-native-chunks.jsonl'), JSON.stringify(entry)+'\n'); console.log(JSON.stringify(entry))
     await c.screenshot(join(context.out,'season-'+world.currentDate+'.png'))
     // Required decisions are acted on through their existing workspaces. Their services retain authority.

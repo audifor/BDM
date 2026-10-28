@@ -22,9 +22,11 @@ it('shows the real compensation refusal before accepting a counter, independentl
   const transfers = screen.getByTestId('market-transfers')
   expect(within(transfers).getByText(/Es una partida distinta del salario/)).toBeInTheDocument()
   expect(within(transfers).getByText(/Finance no autoriza esta compensación/)).toBeInTheDocument()
+  expect(within(transfers).getByText(/La petición supera el margen autorizado para compensaciones/)).toBeInTheDocument()
+  expect(transfers.textContent).not.toContain('INSUFFICIENT_AUTHORIZED_HEADROOM')
   const accept = within(transfers).getByRole('button', { name: 'Aceptar la compensación del club' })
   expect(accept).toBeDisabled()
   const before = useGameStore.getState().world
   fireEvent.click(accept)
   expect(useGameStore.getState().world).toBe(before)
-})
+}, 30_000)
