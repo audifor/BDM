@@ -1,0 +1,704 @@
+{
+  "label": "final-native-proof",
+  "reportedCores": 12,
+  "executableSha256": "8b7e17048459704a3631d42fadc5862d6cfdabfe9310f9ccebc6e9b4e1cce1dd",
+  "openingSha256": "646706f6cdc271871a79a002cda9df57e957b138c1d650689cce3e4030fd0944",
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12400F",
+    "logicalProcessors": 12,
+    "memoryBytes": 68523843584
+  },
+  "runs": [
+    {
+      "repetition": 1,
+      "profile": "v2-06-final-native-proof-1793192167352-1",
+      "clickedAt": 6648.20000000298,
+      "dateChangedAt": 24063.70000000298,
+      "paintedAt": 24067.39999999106,
+      "jobs": [
+        {
+          "at": 7411.5,
+          "jobId": 1,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0001",
+          "seed": 151617
+        },
+        {
+          "at": 7411.70000000298,
+          "jobId": 2,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0002",
+          "seed": 151618
+        },
+        {
+          "at": 7411.79999999702,
+          "jobId": 3,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0003",
+          "seed": 151619
+        },
+        {
+          "at": 7411.899999991059,
+          "jobId": 4,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0004",
+          "seed": 151620
+        },
+        {
+          "at": 7412.0999999940395,
+          "jobId": 5,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0005",
+          "seed": 151621
+        },
+        {
+          "at": 7412.29999999702,
+          "jobId": 6,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0006",
+          "seed": 151622
+        },
+        {
+          "at": 7412.399999991059,
+          "jobId": 7,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0007",
+          "seed": 151623
+        },
+        {
+          "at": 7412.5,
+          "jobId": 8,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0008",
+          "seed": 151624
+        },
+        {
+          "at": 11804.29999999702,
+          "jobId": 9,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0009",
+          "seed": 151625
+        },
+        {
+          "at": 11879.70000000298,
+          "jobId": 10,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0010",
+          "seed": 151626
+        },
+        {
+          "at": 12050.09999999404,
+          "jobId": 11,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0001",
+          "seed": 151627
+        },
+        {
+          "at": 12090.70000000298,
+          "jobId": 12,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0002",
+          "seed": 151628
+        },
+        {
+          "at": 12313.29999999702,
+          "jobId": 13,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0003",
+          "seed": 151629
+        },
+        {
+          "at": 12350.29999999702,
+          "jobId": 14,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0004",
+          "seed": 151630
+        },
+        {
+          "at": 12493.39999999106,
+          "jobId": 15,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0005",
+          "seed": 151631
+        },
+        {
+          "at": 12569.29999999702,
+          "jobId": 16,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0006",
+          "seed": 151632
+        },
+        {
+          "at": 15427.09999999404,
+          "jobId": 17,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007",
+          "seed": 151633
+        },
+        {
+          "at": 15459.39999999106,
+          "jobId": 18,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0008",
+          "seed": 151634
+        },
+        {
+          "at": 15723.89999999106,
+          "jobId": 19,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0009",
+          "seed": 151635
+        },
+        {
+          "at": 15877.79999999702,
+          "jobId": 20,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0001",
+          "seed": 151636
+        },
+        {
+          "at": 16067.09999999404,
+          "jobId": 21,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0002",
+          "seed": 151637
+        },
+        {
+          "at": 16097.39999999106,
+          "jobId": 22,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0003",
+          "seed": 151638
+        },
+        {
+          "at": 16413.09999999404,
+          "jobId": 23,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0004",
+          "seed": 151639
+        },
+        {
+          "at": 16742.09999999404,
+          "jobId": 24,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0005",
+          "seed": 151640
+        },
+        {
+          "at": 18734.20000000298,
+          "jobId": 25,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0006",
+          "seed": 151641
+        },
+        {
+          "at": 18803.79999999702,
+          "jobId": 26,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0007",
+          "seed": 151642
+        },
+        {
+          "at": 18975,
+          "jobId": 27,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0008",
+          "seed": 151643
+        },
+        {
+          "at": 19006.70000000298,
+          "jobId": 28,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0001",
+          "seed": 151644
+        },
+        {
+          "at": 19122.09999999404,
+          "jobId": 29,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0002",
+          "seed": 151645
+        },
+        {
+          "at": 19169.29999999702,
+          "jobId": 30,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0003",
+          "seed": 151646
+        },
+        {
+          "at": 19459.70000000298,
+          "jobId": 31,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0004",
+          "seed": 151647
+        },
+        {
+          "at": 19770.5,
+          "jobId": 32,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0005",
+          "seed": 151648
+        },
+        {
+          "at": 21382.09999999404,
+          "jobId": 33,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0006",
+          "seed": 151649
+        },
+        {
+          "at": 21417.70000000298,
+          "jobId": 34,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0007",
+          "seed": 151650
+        },
+        {
+          "at": 21445.5,
+          "jobId": 35,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0008",
+          "seed": 151651
+        }
+      ],
+      "seedDraws": [
+        151617,
+        151618,
+        151619,
+        151620,
+        151621,
+        151622,
+        151623,
+        151624,
+        151625,
+        151626,
+        151627,
+        151628,
+        151629,
+        151630,
+        151631,
+        151632,
+        151633,
+        151634,
+        151635,
+        151636,
+        151637,
+        151638,
+        151639,
+        151640,
+        151641,
+        151642,
+        151643,
+        151644,
+        151645,
+        151646,
+        151647,
+        151648,
+        151649,
+        151650,
+        151651
+      ],
+      "workers": 8,
+      "replies": [
+        {
+          "at": 11804,
+          "jobId": 4,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0004",
+          "seed": 151620,
+          "engineMs": 4258.0999999940395
+        },
+        {
+          "at": 11879.59999999404,
+          "jobId": 7,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0007",
+          "seed": 151623,
+          "engineMs": 4331.4000000059605
+        },
+        {
+          "at": 12050,
+          "jobId": 8,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0008",
+          "seed": 151624,
+          "engineMs": 4510.20000000298
+        },
+        {
+          "at": 12090.59999999404,
+          "jobId": 3,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0003",
+          "seed": 151619,
+          "engineMs": 4531.600000008941
+        },
+        {
+          "at": 12313.09999999404,
+          "jobId": 5,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0005",
+          "seed": 151621,
+          "engineMs": 4762.399999991059
+        },
+        {
+          "at": 12350.09999999404,
+          "jobId": 1,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0001",
+          "seed": 151617,
+          "engineMs": 4790.399999991059
+        },
+        {
+          "at": 12493.29999999702,
+          "jobId": 6,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0006",
+          "seed": 151622,
+          "engineMs": 4941
+        },
+        {
+          "at": 12569.09999999404,
+          "jobId": 2,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0002",
+          "seed": 151618,
+          "engineMs": 5013.79999999702
+        },
+        {
+          "at": 15426.79999999702,
+          "jobId": 10,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0010",
+          "seed": 151626,
+          "engineMs": 3502.2000000029802
+        },
+        {
+          "at": 15459.29999999702,
+          "jobId": 9,
+          "gameId": "derived-simulation-from-b04:edition:BRA:nbb:2026:0009",
+          "seed": 151625,
+          "engineMs": 3611.800000011921
+        },
+        {
+          "at": 15723.79999999702,
+          "jobId": 11,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0001",
+          "seed": 151627,
+          "engineMs": 3629.5
+        },
+        {
+          "at": 15877.59999999404,
+          "jobId": 12,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0002",
+          "seed": 151628,
+          "engineMs": 3727.9000000059605
+        },
+        {
+          "at": 16066.79999999702,
+          "jobId": 13,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0003",
+          "seed": 151629,
+          "engineMs": 3699.8999999910593
+        },
+        {
+          "at": 16097.20000000298,
+          "jobId": 14,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0004",
+          "seed": 151630,
+          "engineMs": 3690.2000000029802
+        },
+        {
+          "at": 16413,
+          "jobId": 16,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0006",
+          "seed": 151632,
+          "engineMs": 3793.7000000029802
+        },
+        {
+          "at": 16742,
+          "jobId": 15,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0005",
+          "seed": 151631,
+          "engineMs": 4191
+        },
+        {
+          "at": 18733.89999999106,
+          "jobId": 17,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0007",
+          "seed": 151633,
+          "engineMs": 3266.1000000089407
+        },
+        {
+          "at": 18803.29999999702,
+          "jobId": 18,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0008",
+          "seed": 151634,
+          "engineMs": 3292
+        },
+        {
+          "at": 18974.89999999106,
+          "jobId": 19,
+          "gameId": "derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0009",
+          "seed": 151635,
+          "engineMs": 3197.300000011921
+        },
+        {
+          "at": 19006.59999999404,
+          "jobId": 20,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0001",
+          "seed": 151636,
+          "engineMs": 3058.9000000059605
+        },
+        {
+          "at": 19122.09999999404,
+          "jobId": 22,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0003",
+          "seed": 151638,
+          "engineMs": 2975.5999999940395
+        },
+        {
+          "at": 19169.20000000298,
+          "jobId": 21,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0002",
+          "seed": 151637,
+          "engineMs": 3054
+        },
+        {
+          "at": 19459.5,
+          "jobId": 23,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0004",
+          "seed": 151639,
+          "engineMs": 3009.7000000029802
+        },
+        {
+          "at": 19770.39999999106,
+          "jobId": 24,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0005",
+          "seed": 151640,
+          "engineMs": 2981.699999988079
+        },
+        {
+          "at": 21382.09999999404,
+          "jobId": 26,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0007",
+          "seed": 151642,
+          "engineMs": 2543.9000000059605
+        },
+        {
+          "at": 21417.70000000298,
+          "jobId": 28,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0001",
+          "seed": 151644,
+          "engineMs": 2372.7999999970198
+        },
+        {
+          "at": 21445.29999999702,
+          "jobId": 25,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0006",
+          "seed": 151641,
+          "engineMs": 2673.5
+        },
+        {
+          "at": 21613.39999999106,
+          "jobId": 27,
+          "gameId": "derived-simulation-from-b04:edition:FRA:betclic-elite:2025-26:0008",
+          "seed": 151643,
+          "engineMs": 2601.4000000059605
+        },
+        {
+          "at": 21729.20000000298,
+          "jobId": 30,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0003",
+          "seed": 151646,
+          "engineMs": 2530
+        },
+        {
+          "at": 21835.5,
+          "jobId": 29,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0002",
+          "seed": 151645,
+          "engineMs": 2681.5999999940395
+        },
+        {
+          "at": 22011.59999999404,
+          "jobId": 31,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0004",
+          "seed": 151647,
+          "engineMs": 2519.0999999940395
+        },
+        {
+          "at": 22119.89999999106,
+          "jobId": 32,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0005",
+          "seed": 151648,
+          "engineMs": 2323.0999999940395
+        },
+        {
+          "at": 23157,
+          "jobId": 33,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0006",
+          "seed": 151649,
+          "engineMs": 1740.9000000059605
+        },
+        {
+          "at": 23208.5,
+          "jobId": 34,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0007",
+          "seed": 151650,
+          "engineMs": 1759.8999999910593
+        },
+        {
+          "at": 23228.79999999702,
+          "jobId": 35,
+          "gameId": "derived-simulation-from-b04:edition:ITA:serie-a:2025-26:0008",
+          "seed": 151651,
+          "engineMs": 1747.6000000089407
+        }
+      ],
+      "longTasks": [
+        {
+          "start": 6662.5,
+          "duration": 751
+        },
+        {
+          "start": 23230.89999999106,
+          "duration": 832
+        }
+      ],
+      "maxFrameGapMs": 840.3999999999978,
+      "progress": [
+        {
+          "at": 4781.899999991059,
+          "text": "SIMULATION IDLE"
+        },
+        {
+          "at": 6661.399999991059,
+          "text": "SIMULATION RUNNING"
+        },
+        {
+          "at": 7414,
+          "text": "PARTIDOS 0/35 · 2025-10-04"
+        },
+        {
+          "at": 11805.79999999702,
+          "text": "PARTIDOS 1/35 · 2025-10-04"
+        },
+        {
+          "at": 11881.09999999404,
+          "text": "PARTIDOS 2/35 · 2025-10-04"
+        },
+        {
+          "at": 12051.59999999404,
+          "text": "PARTIDOS 3/35 · 2025-10-04"
+        },
+        {
+          "at": 12092,
+          "text": "PARTIDOS 4/35 · 2025-10-04"
+        },
+        {
+          "at": 12315,
+          "text": "PARTIDOS 5/35 · 2025-10-04"
+        },
+        {
+          "at": 12351.70000000298,
+          "text": "PARTIDOS 6/35 · 2025-10-04"
+        },
+        {
+          "at": 12494.70000000298,
+          "text": "PARTIDOS 7/35 · 2025-10-04"
+        },
+        {
+          "at": 12571.09999999404,
+          "text": "PARTIDOS 8/35 · 2025-10-04"
+        },
+        {
+          "at": 15428.79999999702,
+          "text": "PARTIDOS 9/35 · 2025-10-04"
+        },
+        {
+          "at": 15460.89999999106,
+          "text": "PARTIDOS 10/35 · 2025-10-04"
+        },
+        {
+          "at": 15725.29999999702,
+          "text": "PARTIDOS 11/35 · 2025-10-04"
+        },
+        {
+          "at": 15879.29999999702,
+          "text": "PARTIDOS 12/35 · 2025-10-04"
+        },
+        {
+          "at": 16068.59999999404,
+          "text": "PARTIDOS 13/35 · 2025-10-04"
+        },
+        {
+          "at": 16098.70000000298,
+          "text": "PARTIDOS 14/35 · 2025-10-04"
+        },
+        {
+          "at": 16414.59999999404,
+          "text": "PARTIDOS 15/35 · 2025-10-04"
+        },
+        {
+          "at": 16743.79999999702,
+          "text": "PARTIDOS 16/35 · 2025-10-04"
+        },
+        {
+          "at": 18735.59999999404,
+          "text": "PARTIDOS 17/35 · 2025-10-04"
+        },
+        {
+          "at": 18805.09999999404,
+          "text": "PARTIDOS 18/35 · 2025-10-04"
+        },
+        {
+          "at": 18976.5,
+          "text": "PARTIDOS 19/35 · 2025-10-04"
+        },
+        {
+          "at": 19008.09999999404,
+          "text": "PARTIDOS 20/35 · 2025-10-04"
+        },
+        {
+          "at": 19123.09999999404,
+          "text": "PARTIDOS 21/35 · 2025-10-04"
+        },
+        {
+          "at": 19170.59999999404,
+          "text": "PARTIDOS 22/35 · 2025-10-04"
+        },
+        {
+          "at": 19461,
+          "text": "PARTIDOS 23/35 · 2025-10-04"
+        },
+        {
+          "at": 19771.79999999702,
+          "text": "PARTIDOS 24/35 · 2025-10-04"
+        },
+        {
+          "at": 21383.5,
+          "text": "PARTIDOS 25/35 · 2025-10-04"
+        },
+        {
+          "at": 21419.20000000298,
+          "text": "PARTIDOS 26/35 · 2025-10-04"
+        },
+        {
+          "at": 21446.89999999106,
+          "text": "PARTIDOS 27/35 · 2025-10-04"
+        },
+        {
+          "at": 21614.20000000298,
+          "text": "PARTIDOS 28/35 · 2025-10-04"
+        },
+        {
+          "at": 21730.5,
+          "text": "PARTIDOS 29/35 · 2025-10-04"
+        },
+        {
+          "at": 21836.29999999702,
+          "text": "PARTIDOS 30/35 · 2025-10-04"
+        },
+        {
+          "at": 22013,
+          "text": "PARTIDOS 31/35 · 2025-10-04"
+        },
+        {
+          "at": 22120.79999999702,
+          "text": "PARTIDOS 32/35 · 2025-10-04"
+        },
+        {
+          "at": 23157.89999999106,
+          "text": "PARTIDOS 33/35 · 2025-10-04"
+        },
+        {
+          "at": 23209.29999999702,
+          "text": "PARTIDOS 34/35 · 2025-10-04"
+        },
+        {
+          "at": 23229.70000000298,
+          "text": "PARTIDOS 35/35 · 2025-10-04"
+        },
+        {
+          "at": 23230.39999999106,
+          "text": "APLICANDO CONSECUENCIAS · 2025-10-04"
+        },
+        {
+          "at": 24019.09999999404,
+          "text": "AVANZANDO CALENDARIO · 2025-10-04"
+        },
+        {
+          "at": 24063.70000000298,
+          "text": "SIMULATION IDLE"
+        }
+      ],
+      "advanceMs": 17419.19999998808,
+      "preparationUntilFirstPostMs": 763.2999999970198,
+      "workersWallMs": 15817.29999999702,
+      "afterLastReplyUntilPaintMs": 838.5999999940395,
+      "saveMs": 1565.2282999999989,
+      "saveActivationRetry": false,
+      "saveBytes": 12541455,
+      "payloadSha256": "3799277a29fd27807bfb60a1aa7542f4aebf8b99ef3f5764468235639505e6b1",
+      "workerResultsSha256": "7d0c9a6949089173f4a42ad40d0d259436b816edd9915e873b8b46719252b7c7",
+      "consoleErrors": []
+    }
+  ]
+}

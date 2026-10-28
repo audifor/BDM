@@ -4,6 +4,10 @@ import sys
 from pathlib import Path
 sys.dont_write_bytecode = True
 
+def has_player_name(first_name, last_name):
+    """Optional original free agents must satisfy the existing canonical Player identity contract."""
+    return isinstance(first_name, str) and bool(first_name.strip()) and isinstance(last_name, str) and bool(last_name.strip())
+
 def main():
     request = json.loads(sys.stdin.buffer.read().decode('utf-8'))
     root = Path(request['sourceRoot']).resolve()
@@ -50,6 +54,8 @@ def main():
         day=date.fromisoformat(request['startDate'])
         candidates=[]
         for row in u.c.execute('SELECT * FROM world.DYN_joueur WHERE team_id=0 AND is_alive=1 AND retraite=0 AND sexe=0 AND nationalite=?',(selection['countryId'],)):
+            # Keep incomplete source identities in the immutable master, outside the playable optional pool.
+            if not has_player_name(decode(row['joueur_prenom']), decode(row['joueur_nom'])):continue
             born=validate_birth(dict(row),day)
             if born is None:continue
             age=day.year-born.year-((day.month,day.day)<(born.month,born.day))

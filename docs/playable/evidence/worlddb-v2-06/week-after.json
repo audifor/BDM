@@ -1,0 +1,98 @@
+{
+  "label": "week-candidate",
+  "runs": [
+    {
+      "rep": 1,
+      "days": [
+        {
+          "date": "06 OCT 2025",
+          "elapsedMs": 340.30000000447035
+        },
+        {
+          "date": "07 OCT 2025",
+          "elapsedMs": 276.20000000298023
+        },
+        {
+          "date": "08 OCT 2025",
+          "elapsedMs": 210.60000000149012
+        },
+        {
+          "date": "09 OCT 2025",
+          "elapsedMs": 260.09999999403954
+        },
+        {
+          "date": "10 OCT 2025",
+          "elapsedMs": 146.20000000298023
+        },
+        {
+          "date": "11 OCT 2025",
+          "elapsedMs": 154.89999999850988
+        }
+      ],
+      "totalMs": 1388.3000000044703,
+      "payloadSha256": "a3f0acd5fbdc7ff9a0b32de056e3f4805262785f6249bedae00f617206ddae08"
+    },
+    {
+      "rep": 2,
+      "days": [
+        {
+          "date": "06 OCT 2025",
+          "elapsedMs": 361.20000000298023
+        },
+        {
+          "date": "07 OCT 2025",
+          "elapsedMs": 334.30000000447035
+        },
+        {
+          "date": "08 OCT 2025",
+          "elapsedMs": 200.40000000596046
+        },
+        {
+          "date": "09 OCT 2025",
+          "elapsedMs": 255.60000000149012
+        },
+        {
+          "date": "10 OCT 2025",
+          "elapsedMs": 134.39999999850988
+        },
+        {
+          "date": "11 OCT 2025",
+          "elapsedMs": 158.19999999552965
+        }
+      ],
+      "totalMs": 1444.1000000089407,
+      "payloadSha256": "a3f0acd5fbdc7ff9a0b32de056e3f4805262785f6249bedae00f617206ddae08"
+    },
+    {
+      "rep": 3,
+      "days": [
+        {
+          "date": "06 OCT 2025",
+          "elapsedMs": 349
+        },
+        {
+          "date": "07 OCT 2025",
+          "elapsedMs": 288.6000000014901
+        },
+        {
+          "date": "08 OCT 2025",
+          "elapsedMs": 206.89999999850988
+        },
+        {
+          "date": "09 OCT 2025",
+          "elapsedMs": 310.1000000014901
+        },
+        {
+          "date": "10 OCT 2025",
+          "elapsedMs": 131
+        },
+        {
+          "date": "11 OCT 2025",
+          "elapsedMs": 155.29999999701977
+        }
+      ],
+      "totalMs": 1440.8999999985099,
+      "payloadSha256": "a3f0acd5fbdc7ff9a0b32de056e3f4805262785f6249bedae00f617206ddae08"
+    }
+  ]
+}

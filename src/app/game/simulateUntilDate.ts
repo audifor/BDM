@@ -1,11 +1,10 @@
 import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
-import type { SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import { withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 
-import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday, type WorldDayAdvanceObserver } from './advanceGameDay'
+import { advanceGameDay, advanceGameDayAsync, simulateRemainingGamesToday, type WorldDayAdvanceObserver, type DayAdvanceOptions } from './advanceGameDay'
 import { getContinueStopReason, getExplicitAdvanceStopReason, noProgressStop, type ContinueStopReason } from './ContinueFlow'
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { getScheduledGamesToday } from '@/engine/calendar'
@@ -47,7 +46,7 @@ export interface SimulateUntilTick {
 
 /** Optional transient timings for certification and diagnostics; it does not affect lifecycle order. */
 export interface SimulateUntilObserver {
-  readonly simulationContext?: SimulationResolutionContext
+  readonly simulationContext?: DayAdvanceOptions
   readonly onDayAdvance?: WorldDayAdvanceObserver
   readonly onSeasonLifecycle?: (elapsedMs: number, transitionCount: number) => void
 }

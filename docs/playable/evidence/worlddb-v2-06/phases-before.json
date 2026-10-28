@@ -1,0 +1,1463 @@
+{
+  "passed": true,
+  "measured": {
+    "preparation": {
+      "calls": 7,
+      "elapsedMs": 858.3604999999925
+    },
+    "workers": {
+      "calls": 1,
+      "elapsedMs": 24264.200300000004
+    },
+    "statisticsNested": {
+      "calls": 35,
+      "elapsedMs": 16.926499999986845
+    },
+    "fatigueAndLearningProjectionNested": {
+      "calls": 35,
+      "elapsedMs": 297.99010000001
+    },
+    "applicationIncludingConsequences": {
+      "calls": 7,
+      "elapsedMs": 683.502499999995
+    },
+    "facilityAuthorityNested": {
+      "calls": 71,
+      "elapsedMs": 337.0284999999785
+    }
+  },
+  "repeatedAuthorityQueries": 48,
+  "days": [
+    {
+      "day": 1,
+      "date": "2025-10-05",
+      "elapsedMs": 26300.702599999997,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.07
+        },
+        {
+          "phaseId": "PRE_MATCH_SELF_HEALING",
+          "elapsedMs": 4.07
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 25812.95
+        },
+        {
+          "phaseId": "MATCH_LINEUP_REPAIR"
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.7
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.26
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 3.77
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.77
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0.04
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.65
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.13
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0.26
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 0.36
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0.21
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0.03
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.54
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 1.36
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 1.05
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 3.47
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.16
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 7
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0.08
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 3.73
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0.12
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.17
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 130.7
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 5.03
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.19
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.59
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.23
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 8.05
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 33.80599999999686
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "3c5a8c16679c70d8dc298a90366268d6ae86337f1e3a7294bbf649cde9f6e090"
+    },
+    {
+      "day": 2,
+      "date": "2025-10-06",
+      "elapsedMs": 417.7702999999965,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 7.19
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.38
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.63
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.32
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.21
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING",
+          "elapsedMs": 157.51
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 0.28
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.11
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 0.27
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.42
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 2.06
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 5.6
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 3.15
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 2.09
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 1.37
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.24
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 137.13
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 5.45
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.9
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.33
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 8.61
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 22.310300000004645
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "e476b089022ebcac96f152908db3f94e59af268be06bea5e5d92eca3be87a640"
+    },
+    {
+      "day": 3,
+      "date": "2025-10-07",
+      "elapsedMs": 399.6113000000041,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 5.94
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.27
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.49
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.32
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.2
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 152.63
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.11
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 0.13
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.4
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 4.13
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 0.19
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 0.3
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.24
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 143.38
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 3.47
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.44
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.19
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 6.21
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 22.11479999999574
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "78f9f26d0577104f9ba096166f7ac40cdd328a0e792ce704b95f723a0d178ea0"
+    },
+    {
+      "day": 4,
+      "date": "2025-10-08",
+      "elapsedMs": 310.0446000000011,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 5.65
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.26
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.5
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.36
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.25
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.11
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 2.08
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.73
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 1.89
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 0.2
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 0.58
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.13
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 206.46
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 3.8
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.39
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.18
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 7.01
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 20.419000000001688
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "17fc5b5846464e2cac9e793527d3744c1e263162fa0ca0a34604ec8a583f6e5c"
+    },
+    {
+      "day": 5,
+      "date": "2025-10-09",
+      "elapsedMs": 343.8014999999941,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 5.89
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.24
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.46
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.22
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.16
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 145.56
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.11
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 0.1
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.34
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 1.57
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 0.23
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 0.3
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.12
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 91.89
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 4.35
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.42
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.21
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 5.55
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 21.36460000000079
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "09b8e1c731713e2171c0248179dc4770cf170a06273613ccdb175ed56f7dc3f9"
+    },
+    {
+      "day": 6,
+      "date": "2025-10-10",
+      "elapsedMs": 207.59339999999793,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 5.72
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.25
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.5
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.27
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.17
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.1
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 0.18
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.42
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 1.33
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 0.23
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 0.26
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.13
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 97.91
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 3.9
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.41
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.19
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 6.82
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 27.794099999999162
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "989c1d2bb561c9926a1e6ca33dc359d62a6094197aeb25a6d6e295497f7cc545"
+    },
+    {
+      "day": 7,
+      "date": "2025-10-11",
+      "elapsedMs": 201.313900000001,
+      "phases": [
+        {
+          "phaseId": "PRE_ADVANCE_VALIDATION",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MATCH_RESOLUTION",
+          "elapsedMs": 6
+        },
+        {
+          "phaseId": "DATE_ADVANCE",
+          "elapsedMs": 0.3
+        },
+        {
+          "phaseId": "ANNUAL_PLAYER_DEVELOPMENT"
+        },
+        {
+          "phaseId": "ANNUAL_TALENT_SUPPLY"
+        },
+        {
+          "phaseId": "PLAYER_CAREER_END"
+        },
+        {
+          "phaseId": "COLLEGE_ELIGIBILITY_EXITS",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "CAREER_FATIGUE_RECOVERY",
+          "elapsedMs": 0.52
+        },
+        {
+          "phaseId": "EXPIRED_CONTRACT_RECONCILIATION",
+          "elapsedMs": 0.28
+        },
+        {
+          "phaseId": "RETENTION_NEGOTIATION_INVALIDATION",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_RETENTION_NEGOTIATIONS",
+          "elapsedMs": 0.18
+        },
+        {
+          "phaseId": "MARKET_CONTACT_RESPONSES",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "MARKET_FORMAL_OFFER_RESPONSES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "AI_TRAINING_PLANNING"
+        },
+        {
+          "phaseId": "TRAINING",
+          "elapsedMs": 0.01
+        },
+        {
+          "phaseId": "RECRUITING",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "ACADEMICS"
+        },
+        {
+          "phaseId": "NIL_LIFECYCLE",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "MONTHLY_NIL_AUTONOMY"
+        },
+        {
+          "phaseId": "MONTHLY_BOOSTER_AUTONOMY"
+        },
+        {
+          "phaseId": "COACH_FINANCE"
+        },
+        {
+          "phaseId": "MEMORY_DECAY"
+        },
+        {
+          "phaseId": "ENFORCEMENT",
+          "elapsedMs": 0.11
+        },
+        {
+          "phaseId": "SCOUTING_INTAKE",
+          "elapsedMs": 0.09
+        },
+        {
+          "phaseId": "MEDICAL_AND_ROSTER_ADVISORIES",
+          "elapsedMs": 0.44
+        },
+        {
+          "phaseId": "AI_MEDICAL_DECISIONS",
+          "elapsedMs": 1.37
+        },
+        {
+          "phaseId": "SCOUTING_ASSIGNMENTS",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "DRAFT",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "PROFESSIONAL_PATHWAYS"
+        },
+        {
+          "phaseId": "STAFF_HUMAN_STATE",
+          "elapsedMs": 0.14
+        },
+        {
+          "phaseId": "STAFF_CONFLICTS",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CULTURE_COHESION",
+          "elapsedMs": 0.21
+        },
+        {
+          "phaseId": "STAFF_POLITICAL_CASES",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_APPRAISAL",
+          "elapsedMs": 0
+        },
+        {
+          "phaseId": "STAFF_CAREER_AUTONOMY",
+          "elapsedMs": 0.12
+        },
+        {
+          "phaseId": "FACILITY_CONDITION"
+        },
+        {
+          "phaseId": "FACILITY_MANAGEMENT",
+          "elapsedMs": 97.62
+        },
+        {
+          "phaseId": "CLUB_FINANCE_V2",
+          "elapsedMs": 4.05
+        },
+        {
+          "phaseId": "GOVERNANCE",
+          "elapsedMs": 0.02
+        },
+        {
+          "phaseId": "EVENT_COLLECTION"
+        },
+        {
+          "phaseId": "BS19C_STAFF_PROMISE_REVIEW"
+        },
+        {
+          "phaseId": "BS19C_PLAYER_TRAINING_FEEDBACK"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_RETENTION_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "AI_FORMAL_FREE_AGENT_OFFERS"
+        },
+        {
+          "phaseId": "AI_FORMAL_NEGOTIATION_RESPONSES"
+        },
+        {
+          "phaseId": "AI_ACCEPTED_COUNTER_SIGNING_GOVERNANCE"
+        },
+        {
+          "phaseId": "SCHEDULE_INTEGRITY",
+          "elapsedMs": 0.44
+        },
+        {
+          "phaseId": "PRE_MATCH_MEDIA",
+          "elapsedMs": 0.34
+        },
+        {
+          "phaseId": "HUMAN_SIMULATION"
+        },
+        {
+          "phaseId": "COMPETITION_LIFECYCLES"
+        },
+        {
+          "phaseId": "BREAKPOINT_EVALUATION",
+          "elapsedMs": 6.42
+        },
+        {
+          "phaseId": "DAY_PUBLICATION",
+          "elapsedMs": 21.71100000000297
+        },
+        {
+          "phaseId": "DAY_COMPLETE"
+        }
+      ],
+      "payloadSha256": "e29b4cf77000b2e2d4cfa6f49afb32f474875b26916718b4b0d2168700b821cf"
+    }
+  ],
+  "decisions": [],
+  "saveMs": 782.8886999999959,
+  "nativeComparison": {
+    "nodePayloadSha256": "3c5a8c16679c70d8dc298a90366268d6ae86337f1e3a7294bbf649cde9f6e090",
+    "nativePayloadSha256": "3799277a29fd27807bfb60a1aa7542f4aebf8b99ef3f5764468235639505e6b1",
+    "identical": false,
+    "preparedInputsIdentical": true
+  },
+  "note": "Nested timings overlap their parent. Node and WebView baseline math differ; candidate equality is checked separately within each runtime."
+}

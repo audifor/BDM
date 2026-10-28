@@ -161,11 +161,16 @@ describe('day simulation in parallel workers (ME-LOCK1.1)', () => {
     let a = 100, b = 100, c = 100
     const sync = advanceGameDayWithResult(world, () => a++)
     const inline = await advanceGameDayWithResultAsync(world, createInlineMatchRunner(), () => b++)
-    const reversed = await advanceGameDayWithResultAsync(world, reversedReplyPool(), () => c++)
+    const progress: { phase: string; completed: number; total: number }[] = []
+    const reversed = await advanceGameDayWithResultAsync(world, reversedReplyPool(), () => c++, undefined, { onProgress: item => progress.push(item) })
     expect(sync.status).toBe('COMPLETED')
     expect(JSON.stringify(inline.world)).toBe(JSON.stringify(sync.world))
     expect(JSON.stringify(reversed.world)).toBe(JSON.stringify(sync.world))
     expect(reversed.phases.map((phase) => phase.phaseId)).toEqual(sync.phases.map((phase) => phase.phaseId))
+    const total = getScheduledGamesToday(world).length
+    expect(progress.filter(item => item.phase === 'matches').map(item => item.completed)).toEqual(Array.from({ length: total + 1 }, (_, index) => index))
+    expect(progress.filter(item => item.phase === 'matches').every(item => item.total === total)).toBe(true)
+    expect(progress.at(-1)?.phase).toBe('calendar')
   }, 600_000)
 
   it('a failed simulation ends the day as FAILED with the world untouched (nothing applied)', async () => {

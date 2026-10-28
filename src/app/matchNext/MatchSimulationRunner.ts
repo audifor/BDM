@@ -9,16 +9,22 @@ import type { MatchNextResult } from './MatchNextResult'
  */
 export interface MatchSimulationRunner {
   readonly kind: 'inline' | 'workers'
-  simulate(setups: readonly MatchSetup[]): Promise<MatchNextResult[]>
+  simulate(setups: readonly MatchSetup[], onProgress?: (progress: MatchSimulationProgress) => void): Promise<MatchNextResult[]>
   dispose(): void
 }
+
+export interface MatchSimulationProgress { readonly completed: number; readonly total: number }
 
 /** The same engine on the calling thread (tests, Node tools, environments without workers). */
 export function createInlineMatchRunner(): MatchSimulationRunner {
   const port = createMatchEnginePort('match-next')
   return {
     kind: 'inline',
-    simulate: async (setups) => setups.map((setup) => port.simulate(setup, 'FAST')),
+    simulate: async (setups, onProgress) => setups.map((setup, index) => {
+      const result = port.simulate(setup, 'FAST')
+      onProgress?.({ completed: index + 1, total: setups.length })
+      return result
+    }),
     dispose: () => {},
   }
 }
@@ -26,7 +32,7 @@ export function createInlineMatchRunner(): MatchSimulationRunner {
 /** Messages between the pool and a simulation worker (see matchSimulation.worker.ts). */
 export interface MatchSimulationJob { readonly jobId: number; readonly setup: MatchSetup }
 export type MatchSimulationReply =
-  | { readonly jobId: number; readonly result: MatchNextResult }
+  | { readonly jobId: number; readonly result: MatchNextResult; readonly elapsedMs?: number }
   | { readonly jobId: number; readonly error: string }
 
 /** The few operations the pool needs from a worker (a browser Web Worker or a Node worker_threads Worker, through an adapter). */
@@ -91,7 +97,7 @@ export function createWorkerPoolRunner(createWorker: () => MatchWorkerHandle, si
 
   return {
     kind: 'workers',
-    simulate: (setups) => new Promise<MatchNextResult[]>((resolve, reject) => {
+    simulate: (setups, onProgress) => new Promise<MatchNextResult[]>((resolve, reject) => {
       if (setups.length === 0) { resolve([]); return }
       const results = new Array<MatchNextResult>(setups.length)
       let remaining = setups.length
@@ -105,6 +111,7 @@ export function createWorkerPoolRunner(createWorker: () => MatchWorkerHandle, si
             if (outcome.error !== undefined || outcome.result === undefined) { failed = true; reject(new Error(`Match simulation failed: ${outcome.error ?? 'no result'}`)); return }
             results[index] = outcome.result
             remaining -= 1
+            onProgress?.({ completed: setups.length - remaining, total: setups.length })
             if (remaining === 0) resolve(results)
           },
         })

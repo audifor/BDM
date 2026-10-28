@@ -1,4 +1,4 @@
-export { advanceGameDay, advanceGameDayAsync, advanceGameDayWithResult, advanceGameDayWithResultAsync, assertSimulationMayAdvance, simulateRemainingGamesToday, simulateRemainingGamesTodayAsync, SimulationAdvanceBlockedError, type WorldDayAdvancePhase, type WorldDayAdvanceResult, type WorldDayAdvanceStatus } from './advanceGameDay'
+export { advanceGameDay, advanceGameDayAsync, advanceGameDayWithResult, advanceGameDayWithResultAsync, assertSimulationMayAdvance, simulateRemainingGamesToday, simulateRemainingGamesTodayAsync, SimulationAdvanceBlockedError, type WorldSimulationProgress, type WorldDayAdvancePhase, type WorldDayAdvanceResult, type WorldDayAdvanceStatus } from './advanceGameDay'
 export { evaluateSimulationBreakpoints, SIMULATION_BREAKPOINT_LEVELS, type SimulationBreakpoint, type SimulationBreakpointContext, type SimulationBreakpointInput, type SimulationBreakpointLevel, type SimulationBreakpointResult } from './SimulationBreakpoints'
 export { continueGame, continueGameAsync, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
 export {

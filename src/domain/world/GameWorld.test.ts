@@ -59,6 +59,22 @@ describe('GameWorld', () => {
     expect(() => createGameWorld(missingAssignment)).toThrow('Coach coach-user employment requires one matching headCoach Staff assignment')
   })
 
+  it('allows a former head coach to work as an assistant without duplicating their Person or Coach identity', () => {
+    const input = createValidGameWorldInput(), coach = input.coaches[0]!
+    const teams = input.teams.map(({ coachId: _coachId, ...team }) => team)
+    const former = { ...input, teams, coachEmploymentByCoachId: { [coach.id]: { status: 'unemployed' as const } } }
+    expect(() => createGameWorld(former)).toThrow('cannot retain a headCoach Staff assignment')
+    const world = createGameWorld({ ...former,
+      teamStaffAssignments: input.teamStaffAssignments!.map(assignment => ({ ...assignment, role: 'assistantCoach' as const })),
+      staffEmploymentByStaffId: { [coach.staffProfileId]: { ...input.staffEmploymentByStaffId![coach.staffProfileId]!, roleId: 'assistantCoach' } },
+    })
+    expect(world.coachEmploymentByCoachId[coach.id]?.status).toBe('unemployed')
+    expect(world.staffEmploymentByStaffId[coach.staffProfileId]?.roleId).toBe('assistantCoach')
+    expect(world.coaches[coach.id]?.personId).toBe(coach.personId)
+    expect(Object.keys(world.coaches)).toHaveLength(input.coaches.length)
+    expect(Object.keys(world.personsById)).toHaveLength(3)
+  })
+
   it('preserves canonical Person data when a Player or Staff profile is replaced', () => {
     const input = createValidGameWorldInput()
     const world = createGameWorld(input)

@@ -34,8 +34,23 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
   const [running, setRunning] = useState(false)
   const [liveDate, setLiveDate] = useState(world.currentDate)
   const [matches, setMatches] = useState<UserMatchSummary[]>([])
+  const progress = useGameStore(state => state.simulationProgress)
+  const [error, setError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef(false)
+  const inFlightRef = useRef(false)
+  const ownsBusyRef = useRef(false)
+  const releaseBusy = () => {
+    if (!ownsBusyRef.current) return
+    ownsBusyRef.current = false
+    useGameStore.setState({ simulationBusy: false, simulationProgress: null })
+  }
+  const stopHoliday = () => {
+    cancelRef.current = true
+    setRunning(false)
+    setMatches([])
+    if (!inFlightRef.current) releaseBusy()
+  }
 
   useEffect(() => {
     if (open || running) return
@@ -65,9 +80,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
     const stopOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       event.preventDefault()
-      cancelRef.current = true
-      setRunning(false)
-      setMatches([])
+      stopHoliday()
     }
     document.addEventListener('keydown', stopOnEscape)
     return () => {
@@ -78,6 +91,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
   useEffect(() => {
     return () => {
       cancelRef.current = true
+      if (!inFlightRef.current) releaseBusy()
     }
   }, [])
 
@@ -85,9 +99,12 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
   const minMonth = monthStart(tomorrow)
 
   const startHoliday = () => {
-    if (!canConfirm) return
+    if (!canConfirm || blocked || useGameStore.getState().simulationBusy) return
     const target = parseGameDate(draft)
     cancelRef.current = false
+    ownsBusyRef.current = true
+    useGameStore.setState({ simulationBusy: true, simulationProgress: null })
+    setError(null)
     setOpen(false)
     setRunning(true)
     setMatches([])
@@ -99,15 +116,17 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
       if (cancelRef.current) return
       const current = useGameStore.getState().world
       if (current === null) {
-        setRunning(false)
-        setMatches([])
+        stopHoliday()
         return
       }
 
       // ME-LOCK1.1: each day's matches are simulated in parallel workers; the next tick starts when this one has been applied.
-      void tickSimulateUntilDateAsync(current, target, getWorldMatchRunner()).then((tick) => {
+      inFlightRef.current = true
+      void tickSimulateUntilDateAsync(current, target, getWorldMatchRunner(), undefined, { simulationContext: {
+        onProgress: next => { if (!cancelRef.current) useGameStore.setState({ simulationProgress: next }) },
+      } }).then((tick) => {
         if (cancelRef.current) return
-        if (useGameStore.getState().world !== current) { setRunning(false); setMatches([]); return }
+        if (useGameStore.getState().world !== current) { stopHoliday(); return }
         iterations += 1
         useGameStore.getState().replaceWorld(tick.world)
         const live = tick.event.type === 'userMatch' ? tick.event.match.date : tick.world.currentDate
@@ -120,12 +139,17 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
         setMatches(spotlight === undefined ? [] : [spotlight])
         const arrived = compareGameDates(tick.world.currentDate, target) >= 0
         if (tick.event.type === 'finished' || arrived || iterations > 4000) {
-          setRunning(false)
-          setMatches([])
+          stopHoliday()
           return
         }
         window.setTimeout(step, spotlight === undefined ? 90 : 500)
-      }, () => { setRunning(false); setMatches([]) })
+      }, cause => {
+        if (!cancelRef.current) setError(cause instanceof Error ? cause.message : 'No se pudo avanzar el universo.')
+        stopHoliday()
+      }).finally(() => {
+        inFlightRef.current = false
+        if (cancelRef.current) releaseBusy()
+      })
     }
 
     window.setTimeout(step, 0)
@@ -204,11 +228,18 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
           </div>
         </div>
       ) : null}
+      {error && <p role="alert">{error}</p>}
       {running ? (
         <SimulationOverlay>
           <div aria-busy aria-label="Simulation progress" className="ng-sim-modal" role="dialog">
             <p className="ng-sim-modal__eyebrow">Simulando</p>
             <h2 className="ng-sim-modal__date">{formatGameDateLabel(liveDate)}</h2>
+            <p className="ng-sim-modal__empty" role="status" aria-live="polite">
+              {progress?.phase === 'matches' ? `Partidos completados: ${progress.completed}/${progress.total}`
+                : progress?.phase === 'preparing' ? 'Preparando partidos'
+                  : progress?.phase === 'consequences' ? 'Aplicando resultados y consecuencias'
+                    : 'Avanzando el calendario'} · Esc para detener
+            </p>
             <div aria-label="Your results" className="ng-sim-modal__results">
               {matches[0] === undefined ? (
                 <p className="ng-sim-modal__empty" />

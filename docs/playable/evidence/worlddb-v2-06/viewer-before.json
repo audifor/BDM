@@ -1,0 +1,33 @@
+{
+  "label": "live-baseline-controlled-v2",
+  "exeSha256": "e30d22cf6dc88649fcb1ea9491890fc85f5df98d493a5a0ae73d311e9ba0744b",
+  "runs": [
+    {
+      "rep": 1,
+      "elapsedMs": 2968.199999988079,
+      "maxFrameGapMs": 240.10000000000036,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "SIMULATION IDLE",
+      "consoleErrors": []
+    },
+    {
+      "rep": 2,
+      "elapsedMs": 3042.300000011921,
+      "maxFrameGapMs": 253.5,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "SIMULATION IDLE",
+      "consoleErrors": []
+    },
+    {
+      "rep": 3,
+      "elapsedMs": 2977.3999999910593,
+      "maxFrameGapMs": 253.5,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "SIMULATION IDLE",
+      "consoleErrors": []
+    }
+  ]
+}

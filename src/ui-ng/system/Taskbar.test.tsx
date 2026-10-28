@@ -8,12 +8,14 @@ import { Taskbar } from '@/ui-ng/system/Taskbar'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { navigateToPlayer, navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 import type { PlayerId, StaffPersonId } from '@/domain/ids'
+import { parseGameDate } from '@/domain/date'
 
 afterEach(cleanup)
 
 beforeEach(() => {
   window.history.replaceState({}, '', '/?ui=ng&app=home')
   useGameStore.getState().resetGame()
+  useGameStore.setState({ simulationBusy: false, simulationProgress: null, liveMatchActive: false })
 })
 
 function mountTaskbar() {
@@ -39,6 +41,21 @@ function mountCourtsideTaskbar(theme: 'dark' | 'light') {
  * "Simulation idle", which claimed the simulation was idle even while a background day advance was running.
  */
 describe('Taskbar simulation status', () => {
+  it('identifies a live match while the world clock is paused', () => {
+    useGameStore.setState({ liveMatchActive: true })
+    mountTaskbar()
+    expect(screen.getByRole('status')).toHaveTextContent('Partido en directo')
+    expect(screen.queryByText('Simulation idle')).not.toBeInTheDocument()
+  })
+  it('shows completed matches and the processing date without changing the persisted world', () => {
+    const world = useGameStore.getState().world
+    useGameStore.setState({ simulationBusy: true, simulationProgress: { date: parseGameDate('2025-10-04'), phase: 'matches', completed: 17, total: 35 } })
+    mountTaskbar()
+    expect(screen.getByRole('status')).toHaveTextContent('Partidos 17/35 · 2025-10-04')
+    act(() => useGameStore.setState({ simulationProgress: { date: parseGameDate('2025-10-04'), phase: 'consequences', completed: 35, total: 35 } }))
+    expect(screen.getByRole('status')).toHaveTextContent('Aplicando consecuencias')
+    expect(useGameStore.getState().world).toBe(world)
+  })
   it('reports the idle state when no simulation is running', () => {
     mountTaskbar()
 

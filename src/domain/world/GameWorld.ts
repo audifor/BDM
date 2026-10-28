@@ -2301,7 +2301,7 @@ function validateWorld(canonical: GameWorld, previous?: GameWorld, scope = new W
         if (headCoachAssignments.length !== 1 || assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== 'headCoach') throw new GameWorldValidationError(`Coach ${coachId} employment requires one matching headCoach Staff assignment`)
         const staffEmployment = world.staffEmploymentByStaffId[coach.staffProfileId]
         if (staffEmployment !== undefined && (staffEmployment.status !== 'employed' || staffEmployment.teamId !== employment.teamId || staffEmployment.roleId !== 'headCoach')) throw new GameWorldValidationError(`Coach ${coachId} Staff employment does not match Coach employment`)
-      } else if (headCoachAssignments.length !== 0) {
+      } else if (headCoachAssignments.some((assignment) => assignment.role === 'headCoach')) {
         throw new GameWorldValidationError(`Unemployed Coach ${coachId} cannot retain a headCoach Staff assignment`)
       }
     }

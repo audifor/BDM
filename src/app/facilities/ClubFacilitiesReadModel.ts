@@ -213,32 +213,46 @@ export interface ClubFacilitiesWorkspaceModel {
   readonly sporting: TeamSportingFacilityContext
 }
 
+const accessByWorld = new WeakMap<GameWorld, Map<string, ReadonlyMap<FacilityId, readonly ClubFacilityAccessKind[]>>>()
+const noAccess: readonly ClubFacilityAccessKind[] = Object.freeze([])
+
 function accessKindsFor(world: GameWorld, facilityId: FacilityId, organizationId: OrganizationId, asOf: GameDate): readonly ClubFacilityAccessKind[] {
-  const kinds = new Set<ClubFacilityAccessKind>()
+  const key = JSON.stringify([organizationId, asOf])
+  const cached = accessByWorld.get(world)?.get(key)
+  if (cached !== undefined) return cached.get(facilityId) ?? noAccess
+  const kinds = new Map<FacilityId, Set<ClubFacilityAccessKind>>()
+  const add = (id: FacilityId, kind: ClubFacilityAccessKind) => {
+    let values = kinds.get(id)
+    if (values === undefined) { values = new Set(); kinds.set(id, values) }
+    values.add(kind)
+  }
   const clubTeamIds = new Set(Object.values(world.teams).filter((team) => team.organizationId === organizationId).map((team) => team.id))
   const activeOn = (validFrom: GameDate | null, validTo: GameDate | null) => (validFrom === null || validFrom <= asOf) && (validTo === null || validTo >= asOf)
 
   for (const interest of Object.values(world.facilityOwnershipInterestsById)) {
-    if (interest.facilityId !== facilityId) continue
     if (interest.owner.kind !== 'ORGANIZATION' || interest.owner.organizationId !== organizationId) continue
-    if (activeOn(interest.validFrom, interest.validTo)) kinds.add('OWNED')
+    if (activeOn(interest.validFrom, interest.validTo)) add(interest.facilityId, 'OWNED')
   }
   for (const assignment of Object.values(world.facilityOperatorAssignmentsById)) {
-    if (assignment.facilityId !== facilityId || assignment.operatorOrganizationId !== organizationId) continue
-    if (activeOn(assignment.validFrom, assignment.validTo)) kinds.add('OPERATED')
+    if (assignment.operatorOrganizationId !== organizationId) continue
+    if (activeOn(assignment.validFrom, assignment.validTo)) add(assignment.facilityId, 'OPERATED')
   }
   for (const relationship of Object.values(world.facilityOrganizationRelationshipsById)) {
-    if (relationship.facilityId !== facilityId || relationship.organizationId !== organizationId) continue
-    if (activeOn(relationship.validFrom, relationship.validTo)) kinds.add('USED')
+    if (relationship.organizationId !== organizationId) continue
+    if (activeOn(relationship.validFrom, relationship.validTo)) add(relationship.facilityId, 'USED')
   }
   for (const right of Object.values(world.facilityUsageRightsById)) {
-    if (right.facilityId !== facilityId || right.organizationId !== organizationId && (right.teamId === null || !clubTeamIds.has(right.teamId))) continue
-    if (activeOn(right.validFrom, right.validTo)) kinds.add('USED')
+    if (right.organizationId !== organizationId && (right.teamId === null || !clubTeamIds.has(right.teamId))) continue
+    if (activeOn(right.validFrom, right.validTo)) add(right.facilityId, 'USED')
   }
   for (const relationship of Object.values(world.facilityTeamRelationshipsById)) {
-    if (relationship.facilityId === facilityId && clubTeamIds.has(relationship.teamId) && activeOn(relationship.validFrom, relationship.validTo)) kinds.add('RELATED')
+    if (clubTeamIds.has(relationship.teamId) && activeOn(relationship.validFrom, relationship.validTo)) add(relationship.facilityId, 'RELATED')
   }
-  return Object.freeze([...kinds].sort())
+  const index = new Map([...kinds].map(([id, values]) => [id, Object.freeze([...values].sort())]))
+  let organizations = accessByWorld.get(world)
+  if (organizations === undefined) { organizations = new Map(); accessByWorld.set(world, organizations) }
+  organizations.set(key, index)
+  return index.get(facilityId) ?? noAccess
 }
 
 function componentLabel(world: GameWorld, componentId: FacilityComponentId | null): string | null {
@@ -310,8 +324,13 @@ function moneyRows(world: GameWorld, projectId: FacilityDevelopmentProjectId, as
   )
 }
 
+/** Derived, frozen answers live only as long as their immutable world; a new date or command uses a new world key. */
+const authorityByWorld = new WeakMap<GameWorld, Map<TeamId, ClubFacilityAuthority>>()
+
 /** The club's Facilities authority: its Organization, every Facility it is canonically involved with, and its own projects. */
 export function resolveClubFacilityAuthority(world: GameWorld, teamId: TeamId): ClubFacilityAuthority {
+  const cached = authorityByWorld.get(world)?.get(teamId)
+  if (cached !== undefined) return cached
   const team = world.teams[teamId]
   if (team === undefined) throw new RangeError(`Unknown team: ${teamId}`)
   const organizationId = team.organizationId
@@ -321,12 +340,16 @@ export function resolveClubFacilityAuthority(world: GameWorld, teamId: TeamId): 
   }
   const projects = developmentProjectsForOrganization(Object.values(world.facilityDevelopmentProjectsById), organizationId)
   for (const project of projects) if (project.facilityId !== null) facilityIds.add(project.facilityId)
-  return Object.freeze({
+  const authority = Object.freeze({
     teamId,
     organizationId,
     facilityIds: Object.freeze([...facilityIds].sort()),
     projectIds: Object.freeze(projects.map((project) => project.id).sort()),
   })
+  let teams = authorityByWorld.get(world)
+  if (teams === undefined) { teams = new Map(); authorityByWorld.set(world, teams) }
+  teams.set(teamId, authority)
+  return authority
 }
 
 export function buildClubFacilitiesWorkspaceModel(world: GameWorld, teamId: TeamId): ClubFacilitiesWorkspaceModel {

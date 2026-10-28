@@ -1,0 +1,140 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "expected": "060158a26374ee5af6c1e8370850448840e814cccb65d0f811a351aa67090e3e",
+      "actual": "060158a26374ee5af6c1e8370850448840e814cccb65d0f811a351aa67090e3e"
+    },
+    {
+      "file": "docs/playable/F4_CERTIFICATION.md",
+      "expected": "81e6450142e188492a37b12b8657a74f1f11c1c9dd57b89da252a284e0c1aae1",
+      "actual": "81e6450142e188492a37b12b8657a74f1f11c1c9dd57b89da252a284e0c1aae1"
+    },
+    {
+      "file": "scripts/playable/f4-windows-acceptance.mjs",
+      "expected": "4a8d85f6bdf97915134f73b9cb5e1d889b5c7d73a78029511ca65ccf7fedc25c",
+      "actual": "4a8d85f6bdf97915134f73b9cb5e1d889b5c7d73a78029511ca65ccf7fedc25c"
+    },
+    {
+      "file": "src/app/game/AcbCompetitionEdition.ts",
+      "expected": "7b9def98d31adaec8d66fd93b35ec898141d679b3e03a0ff9f05ba2704680512",
+      "actual": "7b9def98d31adaec8d66fd93b35ec898141d679b3e03a0ff9f05ba2704680512"
+    },
+    {
+      "file": "src/app/game/PlayableF4.test.ts",
+      "expected": "b57032e92126e77e9ce31088eb01b8c2fa39f41b86060c2de19c764e69c257b8",
+      "actual": "b57032e92126e77e9ce31088eb01b8c2fa39f41b86060c2de19c764e69c257b8"
+    },
+    {
+      "file": "src/app/game/PlayableF4Checkpoint.test.ts",
+      "expected": "ffecedd5b002ab6707b9114d6dec85dd95fbb81c492d39af76b22814d547607e",
+      "actual": "ffecedd5b002ab6707b9114d6dec85dd95fbb81c492d39af76b22814d547607e"
+    },
+    {
+      "file": "src/app/game/PlayableF4Season.test.ts",
+      "expected": "3b566f14d229bb72bae16013ecd333ad2a7347f2195062ac6e5d9282893f03a7",
+      "actual": "3b566f14d229bb72bae16013ecd333ad2a7347f2195062ac6e5d9282893f03a7"
+    },
+    {
+      "file": "src/app/game/PlayableF4Training.test.ts",
+      "expected": "8e35ab3d8643d72567865984db77185ded6ac0aaf8e54db03c41bde3ec56620e",
+      "actual": "8e35ab3d8643d72567865984db77185ded6ac0aaf8e54db03c41bde3ec56620e"
+    },
+    {
+      "file": "src/app/game/WorldDbGameBootstrap.test.ts",
+      "expected": "af1b9ddabc460dd72de5ecc9bbf3ba04aa559ff59f4b8fbab926918246278fe1",
+      "actual": "af1b9ddabc460dd72de5ecc9bbf3ba04aa559ff59f4b8fbab926918246278fe1"
+    },
+    {
+      "file": "src/app/game/createAcbTestGame.ts",
+      "expected": "6ce5c18e1062ec39eab21b2771bcc726cb88cd2e55c01d4b56af0edc2e99aa1c",
+      "actual": "6ce5c18e1062ec39eab21b2771bcc726cb88cd2e55c01d4b56af0edc2e99aa1c"
+    },
+    {
+      "file": "src/data/competition-formats/acb-bdm-db-2025-26.json",
+      "expected": "4d16757eb94ba77de6d963ae25ab06f61d469fad609983e5f536572b32e1abd1",
+      "actual": "4d16757eb94ba77de6d963ae25ab06f61d469fad609983e5f536572b32e1abd1"
+    },
+    {
+      "file": "src/domain/competition/CompetitionRules.ts",
+      "expected": "399dabe6d3f27d8f6d849bc71f45354de45fe61875261d0f4c950663592aafe5",
+      "actual": "399dabe6d3f27d8f6d849bc71f45354de45fe61875261d0f4c950663592aafe5"
+    },
+    {
+      "file": "src/domain/season/Season.ts",
+      "expected": "69c05037d9ba3ed9739db70ca3c5b98709a4570d7224a3131a6b78aa5201af27",
+      "actual": "69c05037d9ba3ed9739db70ca3c5b98709a4570d7224a3131a6b78aa5201af27"
+    },
+    {
+      "file": "src/domain/season/calculateStandings.ts",
+      "expected": "3e316e7b28ecc1f06e2858d2a43a44327287ff28b1277ca938fa22481bdf2480",
+      "actual": "3e316e7b28ecc1f06e2858d2a43a44327287ff28b1277ca938fa22481bdf2480"
+    },
+    {
+      "file": "src/domain/season/index.ts",
+      "expected": "ce0719f51ca3e43772c2b837d0a38b6982ef7806cdf971951c105dab59f3e54b",
+      "actual": "ce0719f51ca3e43772c2b837d0a38b6982ef7806cdf971951c105dab59f3e54b"
+    },
+    {
+      "file": "src/domain/world/GameWorld.ts",
+      "expected": "1964955871fd44550b3f0ac1d1f7dc087c1d2a726302a1dcc79c637dbc10512e",
+      "actual": "1964955871fd44550b3f0ac1d1f7dc087c1d2a726302a1dcc79c637dbc10512e"
+    },
+    {
+      "file": "src/engine/board/BoardEngine.test.ts",
+      "expected": "27b7a996c340206514e867e069e4f67bd997d45f4a0a9485aebd161f023a9204",
+      "actual": "27b7a996c340206514e867e069e4f67bd997d45f4a0a9485aebd161f023a9204"
+    },
+    {
+      "file": "src/engine/board/BoardEngine.ts",
+      "expected": "9342e26384c38ac73896bcc9b948380525189db3df60b2acc8c1db0a84f54b90",
+      "actual": "9342e26384c38ac73896bcc9b948380525189db3df60b2acc8c1db0a84f54b90"
+    },
+    {
+      "file": "src/engine/competition/WorldCompetitionPostseason.ts",
+      "expected": "4fbf78def69a2dd20e359d21b24ea17d7320ae192110e43728a5061575892b17",
+      "actual": "4fbf78def69a2dd20e359d21b24ea17d7320ae192110e43728a5061575892b17"
+    },
+    {
+      "file": "src/engine/competition/standings/Standings.test.ts",
+      "expected": "0186fc4600421a27ea10b808626a120f96e72aa88cc86703b2c289a5b6959ce0",
+      "actual": "0186fc4600421a27ea10b808626a120f96e72aa88cc86703b2c289a5b6959ce0"
+    },
+    {
+      "file": "src/engine/training/TrainingPlanning.ts",
+      "expected": "040c00a1c24fe3d55026a153dfb76132e99b50c1dfa268c268213c9ff97e99d2",
+      "actual": "040c00a1c24fe3d55026a153dfb76132e99b50c1dfa268c268213c9ff97e99d2"
+    },
+    {
+      "file": "src/save/GameWorldSaveV1.ts",
+      "expected": "065ceb60dd3e814af1d0b5c55552bc8d13f70af99c4870cb26b9b15ad55fd43a",
+      "actual": "065ceb60dd3e814af1d0b5c55552bc8d13f70af99c4870cb26b9b15ad55fd43a"
+    },
+    {
+      "file": "src/ui-ng/applications/competition/CompetitionPostseasonPanel.test.tsx",
+      "expected": "25ea7735115fc03bd226d99f06eab5ae4f7285097b166718083419e899676710",
+      "actual": "25ea7735115fc03bd226d99f06eab5ae4f7285097b166718083419e899676710"
+    },
+    {
+      "file": "src/ui-ng/applications/competition/CompetitionPostseasonPanel.tsx",
+      "expected": "af9d19a1b92c07932b3251e8bf041e651fe5b292cbc69e12edaf4ba908e05bb7",
+      "actual": "af9d19a1b92c07932b3251e8bf041e651fe5b292cbc69e12edaf4ba908e05bb7"
+    },
+    {
+      "file": "src/ui-ng/applications/competition/CompetitionWorkspace.tsx",
+      "expected": "5d4c71578be947deb458601959ff66462f222a95bb2980c849bda0bcf2da6ece",
+      "actual": "5d4c71578be947deb458601959ff66462f222a95bb2980c849bda0bcf2da6ece"
+    },
+    {
+      "file": "src/ui-ng/applications/competition/buildCompetitionWorkspaceModel.ts",
+      "expected": "5880e3233d29bfc10e8658136feef749bcbf0579de36a31b5088c7bb33559433",
+      "actual": "5880e3233d29bfc10e8658136feef749bcbf0579de36a31b5088c7bb33559433"
+    },
+    {
+      "file": "src/ui-ng/applications/home/HomeWorkspace.tsx",
+      "expected": "f12cfea527e1999c896d88a1872fb808cfd9b39ed568321e314abbcbab3819cb",
+      "actual": "f12cfea527e1999c896d88a1872fb808cfd9b39ed568321e314abbcbab3819cb"
+    }
+  ]
+}

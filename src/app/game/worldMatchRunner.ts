@@ -14,7 +14,7 @@ export function getWorldMatchRunner(): MatchSimulationRunner {
     return runner
   }
   const cores = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency > 0 ? navigator.hardwareConcurrency : 4
-  // Leave one core to the interface; a day rarely needs more than eight Games at once.
+  // Leave one logical processor to the interface. Controlled 35-game runs retain the existing eight-worker limit.
   const size = Math.max(1, Math.min(8, cores - 1))
   runner = createWorkerPoolRunner(() => {
     const worker = new Worker(new URL('../matchNext/matchSimulation.worker.ts', import.meta.url), { type: 'module' })

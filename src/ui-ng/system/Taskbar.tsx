@@ -51,6 +51,8 @@ export function Taskbar() {
     groupExitTimer.current=setTimeout(()=>{setInstanceGroup(null);groupExitTimer.current=null},200)
   }
   const busy=useGameStore(s=>s.simulationBusy)
+  const liveMatchActive=useGameStore(s=>s.liveMatchActive)
+  const progress=useGameStore(s=>s.simulationProgress)
   const [startOpen,setStartOpen]=useState(false)
   const [menu,setMenu]=useState<WorkspaceAppId|null>(null)
   const [moreOpen,setMoreOpen]=useState(false)
@@ -182,6 +184,11 @@ export function Taskbar() {
         </div>)}
       </div>
     </>,document.querySelector('.bdm-os-ng[data-bdm-courtside-shell="true"]') ?? document.body)}
-    <span className="ng-taskbar__status">{busy?'Simulation running':'Simulation idle'}</span>
+    <span className="ng-taskbar__status" role="status" aria-live="polite" data-simulation-phase={busy ? progress?.phase : undefined}
+      title={busy && progress ? `Simulation running · ${progress.date}` : undefined}>
+      {liveMatchActive ? 'Partido en directo' : !busy ? 'Simulation idle' : !progress ? 'Simulation running' : progress.phase === 'matches'
+        ? `Partidos ${progress.completed}/${progress.total} · ${progress.date}`
+        : `${progress.phase === 'preparing' ? 'Preparando partidos' : progress.phase === 'consequences' ? 'Aplicando consecuencias' : 'Avanzando calendario'} · ${progress.date}`}
+    </span>
   </footer>
 }
