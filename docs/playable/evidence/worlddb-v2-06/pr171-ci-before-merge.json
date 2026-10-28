@@ -1,0 +1,97 @@
+{
+  "baseRefName": "main",
+  "headRefOid": "64849345f3c1629d9148db28246cf3820a3d47fc",
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T19:12:06Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532806/job/122398614532",
+      "name": "Unit tests (shard 1/4)",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "BDM CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T18:51:04Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532662/job/122398612556",
+      "name": "ui-and-scouting",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "Courtside main regressions"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T18:52:27Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532650/job/122398612114",
+      "name": "player-repertoire",
+      "startedAt": "2026-10-27T18:49:31Z",
+      "status": "COMPLETED",
+      "workflowName": "PLAYER 2.4 D3-D5B integration gate"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T19:13:18Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532806/job/122398612740",
+      "name": "Unit tests (shard 2/4)",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "BDM CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T19:21:05Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532806/job/122398612381",
+      "name": "Unit tests (shard 3/4)",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "BDM CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T19:13:28Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532806/job/122398612863",
+      "name": "Unit tests (shard 4/4)",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "BDM CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T19:39:26Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532806/job/122415392617",
+      "name": "validate",
+      "startedAt": "2026-10-27T19:21:09Z",
+      "status": "COMPLETED",
+      "workflowName": "BDM CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T18:50:16Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532662/job/122398613080",
+      "name": "save-batch",
+      "startedAt": "2026-10-27T18:49:32Z",
+      "status": "COMPLETED",
+      "workflowName": "Courtside main regressions"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-27T18:55:13Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/audifor/BDM/actions/runs/40563532650/job/122398612610",
+      "name": "player-native-bridge",
+      "startedAt": "2026-10-27T18:49:31Z",
+      "status": "COMPLETED",
+      "workflowName": "PLAYER 2.4 D3-D5B integration gate"
+    }
+  ]
+}

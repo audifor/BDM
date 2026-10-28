@@ -14,6 +14,13 @@ import type { SimulationDetailSettings } from '@/app/worldSim/SimulationResoluti
 /** WSR1: how much of the world is simulated exactly (the user's simulation-detail setting); omitted: the world's setting/default. */
 export interface DayAdvanceOptions extends SimulationResolutionContext {
   readonly simulationDetail?: SimulationDetailSettings
+  readonly onProgress?: (progress: WorldSimulationProgress) => void
+}
+export interface WorldSimulationProgress {
+  readonly date: GameWorld['currentDate']
+  readonly phase: 'preparing' | 'matches' | 'consequences' | 'calendar'
+  readonly completed: number
+  readonly total: number
 }
 import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from './SimulationBreakpoints'
@@ -76,8 +83,12 @@ export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchS
 
 /** The same resolution with the simulation phase on `runner` (parallel workers in the app); identical result for the same seeds. */
 export async function simulateRemainingGamesTodayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = [], options: DayAdvanceOptions = {}): Promise<GameWorld> {
+  await new Promise<void>(resolve => setTimeout(resolve, 0))
   assertSimulationMayAdvance(world, allowedRequiredReasons)
-  return resolveDayGamesAsync(world, getScheduledGamesToday(world), createSeed, runner, repairReports, options.simulationDetail ?? simulationDetailFor(world), options)
+  const games = getScheduledGamesToday(world)
+  options.onProgress?.({ date: world.currentDate, phase: 'preparing', completed: 0, total: games.length })
+  return resolveDayGamesAsync(world, games, createSeed, runner, repairReports, options.simulationDetail ?? simulationDetailFor(world), options,
+    progress => options.onProgress?.({ ...progress, date: world.currentDate, phase: progress.completed === progress.total ? 'consequences' : 'matches' }))
 }
 
 /** Resolves today's pending games, then advances the game calendar by one day. */
@@ -159,11 +170,15 @@ export async function advanceGameDayWithResultAsync(world: GameWorld, runner: Ma
     if (!step!.done) segmentWorld = step!.value.world
   }
   try {
+    // Yield outside the synchronous validation scope so React can paint and accept navigation.
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
     resume()
     while (!step!.done) {
       let outcomes: DayOutcome[]
-      try { outcomes = await simulateDayOutcomes(step!.value.games, runner) }
+      try { outcomes = await simulateDayOutcomes(step!.value.games, runner, progress => options.onProgress?.({ ...progress, date: world.currentDate, phase: 'matches' })) }
       catch (error) { resume(undefined, error); continue }
+      options.onProgress?.({ date: world.currentDate, phase: 'consequences', completed: outcomes.length, total: outcomes.length })
+      await new Promise<void>(resolve => setTimeout(resolve, 0))
       resume(outcomes)
     }
     return addDayPublication(step!.value, publicationStarted)
@@ -222,11 +237,13 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
 
     activePhaseId = 'MATCH_RESOLUTION'
     const matches = getScheduledGamesToday(current)
+    options.onProgress?.({ date: current.currentDate, phase: 'preparing', completed: 0, total: matches.length })
     const matchStart = performance.now()
     const lineupReports: WorldRepairReport[] = []
     assertSimulationMayAdvance(current, allowedRequiredReasons)
     if (dayGamesAreIndependent(matches)) {
       const prepared = prepareDayGames(current, matches, createSeed, lineupReports, options.simulationDetail ?? simulationDetailFor(current), options)
+      options.onProgress?.({ date: current.currentDate, phase: 'matches', completed: 0, total: prepared.length })
       const results: DayOutcome[] = prepared.length === 0 ? [] : yield { world: current, games: prepared }
       current = applyDayOutcomes(current, prepared, results)
     } else {
@@ -238,6 +255,7 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     if (lineupReports.length > 0) phases.push({ phaseId: 'MATCH_LINEUP_REPAIR', order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: repairDiagnostics(lineupReports), summary: `Resolved ${lineupReports.length} transient match lineup report(s).` })
 
     activePhaseId = 'CALENDAR_LIFECYCLE'
+    options.onProgress?.({ date: current.currentDate, phase: 'calendar', completed: matches.length, total: matches.length })
     const beforeCalendar = current
     const calendar: CalendarDayLifecycleResult = advanceDayWithTrace(current)
     if (calendar.status === 'FAILED') {

@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "profile": "v2-06-staff-1793191193633",
+  "date": "2025-10-05",
+  "staffId": "pbm:DYN_person:58609",
+  "personCountUnchanged": true,
+  "responsibility": {
+    "id": "responsibility:pbm:DYN_equipe:41:createTeamTrainingPlan",
+    "teamId": "pbm:DYN_equipe:41",
+    "kind": "createTeamTrainingPlan",
+    "mode": "delegated",
+    "holderStaffId": "pbm:DYN_person:58609",
+    "assignedOn": "2025-10-05"
+  },
+  "consoleErrors": []
+}

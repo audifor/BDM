@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "reports": [
+    {
+      "file": "day-30.save.json.gz",
+      "beforeDate": "2025-11-03",
+      "afterDate": "2025-11-04",
+      "identities": 1154,
+      "clubs": 70,
+      "competitions": 4,
+      "champions": [],
+      "decisions": [],
+      "beforeActas": 175,
+      "afterActas": 175,
+      "exactRoundTrips": true
+    },
+    {
+      "file": "certified-universe.save.json.gz",
+      "beforeDate": "2026-10-12",
+      "afterDate": "2026-10-13",
+      "identities": 1154,
+      "clubs": 70,
+      "competitions": 4,
+      "champions": [
+        {
+          "seasonId": "worlddb-v2:season:2025-10-04",
+          "championTeamId": "pbm:DYN_equipe:51"
+        },
+        {
+          "seasonId": "worlddb-v2:season:pbm:DYN_championnat:10:2025-10-04",
+          "championTeamId": "pbm:DYN_equipe:2051"
+        },
+        {
+          "seasonId": "worlddb-v2:season:pbm:DYN_championnat:109:2025-10-04",
+          "championTeamId": "pbm:DYN_equipe:2951"
+        },
+        {
+          "seasonId": "worlddb-v2:season:pbm:DYN_championnat:2:2025-10-04",
+          "championTeamId": "pbm:DYN_equipe:9"
+        }
+      ],
+      "decisions": [],
+      "beforeActas": 1358,
+      "afterActas": 1358,
+      "exactRoundTrips": true
+    }
+  ]
+}

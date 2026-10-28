@@ -14,7 +14,9 @@ const port = createMatchEnginePort('match-next')
 scope.onmessage = (event) => {
   const { jobId, setup } = event.data
   try {
-    scope.postMessage({ jobId, result: port.simulate(setup, 'FAST') })
+    const started = performance.now()
+    const result = port.simulate(setup, 'FAST')
+    scope.postMessage({ jobId, result, elapsedMs: performance.now() - started })
   } catch (error) {
     scope.postMessage({ jobId, error: error instanceof Error ? error.message : String(error) })
   }

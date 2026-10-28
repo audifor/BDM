@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
+import { updateGameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
+import { createPreMatchMediaOpportunity } from '@/engine/media'
 import { useGameStore } from '@/stores/gameStore'
 import { useMatchViewerStore } from '@/stores/matchViewerStore'
 import { MatchWorkspace } from '@/ui-ng/applications/match/MatchWorkspace'
@@ -29,6 +32,32 @@ function mountMatch() {
 }
 
 describe('MatchWorkspace', () => {
+  it('blocks a second match command while the shared world is advancing', () => {
+    const world = createNewGame()
+    useGameStore.getState().replaceWorld(world)
+    const stored = useGameStore.getState().world
+    useGameStore.setState({ simulationBusy: true })
+    mountMatch()
+    for (const name of ['Jugar partido', 'Simulación rápida', 'Avanzar un día']) expect(screen.getByRole('button', { name })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Jugar partido' }))
+    expect(document.querySelector('[data-ng-region="match-live"]')).toBeNull()
+    expect(useGameStore.getState().world).toBe(stored)
+    useGameStore.setState({ simulationBusy: false })
+  })
+
+  it('explains a required press decision instead of silently ignoring advance day', async () => {
+    const initial = createNewGame(), team = getUserTeam(initial)!
+    const game = Object.values(initial.games).find(g => g.date === initial.currentDate && (g.homeTeamId === team.id || g.awayTeamId === team.id))!
+    const important = updateGameWorld(initial, { games: Object.values(initial.games).map(g => g.id === game.id ? { ...g, stakes: 'final' as const } : g) })
+    const world = createPreMatchMediaOpportunity(important, game.id)
+    useGameStore.getState().replaceWorld(world)
+    mountMatch()
+    fireEvent.click(screen.getByRole('button', { name: 'Avanzar un día' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/media|pending|prensa/i)
+    expect(useGameStore.getState().world?.currentDate).toBe(world.currentDate)
+    expect(useGameStore.getState().world?.games[game.id]?.status).toBe('scheduled')
+  })
+
   it('opens the normal live match centre with ME-NEXT canonical frames', () => {
     useGameStore.getState().replaceWorld(createNewGame())
     const scheduledId = Object.values(useGameStore.getState().world!.games).find((game) => game.status === 'scheduled')!.id

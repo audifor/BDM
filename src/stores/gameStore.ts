@@ -63,7 +63,7 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { considerDraftEntry, declareDraftEntry, withdrawDraftEntry } from '@/engine/draft'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
-import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
+import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult, WorldSimulationProgress } from '@/app/game'
 import { addRecruitingBoardEntry, addTransferRecruitToCycle, applyRecruitingPressure, completeCollegeTransfer, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, resolveBasketballChampionshipDate, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
 import { basketballTransferWindow } from '@/domain/eligibility'
 import { ensureTransferPortalRuleset } from '@/engine/eligibility'
@@ -120,6 +120,7 @@ import { setRehabilitationPlan as setRehabilitationPlanCommand, type SetRehabili
 interface GameStore {
   readonly world: GameWorld | null
   readonly lastDayAdvanceResult: WorldDayAdvanceResult | null
+  readonly simulationProgress: WorldSimulationProgress | null
   /** ME-LOCK1.1: a day is being simulated in the background (worker pool); world-changing actions wait for it. */
   readonly simulationBusy: boolean
   /** Why the last Plantilla/Pizarra lineup change was refused (a player who cannot play the next game); null once a change is accepted. */
@@ -342,6 +343,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ world: releaseTrainingPhysicalAllocation(world, sessionId, id) })
   },
   lastDayAdvanceResult: null,
+  simulationProgress: null,
   simulationBusy: false,
   lineupNotice: null,
   marketNotice: null,
@@ -379,16 +381,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, lastDayAdvanceResult: result })
     return result
   },
-  advanceDayAsync: () => runBackgroundSimulation(get, set, async (world) => {
-    const result = await advanceGameDayWithResultAsync(world, getWorldMatchRunner())
+  advanceDayAsync: () => runBackgroundSimulation(get, set, async (world, onProgress) => {
+    const result = await advanceGameDayWithResultAsync(world, getWorldMatchRunner(), undefined, undefined, { onProgress })
     return { world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, value: result, lastDayAdvanceResult: result }
   }),
-  continueGameAsync: () => runBackgroundSimulation(get, set, async (world) => {
-    const result = await continueGameAsync(world, getWorldMatchRunner())
+  continueGameAsync: () => runBackgroundSimulation(get, set, async (world, onProgress) => {
+    const result = await continueGameAsync(world, getWorldMatchRunner(), undefined, undefined, { onProgress })
     return { world: result.world, value: result }
   }),
   simulateRemainingGamesTodayAsync: async () => {
-    await runBackgroundSimulation(get, set, async (world) => ({ world: await simulateRemainingGamesTodayAsync(world, getWorldMatchRunner()), value: undefined }))
+    await runBackgroundSimulation(get, set, async (world, onProgress) => ({ world: await simulateRemainingGamesTodayAsync(world, getWorldMatchRunner(), undefined, undefined, undefined, { onProgress }), value: undefined }))
   },
   continueGame: () => {
     const result = runContinueGame(requireWorld(get().world))
@@ -906,17 +908,17 @@ export function selectDesignerPlaybooks(world: GameWorld | null): readonly Playb
 async function runBackgroundSimulation<T>(
   get: () => GameStore,
   set: (partial: Partial<GameStore>) => void,
-  run: (world: GameWorld) => Promise<{ readonly world: GameWorld; readonly value: T; readonly lastDayAdvanceResult?: WorldDayAdvanceResult }>,
+  run: (world: GameWorld, onProgress: (progress: WorldSimulationProgress) => void) => Promise<{ readonly world: GameWorld; readonly value: T; readonly lastDayAdvanceResult?: WorldDayAdvanceResult }>,
 ): Promise<T | null> {
   if (get().simulationBusy) return null
   const start = requireWorld(get().world)
-  set({ simulationBusy: true })
+  set({ simulationBusy: true, simulationProgress: null })
   try {
-    const outcome = await run(start)
+    const outcome = await run(start, progress => { if (get().world === start) set({ simulationProgress: progress }) })
     if (get().world !== start) return null
     set({ world: outcome.world, ...(outcome.lastDayAdvanceResult === undefined ? {} : { lastDayAdvanceResult: outcome.lastDayAdvanceResult }) })
     return outcome.value
   } finally {
-    set({ simulationBusy: false })
+    set({ simulationBusy: false, simulationProgress: null })
   }
 }

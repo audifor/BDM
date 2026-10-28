@@ -1,0 +1,56 @@
+{
+  "technicalPass": true,
+  "experienceAssessment": "Functional Windows route completed; no claim of fun.",
+  "branch": "playable/worlddb-v2-06",
+  "base": "708af37514166ec99caf2c6c79cb109e84c595a1",
+  "sessionMinutes": 17.4833,
+  "saveVersion": 4,
+  "date": "2025-10-12",
+  "clubs": 70,
+  "competitions": 4,
+  "leagues": [
+    {
+      "id": "competition:ESP:liga-endesa",
+      "clubs": 18,
+      "completed": 18
+    },
+    {
+      "id": "competition:FRA:betclic-elite",
+      "clubs": 16,
+      "completed": 16
+    },
+    {
+      "id": "competition:ITA:serie-a",
+      "clubs": 16,
+      "completed": 16
+    },
+    {
+      "id": "competition:BRA:nbb",
+      "clubs": 20,
+      "completed": 20
+    }
+  ],
+  "actas": 70,
+  "artifacts": [
+    {
+      "name": "BDM-V2-06.exe",
+      "sha256": "8b7e17048459704a3631d42fadc5862d6cfdabfe9310f9ccebc6e9b4e1cce1dd"
+    },
+    {
+      "name": "universe-certified-v4.json",
+      "sha256": "e44739b2bc066492dd9f021fb582e1238020d216f2596846ba6fb72dc09734e1"
+    },
+    {
+      "name": "BDM-V2-06.cmd",
+      "sha256": "a277ec9484a2b087e742ccaa0321ff49e5f6907f5146c17dd2b8cefa7f7ea675"
+    },
+    {
+      "name": "INFORME.md",
+      "sha256": "9b5a0be42474cdf85d71952344f7a166956b6e76827a44f7200d981bda01e5d6"
+    },
+    {
+      "name": "LEEME.md",
+      "sha256": "87b8a6bdb47a20e93f198043c6a9f15dae8e97f032b02a7f25ed6dbd5b3128ed"
+    }
+  ]
+}

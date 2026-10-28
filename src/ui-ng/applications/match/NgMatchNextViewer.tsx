@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import type { GameId, PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
@@ -86,13 +86,16 @@ export function NgMatchNextViewer({
     '--me-club-ink': clubColors.ink,
   } as CSSProperties
   const venue = venueLabel(world, game.homeTeamId)
-  const liveLines = projectMatchNextPlayByPlay(result?.events ?? frame.events).slice().reverse()
-  const presentation = projectMatchNextPresentation(world, setup, frame, result)
+  // Visual interpolation repaints between engine frames; those repaints do not change world truth or the acta.
+  const liveLines = useMemo(() => projectMatchNextPlayByPlay(result?.events ?? frame.events).slice().reverse(), [frame, result])
+  const presentation = useMemo(() => projectMatchNextPresentation(world, setup, frame, result), [world, setup, frame, result])
+  const homeRecord = useMemo(() => teamRecordLabel(world, game.homeTeamId), [world, game.homeTeamId])
+  const awayRecord = useMemo(() => teamRecordLabel(world, game.awayTeamId), [world, game.awayTeamId])
   const homeName = homeTeam.name
   const awayName = awayTeam.name
   const offenseId = frame.possession?.teamId ?? game.homeTeamId
   const activeAction = frame.actions.find((action) => action.status === 'ACTIVE' && action.kind !== 'CLOSEOUT')
-  const canonicalVisualSnapshot = createVisualSnapshot(frame)
+  const canonicalVisualSnapshot = useMemo(() => createVisualSnapshot(frame), [frame])
   if (visualSnapshotRef.current === null) visualSnapshotRef.current = canonicalVisualSnapshot
 
   useEffect(() => {
@@ -145,9 +148,9 @@ export function NgMatchNextViewer({
   return (
     <section className="me" data-ng-region="match-live" data-me-engine="match-next" style={courtStyle}>
       <MatchScoreboard
-        home={<TeamScoreSummary fouls={null} mark={teamMark(homeName)} name={homeName} onOpen={() => navigateToTeamInNg({ type: 'team', teamId: game.homeTeamId, section: 'overview' })} record={teamRecordLabel(world, game.homeTeamId)} side="home" timeouts={null} />}
+        home={<TeamScoreSummary fouls={null} mark={teamMark(homeName)} name={homeName} onOpen={() => navigateToTeamInNg({ type: 'team', teamId: game.homeTeamId, section: 'overview' })} record={homeRecord} side="home" timeouts={null} />}
         score={<GameClock arena={venue.arena} attendance={null} awayScore={frame.score.away} clockLabel={formatClock(frame.gameClock / 10)} finished={snapshot.isComplete} homeScore={frame.score.home} location={venue.location} periodLabel={formatPeriod(frame.period)} shotClock={frame.shotClock === null ? null : frame.shotClock / 10} />}
-        away={<TeamScoreSummary fouls={null} mark={teamMark(awayName)} name={awayName} onOpen={() => navigateToTeamInNg({ type: 'team', teamId: game.awayTeamId, section: 'overview' })} record={teamRecordLabel(world, game.awayTeamId)} side="away" timeouts={null} />}
+        away={<TeamScoreSummary fouls={null} mark={teamMark(awayName)} name={awayName} onOpen={() => navigateToTeamInNg({ type: 'team', teamId: game.awayTeamId, section: 'overview' })} record={awayRecord} side="away" timeouts={null} />}
         controls={<div className="me-quick" aria-label="Match Next playback controls">
           <button className="me-quick__btn is-emphasis" disabled={snapshot.isComplete} onClick={() => setIsPlaying((playing) => !playing)} type="button">{isPlaying ? 'Pausar partido' : 'Reanudar partido'}</button>
           <button className="me-quick__btn" disabled={snapshot.isComplete || isSkipping} onClick={nextPossession} type="button">Próxima posesión</button>

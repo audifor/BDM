@@ -1,0 +1,17 @@
+{
+  "global": {
+    "passed": true,
+    "passedTests": 5775,
+    "failedTests": 0,
+    "skippedTests": 69,
+    "suites": 840
+  },
+  "consequences": 19,
+  "rust": {
+    "test": 0,
+    "fmt": 0,
+    "check": 0
+  },
+  "build": true,
+  "typecheck": true
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
-import { createFacilityDevelopmentProject, type FacilityDevelopmentProjectStatus } from '@/domain/facilities'
+import { createFacilityDevelopmentProject, createFacilityUsageRight, type FacilityDevelopmentProjectStatus } from '@/domain/facilities'
 import { updateGameWorld } from '@/domain/world'
 import { buildClubFacilitiesWorkspaceModel, projectActionsFor, resolveClubFacilityAuthority } from './ClubFacilitiesReadModel'
 import { createFacilityClubScenario } from './testFixtures'
@@ -11,6 +11,22 @@ import { createFacilityClubScenario } from './testFixtures'
  * same world, same answer; nothing persisted; unknown state reported as unknown rather than defaulted.
  */
 describe('MX0.6 club facilities read boundary', () => {
+  it('recomputes authority for new rights and dates without changing the previous world or another club', () => {
+    const s = createFacilityClubScenario()
+    const before = JSON.stringify(s.world)
+    const original = resolveClubFacilityAuthority(s.world, s.teamId)
+    const starts = addDays(s.asOf, 1)
+    const right = createFacilityUsageRight({ id: 'usage:fluidity-next-day', facilityId: s.rivalFacilityId, componentIds: null,
+      organizationId: s.organizationId, teamId: s.teamId, purpose: 'TRAINING', exclusivity: 'SHARED', priority: 'SECONDARY', validFrom: starts })
+    const granted = updateGameWorld(s.world, { facilityUsageRights: [...Object.values(s.world.facilityUsageRightsById), right] })
+    expect(resolveClubFacilityAuthority(granted, s.teamId).facilityIds).not.toContain(s.rivalFacilityId)
+    const tomorrow = updateGameWorld(granted, { currentDate: starts })
+    expect(resolveClubFacilityAuthority(tomorrow, s.teamId).facilityIds).toContain(s.rivalFacilityId)
+    expect(resolveClubFacilityAuthority(s.world, s.teamId)).toEqual(original)
+    expect(original.facilityIds).not.toContain(s.rivalFacilityId)
+    expect(JSON.stringify(s.world)).toBe(before)
+  })
+
   it('resolves club authority from canonical relationships only', () => {
     const scenario = createFacilityClubScenario()
     const authority = resolveClubFacilityAuthority(scenario.world, scenario.teamId)

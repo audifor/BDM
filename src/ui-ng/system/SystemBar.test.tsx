@@ -9,7 +9,8 @@ import { injuryIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
-import { continueGame, createAcbTestGame as createFullAcbTestGame, createNewGame as createFullNewGame, simulateUntilDate } from '@/app/game'
+import { continueGame, createAcbTestGame as createFullAcbTestGame, createNewGame as createFullNewGame, simulateUntilDate, setWorldMatchRunner } from '@/app/game'
+import { createInlineMatchRunner, type MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import type { SimulationBreakpoint } from '@/app/game'
 import { useGameStore } from '@/stores/gameStore'
 import { SystemBar, continueAction } from '@/ui-ng/system/SystemBar'
@@ -36,6 +37,34 @@ function mountBar() {
 }
 
 describe('SystemBar continue', () => {
+  it('keeps the shared simulation locked until an in-flight holiday day settles after Escape', { timeout: 15_000 }, async () => {
+    let release: (() => void) | undefined
+    const inline = createInlineMatchRunner()
+    const held: MatchSimulationRunner = { kind: 'workers', dispose: () => {}, simulate: (setups, progress) => new Promise((resolve, reject) => {
+      release = () => { void inline.simulate(setups, progress).then(resolve, reject) }
+    }) }
+    setWorldMatchRunner(held)
+    try {
+      const world = createNewGame()
+      useGameStore.getState().replaceWorld(world)
+      const stored = useGameStore.getState().world
+      mountBar()
+      fireEvent.click(screen.getByRole('button', { name: 'Simulate until date' }))
+      fireEvent.click(screen.getByRole('button', { name: `Choose ${addDays(world.currentDate, 1)}` }))
+      fireEvent.click(screen.getByRole('button', { name: 'Simulate' }))
+      await waitFor(() => expect(release).toBeDefined(), { timeout: 5000 })
+      expect(useGameStore.getState().simulationBusy).toBe(true)
+      expect(screen.getByText(/Partidos completados: 0\//)).toBeInTheDocument()
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(screen.queryByRole('dialog', { name: 'Simulation progress' })).toBeNull()
+      expect(useGameStore.getState().simulationBusy).toBe(true)
+      const resume = release!; release = undefined; resume()
+      await waitFor(() => expect(useGameStore.getState().simulationBusy).toBe(false), { timeout: 5000 })
+      expect(useGameStore.getState().world).toBe(stored)
+      expect(useGameStore.getState().simulationProgress).toBeNull()
+    } finally { release?.(); setWorldMatchRunner(undefined) }
+  })
+
   it('opens the match workspace when today is already a user match day', () => {
     useGameStore.getState().replaceWorld(createNewGame())
     mountBar()

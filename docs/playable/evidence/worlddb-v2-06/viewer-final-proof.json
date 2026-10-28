@@ -1,0 +1,15 @@
+{
+  "label": "final-viewer-proof",
+  "exeSha256": "8b7e17048459704a3631d42fadc5862d6cfdabfe9310f9ccebc6e9b4e1cce1dd",
+  "runs": [
+    {
+      "rep": 1,
+      "elapsedMs": 2769,
+      "maxFrameGapMs": 240,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "PARTIDO EN DIRECTO",
+      "consoleErrors": []
+    }
+  ]
+}

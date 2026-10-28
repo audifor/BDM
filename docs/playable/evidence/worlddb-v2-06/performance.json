@@ -1,0 +1,59 @@
+{
+  "controlled": true,
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12400F",
+    "logicalProcessors": 12,
+    "memoryBytes": 68523843584
+  },
+  "day": {
+    "beforeMs": [
+      21696,
+      20284.69999999553,
+      20530
+    ],
+    "afterMs": [
+      21351,
+      21554,
+      21213.29999999702
+    ],
+    "beforeMedianMs": 20530,
+    "afterMedianMs": 21351,
+    "improvementClaim": false,
+    "exactPersistentSha256": "3799277a29fd27807bfb60a1aa7542f4aebf8b99ef3f5764468235639505e6b1",
+    "exactResultsSha256": "7d0c9a6949089173f4a42ad40d0d259436b816edd9915e873b8b46719252b7c7"
+  },
+  "sixDays": {
+    "beforeMs": [
+      1604,
+      1525.8999999985099,
+      1618.8999999985099
+    ],
+    "afterMs": [
+      1388.3000000044703,
+      1444.1000000089407,
+      1440.8999999985099
+    ],
+    "beforeMedianMs": 1604,
+    "afterMedianMs": 1440.8999999985099,
+    "exactPersistentSha256": "a3f0acd5fbdc7ff9a0b32de056e3f4805262785f6249bedae00f617206ddae08"
+  },
+  "viewer": {
+    "beforeMs": [
+      2968.199999988079,
+      3042.300000011921,
+      2977.3999999910593
+    ],
+    "afterMs": [
+      2981.8999999910593,
+      3037.7000000029802,
+      2983
+    ],
+    "improvementClaim": false,
+    "exactPersistentSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24"
+  },
+  "limitations": [
+    "No demonstrated acceleration of the 35-game day or Simular final.",
+    "Pre-existing Node/WebView V8 math differences: before/after equality is asserted within each runtime.",
+    "Technical success does not establish fun or competitive superiority."
+  ]
+}

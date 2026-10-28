@@ -29,20 +29,23 @@ export async function connect(webSocketUrl) {
   await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject })
   let nextId = 1
   const pending = new Map()
-  socket.onclose = () => { for (const {reject} of pending.values()) reject(new Error('Native WebView2 connection closed')); pending.clear() }
+  socket.onclose = () => { for (const {reject, timer} of pending.values()) { clearTimeout(timer); reject(new Error('Native WebView2 connection closed')) }; pending.clear() }
   const consoleErrors = []
   socket.onmessage = (message) => {
     const data = JSON.parse(message.data)
     if (data.id !== undefined && pending.has(data.id)) {
-      const { resolve, reject } = pending.get(data.id)
+      const { resolve, reject, timer } = pending.get(data.id)
+      clearTimeout(timer)
       pending.delete(data.id)
       if (data.error) reject(new Error(`${data.error.message}`)); else resolve(data.result)
     } else if (data.method === 'Runtime.exceptionThrown') consoleErrors.push(data.params.exceptionDetails?.exception?.description ?? data.params.exceptionDetails?.text)
     else if (data.method === 'Runtime.consoleAPICalled' && data.params.type === 'error') consoleErrors.push(data.params.args.map((arg) => arg.value ?? arg.description).join(' '))
   }
   const send = (method, params = {}) => new Promise((resolve, reject) => {
+    if (socket.readyState !== WebSocket.OPEN) { reject(new Error(`Native WebView2 connection is closed (${method})`)); return }
     const id = nextId++
-    pending.set(id, { resolve, reject })
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Native WebView2 command timed out: ${method}`)) }, 60000)
+    pending.set(id, { resolve, reject, timer })
     socket.send(JSON.stringify({ id, method, params }))
   })
   await send('Runtime.enable')

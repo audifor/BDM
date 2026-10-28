@@ -87,7 +87,7 @@ export function MatchWorkspace() {
   const game = readiness?.game
   const opponent = readiness === undefined ? undefined : world.teams[readiness.opponentTeamId]
   const startMatchNext = () => {
-    if (game === undefined) return
+    if (game === undefined || useGameStore.getState().simulationBusy) return
     setMatchError(null)
     try {
       const setup = matchNextPort.prepare(world, game)
@@ -97,7 +97,7 @@ export function MatchWorkspace() {
     }
   }
   const simulateMatchNext = () => {
-    if (game === undefined) return
+    if (game === undefined || useGameStore.getState().simulationBusy) return
     setMatchError(null)
     try {
       const setup = matchNextPort.prepare(world, game)
@@ -128,6 +128,17 @@ export function MatchWorkspace() {
     }
   }
   const justPlayed = lastResult !== undefined && lastResult.game.date === world.currentDate
+  const runDayCommand = async (otherGames = false) => {
+    setMatchError(null)
+    try {
+      if (otherGames) await simulateRemainingGamesToday()
+      else {
+        const result = await advanceDay()
+        if (result?.status === 'FAILED') setMatchError(result.failure?.message ?? 'No se pudo avanzar el universo.')
+        else if (result?.status === 'BREAKPOINT_PREVENTED') setMatchError(result.breakpointBefore.breakpoint?.diagnostic ?? 'Hay una decisión obligatoria pendiente antes de avanzar.')
+      }
+    } catch (error) { setMatchError(error instanceof Error ? error.message : 'No se pudo avanzar el universo.') }
+  }
   const report = lastResult === undefined ? null : <MatchReportPanel game={lastResult.game} log={lastResult.log} world={world} />
   const canPlay = readiness !== undefined && readiness.isToday && readiness.blockedReason === undefined
 
@@ -143,12 +154,12 @@ export function MatchWorkspace() {
         <div className="mp-actions" role="group" aria-label="Acciones del partido">
           {readiness?.isToday ? (
             <>
-              <button className="mp-action mp-action--primary" disabled={!canPlay || instantProgress !== null} onClick={startMatchNext} type="button">Jugar partido</button>
-              <button className="mp-action" disabled={!canPlay || instantProgress !== null} onClick={simulateMatchNext} type="button">Simulación rápida</button>
-              <button className="mp-action" disabled={instantProgress !== null || simulationBusy} onClick={() => { void simulateRemainingGamesToday() }} type="button">Simular otros partidos del día</button>
+              <button className="mp-action mp-action--primary" disabled={!canPlay || instantProgress !== null || simulationBusy} onClick={startMatchNext} type="button">Jugar partido</button>
+              <button className="mp-action" disabled={!canPlay || instantProgress !== null || simulationBusy} onClick={simulateMatchNext} type="button">Simulación rápida</button>
+              <button className="mp-action" disabled={instantProgress !== null || simulationBusy} onClick={() => { void runDayCommand(true) }} type="button">Simular otros partidos del día</button>
             </>
           ) : readiness === undefined ? null : <p className="mp-note">El próximo partido es el {readiness.game.date}. Avanza hasta esa fecha para disputarlo.</p>}
-          <button className="mp-action" disabled={simulationBusy || instantProgress !== null} onClick={() => { void advanceDay() }} type="button">Avanzar un día</button>
+          <button className="mp-action" disabled={simulationBusy || instantProgress !== null} onClick={() => { void runDayCommand() }} type="button">Avanzar un día</button>
         </div>
         {instantProgress && <p role="status" className="mp-note">{instantProgress}</p>}
         {matchError && <p role="alert" className="mp-alert">{matchError}</p>}

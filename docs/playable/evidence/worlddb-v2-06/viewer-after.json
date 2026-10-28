@@ -1,0 +1,33 @@
+{
+  "label": "live-candidate-controlled",
+  "exeSha256": "56b4f2844676a35af76da7941d2297b875b78bc511c24452afdf55addf8d2170",
+  "runs": [
+    {
+      "rep": 1,
+      "elapsedMs": 2981.8999999910593,
+      "maxFrameGapMs": 240.20000000000073,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "PARTIDO EN DIRECTO",
+      "consoleErrors": []
+    },
+    {
+      "rep": 2,
+      "elapsedMs": 3037.7000000029802,
+      "maxFrameGapMs": 266.90000000000146,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "PARTIDO EN DIRECTO",
+      "consoleErrors": []
+    },
+    {
+      "rep": 3,
+      "elapsedMs": 2983,
+      "maxFrameGapMs": 253.40000000000146,
+      "frames": 134,
+      "payloadSha256": "19d495a5345875cd96a8c30196e8c5d5848e7659864cd4acfb50d266c535eb24",
+      "footer": "PARTIDO EN DIRECTO",
+      "consoleErrors": []
+    }
+  ]
+}

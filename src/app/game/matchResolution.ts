@@ -5,7 +5,7 @@ import type { WorldRepairReport } from '@/domain/repair'
 import type { MatchTacticalPlan } from '@/engine/match'
 import { createMatchEnginePort, prepareMatchSetupWithReports, type MatchNextResult } from '@/app/matchNext'
 import type { MatchSetup } from '@/engine/match-next'
-import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
+import type { MatchSimulationProgress, MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { simulateBackgroundMatch, type BackgroundMatchResult } from '@/engine/world-sim/background/BackgroundMatchModel'
 import { completeBackgroundMatch } from '@/app/worldSim/BackgroundMatchCompletion'
 import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationDetailSettings, type SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
@@ -86,10 +86,16 @@ export function simulateDayOutcomesInline(prepared: readonly PreparedDayGame[]):
  * Phase 2 with exact Games on `runner` (parallel workers in the app) and BACKGROUND Games inline (a fraction of a millisecond each, so
  * they need no worker). The outcomes are in schedule order whatever order the runner finishes in.
  */
-export async function simulateDayOutcomes(prepared: readonly PreparedDayGame[], runner: MatchSimulationRunner): Promise<DayOutcome[]> {
+export async function simulateDayOutcomes(prepared: readonly PreparedDayGame[], runner: MatchSimulationRunner, onProgress?: (progress: MatchSimulationProgress) => void): Promise<DayOutcome[]> {
   const exact = prepared.map((item, index) => ({ item, index })).filter(({ item }) => (item.resolution ?? 'FAST') === 'FAST')
-  const pending = exact.length === 0 ? Promise.resolve([] as MatchNextResult[]) : runner.simulate(exact.map(({ item }) => item.setup))
-  const outcomes: (DayOutcome | undefined)[] = prepared.map((item) => item.resolution === 'BACKGROUND' ? { resolution: 'BACKGROUND', result: simulateBackgroundMatch(item.setup) } : item.resolution === 'FULL' ? simulateDayGameInline(item) : undefined)
+  let exactCompleted = 0, otherCompleted = 0
+  const report = () => onProgress?.({ completed: exactCompleted + otherCompleted, total: prepared.length })
+  const pending = exact.length === 0 ? Promise.resolve([] as MatchNextResult[]) : runner.simulate(exact.map(({ item }) => item.setup), progress => { exactCompleted = progress.completed; report() })
+  const outcomes: (DayOutcome | undefined)[] = prepared.map((item) => {
+    const outcome = item.resolution === 'BACKGROUND' ? { resolution: 'BACKGROUND' as const, result: simulateBackgroundMatch(item.setup) } : item.resolution === 'FULL' ? simulateDayGameInline(item) : undefined
+    if (outcome !== undefined) { otherCompleted++; report() }
+    return outcome
+  })
   const results = await pending
   exact.forEach(({ index }, at) => { outcomes[index] = { resolution: 'FAST', result: results[at]! } })
   return outcomes as DayOutcome[]
@@ -137,10 +143,11 @@ export function applyDayResults(world: GameWorld, prepared: readonly PreparedDay
 }
 
 /** `resolveDayGames` with exact simulations on `runner`; the same world for the same seeds. */
-export async function resolveDayGamesAsync(world: GameWorld, games: readonly Game[], createSeed: () => number, runner: MatchSimulationRunner, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world), context: SimulationResolutionContext = {}): Promise<GameWorld> {
+export async function resolveDayGamesAsync(world: GameWorld, games: readonly Game[], createSeed: () => number, runner: MatchSimulationRunner, repairReports?: WorldRepairReport[], settings: SimulationDetailSettings = simulationDetailFor(world), context: SimulationResolutionContext = {}, onProgress?: (progress: MatchSimulationProgress) => void): Promise<GameWorld> {
   if (!dayGamesAreIndependent(games)) return resolveDayGames(world, games, createSeed, repairReports, settings, context)
   const prepared = prepareDayGames(world, games, createSeed, repairReports, settings, context)
-  const outcomes = prepared.length === 0 ? [] : await simulateDayOutcomes(prepared, runner)
+  const outcomes = prepared.length === 0 ? [] : await simulateDayOutcomes(prepared, runner, onProgress)
+  await new Promise<void>(resolve => setTimeout(resolve, 0))
   return applyDayOutcomes(world, prepared, outcomes)
 }
 
