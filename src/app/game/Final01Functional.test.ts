@@ -55,6 +55,8 @@ it.skipIf(process.env.BDM_FINAL01 !== '1' || !existsSync(out + '/snapshot-ESP.js
     let seed = 151617
     const day = await advanceGameDayWithResultAsync(world, runner, () => seed++)
     expect(day.status, JSON.stringify(day.failure)).toMatch(/COMPLETED|BREAKPOINT_AFTER_PROCESSING/)
+    const payrollDiagnostics = day.phases.find(phase => phase.phaseId === 'CLUB_FINANCE_V2')!.diagnostics.filter(item => item.code === 'CONTRACT_PAYROLL_DUE')
+    for (const contract of hiredContracts) expect(payrollDiagnostics.some(item => item.sourceId?.includes(contract.id))).toBe(true)
     world = day.world
     for (const contract of hiredContracts) expect(Object.values(world.expenseRecognitionsById).some(e => e.dimensions?.reference?.kind === 'STAFF_CONTRACT' && e.dimensions.reference.id === contract.id)).toBe(true)
   } finally { runner.dispose() }
