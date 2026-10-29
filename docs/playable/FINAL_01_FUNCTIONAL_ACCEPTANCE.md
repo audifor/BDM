@@ -16,6 +16,7 @@ Base: `main` posterior a V2-06, `12d926241fda7f2ba3f198083cd61fd480c2fec8`. Rama
 10. **El diagnóstico diario repetía nóminas ya contabilizadas.** Al reconciliar la fecha saliente, Calendar sólo informa como nuevas las nóminas que han generado un reconocimiento en esa reconciliación; los hechos financieros conservan sus identificadores y protección contra repetición.
 11. **Rehabilitación no explicaba por qué estaba desactivada durante una revisión.** La ficha indica que hay que resolver la revisión en Overview y nombra las dos decisiones disponibles; no modifica las reglas médicas.
 12. **Un fichaje vencido bloqueaba la carrera al salir de la plantilla.** La validación de Governance acepta el vencimiento real registrado y su cadena contractual, sin borrar la autorización ni aceptar una baja sin evidencia. Una prueba usa el guardado Windows que produjo el bloqueo y atraviesa el vencimiento con el ciclo diario real.
+13. **Inicio mezclaba ejercicios y mostraba un tope salarial inexistente.** El resultado operativo usa el FiscalPeriod vigente y el panel indica que el Salary Cap no aplica cuando las reglas de la competición así lo establecen.
 
 ## Evidencia y alcance
 
