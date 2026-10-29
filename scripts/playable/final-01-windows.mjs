@@ -1,5 +1,5 @@
 // Real Tauri/WebView2 input and native saves. No injected world state or simulated commands.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { launchApp, connect, sleep } from './cdp.mjs'
 import { resolveNativeMedical, resolveNativePress } from './worlddb-v2-native-decisions.mjs'
@@ -16,9 +16,12 @@ async function open(name, group) {
   await c.click('button', '='+group); await c.click('button', '='+name); await sleep(1000)
 }
 async function save(name) {
+  const modified=existsSync(context.savePath)?statSync(context.savePath).mtimeMs:0
   await c.click('button', 'Abrir menú de inicio BDM'); await c.click('button', 'GUARDAR PARTIDA')
   await c.waitFor("document.body.innerText.includes('Partida guardada.')", { timeout: 120000 })
-  await c.click('button', 'Abrir menú de inicio BDM')
+  for(let wait=0;(!existsSync(context.savePath)||statSync(context.savePath).mtimeMs===modified)&&wait<600;wait++)await sleep(200)
+  assert(existsSync(context.savePath)&&statSync(context.savePath).mtimeMs!==modified,'Native save was not written')
+  if(await c.locate('button','=GUARDAR PARTIDA'))await c.click('button', 'Abrir menú de inicio BDM')
   const data = JSON.parse(readFileSync(context.savePath, 'utf8'))
   writeFileSync(join(context.out, name+'.json'), JSON.stringify(data)); return data
 }
@@ -165,7 +168,7 @@ try {
     for(let day=0;day<Number(process.env.BDM_FINAL01_DAYS??1);day++)await step('10-advance-'+day,async()=>{
       const saved=await advanceDay(),hired=JSON.parse(readFileSync(join(context.out,'hired-staff.json'),'utf8'))
       for(const employee of hired){
-        const contract=saved.payload.staffCareerRuntime.staffContracts.find(contract=>contract.staffId===employee.id&&!contract.termination)
+        const contract=saved.payload.staffCareerRuntime.staffContracts.find(contract=>contract.staffId===employee.id)
         assert(saved.payload.expenseRecognitions.some(e=>e.dimensions?.reference?.kind==='STAFF_CONTRACT'&&e.dimensions.reference.id===contract.id),'First payroll skipped after hiring '+employee.name)
       }
       return {date:saved.payload.currentDate,actas:saved.payload.matchStatLogs.length,expenses:saved.payload.expenseRecognitions.length}
@@ -259,5 +262,51 @@ try {
       assert(!saved.payload.teams.find(t=>t.id===transfer.sellerTeamId).rosterPlayerIds.includes(player.id),'Seller roster still owns player')
       assert(saved.payload.players.filter(p=>p.id===player.id).length===1,'Duplicated player identity');return transfer
     })
+  }
+  if(process.env.BDM_FINAL01_PHASE==='renewal'){
+    const name=process.env.BDM_FINAL01_RENEW_PLAYER??'Bojan Dubljevic'
+    await step('24-contract-renewal',async()=>{
+      await open('CONTRACTS','Gestión del club');await c.click('button,[role=tab]','=Negotiations')
+      const row=`article[aria-label="${name} retention"]`
+      await c.click(row+' button','=Open negotiation')
+      await c.setValue(`input[aria-label="${name} retention annual salary"]`,process.env.BDM_FINAL01_RENEW_SALARY??'200000')
+      await c.setValue(`input[aria-label="${name} retention years"]`,'1');await c.click(row+' button','=Submit offer')
+      if(await c.locate(row+' button','Respond to counter'))await c.click(row+' button','Respond to counter')
+      await c.click(row+' button','Request signing approval')
+      const saved=await save('24-contract-renewal'),player=saved.payload.players.find(p=>p.firstName+' '+p.lastName===name)
+      const negotiation=saved.payload.retentionNegotiations.find(n=>n.playerId===player.id&&n.status==='ACCEPTED')
+      assert(negotiation,'Renewal was not accepted in principle');return negotiation
+    })
+  }
+  if(process.env.BDM_FINAL01_PHASE==='release'){
+    const name=process.env.BDM_FINAL01_RELEASE_PLAYER??'Erik Stevenson'
+    await step('25-release-player',async()=>{
+      const before=JSON.parse(readFileSync(context.savePath,'utf8')).payload,player=before.players.find(p=>p.firstName+' '+p.lastName===name)
+      await open('CONTRACTS','Gestión del club');await c.click('button,[role=tab]','=Release / risk');await field('Player',player.id)
+      const action=c.click('button','=Execute release');await sleep(600);await c.send('Page.handleJavaScriptDialog',{accept:true});await action
+      const saved=await save('25-release-player')
+      assert(!saved.payload.teams.find(t=>t.id==='pbm:DYN_equipe:41').rosterPlayerIds.includes(player.id),'Released player remains on roster')
+      assert(saved.payload.contracts.some(c=>c.playerId===player.id&&c.termination),'Release did not terminate contract');return {playerId:player.id,date:saved.payload.currentDate}
+    })
+  }
+  if(process.env.BDM_FINAL01_PHASE==='season-views'){
+    await step('26-four-competition-views',async()=>{
+      await open('COMPETITION','Partidos y competición')
+      const leagues=await c.evaluate("[...document.querySelector('select[aria-label=\"Competición\"]').options].map(o=>({id:o.value,name:o.text}))")
+      assert(leagues.length===4,'Missing selectable competition')
+      for(const league of leagues){
+        await c.setValue('select[aria-label="Competición"]',league.id);await c.click('button,[role=tab]','=Clasificación')
+        await c.screenshot(join(context.out,'final-league-'+league.id.replaceAll(':','-')+'.png'))
+        writeFileSync(join(context.out,'final-league-'+league.id.replaceAll(':','-')+'.txt'),await c.bodyText())
+      }
+      return leagues
+    })
+    await step('27-fiscal-closure-visible',async()=>{
+      await open('FINANCES','Gestión del club');await c.click('summary','Ejercicios y cierres')
+      const text=await c.bodyText();assert(text.includes('Cerrado')&&text.includes('Abierto'),'Old closure or new fiscal period not visible')
+      writeFileSync(join(context.out,'final-fiscal-ui.txt'),text);return {date:JSON.parse(readFileSync(context.savePath,'utf8')).payload.currentDate}
+    })
+    await open('TRAINING','Equipo');await c.click('button,[role=tab]','=RESULTADOS');await c.screenshot(join(context.out,'final-training-results.png'))
+    writeFileSync(join(context.out,'final-training-results.txt'),await c.bodyText())
   }
 } finally { c?.close(); if(app&&process.env.BDM_FINAL01_KEEP_OPEN!=='1')app.child.kill() }

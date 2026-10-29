@@ -1,6 +1,6 @@
 // Continue the same real Windows career through Courtside's existing holiday control.
 // No world injection, mocked decisions, synthetic injuries, or alternate match runner.
-import { readFileSync, writeFileSync, appendFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, appendFileSync, statSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { connect, sleep } from './cdp.mjs'
 import { resolveNativeMedical, resolveNativePress } from './worlddb-v2-native-decisions.mjs'
@@ -15,8 +15,11 @@ const open = async (name, group) => {
 }
 async function save(name) {
   await sleep(600)
+  const modified=statSync(context.savePath).mtimeMs
   await c.click('button', 'Abrir menú de inicio BDM'); await c.click('button', '=GUARDAR PARTIDA')
   await c.waitFor("document.body.innerText.includes('Partida guardada.')", { timeout: 120000 })
+  for(let wait=0;statSync(context.savePath).mtimeMs===modified&&wait<600;wait++)await sleep(200)
+  if(statSync(context.savePath).mtimeMs===modified)throw Error('Native save did not reach disk')
   await sleep(600)
   if (await c.locate('button','=GUARDAR PARTIDA')) await c.click('button', 'Abrir menú de inicio BDM')
   const raw = readFileSync(context.savePath, 'utf8'), data = JSON.parse(raw)
@@ -25,7 +28,7 @@ async function save(name) {
 }
 const plusDays = (date, count) => new Date(Date.parse(date+'T12:00:00Z')+count*86400000).toISOString().slice(0,10)
 try {
-  let world = await save('season-native-start'), stalls = 0
+  let world = await save(existsSync(join(context.out,'season-native-start.json')) ? 'season-native-resume-'+Date.now() : 'season-native-start'), stalls = 0
   for (let chunk = 0; world.currentDate < target && chunk < 180; chunk++) {
     const before = world.currentDate, until = [plusDays(before, 30), target].sort()[0]
     await c.click('button[aria-label="Simulate until date"]')

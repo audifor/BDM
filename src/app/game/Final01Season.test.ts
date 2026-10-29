@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { hashStringToSeed } from '@/engine/random'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getCompetitionPostseasonState } from '@/engine/competition'
+import { closeFiscalPeriod, getAccountBalanceAsOfDate } from '@/domain/finance'
 import { advanceGameDayWithResultAsync } from './advanceGameDay'
 import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 import { createUniverseAcceptanceRunner } from './testSupport/WorldDbV2UniverseRunner'
@@ -76,7 +77,19 @@ it.skipIf(process.env.BDM_FINAL01_SEASON !== '1' || !input || !existsSync(input)
     for (const [id, contract] of Object.entries(initial.contractsById)) expect(world.contractsById[id as never]).toMatchObject({ playerId: contract.playerId, teamId: contract.teamId, term: contract.term, compensation: contract.compensation })
     for (const id of Object.keys(initial.injuriesById)) expect(world.injuriesById[id as never]).toBeDefined()
     for (const id of Object.keys(initial.personsById)) expect(world.personsById[id as never]).toBeDefined()
-    for (const period of Object.values(initial.fiscalPeriodsById)) if (period.endsOn < world.currentDate) expect(world.fiscalPeriodsById[period.id]!.status).toBe('CLOSED')
+    for (const period of Object.values(initial.fiscalPeriodsById)) if (period.endsOn < world.currentDate) {
+      expect(world.fiscalPeriodsById[period.id]!.status).toBe('CLOSED')
+      expect(closeFiscalPeriod(world, period.id)).toBe(world)
+      const closings = Object.values(world.financialTransactionsById).filter(t => t.transactionType === 'FISCAL_PERIOD_CLOSING' && t.provenance.id === period.id)
+      expect(closings.length).toBeGreaterThan(0)
+      expect(new Set(closings.map(t => t.amount.currencyCode)).size).toBe(closings.length)
+      for (const account of Object.values(world.financialAccountsById).filter(a => a.organizationId === period.organizationId && (a.accountType === 'REVENUE' || a.accountType === 'EXPENSE'))) {
+        expect(getAccountBalanceAsOfDate(world, account.id, period.endsOn).balanceMinorUnits).toBe(0)
+      }
+    }
+    expect(Object.values(world.injuriesById).some(injury => (injury.returnToPlay?.reviews.length ?? 0) > 0)).toBe(true)
+    expect(Object.values(world.scheduledTrainingSessionsById).some(session => session.status === 'completed' && session.execution !== undefined)).toBe(true)
+    expect(Object.keys(world.developmentStimulusEventsById).length).toBeGreaterThan(Object.keys(initial.developmentStimulusEventsById).length)
     const rosterIds = Object.values(world.teams).flatMap(team => team.rosterPlayerIds)
     expect(new Set(rosterIds).size).toBe(rosterIds.length)
     checkpoint('certified-universe')

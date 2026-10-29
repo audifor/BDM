@@ -11,7 +11,7 @@ for(const [kind,input] of [['v206','C:/BasketballTycoonWorld/outputs/worlddb-v2-
   const profile='final01-compat-'+kind+'-'+Date.now(),folder=join(process.env.APPDATA,'com.bdm.worlddbv2.pilot/saves/profiles',profile)
   mkdirSync(folder,{recursive:true});const savePath=join(folder,'main.json')
   const bytes=readFileSync(input),raw=input.endsWith('.gz')?gunzipSync(bytes):bytes;writeFileSync(savePath,raw)
-  const before=JSON.parse(raw),app=await launchApp(resolve('artifacts/bdm.exe'),9600,{BDM_SAVE_PROFILE:profile,WEBVIEW2_USER_DATA_FOLDER:join(out,profile)})
+  const before=JSON.parse(raw),app=await launchApp(resolve(process.env.BDM_FINAL01_EXE??'artifacts/bdm.exe'),9600,{BDM_SAVE_PROFILE:profile,WEBVIEW2_USER_DATA_FOLDER:join(out,profile)})
   const c=await connect(app.page.webSocketDebuggerUrl)
   try{
     await c.waitFor("[...document.querySelectorAll('button')].some(b=>b.innerText.trim()==='CONTINUE')",{timeout:60000});await c.click('button','=CONTINUE')
@@ -22,6 +22,11 @@ for(const [kind,input] of [['v206','C:/BasketballTycoonWorld/outputs/worlddb-v2-
       if(!correct)throw Error('Native counter fee viability is missing')
     }
     await c.screenshot(join(out,kind+'.png'));writeFileSync(join(out,kind+'-ui.txt'),await c.bodyText())
+    if(kind==='counter'){
+      await c.click('button','Abrir menú de inicio BDM');await c.click('button','=Equipo');await c.click('button','=STAFF');await sleep(1000);await c.click('button','Lucas Koffi')
+      if(!(await c.bodyText()).includes('€66K'))throw Error('Staff dossier did not use the original organization currency')
+      await c.screenshot(join(out,'staff-currency.png'));writeFileSync(join(out,'staff-currency-ui.txt'),await c.bodyText())
+    }
     const modified=statSync(savePath).mtimeMs
     await c.click('button','Abrir menú de inicio BDM');await c.click('button','=GUARDAR PARTIDA')
     for(let n=0;statSync(savePath).mtimeMs===modified&&n<600;n++)await sleep(200)
