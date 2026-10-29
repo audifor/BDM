@@ -18,7 +18,7 @@ it('uses the current fiscal exercise and does not display a salary cap where non
     salaryRulesBySeasonId: { ...base.salaryRulesBySeasonId, [base.currentSeasonId]: createGeneratedProfessionalSalaryRulesV1(base.currentSeasonId) },
   })
   render(<HomeDashboardSlot moduleId="finances" context={{ world, teamId: team.id, competition: null, homeDynamics: undefined, awayDynamics: undefined, upcoming: [] }} />)
-  const panel = document.querySelector('.home-finances')!
+  const panel = document.querySelector<HTMLElement>('.home-finances')!
   expect(within(panel).getAllByText('No aplica')).toHaveLength(2)
   expect(within(panel).getByText(/200\.00/)).toBeInTheDocument()
   expect(within(panel).queryByText(/300\.00/)).not.toBeInTheDocument()
