@@ -58,7 +58,15 @@ describe('STAFF-CONTRACT V4-01: no synthetic renewal on current V4 load', () => 
     expect(isStaffContractActiveOn(loaded.staffContractsById[contract.id]!, expiredOn)).toBe(false)
     expect(economicFacts(loaded)).toEqual(economicFacts(paid))
     const processed = advanceClubFinanceForDate(loaded, expiredOn)
-    expect(economicFacts(processed)).toEqual(economicFacts(paid))
+    // The expired fiscal year now closes its existing result; that ledger entry
+    // is not a new contract, salary, payment, or revision of previous facts.
+    expect(processed.expenseRecognitionsById).toEqual(paid.expenseRecognitionsById)
+    expect(processed.financialCommitmentsById).toEqual(paid.financialCommitmentsById)
+    expect(processed.payablesById).toEqual(paid.payablesById)
+    expect(processed.treasuryApplicationsById).toEqual(paid.treasuryApplicationsById)
+    for (const transaction of Object.values(paid.financialTransactionsById)) expect(processed.financialTransactionsById[transaction.id]).toEqual(transaction)
+    const added = Object.values(processed.financialTransactionsById).filter(transaction => paid.financialTransactionsById[transaction.id] === undefined)
+    expect(added.map(transaction => transaction.transactionType)).toEqual(['FISCAL_PERIOD_CLOSING'])
     expect(processed.staffContractsById).toEqual(expired.staffContractsById)
     expect(processed.staffEmploymentByStaffId).toEqual(expired.staffEmploymentByStaffId)
   })

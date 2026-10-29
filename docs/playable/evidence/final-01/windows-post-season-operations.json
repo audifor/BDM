@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "date": "2026-10-13",
+  "renewalPlayerId": "pbm:DYN_joueur:242829",
+  "successorId": "contract:retention-successor:retention:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A242829:contract%3Apbm%3ADYN_joueur%3A242829%3Apbm%3ADYN_equipe%3A41%3A2025-10-04:retention-open%3Apbm%3ADYN_equipe%3A41%3Acontract%3Apbm%3ADYN_joueur%3A242829%3Apbm%3ADYN_equipe%3A41%3A2025-10-04%3A2026-10-12",
+  "releasedPlayerId": "pbm:DYN_joueur:100074448",
+  "guaranteedFuturePayrollEntries": 2,
+  "originalFinancialHistoryUnchanged": true
+}

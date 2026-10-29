@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "kind": "v206",
+      "passed": true,
+      "profile": "final01-compat-v206-1793224381521",
+      "date": "2025-10-12",
+      "exactFullPayloadRoundTrip": true
+    },
+    {
+      "kind": "counter",
+      "passed": true,
+      "profile": "final01-compat-counter-1793224392135",
+      "date": "2025-10-07",
+      "exactFullPayloadRoundTrip": true
+    }
+  ]
+}

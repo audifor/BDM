@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "date": "2026-10-07",
+  "playerId": "pbm:DYN_joueur:100019067",
+  "contractId": "contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100019067:direct-approach%3Apbm%3ADYN_joueur%3A100019067%3A0",
+  "expirationId": "transaction:contractExpired:contract:signed-free-agent:negotiation:pbm%3ADYN_equipe%3A41%3Aorganization:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100019067:direct-approach%3Apbm%3ADYN_joueur%3A100019067%3A0",
+  "authorizationPreserved": true,
+  "exactSaveRoundTrip": true
+}

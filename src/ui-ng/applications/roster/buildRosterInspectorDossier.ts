@@ -59,10 +59,11 @@ const CONTRACT_STATUS_LABELS = {
   terminated: 'Terminated',
 } as const
 
-function compactMoney(value: number) {
+function compactMoney(value: number, currencyCode = 'USD') {
+  const symbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find(part => part.type === 'currency')!.value
   return value >= 1_000_000
-    ? `$${Math.round(value / 1_000_000)}M`
-    : `$${Math.round(value / 1_000)}K`
+    ? `${symbol}${Math.round(value / 1_000_000)}M`
+    : `${symbol}${Math.round(value / 1_000)}K`
 }
 
 export function buildRosterInspectorDossier(
@@ -72,6 +73,8 @@ export function buildRosterInspectorDossier(
 ): RosterInspectorDossier {
   const staff = buildRosterStaffComments(world, teamId, player.id)
   const contract = getCurrentPlayerContract(world, player.id)
+  const organizationId = world.teams[teamId]?.organizationId
+  const currency = organizationId === undefined ? undefined : world.organizationFinancialProfilesById[organizationId]?.baseCurrencyCode
   const injury = getCurrentPlayerInjury(world, player.id)
   const moraleBand = getMoraleBandForPerson(world, player.id)
   const lookup = buildRosterRatingEvaluationLookup(world, teamId)
@@ -101,7 +104,7 @@ export function buildRosterInspectorDossier(
           ]
         : [
             { label: 'Status', value: CONTRACT_STATUS_LABELS[getPlayerContractStatus(contract, world.currentDate)] },
-            { label: 'Salary', value: compactMoney(contract.compensation.annualSalary) },
+            { label: 'Salary', value: compactMoney(contract.compensation.annualSalary, currency) },
             { label: 'Expiration', value: formatGameDateLabel(contract.term.expiresOn) },
           ],
     staff: undefined,

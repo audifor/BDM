@@ -158,7 +158,7 @@ export function buildStaffPersonWorkspaceModel(
     contract: {
       employmentLabel: getStaffEmploymentStatusLabel(world, staffPersonId),
       contractStatusLabel: STAFF_CONTRACT_STATUS_LABELS[getStaffContractStatus(world, staffPersonId)],
-      salaryLabel: contract === undefined ? null : compactStaffSalary(contract.compensation.annualSalary),
+      salaryLabel: contract === undefined ? null : compactStaffSalary(contract.compensation.annualSalary, team === undefined ? undefined : world.organizationFinancialProfilesById[team.organizationId]?.baseCurrencyCode),
       termLabel: contract === undefined ? null : `${contract.term.startsOn} → ${contract.term.expiresOn}`,
       expiresOn: contract?.term.expiresOn ?? null,
       terminationLabel:

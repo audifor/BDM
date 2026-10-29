@@ -216,10 +216,23 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('FACILITY_MANAGEMENT', current.currentDate, true, (input) => processFacilityManagement(input), 'The Board decides pending Facilities requests it was asked to review, and AI clubs manage their own facilities through the same Governance and Finance commands a manager uses.')
     let clubFinanceDiagnostics: readonly DailyLifecycleDiagnostic[] = []
     run('CLUB_FINANCE_V2', current.currentDate, true, (input) => {
-      const application = processClubFinanceForDate(input, input.currentDate)
-      clubFinanceDiagnostics = application.result.diagnostics
+      // Contracts signed by the manager during the outgoing date have not reached
+      // a calendar Finance phase yet. Reconcile that date before closing its fiscal
+      // period, then process the incoming date. Event identities make replay a no-op.
+      const outgoing = processClubFinanceForDate(input, original.currentDate)
+      const application = processClubFinanceForDate(outgoing.world, input.currentDate)
+      // A replay may report an already-recognized schedule as due. Include only
+      // newly materialized outgoing payroll in this day's lifecycle trace.
+      const newSchedules = new Set(outgoing.result.diagnostics.some(diagnostic => diagnostic.code === 'CONTRACT_PAYROLL_DUE') ? Object.values(outgoing.world.expenseRecognitionsById)
+        .filter(recognition => input.expenseRecognitionsById[recognition.id] === undefined)
+        .flatMap(recognition => {
+          const provenance = recognition.provenance.id ?? ''
+          const index = provenance.indexOf('contract-schedule:')
+          return index < 0 ? [] : [provenance.slice(index)]
+        }) : [])
+      clubFinanceDiagnostics = [...outgoing.result.diagnostics.filter(diagnostic => diagnostic.code !== 'CONTRACT_PAYROLL_DUE' || (diagnostic.sourceId !== undefined && newSchedules.has(diagnostic.sourceId))), ...application.result.diagnostics]
       return application.world
-    }, 'Canonical Finance materializes the economic facts whose source already exists: due guaranteed contract payroll (commitment, recognition, payable, ledger posting), plus operating cost, revenue or debt only when the world declares such a source. Obligations stay outstanding because no canonical policy says when a payable is paid.', () => clubFinanceDiagnostics)
+    }, 'Canonical Finance reconciles the outgoing and incoming dates through existing recognition, collection and Treasury authorities, then closes ended fiscal periods. It creates no economic source or funding.', () => clubFinanceDiagnostics)
     run('GOVERNANCE', current.currentDate, true, (input) => executeBoardApprovedRetentionAgreements(processBoardPlayerContractSigningDecisions(input)), 'The Board decides pending player contract signing and retention decisions it was asked to review, and fully approved renewals are executed; other Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
     const diagnostics = phases.flatMap((phase) => phase.diagnostics)
     phases.push({ phaseId: 'EVENT_COLLECTION', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: `Collected ${diagnostics.length} phase diagnostic(s) without persisting an event stream.` })

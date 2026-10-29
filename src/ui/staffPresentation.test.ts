@@ -228,6 +228,10 @@ describe('getStaffAge', () => {
 })
 
 describe('compactStaffSalary', () => {
+  it('uses the organization currency when supplied without converting the salary', () => {
+    expect(compactStaffSalary(65_000, 'EUR')).toBe('€65K')
+    expect(compactStaffSalary(65_000, 'BRL')).toBe('R$65K')
+  })
   it('keeps whole-scale values clean, with no trailing .0', () => {
     expect(compactStaffSalary(1_000_000)).toBe('$1M')
     expect(compactStaffSalary(65_000)).toBe('$65K')

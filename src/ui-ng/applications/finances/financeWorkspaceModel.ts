@@ -5,7 +5,7 @@ import {
   getCashAccountBalances, getCashFlowProjection, getCashFlowTotalsBetween, getCashMovementsBetween, getContractFinancialSchedule,
   getCompetitionFees, getCompetitionRevenue, getDebtSchedule, getFinancialHealthSnapshot, getFinanceProposals, getOrganizationPayables,
   getOrganizationReceivables, getOutstandingPrincipal, getProjectedLiquidity, getRevenueRecognitionsBetween,
-  getExpenseRecognitionsBetween, valueOrganization, type ValuationAssumptions,
+  getExpenseRecognitionsBetween, valueOrganization, financeFiscalPeriodsOf, type ValuationAssumptions,
 } from '@/domain/finance'
 
 export const FINANCE_TABS = [
@@ -32,12 +32,19 @@ const table = (title: string, columns: readonly string[], rows: readonly Finance
 const row = (id: string, cells: readonly string[], provenance?: string, references?: readonly string[]): FinanceRow => ({ id, cells, provenance, references })
 const refs = (...ids: readonly (string | null | undefined)[]): string[] => ids.filter((id): id is string => id != null).map(String)
 
+export function financeReportingPeriod(world: GameWorld, organizationId: string) {
+  const period = financeFiscalPeriodsOf(world, organizationId).filter(p => p.startsOn <= world.currentDate && world.currentDate <= p.endsOn).at(-1)
+  return createFinancialPlanningPeriod(period === undefined
+    ? { kind: 'DATE_RANGE', startsOn: `${world.currentDate.slice(0, 4)}-01-01`, endsOn: `${world.currentDate.slice(0, 4)}-12-31` }
+    : { kind: 'FISCAL_YEAR', startsOn: period.startsOn, endsOn: period.endsOn })
+}
+
 /** One section is derived on demand from canonical world facts. No totals are stored in UI state. */
 export function buildFinanceWorkspaceSection(world: GameWorld, organizationId: string, tab: FinanceTab, options: FinanceModelOptions = {}): FinanceSection {
   if (!world.organizationsById[organizationId as keyof typeof world.organizationsById]) throw new RangeError('Unknown finance Organization')
   const asOf = world.currentDate
-  const startsOn = `${asOf.slice(0, 4)}-01-01` as GameDate
-  const period = createFinancialPlanningPeriod({ kind: 'DATE_RANGE', startsOn, endsOn: `${asOf.slice(0, 4)}-12-31` })
+  const period = financeReportingPeriod(world, organizationId)
+  const startsOn = period.startsOn
   const currency = options.reportingCurrency ?? world.organizationFinancialProfilesById[organizationId as keyof typeof world.organizationFinancialProfilesById]?.baseCurrencyCode
   const cash = getCashAccountBalances(world, organizationId, asOf)
   const receivables = getOrganizationReceivables(world, organizationId, asOf).filter((item) => item.obligation.recognizedOn <= asOf)

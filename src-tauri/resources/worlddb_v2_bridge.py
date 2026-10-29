@@ -66,6 +66,25 @@ def main():
             u.c.execute("INSERT INTO R_entity VALUES (?,'person','DYN_joueur',?,NULL,1,NULL)",(ref('DYN_joueur',key),str(key)))
         u.c.commit()
         free_agents=[u.get(ref('DYN_joueur',key)) for key in selected]
+        # Original unemployed professionals, balanced by their recorded job preference.
+        # Chairmanship is ownership/governance, not a staff vacancy. No identities are generated.
+        staff_groups={}
+        for row in u.c.execute('SELECT * FROM world.DYN_person WHERE equipe_id=0 AND is_alive=1 AND retraite=0 AND nationalite_id=?',(selection['countryId'],)):
+            if not has_player_name(decode(row['prenom']),decode(row['nom'])):continue
+            born=validate_birth(dict(row),day)
+            if born is None or not 18<=day.year-born.year-((day.month,day.day)<(born.month,born.day))<=80:continue
+            preferences=[k for k in row.keys() if k.startswith('job_preference_')]
+            role=max(preferences,key=lambda k:row[k] or 0)
+            if role=='job_preference_chairman' or not row[role]:continue
+            staff_groups.setdefault(role,[]).append(row['id_person'])
+        selected_staff=[]
+        for role,keys in sorted(staff_groups.items()):
+            keys.sort(key=lambda key:hashlib.sha256((request['seed']+':free-staff:'+str(key)).encode()).hexdigest())
+            selected_staff.extend(keys[:6])
+        for key in selected_staff:
+            u.c.execute("INSERT INTO R_entity VALUES (?,'person','DYN_person',?,NULL,1,NULL)",(ref('DYN_person',key),str(key)))
+        u.c.commit()
+        free_staff=[u.get(ref('DYN_person',key)) for key in selected_staff]
         clubs=u.query('club',10000)
         from runtime import decode
         places={};facilities={};usages=[]
@@ -78,7 +97,7 @@ def main():
                 facilities[facility_id]=dict(facilityId=facility_id,name=f['name_arena'],placeId=place_id,capacity=f['capacity'] if f['capacity'] and f['capacity']>0 else None)
                 usages.append(dict(usageId=facility_id+':'+club['entity_id'],teamId=club['entity_id'],facilityId=facility_id,usageType='home',validFrom=None,validTo=None))
         people=[p for p in u.query('person',10000) if p['parent_id'] is not None]
-        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=people,freeAgents=free_agents,freeAgentSelection=dict(eligibleOriginals=len(candidates),selected=len(selected),policy='ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' if selection['countryId']==8 else 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60'),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
+        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=people,freeStaff=free_staff,freeAgents=free_agents,freeAgentSelection=dict(eligibleOriginals=len(candidates),selected=len(selected),policy='ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' if selection['countryId']==8 else 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60'),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
 
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8')

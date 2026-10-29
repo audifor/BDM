@@ -17,6 +17,7 @@ export interface WorldDbV2Pilot {
     }[];
 }
 export interface WorldDbV2Snapshot {
+    readonly freeStaff?: readonly WorldDbV2Entity[];
     readonly freeAgents?: readonly WorldDbV2Entity[];
     readonly freeAgentSelection?: { readonly eligibleOriginals: number; readonly selected: number; readonly policy: string };
     readonly physicalContent?: import('@/domain/worldDb/GameBootstrap').WorldDbPhysicalContentV1;

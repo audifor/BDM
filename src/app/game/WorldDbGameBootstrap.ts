@@ -30,6 +30,7 @@ import { projectWorldDbPhysicalContent } from './WorldDbPhysicalContent'
 const ROLE_FAMILIES: Readonly<Record<string, StaffRoleFamily>> = {
   headCoach: 'coaching', assistantCoach: 'coaching', playerDevelopmentCoach: 'coaching',
   physiotherapist: 'medical', regionalScout: 'scouting', strengthConditioningCoach: 'performance', recruitingCoordinator: 'recruiting',
+  offensiveSpecialist: 'coaching', defensiveSpecialist: 'coaching', sportingDirector: 'basketballOperations',
 }
 
 /** DDL-12 stores the complete 80-value Staff source vector without semantic labels. The runtime
@@ -92,7 +93,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     if (person === undefined) throw new Error(`World DB bootstrap staff person is missing: ${source.personId}`)
     const profilePerson = requireProfilePerson(person, source.personId)
     const assignments = slice.staffAssignments.filter((assignment) => assignment.staffId === source.staffId)
-    const marketRole = assignments[0]?.roleCode
+    const marketRole = source.marketRole ?? assignments[0]?.roleCode
     return createStaffPerson({ id: staffPersonIdFromString(source.staffId), personId: source.personId as never, identity: { firstName: person.firstName, lastName: person.lastName, dateOfBirth: parseGameDate(profilePerson.dateOfBirth), nationality: person.nationalityIds[0] }, professional: { attributes: projectStaffAttributes(source.attributes) }, ...(marketRole === undefined ? {} : { marketRole: marketRole as never, roleFamily: ROLE_FAMILIES[marketRole] }), specialismIds: source.specialismIds })
   })
   const selectedTeam = slice.teams.find((team) => team.teamId === selection.teamId)!

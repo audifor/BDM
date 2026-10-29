@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "kind": "medical",
+      "passed": true,
+      "profile": "final01-compat-medical-1793294641722",
+      "date": "2026-05-21",
+      "exactFullPayloadRoundTrip": true
+    }
+  ]
+}

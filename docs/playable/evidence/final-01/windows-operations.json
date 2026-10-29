@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "date": "2025-10-12",
+  "transferId": "transfer:pbm%3ADYN_equipe%3A41:pbm%3ADYN_joueur%3A100069319:0",
+  "feeMinorUnits": 100000000,
+  "cashConservedBetweenClubs": true,
+  "originalIdentityPreserved": true,
+  "freeAgentFirstPayrollExactlyOnce": true,
+  "staffDismissalWithHistoryPreserved": true
+}

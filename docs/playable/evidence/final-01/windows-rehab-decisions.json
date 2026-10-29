@@ -1,0 +1,41 @@
+{
+  "playerId": "pbm:DYN_joueur:100040487",
+  "injuryId": "injury:derived-simulation-from-b04:edition:ESP:liga-endesa:2025-26:0180:pbm:DYN_joueur:100040487",
+  "rehabilitation": {
+    "mode": "REST",
+    "startedOn": "2026-02-14",
+    "changedOn": "2026-02-18",
+    "history": [
+      {
+        "changedOn": "2026-02-18",
+        "mode": "REST",
+        "actor": {
+          "kind": "USER",
+          "coachId": "bs19b:user:worlddb:pbm:DYN_equipe:41"
+        }
+      }
+    ]
+  },
+  "returnToPlay": {
+    "reviewDueOn": "2026-02-19",
+    "reviews": [
+      {
+        "reviewedOn": "2026-02-18",
+        "decision": "CONTINUE_RECOVERY",
+        "actor": {
+          "kind": "USER",
+          "coachId": "bs19b:user:worlddb:pbm:DYN_equipe:41"
+        }
+      },
+      {
+        "reviewedOn": "2026-02-19",
+        "decision": "CLEAR_FOR_PLAY",
+        "actor": {
+          "kind": "USER",
+          "coachId": "bs19b:user:worlddb:pbm:DYN_equipe:41"
+        }
+      }
+    ],
+    "clearedOn": "2026-02-19"
+  }
+}

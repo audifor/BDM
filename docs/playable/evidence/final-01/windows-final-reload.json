@@ -1,0 +1,23 @@
+{
+  "steps": [
+    {
+      "name": "31-final-save-reload",
+      "status": "PASS",
+      "result": {
+        "date": "2026-10-20",
+        "exactFullSaveRoundTrip": true,
+        "actas": 1396,
+        "competitions": 4
+      }
+    },
+    {
+      "name": "32-roster-currency",
+      "status": "PASS",
+      "result": {
+        "currency": "EUR",
+        "salary": "€210K"
+      }
+    }
+  ],
+  "consoleErrors": []
+}
