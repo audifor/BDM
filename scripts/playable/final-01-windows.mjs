@@ -17,7 +17,8 @@ async function open(name, group) {
 }
 async function save(name) {
   const modified=existsSync(context.savePath)?statSync(context.savePath).mtimeMs:0
-  await c.click('button', 'Abrir menú de inicio BDM'); await c.click('button', 'GUARDAR PARTIDA')
+  if(!await c.locate('button','=GUARDAR PARTIDA'))await c.click('button', 'Abrir menú de inicio BDM')
+  await c.click('button', 'GUARDAR PARTIDA')
   await c.waitFor("document.body.innerText.includes('Partida guardada.')", { timeout: 120000 })
   for(let wait=0;(!existsSync(context.savePath)||statSync(context.savePath).mtimeMs===modified)&&wait<600;wait++)await sleep(200)
   assert(existsSync(context.savePath)&&statSync(context.savePath).mtimeMs!==modified,'Native save was not written')

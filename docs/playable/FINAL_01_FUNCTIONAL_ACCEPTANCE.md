@@ -17,6 +17,7 @@ Base: `main` posterior a V2-06, `12d926241fda7f2ba3f198083cd61fd480c2fec8`. Rama
 11. **Rehabilitación no explicaba por qué estaba desactivada durante una revisión.** La ficha indica que hay que resolver la revisión en Overview y nombra las dos decisiones disponibles; no modifica las reglas médicas.
 12. **Un fichaje vencido bloqueaba la carrera al salir de la plantilla.** La validación de Governance acepta el vencimiento real registrado y su cadena contractual, sin borrar la autorización ni aceptar una baja sin evidencia. Una prueba usa el guardado Windows que produjo el bloqueo y atraviesa el vencimiento con el ciclo diario real.
 13. **Inicio mezclaba ejercicios y mostraba un tope salarial inexistente.** El resultado operativo usa el FiscalPeriod vigente y el panel indica que el Salary Cap no aplica cuando las reglas de la competición así lo establecen.
+14. **La plantilla mostraba salarios en dólares para clubes con otra moneda.** La tabla y el expediente usan la moneda registrada del club, sin convertir las cantidades.
 
 ## Evidencia y alcance
 

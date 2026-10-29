@@ -16,7 +16,8 @@ const open = async (name, group) => {
 async function save(name) {
   await sleep(600)
   const modified=statSync(context.savePath).mtimeMs
-  await c.click('button', 'Abrir menú de inicio BDM'); await c.click('button', '=GUARDAR PARTIDA')
+  if (!await c.locate('button','=GUARDAR PARTIDA')) await c.click('button', 'Abrir menú de inicio BDM')
+  await c.click('button', '=GUARDAR PARTIDA')
   await c.waitFor("document.body.innerText.includes('Partida guardada.')", { timeout: 120000 })
   for(let wait=0;statSync(context.savePath).mtimeMs===modified&&wait<600;wait++)await sleep(200)
   if(statSync(context.savePath).mtimeMs===modified)throw Error('Native save did not reach disk')
