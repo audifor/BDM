@@ -14,6 +14,7 @@ Base: `main` posterior a V2-06, `12d926241fda7f2ba3f198083cd61fd480c2fec8`. Rama
 8. **Un contacto respondido seguía indicando espera.** Operaciones muestra la respuesta recibida.
 9. **Staff mostraba dólares en clubes con otra moneda.** La ficha y el departamento usan la moneda financiera del club para el símbolo, sin convertir ni modificar salarios. Las negativas financieras muestran texto legible en lugar de códigos internos.
 10. **El diagnóstico diario repetía nóminas ya contabilizadas.** Al reconciliar la fecha saliente, Calendar sólo informa como nuevas las nóminas que han generado un reconocimiento en esa reconciliación; los hechos financieros conservan sus identificadores y protección contra repetición.
+11. **Rehabilitación no explicaba por qué estaba desactivada durante una revisión.** La ficha indica que hay que resolver la revisión en Overview y nombra las dos decisiones disponibles; no modifica las reglas médicas.
 
 ## Evidencia y alcance
 
