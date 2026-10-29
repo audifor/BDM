@@ -32,7 +32,10 @@ try {
   for (let chunk = 0; world.currentDate < target && chunk < 180; chunk++) {
     const before = world.currentDate, until = [plusDays(before, 30), target].sort()[0]
     await c.click('button[aria-label="Simulate until date"]')
-    for (let month = 0; !await c.locate(`button[aria-label="Choose ${until}"]`) && month < 15; month++) await c.click('button[aria-label="Next month"]')
+    for (let month = 0; !await c.locate(`button[aria-label="Choose ${until}"]`) && month < 15; month++) {
+      const first = await c.evaluate("document.querySelector('button[aria-label^=\"Choose \"]')?.getAttribute('aria-label').slice(7)")
+      await c.click(`button[aria-label="${until < first ? 'Previous' : 'Next'} month"]`)
+    }
     await c.click(`button[aria-label="Choose ${until}"]`); await c.click('.ng-sim-cal__actions button', '=Simulate')
     await sleep(1000)
     for (let poll = 0; await c.locate('[aria-label="Simulation progress"]') && poll < 1800; poll++) {
@@ -46,7 +49,7 @@ try {
     if (await c.locate('[aria-label="Simulation progress"]')) throw Error('Native holiday exceeded one hour')
     world = await save('season-native-latest')
     const entry = { before, until, date: world.currentDate, actas: world.matchStatLogs.length, injuries: world.injuries.length,
-      champions: (world.seasonHistory ?? []).filter(season=>season.championTeamId).length, periods: world.fiscalPeriods?.filter(p=>p.status==='CLOSED').length }
+      champions: (world.seasonHistoryBySeasonId ?? []).filter(season=>season.championTeamId).length, periods: world.fiscalPeriods?.filter(p=>p.status==='CLOSED').length }
     appendFileSync(join(context.out, 'season-native-chunks.jsonl'), JSON.stringify(entry)+'\n'); console.log(JSON.stringify(entry))
     await c.screenshot(join(context.out,'season-'+world.currentDate+'.png'))
     // Required decisions are acted on through their existing workspaces. Their services retain authority.

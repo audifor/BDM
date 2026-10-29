@@ -295,7 +295,7 @@ try {
       const leagues=await c.evaluate("[...document.querySelector('select[aria-label=\"Competición\"]').options].map(o=>({id:o.value,name:o.text}))")
       assert(leagues.length===4,'Missing selectable competition')
       for(const league of leagues){
-        await c.setValue('select[aria-label="Competición"]',league.id);await c.click('button,[role=tab]','=Clasificación')
+        await c.setValue('select[aria-label="Competición"]',league.id);await sleep(800);await c.click('button,[role=tab]','=Clasificación');await sleep(800)
         await c.screenshot(join(context.out,'final-league-'+league.id.replaceAll(':','-')+'.png'))
         writeFileSync(join(context.out,'final-league-'+league.id.replaceAll(':','-')+'.txt'),await c.bodyText())
       }

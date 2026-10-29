@@ -24,7 +24,12 @@ for(const [kind,input] of cases.filter(([name])=>!process.env.BDM_FINAL01_COMPAT
     }
     if(kind==='medical'){
       await c.click('button','Abrir menú de inicio BDM');await c.click('button','=Equipo');await c.click('button','=Medical');await sleep(1000)
-      await c.click('button.ng-workspace-tabs__tab','Injured');await c.waitFor("!!document.querySelector('.medical-workspace__rehab-control select:disabled')",{timeout:30000})
+      for(let attempt=0;attempt<3&&!await c.locate('.medical-workspace__rehab-control select');attempt++){await c.click('button.ng-workspace-tabs__tab','Injured');await sleep(1200)}
+      const team=before.payload.teams.find(team=>team.coachId===before.payload.userCoachId)
+      const injury=before.payload.injuries.find(injury=>team.rosterPlayerIds.includes(injury.playerId)&&injury.returnToPlay?.reviewDueOn===before.payload.currentDate&&!injury.returnToPlay.clearedOn)
+      const player=before.payload.players.find(player=>player.id===injury.playerId)
+      await c.click('tr',player.firstName+' '+player.lastName);await sleep(1000)
+      await c.waitFor("!!document.querySelector('.medical-workspace__rehab-control select:disabled')",{timeout:30000})
       if(!(await c.bodyText()).includes('Hay una revisión pendiente. Ve a Overview'))throw Error('Missing explanation for disabled rehabilitation control')
     }
     await c.screenshot(join(out,kind+'.png'));writeFileSync(join(out,kind+'-ui.txt'),await c.bodyText())

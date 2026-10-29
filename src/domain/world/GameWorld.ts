@@ -3040,6 +3040,19 @@ function validCurrentContractRosterEffect(world: GameWorld, contract: PlayerCont
     && transaction.playerId === contract.playerId && transaction.fromTeamId === teamId
     && transaction.occurredOn >= contract.term.startsOn && transaction.contractId !== undefined
     && world.contractsById[transaction.contractId]?.playerId === contract.playerId)
+    || Object.values(world.playerTransactionsById).some((transaction) => {
+      if (transaction.kind !== 'contractExpired' || transaction.playerId !== contract.playerId || transaction.fromTeamId !== teamId
+        || transaction.contractId === undefined || transaction.occurredOn > world.currentDate) return false
+      let expired: PlayerContract | undefined = world.contractsById[transaction.contractId]
+      if (expired === undefined || expired.playerId !== contract.playerId || expired.teamId !== teamId || expired.term.expiresOn !== transaction.occurredOn) return false
+      const seen = new Set<string>()
+      while (expired !== undefined && !seen.has(expired.id)) {
+        if (expired.id === contract.id) return true
+        seen.add(expired.id)
+        expired = expired.predecessorContractId === undefined ? undefined : world.contractsById[expired.predecessorContractId]
+      }
+      return false
+    })
 }
 
 function releaseTransactionCoversContract(world: GameWorld, rootContractId: ContractId, targetContractId: ContractId, releasedOn: GameDate): boolean {

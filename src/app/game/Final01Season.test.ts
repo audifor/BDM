@@ -89,6 +89,9 @@ it.skipIf(process.env.BDM_FINAL01_SEASON !== '1' || !input || !existsSync(input)
     }
     expect(Object.values(world.injuriesById).some(injury => (injury.returnToPlay?.reviews.length ?? 0) > 0)).toBe(true)
     expect(Object.values(world.scheduledTrainingSessionsById).some(session => session.status === 'completed' && session.execution !== undefined)).toBe(true)
+    const userTeam = Object.values(initial.teams).find(team => team.coachId === initial.userCoachId)!
+    expect(Object.values(world.injuriesById).some(injury => injury.returnToPlay?.reviews.some(review => review.actor.kind === 'AI'))).toBe(true)
+    expect(Object.values(world.scheduledTrainingSessionsById).some(session => session.teamId !== userTeam.id && session.status === 'completed' && session.execution !== undefined)).toBe(true)
     expect(Object.keys(world.developmentStimulusEventsById).length).toBeGreaterThan(Object.keys(initial.developmentStimulusEventsById).length)
     const rosterIds = Object.values(world.teams).flatMap(team => team.rosterPlayerIds)
     expect(new Set(rosterIds).size).toBe(rosterIds.length)
