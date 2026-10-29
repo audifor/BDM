@@ -310,4 +310,19 @@ try {
     await open('TRAINING','Equipo');await c.click('button,[role=tab]','=RESULTADOS');await c.screenshot(join(context.out,'final-training-results.png'))
     writeFileSync(join(context.out,'final-training-results.txt'),await c.bodyText())
   }
+  if(process.env.BDM_FINAL01_PHASE==='final-reload'){
+    await step('31-final-save-reload',async()=>{
+      const previous=JSON.parse(readFileSync(join(context.out,'season-native-completed.json'),'utf8'))
+      const after=await save('31-final-reload')
+      const canonical=x=>Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x
+      const truth=payload=>{payload.staffCareerRuntime.governanceDecisionEvents.sort((a,b)=>a.id.localeCompare(b.id));return JSON.stringify(canonical(payload))}
+      assert(truth(previous.payload)===truth(after.payload),'Native final save changed on reload')
+      return {date:after.payload.currentDate,exactFullSaveRoundTrip:true,actas:after.payload.matchStatLogs.length,competitions:after.payload.competitions.length}
+    })
+    await step('32-roster-currency',async()=>{
+      await open('ROSTER','Equipo');const body=await c.bodyText()
+      assert(body.includes('€210K'),'The roster did not use the club currency')
+      writeFileSync(join(context.out,'final-roster-ui.txt'),body);return {currency:'EUR',salary:'€210K'}
+    })
+  }
 } finally { c?.close(); if(app&&process.env.BDM_FINAL01_KEEP_OPEN!=='1')app.child.kill() }

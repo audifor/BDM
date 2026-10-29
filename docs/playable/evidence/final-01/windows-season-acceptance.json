@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "date": "2026-10-12",
+  "date": "2026-10-20",
   "leagues": [
     {
       "competitionId": "competition:ESP:liga-endesa",
@@ -9,7 +9,7 @@
       "completed": 325,
       "clubs": 18,
       "successor": "generated-season-0001",
-      "successorCompleted": 9
+      "successorCompleted": 18
     },
     {
       "competitionId": "competition:FRA:betclic-elite",
@@ -18,7 +18,7 @@
       "completed": 264,
       "clubs": 16,
       "successor": "generated-season-0002",
-      "successorCompleted": 16
+      "successorCompleted": 24
     },
     {
       "competitionId": "competition:ITA:serie-a",
@@ -27,7 +27,7 @@
       "completed": 269,
       "clubs": 16,
       "successor": "generated-season-0003",
-      "successorCompleted": 16
+      "successorCompleted": 24
     },
     {
       "competitionId": "competition:BRA:nbb",
@@ -36,10 +36,10 @@
       "completed": 442,
       "clubs": 20,
       "successor": "generated-season-0004",
-      "successorCompleted": 20
+      "successorCompleted": 30
     }
   ],
-  "actas": 1361,
+  "actas": 1396,
   "closedPeriods": 70,
   "originalFinancialHistoryUnchanged": true,
   "exactSaveRoundTrip": true,
