@@ -77,6 +77,10 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         self.assertEqual(result["ncaa_plan"]["team_membership"], "REQUIRES_SOURCE_IDENTITY_RECONCILIATION")
         self.assertEqual(len(result["ncaa_plan"]["conference_formats"]), 32)
 
+    def test_ncaa_never_uses_a_single_353_team_round_robin_even_if_called_directly(self):
+        with self.assertRaisesRegex(ValueError, "NCAA D1 must use its existing conference"):
+            MODULE.simulation_document(MODULE.NCAA_SOURCE_ID, "NCAA I", 353)
+
     def test_missing_or_conflicting_pbm_source_fails_closed(self):
         matrix, batch, published = fixtures()
         batch["results"][-1]["source_build"] = "BLOCKED"
