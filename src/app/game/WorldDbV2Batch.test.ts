@@ -24,22 +24,46 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
   const base = parseWorldCompetitionRuntimeBundle(reference)
   const compiled = additions.map(parseWorldCompetitionFormatDocument)
   const trusted = new Map([...base.competitionFormats, ...compiled].map(f => [f.competitionSeasonId, f]))
+  // Opt-in only: candidate formats are not published in NEW GAME. The batch
+  // must exercise the full native game/market/save boundary for every PBM ID.
+  const simulationMode = process.env.BDM_WORLDDB_SIMULATION_CANDIDATES === '1'
+  const generatedDir = resolve('.worlddb-v2/generated-simulation-candidates')
+  const candidateRows: any[] = simulationMode ? JSON.parse(readFileSync(resolve(generatedDir, 'candidate-competitions.json'), 'utf8')) : []
+  const simulationDocs = simulationMode
+    ? JSON.parse(readFileSync(resolve(generatedDir, 'simulation-formats.json'), 'utf8')).map(parseWorldCompetitionFormatDocument)
+    : []
+  const candidateConfigs = new Map<string, any>(candidateRows.map(config => [config.sourceCompetitionId, config]))
+  const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
+  if (simulationMode) {
+    expect(candidateConfigs.size).toBe(102)
+    expect(simulationFormats.size).toBe(98)
+    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(98)
+  }
   for (const row of index.results) {
-    const report: Record<string, any> = { ...row, native_projection: 'NOT_RUN', minimum_flow: 'NOT_RUN', status: 'BLOCKED' }
+    const config = simulationMode ? candidateConfigs.get(row.source_id) : row.config
+    const report: Record<string, any> = {
+      ...row, config, native_projection: 'NOT_RUN', minimum_flow: 'NOT_RUN', status: 'BLOCKED',
+      ...(simulationMode ? { format_mode: config?.formatProvenance === 'GENERATED_SIMULATION'
+        ? 'GENERATED_SIMULATION_CANDIDATE' : 'VERIFIED_EXISTING' } : {}),
+    }
     try {
       if (row.source_build !== 'PASS') throw Error('Runtime source build failed: ' + row.source_error)
       const snapshot = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
       // Even unmapped selections reach the real native factory with their original
       // population; missing identity/rules fail at the actual repository contract.
-      const document = trusted.get(row.config.editionId)
-        ?? (row.formatPath ? parseWorldCompetitionFormatDocument(JSON.parse(readFileSync(row.formatPath, 'utf8'))) : undefined)
+      if (!config) throw Error('Missing candidate configuration: ' + row.source_id)
+      const document = simulationFormats.get(config.editionId) ?? trusted.get(config.editionId)
+        ?? (row.formatPath && !simulationMode ? parseWorldCompetitionFormatDocument(JSON.parse(readFileSync(row.formatPath, 'utf8'))) : undefined)
+      if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION' && !simulationFormats.has(config.editionId)) {
+        throw Error('Generated simulation edition has no matching explicit document: ' + row.source_id)
+      }
       const runtime = { ...base, competitionFormats: [...trusted.values(), ...(document && !trusted.has(document.competitionSeasonId) ? [document] : [])] }
-      let world = await createWorldDbV2GameFromSnapshot(snapshot, snapshot.clubs[0]!.entity_id, undefined, row.config, runtime)
+      let world = await createWorldDbV2GameFromSnapshot(snapshot, snapshot.clubs[0]!.entity_id, undefined, config, runtime)
       report.native_projection = 'PASS'
       validateGameWorld(world)
       expect(Object.keys(world.teams).sort()).toEqual(snapshot.clubs.map(c => c.entity_id).sort())
       const season = world.seasons[world.currentSeasonId!]!
-      expect(season.worldCompetitionFormat?.competitionId).toBe(row.config.nativeCompetitionId)
+      expect(season.worldCompetitionFormat?.competitionId).toBe(config.nativeCompetitionId)
       expect(season.worldCompetitionFormat?.status).toBe('COMPLETE')
       expect(Object.keys(world.games).length).toBeGreaterThan(0)
       const ids = Object.keys(world.players).sort()
