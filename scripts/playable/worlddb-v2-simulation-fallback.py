@@ -24,6 +24,72 @@ OUTPUT = ROOT / ".worlddb-v2/generated-simulation-candidates"
 SOURCE_URL = "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py"
 MASTER_SHA = "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f"
 
+NCAA_SOURCE_ID = "pbm:DYN_championnat:71"
+NCAA_BUNDLE = ROOT / "src/data/worlddb-v2/competition-runtime.json"
+
+
+def ncaa_existing_rules_plan(original_clubs, bundle):
+    """Reference NCAA rules as actually shipped; never manufacture 353 memberships.
+
+    The 2026-27 format population is not the PBM source cohort. Link explicit
+    club-to-conference identities before the college scheduler can be certified.
+    """
+    docs = bundle["competition_formats"]
+    prefix = "competition:USA:ncaa-d1-men:"
+    regular = sorted(
+        (doc for doc in docs if doc["competition_id"].startswith(prefix)
+         and doc["competition_id"].endswith(":regular-season")
+         and doc["status"] == "COMPLETE"),
+        key=lambda doc: doc["competition_id"],
+    )
+    tournaments = sorted(
+        (doc for doc in docs if doc["competition_id"].startswith(prefix)
+         and doc["competition_id"].endswith(":tournament")
+         and doc["status"] == "COMPLETE"),
+        key=lambda doc: doc["competition_id"],
+    )
+    final = next((doc for doc in docs
+                  if doc["competition_id"] == "competition:USA:ncaa-d1-men-championship"
+                  and doc["status"] == "COMPLETE"), None)
+    if len(regular) != 32 or len(tournaments) != 32 or final is None:
+        raise ValueError("Existing NCAA reference requires 32 conference seasons, 32 conference tournaments and national championship")
+    conferences = []
+    for doc in regular:
+        node = next((node for node in doc["variants"][0]["nodes"]
+                     if node["role"] == "REGULAR_SEASON"), None)
+        if node is None or not isinstance(node.get("team_count"), int):
+            raise ValueError("NCAA reference conference lacks published participant count")
+        conference_id = doc["competition_id"].removesuffix(":regular-season")
+        matching = next((t for t in tournaments if t["competition_id"] == conference_id + ":tournament"), None)
+        if matching is None:
+            raise ValueError("NCAA conference tournament missing: " + conference_id)
+        conferences.append({
+            "reference_competition": conference_id,
+            "regular_edition": doc["competition_season_id"],
+            "tournament_edition": matching["competition_season_id"],
+            "reference_participants": node["team_count"],
+            "original_pbm_team_ids": [],
+            "membership_status": "UNRECONCILED",
+        })
+    sum_reference = sum(row["reference_participants"] for row in conferences)
+    return {
+        "source_competition_id": NCAA_SOURCE_ID,
+        "source_clubs": original_clubs,
+        "reference_edition": "2026-27",
+        "reference_conferences": len(conferences),
+        "reference_clubs": sum_reference,
+        "reference_difference": sum_reference - original_clubs,
+        "existing_calendar_authority": "generateNcaaLikeSchedule",
+        "existing_lifecycle_authority": "startNextSeasonTransitionFor",
+        "national_championship_format": final["competition_season_id"],
+        "conference_formats": conferences,
+        "team_membership": "REQUIRES_SOURCE_IDENTITY_RECONCILIATION",
+        "scheduling_status": "NOT_CERTIFIED",
+        "no_all_team_double_round_robin": True,
+        "notes": "353 PBM historical clubs are not the 365 teams in the 2026-27 format references. Do not infer official conference memberships, create 12 phantom teams or schedule 124256 games.",
+    }
+
+
 
 def read(path):
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
@@ -94,6 +160,7 @@ def build_package(matrix, batch, published):
     candidates = list(published)
     documents = []
     evidence = []
+    ncaa_plan = None
     for source_id in sorted(rows, key=lambda x: int(x.rsplit(":", 1)[-1])):
         row, build = rows[source_id], builds[source_id]
         expected_count = row["pbm"]["clubs"]
@@ -105,6 +172,27 @@ def build_package(matrix, batch, published):
         if source_id in existing:
             if config["nativeCompetitionId"] != existing[source_id]["nativeCompetitionId"]:
                 raise ValueError("Existing official runtime mapping changed: " + source_id)
+            continue
+        if source_id == NCAA_SOURCE_ID:
+            ncaa_plan = ncaa_existing_rules_plan(expected_count, read(NCAA_BUNDLE))
+            candidates.append({
+                **config,
+                "name": row["competition"],
+                "calendar": "NCAA_LIKE_EXISTING_REQUIRES_MEMBERSHIP",
+                "nativeStatus": "CANDIDATE_NCAA_MEMBERSHIP_PENDING",
+                "formatProvenance": "DOCUMENTED_NCAA_REFERENCE_UNRECONCILED",
+            })
+            evidence.append({
+                "source_id": source_id, "name": row["competition"],
+                "original_clubs": expected_count, "source_status": row["status"],
+                "format_provenance": "DOCUMENTED_NCAA_REFERENCE_UNRECONCILED",
+                "expected_regular_games": None,
+                "no_all_team_double_round_robin": True,
+                "reference_clubs": ncaa_plan["reference_clubs"],
+                "conference_count": ncaa_plan["reference_conferences"],
+                "native_status": "NCAA_MEMBERSHIP_PENDING",
+                "official_fidelity": "NOT_CERTIFIED",
+            })
             continue
         document = simulation_document(source_id, row["competition"], expected_count)
         documents.append(document)
@@ -128,15 +216,16 @@ def build_package(matrix, batch, published):
             "native_status": "NOT_TESTED",
             "official_fidelity": "NOT_CLAIMED"
         })
-    if len(documents) != 98 or len(candidates) != 102:
-        raise ValueError("Expected exactly 98 simulation documents and 102 candidate entries")
-    if len({d["competition_id"] for d in documents}) != 98:
+    if len(documents) != 97 or len(candidates) != 102 or ncaa_plan is None:
+        raise ValueError("Expected 97 round-robin candidates, 1 NCAA reference and 4 original leagues")
+    if len({d["competition_id"] for d in documents}) != 97:
         raise ValueError("Generated format collision")
     return {
-        "formats": documents, "catalog": candidates,
+        "formats": documents, "catalog": candidates, "ncaa_plan": ncaa_plan,
         "manifest": {
             "total": 102, "original_playable": 4,
-            "generated_simulation_candidates": 98,
+            "generated_simulation_candidates": 97,
+            "ncaa_existing_rules_pending_membership": 1,
             "published_new_competitions": 0,
             "certified_new_competitions": 0,
             "master_sha256_expected": MASTER_SHA,
@@ -158,6 +247,7 @@ def main():
     for key, filename in [
         ("formats", "simulation-formats.json"),
         ("catalog", "candidate-competitions.json"),
+        ("ncaa_plan", "ncaa-existing-rules-plan.json"),
         ("manifest", "manifest.json")
     ]:
         (args.output / filename).write_text(
