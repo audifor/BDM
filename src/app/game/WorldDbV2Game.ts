@@ -47,6 +47,9 @@ const developmentDomains = ['shooting', 'finishing', 'creation', 'passing', 'cre
  * persisted separately. PBM club/person IDs are preserved exactly in their runtime namespaces. */
 export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config = worldDbV2Competition(snapshot.competitions[0]?.entity_id)): WorldDbGameBootstrapSliceV1 {
     const day = parseGameDate(snapshot.manifest.configuration.start_date), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
+    // Repair source shortfalls only in explicitly generated simulation careers.
+    // Source-backed competitions and their original PBM people remain unchanged.
+    const allowSimulationPopulation = 'formatProvenance' in config && config.formatProvenance === 'GENERATED_SIMULATION';
     const year = Number(day.slice(0, 4)) + (config.calendar === 'SPAIN_ACB_EXISTING' && day.slice(5) > '10-04' ? 1 : 0);
     const { nativeCompetitionId: COMPETITION, editionId: EDITION, ecosystemId: ECOSYSTEM } = config;
     const countries = snapshot.countries.map(e => ({ countryId: e.entity_id, name: String(e.reference_data.nom_pays), code: String(e.reference_data.abreviation) }));
@@ -75,23 +78,79 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config = worldDbV2
     }
     const staffProfiles: WorldDbGameBootstrapSliceV1['staffProfiles'][number][] = [];
     const staffAssignments: WorldDbGameBootstrapSliceV1['staffAssignments'][number][] = [];
+    const rosterTeamByPlayerId = new Map(snapshot.people.filter(e => e.source_table === 'DYN_joueur')
+        .map(e => [e.entity_id, e.parent_id] as const));
     for (const team of teams) {
         const staff = snapshot.people.filter(e => e.source_table === 'DYN_person' && e.parent_id === team.teamId).sort((a, b) => Number(b.reference_data.job_preference_coach) - Number(a.reference_data.job_preference_coach) || a.entity_id.localeCompare(b.entity_id));
-        const coach = staff[0];
-        if (coach === undefined)
+        const coach = staff.find(e => !allowSimulationPopulation || (Number(e.reference_data.job_preference_coach ?? 0) > 0
+            && Number(e.reference_data.job_preference_coach ?? 0) > Number(e.reference_data.job_preference_chairman ?? 0)));
+        if (coach === undefined && !allowSimulationPopulation)
             throw new Error(`PBM pilot club lacks an original head-coach candidate: ${team.teamId}`);
         const generated = generateInitialTeamStaff(teamIdFromString(team.teamId), 'assistantCoach', day);
+        // The generated coach retains a separate BDM id. Never reassign a source
+        // chairman or invent a PBM identity to fill the sporting vacancy.
+        const coachId = coach?.entity_id ?? String(generated.person.id);
+        if (coach === undefined) {
+            persons.push({
+                personId: coachId,
+                firstName: generated.person.identity.firstName,
+                lastName: generated.person.identity.lastName,
+                gender: team.gender,
+                dateOfBirth: '1980-01-01',
+                nationalityIds: [team.countryId],
+            });
+        }
         // Reversible expansion of BDM's 13 canonical generated Staff values into the legacy 80-vector
         // transport. The existing bootstrap bucket means recover each value exactly; no PBM scaling.
         const attributes: Record<string, number> = {};
         STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.forEach((key, i) => { for (let j = Math.floor(i * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j < Math.floor((i + 1) * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j++)
             attributes[`STAFF_ATTRIBUTE_${String(j + 1).padStart(2, '0')}`] = generated.person.professional.attributes[key]; });
-        staffProfiles.push({ staffId: coach.entity_id, personId: coach.entity_id, attributes, specialismIds: [] });
-        staffAssignments.push({ assignmentId: `${coach.entity_id}:headCoach:${team.teamId}`, staffId: coach.entity_id, teamId: team.teamId, roleCode: 'headCoach', assignedOn: day });
-        if (players.filter(p => snapshot.people.find(e => e.entity_id === p.playerId)?.parent_id === team.teamId).length < 5)
+        staffProfiles.push({ staffId: coachId, personId: coachId, attributes, specialismIds: [] });
+        staffAssignments.push({ assignmentId: `${coachId}:headCoach:${team.teamId}`, staffId: coachId, teamId: team.teamId, roleCode: 'headCoach', assignedOn: day });
+        const originalRosterSize = players.filter(p => rosterTeamByPlayerId.get(p.playerId) === team.teamId).length;
+        if (originalRosterSize < 5 && !allowSimulationPopulation)
             throw new Error(`PBM pilot roster incomplete: ${team.teamId}`);
+        for (let slot = originalRosterSize; slot < (allowSimulationPopulation ? 5 : originalRosterSize); slot++) {
+            const playerId = `bdm:generated-player:${team.teamId}:${slot + 1}`;
+            const position = positions[slot % positions.length]!;
+            const id = playerIdFromString(playerId);
+            const bio = generatePlayerBio(id, position, day);
+            const ratings = generateCanonicalRatings(seed, id, position);
+            const firstName = 'Jugador', lastName = `Generado ${slot + 1}`;
+            const simulated = createPlayer({
+                id, firstName, lastName, gender: team.gender,
+                nationalityId: countryIdFromString(team.countryId),
+                basketball: { primaryPosition: position, ratings }, bio,
+            });
+            const development = generateCanonicalDevelopmentProfile(seed, id, ratings, calculateAge(bio.dateOfBirth, day));
+            persons.push({
+                personId: playerId, firstName, lastName, gender: team.gender,
+                dateOfBirth: bio.dateOfBirth, nationalityIds: [team.countryId],
+                measurementProvenance: {
+                    wingspanCm: 'generated', standingReachCm: 'generated', dominantHand: 'generated',
+                },
+                physical: {
+                    heightCm: bio.heightCm, weightKg: bio.weightKg,
+                    wingspanCm: bio.wingspanCm, standingReachCm: bio.standingReachCm,
+                },
+            });
+            players.push({
+                playerId, personId: playerId, primaryPosition: position,
+                secondaryPositions: [], dominantHand: bio.dominantHand,
+                ratings: pick(ratings, PLAYER_TRUTH_RATING_KEYS),
+                tendencies: pick(simulated.basketball.tendencies, PLAYER_TRUTH_TENDENCY_KEYS),
+                development: developmentCodes.map((code, i) => ({
+                    dimensionCode: code, ceiling: development.ceilings[developmentDomains[i]!],
+                    growthRate: development.growthRate, declineSensitivity: development.declineSensitivity,
+                })),
+            });
+            rosterTeamByPlayerId.set(playerId, team.teamId);
+        }
     }
-    const result: WorldDbGameBootstrapSliceV1 = { schemaVersion: 1, source: { databaseId: 'worlddb-v2-projection:' + snapshot.manifest.master.sha256, schemaId: bundle.worldDbSchema }, ecosystem: { ecosystemId: ECOSYSTEM, name: config.name + ' PBM ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: COMPETITION, name: config.name + ' · PBM V2', gender: 'male', ecosystemId: ECOSYSTEM }, season: { competitionSeasonId: EDITION, seasonId: 'worlddb-v2:season:' + (config.countryCode === 'ESP' ? '' : config.sourceCompetitionId + ':') + day, label: `${year}-${year + 1} · fictional PBM snapshot`, startDate: day, endDate: worldDbV2SeasonEnd(config, day), provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries, teams, persons, players, staffProfiles, staffAssignments, organizations: teams.map(t => ({ organizationId: t.organizationId, entityId: t.teamId, legalName: t.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null })), organizationSections: teams.map(t => ({ sectionId: t.organizationSectionId, organizationId: t.organizationId, sport: 'BASKETBALL', gender: 'MALE', categoryScope: 'SENIOR', canonicalName: t.name, validFrom: null, validTo: null })), rosterAssignments: players.map(p => ({ rosterId: 'pbm:roster:' + p.playerId, teamId: snapshot.people.find(e => e.entity_id === p.playerId)!.parent_id!, playerId: p.playerId, status: 'ACTIVE' })), matches: [] };
+    const result: WorldDbGameBootstrapSliceV1 = { schemaVersion: 1, source: { databaseId: 'worlddb-v2-projection:' + snapshot.manifest.master.sha256, schemaId: bundle.worldDbSchema }, ecosystem: { ecosystemId: ECOSYSTEM, name: config.name + ' PBM ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: COMPETITION, name: config.name + ' · PBM V2', gender: 'male', ecosystemId: ECOSYSTEM }, season: { competitionSeasonId: EDITION, seasonId: 'worlddb-v2:season:' + (config.countryCode === 'ESP' ? '' : config.sourceCompetitionId + ':') + day, label: `${year}-${year + 1} · fictional PBM snapshot`, startDate: day, endDate: worldDbV2SeasonEnd(config, day), provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries, teams, persons, players, staffProfiles, staffAssignments, organizations: teams.map(t => ({ organizationId: t.organizationId, entityId: t.teamId, legalName: t.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null })), organizationSections: teams.map(t => ({ sectionId: t.organizationSectionId, organizationId: t.organizationId, sport: 'BASKETBALL', gender: 'MALE', categoryScope: 'SENIOR', canonicalName: t.name, validFrom: null, validTo: null })), rosterAssignments: players.map(p => ({
+        rosterId: p.playerId.startsWith('bdm:generated-player:') ? 'bdm:roster:' + p.playerId : 'pbm:roster:' + p.playerId,
+        teamId: rosterTeamByPlayerId.get(p.playerId)!, playerId: p.playerId, status: 'ACTIVE',
+    })), matches: [] };
     const sourced = { ...result, physicalContent: snapshot.physicalContent };
     assertWorldDbGameBootstrapSliceV1(sourced);
     return sourced;
