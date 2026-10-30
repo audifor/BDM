@@ -50,7 +50,7 @@ jobs:
           python-version: '3.11'
 
       - name: WorldDB simulation fallback contract tests
-        run: python -m unittest discover -s scripts/playable -p 'test_worlddb_v2_simulation_fallback.py'
+        run: python -m unittest discover -s scripts/playable -p 'test_worlddb_v2_*.py'
 
       - name: Setup Node
         uses: actions/setup-node@v4
