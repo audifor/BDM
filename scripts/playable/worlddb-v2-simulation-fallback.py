@@ -96,6 +96,8 @@ def read(path):
 
 
 def simulation_document(source_id, name, participants):
+    if source_id == NCAA_SOURCE_ID:
+        raise ValueError("NCAA D1 must use its existing conference and national championship formats, never global round-robin")
     if not source_id.startswith("pbm:DYN_championnat:"):
         raise ValueError("Unexpected PBM competition identity: " + source_id)
     if not isinstance(participants, int) or participants < 2:
