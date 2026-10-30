@@ -21,7 +21,7 @@ def fixtures():
     published = []
     for n in range(1, 103):
         source = f"pbm:DYN_championnat:{n}"
-        count = 353 if n == 102 else 13 if n == 101 else 12
+        count = 353 if n == 71 else 13 if n == 101 else 12
         certified = n <= 4
         config = {
             "sourceCompetitionId": source, "nativeCompetitionId": f"competition:TEST:{n}",
@@ -47,12 +47,14 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         matrix, batch, published = fixtures()
         originals = copy.deepcopy((matrix, batch, published))
         result = MODULE.build_package(matrix, batch, published)
-        self.assertEqual((len(result["catalog"]), len(result["formats"])), (102, 98))
+        self.assertEqual((len(result["catalog"]), len(result["formats"])), (102, 97))
         self.assertEqual(result["catalog"][:4], published)
         self.assertEqual(result["manifest"]["certified_new_competitions"], 0)
         self.assertEqual((matrix, batch, published), originals)
         self.assertTrue(all(c.get("nativeStatus") == "CANDIDATE_NATIVE_PENDING" for c in result["catalog"][4:]))
-        self.assertTrue(all(c["formatProvenance"] == "GENERATED_SIMULATION" for c in result["catalog"][4:]))
+        self.assertEqual(sum(c["formatProvenance"] == "GENERATED_SIMULATION" for c in result["catalog"][4:]), 97)
+        self.assertEqual(sum(c["formatProvenance"] == "DOCUMENTED_NCAA_REFERENCE_UNRECONCILED" for c in result["catalog"][4:]), 1)
+        self.assertNotIn("competition:BDM-SIM:dyn_championnat-71", [d["competition_id"] for d in result["formats"]])
 
     def test_generated_format_is_explicitly_non_official_and_odd_clubs_are_preserved(self):
         matrix, batch, published = fixtures()
@@ -64,9 +66,15 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         self.assertEqual(doc["sources"][0]["type"], "SECONDARY")
         audit = next(e for e in result["manifest"]["evidence"] if e["source_id"].endswith(":101"))
         self.assertEqual(audit["expected_regular_games"], 156)
-        large = next(e for e in result["manifest"]["evidence"] if e["source_id"].endswith(":102"))
-        self.assertTrue(large["large_schedule_warning"])
-        self.assertEqual(large["expected_regular_games"], 353 * 352)
+        ncaa = next(e for e in result["manifest"]["evidence"] if e["source_id"].endswith(":71"))
+        self.assertTrue(ncaa["no_all_team_double_round_robin"])
+        self.assertIsNone(ncaa["expected_regular_games"])
+        self.assertEqual(result["ncaa_plan"]["reference_conferences"], 32)
+        self.assertEqual(result["ncaa_plan"]["reference_clubs"], 365)
+        self.assertEqual(result["ncaa_plan"]["source_clubs"], 353)
+        self.assertEqual(result["ncaa_plan"]["reference_difference"], 12)
+        self.assertEqual(result["ncaa_plan"]["team_membership"], "REQUIRES_SOURCE_IDENTITY_RECONCILIATION")
+        self.assertEqual(len(result["ncaa_plan"]["conference_formats"]), 32)
 
     def test_missing_or_conflicting_pbm_source_fails_closed(self):
         matrix, batch, published = fixtures()
