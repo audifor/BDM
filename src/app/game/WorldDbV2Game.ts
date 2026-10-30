@@ -31,6 +31,11 @@ import { gameBalanceOpeningEconomicStates, applyGameBalanceBootstrap } from '@/a
 import { annualAuthorizationContinuityAuthorities } from './AnnualAuthorizationContinuityPolicy';
 import { appointCreatedUserCoachToWorldDbClub } from './WorldDbUserCoachAppointment';
 import type { UserCoachCreationInput } from './UserCoachCreator';
+/** Candidate league metadata extends the published 4-league configuration without
+ * making a generated simulation eligible for NEW GAME. */
+export type WorldDbV2CompetitionConfig = ReturnType<typeof worldDbV2Competition> & {
+    readonly formatProvenance?: string;
+};
 const reference = parseWorldCompetitionRuntimeBundle(referenceBundle);
 // Preserve the frozen bundle identity; supplemental documents retain their own
 // sources in the persisted format. Never relabel a SHA as the bundle's BLAKE3.
@@ -45,7 +50,7 @@ const developmentDomains = ['shooting', 'finishing', 'creation', 'passing', 'cre
 /** The DDL DTO is an application projection. The raw SQLite remains PBM V2, not a DDL database.
  * Competition/edition keys refer to the unchanged certified rules template; source identity is
  * persisted separately. PBM club/person IDs are preserved exactly in their runtime namespaces. */
-export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config = worldDbV2Competition(snapshot.competitions[0]?.entity_id)): WorldDbGameBootstrapSliceV1 {
+export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2CompetitionConfig = worldDbV2Competition(snapshot.competitions[0]?.entity_id)): WorldDbGameBootstrapSliceV1 {
     const day = parseGameDate(snapshot.manifest.configuration.start_date), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
     // Repair source shortfalls only in explicitly generated simulation careers.
     // Source-backed competitions and their original PBM people remain unchanged.
@@ -168,7 +173,7 @@ export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1, runtimeB
         async loadMatchRealizations() { return { schemaVersion: 1, competitionSeasonId: EDITION, matches: [], realizations: [] }; },
     };
 }
-export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapshot, teamId: string, userCoachCreation?: UserCoachCreationInput, config = worldDbV2Competition(snapshot.competitions[0]?.entity_id), runtimeBundle = bundle): Promise<GameWorld> {
+export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapshot, teamId: string, userCoachCreation?: UserCoachCreationInput, config: WorldDbV2CompetitionConfig = worldDbV2Competition(snapshot.competitions[0]?.entity_id), runtimeBundle = bundle): Promise<GameWorld> {
     if (config.sourceCompetitionId !== snapshot.competitions[0]?.entity_id) throw Error('PBM competition/config identity mismatch');
     const format = runtimeBundle.competitionFormats.find(f => f.competitionSeasonId === config.editionId && f.competitionId === config.nativeCompetitionId);
     if (!format) throw Error('Verified runtime format/edition mapping required: ' + config.sourceCompetitionId);
