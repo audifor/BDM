@@ -84,7 +84,12 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Duplicate PBM identity"):
             MODULE.build_package(matrix, batch, published)
         matrix, batch, published = fixtures()
-        batch["results"][0]["config"]["nativeCompetitionId"] = "competition:INVALID"
+        # The fixture shares config objects with published entries. Replace only
+        # the incoming batch copy, as happens when parsing separate JSON files.
+        batch["results"][0]["config"] = {
+            **batch["results"][0]["config"],
+            "nativeCompetitionId": "competition:INVALID",
+        }
         with self.assertRaisesRegex(ValueError, "Existing official runtime mapping changed"):
             MODULE.build_package(matrix, batch, published)
 
