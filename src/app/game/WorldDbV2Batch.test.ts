@@ -63,7 +63,27 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
       report.native_projection = 'PASS'
       validateGameWorld(world)
       expect(Object.keys(world.teams).sort()).toEqual(snapshot.clubs.map(c => c.entity_id).sort())
+      if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION') {
+        // Candidate simulation must retain every eligible original PBM player,
+        // and only supplement the source where the playable floor is missing.
+        expect(Object.values(world.teams).every(team => team.rosterPlayerIds.length >= 5))
+          .toBe(true)
+        const originalPlayers = snapshot.people
+          .filter(person => person.source_table === 'DYN_joueur'
+            && person.reference_data.is_alive !== 0
+            && person.reference_data.retraite !== 1)
+          .map(person => person.entity_id)
+        expect(originalPlayers.every(playerId => world.players[playerId] !== undefined))
+          .toBe(true)
+        report.original_player_count = originalPlayers.length
+        report.generated_player_count = Object.keys(world.players)
+          .filter(playerId => playerId.startsWith('bdm:generated-player:')).length
+      }
       const season = world.seasons[world.currentSeasonId!]!
+      if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION') {
+        expect(season.worldCompetitionFormat?.notes).toContain('GENERATED_SIMULATION')
+        expect(season.worldCompetitionFormat?.variants[0]?.isRealVariant).toBe(false)
+      }
       expect(season.worldCompetitionFormat?.competitionId).toBe(config.nativeCompetitionId)
       expect(season.worldCompetitionFormat?.status).toBe('COMPLETE')
       expect(Object.keys(world.games).length).toBeGreaterThan(0)
