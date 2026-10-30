@@ -10,7 +10,7 @@ import reference from '@/data/worlddb-v2/competition-runtime.json'
 import additions from '@/data/worlddb-v2/additional-formats.json'
 import { getFreeAgents, validateGameWorld } from '@/domain/world'
 import { initializeFreeAgentMarketTruth } from '@/engine/market'
-import { f3Store, f3World } from './testSupport/PlayableF3Support'
+import { f3AdvanceDay, f3Store, f3World } from './testSupport/PlayableF3Support'
 import { f3PlayDirectSigning } from './testSupport/PlayableF3TransferSupport'
 import { serializeGameWorldV4, deserializeGameWorldSaveV4 } from '@/save/GameWorldSaveV4'
 import { projectPersistentWorldTruth } from '@/save/persistentWorldTruth'
@@ -73,13 +73,35 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
         .sort((a, b) => truth.marketRealityByPlayerId[a.id]!.expectedSalary - truth.marketRealityByPlayerId[b.id]!.expectedSalary)
       const attempts = []
       let signed = false
-      for (const player of candidates.slice(0, 6)) {
+      if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION') {
+        // Initial-connect acceptance: do not require a free-agent market in a
+        // country whose PBM source has no eligible original free agents.
+        // A real game must still be decided by MatchEngine via the day boundary.
         f3Store().replaceWorld(world)
-        const result = f3PlayDirectSigning(player.id, { salaryShare: 1.1, years: 1, role: 'ROTATION' })
-        attempts.push({ playerId: player.id, status: result.status, stoppedAt: result.stoppedAt })
-        if (result.status === 'SIGNED') { world = f3World(); signed = true; break }
+        const fixture = Object.values(world.games)
+          .filter(g => g.homeTeamId === snapshot.clubs[0]!.entity_id || g.awayTeamId === snapshot.clubs[0]!.entity_id)
+          .sort((a, b) => a.date.localeCompare(b.date))[0]
+        expect(fixture, 'Original PBM club must have a scheduled fixture').toBeDefined()
+        const daysUntilFixture = Math.max(0, Math.round(
+          (Date.parse(fixture!.date + 'T00:00:00Z') - Date.parse(world.currentDate + 'T00:00:00Z')) / 86_400_000,
+        ))
+        expect(daysUntilFixture, 'Initial fixture outside a one-year season').toBeLessThan(365)
+        for (let day = 0; day <= daysUntilFixture + 1; day++) {
+          if (Object.keys(f3World().matchStatLogsByGameId).length > 0) break
+          f3AdvanceDay()
+        }
+        world = f3World()
+        report.market_flow = 'NOT_TESTED_NO_ORIGINAL_FREE_AGENT_REQUIREMENT'
+      } else {
+        for (const player of candidates.slice(0, 6)) {
+          f3Store().replaceWorld(world)
+          const result = f3PlayDirectSigning(player.id, { salaryShare: 1.1, years: 1, role: 'ROTATION' })
+          attempts.push({ playerId: player.id, status: result.status, stoppedAt: result.stoppedAt })
+          if (result.status === 'SIGNED') { world = f3World(); signed = true; break }
+        }
+        expect(signed, JSON.stringify(attempts)).toBe(true)
+        report.market_flow = 'PASS'
       }
-      expect(signed, JSON.stringify(attempts)).toBe(true)
       expect(Object.keys(world.matchStatLogsByGameId).length).toBeGreaterThan(0)
       expect(Object.keys(world.players).sort()).toEqual(ids)
       validateGameWorld(world)
@@ -91,7 +113,9 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
       expect(projectPersistentWorldTruth(reopened)).toEqual(projectPersistentWorldTruth(world))
       report.minimum_flow = 'PASS'
       report.family_signature = worldDbV2FamilySignature(season.worldCompetitionFormat!)
-      report.status = 'ENGINE_CERTIFIED_NATIVE_ACCEPTANCE_SEPARATE'
+      report.status = simulationMode && config.formatProvenance === 'GENERATED_SIMULATION'
+        ? 'SIMULATION_CANDIDATE_MATCH_SAVE_PASS_NATIVE_PENDING'
+        : 'ENGINE_CERTIFIED_NATIVE_ACCEPTANCE_SEPARATE'
       report.proof = { sourceClubs: snapshot.clubs.length, retainedPeople: ids.length, initialGames: Object.keys(world.games).length,
         actas: Object.keys(world.matchStatLogsByGameId).length, signed, attempts, savePath,
         format: season.worldCompetitionFormat }
