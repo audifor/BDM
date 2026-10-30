@@ -37,8 +37,16 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
   const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
   if (simulationMode) {
     expect(candidateConfigs.size).toBe(102)
-    expect(simulationFormats.size).toBe(98)
-    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(98)
+    expect(simulationFormats.size).toBe(97)
+    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(97)
+    const college = candidateRows.filter(config => config.formatProvenance === 'DOCUMENTED_NCAA_REFERENCE_UNRECONCILED')
+    expect(college).toHaveLength(1)
+    expect(college[0].sourceCompetitionId).toBe('pbm:DYN_championnat:71')
+    const collegePlan = JSON.parse(readFileSync(resolve(generatedDir, 'ncaa-existing-rules-plan.json'), 'utf8'))
+    expect(collegePlan.source_clubs).toBe(353)
+    expect(collegePlan.reference_conferences).toBe(32)
+    expect(collegePlan.reference_clubs).toBe(365)
+    expect(collegePlan.team_membership).toBe('REQUIRES_SOURCE_IDENTITY_RECONCILIATION')
   }
   for (const row of index.results) {
     const config = simulationMode ? candidateConfigs.get(row.source_id) : row.config
@@ -53,6 +61,13 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
       // Even unmapped selections reach the real native factory with their original
       // population; missing identity/rules fail at the actual repository contract.
       if (!config) throw Error('Missing candidate configuration: ' + row.source_id)
+      if (simulationMode && config.formatProvenance === 'DOCUMENTED_NCAA_REFERENCE_UNRECONCILED') {
+        // 353 PBM NCAA programs cannot become a single 124256-game round robin.
+        // The existing NCAA engine requires real/proven conference memberships,
+        // not 2026-27 reference counts (365) guessed onto a historical PBM cohort.
+        report.ncaa_structure = 'EXISTING_NCAA_CONFERENCES_NOT_YET_LINKED'
+        throw Error('NCAA_353: source conference memberships must be reconciled before native college GameWorld; never use generic ROUND_ROBIN')
+      }
       const document = simulationFormats.get(config.editionId) ?? trusted.get(config.editionId)
         ?? (row.formatPath && !simulationMode ? parseWorldCompetitionFormatDocument(JSON.parse(readFileSync(row.formatPath, 'utf8'))) : undefined)
       if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION' && !simulationFormats.has(config.editionId)) {
@@ -141,7 +156,9 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
         format: season.worldCompetitionFormat }
     } catch (error) {
       report.blocker = error instanceof Error ? error.message : String(error)
-      report.status = row.identity_scope === 'RESEARCH_ONLY' ? 'MAPPED_RESEARCH_ONLY' : row.identityEvidence ? 'PARTIAL_CONNECTION' : 'NEEDS_MAPPING'
+      report.status = report.ncaa_structure === 'EXISTING_NCAA_CONFERENCES_NOT_YET_LINKED'
+        ? 'NCAA_EXISTING_RULES_MEMBERSHIP_PENDING'
+        : row.identity_scope === 'RESEARCH_ONLY' ? 'MAPPED_RESEARCH_ONLY' : row.identityEvidence ? 'PARTIAL_CONNECTION' : 'NEEDS_MAPPING'
     }
     reports.push(report)
     writeFileSync(resolve(directory, 'native-results.json'), JSON.stringify({ total: reports.length, results: reports }, null, 2))
