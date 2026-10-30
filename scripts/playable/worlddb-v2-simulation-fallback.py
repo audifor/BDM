@@ -7,11 +7,18 @@ Use the native batch runner and Windows acceptance before publishing candidates.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "docs/playable/evidence/worlddb-v2-04/family-matrix.json"
-INDEX = ROOT / ".worlddb-v2/batch-04/index.json"
+INDEX = Path(os.environ.get("BDM_WORLDDB_V2_BATCH_INDEX", str(ROOT / ".worlddb-v2/batch-04/index.json")))
+# The isolated V2-04 worktree owns its ignored, real PBM source-build artifacts.
+# This is an authoring fallback, never a runtime dependency or a redistributable path.
+if not INDEX.is_file() and "BDM_WORLDDB_V2_BATCH_INDEX" not in os.environ:
+    previous = Path("C:/BDM-worktrees/worlddb-v2-04/.worlddb-v2/batch-04/index.json")
+    if previous.is_file():
+        INDEX = previous
 PUBLISHED = ROOT / "src/data/worlddb-v2/competitions.json"
 OUTPUT = ROOT / ".worlddb-v2/generated-simulation-candidates"
 SOURCE_URL = "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py"
