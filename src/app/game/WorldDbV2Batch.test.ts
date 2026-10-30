@@ -29,8 +29,8 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
   const simulationMode = process.env.BDM_WORLDDB_SIMULATION_CANDIDATES === '1'
   const generatedDir = resolve('.worlddb-v2/generated-simulation-candidates')
   const candidateRows: any[] = simulationMode ? JSON.parse(readFileSync(resolve(generatedDir, 'candidate-competitions.json'), 'utf8')) : []
-  const simulationDocs = simulationMode
-    ? JSON.parse(readFileSync(resolve(generatedDir, 'simulation-formats.json'), 'utf8')).map(parseWorldCompetitionFormatDocument)
+  const simulationDocs: ReturnType<typeof parseWorldCompetitionFormatDocument>[] = simulationMode
+    ? (JSON.parse(readFileSync(resolve(generatedDir, 'simulation-formats.json'), 'utf8')) as unknown[]).map(parseWorldCompetitionFormatDocument)
     : []
   const candidateConfigs = new Map<string, any>(candidateRows.map(config => [config.sourceCompetitionId, config]))
   const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
