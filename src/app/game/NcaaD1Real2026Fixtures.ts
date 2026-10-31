@@ -51,6 +51,7 @@ export function projectNcaaD1Real2026Fixtures(
       host === 'ncaa.org' || host.endsWith('.ncaa.org')
       || host.endsWith('.edu') || host.endsWith('.edu.au')
       || host === 'asunsports.org' || host === 'necsports.com'
+      || host === 'unfospreys.com'
     )) throw new Error('NCAA fixture source must be an authorized university, conference or NCAA primary source')
     const key = [date, ...[fixture.homeProgramId, fixture.awayProgramId].sort()].join('|')
     if (seen.has(key)) throw new Error('Duplicate NCAA fixture with the same clubs and date')
