@@ -16,12 +16,14 @@ export interface NcaaD1Real2026FixtureSource {
   readonly homeProgramId: string
   readonly awayProgramId: string
   readonly sourceUrl: string
+  /** Second independent official institution entry for cross-confirmed fixtures. */
+  readonly corroboratingSourceUrl?: string
   readonly evidenceKind: 'CONFERENCE_OFFICIAL' | 'SCHOOL_OFFICIAL' | 'NCAA_OFFICIAL'
 }
 
 export interface NcaaD1Real2026FixtureProjection {
   readonly games: readonly Game[]
-  readonly evidenceByGameId: Readonly<Record<string, { readonly url: string; readonly kind: NcaaD1Real2026FixtureSource['evidenceKind'] }>>
+  readonly evidenceByGameId: Readonly<Record<string, { readonly url: string; readonly kind: NcaaD1Real2026FixtureSource['evidenceKind']; readonly corroboratingSourceUrl?: string }>>
 }
 
 /** Materializes only documented fixtures in the existing Game canonical model.
@@ -35,7 +37,7 @@ export function projectNcaaD1Real2026Fixtures(
   const snapshot = buildNcaaD1Real2026ConferenceSnapshot(gender)
   const known = new Set(snapshot.teams.map(team => String(team.id)))
   const seen = new Set<string>()
-  const evidenceByGameId: Record<string, { readonly url: string; readonly kind: NcaaD1Real2026FixtureSource['evidenceKind'] }> = {}
+  const evidenceByGameId: Record<string, { readonly url: string; readonly kind: NcaaD1Real2026FixtureSource['evidenceKind']; readonly corroboratingSourceUrl?: string }> = {}
   const competitionId = competitionIdFromString('competition:USA:ncaa-d1-' + gender + ':regular-season')
   const games = fixtures.map(fixture => {
     if (fixture.gender !== gender) throw new Error('NCAA fixture gender and program membership must match')
@@ -53,6 +55,12 @@ export function projectNcaaD1Real2026Fixtures(
       || host === 'asunsports.org' || host === 'necsports.com'
       || host === 'unfospreys.com'
     )) throw new Error('NCAA fixture source must be an authorized university, conference or NCAA primary source')
+    if (fixture.corroboratingSourceUrl !== undefined) {
+      if (!fixture.corroboratingSourceUrl.startsWith('https://asunsports.org/schedule.aspx?schedule=') ||
+          fixture.corroboratingSourceUrl === fixture.sourceUrl) {
+        throw new Error('NCAA corroborating schedule must identify a different official conference team schedule')
+      }
+    }
     const key = [date, ...[fixture.homeProgramId, fixture.awayProgramId].sort()].join('|')
     if (seen.has(key)) throw new Error('Duplicate NCAA fixture with the same clubs and date')
     seen.add(key)
@@ -69,7 +77,9 @@ export function projectNcaaD1Real2026Fixtures(
       date, status: 'scheduled', result: null, stakes: 'regular',
       classification, competitionStageKey: 'REGULAR_SEASON',
     })
-    evidenceByGameId[id] = { url: fixture.sourceUrl, kind: fixture.evidenceKind }
+    evidenceByGameId[id] = { url: fixture.sourceUrl, kind: fixture.evidenceKind,
+      ...(fixture.corroboratingSourceUrl === undefined ? {} : { corroboratingSourceUrl: fixture.corroboratingSourceUrl }),
+    }
     return game
   })
   games.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
