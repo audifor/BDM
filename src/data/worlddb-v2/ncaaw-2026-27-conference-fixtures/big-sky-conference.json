@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "big-sky-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "memberCount": 11,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:eastern-washington-eagles",
+    "ncaa:2026-27:women:idaho-state-bengals",
+    "ncaa:2026-27:women:idaho-vandals",
+    "ncaa:2026-27:women:montana-lady-griz",
+    "ncaa:2026-27:women:montana-state-bobcats",
+    "ncaa:2026-27:women:northern-arizona-lumberjacks",
+    "ncaa:2026-27:women:northern-colorado-bears",
+    "ncaa:2026-27:women:portland-state-vikings",
+    "ncaa:2026-27:women:southern-utah-thunderbirds",
+    "ncaa:2026-27:women:utah-tech-trailblazers",
+    "ncaa:2026-27:women:weber-state-wildcats"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/eastern-washington-eagles",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/idaho-state-bengals",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/idaho-vandals",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/montana-lady-griz",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/montana-state-bobcats",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/northern-arizona-lumberjacks",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/northern-colorado-bears",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/portland-state-vikings",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/southern-utah-thunderbirds",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/utah-tech-trailblazers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/weber-state-wildcats"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:portland-state-vikings",
+      "listedGames": 24,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:montana-lady-griz",
+      "listedGames": 26,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:eastern-washington-eagles",
+      "listedGames": 25,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:idaho-vandals",
+      "listedGames": 24,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:northern-colorado-bears",
+      "listedGames": 24,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "listedGames": 26,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:montana-state-bobcats",
+      "listedGames": 25,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:idaho-state-bengals",
+      "listedGames": 25,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:weber-state-wildcats",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    }
+  ],
+  "fixtureCount": 0,
+  "nonD1OrUnmatched": [],
+  "fixtures": []
+}
