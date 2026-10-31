@@ -5,13 +5,13 @@ import type { RetainedSalaryTerm, TradeAssetMovement, TradeProposal, TradeRules 
 import type { TeamId } from '@/domain/ids'
 import { playerTransactionIdFromString } from '@/domain/ids'
 import { createRetainedSalaryObligation, createTradeRecord } from '@/domain/trade'
-import { getEcosystemForTeam, getTeamsForEcosystem, updateGameWorld, type GameWorld } from '@/domain/world'
+import { getEcosystemForTeam, getTeamsForEcosystem, isPlayerTeamCategoryCompatible, updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateTeamPayroll, calculateTeamSalaryStatus, getIncomingSalaryLimit } from '@/engine/salary'
 import { clearPlayerFromLineup } from '@/domain/tactics'
 import { assessActiveContractRosterIntegrity } from '@/engine/market/RosterContractIntegrity'
 
 export type TradeWindowStatus = 'OPEN' | 'NOT_OPEN' | 'CLOSED' | 'NOT_CONFIGURED'
-export type TradeValidationReason = 'RULES_UNAVAILABLE' | 'TRADE_WINDOW_NOT_OPEN' | 'TRADE_WINDOW_CLOSED' | 'TRADE_WINDOW_NOT_CONFIGURED' | 'INVALID_PARTICIPANT' | 'TOO_MANY_TEAMS' | 'EMPTY_PARTICIPANT' | 'ASSET_TYPE_NOT_ALLOWED' | 'ASSET_NOT_OWNED' | 'PLAYER_NOT_ON_TEAM' | 'PLAYER_CONTRACT_NOT_ACTIVE' | 'PLAYER_CONTRACT_ROSTER_INTEGRITY' | 'BINDING_SUCCESSOR_UNRESOLVED' | 'DUPLICATE_ASSET' | 'SAME_TEAM_MOVEMENT' | 'INVALID_FUTURE_PICK' | 'FUTURE_PICK_HORIZON_EXCEEDED' | 'INVALID_SWAP_RIGHT' | 'CASH_NOT_ALLOWED' | 'CASH_LIMIT_EXCEEDED' | 'CASH_SETTLEMENT_UNAVAILABLE' | 'RETAINED_SALARY_NOT_ALLOWED' | 'RETAINED_SALARY_LIMIT_EXCEEDED' | 'EXCEPTION_UNAVAILABLE' | 'SALARY_MATCHING_FAILED'
+export type TradeValidationReason = 'RULES_UNAVAILABLE' | 'TRADE_WINDOW_NOT_OPEN' | 'TRADE_WINDOW_CLOSED' | 'TRADE_WINDOW_NOT_CONFIGURED' | 'INVALID_PARTICIPANT' | 'PLAYER_CATEGORY_MISMATCH' | 'TOO_MANY_TEAMS' | 'EMPTY_PARTICIPANT' | 'ASSET_TYPE_NOT_ALLOWED' | 'ASSET_NOT_OWNED' | 'PLAYER_NOT_ON_TEAM' | 'PLAYER_CONTRACT_NOT_ACTIVE' | 'PLAYER_CONTRACT_ROSTER_INTEGRITY' | 'BINDING_SUCCESSOR_UNRESOLVED' | 'DUPLICATE_ASSET' | 'SAME_TEAM_MOVEMENT' | 'INVALID_FUTURE_PICK' | 'FUTURE_PICK_HORIZON_EXCEEDED' | 'INVALID_SWAP_RIGHT' | 'CASH_NOT_ALLOWED' | 'CASH_LIMIT_EXCEEDED' | 'CASH_SETTLEMENT_UNAVAILABLE' | 'RETAINED_SALARY_NOT_ALLOWED' | 'RETAINED_SALARY_LIMIT_EXCEEDED' | 'EXCEPTION_UNAVAILABLE' | 'SALARY_MATCHING_FAILED'
 export interface TeamTradeValidation { readonly teamId: string; readonly outgoingSalary: number; readonly incomingSalary: number; readonly incomingSalaryLimit?: number; readonly projectedPayroll?: number; readonly reasons: readonly TradeValidationReason[] }
 export interface TradeValidationResult { readonly allowed: boolean; readonly globalReasons: readonly TradeValidationReason[]; readonly teamResults: readonly TeamTradeValidation[] }
 export interface TradeExecutionResult { readonly validation: TradeValidationResult; readonly world: GameWorld }
@@ -34,6 +34,7 @@ export function validateTrade(world: GameWorld, proposal: TradeProposal): TradeV
   for (const movement of proposal.movements) {
     if (!participants.includes(movement.fromTeamId) || !participants.includes(movement.toTeamId)) { add(movement.fromTeamId, 'INVALID_PARTICIPANT'); continue }
     if (movement.fromTeamId === movement.toTeamId) add(movement.fromTeamId, 'SAME_TEAM_MOVEMENT')
+    if (movement.asset.kind === 'player' && !isPlayerTeamCategoryCompatible(world, movement.asset.playerId, movement.toTeamId)) add(movement.toTeamId, 'PLAYER_CATEGORY_MISMATCH')
     const key = assetKey(movement)
     if (assetKeys.has(key)) add(movement.fromTeamId, 'DUPLICATE_ASSET'); else assetKeys.add(key)
     validateAssetOwnership(world, proposal, rules, movement, add)
