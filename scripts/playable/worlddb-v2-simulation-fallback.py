@@ -188,6 +188,8 @@ def nba_matrix_sim_document(row, participants):
     """
     if row.get('source_id') != 'pbm:DYN_championnat:44' or row.get('native_format_id') != 'competition:NAM:nba':
         return None
+    if not any(item.get('identity') == 'competition:NAM:nba' for item in row.get('official_documentary_evidence') or []):
+        return None
     if participants != 30:
         raise ValueError('NBA PBM requires 30 original clubs')
     path = Path(__file__).resolve().parents[2] / 'src/data/worlddb-v2/global-formats.json'
