@@ -34,6 +34,8 @@ it.skipIf(process.env.BDM_NCAA_REAL_NATIVE_ACCEPTANCE !== '1')(
       expect(world.competitions[Object.values(world.competitions)[0]!.id]?.rules.gameFormat.periodCount)
         .toBe(gender === 'men' ? 2 : 4)
       expect(created.fixtureCoverage).toBe('PARTIAL_OFFICIALLY_SOURCED')
+      expect(Object.keys(created.sourceEvidenceByGameId)).toEqual(Object.keys(world.games))
+      expect(Object.values(created.sourceEvidenceByGameId)[0]?.url).toContain('asunsports.org')
       const save = serializeGameWorldV4(world, '2026-10-31T09:00:00Z')
       const roundtripped = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(save)))
       validateGameWorld(roundtripped)
