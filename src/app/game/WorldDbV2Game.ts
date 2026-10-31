@@ -96,13 +96,24 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2C
         // chairman or invent a PBM identity to fill the sporting vacancy.
         const coachId = coach?.entity_id ?? String(generated.person.id);
         if (coach === undefined) {
+            // Staff profiles require a complete Person (birth date and physical
+            // dimensions) at the native bootstrap boundary. Generate these with
+            // the existing deterministic BDM bio stream, never with PBM IDs.
+            const bio = generatePlayerBio(coachId, 'SF', day, 1980);
             persons.push({
                 personId: coachId,
                 firstName: generated.person.identity.firstName,
                 lastName: generated.person.identity.lastName,
                 gender: team.gender,
-                dateOfBirth: '1980-01-01',
+                dateOfBirth: bio.dateOfBirth,
                 nationalityIds: [team.countryId],
+                measurementProvenance: bio.measurementProvenance,
+                physical: {
+                    heightCm: bio.heightCm,
+                    weightKg: bio.weightKg,
+                    wingspanCm: bio.wingspanCm,
+                    standingReachCm: bio.standingReachCm,
+                },
             });
         }
         // Reversible expansion of BDM's 13 canonical generated Staff values into the legacy 80-vector
