@@ -2,7 +2,9 @@ import { expect, it } from 'vitest'
 import { assertWorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 import { projectWorldDbV2 } from './WorldDbV2Game'
-import { worldDbV2Competition } from './WorldDbV2Competitions'
+import { worldDbV2Calendar, worldDbV2Competition } from './WorldDbV2Competitions'
+import { parseGameDate } from '@/domain/date'
+import { scheduleRoundsByCalendar } from '@/engine/competition/schedule/SchedulePolicy'
 
 const competitionId = 'pbm:DYN_championnat:92001'
 const sourceCountry = 'pbm:DYN_pays:8'
@@ -33,6 +35,14 @@ const format = {
   calendar: 'FORMAT_DERIVED_SIMULATION',
   formatProvenance: 'GENERATED_SIMULATION',
 }
+
+it('fits the largest generated double round robin within its fictional season', () => {
+  const start = parseGameDate('2025-07-01')
+  const calendar = worldDbV2Calendar({ ...format, teamCount: 56 }, start)!
+  const dates = scheduleRoundsByCalendar(110, start, calendar.regularSeasonWindow.endDate, calendar)
+  expect(dates).toHaveLength(110)
+  expect(dates.at(-1)).toBe('2026-05-24')
+})
 
 it('retains both original PBM clubs and generates minimum viable rosters and coaches only for simulation candidates', () => {
   const source = emptySourceSnapshot()
