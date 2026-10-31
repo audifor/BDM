@@ -130,6 +130,15 @@ it('plays four source groups, the second group stage and cross semifinals throug
   await exerciseFamily(wire, 16, 1, true, false)
 }, 180_000)
 
+it('plays NBL27 33-game matrix, six-team play-in, best-of-three semifinals and best-of-five final', async () => {
+  const wire = globalFormats.find(doc => doc.competition_id === 'competition:AUS:nbl')
+  expect(wire).toBeDefined()
+  expect(wire!.notes).toContain('GENERATED_SIMULATION')
+  const nodes = wire!.variants[0]!.nodes
+  expect(nodes.map(n => n.role)).toEqual(['REGULAR_SEASON', 'PLAY_IN', 'PLAY_IN', 'PLAY_IN', 'PLAYOFF', 'FINAL'])
+  await exerciseFamily(wire, 10, 2, false, false)
+}, 180_000)
+
 it('plays a generated matrix league through Save V4, playoffs and next edition', async () => {
   const wire = generated(6, false)
   const regular = wire.variants[0].nodes[0]
@@ -299,9 +308,9 @@ it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('projects every source
   expect(results.filter(r => r.status === 'PROJECTION_SAVE_PASS').length).toBeGreaterThanOrEqual(90)
 }, 600_000)
 
-it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 98 available catalog entries through the default application bundle', async () => {
+it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 99 available catalog entries through the default application bundle', async () => {
   const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
-  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(98)
+  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(99)
   for (const config of WORLDDB_V2_GLOBAL_COMPETITIONS) {
     const row = index.results.find((r: any) => r.source_id === config.sourceCompetitionId)
     const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
