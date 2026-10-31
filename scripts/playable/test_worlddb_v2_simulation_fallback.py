@@ -45,6 +45,33 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_gleague_two_phase_keeps_31_clubs_and_separate_14_36_stages(self):
+        row = {'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague',
+               'official_documentary_evidence': [{'identity': 'competition:NAM:gleague'}]}
+        original = copy.deepcopy(row)
+        doc = MODULE.gleague_two_phase_sim_document(row, 31)
+        self.assertEqual(row, original)
+        self.assertEqual(doc['competition_id'], 'competition:NAM:gleague')
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        regular = next(node for node in doc['variants'][0]['nodes'] if node['role'] == 'REGULAR_SEASON')
+        tipoff = next(node for node in doc['variants'][0]['nodes'] if node['key'] == 'TIP_OFF_TOURNAMENT')
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 36)
+        self.assertEqual(tipoff['pairing']['payload']['games_per_team'], 14)
+        self.assertTrue(regular['pairing']['payload']['bdm_gleague_two_phase_v1'])
+        self.assertEqual(regular['opponent_scope']['payload']['policy'], 'BDM_PINNED_GLEAGUE_CONFERENCES')
+        self.assertEqual(tipoff['opponent_scope']['payload']['policy'], 'BDM_PINNED_GLEAGUE_TIPOFF_REGIONS')
+        self.assertEqual([n['key'] for n in doc['variants'][0]['nodes'][-4:]],
+                         ['PLAYOFF_ROUND_1', 'CONFERENCE_SEMIFINALS', 'CONFERENCE_FINALS', 'GLEAGUE_FINALS'])
+
+    def test_gleague_does_not_substitute_itself_for_ambiguous_or_missing_PBM_evidence(self):
+        self.assertIsNone(MODULE.gleague_two_phase_sim_document({
+            'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague'}, 31))
+        with self.assertRaisesRegex(ValueError, '31 original clubs'):
+            MODULE.gleague_two_phase_sim_document({
+                'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague',
+                'official_documentary_evidence': [{'identity': 'competition:NAM:gleague'}]}, 30)
+
+
     def test_nba_matrix_preserves_documented_conferences_and_seed_graph(self):
         row = {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
                'competition': 'NBA', 'official_documentary_evidence': [{'identity': 'competition:NAM:nba'}]}
