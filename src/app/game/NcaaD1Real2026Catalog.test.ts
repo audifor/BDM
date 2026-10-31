@@ -228,8 +228,8 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
   })
 
   it('rejects unverified, duplicated, cross-gender or wrong-edition NCAA source fixtures', () => {
-    const m = sourceFixtureSample.fixtures[0]! as NcaaD1Real2026FixtureSource
-    const w = sourceFixtureSample.fixtures[1]! as NcaaD1Real2026FixtureSource
+    const m = sourceFixtureSample.fixtures.find(fixture => fixture.gender === 'men')! as NcaaD1Real2026FixtureSource
+    const w = sourceFixtureSample.fixtures.find(fixture => fixture.gender === 'women')! as NcaaD1Real2026FixtureSource
     expect(() => projectNcaaD1Real2026Fixtures('men', [w])).toThrow(/gender/)
     expect(() => projectNcaaD1Real2026Fixtures('men', [m, m])).toThrow(/Duplicate/)
     expect(() => projectNcaaD1Real2026Fixtures('men', [{ ...m, date: '2018-01-07' }])).toThrow(/another edition/)
