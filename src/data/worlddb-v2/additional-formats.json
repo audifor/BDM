@@ -183,5 +183,460 @@
         "scope": "20 participating clubs"
       }
     ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-women-championship",
+    "competition_season_id": "edition:USA:ncaa-d1-women-championship:2026-27",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "OFFICIAL 2027 NCAA Division I Women's Basketball Championship format: 76-team field (32 conference automatic qualifiers and 44 at-large). The bottom 12 automatic qualifiers and bottom 12 at-large teams play separate six-game Opening Round paths; 12 winners join 52 byes in the 64-team First Round. NCAA women's campus hosts and dates apply, never men's neutral-site Opening Round or Detroit Final Four. The 363 women's DI teams figure is projected sponsorship, not a verified season roster or conference-membership mapping. Bracket entrants and placement are selected by the women's committee, not supplied here.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2027 NCAA Division I Women's Basketball Championship",
+        "scope": null,
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "COMMITTEE_SELECTION",
+          "payload": {
+            "at_large": 44,
+            "at_large_selection": "NCAA_DIVISION_I_WOMENS_BASKETBALL_COMMITTEE",
+            "automatic_qualifier_source": "CONFERENCE_TOURNAMENT_CHAMPIONS_OR_NCAA_APPROVED_CONFERENCE_CHAMPIONS",
+            "automatic_qualifiers": 32,
+            "eligibility_boundary": "B14_ROSTER_REGISTRATION",
+            "field_size": 76,
+            "selection_phase": "SELECT_44_AT_LARGE"
+          }
+        },
+        "seeding": {
+          "scheme_type": "COMMITTEE",
+          "basis": [
+            {
+              "bracketing_constraints": [
+                "WOMENS_CHAMPIONSHIP_NCAA_APPROVED_SEEDING_AND_BRACKETING"
+              ],
+              "opening_round_at_large": 12,
+              "opening_round_automatic_qualifiers": 12,
+              "phases": [
+                "SELECT",
+                "SEED",
+                "PLACE"
+              ],
+              "rank_count": 76,
+              "source": "NCAA_WOMENS_COMMITTEE_OVERALL_SEED_LIST"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "FIELD",
+            "node_type": "STAGE",
+            "role": "QUALIFIER",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 76,
+            "pairing": null,
+            "opponent_scope": null,
+            "contest": null,
+            "hosting": null,
+            "carryover": null
+          },
+          {
+            "key": "OPENING_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 24,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "automatic_qualifier_games": 6,
+                "at_large_games": 6,
+                "cross_class_pairing": false,
+                "game_count": 12,
+                "automatic_qualifier_pairing": "LOWEST_12_AUTOMATIC_QUALIFIERS_WITHIN_CLASS",
+                "at_large_pairing": "LOWEST_12_AT_LARGE_WITHIN_CLASS",
+                "site_policy": "CAMPUS_HOSTS_SELECTED_FROM_TOP_16_SEEDS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "dates": [
+                  "2027-03-17",
+                  "2027-03-18"
+                ],
+                "site_type": "CAMPUS",
+                "host_source": "12_OF_TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 64,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "regional_bracket": true,
+                "regions": 4,
+                "seed_lines": 16,
+                "teams_per_region": 16
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "CAMPUS",
+                "host_source": "TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "SECOND_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 32,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "FIRST_ROUND_BRACKET_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "CAMPUS",
+                "host_source": "TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "SWEET_16",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "REGIONAL_BRACKET_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "REGIONAL",
+                "locations": [
+                  "Philadelphia, Pennsylvania",
+                  "Las Vegas, Nevada"
+                ],
+                "dates": [
+                  "2027-03-26",
+                  "2027-03-27"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "ELITE_EIGHT",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": "QUARTERFINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "REGIONAL_FINAL_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "REGIONAL",
+                "locations": [
+                  "Philadelphia, Pennsylvania",
+                  "Las Vegas, Nevada"
+                ],
+                "dates": [
+                  "2027-03-28",
+                  "2027-03-29"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FINAL_FOUR",
+            "node_type": "ROUND",
+            "role": "FINAL_FOUR",
+            "specialized_type": "SEMIFINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "source": "REGION_CHAMPIONS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "dates": [
+                  "2027-04-02"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "specialized_type": "FINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "source": "FINAL_FOUR_WINNERS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "dates": [
+                  "2027-04-04"
+                ]
+              }
+            },
+            "carryover": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "FIELD",
+            "to": "OPENING_ROUND",
+            "selector": "BOTTOM_N",
+            "rank_from": null,
+            "rank_to": null,
+            "count": 24,
+            "payload": {
+              "partition": [
+                {
+                  "count": 12,
+                  "qualification_class": "AUTOMATIC_QUALIFIER",
+                  "selection": "LOWEST_SEEDED"
+                },
+                {
+                  "count": 12,
+                  "qualification_class": "AT_LARGE",
+                  "selection": "LOWEST_SEEDED"
+                }
+              ]
+            }
+          },
+          {
+            "from": "FIELD",
+            "to": "FIRST_ROUND",
+            "selector": "BYE",
+            "rank_from": null,
+            "rank_to": null,
+            "count": 52,
+            "payload": {
+              "description": "All field members not assigned to the Opening Round advance directly to the 64-team First Round"
+            }
+          },
+          {
+            "from": "OPENING_ROUND",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "SECOND_ROUND",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "SECOND_ROUND",
+            "to": "SWEET_16",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "SWEET_16",
+            "to": "ELITE_EIGHT",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "ELITE_EIGHT",
+            "to": "FINAL_FOUR",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "FINAL_FOUR",
+            "to": "FINAL",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.ncaa.org/news/media-center-ncaa-reveals-new-76-team-bracket-for-di-mens-and-womens-basketball-championships/",
+        "type": "OFFICIAL",
+        "scope": "2027 both-gender 76-team championship, 12 opening games, 32 AQ, 44 at-large"
+      },
+      {
+        "url": "https://www.ncaa.com/news/basketball-women/article/2026-05-07/2027-march-madness-womens-ncaa-tournament-schedule-dates-times",
+        "type": "OFFICIAL",
+        "scope": "2027 women's host location and round-specific calendar"
+      },
+      {
+        "url": "https://www.ncaa.org/about-us/membership-directory/membership-composition-and-sport-sponsorship/",
+        "type": "OFFICIAL",
+        "scope": "2026-27 projected Division I women's basketball program count 363, not a program affiliation list"
+      }
+    ]
   }
 ]
