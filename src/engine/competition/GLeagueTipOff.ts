@@ -50,6 +50,7 @@ export function calculateGLeagueTipOffStandings(world: GameWorld, seasonId: Seas
     for (const game of games) {
       const home = byTeam.get(game.homeTeamId), away = byTeam.get(game.awayTeamId)
       if (!home || !away) continue
+      if (!game.result) throw new Error('Completed G League Tip-Off fixture has no score')
       home.played++; away.played++
       home.pointsFor += game.result.homeScore; home.pointsAgainst += game.result.awayScore
       away.pointsFor += game.result.awayScore; away.pointsAgainst += game.result.homeScore
