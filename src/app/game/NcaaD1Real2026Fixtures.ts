@@ -4,7 +4,7 @@ import { competitionIdFromString, gameIdFromString } from '@/domain/ids'
 import { classifyNcaaGame } from '@/engine/competition/schedule'
 import { buildNcaaD1Real2026ConferenceSnapshot, type NcaaD1RealGender } from './NcaaD1Real2026Conferences'
 
-/** Input boundary for official, season-dated NCAA fixtures.
+/** Input boundary for source-dated NCAA fixtures; primary and secondary provenance are distinct.
  *
  * One fixture must cite its announcing school/conference. Never invent a
  * game to fill an incomplete schedule. The domain's existing conference
@@ -18,7 +18,7 @@ export interface NcaaD1Real2026FixtureSource {
   readonly sourceUrl: string
   /** Second independent official institution entry for cross-confirmed fixtures. */
   readonly corroboratingSourceUrl?: string
-  readonly evidenceKind: 'CONFERENCE_OFFICIAL' | 'SCHOOL_OFFICIAL' | 'NCAA_OFFICIAL'
+  readonly evidenceKind: 'CONFERENCE_OFFICIAL' | 'SCHOOL_OFFICIAL' | 'NCAA_OFFICIAL' | 'SECONDARY_DIRECTORY'
 }
 
 export interface NcaaD1Real2026FixtureProjection {
@@ -49,12 +49,23 @@ export function projectNcaaD1Real2026Fixtures(
     if (fixture.homeProgramId === fixture.awayProgramId) throw new Error('NCAA fixture requires distinct teams')
     let host: string
     try { host = new URL(fixture.sourceUrl).hostname.toLowerCase() } catch { throw new Error('NCAA fixture requires a verifiable official source URL') }
-    if (!fixture.sourceUrl.startsWith('https://') || !(
+    const secondary = fixture.evidenceKind === 'SECONDARY_DIRECTORY'
+    if (secondary) {
+      // Never silently promote a third-party listing to officially
+      // corroborated evidence or borrow official confirmation status.
+      if (host !== 'www.ncaawomensbasketball.com' ||
+          !fixture.sourceUrl.startsWith('https://www.ncaawomensbasketball.com/womens-college-basketball/game/')) {
+        throw new Error('NCAA third-party fixture must retain its restricted secondary-directory provenance')
+      }
+    } else if (!fixture.sourceUrl.startsWith('https://') || !(
       host === 'ncaa.org' || host.endsWith('.ncaa.org')
       || host.endsWith('.edu') || host.endsWith('.edu.au')
       || host === 'asunsports.org' || host === 'necsports.com'
       || host === 'unfospreys.com'
     )) throw new Error('NCAA fixture source must be an authorized university, conference or NCAA primary source')
+    if (secondary && fixture.corroboratingSourceUrl !== undefined) {
+      throw new Error('NCAA secondary directory cannot claim independent official corroboration')
+    }
     if (fixture.corroboratingSourceUrl !== undefined) {
       if (!fixture.corroboratingSourceUrl.startsWith('https://asunsports.org/schedule.aspx?schedule=') ||
           fixture.corroboratingSourceUrl === fixture.sourceUrl) {
