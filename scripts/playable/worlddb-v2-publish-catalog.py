@@ -40,11 +40,14 @@ def main():
     families = {rows[key]['family_signature'] for key in certified if key in rows and rows[key].get('family_signature')}
     successful = {}
     for row in results:
-        generated = row.get('format_mode') == 'GENERATED_SIMULATION_CANDIDATE' or row.get('config', {}).get('formatProvenance') == 'GENERATED_SIMULATION'
-        # Generated formats share the same round-robin family signature. A
-        # single native acceptance cannot certify 98 unrelated PBM populations,
-        # and match/save alone is not a certified global market flow.
-        accepted = (row['source_id'] in certified and row.get('market_flow') == 'PASS') if generated \
+        provenance = row.get('config', {}).get('formatProvenance')
+        generated = row.get('format_mode') == 'GENERATED_SIMULATION_CANDIDATE' or provenance == 'GENERATED_SIMULATION'
+        reused_documented = row.get('format_mode') == 'REUSED_DOCUMENTED_FORMAT_CANDIDATE' or provenance == 'REUSED_DOCUMENTED_FORMAT'
+        # A documented format is NOT an engine adapter or Windows acceptance.
+        # Neither reused candidates nor generated ones inherit certification
+        # from another competition that happens to share their family signature.
+        requires_individual_acceptance = generated or reused_documented
+        accepted = (row['source_id'] in certified and row.get('market_flow') == 'PASS') if requires_individual_acceptance \
             else (row['source_id'] in certified or row.get('family_signature') in families)
         if row.get('minimum_flow') != 'PASS' or not (accepted or args.candidates):
             continue

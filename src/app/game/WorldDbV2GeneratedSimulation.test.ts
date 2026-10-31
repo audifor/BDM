@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
-import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
+import { parseWorldCompetitionFormatDocument, parseWorldCompetitionRuntimeBundle } from '@/domain/competition'
+import reference from '@/data/worlddb-v2/competition-runtime.json'
 import { worldDbV2ConnectionBlockers, worldDbV2FamilySignature } from './WorldDbV2Connection'
 
 // Mirror the wire contract emitted by worlddb-v2-simulation-fallback.py. The
@@ -51,4 +52,13 @@ it('parses a generated, odd-team 13-club candidate and passes the shared round-r
 it('does not let a generated format disguise an edition with the wrong PBM participant count', () => {
   const format = parseWorldCompetitionFormatDocument(generated)
   expect(worldDbV2ConnectionBlockers(format, 12).join(' ')).toContain('13 participants, PBM supplies 12')
+})
+
+it('keeps the shipped NBA format separate from the generic two-leg league simulator', () => {
+  const runtime = parseWorldCompetitionRuntimeBundle(reference)
+  const nba = runtime.competitionFormats.find(format => format.competitionId === 'competition:NAM:nba')
+  expect(nba?.status).toBe('COMPLETE')
+  expect(nba?.variants[0]?.nodes.find(node => node.role === 'REGULAR_SEASON')?.pairing?.type).toBe('FIXED_SCHEDULE')
+  // The existing single-stage adapter is not a valid 82-game NBA engine.
+  expect(worldDbV2ConnectionBlockers(nba!, 30).join(' ')).toContain('requires its own existing scheduling authority')
 })

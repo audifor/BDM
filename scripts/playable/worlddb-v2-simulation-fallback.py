@@ -21,6 +21,8 @@ if not INDEX.is_file() and "BDM_WORLDDB_V2_BATCH_INDEX" not in os.environ:
         INDEX = previous
 PUBLISHED = ROOT / "src/data/worlddb-v2/competitions.json"
 OUTPUT = ROOT / ".worlddb-v2/generated-simulation-candidates"
+ADDITIONAL_FORMATS = ROOT / "src/data/worlddb-v2/additional-formats.json"
+PGM_FORMATS_DIR = Path(os.environ.get("BDM_PGM_SOURCE", "C:/BDM_DB/PBM_WORLD_EXPERIMENT/pgm-source")) / "reference-packs/competition-formats/seasons"
 SOURCE_URL = "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py"
 MASTER_SHA = "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f"
 
@@ -145,7 +147,59 @@ def simulation_document(source_id, name, participants):
     return document
 
 
-def build_package(matrix, batch, published):
+def reusable_documented_format(row, participants, documents):
+    """Reuse an explicitly mapped, complete, matching format before synthesizing.
+
+    An identity match does not certify its native engine adapter or historical
+    edition. Missing/ambiguous documents are a simulation fallback, not a guess.
+    """
+    reference_id = row.get("native_format_id")
+    if not reference_id:
+        return None, "NO_MAPPED_FORMAT"
+    matches = [doc for doc in documents if doc.get("competition_id") == reference_id]
+    valid = []
+    for doc in matches:
+        if doc.get("status") != "COMPLETE":
+            continue
+        variants = doc.get("variants", [])
+        for variant in variants:
+            regular = [node for node in variant.get("nodes", []) if node.get("role") == "REGULAR_SEASON"]
+            if len(regular) == 1 and regular[0].get("team_count") == participants:
+                valid.append(doc)
+                break
+    unique = {doc.get("competition_season_id"): doc for doc in valid}
+    if len(unique) == 1:
+        return next(iter(unique.values())), "COMPLETE_MATCHING_DOCUMENT"
+    if len(unique) > 1:
+        return None, "AMBIGUOUS_DOCUMENTED_EDITION"
+    return None, "DOCUMENTED_REFERENCE_NOT_USABLE"
+
+
+def load_format_documents(paths):
+    """Read known BDM/PGM formats, including the existing PGM seasons directory.
+
+    Read-only input. A collection of edition documents may contain different
+    statuses; only one complete format with matching participants is reused.
+    """
+    documents = []
+    for root in paths:
+        root = Path(root)
+        sources = sorted(root.rglob("*.json")) if root.is_dir() else [root]
+        if not sources:
+            raise ValueError("Format directory has no JSON documents: " + str(root))
+        for path in sources:
+            payload = read(path)
+            items = (payload if isinstance(payload, list) else
+                     payload.get("competition_formats", [payload]) if isinstance(payload, dict) else None)
+            if not isinstance(items, list) or any(not isinstance(doc, dict) or
+                   not doc.get("competition_id") or not doc.get("competition_season_id")
+                   for doc in items):
+                raise ValueError("Unsupported documented format source: " + str(path))
+            documents.extend(items)
+    return documents
+
+
+def build_package(matrix, batch, published, reusable_formats=()):
     if matrix.get("total") != 102 or len(matrix.get("competitions", [])) != 102:
         raise ValueError("Require the certified 102-row family matrix")
     if batch.get("total") != 102 or len(batch.get("results", [])) != 102:
@@ -161,8 +215,11 @@ def build_package(matrix, batch, published):
         raise ValueError("Existing four certified league configurations must remain untouched")
     candidates = list(published)
     documents = []
+    reused_documents = []
     evidence = []
     ncaa_plan = None
+    reused = 0
+    referenced_fallbacks = 0
     for source_id in sorted(rows, key=lambda x: int(x.rsplit(":", 1)[-1])):
         row, build = rows[source_id], builds[source_id]
         expected_count = row["pbm"]["clubs"]
@@ -196,6 +253,39 @@ def build_package(matrix, batch, published):
                 "official_fidelity": "NOT_CERTIFIED",
             })
             continue
+        existing_format, reference_resolution = reusable_documented_format(
+            row, expected_count, reusable_formats
+        )
+        reference_id = row.get("native_format_id")
+        if existing_format is not None:
+            # The document is not cloned and its native competition/edition IDs
+            # remain intact. Runtime binding and Windows acceptance are separate.
+            reused += 1
+            reused_documents.append(existing_format)
+            candidates.append({
+                **config,
+                "nativeCompetitionId": existing_format["competition_id"],
+                "editionId": existing_format["competition_season_id"],
+                "name": row["competition"],
+                "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
+                "nativeStatus": "CANDIDATE_DOCUMENTED_FORMAT_ENGINE_PENDING",
+                "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+                "formatReferenceId": existing_format["competition_id"],
+                "formatReferenceResolution": reference_resolution,
+            })
+            evidence.append({
+                "source_id": source_id, "name": row["competition"],
+                "original_clubs": expected_count, "source_status": row["status"],
+                "format_provenance": "REUSED_DOCUMENTED_FORMAT",
+                "format_reference_id": existing_format["competition_id"],
+                "format_reference_edition": existing_format["competition_season_id"],
+                "expected_regular_games": None,
+                "native_status": "ENGINE_BINDING_PENDING",
+                "official_fidelity": "EDITION_AND_NATIVE_ACCEPTANCE_PENDING",
+            })
+            continue
+        if reference_id:
+            referenced_fallbacks += 1
         document = simulation_document(source_id, row["competition"], expected_count)
         documents.append(document)
         candidates.append({
@@ -206,27 +296,35 @@ def build_package(matrix, batch, published):
             "name": row["competition"],
             "calendar": "FORMAT_DERIVED_SIMULATION",
             "nativeStatus": "CANDIDATE_NATIVE_PENDING",
-            "formatProvenance": "GENERATED_SIMULATION"
+            "formatProvenance": "GENERATED_SIMULATION",
+            **({"formatReferenceId": reference_id,
+                "formatReferenceResolution": reference_resolution} if reference_id else {}),
         })
         games = expected_count * (expected_count - 1)
         evidence.append({
             "source_id": source_id, "name": row["competition"],
             "original_clubs": expected_count, "source_status": row["status"],
             "format_provenance": "GENERATED_SIMULATION",
+            **({"format_reference_id": reference_id,
+                "format_reference_resolution": reference_resolution} if reference_id else {}),
             "expected_regular_games": games,
             "large_schedule_warning": games > 2000,
             "native_status": "NOT_TESTED",
             "official_fidelity": "NOT_CLAIMED"
         })
-    if len(documents) != 97 or len(candidates) != 102 or ncaa_plan is None:
-        raise ValueError("Expected 97 round-robin candidates, 1 NCAA reference and 4 original leagues")
-    if len({d["competition_id"] for d in documents}) != 97:
+    expected_new = 102 - len(existing) - 1
+    if len(documents) + reused != expected_new or len(candidates) != 102 or ncaa_plan is None:
+        raise ValueError("Expected 102 identities: originals, reused formats, generated formats and NCAA")
+    if len({d["competition_id"] for d in documents}) != len(documents):
         raise ValueError("Generated format collision")
     return {
-        "formats": documents, "catalog": candidates, "ncaa_plan": ncaa_plan,
+        "formats": documents, "reused_formats": reused_documents,
+        "catalog": candidates, "ncaa_plan": ncaa_plan,
         "manifest": {
             "total": 102, "original_playable": 4,
-            "generated_simulation_candidates": 97,
+            "generated_simulation_candidates": len(documents),
+            "reused_documented_format_candidates": reused,
+            "generated_with_documented_reference": referenced_fallbacks,
             "ncaa_existing_rules_pending_membership": 1,
             "published_new_competitions": 0,
             "certified_new_competitions": 0,
@@ -243,11 +341,23 @@ def main():
     parser.add_argument("--batch", type=Path, default=INDEX)
     parser.add_argument("--published", type=Path, default=PUBLISHED)
     parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--format-source", action="append", type=Path, default=[],
+                        help="Additional read-only PGM/B04 format JSON file or directory; repeatable")
+    parser.add_argument("--pgm-formats-dir", type=Path, default=PGM_FORMATS_DIR,
+                        help="Existing PGM seasons reference-pack directory, imported read-only if present")
     args = parser.parse_args()
-    package = build_package(read(args.matrix), read(args.batch), read(args.published))
+    # Reuse the PGM reference packs already on the developer's disk. Missing
+    # optional private sources never prevent the checked-in bundle from working.
+    sources = [NCAA_BUNDLE, ADDITIONAL_FORMATS]
+    if args.pgm_formats_dir.is_dir():
+        sources.append(args.pgm_formats_dir)
+    documented = load_format_documents([*sources, *args.format_source])
+    package = build_package(read(args.matrix), read(args.batch), read(args.published),
+                            reusable_formats=documented)
     args.output.mkdir(parents=True, exist_ok=True)
     for key, filename in [
         ("formats", "simulation-formats.json"),
+        ("reused_formats", "reused-documented-formats.json"),
         ("catalog", "candidate-competitions.json"),
         ("ncaa_plan", "ncaa-existing-rules-plan.json"),
         ("manifest", "manifest.json")
@@ -258,6 +368,7 @@ def main():
     print(json.dumps({
         "candidates": len(package["catalog"]),
         "generated": len(package["formats"]),
+        "reused": package["manifest"]["reused_documented_format_candidates"],
         "published": 0,
         "output": str(args.output)
     }))
