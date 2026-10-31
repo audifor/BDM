@@ -62,7 +62,7 @@ export function projectNcaaD1Real2026Fixtures(
     } else if (!fixture.sourceUrl.startsWith('https://') || !(
       host === 'ncaa.org' || host.endsWith('.ncaa.org')
       || host.endsWith('.edu') || host.endsWith('.edu.au')
-      || host === 'asunsports.org' || host === 'necsports.com'
+      || host === 'asunsports.org' || host === 'necsports.com' || host === 'www.bigten.org' || host === 'bigten.org' || host === 'pac-12.com' || host === 'mvc-sports.com'
       || host === 'unfospreys.com'
     )) throw new Error('NCAA fixture source must be an authorized university, conference or NCAA primary source')
     if (secondary && fixture.corroboratingSourceUrl !== undefined) {

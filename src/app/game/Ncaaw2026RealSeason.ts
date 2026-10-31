@@ -1,4 +1,7 @@
 import officialAsun from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
+import officialBigTen from '@/data/worlddb-v2/ncaaw-2026-27-big-ten-official.json'
+import officialPac12 from '@/data/worlddb-v2/ncaaw-2026-27-pac12-official.json'
+import officialMvc from '@/data/worlddb-v2/ncaaw-2026-27-mvc-official.json'
 import programs from '@/data/worlddb-v2/ncaa-d1-2026-27-programs.json'
 import { createNcaaD1Real2026WorldSeed, type NcaaD1Real2026NativeSeed } from './NcaaD1Real2026WorldSeed'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
@@ -22,6 +25,9 @@ export interface NcaawSourceCorpus {
 export interface Ncaaw2026Coverage {
   readonly sourcedGames: number
   readonly officialAsunGames: number
+  readonly officialBigTenGames: number
+  readonly officialPac12Games: number
+  readonly officialMvcGames: number
   readonly otherUnverifiedGames: number
   readonly distinctProgramsWithGames: number
   readonly womenConferences: 32
@@ -72,6 +78,62 @@ export function prepareNcaaw2026RealCalendar(corpus: NcaawSourceCorpus): Ncaaw20
     }
     fixtures.set(byDatePair(game), game as NcaaD1Real2026FixtureSource)
   }
+  const bigTenTeams = programs.genders.women.teams.filter(team => team.conferenceId === 'big-ten-conference')
+  const bigTenIds = new Set(bigTenTeams.map(team => team.id))
+  const bigTenCounts = new Map(bigTenTeams.map(team => [team.id, 0]))
+  const bigTenHomes = new Map(bigTenTeams.map(team => [team.id, 0]))
+  const bigTenOpponents = new Map(bigTenTeams.map(team => [team.id, new Set<string>()]))
+  if (officialBigTen.season !== '2026-27' || officialBigTen.fixtures.length !== 162 || bigTenIds.size !== 18) {
+    throw new Error('NCAAW official Big Ten conference calendar is incomplete')
+  }
+  const bigTenPairs = new Set<string>()
+  for (const game of officialBigTen.fixtures) {
+    const key = byDatePair(game)
+    if (game.gender !== 'women' || game.evidenceKind !== 'CONFERENCE_OFFICIAL' ||
+        game.sourceUrl !== officialBigTen.sourceUrl || !bigTenIds.has(game.homeProgramId) ||
+        !bigTenIds.has(game.awayProgramId) || bigTenPairs.has(key)) {
+      throw new Error('NCAAW official Big Ten fixture identity or provenance is invalid')
+    }
+    bigTenPairs.add(key)
+    bigTenCounts.set(game.homeProgramId, bigTenCounts.get(game.homeProgramId)! + 1)
+    bigTenCounts.set(game.awayProgramId, bigTenCounts.get(game.awayProgramId)! + 1)
+    bigTenHomes.set(game.homeProgramId, bigTenHomes.get(game.homeProgramId)! + 1)
+    bigTenOpponents.get(game.homeProgramId)!.add(game.awayProgramId)
+    bigTenOpponents.get(game.awayProgramId)!.add(game.homeProgramId)
+    fixtures.set(key, game as NcaaD1Real2026FixtureSource)
+  }
+  if ([...bigTenCounts.values()].some(count => count !== 18) ||
+      [...bigTenHomes.values()].some(count => count !== 9) ||
+      [...bigTenOpponents.values()].some(opponents => opponents.size !== 17)) {
+    throw new Error('NCAAW Big Ten requires 18 games, nine home games and 17 opponents per team')
+  }
+  const mergeDoubleRoundRobin = (source: { readonly season: string; readonly sourceUrl: string; readonly fixtures: readonly { readonly gender: string; readonly date: string; readonly homeProgramId: string; readonly awayProgramId: string; readonly sourceUrl: string; readonly evidenceKind: string }[] }, conferenceId: string, teamCount: number) => {
+    const members = programs.genders.women.teams.filter(team => team.conferenceId === conferenceId)
+    const ids = new Set(members.map(team => team.id))
+    const counts = new Map(members.map(team => [team.id, 0]))
+    const pairs = new Map<string, string[]>()
+    if (source.season !== '2026-27' || ids.size !== teamCount || source.fixtures.length !== teamCount * (teamCount - 1)) {
+      throw new Error(`NCAAW ${conferenceId} conference calendar is incomplete`)
+    }
+    for (const game of source.fixtures) {
+      if (game.gender !== 'women' || game.evidenceKind !== 'CONFERENCE_OFFICIAL' || game.sourceUrl !== source.sourceUrl ||
+          !ids.has(game.homeProgramId) || !ids.has(game.awayProgramId) || game.homeProgramId === game.awayProgramId) {
+        throw new Error(`NCAAW ${conferenceId} fixture identity or provenance is invalid`)
+      }
+      const pair = [game.homeProgramId, game.awayProgramId].sort().join('|')
+      pairs.set(pair, [...(pairs.get(pair) ?? []), game.homeProgramId])
+      counts.set(game.homeProgramId, counts.get(game.homeProgramId)! + 1)
+      counts.set(game.awayProgramId, counts.get(game.awayProgramId)! + 1)
+      fixtures.set(byDatePair(game), game as NcaaD1Real2026FixtureSource)
+    }
+    if ([...counts.values()].some(count => count !== 2 * (teamCount - 1)) ||
+        pairs.size !== teamCount * (teamCount - 1) / 2 ||
+        [...pairs.values()].some(homes => homes.length !== 2 || homes[0] === homes[1])) {
+      throw new Error(`NCAAW ${conferenceId} requires a complete home-and-away conference calendar`)
+    }
+  }
+  mergeDoubleRoundRobin(officialPac12, 'pac-12-conference', 9)
+  mergeDoubleRoundRobin(officialMvc, 'missouri-valley-conference', 11)
   const dated = [...fixtures.values()].sort((a, b) => a.date.localeCompare(b.date)
     || a.homeProgramId.localeCompare(b.homeProgramId) || a.awayProgramId.localeCompare(b.awayProgramId))
   const playedBy = new Set<string>()
@@ -91,7 +153,10 @@ export function prepareNcaaw2026RealCalendar(corpus: NcaawSourceCorpus): Ncaaw20
     coverage: {
       sourcedGames: dated.length,
       officialAsunGames: 56,
-      otherUnverifiedGames: dated.length - 56,
+      officialBigTenGames: 162,
+      officialPac12Games: 72,
+      officialMvcGames: 110,
+      otherUnverifiedGames: dated.length - 56 - 162 - 72 - 110,
       distinctProgramsWithGames: participantIds.size,
       womenConferences: 32,
       officialFullSeasonCertification: false,

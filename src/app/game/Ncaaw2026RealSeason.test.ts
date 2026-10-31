@@ -1,8 +1,21 @@
 import { expect, it } from 'vitest'
 import programs from '@/data/worlddb-v2/ncaa-d1-2026-27-programs.json'
+import corpus from '@/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json'
 import { validateGameWorld } from '@/domain/world'
 import { serializeGameWorldV4, deserializeGameWorldSaveV4 } from '@/save/GameWorldSaveV4'
-import { createNcaaw2026FromCheckedInSources } from './Ncaaw2026RealSeason'
+import { createNcaaw2026FromCheckedInSources, prepareNcaaw2026RealCalendar, type NcaawSourceCorpus } from './Ncaaw2026RealSeason'
+
+it('merges official Big Ten and Pac-12 calendars without certifying the full season', () => {
+  const calendar = prepareNcaaw2026RealCalendar(corpus as NcaawSourceCorpus)
+  expect(calendar.coverage.officialBigTenGames).toBe(162)
+  expect(calendar.coverage.officialPac12Games).toBe(72)
+  expect(calendar.coverage.officialMvcGames).toBe(110)
+  expect(calendar.coverage.officialFullSeasonCertification).toBe(false)
+  const corrected = calendar.fixtures.find(game => game.date === '2027-02-14'
+    && game.homeProgramId === 'ncaa:2026-27:women:colorado-state-rams'
+    && game.awayProgramId === 'ncaa:2026-27:women:washington-state-cougars')
+  expect(corrected?.evidenceKind).toBe('CONFERENCE_OFFICIAL')
+})
 
 /** This is not a source-less toy simulation. CI runs it only after collecting
  * all 363 publicly listed NCAAW school schedules and all 56 primary-source
@@ -22,6 +35,9 @@ it.skipIf(process.env.BDM_NCAAW_REAL_ACCEPTANCE !== '1')(
     expect(Object.values(world.games).length).toBe(seeded.calendarCoverage.sourcedGames)
     expect(seeded.calendarCoverage.distinctProgramsWithGames).toBe(363)
     expect(seeded.calendarCoverage.officialAsunGames).toBe(56)
+    expect(seeded.calendarCoverage.officialBigTenGames).toBe(162)
+    expect(seeded.calendarCoverage.officialPac12Games).toBe(72)
+    expect(seeded.calendarCoverage.officialMvcGames).toBe(110)
     expect(seeded.calendarCoverage.otherUnverifiedGames).toBeGreaterThan(0)
     expect(seeded.calendarCoverage.officialFullSeasonCertification).toBe(false)
     expect(Object.values(world.games).every(g => g.status === 'scheduled')).toBe(true)
