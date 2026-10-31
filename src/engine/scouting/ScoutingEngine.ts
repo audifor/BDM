@@ -17,7 +17,7 @@ import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/do
 import { getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleIdsInDepartment, type StaffRoleId } from '@/domain/staff'
 import { createEvaluatorProfile, SCOUTING_TERRITORY_WORKLOAD_COST, type EvaluatorFinding, type EvaluatorProfile, type EvaluatorReport, type Evidence, type ScoutingAssignment, type ScoutingMission, type ScoutingPriority } from '@/domain/scouting'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerTeamCategoryCompatible, updateGameWorld, type GameWorld } from '@/domain/world'
 
 const missionUnits: Readonly<Record<ScoutingMission, number>> = { QUICK_LOOK: 1, FULL_REPORT: 4, SKILL_EVALUATION: 2, POTENTIAL_EVALUATION: 2, TACTICAL_FIT: 2, LIVE_GAME: 2 }
 const missionDays: Readonly<Record<ScoutingMission, number>> = { QUICK_LOOK: 1, FULL_REPORT: 5, SKILL_EVALUATION: 3, POTENTIAL_EVALUATION: 3, TACTICAL_FIT: 3, LIVE_GAME: 1 }
@@ -41,6 +41,7 @@ export function requestScouting(world: GameWorld, input: { organizationId: Organ
   if (input.teamContextId !== undefined) {
     const team = world.teams[input.teamContextId]
     if (team === undefined || team.organizationId !== input.organizationId) throw new Error('Scouting team context does not belong to this organization')
+    if (!isPlayerTeamCategoryCompatible(world, input.playerId, team.id)) throw new Error('PLAYER_TEAM_CATEGORY_MISMATCH')
     if (!isScoutingEvaluatorEligible(world, team.id, evaluatorStaffId, input.missionType)) throw new Error('Selected Staff is not eligible for this Scouting mission')
   }
   if (Object.values(world.scoutingAssignmentsById).some((item) => item.organizationId === input.organizationId && item.subjectPlayerId === input.playerId && item.evaluatorStaffId === evaluatorStaffId && item.missionType === input.missionType && item.status !== 'COMPLETED' && item.status !== 'CANCELLED')) return world
