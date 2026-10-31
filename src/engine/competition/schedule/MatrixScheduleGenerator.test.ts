@@ -44,6 +44,9 @@ describe('generated WorldDB fixture matrix (never an official federation calenda
   it('supports a ten-club NBL-shaped 32-match fictional quota', () => {
     expect(inspect(10, 32).flat()).toHaveLength(160)
   })
+  it('supports the official 10 × 33 NBL27 game quota, with 16/17 home distribution', () => {
+    expect(inspect(10, 33).flat()).toHaveLength(165)
+  })
   it('supports 31 clubs × 50 games with byes and balanced home/away', () => {
     const rounds = inspect(31, 50)
     expect(rounds).toHaveLength(75)
