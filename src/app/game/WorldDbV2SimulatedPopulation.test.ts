@@ -74,6 +74,20 @@ it('leaves the source-backed population gate unchanged and never invents a PBM c
     .toThrow('PBM pilot club lacks an original head-coach candidate')
 })
 
+it('preserves the source competition and team genders for a women’s league', () => {
+  const source = emptySourceSnapshot()
+  const female = {
+    ...source,
+    competitions: source.competitions.map(c => ({ ...c, reference_data: { ...c.reference_data, sexe: 1 } })),
+    clubs: source.clubs.map(c => ({ ...c, reference_data: { ...c.reference_data, sexe: 1 } })),
+  }
+  const result = projectWorldDbV2(female, format)
+  expect(result.competition.gender).toBe('female')
+  expect(result.ecosystem.category).toBe('women')
+  expect(result.organizationSections.every(section => section.gender === 'FEMALE')).toBe(true)
+  expect(result.persons.every(person => person.gender === 'female')).toBe(true)
+})
+
 it('keeps original staffed teams unmodified when the simulation fallback is enabled', () => {
   const source = emptySourceSnapshot()
   const originalCoach = 'pbm:DYN_person:92001'

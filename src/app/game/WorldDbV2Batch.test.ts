@@ -21,6 +21,9 @@ import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable PBM competition without transferring rules or stopping on incompatibility', async () => {
   const directory = resolve('.worlddb-v2/batch-04')
   const index = JSON.parse(readFileSync(resolve(directory, 'index.json'), 'utf8'))
+  const selectedIds = new Set((process.env.BDM_WORLDDB_BATCH_IDS ?? '').split(',').filter(Boolean))
+  const rows = selectedIds.size ? index.results.filter((row: any) => selectedIds.has(row.source_id)) : index.results
+  if (selectedIds.size) expect(rows).toHaveLength(selectedIds.size)
   const reports: Record<string, any>[] = []
   const base = parseWorldCompetitionRuntimeBundle(reference)
   const compiled = additions.map(parseWorldCompetitionFormatDocument)
@@ -48,7 +51,7 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
     expect(collegePlan.reference_clubs).toBe(365)
     expect(collegePlan.team_membership).toBe('REQUIRES_SOURCE_IDENTITY_RECONCILIATION')
   }
-  for (const row of index.results) {
+  for (const row of rows) {
     const config = simulationMode ? candidateConfigs.get(row.source_id) : row.config
     const report: Record<string, any> = {
       ...row, config, native_projection: 'NOT_RUN', minimum_flow: 'NOT_RUN', status: 'BLOCKED',
@@ -164,11 +167,11 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
         : row.identity_scope === 'RESEARCH_ONLY' ? 'MAPPED_RESEARCH_ONLY' : row.identityEvidence ? 'PARTIAL_CONNECTION' : 'NEEDS_MAPPING'
     }
     reports.push(report)
-    writeFileSync(resolve(directory, 'native-results.json'), JSON.stringify({ total: reports.length, results: reports }, null, 2))
+    writeFileSync(resolve(directory, selectedIds.size ? 'native-results-retry.json' : 'native-results.json'), JSON.stringify({ total: reports.length, results: reports }, null, 2))
     console.log(row.source_id, report.status, report.blocker ?? '')
   }
-  expect(reports).toHaveLength(102)
-  for (const config of WORLDDB_V2_COMPETITIONS) expect(reports.find(r => r.source_id === config.sourceCompetitionId)?.minimum_flow).toBe('PASS')
+  expect(reports).toHaveLength(selectedIds.size || 102)
+  for (const config of WORLDDB_V2_COMPETITIONS.filter(config => !selectedIds.size || selectedIds.has(config.sourceCompetitionId))) expect(reports.find(r => r.source_id === config.sourceCompetitionId)?.minimum_flow).toBe('PASS')
 }, 7_200_000)
 
 it.skipIf(process.env.BDM_WORLDDB_BATCH_FAMILIES !== '1')('indexes families from certified persisted formats without replaying matches', () => {
