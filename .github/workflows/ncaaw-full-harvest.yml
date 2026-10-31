@@ -1,0 +1,52 @@
+name: NCAAW 2026-27 all 363 programs fixture evidence harvest
+
+on:
+  push:
+    branches: [playable/worlddb-102-final-01]
+    paths:
+      - 'scripts/playable/ncaaw_2026_27_full_harvest.py'
+      - '.github/workflows/ncaaw-full-harvest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  harvest:
+    name: Harvest 363 women schools and 32 conferences
+    if: github.repository == 'audifor/BDM'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout the data branch, not PR merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: playable/worlddb-102-final-01
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install parsing dependencies
+        run: pip install --disable-pip-version-check requests beautifulsoup4
+      - name: Scrape all contemporary school schedule listings, never synthesize fixtures
+        run: >
+          python scripts/playable/ncaaw_2026_27_full_harvest.py
+          --catalog src/data/worlddb-v2/ncaa-d1-2026-27-programs.json
+          --out src/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json
+      - name: Store evidence report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncaaw-2026-27-all-363-fixtures
+          path: src/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json
+      - name: Publish source-only data back to PR branch after all validations
+        if: github.event_name == 'push' && github.ref == 'refs/heads/playable/worlddb-102-final-01'
+        run: |
+          git config user.name "BDM NCAA Evidence Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json
+          if git diff --cached --quiet; then
+            echo "No fixture source data changed."
+            exit 0
+          fi
+          git commit -m "Add all current sourced 2026-27 NCAA women's Division I fixtures for 363 programs [skip ci]"
+          git push origin HEAD:playable/worlddb-102-final-01
