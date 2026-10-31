@@ -910,5 +910,212 @@
         "scope": "university cross-confirmation of 2027 women's ASUN tournament structure"
       }
     ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-men:asun:tournament",
+    "competition_season_id": "edition:USA:ncaa-d1-men:asun:tournament:2026-27",
+    "season_label": "2026-27",
+    "status": "PARTIAL",
+    "notes": "REAL OFFICIAL 2027 ASUN MEN'S BASKETBALL TOURNAMENT. 8 current men's 2026-27 ASUN members qualify. Seeds 1/2 double bye to semifinals, seeds 3/4 single bye to quarters, seeds 5 v 8 and 6 v 7 start March 4. Men's championship March 7 2027 at VyStar Veterans Memorial Arena, Jacksonville. PARTIAL until the native seeded advancement, full season standings and rule-dependent at-large eligibility are integrated and acceptance-tested.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2027 ASUN Men's Basketball Tournament",
+        "is_real_variant": true,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 8,
+            "source": "ASUN_2026_27_MEN_MEMBERSHIP"
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "ASUN_2026_27_MEN_REGULAR_SEASON_STANDINGS",
+              "source": "ASUN_OFFICIAL_SEEDING_CROSSWALK_NOT_YET_NATIVE"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "QUALIFIED",
+            "node_type": "STAGE",
+            "role": "QUALIFIER",
+            "team_count": 8
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 4,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "5-8",
+                  "6-7"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-04"
+                ]
+              }
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "3-WINNER_1",
+                  "4-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-05"
+                ]
+              }
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-WINNER_1",
+                  "2-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-06"
+                ]
+              }
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-07"
+                ]
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "QUALIFIED",
+            "to": "FIRST_ROUND",
+            "selector": "RANK_RANGE",
+            "rank_from": 5,
+            "rank_to": 8,
+            "count": 4
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "QUARTERFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 3,
+            "rank_to": 4,
+            "count": 2
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "SEMIFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 2,
+            "count": 2
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "QUARTERFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER",
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://asunsports.org/news/2026/10/20/general-atlantic-sun-conference-announces-adjusted-eight-team-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "2027 ASUN official 8-team men's postseason: seeded byes, March 4 opening, March 7 final"
+      },
+      {
+        "url": "https://fgcuathletics.com/news/2026/10/26/mens-basketball-atlantic-sun-conference-announces-adjusted-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "FGCU primary confirmation of both 2027 brackets and men's championship on March 7"
+      }
+    ]
   }
 ]
