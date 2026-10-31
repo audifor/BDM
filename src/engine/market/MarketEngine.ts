@@ -1,6 +1,6 @@
 import { agentCounter, consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type FormalOfferPlayerResponse, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole, type NegotiationRoundHistory, type NegotiationTermSet } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
-import { isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, isPlayerTeamCategoryCompatible, requirePlayerTeamCategory, updateGameWorld, type GameWorld } from '@/domain/world'
 import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import type { GameDate } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
@@ -45,6 +45,7 @@ export function createNegotiationContact(world: GameWorld, input: CreateNegotiat
     return { status: 'BLOCKED', world, reason: 'TEAM_OR_ORGANIZATION_MISMATCH' }
   }
   if (world.players[input.playerId] === undefined) return { status: 'BLOCKED', world, reason: 'PLAYER_NOT_FOUND' }
+  if (!isPlayerTeamCategoryCompatible(world, input.playerId, input.teamId)) return { status: 'BLOCKED', world, reason: 'PLAYER_TEAM_CATEGORY_MISMATCH' }
   if (typeof input.actionKey !== 'string' || input.actionKey.trim() === ''
     || typeof input.sourcePlanId !== 'string' || input.sourcePlanId.trim() === ''
     || typeof input.sourceProposalId !== 'string' || input.sourceProposalId.trim() === '') {
@@ -346,6 +347,7 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
   const team = world.teams[input.teamId]
   if (team === undefined || team.organizationId !== input.organizationId) throw new RangeError('Negotiation team does not belong to the organization')
   if (world.players[input.playerId] === undefined) throw new RangeError('Negotiation player does not exist')
+  requirePlayerTeamCategory(world, input.playerId, input.teamId)
   if (!isAuthorizedOfferActor(world, input.teamId, input.offerResponsibleActor)) throw new RangeError('Formal offer actor is not authorized for this team')
   if (!Number.isSafeInteger(input.salary) || input.salary < 1 || input.salary > 100_000_000) throw new RangeError('Formal offer salary is invalid')
   if (!Number.isSafeInteger(input.years) || input.years < 1) throw new RangeError('Formal offer years are invalid')
