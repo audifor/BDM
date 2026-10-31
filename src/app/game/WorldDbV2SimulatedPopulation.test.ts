@@ -42,6 +42,16 @@ it('retains both original PBM clubs and generates minimum viable rosters and coa
   expect(result.players).toHaveLength(10)
   expect(result.staffProfiles).toHaveLength(2)
   expect(result.staffAssignments.map(s => s.roleCode)).toEqual(['headCoach', 'headCoach'])
+  const generatedCoaches = result.persons.filter(person => person.personId.startsWith('generated-staff-'))
+  expect(generatedCoaches).toHaveLength(2)
+  expect(generatedCoaches.every(person =>
+    person.dateOfBirth !== undefined
+    && person.nationalityIds.length > 0
+    && (person.physical?.heightCm ?? 0) > 0
+    && (person.physical?.weightKg ?? 0) > 0
+    && (person.physical?.wingspanCm ?? 0) > 0
+    && (person.physical?.standingReachCm ?? 0) > 0,
+  )).toBe(true)
   expect(result.players.every(p => p.playerId.startsWith('bdm:generated-player:'))).toBe(true)
   expect(result.players.every(p => result.rosterAssignments.some(r => r.playerId === p.playerId))).toBe(true)
   expect(result.persons.every(p => p.personId.startsWith('bdm:'))).toBe(true)
