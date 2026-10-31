@@ -16,7 +16,7 @@ def fixture():
     names = [f"competition:USA:ncaa-d1-men:sim-{i}" for i in range(32)]
     plan = {
         "source_competition_id": MODULE.NCAA, "source_clubs": 353,
-        "reference_conferences": 32, "reference_clubs": 365,
+        "reference_conferences": 32, "reference_clubs": 365, "reference_edition": "2026-27",
         "conference_formats": [{"reference_competition": n} for n in names]
     }
     snapshot = {
@@ -27,8 +27,9 @@ def fixture():
     bindings = {
         "source_competition_id": MODULE.NCAA,
         "master_sha256": snapshot["manifest"]["master"]["sha256"],
+        "membership_edition": "2026-27",
         "assignments": [
-            {"teamId": key, "conferenceCompetitionId": names[i % 32], "evidence": "source-binding-row"}
+            {"teamId": key, "conferenceCompetitionId": names[i % 32], "evidence": "source-binding-row", "edition": "2026-27"}
             for i, key in enumerate(ids)
         ]
     }
@@ -72,6 +73,16 @@ class NcaaConferenceBindingTests(unittest.TestCase):
         snapshot, plan, membership = fixture()
         membership["assignments"][0]["conferenceCompetitionId"] = "invented-conference"
         with self.assertRaisesRegex(ValueError, "Unknown NCAA conference"):
+            MODULE.bind_ncaa(snapshot, plan, membership)
+
+    def test_rejects_memberships_from_other_or_unknown_editions(self):
+        snapshot, plan, membership = fixture()
+        membership['membership_edition'] = '2018-19'
+        with self.assertRaisesRegex(ValueError, 'membership edition'):
+            MODULE.bind_ncaa(snapshot, plan, membership)
+        snapshot, plan, membership = fixture()
+        membership['assignments'][0]['edition'] = '2018-19'
+        with self.assertRaisesRegex(ValueError, 'evidenced for the reference edition'):
             MODULE.bind_ncaa(snapshot, plan, membership)
 
 

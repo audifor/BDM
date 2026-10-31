@@ -36,6 +36,9 @@ def bind_ncaa(snapshot, plan, memberships):
         raise ValueError("Conference memberships refer to another competition")
     if memberships.get("master_sha256") != snapshot["manifest"]["master"]["sha256"]:
         raise ValueError("NCAA membership source identity does not match original master")
+    edition = plan.get("reference_edition")
+    if not edition or memberships.get("membership_edition") != edition:
+        raise ValueError("NCAA membership edition must match the reference edition")
     allowed = {row["reference_competition"] for row in plan["conference_formats"]}
     if len(allowed) != 32:
         raise ValueError("NCAA format catalog must provide 32 unique conference identities")
@@ -50,6 +53,8 @@ def bind_ncaa(snapshot, plan, memberships):
             raise ValueError("Unknown NCAA conference identity: " + str(record.get("conferenceCompetitionId")))
         if not record.get("evidence"):
             raise ValueError("Every NCAA membership must have explicit source evidence")
+        if record.get("edition") != edition:
+            raise ValueError("Every NCAA membership must be evidenced for the reference edition")
     sizes = Counter(record["conferenceCompetitionId"] for record in assignments)
     if len(sizes) != 32 or min(sizes.values()) < 2:
         raise ValueError("NCAA schedule requires 32 populated conferences with at least two clubs")
@@ -59,7 +64,7 @@ def bind_ncaa(snapshot, plan, memberships):
         "source_clubs": 353,
         "reference_clubs": 365,
         "reference_conferences": 32,
-        "edition_fidelity": "UNVERIFIED_353_PBM_VS_365_REFERENCE",
+        "edition_fidelity": "MEMBERSHIPS_EVIDENCED_FOR_REFERENCE_EDITION_POPULATION_DIFFERENCE_UNVERIFIED",
         "membership_provenance": "EXPLICIT_SOURCE_REFERENCES",
         "native_calendar": "generateNcaaLikeSchedule",
         "native_lifecycle": "startNextSeasonTransitionFor",
