@@ -130,6 +130,14 @@ it('plays four source groups, the second group stage and cross semifinals throug
   await exerciseFamily(wire, 16, 1, true, false)
 }, 180_000)
 
+it('plays a generated matrix league through Save V4, playoffs and next edition', async () => {
+  const wire = generated(6, false)
+  const regular = wire.variants[0].nodes[0]
+  regular.pairing = { type: 'FIXED_SCHEDULE', payload: { bdm_generated_matrix_v1: true, games_per_team: 8 } }
+  regular.opponent_scope = { type: 'SCHEDULE_MATRIX', payload: { bdm_generated_matrix_v1: true } }
+  await exerciseFamily(wire, 6, 2, false, false)
+}, 180_000)
+
 it('plays Segunda FEB with two 14-club groups, aggregate rounds and Save V4 rollover', async () => {
   const wire = globalFormats.find(doc => doc.competition_id === 'competition:ESP:segunda-feb')
   expect(wire).toBeDefined()
@@ -219,7 +227,8 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
   expect(world.seasonHistoryBySeasonId[seasonId]?.championTeamId).toBe(champion)
   const tables = calculateGroupStandings(world, seasonId)
   expect(tables).toHaveLength(grouped ? Number(format.variants[0]!.nodes[0]!.opponentScope!.payload.generated_group_count) : 1)
-  for (const table of tables) expect(table.every(row => row.played === (table.length - 1) * meetings)).toBe(true)
+  const matrixQuota = format.variants[0]!.nodes.find(node => node.role === 'REGULAR_SEASON')?.pairing?.payload.games_per_team
+  for (const table of tables) expect(table.every(row => row.played === (typeof matrixQuota === 'number' ? matrixQuota : (table.length - 1) * meetings))).toBe(true)
   if (format.competitionId === 'competition:FRA:nm2') {
     expect(resolveAdaptedPromotion(world, seasonId)).toEqual(tables.map(table => table[0]!.teamId))
     if (sourceOverride) expect(resolveGroupedRelegation(world, seasonId)).toEqual(tables.flatMap(table => table.slice(-2).map(row => row.teamId)))
