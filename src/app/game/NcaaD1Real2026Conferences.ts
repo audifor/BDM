@@ -1,11 +1,14 @@
 import programs from '@/data/worlddb-v2/ncaa-d1-2026-27-programs.json'
 import { createConference, createConferenceMembership, type Conference, type ConferenceMembership } from '@/domain/conference'
+import { NCAA_MEN_GAME_FORMAT, NCAA_WOMEN_GAME_FORMAT, type GameFormatRules } from '@/domain/competition'
 import { conferenceIdFromString, ecosystemIdFromString, seasonIdFromString, teamIdFromString, type TeamId } from '@/domain/ids'
 
 export type NcaaD1RealGender = 'men' | 'women'
 
 export interface NcaaD1RealConferenceSeasonSnapshot {
   readonly gender: NcaaD1RealGender
+  readonly gameFormat: GameFormatRules
+  readonly ecosystemKind: 'ncaaLike'
   readonly edition: '2026-27'
   readonly sourceStatus: 'SECONDARY_DIRECTORY_MEMBERSHIP_PENDING_INDIVIDUAL_OFFICIAL_VERIFICATION'
   readonly ecosystemId: ReturnType<typeof ecosystemIdFromString>
@@ -64,6 +67,7 @@ export function buildNcaaD1Real2026ConferenceSnapshot(gender: NcaaD1RealGender):
     }))
   return {
     gender, edition: '2026-27', sourceStatus: programs.status,
+    ecosystemKind: 'ncaaLike', gameFormat: gender === 'men' ? NCAA_MEN_GAME_FORMAT : NCAA_WOMEN_GAME_FORMAT,
     ecosystemId, seasonId, conferences, memberships, teams,
   }
 }
