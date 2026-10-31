@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "division": "NCAA Division I",
   "gender": "women",
   "season": "2026-27",
   "conferenceId": "atlantic-coast-conference",
   "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
-  "note": "Aggregated contemporary schedule for current conference institutions. Includes cross-conference and nonconference Division I games. No unsourced fixtures or opponents are generated; official university confirmation is required before certified seasons.",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Every published D1 vs D1 fixture from current member school source pages, without fictional games. Includes nonconference/interconference games. Some 2026-27 opponents and additional games can remain unpublished. Do NOT treat as a full official schedule.",
   "memberCount": 18,
   "memberProgramIds": [
     "ncaa:2026-27:women:boston-college-eagles",
@@ -99,56 +100,69 @@
       "inUniverseGames": 32
     },
     {
-      "id": "ncaa:2026-27:women:stanford-cardinal",
-      "listedGames": 31,
-      "inUniverseGames": 0
-    },
-    {
       "id": "ncaa:2026-27:women:notre-dame-fighting-irish",
       "listedGames": 25,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:virginia-tech-hokies",
-      "listedGames": 30,
-      "inUniverseGames": 0
+      "inUniverseGames": 25
     },
     {
       "id": "ncaa:2026-27:women:pittsburgh-panthers",
       "listedGames": 28,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:syracuse-orange",
-      "listedGames": 29,
-      "inUniverseGames": 0
+      "inUniverseGames": 28
     },
     {
       "id": "ncaa:2026-27:women:smu-mustangs",
       "listedGames": 32,
-      "inUniverseGames": 0
+      "inUniverseGames": 32
     },
     {
-      "id": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "id": "ncaa:2026-27:women:stanford-cardinal",
       "listedGames": 31,
-      "inUniverseGames": 0
+      "inUniverseGames": 31
+    },
+    {
+      "id": "ncaa:2026-27:women:syracuse-orange",
+      "listedGames": 29,
+      "inUniverseGames": 29
     },
     {
       "id": "ncaa:2026-27:women:virginia-cavaliers",
       "listedGames": 30,
-      "inUniverseGames": 0
+      "inUniverseGames": 30
+    },
+    {
+      "id": "ncaa:2026-27:women:virginia-tech-hokies",
+      "listedGames": 30,
+      "inUniverseGames": 30
+    },
+    {
+      "id": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "listedGames": 31,
+      "inUniverseGames": 31
     }
   ],
-  "fixtureCount": 258,
+  "fixtureCount": 380,
   "nonD1OrUnmatched": [
     {
+      "origin": "ncaa:2026-27:women:louisville-cardinals",
+      "issue": "opponent_not_in_d1",
       "date": "2026-11-21",
       "homeId": "ncaa:2026-27:women:alaska-anchorage-seawolves",
-      "awayId": "ncaa:2026-27:women:louisville-cardinals",
-      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/louisville-cardinals"
+      "awayId": "ncaa:2026-27:women:louisville-cardinals"
     }
   ],
   "fixtures": [
+    {
+      "gameId": "401920983",
+      "gender": "women",
+      "date": "2026-11-01",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-villanova-wildcats-401920983",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
     {
       "gameId": "401903553",
       "gender": "women",
@@ -198,6 +212,18 @@
       ]
     },
     {
+      "gameId": "401906102",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-upstate-spartans-vs-wake-forest-demon-deacons-401906102",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
       "gameId": "401911503",
       "gender": "women",
       "date": "2026-11-02",
@@ -207,6 +233,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:clemson-tigers"
+      ]
+    },
+    {
+      "gameId": "401913054",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-arizona-wildcats-401913054",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -258,6 +296,42 @@
       ]
     },
     {
+      "gameId": "401916003",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:maryland-eastern-shore-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maryland-eastern-shore-hawks-vs-virginia-cavaliers-401916003",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916015",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:north-carolina-central-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-central-eagles-vs-virginia-tech-hokies-401916015",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
+      "gameId": "401913744",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:saint-peter-s-peacocks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/saint-peter-s-peacocks-vs-pittsburgh-panthers-401913744",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
       "gameId": "401915906",
       "gender": "women",
       "date": "2026-11-03",
@@ -267,6 +341,30 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915960",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:le-moyne-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/le-moyne-dolphins-vs-smu-mustangs-401915960",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401918038",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:sacred-heart-pioneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacred-heart-pioneers-vs-syracuse-orange-401918038",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -294,6 +392,30 @@
       ]
     },
     {
+      "gameId": "401915978",
+      "gender": "women",
+      "date": "2026-11-04",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:saint-mary-s-gaels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/saint-mary-s-gaels-vs-stanford-cardinal-401915978",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916016",
+      "gender": "women",
+      "date": "2026-11-04",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:delaware-blue-hens",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/delaware-blue-hens-vs-virginia-tech-hokies-401916016",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401906032",
       "gender": "women",
       "date": "2026-11-05",
@@ -315,6 +437,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:california-golden-bears"
+      ]
+    },
+    {
+      "gameId": "401906103",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/presbyterian-blue-hose-vs-wake-forest-demon-deacons-401906103",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -366,6 +500,54 @@
       ]
     },
     {
+      "gameId": "401915961",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:hampton-lady-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/hampton-lady-pirates-vs-smu-mustangs-401915961",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401916004",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-davidson-wildcats-401916004",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401919954",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stonehill-skyhawks-vs-notre-dame-fighting-irish-401919954",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401913745",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:long-island-university-sharks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-island-university-sharks-vs-pittsburgh-panthers-401913745",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
       "gameId": "401906064",
       "gender": "women",
       "date": "2026-11-08",
@@ -399,6 +581,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:north-carolina-tar-heels"
+      ]
+    },
+    {
+      "gameId": "401906104",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:mercer-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mercer-bears-vs-wake-forest-demon-deacons-401906104",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -450,6 +644,18 @@
       ]
     },
     {
+      "gameId": "401914490",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:cornell-big-red",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cornell-big-red-vs-syracuse-orange-401914490",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401915885",
       "gender": "women",
       "date": "2026-11-08",
@@ -474,6 +680,54 @@
       ]
     },
     {
+      "gameId": "401915962",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:east-texas-a-and-m-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-texas-a-and-m-lions-vs-smu-mustangs-401915962",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401915979",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-davis-aggies-vs-stanford-cardinal-401915979",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916005",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:william-and-mary-tribe",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/william-and-mary-tribe-vs-virginia-cavaliers-401916005",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916017",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/james-madison-dukes-vs-virginia-tech-hokies-401916017",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401906077",
       "gender": "women",
       "date": "2026-11-10",
@@ -483,6 +737,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:louisville-cardinals"
+      ]
+    },
+    {
+      "gameId": "401913746",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:delaware-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/delaware-state-hornets-vs-pittsburgh-panthers-401913746",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -534,6 +800,42 @@
       ]
     },
     {
+      "gameId": "401915963",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:long-island-university-sharks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-island-university-sharks-vs-smu-mustangs-401915963",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401916006",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:drexel-dragons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/drexel-dragons-vs-virginia-cavaliers-401916006",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401918034",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:siena-saints",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/siena-saints-vs-syracuse-orange-401918034",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401906065",
       "gender": "women",
       "date": "2026-11-12",
@@ -555,6 +857,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:louisville-cardinals"
+      ]
+    },
+    {
+      "gameId": "401906105",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:unc-wilmington-seahawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-wilmington-seahawks-vs-wake-forest-demon-deacons-401906105",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -582,6 +896,18 @@
       ]
     },
     {
+      "gameId": "401915783",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "awayProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-vcu-rams-401915783",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401915886",
       "gender": "women",
       "date": "2026-11-12",
@@ -603,6 +929,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915980",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:santa-clara-broncos",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-santa-clara-broncos-401915980",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -642,6 +980,18 @@
       ]
     },
     {
+      "gameId": "401913747",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-pittsburgh-panthers-401913747",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
       "gameId": "401906079",
       "gender": "women",
       "date": "2026-11-15",
@@ -651,6 +1001,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:louisville-cardinals"
+      ]
+    },
+    {
+      "gameId": "401906106",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:elon-phoenix",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/elon-phoenix-vs-wake-forest-demon-deacons-401906106",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -690,6 +1052,18 @@
       ]
     },
     {
+      "gameId": "401915595",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:canisius-golden-griffins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/canisius-golden-griffins-vs-syracuse-orange-401915595",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401915887",
       "gender": "women",
       "date": "2026-11-15",
@@ -711,6 +1085,54 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915964",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:nicholls-colonels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nicholls-colonels-vs-smu-mustangs-401915964",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401915981",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gonzaga-bulldogs-vs-stanford-cardinal-401915981",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916007",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:old-dominion-monarchs",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-old-dominion-monarchs-401916007",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916018",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/la-salle-explorers-vs-virginia-tech-hokies-401916018",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -750,6 +1172,18 @@
       ]
     },
     {
+      "gameId": "401906984",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-kansas-state-wildcats-401906984",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
       "gameId": "401912981",
       "gender": "women",
       "date": "2026-11-18",
@@ -759,6 +1193,30 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+      ]
+    },
+    {
+      "gameId": "401913748",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-pittsburgh-panthers-401913748",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401913859",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:harvard-crimson",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-harvard-crimson-401913859",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -783,6 +1241,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:north-carolina-tar-heels"
+      ]
+    },
+    {
+      "gameId": "401906107",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:app-state-mountaineers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/app-state-mountaineers-vs-wake-forest-demon-deacons-401906107",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -834,6 +1304,18 @@
       ]
     },
     {
+      "gameId": "401916008",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/james-madison-dukes-vs-virginia-cavaliers-401916008",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
       "gameId": "401906036",
       "gender": "women",
       "date": "2026-11-20",
@@ -870,6 +1352,18 @@
       ]
     },
     {
+      "gameId": "401915982",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-washington-huskies-401915982",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
       "gameId": "401906093",
       "gender": "women",
       "date": "2026-11-21",
@@ -894,6 +1388,18 @@
       ]
     },
     {
+      "gameId": "401913749",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:canisius-golden-griffins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/canisius-golden-griffins-vs-pittsburgh-panthers-401913749",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
       "gameId": "401915910",
       "gender": "women",
       "date": "2026-11-21",
@@ -903,6 +1409,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915965",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:grand-canyon-lopes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/grand-canyon-lopes-vs-smu-mustangs-401915965",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -930,6 +1448,18 @@
       ]
     },
     {
+      "gameId": "401915983",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:portland-pilots",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-portland-pilots-401915983",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
       "gameId": "401917715",
       "gender": "women",
       "date": "2026-11-22",
@@ -954,6 +1484,18 @@
       ]
     },
     {
+      "gameId": "401906108",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:wofford-terriers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wofford-terriers-vs-wake-forest-demon-deacons-401906108",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
       "gameId": "401913729",
       "gender": "women",
       "date": "2026-11-23",
@@ -963,6 +1505,30 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:miami-hurricanes"
+      ]
+    },
+    {
+      "gameId": "401915966",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:saint-mary-s-gaels",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-saint-mary-s-gaels-401915966",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401916019",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:ut-martin-skyhawks",
+      "awayProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-ut-martin-skyhawks-401916019",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -990,6 +1556,42 @@
       ]
     },
     {
+      "gameId": "401921022",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-davidson-wildcats-401921022",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401915967",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-memphis-tigers-401915967",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401921393",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:southern-jaguars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-jaguars-vs-syracuse-orange-401921393",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401915872",
       "gender": "women",
       "date": "2026-11-26",
@@ -999,6 +1601,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:clemson-tigers"
+      ]
+    },
+    {
+      "gameId": "401918892",
+      "gender": "women",
+      "date": "2026-11-26",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-wisconsin-badgers-401918892",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -1086,6 +1700,18 @@
       ]
     },
     {
+      "gameId": "401921394",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:auburn-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/auburn-tigers-vs-syracuse-orange-401921394",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401906059",
       "gender": "women",
       "date": "2026-11-28",
@@ -1095,6 +1721,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:boston-college-eagles"
+      ]
+    },
+    {
+      "gameId": "401906109",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:quinnipiac-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/quinnipiac-bobcats-vs-wake-forest-demon-deacons-401906109",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1134,6 +1772,30 @@
       ]
     },
     {
+      "gameId": "401913750",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:harvard-crimson",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/harvard-crimson-vs-pittsburgh-panthers-401913750",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401915985",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-diego-state-aztecs-vs-stanford-cardinal-401915985",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
       "gameId": "401906083",
       "gender": "women",
       "date": "2026-11-29",
@@ -1155,6 +1817,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:north-carolina-tar-heels"
+      ]
+    },
+    {
+      "gameId": "401906110",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-arizona-state-sun-devils-401906110",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1191,6 +1865,43 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:clemson-tigers"
+      ]
+    },
+    {
+      "gameId": "401915984",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:columbia-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/columbia-lions-vs-stanford-cardinal-401915984",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916020",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:unc-greensboro-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-greensboro-spartans-vs-virginia-tech-hokies-401916020",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
+      "gameId": "401918255",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-smu-mustangs-401918255",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -1242,6 +1953,18 @@
       ]
     },
     {
+      "gameId": "401912983",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:georgia-lady-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgia-lady-bulldogs-vs-smu-mustangs-401912983",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
       "gameId": "401913740",
       "gender": "women",
       "date": "2026-12-02",
@@ -1254,6 +1977,18 @@
       ]
     },
     {
+      "gameId": "401915987",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:auburn-tigers",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-auburn-tigers-401915987",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
       "gameId": "401906069",
       "gender": "women",
       "date": "2026-12-03",
@@ -1263,6 +1998,30 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:california-golden-bears"
+      ]
+    },
+    {
+      "gameId": "401906111",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:arkansas-razorbacks",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-arkansas-razorbacks-401906111",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
+      "gameId": "401912958",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:tennessee-lady-volunteers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tennessee-lady-volunteers-vs-virginia-tech-hokies-401912958",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -1314,6 +2073,42 @@
       ]
     },
     {
+      "gameId": "401916009",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:mississippi-state-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-mississippi-state-bulldogs-401916009",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401918834",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:vanderbilt-commodores",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-vanderbilt-commodores-401918834",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401921392",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-sooners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oklahoma-sooners-vs-syracuse-orange-401921392",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401906085",
       "gender": "women",
       "date": "2026-12-06",
@@ -1335,6 +2130,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:north-carolina-tar-heels"
+      ]
+    },
+    {
+      "gameId": "401906112",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:auburn-tigers",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-auburn-tigers-401906112",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1386,6 +2193,18 @@
       ]
     },
     {
+      "gameId": "401913751",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:sacred-heart-pioneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacred-heart-pioneers-vs-pittsburgh-panthers-401913751",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
       "gameId": "401918042",
       "gender": "women",
       "date": "2026-12-06",
@@ -1394,7 +2213,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-virginia-cavaliers-401918042",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -1406,7 +2226,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-state-seminoles-vs-notre-dame-fighting-irish-401918256",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401918257",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-syracuse-orange-401918257",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -1418,7 +2252,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-duke-blue-devils-401918258",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -1458,6 +2293,18 @@
       ]
     },
     {
+      "gameId": "401911744",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uconn-huskies-vs-notre-dame-fighting-irish-401911744",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
       "gameId": "401913742",
       "gender": "women",
       "date": "2026-12-09",
@@ -1467,6 +2314,42 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:nc-state-wolfpack"
+      ]
+    },
+    {
+      "gameId": "401915968",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-tulsa-golden-hurricane-401915968",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401916010",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:american-university-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/american-university-eagles-vs-virginia-cavaliers-401916010",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916021",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:app-state-mountaineers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/app-state-mountaineers-vs-virginia-tech-hokies-401916021",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -1506,6 +2389,30 @@
       ]
     },
     {
+      "gameId": "401916011",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:navy-midshipmen",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/navy-midshipmen-vs-virginia-cavaliers-401916011",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916022",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:campbell-fighting-camels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/campbell-fighting-camels-vs-virginia-tech-hokies-401916022",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401918259",
       "gender": "women",
       "date": "2026-12-13",
@@ -1514,7 +2421,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/clemson-tigers-vs-wake-forest-demon-deacons-401918259",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1552,7 +2460,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-georgia-tech-yellow-jackets-401918262",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -1564,7 +2473,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-california-golden-bears-401918263",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -1577,6 +2487,18 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:clemson-tigers"
+      ]
+    },
+    {
+      "gameId": "401906113",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-wake-forest-demon-deacons-401906113",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1604,6 +2526,18 @@
       ]
     },
     {
+      "gameId": "401919919",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:le-moyne-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-le-moyne-dolphins-401919919",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401906087",
       "gender": "women",
       "date": "2026-12-17",
@@ -1613,6 +2547,30 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:louisville-cardinals"
+      ]
+    },
+    {
+      "gameId": "401913752",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:mercyhurst-lakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mercyhurst-lakers-vs-pittsburgh-panthers-401913752",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401915988",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/arizona-state-sun-devils-vs-stanford-cardinal-401915988",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -1642,6 +2600,30 @@
       ]
     },
     {
+      "gameId": "401915969",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:coppin-state-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/coppin-state-eagles-vs-smu-mustangs-401915969",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401919538",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:bucknell-bison",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bucknell-bison-vs-syracuse-orange-401919538",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401915935",
       "gender": "women",
       "date": "2026-12-19",
@@ -1651,6 +2633,31 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915937",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-usc-trojans-401915937",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401918266",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-virginia-tech-hokies-401918266",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1702,6 +2709,30 @@
       ]
     },
     {
+      "gameId": "401913753",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duquesne-dukes-vs-pittsburgh-panthers-401913753",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401915939",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-south-carolina-gamecocks-401915939",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
       "gameId": "401915940",
       "gender": "women",
       "date": "2026-12-20",
@@ -1711,6 +2742,42 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:duke-blue-devils"
+      ]
+    },
+    {
+      "gameId": "401915970",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utsa-roadrunners-vs-smu-mustangs-401915970",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401915989",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ohio-state-buckeyes-vs-stanford-cardinal-401915989",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916012",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:kentucky-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/kentucky-wildcats-vs-virginia-cavaliers-401916012",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -1739,6 +2806,18 @@
       ]
     },
     {
+      "gameId": "401911516",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-virginia-tech-hokies-401911516",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401913722",
       "gender": "women",
       "date": "2026-12-21",
@@ -1763,6 +2842,30 @@
       ]
     },
     {
+      "gameId": "401906114",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:furman-paladins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/furman-paladins-vs-wake-forest-demon-deacons-401906114",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
+      "gameId": "401916013",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:stony-brook-seawolves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stony-brook-seawolves-vs-virginia-cavaliers-401916013",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
       "gameId": "401918043",
       "gender": "women",
       "date": "2026-12-22",
@@ -1773,6 +2876,18 @@
       "listedByTeamIds": [
         "ncaa:2026-27:women:boston-college-eagles",
         "ncaa:2026-27:women:miami-hurricanes"
+      ]
+    },
+    {
+      "gameId": "401915971",
+      "gender": "women",
+      "date": "2026-12-23",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:incarnate-word-cardinals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/incarnate-word-cardinals-vs-smu-mustangs-401915971",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -1812,6 +2927,42 @@
       ]
     },
     {
+      "gameId": "401915990",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-stanford-cardinal-401915990",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401916014",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:norfolk-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/norfolk-state-spartans-vs-virginia-cavaliers-401916014",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401916023",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:charleston-cougars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-cougars-vs-virginia-tech-hokies-401916023",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401918268",
       "gender": "women",
       "date": "2026-12-28",
@@ -1820,7 +2971,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-duke-blue-devils-401918268",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918269",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-pittsburgh-panthers-401918269",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -1845,7 +3010,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-notre-dame-fighting-irish-401918270",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -1857,7 +3023,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-virginia-cavaliers-401918271",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -1895,7 +3062,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-tar-heels-vs-syracuse-orange-401918274",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918275",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-wake-forest-demon-deacons-401918275",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -1907,7 +3088,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-clemson-tigers-401918276",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401918277",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-pittsburgh-panthers-401918277",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -1958,7 +3153,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgia-tech-yellow-jackets-vs-virginia-cavaliers-401918280",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -1983,7 +3179,47 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-miami-hurricanes-401918282",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401918283",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-wake-forest-demon-deacons-401918283",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
+      "gameId": "401918284",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-smu-mustangs-401918284",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs",
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401918285",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-virginia-tech-hokies-401918285",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -1995,7 +3231,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-boston-college-eagles-401918046",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2033,7 +3270,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/miami-hurricanes-vs-stanford-cardinal-401918288",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2050,6 +3288,32 @@
       ]
     },
     {
+      "gameId": "401918290",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-virginia-tech-hokies-401918290",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
+      "gameId": "401918291",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-syracuse-orange-401918291",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
       "gameId": "401918292",
       "gender": "women",
       "date": "2027-01-07",
@@ -2058,7 +3322,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-north-carolina-tar-heels-401918292",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2070,7 +3335,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-notre-dame-fighting-irish-401918313",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -2108,7 +3374,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nc-state-wolfpack-vs-stanford-cardinal-401918316",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:stanford-cardinal"
+      ]
+    },
+    {
+      "gameId": "401918317",
+      "gender": "women",
+      "date": "2027-01-10",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-pittsburgh-panthers-401918317",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2120,7 +3400,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-florida-state-seminoles-401918318",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918319",
+      "gender": "women",
+      "date": "2027-01-10",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-virginia-cavaliers-401918319",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2132,7 +3426,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-georgia-tech-yellow-jackets-401918320",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2144,7 +3439,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-syracuse-orange-401918047",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2169,7 +3465,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/clemson-tigers-vs-smu-mustangs-401918322",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2181,7 +3478,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgia-tech-yellow-jackets-vs-notre-dame-fighting-irish-401918323",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -2193,7 +3491,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-pittsburgh-panthers-401918324",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401918325",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-wake-forest-demon-deacons-401918325",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2205,7 +3517,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-miami-hurricanes-401918326",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2217,7 +3530,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-nc-state-wolfpack-401918327",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2242,7 +3556,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-wake-forest-demon-deacons-401918328",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2267,7 +3582,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-virginia-tech-hokies-401918330",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
+      "gameId": "401918331",
+      "gender": "women",
+      "date": "2027-01-17",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-syracuse-orange-401918331",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2279,7 +3608,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-duke-blue-devils-401918332",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2291,7 +3621,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-clemson-tigers-401918333",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2355,7 +3686,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-louisville-cardinals-401918337",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -2367,7 +3699,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-florida-state-seminoles-401918338",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -2379,7 +3712,34 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-georgia-tech-yellow-jackets-401918339",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401918340",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-stanford-cardinal-401918340",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918341",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-virginia-cavaliers-401918341",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2417,7 +3777,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-state-seminoles-vs-virginia-tech-hokies-401918343",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2429,7 +3790,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-smu-mustangs-401918344",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2441,7 +3803,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-tar-heels-vs-stanford-cardinal-401918345",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2453,7 +3816,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-california-golden-bears-401918346",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918347",
+      "gender": "women",
+      "date": "2027-01-24",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-pittsburgh-panthers-401918347",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2465,7 +3842,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-nc-state-wolfpack-401918348",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2477,7 +3855,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-boston-college-eagles-401918064",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2489,7 +3868,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-virginia-cavaliers-401918349",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2501,7 +3881,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/clemson-tigers-vs-pittsburgh-panthers-401918350",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -2526,7 +3907,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/miami-hurricanes-vs-syracuse-orange-401918352",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2538,7 +3920,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nc-state-wolfpack-vs-smu-mustangs-401918353",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2550,7 +3933,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-north-carolina-tar-heels-401918354",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -2562,7 +3946,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-louisville-cardinals-401918355",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2574,7 +3959,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-pittsburgh-panthers-401918065",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -2586,7 +3972,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-virginia-tech-hokies-401918356",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2611,7 +3998,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-miami-hurricanes-401918358",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401918359",
+      "gender": "women",
+      "date": "2027-01-31",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-notre-dame-fighting-irish-401918359",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2623,7 +4024,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-georgia-tech-yellow-jackets-401918360",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2635,7 +4037,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-florida-state-seminoles-401918361",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2647,7 +4050,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-nc-state-wolfpack-401918362",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2672,7 +4076,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgia-tech-yellow-jackets-vs-stanford-cardinal-401918364",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2684,7 +4089,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-wake-forest-demon-deacons-401918365",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2709,7 +4115,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-nc-state-wolfpack-401918367",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401918368",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-notre-dame-fighting-irish-401918368",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2721,7 +4141,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-clemson-tigers-401918369",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2733,7 +4154,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-wake-forest-demon-deacons-401918066",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2745,7 +4167,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-state-seminoles-vs-stanford-cardinal-401918370",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2770,7 +4193,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-virginia-cavaliers-401918372",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2795,7 +4219,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nc-state-wolfpack-vs-syracuse-orange-401918374",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2807,7 +4232,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-clemson-tigers-401918375",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401918376",
+      "gender": "women",
+      "date": "2027-02-07",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-smu-mustangs-401918376",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2819,7 +4258,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-north-carolina-tar-heels-401918377",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -2844,7 +4284,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-stanford-cardinal-401918378",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -2874,6 +4315,19 @@
       ]
     },
     {
+      "gameId": "401918381",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-virginia-tech-hokies-401918381",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:smu-mustangs",
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
       "gameId": "401918382",
       "gender": "women",
       "date": "2027-02-11",
@@ -2882,7 +4336,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-louisville-cardinals-401918382",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:syracuse-orange"
+      ]
+    },
+    {
+      "gameId": "401918383",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-notre-dame-fighting-irish-401918383",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -2894,7 +4362,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-miami-hurricanes-401918384",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2945,7 +4414,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-tar-heels-vs-smu-mustangs-401918387",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -2957,7 +4427,34 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-duke-blue-devils-401918388",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:pittsburgh-panthers"
+      ]
+    },
+    {
+      "gameId": "401918389",
+      "gender": "women",
+      "date": "2027-02-14",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-syracuse-orange-401918389",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange",
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
+      "gameId": "401918390",
+      "gender": "women",
+      "date": "2027-02-14",
+      "homeProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-notre-dame-fighting-irish-401918390",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:notre-dame-fighting-irish",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -2969,7 +4466,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-boston-college-eagles-401918069",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -2994,7 +4492,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-state-seminoles-vs-virginia-cavaliers-401918392",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -3019,7 +4518,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-tar-heels-vs-pittsburgh-panthers-401918394",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -3031,7 +4531,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-nc-state-wolfpack-401918395",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
+      ]
+    },
+    {
+      "gameId": "401918396",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-virginia-tech-hokies-401918396",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -3043,7 +4557,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-boston-college-eagles-401918070",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -3055,7 +4570,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-smu-mustangs-401918397",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -3067,7 +4583,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-wake-forest-demon-deacons-401918398",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     },
     {
@@ -3092,7 +4609,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/miami-hurricanes-vs-pittsburgh-panthers-401918400",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -3109,6 +4627,19 @@
       ]
     },
     {
+      "gameId": "401918402",
+      "gender": "women",
+      "date": "2027-02-21",
+      "homeProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "awayProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stanford-cardinal-vs-virginia-cavaliers-401918402",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stanford-cardinal",
+        "ncaa:2026-27:women:virginia-cavaliers"
+      ]
+    },
+    {
       "gameId": "401918403",
       "gender": "women",
       "date": "2027-02-21",
@@ -3117,7 +4648,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-georgia-tech-yellow-jackets-401918403",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:georgia-tech-yellow-jackets"
+        "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -3129,7 +4661,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-clemson-tigers-401918404",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:clemson-tigers"
+        "ncaa:2026-27:women:clemson-tigers",
+        "ncaa:2026-27:women:syracuse-orange"
       ]
     },
     {
@@ -3154,7 +4687,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-smu-mustangs-401918405",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:duke-blue-devils"
+        "ncaa:2026-27:women:duke-blue-devils",
+        "ncaa:2026-27:women:smu-mustangs"
       ]
     },
     {
@@ -3179,7 +4713,21 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nc-state-wolfpack-vs-wake-forest-demon-deacons-401918407",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:nc-state-wolfpack"
+        "ncaa:2026-27:women:nc-state-wolfpack",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
+      ]
+    },
+    {
+      "gameId": "401918408",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-stanford-cardinal-401918408",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:pittsburgh-panthers",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -3191,7 +4739,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-north-carolina-tar-heels-401918409",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:north-carolina-tar-heels"
+        "ncaa:2026-27:women:north-carolina-tar-heels",
+        "ncaa:2026-27:women:virginia-cavaliers"
       ]
     },
     {
@@ -3203,7 +4752,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-tech-hokies-vs-miami-hurricanes-401918410",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:miami-hurricanes"
+        "ncaa:2026-27:women:miami-hurricanes",
+        "ncaa:2026-27:women:virginia-tech-hokies"
       ]
     },
     {
@@ -3215,7 +4765,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-stanford-cardinal-401918072",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:boston-college-eagles"
+        "ncaa:2026-27:women:boston-college-eagles",
+        "ncaa:2026-27:women:stanford-cardinal"
       ]
     },
     {
@@ -3266,7 +4817,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisville-cardinals-vs-notre-dame-fighting-irish-401918414",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:louisville-cardinals"
+        "ncaa:2026-27:women:louisville-cardinals",
+        "ncaa:2026-27:women:notre-dame-fighting-irish"
       ]
     },
     {
@@ -3278,7 +4830,8 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pittsburgh-panthers-vs-california-golden-bears-401918415",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:california-golden-bears"
+        "ncaa:2026-27:women:california-golden-bears",
+        "ncaa:2026-27:women:pittsburgh-panthers"
       ]
     },
     {
@@ -3290,7 +4843,34 @@
       "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-florida-state-seminoles-401918416",
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
-        "ncaa:2026-27:women:florida-state-seminoles"
+        "ncaa:2026-27:women:florida-state-seminoles",
+        "ncaa:2026-27:women:smu-mustangs"
+      ]
+    },
+    {
+      "gameId": "401918417",
+      "gender": "women",
+      "date": "2027-02-28",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:virginia-cavaliers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/virginia-cavaliers-vs-virginia-tech-hokies-401918417",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:virginia-cavaliers",
+        "ncaa:2026-27:women:virginia-tech-hokies"
+      ]
+    },
+    {
+      "gameId": "401918418",
+      "gender": "women",
+      "date": "2027-02-28",
+      "homeProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "awayProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wake-forest-demon-deacons-vs-syracuse-orange-401918418",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:syracuse-orange",
+        "ncaa:2026-27:women:wake-forest-demon-deacons"
       ]
     }
   ]
