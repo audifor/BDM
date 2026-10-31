@@ -14,7 +14,7 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
   const participants = season.participantTeamIds ?? competition.participantTeamIds
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
   const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
-  if (node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' || node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES') {
+  if (node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' || node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES' || node?.opponentScope?.payload.policy === 'BDM_PINNED_GLEAGUE_CONFERENCES') {
     const groups = calculateSeasonGroupStandings(world, seasonId, throughDate)
     return Array.from({ length: Math.max(...groups.map(group => group.length)) }, (_, rank) => groups.flatMap(group => group[rank] ? [group[rank]!] : []))
       .flat().map((row, index) => ({ ...row, position: index + 1 }))
@@ -28,7 +28,7 @@ export function calculateSeasonGroupStandings(world: GameWorld, seasonId: keyof 
   const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
   const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
-  const pinnedConferences = node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES'
+  const pinnedConferences = node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES' || node?.opponentScope?.payload.policy === 'BDM_PINNED_GLEAGUE_CONFERENCES'
   const groups = node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' || pinnedConferences ? resolveWorldCompetitionGroups(node, participants) : [participants]
   return groups.map(group => calculateStandingTable(world, seasonId, group, throughDate, pinnedConferences))
 }
