@@ -1,0 +1,21 @@
+name: WorldDB NCAA official-first hybrid schedules
+on:
+  push:
+    branches:
+      - feature/worlddb-ncaa-hybrid-schedule-01
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Men/Women source-first hybrid schedule and Save V4
+        run: npx vitest run src/app/game/NcaaD1Real2026HybridSchedule.test.ts --maxWorkers=1 --testTimeout=240000
