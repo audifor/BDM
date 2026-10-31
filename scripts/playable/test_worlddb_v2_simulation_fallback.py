@@ -45,6 +45,31 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_nbl_matrix_preserves_source_clubs_and_six_team_path(self):
+        row = {'source_id': 'pbm:DYN_championnat:78', 'native_format_id': 'competition:AUS:nbl',
+               'competition': 'National Basketball League'}
+        before = copy.deepcopy(row)
+        doc = MODULE.nbl_matrix_sim_document(row, 10)
+        self.assertEqual(before, row)
+        self.assertEqual(doc['competition_id'], 'competition:AUS:nbl')
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        variant = doc['variants'][0]
+        regular = variant['nodes'][0]
+        self.assertEqual(regular['pairing']['type'], 'FIXED_SCHEDULE')
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 33)
+        self.assertEqual([n['key'] for n in variant['nodes'][1:]],
+                         ['PLAY_IN_5_6', 'SEEDING_3_4', 'PLAY_IN_FINAL', 'SEMIFINALS', 'FINAL'])
+        self.assertEqual(variant['nodes'][-1]['contest']['best_of'], 5)
+        self.assertEqual(len([edge for edge in variant['edges'] if edge.get('payload', {}).get('playoff_seed')]), 4)
+
+    def test_nbl_matrix_does_not_rewrite_other_editions_or_10_team_format_without_identity(self):
+        self.assertIsNone(MODULE.nbl_matrix_sim_document(
+            {'source_id': 'pbm:DYN_championnat:100', 'native_format_id': 'competition:AUS:nbl'}, 10))
+        with self.assertRaisesRegex(ValueError, '10 source clubs'):
+            MODULE.nbl_matrix_sim_document(
+                {'source_id': 'pbm:DYN_championnat:78', 'native_format_id': 'competition:AUS:nbl'}, 11)
+
+
     def test_segunda_feb_preserves_two_documented_pools_without_claiming_official_knockout(self):
         row = {'source_id': 'pbm:DYN_championnat:112', 'competition': 'Segunda FEB',
                'native_format_id': 'competition:ESP:segunda-feb',
