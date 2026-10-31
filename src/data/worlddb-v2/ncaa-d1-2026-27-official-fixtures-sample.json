@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "season": "2026-27",
   "coverage": "PARTIAL_OFFICIALLY_ANNOUNCED_GAMES_ONLY",
-  "notes": "Two opening games from the ASUN official 2026-27 season announcement. Not a complete men's or women's schedule; no fixture may be invented to fill missing conference or non-conference dates.",
+  "notes": "15 directly evidenced women's ASUN conference fixtures (14 North Florida official 2026-27 schedule plus 1 conference opener) and 1 men's ASUN opener. This is partial real fixture coverage: official ASUN full schedule totals 56 women's conference games. No missing games are invented; schedules from additional universities must be reconciled before full acceptance.",
   "fixtures": [
     {
       "gender": "men",
@@ -19,6 +19,124 @@
       "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
       "sourceUrl": "https://asunsports.org/news/2026/7/16/atlantic-sun-conference-announces-2026-27-mens-womens-basketball-schedules.aspx",
       "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+      "evidenceKind": "SCHOOL_OFFICIAL"
     }
-  ]
+  ],
+  "officialScope": {
+    "womenAsunConferenceGamesExpected": 56,
+    "womenAsunConferenceGamesSourced": 15,
+    "menAsunConferenceGamesExpected": 56,
+    "menAsunConferenceGamesSourced": 1
+  }
 }
