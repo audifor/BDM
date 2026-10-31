@@ -104,5 +104,33 @@ class SimulatedLeaguePublicationTests(unittest.TestCase):
         self.assertEqual(keys, set(self.verified))
 
 
+    def test_documented_format_candidate_requires_own_native_acceptance(self):
+        source = "pbm:DYN_championnat:103"
+        evidence = json.loads((self.root / "results.json").read_text())
+        evidence["results"].append({
+            "source_id": source, "minimum_flow": "PASS",
+            # Even a shared signature with verified leagues cannot certify NBA.
+            "family_signature": "verified-family",
+            "format_mode": "REUSED_DOCUMENTED_FORMAT_CANDIDATE",
+            "market_flow": "PASS",
+            "config": {"sourceCompetitionId": source,
+                       "nativeCompetitionId": "competition:NAM:nba",
+                       "editionId": "edition:NAM:nba:2025-26",
+                       "formatProvenance": "REUSED_DOCUMENTED_FORMAT"}
+        })
+        self.write("results.json", evidence)
+        self.run_publisher()
+        public = json.loads((self.root / "src/data/worlddb-v2/competitions.json").read_text())
+        self.assertNotIn(source, {row["sourceCompetitionId"] for row in public})
+        self.write("proof-103.json", {
+            "competition": source,
+            "steps": [{"name": name, "status": "PASS"} for name in REQUIRED],
+        })
+        self.run_publisher("--native-evidence", "proof-103.json")
+        public = json.loads((self.root / "src/data/worlddb-v2/competitions.json").read_text())
+        self.assertEqual(next(row for row in public if row["sourceCompetitionId"] == source)
+                         ["formatProvenance"], "REUSED_DOCUMENTED_FORMAT")
+
+
 if __name__ == "__main__":
     unittest.main()
