@@ -7747,6 +7747,212 @@
   },
   {
     "schema_version": "1.0",
+    "competition_id": "competition:ESP:segunda-feb",
+    "competition_season_id": "edition:ESP:segunda-feb:2025-26:bdm-adapted:112",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: preserves the PBM 28 clubs and documented two groups of 14. Group assignments, qualification, aggregate knockout and classification are BDM simulation, NOT official regulations. No promotion/relegation numbers inferred from contradictory source PDFs.",
+    "variants": [
+      {
+        "key": "SEGUNDA_FEB_BDM_SIM",
+        "name": "Segunda FEB (two groups, simulated knockout)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 28
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_GROUPS",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 28,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "policy": "BDM_GENERATED_DOUBLE_ROUND_ROBIN"
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP",
+              "payload": {
+                "policy": "BDM_GENERATED_GROUPS",
+                "generated_group_count": 2
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "GROUP_A",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 0
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "GROUP_B",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 1
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-8",
+                  "2-7",
+                  "3-6",
+                  "4-5"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "AGGREGATE",
+              "leg_count": 2,
+              "tie_resolution": {
+                "method": "BDM_EXTRA_DECIDER"
+              }
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_4",
+                  "WINNER_2-WINNER_3"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "AGGREGATE",
+              "leg_count": 2,
+              "tie_resolution": {
+                "method": "BDM_EXTRA_DECIDER"
+              }
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_GROUPS",
+            "to": "QUARTERFINALS",
+            "selector": "TOP_N",
+            "count": 8
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6549%5DBBCC%20SEGUNDA%20FEB%2025-26%20-%20Versi%C3%B3n%20Web.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6549%5DBBCC%20SEGUNDA%20FEB%2025-26.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6005%5D1266_Reglamento%20General%20y%20Competiciones%20%28Baloncesto%29%20CD%2007.10.2025%20-%20CSD%20Versi%C3%B3n%20web.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM simulation policy for group assignment, knockout and tie resolution"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
     "competition_id": "competition:BDM-SIM:dyn_championnat-113",
     "competition_season_id": "edition:BDM-SIM:dyn_championnat-113:generated",
     "season_label": "BDM generated season",
