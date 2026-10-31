@@ -1,6 +1,6 @@
 import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoach } from '@/domain/coach'
-import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
+import { createCompetition, defaultLeagueCompetitionRules, NBA_GAME_FORMAT } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { parseGameDate } from '@/domain/date'
 import { createPerson } from '@/domain/person'
@@ -120,7 +120,7 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), organizationId: organizationIdFromString(team.organizationId), organizationSectionId: organizationSectionIdFromString(team.organizationSectionId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
   const formatVariant = worldCompetitionFormat?.variants.find(variant => variant.isRealVariant) ?? worldCompetitionFormat?.variants[0]
   const meetingsPerPair = formatVariant?.nodes.find(node => node.role === 'REGULAR_SEASON')?.pairing?.meetingsPerPair ?? 2
-  const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: { ...defaultLeagueCompetitionRules, schedule: { meetingsPerPair, homeAwayBalance: meetingsPerPair % 2 === 0 ? 'equal' : 'balanced' } } })
+  const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: { ...defaultLeagueCompetitionRules, ...(worldCompetitionFormat?.competitionId === 'competition:NAM:nba' ? { gameFormat: NBA_GAME_FORMAT } : {}), schedule: { meetingsPerPair, homeAwayBalance: meetingsPerPair % 2 === 0 ? 'equal' : 'balanced' } } })
   const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }), ...(calendarPolicy === undefined ? {} : { calendarPolicy }) })
   const ecosystem = createSportsEcosystem({ id: ecosystemId, name: slice.ecosystem.name, kind: slice.ecosystem.kind, category: slice.ecosystem.category })
   const organizationOwnership = (slice.organizationOwnership ?? []).map((record) => createOrganizationOwnership({ id: record.ownershipId, organizationId: record.organizationId, owner: record.ownerKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.ownerId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.ownerId) }, ownershipPercentage: record.ownershipPercentage, validFrom: record.validFrom, validTo: record.validTo }))

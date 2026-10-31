@@ -288,6 +288,23 @@
     "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   },
   {
+    "sourceCompetitionId": "pbm:DYN_championnat:44",
+    "currencyCode": "USD",
+    "countryId": 2,
+    "countryCode": "USA",
+    "name": "NBA",
+    "nativeCompetitionId": "competition:NAM:nba",
+    "editionId": "edition:NAM:nba:2025-26:bdm-matrix:44",
+    "ecosystemId": "worlddb-batch:DYN_championnat:44",
+    "teamCount": 30,
+    "calendar": "FORMAT_DERIVED_SIMULATION",
+    "nativeStatus": "CANDIDATE_NATIVE_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:NAM:nba",
+    "formatReferenceResolution": "NBA_SOURCE_CONFERENCES_WITH_GENERATED_MATRIX"
+  },
+  {
     "sourceCompetitionId": "pbm:DYN_championnat:45",
     "currencyCode": "EUR",
     "countryId": 15,

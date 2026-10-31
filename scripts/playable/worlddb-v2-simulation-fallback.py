@@ -180,6 +180,36 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
     return document
 
 
+def nba_matrix_sim_document(row, participants):
+    """Load the versioned NBA simulation graph without inventing source club IDs.
+
+    Each real PBM team is reconciled to East/West at game bootstrap, not here.
+    Unrecognized franchise identities fail closed at that boundary.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:44' or row.get('native_format_id') != 'competition:NAM:nba':
+        return None
+    if not any(item.get('identity') == 'competition:NAM:nba' for item in row.get('official_documentary_evidence') or []):
+        return None
+    if participants != 30:
+        raise ValueError('NBA PBM requires 30 original clubs')
+    path = Path(__file__).resolve().parents[2] / 'src/data/worlddb-v2/global-formats.json'
+    formats = read(path)
+    matched = [doc for doc in formats if doc.get('competition_id') == 'competition:NAM:nba'
+               and doc.get('competition_season_id') == 'edition:NAM:nba:2025-26:bdm-matrix:44']
+    if len(matched) != 1:
+        raise ValueError('NBA BDM matrix source format must resolve uniquely')
+    document = matched[0]
+    variant = document['variants'][0]
+    regular = [node for node in variant['nodes'] if node.get('role') == 'REGULAR_SEASON']
+    if (document.get('status') != 'COMPLETE' or len(regular) != 1
+        or regular[0].get('team_count') != participants
+        or regular[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 82
+        or regular[0].get('opponent_scope', {}).get('payload', {}).get('policy') != 'BDM_PINNED_NBA_CONFERENCES'
+        or 'GENERATED_SIMULATION' not in document.get('notes', '')):
+        raise ValueError('NBA matrix lacks explicit source and simulation guarantees')
+    return copy.deepcopy(document)
+
+
 def nbl_matrix_sim_document(row, participants):
     """NBL27: 10 clubs x 33 matches, six-team play-in; fixture matrix is fiction.
 
@@ -720,6 +750,28 @@ def build_package(matrix, batch, published, reusable_formats=()):
                 "conference_count": ncaa_plan["reference_conferences"],
                 "native_status": "NCAA_MEMBERSHIP_PENDING",
                 "official_fidelity": "NOT_CERTIFIED",
+            })
+            continue
+        nba_sim = nba_matrix_sim_document(row, expected_count)
+        if nba_sim is not None:
+            documents.append(nba_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': nba_sim['competition_id'],
+                'editionId': nba_sim['competition_season_id'],
+                'name': row['competition'], 'currencyCode': 'USD',
+                'calendar': 'FORMAT_DERIVED_SIMULATION',
+                'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'REUSED_DOCUMENTED_FORMAT',
+                'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'NBA_SOURCE_CONFERENCES_WITH_GENERATED_MATRIX',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'REUSED_DOCUMENTED_FORMAT',
+                'format_reference_id': row['native_format_id'], 'expected_regular_games': 1230,
+                'native_status': 'ENGINE_AND_PBM_NAME_RECONCILIATION_PENDING',
+                'official_fidelity': 'SOURCE_NBA_CONFERENCES_PLAY_IN_AND_BO7; FIXTURES_AND_TIEBREAK_SIMULATED',
             })
             continue
         nbl_sim = nbl_matrix_sim_document(row, expected_count)
