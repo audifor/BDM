@@ -21,6 +21,8 @@ import { startNextSeasonTransitionFor } from './startNextSeason'
 import { serializeGameWorldV4, deserializeGameWorldSaveV4 } from '@/save/GameWorldSaveV4'
 import { validateGameWorld } from '@/domain/world'
 import { NBA_EAST_FRANCHISE_NAMES, NBA_WEST_FRANCHISE_NAMES } from './NbaConferenceSource'
+import { GLEAGUE_2026_FRANCHISE_NAMES } from './GLeagueSourceGroups'
+import { calculateGLeagueTipOffStandings } from '@/engine/competition/GLeagueTipOff'
 
 function generated(count: number, grouped: boolean) {
   return JSON.parse(execFileSync(process.env.BDM_PYTHON ?? 'python', ['-c',
@@ -131,6 +133,20 @@ it('plays four source groups, the second group stage and cross semifinals throug
   await exerciseFamily(wire, 16, 1, true, false)
 }, 180_000)
 
+it('plays G League Tip-Off 14 and RESET 36-game regular with distinct region and conference records, Save V4 and successor edition', async () => {
+  const wire = globalFormats.find(doc => doc.competition_id === 'competition:NAM:gleague')
+  expect(wire).toBeDefined()
+  const base = snapshot(31, false)
+  const source: WorldDbV2Snapshot = {
+    ...base,
+    clubs: base.clubs.map((club, i) => ({
+      ...club, reference_data: { ...club.reference_data, nom_equipe: GLEAGUE_2026_FRANCHISE_NAMES[i]! },
+    })),
+    competitions: [{ ...base.competitions[0]!, entity_id: 'pbm:DYN_championnat:94' }],
+  }
+  await exerciseFamily(wire, 31, 2, true, false, source, worldDbV2Competition('pbm:DYN_championnat:94'))
+}, 600_000)
+
 it('plays NBA 30 clubs through 82 regular games, two real conferences, play-in and BO7 Finals', async () => {
   const wire = globalFormats.find(doc => doc.competition_id === 'competition:NAM:nba')
   expect(wire).toBeDefined()
@@ -235,6 +251,15 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
   expect(Object.keys(world.teams).sort()).toEqual(source.clubs.map(club => club.entity_id).sort())
   const seasonId = world.currentSeasonId!
   const regularCount = Object.keys(world.games).length
+  if (format.competitionId === 'competition:NAM:gleague') {
+    const games = Object.values(world.games)
+    expect(games.filter(g => g.competitionStageKey === 'TIP_OFF_TOURNAMENT')).toHaveLength(217)
+    expect(games.filter(g => g.competitionStageKey === 'REGULAR_SEASON')).toHaveLength(558)
+    expect(regularCount).toBe(775)
+    expect(calculateGLeagueTipOffStandings(world, seasonId).map(group => group.length)).toEqual([8, 8, 8, 7])
+    expect(calculateGroupStandings(world, seasonId).map(group => group.length)).toEqual([16, 15])
+    expect(new Set(games.map(g => g.id)).size).toBe(775)
+  }
   expect(world.competitions[world.seasons[seasonId]!.competitionId]!.rules.schedule.meetingsPerPair).toBe(meetings)
   expect(Object.values(world.players).every(p => p.gender === (female ? 'female' : 'male'))).toBe(true)
   const save = () => {
@@ -258,10 +283,16 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
   expect(champion).toBeTruthy()
   expect(world.seasonHistoryBySeasonId[seasonId]?.championTeamId).toBe(champion)
   const tables = calculateGroupStandings(world, seasonId)
-  const simulatedConferences = world.seasons[seasonId]!.worldCompetitionFormat?.variants[0]?.nodes[0]?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES'
+  const simulatedConferences = ['BDM_PINNED_NBA_CONFERENCES', 'BDM_PINNED_GLEAGUE_CONFERENCES'].includes(String(world.seasons[seasonId]!.worldCompetitionFormat?.variants[0]?.nodes[0]?.opponentScope?.payload.policy))
   expect(tables).toHaveLength(simulatedConferences ? 2 : grouped ? Number(format.variants[0]!.nodes[0]!.opponentScope!.payload.generated_group_count) : 1)
   const matrixQuota = format.variants[0]!.nodes.find(node => node.role === 'REGULAR_SEASON')?.pairing?.payload.games_per_team
   for (const table of tables) expect(table.every(row => row.played === (typeof matrixQuota === 'number' ? matrixQuota : (table.length - 1) * meetings))).toBe(true)
+  if (format.competitionId === 'competition:NAM:gleague') {
+    const regions = calculateGLeagueTipOffStandings(world, seasonId)
+    expect(regions.map(group => group.length)).toEqual([8, 8, 8, 7])
+    expect(regions.every(group => group.every(row => row.played === 14))).toBe(true)
+    expect(tables.every(table => table.every(row => row.played === 36))).toBe(true)
+  }
   if (format.competitionId === 'competition:FRA:nm2') {
     expect(resolveAdaptedPromotion(world, seasonId)).toEqual(tables.map(table => table[0]!.teamId))
     if (sourceOverride) expect(resolveGroupedRelegation(world, seasonId)).toEqual(tables.flatMap(table => table.slice(-2).map(row => row.teamId)))
@@ -332,9 +363,9 @@ it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('projects every source
   expect(results.filter(r => r.status === 'PROJECTION_SAVE_PASS').length).toBeGreaterThanOrEqual(90)
 }, 600_000)
 
-it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 100 available catalog entries through the default application bundle', async () => {
+it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 101 available catalog entries through the default application bundle', async () => {
   const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
-  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(100)
+  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(101)
   for (const config of WORLDDB_V2_GLOBAL_COMPETITIONS) {
     const row = index.results.find((r: any) => r.source_id === config.sourceCompetitionId)
     const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
