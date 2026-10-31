@@ -88,7 +88,10 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
             && person.reference_data.is_alive !== 0
             && person.reference_data.retraite !== 1)
           .map(person => person.entity_id)
-        expect(originalPlayers.every(playerId => world.players[playerId] !== undefined))
+        // PBM source IDs arrive as strings, while GameWorld.players is keyed
+        // by branded PlayerId. Compare identity sets without an unsafe cast.
+        const projectedPlayerIds = new Set(Object.keys(world.players))
+        expect(originalPlayers.every(playerId => projectedPlayerIds.has(playerId)))
           .toBe(true)
         report.original_player_count = originalPlayers.length
         report.generated_player_count = Object.keys(world.players)
