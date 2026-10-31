@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "season": "2026-27",
+  "coverage": "PARTIAL_OFFICIALLY_ANNOUNCED_GAMES_ONLY",
+  "notes": "Two opening games from the ASUN official 2026-27 season announcement. Not a complete men's or women's schedule; no fixture may be invented to fill missing conference or non-conference dates.",
+  "fixtures": [
+    {
+      "gender": "men",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/news/2026/7/16/atlantic-sun-conference-announces-2026-27-mens-womens-basketball-schedules.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/news/2026/7/16/atlantic-sun-conference-announces-2026-27-mens-womens-basketball-schedules.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}
