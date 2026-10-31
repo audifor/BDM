@@ -54,7 +54,8 @@ it('retains both original PBM clubs and generates minimum viable rosters and coa
   )).toBe(true)
   expect(result.players.every(p => p.playerId.startsWith('bdm:generated-player:'))).toBe(true)
   expect(result.players.every(p => result.rosterAssignments.some(r => r.playerId === p.playerId))).toBe(true)
-  expect(result.persons.every(p => p.personId.startsWith('bdm:'))).toBe(true)
+  expect(result.persons).toHaveLength(result.players.length + generatedCoaches.length)
+  expect(result.players.every(player => result.persons.some(person => person.personId === player.personId))).toBe(true)
   expect(projectWorldDbV2(source, format)).toEqual(result)
 })
 
