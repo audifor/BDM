@@ -1,15 +1,511 @@
 {
   "schemaVersion": 1,
   "season": "2026-27",
-  "coverage": "ASUN_WOMEN_CONFERENCE_REGULAR_SEASON_FULLY_SOURCED_OTHER_NCAA_GAPS_REMAIN",
-  "notes": "2026-27 NCAA ASUN W: ALL 56 conference games cross-verified between two official school schedules as published on ASUN league site. Each of 8 teams plays seven home and seven away against each of 7 opponents. Conference-only scope; women's nonconference and tournament games, and men's full conference calendar remain absent. These ARE 56 documented real matchups, NOT a fully certified women's NCAA playable season.",
+  "coverage": "ASUN_BOTH_GENDERS_CONFERENCE_REGULAR_SEASONS_FULLY_SOURCED_OTHER_NCAA_GAPS_REMAIN",
+  "notes": "2026-27 NCAA ASUN men's AND women's REGULAR SEASONS fully sourced: 56 real conference games per category, each cross-confirmed by 2 distinct official school schedules on the ASUN conference website. Each of the 16 programs plays seven home and seven away games, two games against every conference rival. The complete NCAA men's and women's seasons, 64 conference tournaments, 76-team national championship selection, and nonconference calendars are not yet certified.",
   "fixtures": [
     {
       "gender": "men",
       "date": "2027-01-07",
-      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
-      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
-      "sourceUrl": "https://asunsports.org/news/2026/7/16/atlantic-sun-conference-announces-2026-27-mens-womens-basketball-schedules.aspx",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-22",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-19",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-19",
+      "homeProgramId": "ncaa:2026-27:men:north-florida",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:men:queens",
+      "awayProgramId": "ncaa:2026-27:men:stetson",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:men:west-florida",
+      "awayProgramId": "ncaa:2026-27:men:fgcu",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine",
+      "awayProgramId": "ncaa:2026-27:men:queens",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:fgcu",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb",
+      "awayProgramId": "ncaa:2026-27:men:west-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:stetson",
+      "awayProgramId": "ncaa:2026-27:men:north-florida",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
       "evidenceKind": "CONFERENCE_OFFICIAL"
     },
     {
@@ -518,43 +1014,92 @@
     }
   ],
   "officialScope": {
+    "menAsunConferenceGamesExpected": 56,
+    "menAsunConferenceGamesSourced": 56,
+    "menAsunClubSchedulesCrossVerified": 8,
     "womenAsunConferenceGamesExpected": 56,
     "womenAsunConferenceGamesSourced": 56,
     "womenAsunClubSchedulesCrossVerified": 8,
-    "womenAsunFixtureEvidencePerGame": 2,
-    "menAsunConferenceGamesExpected": 56,
-    "menAsunConferenceGamesSourced": 1
+    "fixtureEvidencePerGame": 2
   },
   "sourceCatalog": [
     {
+      "gender": "men",
+      "school": "bellarmine",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3665"
+    },
+    {
+      "gender": "men",
+      "school": "fgcu",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3666"
+    },
+    {
+      "gender": "men",
+      "school": "jacksonville",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3667"
+    },
+    {
+      "gender": "men",
+      "school": "lipscomb",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3668"
+    },
+    {
+      "gender": "men",
+      "school": "north-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3669"
+    },
+    {
+      "gender": "men",
+      "school": "queens",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3670"
+    },
+    {
+      "gender": "men",
+      "school": "stetson",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3671"
+    },
+    {
+      "gender": "men",
+      "school": "west-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3672"
+    },
+    {
+      "gender": "women",
       "school": "bellarmine",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3654"
     },
     {
+      "gender": "women",
       "school": "fgcu",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3656"
     },
     {
+      "gender": "women",
       "school": "jacksonville",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3673"
     },
     {
+      "gender": "women",
       "school": "lipscomb",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3658"
     },
     {
+      "gender": "women",
       "school": "north-florida",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3659"
     },
     {
+      "gender": "women",
       "school": "queens",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3660"
     },
     {
+      "gender": "women",
       "school": "stetson",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3663"
     },
     {
+      "gender": "women",
       "school": "west-florida",
       "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3664"
     }
