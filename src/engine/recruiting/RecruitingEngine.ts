@@ -4,7 +4,7 @@ import { getRecruitingPeriod, RECRUITING_PREFERENCE_DIMENSIONS, type RecruitingB
 import type { GameDate } from '@/domain/date'
 import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { calculateStaffWorkload, updateGameWorld } from '@/domain/world'
+import { calculateStaffWorkload, isPlayerTeamCategoryCompatible, updateGameWorld } from '@/domain/world'
 import { createOrganizationPlayerAwareness } from '@/domain/scouting'
 import { createTeam } from '@/domain/team'
 import { createPlayer, type PlayerPathwayRecord, type PlayerPathwaySource } from '@/domain/player'
@@ -122,6 +122,10 @@ export function offer(cycle:RecruitingCycle,recruit:RecruitProfile|undefined,off
 
 /** Canonical world operations. The UI and AI share these boundaries. */
 export function addRecruitingBoardEntry(world: GameWorld, entry: RecruitingBoardEntry): GameWorld {
+  const recruit = world.recruitProfilesById[entry.recruitId]
+  if (recruit !== undefined && !isPlayerTeamCategoryCompatible(world, recruit.playerId, entry.programTeamId)) {
+    throw new RangeError('PLAYER_TEAM_CATEGORY_MISMATCH')
+  }
   return updateGameWorld(world, { recruitingBoards: setBoard(world.recruitingBoards, entry) })
 }
 
@@ -178,6 +182,7 @@ export function performRecruitingAction(world: GameWorld, cycleId: string, recru
   const cycle = world.recruitingCyclesById[cycleId]
   if (!cycle) return { ok: false, reason: 'INVALID_RECRUIT' }
   const recruit = world.recruitProfilesById[recruitId]
+  if (recruit && !isPlayerTeamCategoryCompatible(world, recruit.playerId, programTeamId)) return { ok: false, reason: 'PLAYER_TEAM_CATEGORY_MISMATCH' }
   const rivalSigning = Object.values(world.recruitSigningsById).find((signing) => signing.recruitId === recruitId && signing.programTeamId !== programTeamId)
   const signedWithOtherProgram = rivalSigning !== undefined
   const releasedFromContactProhibition = rivalSigning !== undefined && recruit?.contactReleasedFromProgramId === rivalSigning.programTeamId
@@ -340,6 +345,7 @@ export function makeRecruitingOffer(world: GameWorld, cycleId: string, recruitId
   const rivalSigning = Object.values(world.recruitSigningsById).find((signing) => signing.recruitId === recruitId && signing.programTeamId !== programTeamId)
   const signedWithOtherProgram = rivalSigning !== undefined
   const profile = world.recruitProfilesById[recruitId]
+  if (profile && !isPlayerTeamCategoryCompatible(world, profile.playerId, programTeamId)) return { ok: false, reason: 'PLAYER_TEAM_CATEGORY_MISMATCH' }
   const isNCAA = world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike'
   const recruiterId = recruitingStaffActors(world, programTeamId).recruiterId
   if (isNCAA) {
@@ -592,7 +598,9 @@ export function rankAiRecruitingTargets(world: GameWorld, cycleId: string, progr
   const immediateNeeds = getTeamRecruitingNeeds(world, programTeamId)
   const organizationId = world.teams[programTeamId]!.organizationId
   const policy = world.organizationEvaluationPoliciesById[organizationId]
-  return Object.values(world.recruitProfilesById).filter((profile) => profile.cycleId === cycleId && (profile.status === 'open' || profile.status === 'committed')).sort((a, b) => {
+  return Object.values(world.recruitProfilesById).filter((profile) =>
+    profile.cycleId === cycleId && (profile.status === 'open' || profile.status === 'committed') &&
+    isPlayerTeamCategoryCompatible(world, profile.playerId, programTeamId)).sort((a, b) => {
     const first = world.players[a.playerId]!, second = world.players[b.playerId]!
     const firstValue = deriveOrganizationPlayerValuation({ organizationId, playerId: first.id, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'RECRUITING', publicPosition: first.basketball.primaryPosition, policy })
     const secondValue = deriveOrganizationPlayerValuation({ organizationId, playerId: second.id, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'RECRUITING', publicPosition: second.basketball.primaryPosition, policy })
