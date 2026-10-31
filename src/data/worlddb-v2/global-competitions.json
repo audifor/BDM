@@ -677,6 +677,23 @@
     "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   },
   {
+    "sourceCompetitionId": "pbm:DYN_championnat:94",
+    "currencyCode": "USD",
+    "countryId": 2,
+    "countryCode": "USA",
+    "name": "NBA G League",
+    "nativeCompetitionId": "competition:NAM:gleague",
+    "editionId": "edition:NAM:gleague:2026-27:bdm-two-phase:94",
+    "ecosystemId": "worlddb-batch:DYN_championnat:94",
+    "teamCount": 31,
+    "calendar": "FORMAT_DERIVED_SIMULATION",
+    "nativeStatus": "CANDIDATE_NATIVE_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:NAM:gleague",
+    "formatReferenceResolution": "GLEAGUE_SOURCE_GROUPS_WITH_GENERATED_TWO_PHASE_FIXTURES"
+  },
+  {
     "sourceCompetitionId": "pbm:DYN_championnat:107",
     "currencyCode": "EUR",
     "countryId": 0,
