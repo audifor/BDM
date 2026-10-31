@@ -1,6 +1,13 @@
 name: NCAA D1 2026-27 native GameWorld acceptance
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/ncaa-d1-2026-acceptance.yml'
+      - 'src/app/game/NcaaD1Real2026*'
+      - 'src/data/worlddb-v2/ncaa-d1-2026-27-*'
+      - 'src/data/worlddb-v2/additional-formats.json'
   push:
     branches: [playable/worlddb-102-final-01]
     paths:
