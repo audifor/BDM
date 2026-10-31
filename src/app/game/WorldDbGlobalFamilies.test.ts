@@ -224,7 +224,14 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
     editionId: format.competitionSeasonId, teamCount: count, calendar: 'FORMAT_DERIVED_SIMULATION', formatProvenance: 'GENERATED_SIMULATION' }
   const source = sourceOverride ?? snapshot(count, female)
   const runtime = { ...parseWorldCompetitionRuntimeBundle(reference), competitionFormats: [format] }
-  let world = withShortGameFormat(await createWorldDbV2GameFromSnapshot(source, source.clubs[0]!.entity_id, undefined, config, runtime), 0.1)
+  const opening = await createWorldDbV2GameFromSnapshot(source, source.clubs[0]!.entity_id, undefined, config, runtime)
+  if (format.competitionId === 'competition:NAM:nba') {
+    const nbaRules = opening.competitions[opening.seasons[opening.currentSeasonId!]!.competitionId]!.rules.gameFormat
+    expect(nbaRules.periodCount).toBe(4)
+    expect(nbaRules.periodMinutes).toBe(12)
+    expect(nbaRules.foulRules?.personalFoulLimit).toBe(6)
+  }
+  let world = withShortGameFormat(opening, 0.1)
   expect(Object.keys(world.teams).sort()).toEqual(source.clubs.map(club => club.entity_id).sort())
   const seasonId = world.currentSeasonId!
   const regularCount = Object.keys(world.games).length
