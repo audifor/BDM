@@ -45,6 +45,38 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_segunda_feb_preserves_two_documented_pools_without_claiming_official_knockout(self):
+        row = {'source_id': 'pbm:DYN_championnat:112', 'competition': 'Segunda FEB',
+               'native_format_id': 'competition:ESP:segunda-feb',
+               'detailed_blocker': 'Segunda FEB: dos grupos de 14 y eliminatorias agregadas;',
+               'official_documentary_evidence': [{'sources': 'https://www.feb.es/segundafeb.pdf'}]}
+        original = copy.deepcopy(row)
+        doc = MODULE.adapt_documented_format(row, 28, [])
+        self.assertEqual(row, original)
+        self.assertEqual(doc['competition_id'], row['native_format_id'])
+        self.assertEqual(doc['status'], 'COMPLETE')
+        self.assertIn('SIMULATED', doc['notes'].upper())
+        variant = doc['variants'][0]
+        self.assertFalse(variant['is_real_variant'])
+        self.assertEqual(variant['nodes'][0]['team_count'], 28)
+        self.assertEqual(variant['nodes'][0]['opponent_scope']['payload']['generated_group_count'], 2)
+        self.assertEqual([n['pairing']['payload']['bdm_generated_group_index'] for n in variant['nodes'] if n['role'] == 'GROUP_STAGE'], [0, 1])
+        self.assertEqual(len([n for n in variant['nodes'] if n.get('contest', {}).get('format_type') == 'AGGREGATE']), 2)
+        self.assertEqual(variant['edges'][0]['count'], 8)
+        self.assertEqual(doc['consequences'], [])
+        self.assertTrue(any(s['type'] == 'OFFICIAL' for s in doc['sources']))
+
+    def test_segunda_feb_refuses_wrong_cohort_and_missing_evidence(self):
+        row = {'source_id': 'pbm:DYN_championnat:112', 'competition': 'Segunda FEB',
+               'native_format_id': 'competition:ESP:segunda-feb',
+               'detailed_blocker': 'dos grupos de 14',
+               'official_documentary_evidence': [{'sources': 'https://www.feb.es/segundafeb.pdf'}]}
+        with self.assertRaisesRegex(ValueError, '28 original clubs'):
+            MODULE.adapt_documented_format(row, 27, [])
+        with self.assertRaisesRegex(ValueError, 'documentary evidence missing'):
+            MODULE.adapt_documented_format({**row, 'official_documentary_evidence': []}, 28, [])
+
+
     def test_adapts_four_group_winners_and_preserves_the_placement_game(self):
         groups = [{'key': f'POOL_{i}', 'role': 'REGULAR_SEASON', 'node_type': 'GROUP', 'team_count': 14,
                    'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2}, 'opponent_scope': {'type': 'SAME_GROUP'}} for i in range(4)]
