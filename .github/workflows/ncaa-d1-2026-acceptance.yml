@@ -1,0 +1,36 @@
+name: NCAA D1 2026-27 native GameWorld acceptance
+
+on:
+  push:
+    branches: [playable/worlddb-102-final-01]
+    paths:
+      - '.github/workflows/ncaa-d1-2026-acceptance.yml'
+      - 'src/app/game/NcaaD1Real2026*'
+      - 'src/data/worlddb-v2/ncaa-d1-2026-27-*'
+      - 'src/data/worlddb-v2/additional-formats.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ncaa-real-native:
+    name: Real NCAA men and women GameWorld + Save V4
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify TypeScript
+        run: npm run typecheck
+      - name: Real male/female source membership and tournament contracts
+        run: npx vitest run src/app/game/NcaaD1Real2026Catalog.test.ts --maxWorkers=1 --testTimeout=120000
+      - name: Full 365/363-program GameWorld and Save V4 acceptance
+        env:
+          BDM_NCAA_REAL_NATIVE_ACCEPTANCE: '1'
+        run: npx vitest run src/app/game/NcaaD1Real2026WorldSeed.test.ts --maxWorkers=1 --testTimeout=180000 --hookTimeout=180000
