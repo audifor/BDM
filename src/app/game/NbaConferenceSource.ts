@@ -16,10 +16,6 @@ export const NBA_WEST_FRANCHISE_NAMES = [
 
 const normalize = (name: string) => name.toLowerCase().normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
-const aliases = [
-  ['76ers', 'sixers'],
-  ['trailblazers', 'trailblazers'],
-]
 const franchises = [
   ...NBA_EAST_FRANCHISE_NAMES.map(name => ({ name, conference: 'east' as const })),
   ...NBA_WEST_FRANCHISE_NAMES.map(name => ({ name, conference: 'west' as const })),
