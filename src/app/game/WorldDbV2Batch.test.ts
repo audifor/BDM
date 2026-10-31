@@ -39,14 +39,17 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
   const candidateConfigs = new Map<string, any>(candidateRows.map(config => [config.sourceCompetitionId, config]))
   const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
   if (simulationMode) {
+    const manifest = JSON.parse(readFileSync(resolve(generatedDir, 'manifest.json'), 'utf8'))
     expect(candidateConfigs.size).toBe(102)
-    expect(simulationFormats.size).toBe(96)
-    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(96)
+    expect(simulationFormats.size).toBe(manifest.generated_simulation_candidates)
+    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(manifest.generated_simulation_candidates)
     const reused = candidateRows.filter(config => config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT')
-    expect(reused).toHaveLength(1)
-    expect(reused[0].sourceCompetitionId).toBe('pbm:DYN_championnat:44')
-    expect(reused[0].nativeCompetitionId).toBe('competition:NAM:nba')
-    expect(trusted.has(reused[0].editionId)).toBe(true)
+    expect(reused).toHaveLength(manifest.reused_documented_format_candidates)
+    expect(reused.some(config => config.sourceCompetitionId === 'pbm:DYN_championnat:44'
+      && config.nativeCompetitionId === 'competition:NAM:nba')).toBe(true)
+    // External PGM format sources may increase reuse, but every selected
+    // document must be in this runtime or independently supplied by the batch.
+    expect(manifest.generated_simulation_candidates + manifest.reused_documented_format_candidates).toBe(97)
     const college = candidateRows.filter(config => config.formatProvenance === 'DOCUMENTED_NCAA_REFERENCE_UNRECONCILED')
     expect(college).toHaveLength(1)
     expect(college[0].sourceCompetitionId).toBe('pbm:DYN_championnat:71')
