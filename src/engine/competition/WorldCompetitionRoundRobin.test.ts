@@ -27,6 +27,17 @@ const format = parseWorldCompetitionFormatDocument({
 const entries = [1, 2, 3, 4].map((value) => ({ competitionSeasonEntryId: `entry:${value}` }))
 
 describe('Phase 1 round-robin instantiator', () => {
+  it.each([4, 5, 6, 7, 8])('balances home venues for a single meeting among %i teams', count => {
+    const variant = format.variants[0]!
+    const scoped = { ...format, variants: [{ ...variant, nodes: [{ ...variant.nodes[0]!, teamCount: count, pairing: { type: 'ROUND_ROBIN' as const, meetingsPerPair: 1, payload: {} } }] }] }
+    const entries = Array.from({ length: count }, (_, i) => ({ competitionSeasonEntryId: `entry:${i}` }))
+    const plan = instantiateWorldCompetitionRoundRobinV1(scoped, variant.key, 'REGULAR', entries)
+    for (const entry of entries) {
+      const home = plan.fixtures.filter(g => g.homeEntryId === entry.competitionSeasonEntryId).length
+      const away = plan.fixtures.filter(g => g.awayEntryId === entry.competitionSeasonEntryId).length
+      expect(Math.abs(home - away)).toBeLessThanOrEqual(1)
+    }
+  })
   it('creates a deterministic double round robin with every pair exactly twice', () => {
     const first = instantiateWorldCompetitionRoundRobinV1(format, 'MAIN', 'REGULAR', entries)
     const second = instantiateWorldCompetitionRoundRobinV1(format, 'MAIN', 'REGULAR', entries)

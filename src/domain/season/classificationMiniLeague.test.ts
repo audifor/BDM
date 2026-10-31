@@ -36,4 +36,5 @@ it('falls back to overall difference and scoring after the mini-table is exhaust
 it('keeps provisional display stable but never invents a terminal draw outcome', () => {
   expect(rankClassificationMiniLeague([row('B'), row('A')], [], false).map(r => r.teamId)).toEqual(['A', 'B'])
   expect(() => rankClassificationMiniLeague([row('B'), row('A')], [], true)).toThrow('draw authority required')
+  expect(rankClassificationMiniLeague([row('B'), row('A')], [], true, true).map(r => r.teamId)).toEqual(['A', 'B'])
 })

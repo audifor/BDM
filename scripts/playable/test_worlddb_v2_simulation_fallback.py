@@ -45,6 +45,57 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_adapts_four_group_winners_and_preserves_the_placement_game(self):
+        groups = [{'key': f'POOL_{i}', 'role': 'REGULAR_SEASON', 'node_type': 'GROUP', 'team_count': 14,
+                   'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2}, 'opponent_scope': {'type': 'SAME_GROUP'}} for i in range(4)]
+        nodes = groups + [{'key': 'SEMIS', 'role': 'FINAL_FOUR', 'node_type': 'ROUND', 'team_count': 4},
+                          {'key': 'THIRD', 'role': 'PLACEMENT', 'node_type': 'ROUND', 'team_count': 2, 'contest': {'format_type': 'SINGLE_GAME'}},
+                          {'key': 'FINAL', 'role': 'FINAL', 'node_type': 'ROUND', 'team_count': 2, 'contest': {'format_type': 'SINGLE_GAME'}}]
+        edges = [{'from': n['key'], 'to': 'SEMIS', 'selector': 'RANK_RANGE', 'rank_from': 1, 'rank_to': 1} for n in groups]
+        edges += [{'from': 'SEMIS', 'to': 'THIRD', 'selector': 'LOSER'}, {'from': 'SEMIS', 'to': 'FINAL', 'selector': 'WINNER'}]
+        source = {'competition_id': 'competition:test', 'competition_season_id': 'edition:test', 'status': 'PARTIAL',
+                  'variants': [{'key': 'MAIN', 'nodes': nodes, 'edges': edges}], 'consequences': [], 'sources': []}
+        before = copy.deepcopy(source)
+        adapted = MODULE.adapt_documented_format({'source_id': 'pbm:DYN_championnat:42', 'native_format_id': 'competition:test'}, 56, [source])
+        self.assertEqual(source, before)
+        variant = adapted['variants'][0]
+        self.assertEqual(variant['nodes'][0]['opponent_scope']['payload']['generated_group_count'], 4)
+        self.assertEqual(variant['edges'][0]['count'], 4)
+        self.assertEqual(next(n for n in variant['nodes'] if n['key'] == 'THIRD')['pairing']['payload']['matchups'], ['LOSER_1-LOSER_2'])
+
+    def test_generated_group_and_playoff_policy_keeps_a_bounded_schedule(self):
+        doc = MODULE.simulation_document('pbm:DYN_championnat:42', 'NM2 simulation', 56, postseason=True, grouped=True)
+        variant = doc['variants'][0]
+        self.assertEqual(variant['nodes'][0]['opponent_scope']['payload']['generated_group_count'], 4)
+        self.assertEqual(variant['edges'][0], {'from': 'REGULAR_SEASON', 'to': 'PLAYOFF_8', 'selector': 'TOP_N', 'count': 8})
+        self.assertEqual(variant['nodes'][-1]['role'], 'FINAL')
+
+    def test_partial_adaptation_preserves_rules_source_and_consequences(self):
+        source = MODULE.simulation_document('pbm:DYN_championnat:99', 'partial', 8, postseason=True)
+        source['status'] = 'PARTIAL'
+        source['variants'][0].pop('seeding')
+        source['variants'][0]['nodes'][1]['hosting'] = {'rule_type': 'HIGHER_SEED'}
+        source['consequences'] = [{'type': 'RELEGATION', 'payload': {'count': 1}}]
+        before = copy.deepcopy(source)
+        adapted = MODULE.adapt_documented_format({'source_id': 'pbm:DYN_championnat:99', 'native_format_id': source['competition_id']}, 10, [source])
+        self.assertEqual(source, before)
+        self.assertEqual(adapted['consequences'], source['consequences'])
+        self.assertEqual(adapted['variants'][0]['edges'], source['variants'][0]['edges'])
+        self.assertEqual(adapted['variants'][0]['nodes'][0]['team_count'], 10)
+        self.assertFalse(adapted['variants'][0]['is_real_variant'])
+        self.assertIn('ADAPTED_DOCUMENTED_FORMAT', adapted['notes'])
+
+    def test_known_unsupported_groups_are_preserved_instead_of_flattened(self):
+        matrix, batch, published = fixtures()
+        row = matrix['competitions'][5]
+        row['native_format_id'] = 'competition:known-groups'
+        source = {'competition_id': row['native_format_id'], 'competition_season_id': 'edition:groups', 'status': 'PARTIAL',
+                  'variants': [{'nodes': [{'key': 'A', 'role': 'REGULAR_SEASON', 'team_count': 6}, {'key': 'B', 'role': 'REGULAR_SEASON', 'team_count': 6}]}]}
+        result = MODULE.build_package(matrix, batch, published, [source])
+        self.assertIn(source, result['reused_formats'])
+        config = next(c for c in result['catalog'] if c['sourceCompetitionId'] == row['source_id'])
+        self.assertEqual(config['formatReferenceResolution'], 'PRESERVED_SOURCE_REQUIRES_ADAPTER')
+
     def test_102_candidates_are_separate_and_four_verified_are_unchanged(self):
         matrix, batch, published = fixtures()
         originals = copy.deepcopy((matrix, batch, published))

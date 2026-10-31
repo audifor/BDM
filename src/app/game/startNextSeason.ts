@@ -303,6 +303,9 @@ function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: Re
 
 function regularSeasonRoundCount(world: GameWorld, season: Season, participantCount: number): number {
   const meetingsPerPair = world.competitions[season.competitionId]!.rules.schedule.meetingsPerPair
+  const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+  const scope = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')?.opponentScope
+  if (scope?.type === 'SAME_GROUP' && typeof scope.payload.generated_group_count === 'number') participantCount = Math.ceil(participantCount / scope.payload.generated_group_count)
   return (participantCount - 1 + participantCount % 2) * meetingsPerPair
 }
 

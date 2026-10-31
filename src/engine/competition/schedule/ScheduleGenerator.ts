@@ -10,6 +10,7 @@ import type { SchedulePolicy } from './SchedulePolicy'
 import { scheduleRoundsByCalendar } from './SchedulePolicy'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from '../WorldCompetitionCalendar'
 import { instantiateWorldCompetitionRoundRobinV1 } from '../WorldCompetitionRoundRobin'
+import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -39,9 +40,14 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const teamIds = season.participantTeamIds ?? competition.participantTeamIds
   validateParticipants(teamIds, season.worldCompetitionFormat !== undefined)
 
-  const rounds = teamIds.length % 2 === 0
+  const variant = season.worldCompetitionFormat && requireCompetitionFormatVariant(season.worldCompetitionFormat)
+  const regular = variant?.nodes.find(node => node.role === 'REGULAR_SEASON')
+  const groups = regular && resolveWorldCompetitionGroups(regular, teamIds)
+  const rounds = groups && groups.length > 1
+    ? groupedRounds(season.worldCompetitionFormat!, groups, regular!.key)
+    : teamIds.length % 2 === 0 && (competition.rules.schedule.meetingsPerPair % 2 === 0 || !season.worldCompetitionFormat)
     ? (() => {
-      const firstLegRounds = createFirstLegRounds(teamIds)
+      const firstLegRounds = createFirstLegRounds(teamIds, competition.rules.schedule.meetingsPerPair % 2 === 1)
       return Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
     })()
     : createRoundsWithByes(teamIds, season.worldCompetitionFormat!, competition.rules.schedule.meetingsPerPair, options.competitionStageKey)
@@ -80,6 +86,21 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   })
 }
 
+function groupedRounds(format: NonNullable<ReturnType<typeof getSeason>['worldCompetitionFormat']>, groups: readonly (readonly TeamId[])[], stageKey: string): Matchup[][] {
+  const variant = requireCompetitionFormatVariant(format)
+  const regular = variant.nodes.find(node => node.key === stageKey)!
+  const rounds: Matchup[][] = []
+  for (const participants of groups) {
+    const scoped = { ...format, variants: [{ ...variant, nodes: [{ ...regular, teamCount: participants.length, opponentScope: { type: 'ALL_STAGE' as const, payload: {} } }] }] }
+    const plan = instantiateWorldCompetitionRoundRobinV1(scoped, variant.key, stageKey, participants.map(id => ({ competitionSeasonEntryId: id })))
+    const byId = new Map(participants.map(id => [String(id), id]))
+    for (const fixture of plan.fixtures) {
+      (rounds[fixture.roundNo - 1] ??= []).push({ homeTeamId: byId.get(fixture.homeEntryId)!, awayTeamId: byId.get(fixture.awayEntryId)! })
+    }
+  }
+  return rounds
+}
+
 /** Reuses the format engine's bye-aware pairing plan for a verified odd-sized stage. */
 function createRoundsWithByes(teamIds: readonly TeamId[], format: NonNullable<ReturnType<typeof getSeason>['worldCompetitionFormat']>, meetings: number, stageKey?: string): Matchup[][] {
   const variant = requireCompetitionFormatVariant(format)
@@ -93,7 +114,7 @@ function createRoundsWithByes(teamIds: readonly TeamId[], format: NonNullable<Re
   return rounds
 }
 
-function createFirstLegRounds(teamIds: readonly TeamId[]): Matchup[][] {
+function createFirstLegRounds(teamIds: readonly TeamId[], balanceSingleMeeting = false): Matchup[][] {
   const fixedTeam = teamIds[0]!
   const rotatingTeams = teamIds.slice(1)
   const rounds: Matchup[][] = []
@@ -103,10 +124,10 @@ function createFirstLegRounds(teamIds: readonly TeamId[]): Matchup[][] {
     const round: Matchup[] = []
 
     for (let pairIndex = 0; pairIndex < teamIds.length / 2; pairIndex += 1) {
-      round.push({
-        homeTeamId: arrangedTeams[pairIndex]!,
-        awayTeamId: arrangedTeams[arrangedTeams.length - 1 - pairIndex]!,
-      })
+      const left = arrangedTeams[pairIndex]!, right = arrangedTeams[arrangedTeams.length - 1 - pairIndex]!
+      const size = teamIds.length + 1
+      const reverse = balanceSingleMeeting && (teamIds.indexOf(right) - teamIds.indexOf(left) + size) % size > Math.floor(size / 2)
+      round.push({ homeTeamId: reverse ? right : left, awayTeamId: reverse ? left : right })
     }
     rounds.push(round)
 
