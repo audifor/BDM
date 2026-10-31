@@ -21,7 +21,7 @@ import { generatePersonName } from '@/engine/world/GeneratedPersonName'
 import { generateAiCoachProfessionalProfile, createUserCoachRookieProfessionalProfile } from '@/engine/world/CoachProfessionalProfileGenerator'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { buildNcaaD1Real2026ConferenceSnapshot, type NcaaD1RealGender } from './NcaaD1Real2026Conferences'
-import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
+import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource, type NcaaD1Real2026FixtureProjection } from './NcaaD1Real2026Fixtures'
 
 const POSITIONS = ['PG', 'SG', 'SF', 'SF', 'PF', 'C', 'C'] as const
 const USA = countryIdFromString('country:USA')
@@ -39,6 +39,9 @@ export interface NcaaD1Real2026WorldSeedOptions {
 export interface NcaaD1Real2026NativeSeed {
   /** A real GameWorld, but NOT a complete 2026-27 playing season or NCAA certified career. */
   readonly world: GameWorld
+  /** Source provenance is retained outside GameWorld's pure Game DTO; a future
+   * persisted edition evidence store must carry it across saves. */
+  readonly sourceEvidenceByGameId: NcaaD1Real2026FixtureProjection['evidenceByGameId']
   readonly fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED'
   readonly membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION'
   readonly sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED'
@@ -143,6 +146,7 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
   })
   return {
     world,
+    sourceEvidenceByGameId: evidence.evidenceByGameId,
     fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED',
     membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION',
     sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED',
