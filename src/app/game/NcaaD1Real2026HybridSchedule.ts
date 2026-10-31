@@ -1,6 +1,6 @@
 import type { Game } from '@/domain/game'
 import type { SeasonId, TeamId } from '@/domain/ids'
-import type { NcaaSchedulePolicy } from '@/domain/season'
+import type { NcaaSchedulePolicy } from '@/domain/season/Season'
 import type { GameWorld } from '@/domain/world'
 
 /**
