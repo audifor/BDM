@@ -42,7 +42,7 @@ export function pinNbaConferencesToSourceClubs(
     // Match whole nicknames only: "Hornets" must never match "Nets".
     const matches = exact.length > 0 ? exact : franchises.filter(item => {
       const tail = nickname(item.name)
-      const finalWord = normalize(club.name.trim().split(/\\s+/).at(-1)!)
+      const finalWord = normalize(club.name.trim().split(/\s+/).at(-1)!)
       return finalWord === tail || (tail === 'trailblazers' && key.endsWith(tail))
     })
     if (matches.length !== 1 || consumed.has(matches[0]!.name)) {
