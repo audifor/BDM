@@ -60,6 +60,7 @@ export function instantiateWorldCompetitionFixedBracketV1(
   const fixtureBySeedPair = new Map<string, WorldCompetitionVirtualFixtureV1>()
 
   for (const node of topologicalNodes(variant.nodes, variant.edges)) {
+    if (node.role === 'REGULAR_SEASON') continue
     const pairings = stringArray(node.pairing?.payload, 'pairings')
     const matchups = stringArray(node.pairing?.payload, 'matchups')
     if (pairings.length > 0 && matchups.length > 0) throw new Error(`Fixed bracket node ${node.key} declares both pairings and matchups`)
@@ -78,6 +79,19 @@ export function instantiateWorldCompetitionFixedBracketV1(
 
     if (directPairings.length > 0) {
       participants = directPairings.map((pairing) => {
+        const mixed = /^SEED_(\d+)-WINNER_(\d+)$/.exec(pairing)
+        if (mixed) {
+          const seed = Number(mixed[1])
+          const entry = requireSeed(entryBySeed, seed)
+          const sources = incomingWinnerSources.get(node.key) ?? []
+          const source = sources.length === 1 ? fixturesByNodeKey[sources[0]!]?.find(f => f.fixtureOrder === Number(mixed[2])) : undefined
+          const admitted = variant.edges.some(e => e.to === node.key && e.selector === 'RANK_RANGE' && seed >= (e.rankFrom ?? Infinity) && seed <= (e.rankTo ?? -1))
+          if (!source || !admitted) throw new Error(`Invalid mixed qualification in ${node.key}: ${pairing}`)
+          return Object.freeze([
+            Object.freeze({ kind: 'ENTRY' as const, competitionSeasonEntryId: entry.competitionSeasonEntryId, seed }),
+            Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: source.fixtureId }),
+          ] as const)
+        }
         // Authoring packs can address the numbered contests of the preceding
         // round. These numbers are fixture ordinals, never standing seeds.
         const numbered = /^WINNER_(\d+)-WINNER_(\d+)$/.exec(pairing)

@@ -182,7 +182,7 @@ function maxGameDays(node: WorldCompetitionFormatNode): number {
   if (node.contest?.formatType === 'SINGLE_GAME') return 1
   if (node.contest?.formatType === 'AGGREGATE') {
     if (node.contest.legCount === undefined) throw new Error(`Postseason AGGREGATE node ${node.key} requires a leg count`)
-    return node.contest.legCount
+    return node.contest.legCount + (node.contest.tieResolution?.method === 'BDM_EXTRA_DECIDER' ? 1 : 0)
   }
   if (['ROUND', 'SERIES', 'BRACKET'].includes(node.nodeType)) throw new Error(`Postseason node ${node.key} requires an executable contest format`)
   return 0

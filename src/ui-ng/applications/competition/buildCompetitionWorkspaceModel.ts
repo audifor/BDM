@@ -4,6 +4,7 @@ import type { CompetitionId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from '@/domain/training'
 import type { GameWorld } from '@/domain/world'
 import { calculateStandings, type StandingsEntry } from '@/engine/competition/standings'
+import { calculateGroupStandings } from '@/engine/competition/standings/Standings'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { selectCompetitionContext } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
 import { findTeamForPlayer } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -155,6 +156,7 @@ export interface CompetitionWorkspaceModel {
   readonly upcoming: readonly CompetitionGameRow[]
   readonly dateGroups: readonly CompetitionDateGroup[]
   readonly standings: readonly StandingsEntry[]
+  readonly groupStandings: readonly (readonly StandingsEntry[])[]
   readonly standingsZoneBands: StandingsZoneBands
   readonly leaders: readonly CompetitionLeaderRow[]
   readonly statPodiums: readonly CompetitionStatPodium[]
@@ -429,6 +431,7 @@ export function buildCompetitionWorkspaceModel(
         games: groupedGames.filter((game) => game.status === 'completed'),
       })),
     standings: calculateStandings(world, context.seasonId),
+    groupStandings: calculateGroupStandings(world, context.seasonId),
     standingsZoneBands: resolveStandingsZoneBands(world, context.competitionId),
     leaders,
     statPodiums: buildStatPodiums(leaders),

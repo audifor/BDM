@@ -1,4 +1,5 @@
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
+import { instantiateWorldCompetitionFixedBracketV1 } from '@/engine/competition/WorldCompetitionFixedBracket'
 
 /** Runtime capabilities exercised by a family representative, independent of
  * competition identity, participant count, round names and venue pattern length. */
@@ -40,9 +41,23 @@ export function worldDbV2ConnectionBlockers(format: WorldCompetitionFormatDocume
   if (regular.length !== 1) issues.push(`Native single-stage projection requires one regular node; found ${regular.length}; group/conference assignments and stage planner connection required`)
   for (const node of regular) {
     if (node.pairing?.type !== 'ROUND_ROBIN') issues.push(`${node.key}: ${node.pairing?.type ?? 'missing pairing'} requires its own existing scheduling authority; do not substitute ROUND_ROBIN`)
-    if (node.opponentScope && node.opponentScope.type !== 'ALL_STAGE') issues.push(`${node.key}: ${node.opponentScope.type} needs verified participant assignments and scoped scheduling`)
-    if (node.pairing?.meetingsPerPair !== 2) issues.push(`${node.key}: native career projection currently supports exactly two meetings per pair, source declares ${node.pairing?.meetingsPerPair ?? 'unspecified'}`)
+    const groups = node.opponentScope?.payload.generated_group_count
+    const generatedGroups = node.opponentScope?.type === 'SAME_GROUP' && node.opponentScope.payload.policy === 'BDM_GENERATED_GROUPS'
+      && typeof groups === 'number' && Number.isInteger(groups) && groups >= 2 && groups <= Math.floor(participants / 2)
+    if (node.opponentScope && node.opponentScope.type !== 'ALL_STAGE' && !generatedGroups) issues.push(`${node.key}: ${node.opponentScope.type} needs verified participant assignments and scoped scheduling`)
+    if (!Number.isInteger(node.pairing?.meetingsPerPair) || node.pairing!.meetingsPerPair! < 1) issues.push(`${node.key}: meetings per pair must be a positive integer`)
     if (node.teamCount !== undefined && node.teamCount !== participants) issues.push(`${node.key}: source edition declares ${node.teamCount} participants, PBM supplies ${participants}; reconcile editions without changing identities`)
+  }
+  if (!frozenTemplatePolicy && issues.length === 0 && variant.edges.length > 0) {
+    try {
+      const plan = instantiateWorldCompetitionFixedBracketV1(format, variant.key, Array.from({ length: participants }, (_, i) => ({ competitionSeasonEntryId: `preflight:${i + 1}`, seed: i + 1 })))
+      for (const node of variant.nodes.filter(n => n.role !== 'REGULAR_SEASON')) {
+        if (!plan.fixtureIdsByNodeKey[node.key]?.length) throw new Error(`${node.key}: phase has no executable fixtures`)
+        if (node.contest?.formatType === 'SERIES' && (node.hosting?.ruleType !== 'SERIES_PATTERN' || node.hosting.priorityBasis !== 'HIGHER_SEED')) throw new Error(`${node.key}: explicit series hosting required`)
+        if (node.contest?.formatType === 'AGGREGATE' && (node.contest.legCount !== 2 || node.contest.tieResolution?.method !== 'BDM_EXTRA_DECIDER')) throw new Error(`${node.key}: executable aggregate tie policy required`)
+        if (!node.contest) throw new Error(`${node.key}: contest rules missing`)
+      }
+    } catch (error) { issues.push(error instanceof Error ? error.message : String(error)) }
   }
   return issues
 }

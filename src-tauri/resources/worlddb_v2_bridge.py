@@ -20,6 +20,7 @@ def main():
     catalog_config=request.get('competitionCatalog')
     if catalog_config is None:
         catalog_config=json.loads((Path(__file__).resolve().parents[2]/'src/data/worlddb-v2/competitions.json').read_text(encoding='utf-8'))
+        catalog_config += json.loads((Path(__file__).resolve().parents[2]/'src/data/worlddb-v2/global-competitions.json').read_text(encoding='utf-8'))
     selected_id=request.get('competitionId','pbm:DYN_championnat:5')
     selection=next((c for c in catalog_config if c['sourceCompetitionId']==selected_id),None)
     if selection is None:raise ValueError('Competition has no verified BDM mapping: '+selected_id)

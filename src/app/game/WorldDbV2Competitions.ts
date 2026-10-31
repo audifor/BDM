@@ -1,22 +1,31 @@
 import catalog from '@/data/worlddb-v2/competitions.json'
+import globalCatalog from '@/data/worlddb-v2/global-competitions.json'
 import { addDays, addYears, type GameDate } from '@/domain/date'
 import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
+import type { WorldCompetitionFormatDocument } from '@/domain/competition'
+import { deriveCompetitionSeasonWindows } from '@/engine/competition/WorldCompetitionCalendar'
 export const WORLDDB_V2_COMPETITIONS = catalog
+export const WORLDDB_V2_GLOBAL_COMPETITIONS: readonly (typeof catalog[number] & { formatProvenance?: string; simulationPolicy?: boolean })[] = [...catalog, ...globalCatalog]
 export const DEFAULT_WORLDDB_V2_COMPETITION = 'pbm:DYN_championnat:5'
 export function worldDbV2Competition(id = DEFAULT_WORLDDB_V2_COMPETITION) {
-  const config = catalog.find(c => c.sourceCompetitionId === id)
+  const config = WORLDDB_V2_GLOBAL_COMPETITIONS.find(c => c.sourceCompetitionId === id)
   if (!config) throw Error('Unmapped PBM competition: ' + id)
   return config
 }
-export function worldDbV2Calendar(config: ReturnType<typeof worldDbV2Competition> & { formatProvenance?: string }, day: GameDate) {
-  if (config.formatProvenance === 'GENERATED_SIMULATION') {
+export function worldDbV2Calendar(config: ReturnType<typeof worldDbV2Competition> & { formatProvenance?: string; simulationPolicy?: boolean }, day: GameDate, format?: WorldCompetitionFormatDocument) {
+  if (config.formatProvenance === 'GENERATED_SIMULATION' || config.simulationPolicy) {
     // Fictional fallback only: fit large synthetic round robins without claiming
     // to reproduce the source competition's groups or real calendar.
     const endDate = addDays(addYears(day, 1), -1)
-    const roundCount = 2 * (config.teamCount % 2 === 0 ? config.teamCount - 1 : config.teamCount)
+    const windows = deriveCompetitionSeasonWindows(day, endDate, format)
+    const variant = format?.variants.find(v => v.isRealVariant) ?? format?.variants[0]
+    const meetings = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')?.pairing?.meetingsPerPair ?? 2
+    const groupCount = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')?.opponentScope?.payload.generated_group_count
+    const count = typeof groupCount === 'number' ? Math.ceil(config.teamCount / groupCount) : config.teamCount
+    const roundCount = meetings * (count % 2 === 0 ? count - 1 : count)
     return {
-      seasonWindow: { startDate: day, endDate }, regularSeasonWindow: { startDate: day, endDate },
-      specialCompetitionWindows: [], postseasonWindow: null, postseasonStageStartDates: {}, offseasonWindow: null,
+      seasonWindow: { startDate: day, endDate }, regularSeasonWindow: { startDate: day, endDate: windows.regularSeasonEnd },
+      specialCompetitionWindows: [], postseasonWindow: windows.postseasonStart === null ? null : { startDate: windows.postseasonStart, endDate }, postseasonStageStartDates: windows.postseasonStartByNodeKey, offseasonWindow: null,
       regularSeasonCadence: { preferredWeekdays: [0, 1, 2, 3, 4, 5, 6], midweekWeekdays: [0, 1, 2, 3, 4, 5, 6], midweekRoundNumbers: Array.from({ length: roundCount }, (_, i) => i + 1), weeklyCadenceDays: 7, minimumRestDays: 3, breakDaysAfterRound: {} },
       postseasonCadence: { daysBetweenGames: 1, daysBetweenRounds: 1 },
     }

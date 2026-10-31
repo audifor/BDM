@@ -1,0 +1,942 @@
+{
+  "original_native_certified": 4,
+  "new_engine_playable": 90,
+  "generated": 87,
+  "adapted": 3,
+  "pending": [
+    {
+      "id": "pbm:DYN_championnat:29",
+      "name": "Nationale 1",
+      "status": "PENDING",
+      "error": "Error: Source format edition:FRA:nm1:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 2; group/conference assignments and stage planner connection required | PHASE1_A: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_A: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities | PHASE1_B: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_B: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities"
+    },
+    {
+      "id": "pbm:DYN_championnat:42",
+      "name": "Nationale 2",
+      "status": "PENDING",
+      "error": "Error: Source format edition:FRA:nm2:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 4; group/conference assignments and stage planner connection required | POOL_A: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_A: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_B: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_B: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_C: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_C: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_D: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_D: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities"
+    },
+    {
+      "id": "pbm:DYN_championnat:44",
+      "name": "NBA",
+      "status": "PENDING",
+      "error": "Error: REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: SCHEDULE_MATRIX needs verified participant assignments and scoped scheduling | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:71",
+      "name": "NCAA I",
+      "status": "PENDING",
+      "error": "Error: Verified runtime format/edition mapping required: pbm:DYN_championnat:71"
+    },
+    {
+      "id": "pbm:DYN_championnat:78",
+      "name": "National Basketball League",
+      "status": "PENDING",
+      "error": "Error: Source format edition:AUS:nbl:2026-27 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:94",
+      "name": "NBA G League",
+      "status": "PENDING",
+      "error": "Error: Source format edition:NAM:gleague:2026-27 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: SCHEDULE_MATRIX needs verified participant assignments and scoped scheduling | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:112",
+      "name": "Segunda FEB",
+      "status": "PENDING",
+      "error": "Error: Source format edition:ESP:segunda-feb:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
+    },
+    {
+      "id": "pbm:DYN_championnat:171",
+      "name": "Liga Sudamericana de Básquetbol",
+      "status": "PENDING",
+      "error": "Error: Source format edition:AMERICAS:liga-sudamericana:2026 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
+    }
+  ],
+  "validation": [
+    {
+      "id": "pbm:DYN_championnat:3",
+      "name": "Élite 2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 20,
+      "games": 380
+    },
+    {
+      "id": "pbm:DYN_championnat:11",
+      "name": "easyCredit BBL",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:12",
+      "name": "Greek Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 13,
+      "games": 156
+    },
+    {
+      "id": "pbm:DYN_championnat:13",
+      "name": "Elite League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:15",
+      "name": "ProA",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:16",
+      "name": "Betsson Lietuvos Krepšinio Lyga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 9,
+      "games": 72
+    },
+    {
+      "id": "pbm:DYN_championnat:17",
+      "name": "Nacionalinė Krepšinio Lyga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 17,
+      "games": 272
+    },
+    {
+      "id": "pbm:DYN_championnat:18",
+      "name": "1. A Slovenska Košarkarska Liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:19",
+      "name": "Ligat Haal",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:21",
+      "name": "Basketbol Süper Ligi",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:22",
+      "name": "Türkiye Sigorta Türkiye Basketbol Ligi",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:24",
+      "name": "Polska Liga Koszykówki",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:29",
+      "name": "Nationale 1",
+      "status": "PENDING",
+      "error": "Error: Source format edition:FRA:nm1:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 2; group/conference assignments and stage planner connection required | PHASE1_A: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_A: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities | PHASE1_B: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_B: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities"
+    },
+    {
+      "id": "pbm:DYN_championnat:32",
+      "name": "Maxa Národní Basketbalová Liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:36",
+      "name": "First Division A",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:39",
+      "name": "National Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:40",
+      "name": "Ukrainian Basketball SuperLeague",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:41",
+      "name": "Košarkaška Liga Srbije",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:42",
+      "name": "Nationale 2",
+      "status": "PENDING",
+      "error": "Error: Source format edition:FRA:nm2:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 4; group/conference assignments and stage planner connection required | POOL_A: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_A: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_B: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_B: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_C: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_C: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_D: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_D: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities"
+    },
+    {
+      "id": "pbm:DYN_championnat:44",
+      "name": "NBA",
+      "status": "PENDING",
+      "error": "Error: REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: SCHEDULE_MATRIX needs verified participant assignments and scoped scheduling | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:45",
+      "name": "A1 Liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:47",
+      "name": "Euroleague",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 20,
+      "games": 380
+    },
+    {
+      "id": "pbm:DYN_championnat:49",
+      "name": "Eurocup",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 20,
+      "games": 380
+    },
+    {
+      "id": "pbm:DYN_championnat:59",
+      "name": "Primera FEB",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|contest:SINGLE_GAME|hosting:NEUTRAL:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "teams": 17,
+      "games": 272
+    },
+    {
+      "id": "pbm:DYN_championnat:61",
+      "name": "LNP Serie A2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 20,
+      "games": 380
+    },
+    {
+      "id": "pbm:DYN_championnat:65",
+      "name": "SuperLeague",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 15,
+      "games": 210
+    },
+    {
+      "id": "pbm:DYN_championnat:66",
+      "name": "LNB Espoir",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:68",
+      "name": "Ligue Féminine de Basketball",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:69",
+      "name": "Liga Española de Baloncesto Femenino",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:AGGREGATE|contest:SERIES|hosting:HIGHER_SEED:HIGHER_SEED|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:70",
+      "name": "LBF Serie A1",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:71",
+      "name": "NCAA I",
+      "status": "PENDING",
+      "error": "Error: Verified runtime format/edition mapping required: pbm:DYN_championnat:71"
+    },
+    {
+      "id": "pbm:DYN_championnat:75",
+      "name": "Premier Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:76",
+      "name": "Super League Basketball",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 9,
+      "games": 72
+    },
+    {
+      "id": "pbm:DYN_championnat:77",
+      "name": "Chinese Basketball Association",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 20,
+      "games": 380
+    },
+    {
+      "id": "pbm:DYN_championnat:78",
+      "name": "National Basketball League",
+      "status": "PENDING",
+      "error": "Error: Source format edition:AUS:nbl:2026-27 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:79",
+      "name": "Ženská Basketbalová Liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:80",
+      "name": "Kadınlar Basketbol Süper Ligi",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:81",
+      "name": "Nemzeti Bajnokság I/A",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:84",
+      "name": "Swiss Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 9,
+      "games": 72
+    },
+    {
+      "id": "pbm:DYN_championnat:85",
+      "name": "Adriatic League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:86",
+      "name": "Premijer liga BiH",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 15,
+      "games": 210
+    },
+    {
+      "id": "pbm:DYN_championnat:87",
+      "name": "Makedonska prva liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:88",
+      "name": "Erste Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 15,
+      "games": 210
+    },
+    {
+      "id": "pbm:DYN_championnat:89",
+      "name": "VTB United League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:90",
+      "name": "Basket Liga Kobiet",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:93",
+      "name": "Liga Nacional de Básquet",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "teams": 19,
+      "games": 342
+    },
+    {
+      "id": "pbm:DYN_championnat:94",
+      "name": "NBA G League",
+      "status": "PENDING",
+      "error": "Error: Source format edition:NAM:gleague:2026-27 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | REGULAR_SEASON: FIXED_SCHEDULE requires its own existing scheduling authority; do not substitute ROUND_ROBIN | REGULAR_SEASON: SCHEDULE_MATRIX needs verified participant assignments and scoped scheduling | REGULAR_SEASON: meetings per pair must be a positive integer"
+    },
+    {
+      "id": "pbm:DYN_championnat:107",
+      "name": "Basketball Champions League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "teams": 53,
+      "games": 650
+    },
+    {
+      "id": "pbm:DYN_championnat:108",
+      "name": "Ligue Féminine 2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:110",
+      "name": "win2day Basketball Superliga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:111",
+      "name": "Basketligaen",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:112",
+      "name": "Segunda FEB",
+      "status": "PENDING",
+      "error": "Error: Source format edition:ESP:segunda-feb:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
+    },
+    {
+      "id": "pbm:DYN_championnat:113",
+      "name": "Korisliiga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:114",
+      "name": "B.League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "teams": 26,
+      "games": 312
+    },
+    {
+      "id": "pbm:DYN_championnat:115",
+      "name": "Liga Nacional de Baloncesto Profesional",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:116",
+      "name": "BLNO Menn",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:117",
+      "name": "Liga Portuguesa de Basquetebol",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:118",
+      "name": "Liga Națională",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:119",
+      "name": "Tipos SBL",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:120",
+      "name": "Basketligan",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:121",
+      "name": "ELBL",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:123",
+      "name": "Liga e Basketbollit e Shqipërisë",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:125",
+      "name": "Basketball Bundesliga ProB",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "teams": 27,
+      "games": 338
+    },
+    {
+      "id": "pbm:DYN_championnat:129",
+      "name": "Вышэйшая ліга Беларусі",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:133",
+      "name": "Liga Profesional de Baloncesto",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 8,
+      "games": 56
+    },
+    {
+      "id": "pbm:DYN_championnat:134",
+      "name": "한국프로농구",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:139",
+      "name": "Sakalatburto Superliga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:142",
+      "name": "Úrvalsdeild Karla",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:146",
+      "name": "B2 League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:148",
+      "name": "Superliga e Kosovës në Basketboll",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 8,
+      "games": 56
+    },
+    {
+      "id": "pbm:DYN_championnat:150",
+      "name": "Total League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:154",
+      "name": "National Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 11,
+      "games": 110
+    },
+    {
+      "id": "pbm:DYN_championnat:155",
+      "name": "Liga Profesional de Baloncesto",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 6,
+      "games": 30
+    },
+    {
+      "id": "pbm:DYN_championnat:156",
+      "name": "Philippine Basketball Association",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:157",
+      "name": "Baloncesto Superior Nacional",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:159",
+      "name": "Liga Nacional de Baloncesto",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 8,
+      "games": 56
+    },
+    {
+      "id": "pbm:DYN_championnat:166",
+      "name": "Liga Uruguaya de Básquetbol",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:167",
+      "name": "SuperLiga de Baloncesto",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 14,
+      "games": 182
+    },
+    {
+      "id": "pbm:DYN_championnat:168",
+      "name": "BNXT League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 18,
+      "games": 306
+    },
+    {
+      "id": "pbm:DYN_championnat:170",
+      "name": "Basketball Champions League Americas",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:171",
+      "name": "Liga Sudamericana de Básquetbol",
+      "status": "PENDING",
+      "error": "Error: Source format edition:AMERICAS:liga-sudamericana:2026 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
+    },
+    {
+      "id": "pbm:DYN_championnat:172",
+      "name": "Adriatic League 2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 16,
+      "games": 240
+    },
+    {
+      "id": "pbm:DYN_championnat:173",
+      "name": "Nemzeti Bajnokság I/A",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:174",
+      "name": "I liga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 17,
+      "games": 272
+    },
+    {
+      "id": "pbm:DYN_championnat:175",
+      "name": "P. League+",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 4,
+      "games": 12
+    },
+    {
+      "id": "pbm:DYN_championnat:176",
+      "name": "Canadian Elite Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:177",
+      "name": "Liga Nacional de Básquetbol de Chile",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 12,
+      "games": 132
+    },
+    {
+      "id": "pbm:DYN_championnat:178",
+      "name": "Women's Baltic Basketball League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:180",
+      "name": "LBF Serie A2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "teams": 26,
+      "games": 312
+    },
+    {
+      "id": "pbm:DYN_championnat:186",
+      "name": "LNP Serie B",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "teams": 38,
+      "games": 324
+    },
+    {
+      "id": "pbm:DYN_championnat:187",
+      "name": "BLNO Kvinner",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 6,
+      "games": 30
+    },
+    {
+      "id": "pbm:DYN_championnat:188",
+      "name": "OPAP Division A",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 6,
+      "games": 30
+    },
+    {
+      "id": "pbm:DYN_championnat:190",
+      "name": "WABA League",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 7,
+      "games": 42
+    },
+    {
+      "id": "pbm:DYN_championnat:191",
+      "name": "Svenska Basketligan Dam",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 13,
+      "games": 156
+    },
+    {
+      "id": "pbm:DYN_championnat:192",
+      "name": "Tipos EXZ",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 10,
+      "games": 90
+    },
+    {
+      "id": "pbm:DYN_championnat:195",
+      "name": "win2day Damen Superliga",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 7,
+      "games": 42
+    },
+    {
+      "id": "pbm:DYN_championnat:198",
+      "name": "WABA League 2",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 7,
+      "games": 42
+    },
+    {
+      "id": "pbm:DYN_championnat:199",
+      "name": "Tauihi Basketball Aotearoa",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "teams": 5,
+      "games": 20
+    }
+  ],
+  "families": [
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 342,
+      "champion": "pbm:DYN_equipe:90013",
+      "successorGames": 342,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 342,
+      "champion": "pbm:DYN_equipe:90013",
+      "successorGames": 342,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "regularGames": 10,
+      "champion": "pbm:DYN_equipe:90000",
+      "successorGames": 10,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "regularGames": 24,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 24,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "regularGames": 240,
+      "champion": "pbm:DYN_equipe:90023",
+      "successorGames": 240,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "regularGames": 24,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 24,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "regularGames": 24,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 24,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:TOP_N|selector:WINNER",
+      "regularGames": 10,
+      "champion": "pbm:DYN_equipe:90000",
+      "successorGames": 10,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "regularGames": 18,
+      "champion": "pbm:DYN_equipe:90006",
+      "successorGames": 18,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:BALANCED:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:TOP_N|selector:WINNER",
+      "regularGames": 24,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 24,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:AGGREGATE|contest:SERIES|hosting:HIGHER_SEED:HIGHER_SEED|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 240,
+      "champion": "pbm:DYN_equipe:90009",
+      "successorGames": 240,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:AGGREGATE|contest:SERIES|hosting:HIGHER_SEED:HIGHER_SEED|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 240,
+      "champion": "pbm:DYN_equipe:90009",
+      "successorGames": 240,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|contest:SINGLE_GAME|hosting:NEUTRAL:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 272,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 272,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|contest:SINGLE_GAME|hosting:NEUTRAL:|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
+      "regularGames": 272,
+      "champion": "pbm:DYN_equipe:90003",
+      "successorGames": 272,
+      "shortGameMinutes": 0.1
+    }
+  ],
+  "windows_acceptance": "NOT_RUN_FOR_NEW_ENTRIES",
+  "format_sha256": "eae0d9fd519a09ae76e8faefaa8729665ee0914a8f738cdc491c3394258d9e57"
+}

@@ -91,8 +91,8 @@ describe('New Game World DB Spain ACB flow', () => {
     const select = await screen.findByLabelText('TEAM')
     await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(19))
     const active = screen.getAllByRole('checkbox') as HTMLInputElement[]
-    expect(active).toHaveLength(4)
-    expect(active.every(input => input.checked)).toBe(true)
+    expect(active).toHaveLength(94)
+    expect(active.filter(input => input.checked)).toHaveLength(4)
     expect(active[0]!.disabled).toBe(true)
     fireEvent.click(active[3]!)
     fireEvent.change(select, { target: { value: teams[0]!.key } })

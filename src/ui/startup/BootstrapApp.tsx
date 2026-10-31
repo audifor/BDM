@@ -13,7 +13,7 @@ import { App } from '@/ui/App'
 import './BootstrapApp.css'
 import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
 import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
-import v2Competitions from '@/data/worlddb-v2/competitions.json'
+import { WORLDDB_V2_GLOBAL_COMPETITIONS as v2Competitions, WORLDDB_V2_COMPETITIONS as defaultV2Competitions } from '@/app/game/WorldDbV2Competitions'
 
 export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
@@ -100,7 +100,7 @@ function StartScreen({
   const [v2Seed,setV2Seed]=useState('bdm-worlddb-v2-pilot')
   const [v2Pilot,setV2Pilot]=useState<WorldDbV2Pilot|null>(null)
   const [v2Competition,setV2Competition]=useState('pbm:DYN_championnat:5')
-  const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(v2Competitions.map(c=>c.sourceCompetitionId))
+  const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(defaultV2Competitions.map(c=>c.sourceCompetitionId))
   const [v2Error,setV2Error]=useState<string|null>(null)
   const [v2Loading,setV2Loading]=useState(false)
   useEffect(()=>{

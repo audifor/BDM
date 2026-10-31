@@ -4,6 +4,7 @@ import { buildWorldDbV2, type WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 import type { UserCoachCreationInput } from './UserCoachCreator'
 import { createWorldDbV2GameFromSnapshot } from './WorldDbV2Game'
 import { worldDbV2Competition } from './WorldDbV2Competitions'
+import { bindWorldDbV2SimulatedTiers } from './WorldDbV2TierBindings'
 
 export async function createWorldDbV2Universe(sourceRoot: string, startDate: string, seed: string, teamId: string, competitionIds: readonly string[], userCoachCreation?: UserCoachCreationInput): Promise<GameWorld> {
   if (!competitionIds.length || new Set(competitionIds).size !== competitionIds.length) throw new Error('Select distinct active competitions')
@@ -83,6 +84,9 @@ export async function createWorldDbV2UniverseFromSnapshots(
       ...runtime,
       competitionSeasonIds: [...runtime.competitionSeasonIds, ...imported.worldDbCompetitionRuntime!.competitionSeasonIds],
     })
+  }
+  if (snapshots.some(snapshot => { const config = resolveConfig(snapshot); return 'formatProvenance' in config && config.formatProvenance === 'GENERATED_SIMULATION' })) {
+    world = bindWorldDbV2SimulatedTiers(world, snapshots, new Map(snapshots.map(snapshot => [snapshot.competitions[0]!.entity_id, resolveConfig(snapshot).nativeCompetitionId])))
   }
   return attachWorldDbCompetitionRuntime(world, {
     ...world.worldDbCompetitionRuntime!,

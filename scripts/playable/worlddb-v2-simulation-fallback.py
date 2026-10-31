@@ -6,6 +6,7 @@ players, source documents and the four existing playable formats are untouched.
 Use the native batch runner and Windows acceptance before publishing candidates.
 """
 import argparse
+import copy
 import json
 import os
 from pathlib import Path
@@ -97,7 +98,7 @@ def read(path):
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
-def simulation_document(source_id, name, participants):
+def simulation_document(source_id, name, participants, postseason=False, grouped=False):
     if source_id == NCAA_SOURCE_ID:
         raise ValueError("NCAA D1 must use its existing conference and national championship formats, never global round-robin")
     if not source_id.startswith("pbm:DYN_championnat:"):
@@ -144,6 +145,137 @@ def simulation_document(source_id, name, participants):
         "sources": [{"url": SOURCE_URL, "type": "SECONDARY",
                      "scope": "BDM generated gameplay policy ONLY; not an official source"}]
     }
+    if postseason:
+        variant = document['variants'][0]
+        group_count = 1
+        if grouped:
+            group_count = 2
+            while participants / group_count > 16:
+                group_count *= 2
+            variant['nodes'][0]['opponent_scope'] = {'type': 'SAME_GROUP', 'payload': {
+                'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': group_count}}
+        size = 2 * group_count if grouped else min(8, 2 ** (participants.bit_length() - 1))
+        previous = 'REGULAR_SEASON'
+        entrants = size
+        while entrants >= 2:
+            key = 'FINAL' if entrants == 2 else f'PLAYOFF_{entrants}'
+            pairings = ([f'{i}-{entrants + 1 - i}' for i in range(1, entrants // 2 + 1)]
+                        if previous == 'REGULAR_SEASON' else
+                        [f'WINNER_{i}-WINNER_{entrants + 1 - i}' for i in range(1, entrants // 2 + 1)])
+            variant['nodes'].append({
+                'key': key, 'node_type': 'ROUND', 'role': 'FINAL' if entrants == 2 else 'PLAYOFF',
+                'team_count': entrants, 'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': pairings}},
+                'contest': {'format_type': 'SERIES', 'best_of': 3, 'wins_required': 2},
+                'hosting': {'rule_type': 'SERIES_PATTERN', 'pattern': 'HAH', 'priority_basis': 'HIGHER_SEED'},
+            })
+            variant['edges'].append({'from': previous, 'to': key,
+                                     'selector': 'TOP_N' if previous == 'REGULAR_SEASON' else 'WINNER',
+                                     **({'count': size} if previous == 'REGULAR_SEASON' else {})})
+            previous, entrants = key, entrants // 2
+        document['notes'] = ('GENERATED_SIMULATION, NOT AN OFFICIAL SPORTING FORMAT. '
+                             'BDM generated regular season and top-power-of-two HAH best-of-three playoffs; '
+                             'original clubs retained. No historical calendar or official fidelity claimed.')
+        if grouped:
+            document['notes'] += f' {group_count} generated groups by stable club identity; two qualifiers per group. These are not official memberships.'
+    return document
+
+
+def adapt_documented_format(row, participants, documents):
+    """Complete missing execution fields in an isolated, explicitly simulated edition.
+
+    Preserve graph, round counts, qualification, consequences and any supplied
+    contest/hosting rules. Ambiguous editions and unsupported topology stay visible.
+    """
+    matches = {d['competition_season_id']: d for d in documents
+               if d.get('competition_id') == row.get('native_format_id')}
+    if len(matches) != 1:
+        return None
+    source = next(iter(matches.values()))
+    variant = next((v for v in source.get('variants', []) if v.get('is_real_variant')), None)
+    variant = variant or next(iter(source.get('variants', [])), None)
+    if not variant:
+        return None
+    regular = [n for n in variant.get('nodes', []) if n.get('role') == 'REGULAR_SEASON']
+    if len(regular) != 1 or (regular[0].get('pairing') or {}).get('type') != 'ROUND_ROBIN':
+        return None
+    if (regular[0].get('opponent_scope') or {}).get('type', 'ALL_STAGE') != 'ALL_STAGE':
+        return None
+    # A smaller cohort must still satisfy every declared seed/rank.
+    if any((e.get('rank_to') or e.get('count') or 0) > participants
+           for e in variant.get('edges', []) if e.get('from') == regular[0]['key']):
+        return None
+    document = copy.deepcopy(source)
+    document['variants'] = [copy.deepcopy(variant)]
+    adapted = document['variants'][0]
+    patches = []
+    # A container such as FINAL_FOUR has no games of its own. Connect its
+    # qualifiers to the child round, retaining the actual semifinal/final nodes.
+    for container in list(adapted.get('nodes', [])):
+        if container.get('role') != 'FINAL_FOUR' or container.get('contest'):
+            continue
+        incoming = [e for e in adapted['edges'] if e['to'] == container['key']]
+        outgoing = [e for e in adapted['edges'] if e['from'] == container['key']]
+        if len(incoming) == len(outgoing) == 1 and incoming[0]['selector'] == 'WINNER' and outgoing[0]['selector'] == 'TOP_N':
+            adapted['edges'] = [e for e in adapted['edges'] if e not in incoming + outgoing] + [{**incoming[0], 'to': outgoing[0]['to']}]
+            adapted['nodes'].remove(container)
+            patches.append(container['key'] + ' transparent event container')
+    for node in adapted.get('nodes', []):
+        if node.get('role') == 'REGULAR_SEASON':
+            if node.get('team_count') != participants:
+                node['team_count'] = participants
+                patches.append('source cohort participant count')
+            if not (node.get('pairing') or {}).get('meetings_per_pair'):
+                node['pairing']['meetings_per_pair'] = 2
+                patches.append('two meetings per pair')
+        contest = node.get('contest') or {}
+        if contest.get('format_type') == 'AGGREGATE' and contest.get('leg_count') == 2:
+            contest['tie_resolution'] = {'method': 'BDM_EXTRA_DECIDER', 'source_policy': contest.get('tie_resolution') or {}}
+            node['hosting'] = {'rule_type': 'HIGHER_SEED', 'priority_basis': 'HIGHER_SEED'}
+            patches.append(node['key'] + ' aggregate tie uses a generated third deciding game; each leg uses BDM winner-required match rules')
+        if contest and node.get('role') != 'REGULAR_SEASON':
+            pairing = node.get('pairing') or {}
+            payload = pairing.get('payload') or {}
+            if not any(payload.get(k) for k in ['pairing', 'pairings', 'matchups', 'paths']):
+                incoming = [e for e in adapted['edges'] if e['to'] == node['key']]
+                ranks = [e for e in incoming if e['from'] == regular[0]['key'] and e['selector'] == 'RANK_RANGE']
+                winners = [e for e in incoming if e['selector'] == 'WINNER']
+                seeds = [rank for e in ranks for rank in range(e['rank_from'], e['rank_to'] + 1)]
+                count = node.get('team_count')
+                if isinstance(count, int) and count % 2 == 0 and len(winners) <= 1:
+                    if len(seeds) == count:
+                        pairs = [f'{seeds[i]}-{seeds[-1-i]}' for i in range(count // 2)]
+                    elif len(winners) == 1 and len(seeds) == count // 2:
+                        pairs = [f'SEED_{seed}-WINNER_{len(seeds)-i}' for i, seed in enumerate(seeds)]
+                    elif len(winners) == 1 and not seeds:
+                        pairs = [f'WINNER_{i}-WINNER_{count+1-i}' for i in range(1, count // 2 + 1)]
+                    else:
+                        return None
+                    node['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': pairs}}
+                    patches.append(node['key'] + ' generated fixed qualification paths')
+        if contest.get('format_type') == 'SERIES':
+            best = contest.get('best_of')
+            if not isinstance(best, int) or best < 1 or best % 2 == 0:
+                return None
+            if not contest.get('wins_required'):
+                contest['wins_required'] = best // 2 + 1
+                patches.append(node['key'] + ' wins required')
+            hosting = node.get('hosting') or {}
+            if not hosting or hosting.get('rule_type') == 'HIGHER_SEED':
+                node['hosting'] = {'rule_type': 'SERIES_PATTERN', 'pattern': ''.join('H' if i % 2 == 0 else 'A' for i in range(best)), 'priority_basis': 'HIGHER_SEED'}
+                patches.append(node['key'] + ' alternating higher-seed hosting')
+    seeding = adapted.get('seeding') or {'scheme_type': 'RANK_BASED', 'basis': []}
+    if not any(b.get('type') == 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1' for b in seeding.get('basis', []) if isinstance(b, dict)):
+        seeding['basis'] = [*seeding.get('basis', []), {'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION'}]
+        adapted['seeding'] = seeding
+        patches.append('BDM classification policy')
+    if not patches and source.get('status') == 'COMPLETE':
+        return None
+    if source.get('status') != 'COMPLETE':
+        patches.append('partial source execution policy; official fidelity not certified')
+    document['status'] = 'COMPLETE'
+    document['competition_season_id'] = source['competition_season_id'] + ':bdm-adapted:' + row['source_id'].rsplit(':', 1)[-1]
+    adapted['is_real_variant'] = False
+    document['notes'] = (source.get('notes') or '') + ' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: ' + '; '.join(patches)
     return document
 
 
@@ -219,6 +351,7 @@ def build_package(matrix, batch, published, reusable_formats=()):
     evidence = []
     ncaa_plan = None
     reused = 0
+    adapted_count = 0
     referenced_fallbacks = 0
     for source_id in sorted(rows, key=lambda x: int(x.rsplit(":", 1)[-1])):
         row, build = rows[source_id], builds[source_id]
@@ -256,6 +389,20 @@ def build_package(matrix, batch, published, reusable_formats=()):
         existing_format, reference_resolution = reusable_documented_format(
             row, expected_count, reusable_formats
         )
+        adapted_format = adapt_documented_format(row, expected_count, reusable_formats)
+        if adapted_format is not None:
+            existing_format = adapted_format
+            reference_resolution = 'ADAPTED_DOCUMENTED_FORMAT'
+            adapted_count += 1
+        if existing_format is None:
+            known = {d['competition_season_id']: d for d in reusable_formats
+                     if d.get('competition_id') == row.get('native_format_id')}
+            if len(known) == 1:
+                # Keep known group/split/aggregate/conference structure visible.
+                # Unsupported engine topology is not missing regulation and must
+                # never be silently replaced by a simpler generated league.
+                existing_format = next(iter(known.values()))
+                reference_resolution = 'PRESERVED_SOURCE_REQUIRES_ADAPTER'
         reference_id = row.get("native_format_id")
         if existing_format is not None:
             # The document is not cloned and its native competition/edition IDs
@@ -270,6 +417,7 @@ def build_package(matrix, batch, published, reusable_formats=()):
                 "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
                 "nativeStatus": "CANDIDATE_DOCUMENTED_FORMAT_ENGINE_PENDING",
                 "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+                "simulationPolicy": adapted_format is not None,
                 "formatReferenceId": existing_format["competition_id"],
                 "formatReferenceResolution": reference_resolution,
             })
@@ -286,7 +434,9 @@ def build_package(matrix, batch, published, reusable_formats=()):
             continue
         if reference_id:
             referenced_fallbacks += 1
-        document = simulation_document(source_id, row["competition"], expected_count)
+        capabilities = {c['id'] if isinstance(c, dict) else c for c in row.get('shared_capabilities', [])}
+        grouped = expected_count > 24 or bool(capabilities & {'group_stages', 'conferences'})
+        document = simulation_document(source_id, row["competition"], expected_count, postseason=True, grouped=grouped)
         documents.append(document)
         candidates.append({
             **config,
@@ -300,7 +450,10 @@ def build_package(matrix, batch, published, reusable_formats=()):
             **({"formatReferenceId": reference_id,
                 "formatReferenceResolution": reference_resolution} if reference_id else {}),
         })
-        games = expected_count * (expected_count - 1)
+        scope = document['variants'][0]['nodes'][0]['opponent_scope']
+        groups = scope.get('payload', {}).get('generated_group_count', 1)
+        sizes = [expected_count // groups + (i < expected_count % groups) for i in range(groups)]
+        games = sum(n * (n - 1) for n in sizes)
         evidence.append({
             "source_id": source_id, "name": row["competition"],
             "original_clubs": expected_count, "source_status": row["status"],
@@ -324,6 +477,7 @@ def build_package(matrix, batch, published, reusable_formats=()):
             "total": 102, "original_playable": 4,
             "generated_simulation_candidates": len(documents),
             "reused_documented_format_candidates": reused,
+            "adapted_documented_format_candidates": adapted_count,
             "generated_with_documented_reference": referenced_fallbacks,
             "ncaa_existing_rules_pending_membership": 1,
             "published_new_competitions": 0,
@@ -351,8 +505,15 @@ def main():
     sources = [NCAA_BUNDLE, ADDITIONAL_FORMATS]
     if args.pgm_formats_dir.is_dir():
         sources.append(args.pgm_formats_dir)
-    documented = load_format_documents([*sources, *args.format_source])
-    package = build_package(read(args.matrix), read(args.batch), read(args.published),
+    matrix = read(args.matrix)
+    # Reuse the already inventoried PBM/B04 recovery packs as well as PGM.
+    # Only canonical individual season documents, never saved worlds or calendars.
+    inventoried = sorted({path for row in matrix['competitions']
+                          for doc in row.get('format_documents', []) for path in doc.get('sources', [])
+                          if '/reference-packs/competition-formats/seasons/' in path.replace('\\', '/')
+                          and Path(path).is_file()})
+    documented = load_format_documents([*sources, *inventoried, *args.format_source])
+    package = build_package(matrix, read(args.batch), read(args.published),
                             reusable_formats=documented)
     args.output.mkdir(parents=True, exist_ok=True)
     for key, filename in [
