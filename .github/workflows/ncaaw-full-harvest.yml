@@ -21,7 +21,7 @@ jobs:
     name: Harvest 363 women schools and 32 conferences
     if: github.repository == 'audifor/BDM'
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - name: Checkout the data branch, not PR merge commit
         uses: actions/checkout@v4
@@ -38,6 +38,18 @@ jobs:
           python scripts/playable/ncaaw_2026_27_full_harvest.py
           --catalog src/data/worlddb-v2/ncaa-d1-2026-27-programs.json
           --out src/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install BDM native dependencies
+        run: npm ci
+      - name: Typecheck complete NCAAW source integration
+        run: npm run typecheck
+      - name: Native NCAA women 363-program 32-conference GameWorld and Save V4
+        env:
+          BDM_NCAAW_REAL_ACCEPTANCE: '1'
+        run: npx vitest run src/app/game/Ncaaw2026RealSeason.test.ts --maxWorkers=1 --testTimeout=240000 --hookTimeout=240000
       - name: Store evidence report
         uses: actions/upload-artifact@v4
         with:
