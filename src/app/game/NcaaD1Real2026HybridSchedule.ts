@@ -93,7 +93,7 @@ export function mergeNcaaCompleteSourceConferences(
   }
   for (const [team, conferenceId] of membership) {
     if ((perConference.get(team) ?? 0) !== policy.conferenceGamesPerTeam[conferenceId]) {
-      throw new Error('NCAA hybrid did not preserve each school's conference game quota')
+      throw new Error('NCAA hybrid did not preserve the school conference game quota')
     }
   }
   if (official.some(game => !ids.has(game.id))) throw new Error('NCAA official fixture lost in hybrid generation')
