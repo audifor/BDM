@@ -15672,5 +15672,234 @@
         "scope": "BDM simulations of opponents/dates and classification tiebreaks"
       }
     ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:NAM:gleague",
+    "competition_season_id": "edition:NAM:gleague:2026-27:bdm-two-phase:94",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION: 31 original PBM clubs; source-defined 4 Tip-Off regions (8/8/8/7) with exactly 14 games/team and separate standings; records RESET before the 36-game regular season with 16 East/15 West conference standings; top eight each qualify; three single-elimination rounds then BO3 Finals. Generated opponents, dates, tournament winner/Winter Showcase bracket and classification tie rules are NOT official. The Tip-Off championship is NOT yet simulated.",
+    "variants": [
+      {
+        "key": "GLEAGUE_2026_27_BDM_TWO_PHASE",
+        "name": "NBA G League 2026-27: Tip-Off 14 + regular 36, conferences",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 31
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION; tie rules not official",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 31,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "bdm_gleague_two_phase_v1": true,
+                "games_per_team": 36
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_GLEAGUE_CONFERENCES"
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "TIP_OFF_TOURNAMENT",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 31,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_gleague_tipoff_v1": true,
+                "games_per_team": 14
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_GLEAGUE_TIPOFF_REGIONS"
+              }
+            }
+          },
+          {
+            "key": "PLAYOFF_ROUND_1",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-15",
+                  "3-13",
+                  "5-11",
+                  "7-9",
+                  "2-16",
+                  "4-14",
+                  "6-12",
+                  "8-10"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4",
+                  "WINNER_5-WINNER_6",
+                  "WINNER_7-WINNER_8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_FINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "GLEAGUE_FINALS",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 3,
+              "wins_required": 2
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "PLAYOFF_ROUND_1",
+            "selector": "TOP_N",
+            "count": 16
+          },
+          {
+            "from": "PLAYOFF_ROUND_1",
+            "to": "CONFERENCE_SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_SEMIFINALS",
+            "to": "CONFERENCE_FINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_FINALS",
+            "to": "GLEAGUE_FINALS",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://gleague.nba.com/news/2026-27-nba-g-league-schedule-release",
+        "type": "OFFICIAL",
+        "scope": "31 teams, 14 Tip-Off games plus 36 league games and separate phases"
+      },
+      {
+        "url": "https://gleague.nba.com/tip-off-tournament-regions",
+        "type": "OFFICIAL",
+        "scope": "Four Tip-Off regional memberships (8,8,8,7)"
+      },
+      {
+        "url": "https://gleague.nba.com/nba-g-league-conferences",
+        "type": "OFFICIAL",
+        "scope": "2026-27 conferences, record reset, top eight per conference"
+      },
+      {
+        "url": "https://gleague.nba.com/playoff-format",
+        "type": "OFFICIAL",
+        "scope": "2025-26 four-round 16-team playoff with three single rounds and BO3 Finals; provisional carryover to 2026-27"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "Explicit generated opponent matrices, date placement and tie policy"
+      }
+    ]
   }
 ]
