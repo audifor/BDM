@@ -18,7 +18,7 @@ it('keeps professional market contacts, formal offers and scouting within the re
     organizationId: team.organizationId, teamId: team.id, playerId: opposite.id,
     startedOn: world.currentDate, actionKey: 'cross-category', sourcePlanId: 'test-plan',
     sourceProposalId: 'test-proposal', responsibleActor: { kind: 'HEAD_COACH' },
-  } as Parameters<typeof createNegotiationContact>[1])
+  } as unknown as Parameters<typeof createNegotiationContact>[1])
   expect(contact.status).toBe('BLOCKED')
   if (contact.status === 'BLOCKED') expect(contact.reason).toBe('PLAYER_TEAM_CATEGORY_MISMATCH')
   expect(() => openNegotiation(world, {
@@ -26,7 +26,7 @@ it('keeps professional market contacts, formal offers and scouting within the re
     salary: 100_000, years: 1, actionKey: 'cross-category',
     sourcePlanId: 'test-plan', sourceProposalId: 'test-proposal',
     offerResponsibleActor: { kind: 'HEAD_COACH' },
-  } as Parameters<typeof openNegotiation>[1])).toThrow('PLAYER_TEAM_CATEGORY_MISMATCH')
+  } as unknown as Parameters<typeof openNegotiation>[1])).toThrow('PLAYER_TEAM_CATEGORY_MISMATCH')
   const candidates = getAddressableScoutingPlayerIds(world, team.id)
   expect(candidates).toContain(team.rosterPlayerIds[0])
   expect(candidates.every(id => world.players[id]!.gender === team.gender)).toBe(true)
