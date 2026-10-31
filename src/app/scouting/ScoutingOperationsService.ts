@@ -1,7 +1,7 @@
 import type { GameId, OrganizationId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { ScoutingMission, ScoutingPriority, ScoutingTerritory, ScoutingTerritoryAssignment } from '@/domain/scouting'
 import type { ScoutingTerritoryCoverage } from '@/engine/scouting/ScoutingTerritoryOperations'
-import { getCompetitionsForTeam, getFreeAgents, getNextScheduledGame, type GameWorld } from '@/domain/world'
+import { getCompetitionsForTeam, getFreeAgents, getNextScheduledGame, isPlayerTeamCategoryCompatible, type GameWorld } from '@/domain/world'
 import { getEligibleScoutingEvaluators, requestScouting, updateScoutingAssignmentPriority as setAssignmentPriority, cancelScoutingAssignment as cancelAssignment } from '@/engine/scouting'
 import { getTeamsInScoutingTerritory } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
@@ -63,7 +63,7 @@ export function getAddressableScoutingPlayerIds(world: GameWorld, teamId: TeamId
     const profile = world.recruitProfilesById[board.recruitId]
     if (profile?.status === 'open') ids.add(profile.playerId)
   }
-  return [...ids].filter((playerId) => world.players[playerId] !== undefined && world.players[playerId]!.careerEnd === undefined).sort((a, b) => a.localeCompare(b))
+  return [...ids].filter((playerId) => isPlayerTeamCategoryCompatible(world, playerId, teamId) && world.players[playerId]!.careerEnd === undefined).sort((a, b) => a.localeCompare(b))
 }
 
 export function getScoutingCandidatesForUser(world: GameWorld): readonly PlayerId[] {
@@ -78,6 +78,7 @@ export function getAvailableScoutingEvaluators(world: GameWorld, teamId: TeamId,
 export function requestPlayerScouting(world: GameWorld, input: RequestScoutingInput): GameWorld {
   const team = world.teams[input.teamId]
   if (team === undefined || team.coachId !== world.userCoachId) throw new Error('Scouting requests must come from the user-controlled team')
+  if (!isPlayerTeamCategoryCompatible(world, input.playerId, team.id)) throw new Error('PLAYER_TEAM_CATEGORY_MISMATCH')
   if (!getAddressableScoutingPlayerIds(world, team.id).includes(input.playerId)) throw new Error('Player is not currently addressable to this organization')
   if (Object.values(world.scoutingAssignmentsById).some((assignment) => assignment.organizationId === team.organizationId && assignment.subjectPlayerId === input.playerId && assignment.status !== 'COMPLETED' && assignment.status !== 'CANCELLED')) throw new Error('This Player already has an active or queued Scouting assignment')
   const eligible = getAvailableScoutingEvaluators(world, team.id, input.missionType)
