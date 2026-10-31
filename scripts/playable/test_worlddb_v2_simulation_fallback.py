@@ -107,5 +107,62 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
             MODULE.build_package(matrix, batch, published)
 
 
+    def test_reuses_complete_mapped_native_format_before_generic_simulation(self):
+        matrix, batch, published = fixtures()
+        league = next(item for item in matrix["competitions"] if item["source_id"].endswith(":44"))
+        league["native_format_id"] = "competition:NAM:nba"
+        league["format_evidence_kind"] = "RUNTIME_DOCUMENT"
+        league["pbm"]["clubs"] = 30
+        source = next(item for item in batch["results"] if item["source_id"].endswith(":44"))
+        source["config"]["teamCount"] = 30
+        reference = {
+            "competition_id": "competition:NAM:nba",
+            "competition_season_id": "edition:NAM:nba:2025-26",
+            "status": "COMPLETE",
+            "variants": [{"nodes": [{
+                "key": "REGULAR_SEASON", "role": "REGULAR_SEASON",
+                "team_count": 30, "pairing": {"type": "FIXED_SCHEDULE"},
+            }]}],
+        }
+        result = MODULE.build_package(matrix, batch, published, reusable_formats=[reference])
+        reused = next(config for config in result["catalog"] if config["sourceCompetitionId"].endswith(":44"))
+        self.assertEqual(reused["nativeCompetitionId"], reference["competition_id"])
+        self.assertEqual(reused["editionId"], reference["competition_season_id"])
+        self.assertEqual(reused["formatProvenance"], "REUSED_DOCUMENTED_FORMAT")
+        self.assertEqual(reused["nativeStatus"], "CANDIDATE_DOCUMENTED_FORMAT_ENGINE_PENDING")
+        self.assertEqual(result["manifest"]["reused_documented_format_candidates"], 1)
+        self.assertEqual(result["manifest"]["generated_simulation_candidates"], 96)
+        self.assertFalse(any("championnat-44" in doc["competition_id"] for doc in result["formats"]))
+
+    def test_keeps_known_pgm_reference_when_document_not_yet_imported(self):
+        matrix, batch, published = fixtures()
+        league = next(item for item in matrix["competitions"] if item["source_id"].endswith(":29"))
+        league["native_format_id"] = "competition:FRA:nm1"
+        league["format_evidence_kind"] = "RUNTIME_DOCUMENT"
+        result = MODULE.build_package(matrix, batch, published)
+        generated = next(config for config in result["catalog"] if config["sourceCompetitionId"].endswith(":29"))
+        self.assertEqual(generated["formatProvenance"], "GENERATED_SIMULATION")
+        self.assertEqual(generated["formatReferenceId"], "competition:FRA:nm1")
+        self.assertEqual(generated["formatReferenceResolution"], "DOCUMENTED_REFERENCE_NOT_USABLE")
+        self.assertEqual(result["manifest"]["generated_with_documented_reference"], 1)
+        self.assertEqual(result["manifest"]["reused_documented_format_candidates"], 0)
+        self.assertEqual(len(result["formats"]), 97)
+
+    def test_does_not_guess_among_two_matching_pgm_editions(self):
+        matrix, batch, published = fixtures()
+        league = next(item for item in matrix["competitions"] if item["source_id"].endswith(":44"))
+        league["native_format_id"] = "competition:NAM:nba"
+        docs = [{"competition_id": "competition:NAM:nba",
+                 "competition_season_id": f"edition:NAM:nba:{edition}",
+                 "status": "COMPLETE",
+                 "variants": [{"nodes": [{"role": "REGULAR_SEASON", "team_count": 12}]}]}
+                for edition in ("2025-26", "2026-27")]
+        result = MODULE.build_package(matrix, batch, published, reusable_formats=docs)
+        config = next(item for item in result["catalog"] if item["sourceCompetitionId"].endswith(":44"))
+        self.assertEqual(config["formatProvenance"], "GENERATED_SIMULATION")
+        self.assertEqual(config["formatReferenceResolution"], "AMBIGUOUS_DOCUMENTED_EDITION")
+        self.assertEqual(result["manifest"]["generated_simulation_candidates"], 97)
+
+
 if __name__ == "__main__":
     unittest.main()
