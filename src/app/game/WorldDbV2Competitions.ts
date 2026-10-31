@@ -21,6 +21,25 @@ export function worldDbV2Calendar(config: ReturnType<typeof worldDbV2Competition
     const windows = deriveCompetitionSeasonWindows(day, endDate, format)
     const variant = format?.variants.find(v => v.isRealVariant) ?? format?.variants[0]
     const regularNode = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
+    if (regularNode?.pairing?.payload.bdm_gleague_two_phase_v1 === true) {
+      if (config.teamCount !== 31 || regularNode.pairing.payload.games_per_team !== 36) throw new Error('G League requires its 31 clubs and 36-game regular phase')
+      const starts = { PLAYOFF_ROUND_1: 144, CONFERENCE_SEMIFINALS: 146, CONFERENCE_FINALS: 148, GLEAGUE_FINALS: 150 }
+      const roundCount = matrixRoundCount(31, 36)
+      return {
+        seasonWindow: { startDate: day, endDate },
+        regularSeasonWindow: { startDate: addDays(day, 43), endDate: addDays(day, 141) },
+        specialCompetitionWindows: [],
+        postseasonWindow: { startDate: addDays(day, 144), endDate },
+        postseasonStageStartDates: Object.fromEntries(Object.entries(starts).map(([key, offset]) => [key, addDays(day, offset)])),
+        offseasonWindow: null,
+        regularSeasonCadence: {
+          preferredWeekdays: [0, 1, 2, 3, 4, 5, 6], midweekWeekdays: [0, 1, 2, 3, 4, 5, 6],
+          midweekRoundNumbers: Array.from({ length: roundCount }, (_, i) => i + 1),
+          weeklyCadenceDays: 7, minimumRestDays: 1, breakDaysAfterRound: {},
+        },
+        postseasonCadence: { daysBetweenGames: 1, daysBetweenRounds: 1 },
+      }
+    }
     const matrixTarget = regularNode?.pairing?.payload.bdm_generated_matrix_v1 === true ? regularNode.pairing.payload.games_per_team : undefined
     if (matrixTarget !== undefined) {
       if (typeof matrixTarget !== 'number') throw new RangeError('Invalid simulated matrix target')
