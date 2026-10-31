@@ -8,7 +8,19 @@ export function worldDbV2Competition(id = DEFAULT_WORLDDB_V2_COMPETITION) {
   if (!config) throw Error('Unmapped PBM competition: ' + id)
   return config
 }
-export function worldDbV2Calendar(config: ReturnType<typeof worldDbV2Competition>, day: GameDate) {
+export function worldDbV2Calendar(config: ReturnType<typeof worldDbV2Competition> & { formatProvenance?: string }, day: GameDate) {
+  if (config.formatProvenance === 'GENERATED_SIMULATION') {
+    // Fictional fallback only: fit large synthetic round robins without claiming
+    // to reproduce the source competition's groups or real calendar.
+    const endDate = addDays(addYears(day, 1), -1)
+    const roundCount = 2 * (config.teamCount % 2 === 0 ? config.teamCount - 1 : config.teamCount)
+    return {
+      seasonWindow: { startDate: day, endDate }, regularSeasonWindow: { startDate: day, endDate },
+      specialCompetitionWindows: [], postseasonWindow: null, postseasonStageStartDates: {}, offseasonWindow: null,
+      regularSeasonCadence: { preferredWeekdays: [0, 1, 2, 3, 4, 5, 6], midweekWeekdays: [0, 1, 2, 3, 4, 5, 6], midweekRoundNumbers: Array.from({ length: roundCount }, (_, i) => i + 1), weeklyCadenceDays: 7, minimumRestDays: 3, breakDaysAfterRound: {} },
+      postseasonCadence: { daysBetweenGames: 1, daysBetweenRounds: 1 },
+    }
+  }
   // Without a dated league policy, the existing engine derives windows from that
   // league's own format and uses its existing default cadence. No ACB calendar substitution.
   if (config.calendar !== 'SPAIN_ACB_EXISTING') return undefined

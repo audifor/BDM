@@ -151,6 +151,11 @@ export function ensureNcaaEligibility(world: GameWorld): GameWorld {
   const rulesetEcosystems = new Set(rulesets.map((item) => item.ecosystemId))
   const profileKeys = new Set(profiles.map((item) => `${item.ecosystemId}:${item.programTeamId}:${item.playerId}`))
   const enrolledPlayers = new Set(enrollments.filter((item) => item.status === 'active').map((item) => `${item.ecosystemId}:${item.playerId}`))
+  const activeRegistrations = new Map<string, (typeof world.playerRegistrationsById)[string]>()
+  for (const registration of Object.values(world.playerRegistrationsById)) {
+    const key = `${registration.teamId}:${registration.playerId}`
+    if (registration.endsOn === undefined && !activeRegistrations.has(key)) activeRegistrations.set(key, registration)
+  }
   for (const competition of Object.values(world.competitions)) {
     const ecosystemId = competition.ecosystemId
     if (world.ecosystems[ecosystemId]?.kind !== 'ncaaLike') continue
@@ -171,7 +176,7 @@ export function ensureNcaaEligibility(world: GameWorld): GameWorld {
       const enrollmentKey = `${ecosystemId}:${playerId}`
       if (!enrolledPlayers.has(enrollmentKey)) {
         const team = world.teams[teamId]!
-        const registration = Object.values(world.playerRegistrationsById).find((item) => item.playerId === playerId && item.teamId === teamId && item.endsOn === undefined)
+        const registration = activeRegistrations.get(`${teamId}:${playerId}`)
         enrollments.push(createPlayerEnrollment({ id: `enrollment:${ecosystemId}:${teamId}:${playerId}:${world.currentDate}`, playerId, ecosystemId, teamId, organizationId: team.organizationId, startsOn: world.currentDate, status: 'active', ...(registration ? { sourceRegistrationId: registration.id } : {}) }))
         enrolledPlayers.add(enrollmentKey)
       }

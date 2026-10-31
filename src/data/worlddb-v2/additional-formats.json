@@ -183,5 +183,939 @@
         "scope": "20 participating clubs"
       }
     ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-women-championship",
+    "competition_season_id": "edition:USA:ncaa-d1-women-championship:2026-27",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "OFFICIAL 2027 NCAA Division I Women's Basketball Championship format: 76-team field (32 conference automatic qualifiers and 44 at-large). The bottom 12 automatic qualifiers and bottom 12 at-large teams play separate six-game Opening Round paths; 12 winners join 52 byes in the 64-team First Round. NCAA women's campus hosts and dates apply, never men's neutral-site Opening Round or Detroit Final Four. The 363 women's DI teams figure is projected sponsorship, not a verified season roster or conference-membership mapping. Bracket entrants and placement are selected by the women's committee, not supplied here.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2027 NCAA Division I Women's Basketball Championship",
+        "scope": null,
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "COMMITTEE_SELECTION",
+          "payload": {
+            "at_large": 44,
+            "at_large_selection": "NCAA_DIVISION_I_WOMENS_BASKETBALL_COMMITTEE",
+            "automatic_qualifier_source": "CONFERENCE_TOURNAMENT_CHAMPIONS_OR_NCAA_APPROVED_CONFERENCE_CHAMPIONS",
+            "automatic_qualifiers": 32,
+            "eligibility_boundary": "B14_ROSTER_REGISTRATION",
+            "field_size": 76,
+            "selection_phase": "SELECT_44_AT_LARGE"
+          }
+        },
+        "seeding": {
+          "scheme_type": "COMMITTEE",
+          "basis": [
+            {
+              "bracketing_constraints": [
+                "WOMENS_CHAMPIONSHIP_NCAA_APPROVED_SEEDING_AND_BRACKETING"
+              ],
+              "opening_round_at_large": 12,
+              "opening_round_automatic_qualifiers": 12,
+              "phases": [
+                "SELECT",
+                "SEED",
+                "PLACE"
+              ],
+              "rank_count": 76,
+              "source": "NCAA_WOMENS_COMMITTEE_OVERALL_SEED_LIST"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "FIELD",
+            "node_type": "STAGE",
+            "role": "QUALIFIER",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 76,
+            "pairing": null,
+            "opponent_scope": null,
+            "contest": null,
+            "hosting": null,
+            "carryover": null
+          },
+          {
+            "key": "OPENING_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 24,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "automatic_qualifier_games": 6,
+                "at_large_games": 6,
+                "cross_class_pairing": false,
+                "game_count": 12,
+                "automatic_qualifier_pairing": "LOWEST_12_AUTOMATIC_QUALIFIERS_WITHIN_CLASS",
+                "at_large_pairing": "LOWEST_12_AT_LARGE_WITHIN_CLASS",
+                "site_policy": "CAMPUS_HOSTS_SELECTED_FROM_TOP_16_SEEDS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "dates": [
+                  "2027-03-17",
+                  "2027-03-18"
+                ],
+                "site_type": "CAMPUS",
+                "host_source": "12_OF_TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 64,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "regional_bracket": true,
+                "regions": 4,
+                "seed_lines": 16,
+                "teams_per_region": 16
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "CAMPUS",
+                "host_source": "TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "SECOND_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 32,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "FIRST_ROUND_BRACKET_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "ASSIGNED_HOST",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "CAMPUS",
+                "host_source": "TOP_16_SEEDS"
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "SWEET_16",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": null,
+            "name": null,
+            "parent": null,
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "REGIONAL_BRACKET_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "REGIONAL",
+                "locations": [
+                  "Philadelphia, Pennsylvania",
+                  "Las Vegas, Nevada"
+                ],
+                "dates": [
+                  "2027-03-26",
+                  "2027-03-27"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "ELITE_EIGHT",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "specialized_type": "QUARTERFINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "source": "REGIONAL_FINAL_PATH"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site_type": "REGIONAL",
+                "locations": [
+                  "Philadelphia, Pennsylvania",
+                  "Las Vegas, Nevada"
+                ],
+                "dates": [
+                  "2027-03-28",
+                  "2027-03-29"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FINAL_FOUR",
+            "node_type": "ROUND",
+            "role": "FINAL_FOUR",
+            "specialized_type": "SEMIFINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "source": "REGION_CHAMPIONS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "dates": [
+                  "2027-04-02"
+                ]
+              }
+            },
+            "carryover": null
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "specialized_type": "FINAL",
+            "name": null,
+            "parent": null,
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "meetings_per_pair": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "source": "FINAL_FOUR_WINNERS"
+              }
+            },
+            "opponent_scope": null,
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true,
+              "best_of": null,
+              "wins_required": null,
+              "leg_count": null,
+              "aggregate_metric": null,
+              "tie_resolution": null
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "pattern": null,
+              "priority_basis": null,
+              "payload": {
+                "site": "Nationwide Arena, Columbus, Ohio",
+                "dates": [
+                  "2027-04-04"
+                ]
+              }
+            },
+            "carryover": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "FIELD",
+            "to": "OPENING_ROUND",
+            "selector": "BOTTOM_N",
+            "rank_from": null,
+            "rank_to": null,
+            "count": 24,
+            "payload": {
+              "partition": [
+                {
+                  "count": 12,
+                  "qualification_class": "AUTOMATIC_QUALIFIER",
+                  "selection": "LOWEST_SEEDED"
+                },
+                {
+                  "count": 12,
+                  "qualification_class": "AT_LARGE",
+                  "selection": "LOWEST_SEEDED"
+                }
+              ]
+            }
+          },
+          {
+            "from": "FIELD",
+            "to": "FIRST_ROUND",
+            "selector": "BYE",
+            "rank_from": null,
+            "rank_to": null,
+            "count": 52,
+            "payload": {
+              "description": "All field members not assigned to the Opening Round advance directly to the 64-team First Round"
+            }
+          },
+          {
+            "from": "OPENING_ROUND",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "SECOND_ROUND",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "SECOND_ROUND",
+            "to": "SWEET_16",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "SWEET_16",
+            "to": "ELITE_EIGHT",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "ELITE_EIGHT",
+            "to": "FINAL_FOUR",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          },
+          {
+            "from": "FINAL_FOUR",
+            "to": "FINAL",
+            "selector": "WINNER",
+            "rank_from": null,
+            "rank_to": null,
+            "count": null,
+            "payload": {}
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.ncaa.org/news/media-center-ncaa-reveals-new-76-team-bracket-for-di-mens-and-womens-basketball-championships/",
+        "type": "OFFICIAL",
+        "scope": "2027 both-gender 76-team championship, 12 opening games, 32 AQ, 44 at-large"
+      },
+      {
+        "url": "https://www.ncaa.com/news/basketball-women/article/2026-05-07/2027-march-madness-womens-ncaa-tournament-schedule-dates-times",
+        "type": "OFFICIAL",
+        "scope": "2027 women's host location and round-specific calendar"
+      },
+      {
+        "url": "https://www.ncaa.org/about-us/membership-directory/membership-composition-and-sport-sponsorship/",
+        "type": "OFFICIAL",
+        "scope": "2026-27 projected Division I women's basketball program count 363, not a program affiliation list"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-women:asun:regular-season",
+    "competition_season_id": "edition:USA:ncaa-d1-women:asun:regular-season:2026-27",
+    "season_label": "2026-27",
+    "status": "PARTIAL",
+    "notes": "REAL NCAA women's ASUN 2026-27. Eight current NCAA Division I programs, 14 conference games each, full home-and-away against seven opponents. Source-confirmed regular-season dates start Jan 9 and end Feb 27, 2027. PARTIAL because the exact dated game matrix and tie-resolution authority have not been imported, not because the bracket is simulated.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2026-27 ASUN Women's Basketball Regular Season",
+        "is_real_variant": true,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "member_count": 8,
+            "source_membership": "NCAA_D1_WOMEN_2026_27_ASUN_VERIFIED"
+          }
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "team_count": 8,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "games_per_team": 14,
+                "source_calendar": "OFFICIAL_ASUN_2026_27",
+                "calendar_start": "2027-01-09",
+                "calendar_end": "2027-02-27"
+              }
+            },
+            "opponent_scope": {
+              "type": "ALL_STAGE",
+              "payload": {}
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {
+                "home_games": 7,
+                "away_games": 7
+              }
+            }
+          }
+        ],
+        "edges": []
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://unfospreys.com/news/2026/7/16/asun-conference-releases-2026-27-womens-basketball-schedule",
+        "type": "OFFICIAL",
+        "scope": "eight teams, 14 games, home-and-away, January 9-February 27 dates"
+      },
+      {
+        "url": "https://gohatters.com/news/2026/7/16/hatters-announce-2026-27-asun-womens-basketball-schedule.aspx",
+        "type": "OFFICIAL",
+        "scope": "Stetson double round-robin ASUN women 2026-27"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-women:asun:tournament",
+    "competition_season_id": "edition:USA:ncaa-d1-women:asun:tournament:2026-27",
+    "season_label": "2026-27",
+    "status": "PARTIAL",
+    "notes": "REAL 2027 ASUN Women's Basketball Tournament: all eight ASUN programs qualify; seeds 1-2 receive a double bye into semifinals; seeds 3-4 receive a bye into the second round; seeds 5 v 8 and 6 v 7 play opening round on March 4; final March 8 at VyStar Veterans Memorial Arena. PARTIAL: side-specific advancement wiring, seeded placement and complete official fixture matrix still require NCAA native execution acceptance. No fictional 353-team historical PBM seedings are imported.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2027 ASUN Women's Basketball Tournament",
+        "is_real_variant": true,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 8,
+            "source": "ASUN_2026_27_WOMEN_MEMBERSHIP"
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "ASUN_2026_27_REGULAR_SEASON_STANDINGS",
+              "source": "ASUN_OFFICIAL_SEEDING_CROSSWALK_NOT_YET_NATIVE"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "QUALIFIED",
+            "node_type": "STAGE",
+            "role": "QUALIFIER",
+            "team_count": 8
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 4,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "5-8",
+                  "6-7"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-04"
+                ]
+              }
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "3-WINNER_1",
+                  "4-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-05"
+                ]
+              }
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-WINNER_1",
+                  "2-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-06"
+                ]
+              }
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-08"
+                ]
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "QUALIFIED",
+            "to": "FIRST_ROUND",
+            "selector": "RANK_RANGE",
+            "rank_from": 5,
+            "rank_to": 8,
+            "count": 4
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "QUARTERFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 3,
+            "rank_to": 4,
+            "count": 2
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "SEMIFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 2,
+            "count": 2
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "QUARTERFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER",
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://asunsports.org/news/2026/10/20/general-atlantic-sun-conference-announces-adjusted-eight-team-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "both 2027 eight-team tournaments, seeded byes, opening matchups, March 4-8 and women's final March 8"
+      },
+      {
+        "url": "https://fgcuathletics.com/news/2026/10/26/mens-basketball-atlantic-sun-conference-announces-adjusted-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "university cross-confirmation of 2027 women's ASUN tournament structure"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:USA:ncaa-d1-men:asun:tournament",
+    "competition_season_id": "edition:USA:ncaa-d1-men:asun:tournament:2026-27",
+    "season_label": "2026-27",
+    "status": "PARTIAL",
+    "notes": "REAL OFFICIAL 2027 ASUN MEN'S BASKETBALL TOURNAMENT. 8 current men's 2026-27 ASUN members qualify. Seeds 1/2 double bye to semifinals, seeds 3/4 single bye to quarters, seeds 5 v 8 and 6 v 7 start March 4. Men's championship March 7 2027 at VyStar Veterans Memorial Arena, Jacksonville. PARTIAL until the native seeded advancement, full season standings and rule-dependent at-large eligibility are integrated and acceptance-tested.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "2027 ASUN Men's Basketball Tournament",
+        "is_real_variant": true,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 8,
+            "source": "ASUN_2026_27_MEN_MEMBERSHIP"
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "ASUN_2026_27_MEN_REGULAR_SEASON_STANDINGS",
+              "source": "ASUN_OFFICIAL_SEEDING_CROSSWALK_NOT_YET_NATIVE"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "QUALIFIED",
+            "node_type": "STAGE",
+            "role": "QUALIFIER",
+            "team_count": 8
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 4,
+            "pairing": {
+              "type": "SEEDED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "5-8",
+                  "6-7"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-04"
+                ]
+              }
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "3-WINNER_1",
+                  "4-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-05"
+                ]
+              }
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-WINNER_1",
+                  "2-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-06"
+                ]
+              }
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL",
+              "payload": {
+                "site": "VyStar Veterans Memorial Arena, Jacksonville, Florida",
+                "dates": [
+                  "2027-03-07"
+                ]
+              }
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "QUALIFIED",
+            "to": "FIRST_ROUND",
+            "selector": "RANK_RANGE",
+            "rank_from": 5,
+            "rank_to": 8,
+            "count": 4
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "QUARTERFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 3,
+            "rank_to": 4,
+            "count": 2
+          },
+          {
+            "from": "QUALIFIED",
+            "to": "SEMIFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 2,
+            "count": 2
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "QUARTERFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "count": 2
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER",
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://asunsports.org/news/2026/10/20/general-atlantic-sun-conference-announces-adjusted-eight-team-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "2027 ASUN official 8-team men's postseason: seeded byes, March 4 opening, March 7 final"
+      },
+      {
+        "url": "https://fgcuathletics.com/news/2026/10/26/mens-basketball-atlantic-sun-conference-announces-adjusted-mens-and-womens-basketball-tournament-brackets.aspx",
+        "type": "OFFICIAL",
+        "scope": "FGCU primary confirmation of both 2027 brackets and men's championship on March 7"
+      }
+    ]
   }
 ]

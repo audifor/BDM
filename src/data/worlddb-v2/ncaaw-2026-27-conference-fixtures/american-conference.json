@@ -1,0 +1,1272 @@
+{
+  "schemaVersion": 2,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "american-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Every published D1 vs D1 fixture from current member school source pages, without fictional games. Includes nonconference/interconference games. Some 2026-27 opponents and additional games can remain unpublished. Do NOT treat as a full official schedule.",
+  "memberCount": 13,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:charlotte-49ers",
+    "ncaa:2026-27:women:east-carolina-pirates",
+    "ncaa:2026-27:women:florida-atlantic-owls",
+    "ncaa:2026-27:women:memphis-tigers",
+    "ncaa:2026-27:women:north-texas-mean-green",
+    "ncaa:2026-27:women:rice-owls",
+    "ncaa:2026-27:women:south-florida-bulls",
+    "ncaa:2026-27:women:temple-owls",
+    "ncaa:2026-27:women:tulane-green-wave",
+    "ncaa:2026-27:women:tulsa-golden-hurricane",
+    "ncaa:2026-27:women:uab-blazers",
+    "ncaa:2026-27:women:utsa-roadrunners",
+    "ncaa:2026-27:women:wichita-state-shockers"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/charlotte-49ers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/east-carolina-pirates",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/florida-atlantic-owls",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/memphis-tigers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/north-texas-mean-green",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/rice-owls",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/south-florida-bulls",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/temple-owls",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/tulane-green-wave",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/tulsa-golden-hurricane",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/uab-blazers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/utsa-roadrunners",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/wichita-state-shockers"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:charlotte-49ers",
+      "listedGames": 6,
+      "inUniverseGames": 6
+    },
+    {
+      "id": "ncaa:2026-27:women:east-carolina-pirates",
+      "listedGames": 10,
+      "inUniverseGames": 10
+    },
+    {
+      "id": "ncaa:2026-27:women:florida-atlantic-owls",
+      "listedGames": 3,
+      "inUniverseGames": 3
+    },
+    {
+      "id": "ncaa:2026-27:women:memphis-tigers",
+      "listedGames": 4,
+      "inUniverseGames": 4
+    },
+    {
+      "id": "ncaa:2026-27:women:north-texas-mean-green",
+      "listedGames": 5,
+      "inUniverseGames": 5
+    },
+    {
+      "id": "ncaa:2026-27:women:rice-owls",
+      "listedGames": 13,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:south-florida-bulls",
+      "listedGames": 13,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:temple-owls",
+      "listedGames": 7,
+      "inUniverseGames": 7
+    },
+    {
+      "id": "ncaa:2026-27:women:tulane-green-wave",
+      "listedGames": 11,
+      "inUniverseGames": 11
+    },
+    {
+      "id": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "listedGames": 4,
+      "inUniverseGames": 4
+    },
+    {
+      "id": "ncaa:2026-27:women:uab-blazers",
+      "listedGames": 3,
+      "inUniverseGames": 3
+    },
+    {
+      "id": "ncaa:2026-27:women:utsa-roadrunners",
+      "listedGames": 5,
+      "inUniverseGames": 5
+    },
+    {
+      "id": "ncaa:2026-27:women:wichita-state-shockers",
+      "listedGames": 13,
+      "inUniverseGames": 12
+    }
+  ],
+  "fixtureCount": 96,
+  "nonD1OrUnmatched": [
+    {
+      "origin": "ncaa:2026-27:women:wichita-state-shockers",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-12-02",
+      "homeId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayId": "ncaa:2026-27:women:haskell-jayhawks"
+    }
+  ],
+  "fixtures": [
+    {
+      "gameId": "401906979",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-kansas-state-wildcats-401906979",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913675",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/richmond-spiders-vs-charlotte-49ers-401913675",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401913723",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:miami-hurricanes",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-atlantic-owls-vs-miami-hurricanes-401913723",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-atlantic-owls"
+      ]
+    },
+    {
+      "gameId": "401913830",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:houston-christian-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/houston-christian-huskies-vs-rice-owls-401913830",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913842",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:furman-paladins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/furman-paladins-vs-south-florida-bulls-401913842",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401916057",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:texas-southern-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/texas-southern-tigers-vs-tulane-green-wave-401916057",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401921077",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/temple-owls-vs-george-mason-patriots-401921077",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401913822",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-east-carolina-pirates-401913822",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401918940",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charlotte-49ers-vs-texas-tech-lady-raiders-401918940",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401913831",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rice-owls-vs-murray-state-racers-401913831",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913863",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-florida-bulls-vs-belmont-bruins-401913863",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401913873",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:kansas-city-roos",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-kansas-city-roos-401913873",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401920492",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:unlv-lady-rebels",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utsa-roadrunners-vs-unlv-lady-rebels-401920492",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utsa-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401912505",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:liberty-flames",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/liberty-flames-vs-east-carolina-pirates-401912505",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401912991",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:alabama-crimson-tide",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/alabama-crimson-tide-vs-tulane-green-wave-401912991",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401913677",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rice-owls-vs-richmond-spiders-401913677",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913864",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rhode-island-rams-vs-south-florida-bulls-401913864",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401915907",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "awayProgramId": "ncaa:2026-27:women:duke-blue-devils",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-north-texas-mean-green-401915907",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-texas-mean-green"
+      ]
+    },
+    {
+      "gameId": "401913874",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:missouri-state-lady-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/missouri-state-lady-bears-vs-wichita-state-shockers-401913874",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913823",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-east-carolina-pirates-401913823",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401921149",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/temple-owls-vs-la-salle-explorers-401921149",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401906893",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:florida-gators",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-florida-bulls-vs-florida-gators-401906893",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401907049",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oklahoma-state-cowgirls-vs-tulsa-golden-hurricane-401907049",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulsa-golden-hurricane"
+      ]
+    },
+    {
+      "gameId": "401912992",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "awayProgramId": "ncaa:2026-27:women:alabama-crimson-tide",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/alabama-crimson-tide-vs-memphis-tigers-401912992",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:memphis-tigers"
+      ]
+    },
+    {
+      "gameId": "401913832",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:texas-southern-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/texas-southern-tigers-vs-rice-owls-401913832",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401916058",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:lsu-new-orleans-privateers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lsu-new-orleans-privateers-vs-tulane-green-wave-401916058",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401913875",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-wichita-state-shockers-401913875",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913824",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-carolina-pirates-vs-james-madison-dukes-401913824",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913865",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:florida-international-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-international-panthers-vs-south-florida-bulls-401913865",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401916059",
+      "gender": "women",
+      "date": "2026-11-16",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:mcneese-cowgirls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mcneese-cowgirls-vs-tulane-green-wave-401916059",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401913667",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/temple-owls-vs-george-washington-revolutionaries-401913667",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401913833",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:unlv-lady-rebels",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rice-owls-vs-unlv-lady-rebels-401913833",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913876",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:oral-roberts-golden-eagles",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-oral-roberts-golden-eagles-401913876",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913866",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-south-florida-bulls-401913866",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401920211",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "awayProgramId": "ncaa:2026-27:women:lsu-new-orleans-privateers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lsu-new-orleans-privateers-vs-tulsa-golden-hurricane-401920211",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulsa-golden-hurricane"
+      ]
+    },
+    {
+      "gameId": "401906895",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:florida-gators",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-atlantic-owls-vs-florida-gators-401906895",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-atlantic-owls"
+      ]
+    },
+    {
+      "gameId": "401916060",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:alcorn-state-lady-braves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/alcorn-state-lady-braves-vs-tulane-green-wave-401916060",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401918798",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:north-dakota-state-bison",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-dakota-state-bison-vs-utsa-roadrunners-401918798",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utsa-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401921021",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charlotte-49ers-vs-davidson-wildcats-401921021",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401907053",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-oklahoma-state-cowgirls-401907053",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913825",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:unc-wilmington-seahawks",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-carolina-pirates-vs-unc-wilmington-seahawks-401913825",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913834",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:pepperdine-waves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pepperdine-waves-vs-rice-owls-401913834",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913867",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/texas-tech-lady-raiders-vs-south-florida-bulls-401913867",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401918705",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:arkansas-state-red-wolves",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-texas-mean-green-vs-arkansas-state-red-wolves-401918705",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-texas-mean-green"
+      ]
+    },
+    {
+      "gameId": "401919070",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgetown-hoyas-vs-temple-owls-401919070",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401913669",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uab-blazers-vs-george-washington-revolutionaries-401913669",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uab-blazers"
+      ]
+    },
+    {
+      "gameId": "401913835",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:ut-rio-grande-valley-vaqueros",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ut-rio-grande-valley-vaqueros-vs-rice-owls-401913835",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401915967",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-memphis-tigers-401915967",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:memphis-tigers"
+      ]
+    },
+    {
+      "gameId": "401913030",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-florida-bulls-vs-seton-hall-pirates-401913030",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401913836",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:lamar-cardinals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lamar-cardinals-vs-rice-owls-401913836",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401915876",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:missouri-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/missouri-tigers-vs-tulane-green-wave-401915876",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401919062",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charlotte-49ers-vs-ucf-knights-401919062",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401913877",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:south-alabama-jaguars",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-south-alabama-jaguars-401913877",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401915879",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tulane-green-wave-vs-maine-black-bears-401915879",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401913878",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-wichita-state-shockers-401913878",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401913868",
+      "gender": "women",
+      "date": "2026-12-01",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:arkansas-pine-bluff-golden-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/arkansas-pine-bluff-golden-lions-vs-south-florida-bulls-401913868",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401919713",
+      "gender": "women",
+      "date": "2026-12-01",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/murray-state-racers-vs-uab-blazers-401919713",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uab-blazers"
+      ]
+    },
+    {
+      "gameId": "401913826",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:coastal-carolina-chanticleers",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-carolina-pirates-vs-coastal-carolina-chanticleers-401913826",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913837",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:grambling-lady-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/grambling-lady-tigers-vs-rice-owls-401913837",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401916061",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tulane-green-wave-vs-ucf-knights-401916061",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401918469",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/baylor-bears-vs-north-texas-mean-green-401918469",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-texas-mean-green"
+      ]
+    },
+    {
+      "gameId": "401918006",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tcu-horned-frogs-vs-memphis-tigers-401918006",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:memphis-tigers"
+      ]
+    },
+    {
+      "gameId": "401913869",
+      "gender": "women",
+      "date": "2026-12-04",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:morgan-state-lady-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/morgan-state-lady-bears-vs-south-florida-bulls-401913869",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401913838",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:princeton-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/princeton-tigers-vs-rice-owls-401913838",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401917740",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-texas-mean-green-vs-seattle-u-redhawks-401917740",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-texas-mean-green"
+      ]
+    },
+    {
+      "gameId": "401918776",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "awayProgramId": "ncaa:2026-27:women:oral-roberts-golden-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oral-roberts-golden-eagles-vs-tulsa-golden-hurricane-401918776",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulsa-golden-hurricane"
+      ]
+    },
+    {
+      "gameId": "401913827",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:maryland-eastern-shore-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maryland-eastern-shore-hawks-vs-east-carolina-pirates-401913827",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913880",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:middle-tennessee-blue-raiders",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-middle-tennessee-blue-raiders-401913880",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401915789",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charlotte-49ers-vs-vcu-rams-401915789",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401918470",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utsa-roadrunners-vs-baylor-bears-401918470",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utsa-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401915968",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "awayProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/smu-mustangs-vs-tulsa-golden-hurricane-401915968",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulsa-golden-hurricane"
+      ]
+    },
+    {
+      "gameId": "401916062",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:se-louisiana-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/se-louisiana-lady-lions-vs-tulane-green-wave-401916062",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401918008",
+      "gender": "women",
+      "date": "2026-12-10",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utsa-roadrunners-vs-tcu-horned-frogs-401918008",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utsa-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401913839",
+      "gender": "women",
+      "date": "2026-12-11",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/houston-cougars-vs-rice-owls-401913839",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913828",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-east-carolina-pirates-401913828",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913881",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:omaha-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/omaha-mavericks-vs-wichita-state-shockers-401913881",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401916063",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:louisiana-ragin-cajuns",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/louisiana-ragin-cajuns-vs-tulane-green-wave-401916063",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401919672",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/memphis-tigers-vs-bradley-braves-401919672",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:memphis-tigers"
+      ]
+    },
+    {
+      "gameId": "401921307",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/temple-owls-vs-st-john-s-red-storm-401921307",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401907097",
+      "gender": "women",
+      "date": "2026-12-14",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-texas-mean-green-vs-oklahoma-state-cowgirls-401907097",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-texas-mean-green"
+      ]
+    },
+    {
+      "gameId": "401913870",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/longwood-lancers-vs-south-florida-bulls-401913870",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401913882",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-state-gamecocks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-state-gamecocks-vs-wichita-state-shockers-401913882",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401919065",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-atlantic-owls-vs-ucf-knights-401919065",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-atlantic-owls"
+      ]
+    },
+    {
+      "gameId": "401909678",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-charlotte-49ers-401909678",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charlotte-49ers"
+      ]
+    },
+    {
+      "gameId": "401913829",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:campbell-fighting-camels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/campbell-fighting-camels-vs-east-carolina-pirates-401913829",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913840",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:middle-tennessee-blue-raiders",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rice-owls-vs-middle-tennessee-blue-raiders-401913840",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401916064",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "awayProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stonehill-skyhawks-vs-tulane-green-wave-401916064",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:tulane-green-wave"
+      ]
+    },
+    {
+      "gameId": "401918561",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "awayProgramId": "ncaa:2026-27:women:jackson-state-lady-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jackson-state-lady-tigers-vs-uab-blazers-401918561",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uab-blazers"
+      ]
+    },
+    {
+      "gameId": "401913841",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "awayProgramId": "ncaa:2026-27:women:prairie-view-a-and-m-lady-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/prairie-view-a-and-m-lady-panthers-vs-rice-owls-401913841",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:rice-owls"
+      ]
+    },
+    {
+      "gameId": "401913871",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:auburn-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/auburn-tigers-vs-south-florida-bulls-401913871",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401913883",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:sam-houston-bearkats",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wichita-state-shockers-vs-sam-houston-bearkats-401913883",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wichita-state-shockers"
+      ]
+    },
+    {
+      "gameId": "401915896",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:ole-miss-rebels",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/temple-owls-vs-ole-miss-rebels-401915896",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    },
+    {
+      "gameId": "401915970",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:smu-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utsa-roadrunners-vs-smu-mustangs-401915970",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utsa-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401909680",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-east-carolina-pirates-401909680",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:east-carolina-pirates"
+      ]
+    },
+    {
+      "gameId": "401913872",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:middle-tennessee-blue-raiders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/middle-tennessee-blue-raiders-vs-south-florida-bulls-401913872",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-florida-bulls"
+      ]
+    },
+    {
+      "gameId": "401915898",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "awayProgramId": "ncaa:2026-27:women:north-dakota-state-bison",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-dakota-state-bison-vs-temple-owls-401915898",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:temple-owls"
+      ]
+    }
+  ]
+}
