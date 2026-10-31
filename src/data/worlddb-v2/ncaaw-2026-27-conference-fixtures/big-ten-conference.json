@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "season": "2026-27",
   "division": "NCAA Division I",
   "gender": "women",
-  "season": "2026-27",
   "conferenceId": "big-ten-conference",
   "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
-  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Sourced current women's Division I scheduled games across this conference's teams, including nonconference; not a complete NCAA certified season, never fabricate omitted fixtures.",
   "memberCount": 18,
   "memberProgramIds": [
     "ncaa:2026-27:women:illinois-fighting-illini",
@@ -54,9 +55,79 @@
       "inUniverseGames": 4
     },
     {
+      "id": "ncaa:2026-27:women:indiana-hoosiers",
+      "listedGames": 13,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:iowa-hawkeyes",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:maryland-terrapins",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:michigan-state-spartans",
+      "listedGames": 6,
+      "inUniverseGames": 6
+    },
+    {
+      "id": "ncaa:2026-27:women:michigan-wolverines",
+      "listedGames": 4,
+      "inUniverseGames": 4
+    },
+    {
+      "id": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "listedGames": 6,
+      "inUniverseGames": 6
+    },
+    {
+      "id": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:northwestern-wildcats",
+      "listedGames": 14,
+      "inUniverseGames": 14
+    },
+    {
+      "id": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "listedGames": 9,
+      "inUniverseGames": 9
+    },
+    {
+      "id": "ncaa:2026-27:women:oregon-ducks",
+      "listedGames": 14,
+      "inUniverseGames": 14
+    },
+    {
+      "id": "ncaa:2026-27:women:penn-state-lady-lions",
+      "listedGames": 9,
+      "inUniverseGames": 9
+    },
+    {
+      "id": "ncaa:2026-27:women:purdue-boilermakers",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
       "id": "ncaa:2026-27:women:rutgers-scarlet-knights",
       "listedGames": 14,
       "inUniverseGames": 14
+    },
+    {
+      "id": "ncaa:2026-27:women:ucla-bruins",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:usc-trojans",
+      "listedGames": 8,
+      "inUniverseGames": 8
     },
     {
       "id": "ncaa:2026-27:women:washington-huskies",
@@ -64,82 +135,12 @@
       "inUniverseGames": 7
     },
     {
-      "id": "ncaa:2026-27:women:michigan-wolverines",
-      "listedGames": 4,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:maryland-terrapins",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:usc-trojans",
-      "listedGames": 8,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:oregon-ducks",
-      "listedGames": 14,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:michigan-state-spartans",
-      "listedGames": 6,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:iowa-hawkeyes",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:penn-state-lady-lions",
-      "listedGames": 9,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:purdue-boilermakers",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:ucla-bruins",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:nebraska-cornhuskers",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
       "id": "ncaa:2026-27:women:wisconsin-badgers",
       "listedGames": 13,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:minnesota-golden-gophers",
-      "listedGames": 6,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:northwestern-wildcats",
-      "listedGames": 14,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:indiana-hoosiers",
-      "listedGames": 13,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:ohio-state-buckeyes",
-      "listedGames": 9,
-      "inUniverseGames": 0
+      "inUniverseGames": 13
     }
   ],
-  "fixtureCount": 25,
+  "fixtureCount": 181,
   "nonD1OrUnmatched": [],
   "fixtures": [
     {
@@ -155,6 +156,114 @@
       ]
     },
     {
+      "gameId": "401913855",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "awayProgramId": "ncaa:2026-27:women:harvard-crimson",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/harvard-crimson-vs-minnesota-golden-gophers-401913855",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401918849",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maryland-terrapins-vs-south-carolina-gamecocks-401918849",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401918896",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:lehigh-mountain-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lehigh-mountain-hawks-vs-ucla-bruins-401918896",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401918901",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:hawai-i-rainbow-warriors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/hawai-i-rainbow-warriors-vs-oregon-ducks-401918901",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401920491",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:unlv-lady-rebels",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-unlv-lady-rebels-401920491",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401921404",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:towson-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/towson-tigers-vs-iowa-hawkeyes-401921404",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401921434",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:san-jose-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-jose-state-spartans-vs-nebraska-cornhuskers-401921434",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401921451",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:iu-indianapolis-jaguars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/iu-indianapolis-jaguars-vs-purdue-boilermakers-401921451",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401927081",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uic-flames-vs-ohio-state-buckeyes-401927081",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
       "gameId": "401927836",
       "gender": "women",
       "date": "2026-11-02",
@@ -164,6 +273,54 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:washington-huskies"
+      ]
+    },
+    {
+      "gameId": "401918864",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bradley-braves-vs-wisconsin-badgers-401918864",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918923",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-indiana-hoosiers-401918923",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401920013",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/valparaiso-beacons-vs-michigan-state-spartans-401920013",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401921442",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:milwaukee-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/milwaukee-panthers-vs-northwestern-wildcats-401921442",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
       ]
     },
     {
@@ -179,6 +336,30 @@
       ]
     },
     {
+      "gameId": "401911737",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uconn-huskies-vs-michigan-wolverines-401911737",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-wolverines"
+      ]
+    },
+    {
+      "gameId": "401913016",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/xavier-musketeers-vs-northwestern-wildcats-401913016",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
       "gameId": "401917684",
       "gender": "women",
       "date": "2026-11-05",
@@ -188,6 +369,138 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:washington-huskies"
+      ]
+    },
+    {
+      "gameId": "401918865",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:oakland-golden-grizzlies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oakland-golden-grizzlies-vs-wisconsin-badgers-401918865",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918897",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-ucla-bruins-401918897",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401921425",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:eastern-illinois-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-illinois-panthers-vs-iowa-hawkeyes-401921425",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401921452",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:eastern-michigan-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-michigan-eagles-vs-purdue-boilermakers-401921452",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401927082",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:central-michigan-chippewas",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/central-michigan-chippewas-vs-ohio-state-buckeyes-401927082",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401903554",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/washington-state-cougars-vs-oregon-ducks-401903554",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401918924",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-illinois-salukis-vs-indiana-hoosiers-401918924",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401916185",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/penn-state-lady-lions-vs-cincinnati-bearcats-401916185",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401918909",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/minnesota-golden-gophers-vs-marquette-golden-eagles-401918909",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401921435",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:western-illinois-leathernecks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/western-illinois-leathernecks-vs-nebraska-cornhuskers-401921435",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401911738",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/iowa-hawkeyes-vs-uconn-huskies-401911738",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
       ]
     },
     {
@@ -203,6 +516,114 @@
       ]
     },
     {
+      "gameId": "401918866",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:grambling-lady-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/grambling-lady-tigers-vs-wisconsin-badgers-401918866",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918915",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/george-mason-patriots-vs-maryland-terrapins-401918915",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401919942",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:mercyhurst-lakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mercyhurst-lakers-vs-ohio-state-buckeyes-401919942",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401921443",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-uic-flames-401921443",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918902",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:grand-canyon-lopes",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-grand-canyon-lopes-401918902",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401918925",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bradley-braves-vs-indiana-hoosiers-401918925",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401921071",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/penn-state-lady-lions-vs-dayton-flyers-401921071",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401921436",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:north-carolina-a-and-t-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-a-and-t-aggies-vs-nebraska-cornhuskers-401921436",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401921453",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:southeast-missouri-state-redhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southeast-missouri-state-redhawks-vs-purdue-boilermakers-401921453",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
       "gameId": "401913006",
       "gender": "women",
       "date": "2026-11-11",
@@ -215,6 +636,78 @@
       ]
     },
     {
+      "gameId": "401918867",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:delaware-blue-hens",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/delaware-blue-hens-vs-wisconsin-badgers-401918867",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918903",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-vermont-catamounts-401918903",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401911739",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uconn-huskies-vs-ohio-state-buckeyes-401911739",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401913056",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/arizona-wildcats-vs-ucla-bruins-401913056",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401919324",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:columbia-lions",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/michigan-wolverines-vs-columbia-lions-401919324",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-wolverines"
+      ]
+    },
+    {
+      "gameId": "401919981",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-iowa-panthers-vs-iowa-hawkeyes-401919981",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
       "gameId": "401921495",
       "gender": "women",
       "date": "2026-11-12",
@@ -224,6 +717,198 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:washington-huskies"
+      ]
+    },
+    {
+      "gameId": "401907166",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-west-virginia-mountaineers-401907166",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913765",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-maine-black-bears-401913765",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401918926",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:samford-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/samford-bulldogs-vs-indiana-hoosiers-401918926",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401906965",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nebraska-cornhuskers-vs-kansas-jayhawks-401906965",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401906983",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/minnesota-golden-gophers-vs-kansas-state-wildcats-401906983",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401918715",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:app-state-mountaineers",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-app-state-mountaineers-401918715",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918888",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:green-bay-phoenix",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wisconsin-badgers-vs-green-bay-phoenix-401918888",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401913858",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:harvard-crimson",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/michigan-state-spartans-vs-harvard-crimson-401913858",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401915326",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:princeton-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/princeton-tigers-vs-ucla-bruins-401915326",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401916083",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/penn-state-lady-lions-vs-arizona-state-sun-devils-401916083",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401918830",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:vanderbilt-commodores",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vanderbilt-commodores-vs-iowa-hawkeyes-401918830",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401918850",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-south-carolina-gamecocks-401918850",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401918916",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:columbia-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/columbia-lions-vs-maryland-terrapins-401918916",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401918927",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:milwaukee-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/milwaukee-panthers-vs-indiana-hoosiers-401918927",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401919898",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:fairleigh-dickinson-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/fairleigh-dickinson-knights-vs-ohio-state-buckeyes-401919898",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401921454",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:samford-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/samford-bulldogs-vs-purdue-boilermakers-401921454",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
       ]
     },
     {
@@ -251,6 +936,102 @@
       ]
     },
     {
+      "gameId": "401916165",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:mount-st-mary-s-mountaineers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mount-st-mary-s-mountaineers-vs-nebraska-cornhuskers-401916165",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401918889",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/marquette-golden-eagles-vs-wisconsin-badgers-401918889",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918904",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/murray-state-racers-vs-oregon-ducks-401918904",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401906966",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/kansas-jayhawks-vs-minnesota-golden-gophers-401906966",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401916196",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:niagara-purple-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/niagara-purple-eagles-vs-michigan-wolverines-401916196",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-wolverines"
+      ]
+    },
+    {
+      "gameId": "401918542",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:abilene-christian-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-abilene-christian-wildcats-401918542",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918698",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:coastal-carolina-chanticleers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/coastal-carolina-chanticleers-vs-indiana-hoosiers-401918698",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401918917",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:coppin-state-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/coppin-state-eagles-vs-maryland-terrapins-401918917",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
       "gameId": "401913008",
       "gender": "women",
       "date": "2026-11-19",
@@ -260,6 +1041,66 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401913709",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:florida-state-seminoles",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/purdue-boilermakers-vs-florida-state-seminoles-401913709",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401918898",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-ucla-bruins-401918898",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401918905",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:fairfield-stags",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/fairfield-stags-vs-oregon-ducks-401918905",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401919438",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:sacred-heart-pioneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacred-heart-pioneers-vs-michigan-state-spartans-401919438",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401921426",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-iowa-hawkeyes-401921426",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
       ]
     },
     {
@@ -275,6 +1116,18 @@
       ]
     },
     {
+      "gameId": "401918467",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-baylor-bears-401918467",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
       "gameId": "401913009",
       "gender": "women",
       "date": "2026-11-21",
@@ -284,6 +1137,114 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401918918",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:morgan-state-lady-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/morgan-state-lady-bears-vs-maryland-terrapins-401918918",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401918944",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/purdue-boilermakers-vs-texas-tech-lady-raiders-401918944",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401919969",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-illinois-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-illinois-huskies-vs-northwestern-wildcats-401919969",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401911795",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nebraska-cornhuskers-vs-creighton-bluejays-401911795",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401912957",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:tennessee-lady-volunteers",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ucla-bruins-vs-tennessee-lady-volunteers-401912957",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401918844",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:texas-longhorns",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ohio-state-buckeyes-vs-texas-longhorns-401918844",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401918890",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:lafayette-leopards",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lafayette-leopards-vs-wisconsin-badgers-401918890",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918928",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:southern-indiana-screaming-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-indiana-screaming-eagles-vs-indiana-hoosiers-401918928",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401921242",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/saint-joseph-s-hawks-vs-penn-state-lady-lions-401921242",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
       ]
     },
     {
@@ -299,6 +1260,90 @@
       ]
     },
     {
+      "gameId": "401913729",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:miami-hurricanes",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/michigan-wolverines-vs-miami-hurricanes-401913729",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-wolverines"
+      ]
+    },
+    {
+      "gameId": "401916024",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:alcorn-state-lady-braves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/alcorn-state-lady-braves-vs-michigan-state-spartans-401916024",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401921427",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-utes-vs-iowa-hawkeyes-401921427",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401921444",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:oakland-golden-grizzlies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oakland-golden-grizzlies-vs-northwestern-wildcats-401921444",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918919",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:monmouth-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/monmouth-hawks-vs-maryland-terrapins-401918919",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401921306",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ucla-bruins-vs-st-john-s-red-storm-401921306",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401921437",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:kansas-city-roos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/kansas-city-roos-vs-nebraska-cornhuskers-401921437",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
       "gameId": "401913010",
       "gender": "women",
       "date": "2026-11-25",
@@ -308,6 +1353,126 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401918821",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:kansas-city-roos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/kansas-city-roos-vs-nebraska-cornhuskers-401918821",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401918891",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:auburn-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/auburn-tigers-vs-wisconsin-badgers-401918891",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401919711",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/murray-state-racers-vs-purdue-boilermakers-401919711",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401921428",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:navy-midshipmen",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/navy-midshipmen-vs-iowa-hawkeyes-401921428",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401903568",
+      "gender": "women",
+      "date": "2026-11-26",
+      "homeProgramId": "ncaa:2026-27:women:maryland-eastern-shore-hawks",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-maryland-eastern-shore-hawks-401903568",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401903570",
+      "gender": "women",
+      "date": "2026-11-26",
+      "homeProgramId": "ncaa:2026-27:women:missouri-state-lady-bears",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/minnesota-golden-gophers-vs-missouri-state-lady-bears-401903570",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401918892",
+      "gender": "women",
+      "date": "2026-11-26",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:syracuse-orange",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/syracuse-orange-vs-wisconsin-badgers-401918892",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401903572",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/colorado-buffaloes-vs-oregon-ducks-401903572",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401903575",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cincinnati-bearcats-vs-minnesota-golden-gophers-401903575",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:minnesota-golden-gophers"
+      ]
+    },
+    {
+      "gameId": "401913050",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/depaul-blue-demons-vs-northwestern-wildcats-401913050",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
       ]
     },
     {
@@ -323,6 +1488,30 @@
       ]
     },
     {
+      "gameId": "401916121",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/penn-state-lady-lions-vs-baylor-bears-401916121",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401918859",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:mississippi-state-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/indiana-hoosiers-vs-mississippi-state-bulldogs-401918859",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
       "gameId": "401919078",
       "gender": "women",
       "date": "2026-11-27",
@@ -332,6 +1521,54 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:illinois-fighting-illini"
+      ]
+    },
+    {
+      "gameId": "401921243",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-saint-joseph-s-hawks-401921243",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401903577",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:georgia-lady-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/georgia-lady-bulldogs-vs-oregon-ducks-401903577",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401913720",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/indiana-hoosiers-vs-georgia-tech-yellow-jackets-401913720",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401915787",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vcu-rams-vs-ohio-state-buckeyes-401915787",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
       ]
     },
     {
@@ -347,6 +1584,42 @@
       ]
     },
     {
+      "gameId": "401918920",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:towson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maryland-terrapins-vs-towson-tigers-401918920",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401917934",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/iowa-state-cyclones-vs-usc-trojans-401917934",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401918899",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:pennsylvania-quakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pennsylvania-quakers-vs-ucla-bruins-401918899",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
       "gameId": "401921244",
       "gender": "women",
       "date": "2026-11-29",
@@ -359,6 +1632,78 @@
       ]
     },
     {
+      "gameId": "401921455",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:ut-martin-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ut-martin-skyhawks-vs-purdue-boilermakers-401921455",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401919695",
+      "gender": "women",
+      "date": "2026-11-30",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/illinois-state-redbirds-vs-northwestern-wildcats-401919695",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918787",
+      "gender": "women",
+      "date": "2026-12-01",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:omaha-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/omaha-mavericks-vs-nebraska-cornhuskers-401918787",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401918921",
+      "gender": "women",
+      "date": "2026-12-01",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:ball-state-cardinals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ball-state-cardinals-vs-maryland-terrapins-401918921",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401919678",
+      "gender": "women",
+      "date": "2026-12-01",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/iowa-hawkeyes-vs-drake-bulldogs-401919678",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401906060",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:boston-college-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-college-eagles-vs-indiana-hoosiers-401906060",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
       "gameId": "401913011",
       "gender": "women",
       "date": "2026-12-02",
@@ -368,6 +1713,78 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401913768",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-michigan-state-spartans-401913768",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401918679",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "awayProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/james-madison-dukes-vs-penn-state-lady-lions-401918679",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401918893",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:western-michigan-broncos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/western-michigan-broncos-vs-wisconsin-badgers-401918893",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401918906",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:southern-jaguars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-jaguars-vs-oregon-ducks-401918906",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401911743",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maryland-terrapins-vs-uconn-huskies-401911743",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401918922",
+      "gender": "women",
+      "date": "2026-12-07",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:lehigh-mountain-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lehigh-mountain-hawks-vs-maryland-terrapins-401918922",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
       ]
     },
     {
@@ -395,6 +1812,114 @@
       ]
     },
     {
+      "gameId": "401918811",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:north-dakota-fighting-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-dakota-fighting-hawks-vs-nebraska-cornhuskers-401918811",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401918929",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:northern-kentucky-norse",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-kentucky-norse-vs-indiana-hoosiers-401918929",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401917936",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/iowa-state-cyclones-vs-iowa-hawkeyes-401917936",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401918894",
+      "gender": "women",
+      "date": "2026-12-10",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wisconsin-badgers-vs-valparaiso-beacons-401918894",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401919497",
+      "gender": "women",
+      "date": "2026-12-10",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "awayProgramId": "ncaa:2026-27:women:army-black-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/army-black-knights-vs-penn-state-lady-lions-401919497",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401921456",
+      "gender": "women",
+      "date": "2026-12-10",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:central-michigan-chippewas",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/central-michigan-chippewas-vs-purdue-boilermakers-401921456",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401918900",
+      "gender": "women",
+      "date": "2026-12-11",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-ucla-bruins-401918900",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401921438",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "awayProgramId": "ncaa:2026-27:women:texas-a-and-m-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/texas-a-and-m-aggies-vs-nebraska-cornhuskers-401921438",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401906971",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-kansas-jayhawks-401906971",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
       "gameId": "401913013",
       "gender": "women",
       "date": "2026-12-13",
@@ -404,6 +1929,78 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401913052",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/depaul-blue-demons-vs-michigan-state-spartans-401913052",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:michigan-state-spartans"
+      ]
+    },
+    {
+      "gameId": "401915600",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "awayProgramId": "ncaa:2026-27:women:canisius-golden-griffins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/canisius-golden-griffins-vs-ohio-state-buckeyes-401915600",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401916170",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:mount-st-mary-s-mountaineers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mount-st-mary-s-mountaineers-vs-maryland-terrapins-401916170",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401918009",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/penn-state-lady-lions-vs-tcu-horned-frogs-401918009",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
+      "gameId": "401918907",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-oregon-state-beavers-401918907",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401918930",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/illinois-state-redbirds-vs-indiana-hoosiers-401918930",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
       ]
     },
     {
@@ -419,6 +2016,78 @@
       ]
     },
     {
+      "gameId": "401921429",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:southern-jaguars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-jaguars-vs-iowa-hawkeyes-401921429",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401921457",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:eastern-illinois-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-illinois-panthers-vs-purdue-boilermakers-401921457",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401911763",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northwestern-wildcats-vs-loyola-chicago-ramblers-401911763",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913732",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:miami-hurricanes",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-miami-hurricanes-401913732",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401915912",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:duke-blue-devils",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/duke-blue-devils-vs-ucla-bruins-401915912",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401917756",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:portland-pilots",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-pilots-vs-oregon-ducks-401917756",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
       "gameId": "401917757",
       "gender": "women",
       "date": "2026-12-17",
@@ -431,6 +2100,114 @@
       ]
     },
     {
+      "gameId": "401918895",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:delaware-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/delaware-state-hornets-vs-wisconsin-badgers-401918895",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401913673",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/george-washington-revolutionaries-vs-northwestern-wildcats-401913673",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401916042",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-maryland-terrapins-401916042",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maryland-terrapins"
+      ]
+    },
+    {
+      "gameId": "401915936",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ucla-bruins-vs-south-carolina-gamecocks-401915936",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401915937",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "awayProgramId": "ncaa:2026-27:women:notre-dame-fighting-irish",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/notre-dame-fighting-irish-vs-usc-trojans-401915937",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401918908",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-oregon-ducks-401918908",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:oregon-ducks"
+      ]
+    },
+    {
+      "gameId": "401921076",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/purdue-boilermakers-vs-dayton-flyers-401921076",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
+      ]
+    },
+    {
+      "gameId": "401906071",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:california-golden-bears",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nebraska-cornhuskers-vs-california-golden-bears-401906071",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:nebraska-cornhuskers"
+      ]
+    },
+    {
+      "gameId": "401911752",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/fordham-rams-vs-penn-state-lady-lions-401911752",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:penn-state-lady-lions"
+      ]
+    },
+    {
       "gameId": "401913014",
       "gender": "women",
       "date": "2026-12-20",
@@ -440,6 +2217,102 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:rutgers-scarlet-knights"
+      ]
+    },
+    {
+      "gameId": "401913713",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:florida-state-seminoles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-state-seminoles-vs-indiana-hoosiers-401913713",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:indiana-hoosiers"
+      ]
+    },
+    {
+      "gameId": "401915938",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:texas-longhorns",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/texas-longhorns-vs-ucla-bruins-401915938",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ucla-bruins"
+      ]
+    },
+    {
+      "gameId": "401915940",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:duke-blue-devils",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/usc-trojans-vs-duke-blue-devils-401915940",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:usc-trojans"
+      ]
+    },
+    {
+      "gameId": "401915989",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ohio-state-buckeyes-vs-stanford-cardinal-401915989",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ohio-state-buckeyes"
+      ]
+    },
+    {
+      "gameId": "401918792",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "awayProgramId": "ncaa:2026-27:women:omaha-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/omaha-mavericks-vs-wisconsin-badgers-401918792",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:wisconsin-badgers"
+      ]
+    },
+    {
+      "gameId": "401919973",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:northern-illinois-huskies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-illinois-huskies-vs-iowa-hawkeyes-401919973",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:iowa-hawkeyes"
+      ]
+    },
+    {
+      "gameId": "401921445",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:eastern-illinois-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-illinois-panthers-vs-northwestern-wildcats-401921445",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northwestern-wildcats"
+      ]
+    },
+    {
+      "gameId": "401921458",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "awayProgramId": "ncaa:2026-27:women:western-michigan-broncos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/western-michigan-broncos-vs-purdue-boilermakers-401921458",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:purdue-boilermakers"
       ]
     }
   ]
