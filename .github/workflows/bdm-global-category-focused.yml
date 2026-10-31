@@ -1,0 +1,22 @@
+name: BDM player category focused acceptance
+on:
+  push:
+    branches: [feature/bdm-global-player-category-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Global player category market/scouting/trade tests
+        run: npx vitest run src/app/game/GlobalPlayerTeamCategory.test.ts --maxWorkers=1 --testTimeout=120000
+      - name: Typecheck
+        run: npm run typecheck
