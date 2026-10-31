@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "big-south-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "memberCount": 9,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:charleston-southern-buccaneers",
+    "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+    "ncaa:2026-27:women:high-point-panthers",
+    "ncaa:2026-27:women:longwood-lancers",
+    "ncaa:2026-27:women:presbyterian-blue-hose",
+    "ncaa:2026-27:women:radford-highlanders",
+    "ncaa:2026-27:women:south-carolina-upstate-spartans",
+    "ncaa:2026-27:women:unc-asheville-bulldogs",
+    "ncaa:2026-27:women:winthrop-eagles"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/charleston-southern-buccaneers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/gardner-webb-runnin-bulldogs",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/high-point-panthers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/longwood-lancers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/presbyterian-blue-hose",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/south-carolina-upstate-spartans",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/unc-asheville-bulldogs",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/winthrop-eagles"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:radford-highlanders",
+      "listedGames": 14,
+      "inUniverseGames": 11
+    },
+    {
+      "id": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "listedGames": 6,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:longwood-lancers",
+      "listedGames": 3,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "listedGames": 5,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "listedGames": 3,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "listedGames": 3,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "listedGames": 12,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:high-point-panthers",
+      "listedGames": 15,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:winthrop-eagles",
+      "listedGames": 15,
+      "inUniverseGames": 0
+    }
+  ],
+  "fixtureCount": 11,
+  "nonD1OrUnmatched": [
+    {
+      "date": "2026-11-04",
+      "homeId": "ncaa:2026-27:women:radford-highlanders",
+      "awayId": "ncaa:2026-27:women:bluefield-ramblin-rams",
+      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+    },
+    {
+      "date": "2026-11-16",
+      "homeId": "ncaa:2026-27:women:radford-highlanders",
+      "awayId": "ncaa:2026-27:women:ferrum-panthers",
+      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+    },
+    {
+      "date": "2026-12-19",
+      "homeId": "ncaa:2026-27:women:radford-highlanders",
+      "awayId": "ncaa:2026-27:women:concord-mountain-lions",
+      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+    }
+  ],
+  "fixtures": [
+    {
+      "gameId": "401911503",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:clemson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-clemson-tigers-401911503",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911505",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-eastern-kentucky-colonels-401911505",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911506",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:campbell-fighting-camels",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-campbell-fighting-camels-401911506",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911508",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:tennessee-lady-volunteers",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-tennessee-lady-volunteers-401911508",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911509",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:furman-paladins",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-furman-paladins-401911509",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911510",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:norfolk-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/norfolk-state-spartans-vs-radford-highlanders-401911510",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911511",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:east-tennessee-state-bucs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-tennessee-state-bucs-vs-radford-highlanders-401911511",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911512",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:ohio-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-ohio-bobcats-401911512",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911513",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-davidson-wildcats-401911513",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911514",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:chattanooga-mocs",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-chattanooga-mocs-401911514",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401911516",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:virginia-tech-hokies",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/radford-highlanders-vs-virginia-tech-hokies-401911516",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:radford-highlanders"
+      ]
+    }
+  ]
+}
