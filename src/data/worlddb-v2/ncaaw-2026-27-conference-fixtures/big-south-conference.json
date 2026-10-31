@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "season": "2026-27",
   "division": "NCAA Division I",
   "gender": "women",
-  "season": "2026-27",
   "conferenceId": "big-south-conference",
   "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
-  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Sourced current women's Division I scheduled games across this conference's teams, including nonconference; not a complete NCAA certified season, never fabricate omitted fixtures.",
   "memberCount": 9,
   "memberProgramIds": [
     "ncaa:2026-27:women:charleston-southern-buccaneers",
@@ -31,73 +32,130 @@
   ],
   "coverage": [
     {
+      "id": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "listedGames": 6,
+      "inUniverseGames": 6
+    },
+    {
+      "id": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "listedGames": 12,
+      "inUniverseGames": 11
+    },
+    {
+      "id": "ncaa:2026-27:women:high-point-panthers",
+      "listedGames": 15,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:longwood-lancers",
+      "listedGames": 3,
+      "inUniverseGames": 3
+    },
+    {
+      "id": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "listedGames": 3,
+      "inUniverseGames": 3
+    },
+    {
       "id": "ncaa:2026-27:women:radford-highlanders",
       "listedGames": 14,
       "inUniverseGames": 11
     },
     {
-      "id": "ncaa:2026-27:women:charleston-southern-buccaneers",
-      "listedGames": 6,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:longwood-lancers",
+      "id": "ncaa:2026-27:women:south-carolina-upstate-spartans",
       "listedGames": 3,
-      "inUniverseGames": 0
+      "inUniverseGames": 3
     },
     {
       "id": "ncaa:2026-27:women:unc-asheville-bulldogs",
       "listedGames": 5,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:presbyterian-blue-hose",
-      "listedGames": 3,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:south-carolina-upstate-spartans",
-      "listedGames": 3,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
-      "listedGames": 12,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:high-point-panthers",
-      "listedGames": 15,
-      "inUniverseGames": 0
+      "inUniverseGames": 5
     },
     {
       "id": "ncaa:2026-27:women:winthrop-eagles",
       "listedGames": 15,
-      "inUniverseGames": 0
+      "inUniverseGames": 12
     }
   ],
-  "fixtureCount": 11,
+  "fixtureCount": 67,
   "nonD1OrUnmatched": [
     {
+      "origin": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-05",
+      "homeId": "ncaa:2026-27:women:catawba-indians",
+      "awayId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+    },
+    {
+      "origin": "ncaa:2026-27:women:high-point-panthers",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:high-point-panthers",
+      "awayId": "ncaa:2026-27:women:lees-mcrae-bobcats"
+    },
+    {
+      "origin": "ncaa:2026-27:women:high-point-panthers",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-04",
+      "homeId": "ncaa:2026-27:women:high-point-panthers",
+      "awayId": "ncaa:2026-27:women:wingate-bulldogs"
+    },
+    {
+      "origin": "ncaa:2026-27:women:radford-highlanders",
+      "issue": "opponent_not_in_d1",
       "date": "2026-11-04",
       "homeId": "ncaa:2026-27:women:radford-highlanders",
-      "awayId": "ncaa:2026-27:women:bluefield-ramblin-rams",
-      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+      "awayId": "ncaa:2026-27:women:bluefield-ramblin-rams"
     },
     {
+      "origin": "ncaa:2026-27:women:radford-highlanders",
+      "issue": "opponent_not_in_d1",
       "date": "2026-11-16",
       "homeId": "ncaa:2026-27:women:radford-highlanders",
-      "awayId": "ncaa:2026-27:women:ferrum-panthers",
-      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+      "awayId": "ncaa:2026-27:women:ferrum-panthers"
     },
     {
+      "origin": "ncaa:2026-27:women:radford-highlanders",
+      "issue": "opponent_not_in_d1",
       "date": "2026-12-19",
       "homeId": "ncaa:2026-27:women:radford-highlanders",
-      "awayId": "ncaa:2026-27:women:concord-mountain-lions",
-      "source": "https://www.ncaawomensbasketball.com/womens-college-basketball/team/radford-highlanders"
+      "awayId": "ncaa:2026-27:women:concord-mountain-lions"
+    },
+    {
+      "origin": "ncaa:2026-27:women:winthrop-eagles",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayId": "ncaa:2026-27:women:newberry-wolves"
+    },
+    {
+      "origin": "ncaa:2026-27:women:winthrop-eagles",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-10",
+      "homeId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayId": "ncaa:2026-27:women:johnson-c-smith-golden-bulls"
+    },
+    {
+      "origin": "ncaa:2026-27:women:winthrop-eagles",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-14",
+      "homeId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayId": "ncaa:2026-27:women:clinton-golden-bears"
     }
   ],
   "fixtures": [
+    {
+      "gameId": "401906102",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-upstate-spartans-vs-wake-forest-demon-deacons-401906102",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-carolina-upstate-spartans"
+      ]
+    },
     {
       "gameId": "401911503",
       "gender": "women",
@@ -108,6 +166,42 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913822",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-east-carolina-pirates-401913822",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
+      ]
+    },
+    {
+      "gameId": "401906103",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/presbyterian-blue-hose-vs-wake-forest-demon-deacons-401906103",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:presbyterian-blue-hose"
+      ]
+    },
+    {
+      "gameId": "401909670",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:georgia-lady-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-georgia-lady-bulldogs-401909670",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
       ]
     },
     {
@@ -123,6 +217,42 @@
       ]
     },
     {
+      "gameId": "401920336",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:ball-state-cardinals",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-ball-state-cardinals-401920336",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401919075",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/presbyterian-blue-hose-vs-marquette-golden-eagles-401919075",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:presbyterian-blue-hose"
+      ]
+    },
+    {
+      "gameId": "401911493",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:unc-greensboro-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-greensboro-spartans-vs-gardner-webb-runnin-bulldogs-401911493",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
       "gameId": "401911506",
       "gender": "women",
       "date": "2026-11-11",
@@ -132,6 +262,114 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913823",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-east-carolina-pirates-401913823",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401911494",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-gardner-webb-runnin-bulldogs-401911494",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913747",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-pittsburgh-panthers-401913747",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
+      ]
+    },
+    {
+      "gameId": "401920337",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-state-lady-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-state-lady-bulldogs-vs-high-point-panthers-401920337",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401920338",
+      "gender": "women",
+      "date": "2026-11-16",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:hampton-lady-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/hampton-lady-pirates-vs-high-point-panthers-401920338",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401909673",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-state-lady-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-state-lady-bulldogs-vs-winthrop-eagles-401909673",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401911495",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:east-tennessee-state-bucs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/east-tennessee-state-bucs-vs-gardner-webb-runnin-bulldogs-401911495",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401915888",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:clemson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-upstate-spartans-vs-clemson-tigers-401915888",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-carolina-upstate-spartans"
+      ]
+    },
+    {
+      "gameId": "401921020",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-davidson-wildcats-401921020",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
       ]
     },
     {
@@ -147,6 +385,54 @@
       ]
     },
     {
+      "gameId": "401920339",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-vermont-catamounts-401920339",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401915889",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:clemson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-clemson-tigers-401915889",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:unc-asheville-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401911496",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:mercer-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mercer-bears-vs-gardner-webb-runnin-bulldogs-401911496",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401909674",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-san-diego-state-aztecs-401909674",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
       "gameId": "401911509",
       "gender": "women",
       "date": "2026-11-23",
@@ -156,6 +442,102 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401915901",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:grand-canyon-lopes",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-grand-canyon-lopes-401915901",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401906094",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:north-carolina-tar-heels",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-north-carolina-tar-heels-401906094",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401915902",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/james-madison-dukes-vs-winthrop-eagles-401915902",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401915903",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:arkansas-razorbacks",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-arkansas-razorbacks-401915903",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401921080",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/george-mason-patriots-vs-longwood-lancers-401921080",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:longwood-lancers"
+      ]
+    },
+    {
+      "gameId": "401921391",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:grand-canyon-lopes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/grand-canyon-lopes-vs-high-point-panthers-401921391",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401918720",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:app-state-mountaineers",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-app-state-mountaineers-401918720",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:unc-asheville-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913888",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-unc-asheville-bulldogs-401913888",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:unc-asheville-bulldogs"
       ]
     },
     {
@@ -171,6 +553,54 @@
       ]
     },
     {
+      "gameId": "401913878",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-wichita-state-shockers-401913878",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
+      ]
+    },
+    {
+      "gameId": "401919494",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:army-black-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/army-black-knights-vs-high-point-panthers-401919494",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401909675",
+      "gender": "women",
+      "date": "2026-11-30",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayProgramId": "ncaa:2026-27:women:hampton-lady-pirates",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/hampton-lady-pirates-vs-winthrop-eagles-401909675",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401911497",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:western-carolina-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-western-carolina-catamounts-401911497",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
       "gameId": "401911511",
       "gender": "women",
       "date": "2026-12-02",
@@ -180,6 +610,66 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913890",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-south-carolina-upstate-spartans-401913890",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:south-carolina-upstate-spartans"
+      ]
+    },
+    {
+      "gameId": "401918514",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/presbyterian-blue-hose-vs-eastern-kentucky-colonels-401918514",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:presbyterian-blue-hose"
+      ]
+    },
+    {
+      "gameId": "401920340",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:furman-paladins",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-furman-paladins-401920340",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401909676",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayProgramId": "ncaa:2026-27:women:chicago-state-cougars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/chicago-state-cougars-vs-winthrop-eagles-401909676",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401909677",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "awayProgramId": "ncaa:2026-27:women:wofford-terriers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/wofford-terriers-vs-winthrop-eagles-401909677",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
       ]
     },
     {
@@ -195,6 +685,66 @@
       ]
     },
     {
+      "gameId": "401920341",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:north-carolina-central-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-carolina-central-eagles-vs-high-point-panthers-401920341",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401911498",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:clemson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-clemson-tigers-401911498",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401918691",
+      "gender": "women",
+      "date": "2026-12-07",
+      "homeProgramId": "ncaa:2026-27:women:georgia-southern-eagles",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-georgia-southern-eagles-401918691",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
+      ]
+    },
+    {
+      "gameId": "401906099",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:north-carolina-tar-heels",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-north-carolina-tar-heels-401906099",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401913828",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-east-carolina-pirates-401913828",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:unc-asheville-bulldogs"
+      ]
+    },
+    {
       "gameId": "401911513",
       "gender": "women",
       "date": "2026-12-13",
@@ -204,6 +754,66 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401918681",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:james-madison-dukes",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-james-madison-dukes-401918681",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401913870",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/longwood-lancers-vs-south-florida-bulls-401913870",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:longwood-lancers"
+      ]
+    },
+    {
+      "gameId": "401906113",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:wake-forest-demon-deacons",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-asheville-bulldogs-vs-wake-forest-demon-deacons-401906113",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:unc-asheville-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401909678",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-charlotte-49ers-401909678",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401911499",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:tennessee-tech-golden-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tennessee-tech-golden-eagles-vs-gardner-webb-runnin-bulldogs-401911499",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
       ]
     },
     {
@@ -219,6 +829,66 @@
       ]
     },
     {
+      "gameId": "401920342",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:mercer-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mercer-bears-vs-high-point-panthers-401920342",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401909679",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:mercer-bears",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-mercer-bears-401909679",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
+      "gameId": "401911500",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:wofford-terriers",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-wofford-terriers-401911500",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401906900",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:florida-gators",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-southern-buccaneers-vs-florida-gators-401906900",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:charleston-southern-buccaneers"
+      ]
+    },
+    {
+      "gameId": "401909680",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/winthrop-eagles-vs-east-carolina-pirates-401909680",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:winthrop-eagles"
+      ]
+    },
+    {
       "gameId": "401911516",
       "gender": "women",
       "date": "2026-12-21",
@@ -228,6 +898,54 @@
       "evidenceKind": "SECONDARY_DIRECTORY",
       "listedByTeamIds": [
         "ncaa:2026-27:women:radford-highlanders"
+      ]
+    },
+    {
+      "gameId": "401918591",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:bethune-cookman-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/longwood-lancers-vs-bethune-cookman-wildcats-401918591",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:longwood-lancers"
+      ]
+    },
+    {
+      "gameId": "401911501",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:unc-wilmington-seahawks",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-unc-wilmington-seahawks-401911501",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401919653",
+      "gender": "women",
+      "date": "2026-12-23",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "awayProgramId": "ncaa:2026-27:women:norfolk-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/norfolk-state-spartans-vs-high-point-panthers-401919653",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:high-point-panthers"
+      ]
+    },
+    {
+      "gameId": "401911502",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/gardner-webb-runnin-bulldogs-vs-south-carolina-gamecocks-401911502",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:gardner-webb-runnin-bulldogs"
       ]
     }
   ]
