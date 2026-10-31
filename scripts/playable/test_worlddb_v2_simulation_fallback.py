@@ -45,6 +45,32 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_nba_matrix_preserves_documented_conferences_and_seed_graph(self):
+        row = {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
+               'competition': 'NBA'}
+        source = copy.deepcopy(row)
+        doc = MODULE.nba_matrix_sim_document(row, 30)
+        self.assertEqual(row, source)
+        self.assertEqual(doc['competition_id'], row['native_format_id'])
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        variant = doc['variants'][0]
+        self.assertFalse(variant['is_real_variant'])
+        regular = variant['nodes'][0]
+        self.assertEqual(regular['team_count'], 30)
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 82)
+        self.assertEqual(regular['opponent_scope']['payload']['policy'], 'BDM_PINNED_NBA_CONFERENCES')
+        self.assertEqual(len([node for node in variant['nodes'] if node['role'] == 'PLAY_IN']), 6)
+        self.assertEqual(len([node for node in variant['nodes'] if node.get('contest', {}).get('best_of') == 7]), 4)
+        self.assertEqual(len([edge for edge in variant['edges'] if edge.get('payload', {}).get('playoff_seed')]), 4)
+
+    def test_nba_matrix_rejects_wrong_size_or_source_identity(self):
+        self.assertIsNone(MODULE.nba_matrix_sim_document(
+            {'source_id': 'pbm:DYN_championnat:45', 'native_format_id': 'competition:NAM:nba'}, 30))
+        with self.assertRaisesRegex(ValueError, '30 original clubs'):
+            MODULE.nba_matrix_sim_document(
+                {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba'}, 29)
+
+
     def test_nbl_matrix_preserves_source_clubs_and_six_team_path(self):
         row = {'source_id': 'pbm:DYN_championnat:78', 'native_format_id': 'competition:AUS:nbl',
                'competition': 'National Basketball League'}
