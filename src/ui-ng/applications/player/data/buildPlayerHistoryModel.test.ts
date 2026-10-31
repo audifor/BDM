@@ -137,11 +137,12 @@ describe('buildPlayerHistoryModel', () => {
     const base = createNewGame()
     const simulation = prepareUserMatch(base)
     const world = completeMatch(base, simulation)
-    const playerId = simulation.squads.home[0]!
-    const model = buildPlayerHistoryModel(world, playerId)!
     const line = world.matchStatLogsByGameId[simulation.gameId]!.playerLines.find(
-      (entry) => entry.playerId === playerId,
-    )!
+      (entry) => simulation.squads.home.includes(entry.playerId) && entry.stats.points > 0,
+    )
+    expect(line).toBeDefined()
+    const playerId = line!.playerId
+    const model = buildPlayerHistoryModel(world, playerId)!
 
     // The debut of the timeline and the career-high milestone both open a real box score.
     const debut = findHistoryInspectorDetail(world, playerId, model, 'timeline:debut')
@@ -149,7 +150,7 @@ describe('buildPlayerHistoryModel', () => {
     if (debut?.kind === 'milestone') {
       expect(debut.title).toBe('Debut')
       expect(debut.stats.map((stat) => stat.label)).toEqual(['PTS', 'REB', 'AST', 'STL', 'VAL'])
-      expect(debut.stats.find((stat) => stat.label === 'PTS')?.value).toBe(String(line.stats.points))
+      expect(debut.stats.find((stat) => stat.label === 'PTS')?.value).toBe(String(line!.stats.points))
       expect(debut.metadata.map((row) => row.label)).toEqual([
         'Competition',
         'Date',
@@ -171,7 +172,7 @@ describe('buildPlayerHistoryModel', () => {
     if (detail?.kind === 'milestone') {
       expect(detail.title).toBe('Career High')
       expect(detail.stats.find((stat) => stat.label === 'PTS')?.value).toBe(
-        String(line.stats.points),
+        String(line!.stats.points),
       )
     }
 
