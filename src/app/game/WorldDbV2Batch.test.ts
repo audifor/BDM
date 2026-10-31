@@ -40,8 +40,13 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
   const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
   if (simulationMode) {
     expect(candidateConfigs.size).toBe(102)
-    expect(simulationFormats.size).toBe(97)
-    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(97)
+    expect(simulationFormats.size).toBe(96)
+    expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(96)
+    const reused = candidateRows.filter(config => config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT')
+    expect(reused).toHaveLength(1)
+    expect(reused[0].sourceCompetitionId).toBe('pbm:DYN_championnat:44')
+    expect(reused[0].nativeCompetitionId).toBe('competition:NAM:nba')
+    expect(trusted.has(reused[0].editionId)).toBe(true)
     const college = candidateRows.filter(config => config.formatProvenance === 'DOCUMENTED_NCAA_REFERENCE_UNRECONCILED')
     expect(college).toHaveLength(1)
     expect(college[0].sourceCompetitionId).toBe('pbm:DYN_championnat:71')
@@ -56,7 +61,8 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
     const report: Record<string, any> = {
       ...row, config, native_projection: 'NOT_RUN', minimum_flow: 'NOT_RUN', status: 'BLOCKED',
       ...(simulationMode ? { format_mode: config?.formatProvenance === 'GENERATED_SIMULATION'
-        ? 'GENERATED_SIMULATION_CANDIDATE' : 'VERIFIED_EXISTING' } : {}),
+        ? 'GENERATED_SIMULATION_CANDIDATE' : config?.formatProvenance === 'REUSED_DOCUMENTED_FORMAT'
+          ? 'REUSED_DOCUMENTED_FORMAT_CANDIDATE' : 'VERIFIED_EXISTING' } : {}),
     }
     try {
       if (row.source_build !== 'PASS') throw Error('Runtime source build failed: ' + row.source_error)
@@ -73,6 +79,9 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
       }
       const document = simulationFormats.get(config.editionId) ?? trusted.get(config.editionId)
         ?? (row.formatPath && !simulationMode ? parseWorldCompetitionFormatDocument(JSON.parse(readFileSync(row.formatPath, 'utf8'))) : undefined)
+      if (simulationMode && config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT' && !trusted.has(config.editionId)) {
+        throw Error('Referenced documented format is not available in the runtime bundle: ' + row.source_id)
+      }
       if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION' && !simulationFormats.has(config.editionId)) {
         throw Error('Generated simulation edition has no matching explicit document: ' + row.source_id)
       }
