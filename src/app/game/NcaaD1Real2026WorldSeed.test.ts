@@ -7,21 +7,64 @@ import { createNcaaD1Real2026Universe } from './NcaaD1Real2026Universe'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 import { simulateAndApplyGame } from './matchResolution'
+import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 
 it.skipIf(process.env.BDM_NCAA_GENERATED_ACCEPTANCE !== '1')(
-  'creates a full women world with a generated test schedule and exposes the eligibility blocker',
+  'plays and saves a real match in each full NCAA world with generated test schedules',
   () => {
-    const snapshot = buildNcaaD1Real2026ConferenceSnapshot('women')
-    // Minimal test policy, deliberately not presented as an official competition format.
-    const generatedSchedule = { seed: 202627, nonConferenceRounds: 2, conferenceGamesPerTeam: Object.fromEntries(snapshot.conferences.map(c => [c.id, 2])) }
-    const created = createNcaaD1Real2026WorldSeed({ gender: 'women', seed: 202627, managedProgramId: String(snapshot.teams[0]!.id), generatedSchedule })
-    expect(created.fixtureCoverage).toBe('GENERATED_FROM_EXPLICIT_CONFERENCE_RULES')
-    expect(Object.keys(created.sourceEvidenceByGameId)).toHaveLength(0)
-    expect(Object.keys(created.world.teams)).toHaveLength(363)
-    const game = Object.values(created.world.games)[0]!
-    expect(() => simulateAndApplyGame(created.world, game, 123)).toThrow(/0 available players/)
-    const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(created.world, '2026-10-31T09:00:00Z'))))
-    expect(Object.keys(reopened.games)).toHaveLength(Object.keys(created.world.games).length)
+    for (const gender of ['men', 'women'] as const) {
+      const snapshot = buildNcaaD1Real2026ConferenceSnapshot(gender)
+      // Minimal test policy, deliberately not presented as an official competition format.
+      const generatedSchedule = { seed: 202627, nonConferenceRounds: 2, conferenceGamesPerTeam: Object.fromEntries(snapshot.conferences.map(c => [c.id, 2])) }
+      const started = performance.now()
+      const created = createNcaaD1Real2026WorldSeed({ gender, seed: 202627, managedProgramId: String(snapshot.teams[0]!.id), generatedSchedule })
+      const createdAt = performance.now()
+      expect(created.fixtureCoverage).toBe('GENERATED_FROM_EXPLICIT_CONFERENCE_RULES')
+      expect(Object.keys(created.sourceEvidenceByGameId)).toHaveLength(0)
+      expect(Object.keys(created.world.teams)).toHaveLength(gender === 'men' ? 365 : 363)
+      expect(Object.keys(created.world.players)).toHaveLength(snapshot.teams.length * 12)
+      validateGameWorld(created.world)
+      const validatedAt = performance.now()
+      const game = Object.values(created.world.games)[0]!
+      expect(Object.values(created.world.playerEnrollmentsById).filter(e => e.status === 'active')).toHaveLength(snapshot.teams.length * 12)
+      expect(Object.keys(created.world.academicProfilesById)).toHaveLength(snapshot.teams.length * 12)
+      for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+        expect(getAvailablePlayersForCompetition(created.world, teamId, game.competitionId, game.seasonId, game.date)).toHaveLength(12)
+        expect(created.world.teams[teamId]!.rosterPlayerIds.every(id => created.world.players[id]!.gender === (gender === 'men' ? 'male' : 'female'))).toBe(true)
+      }
+      const played = simulateAndApplyGame(created.world, game, 123)
+      const playedAt = performance.now()
+      expect(played.games[game.id]?.status).toBe('completed')
+      expect(played.matchStatLogsByGameId[game.id]).toBeDefined()
+      const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(played, '2026-10-31T09:00:00Z'))))
+      expect(reopened.games[game.id]?.status).toBe('completed')
+      expect(Object.keys(reopened.games)).toHaveLength(Object.keys(played.games).length)
+      expect(reopened.seasons[game.seasonId]?.ncaaSchedulePolicy).toEqual(generatedSchedule)
+      process.stdout.write(`NCAA ${gender} ms: create=${Math.round(createdAt-started)} validate=${Math.round(validatedAt-createdAt)} match=${Math.round(playedAt-validatedAt)} save+load=${Math.round(performance.now()-playedAt)}\n`)
+    }
+  },
+  240_000,
+)
+
+it.skipIf(process.env.BDM_NCAA_GENERATED_ACCEPTANCE !== '1')(
+  'plays both categories in a shared NCAA world without crossing their teams',
+  () => {
+    const men = buildNcaaD1Real2026ConferenceSnapshot('men')
+    const women = buildNcaaD1Real2026ConferenceSnapshot('women')
+    const policy = (snapshot: typeof men) => ({ seed: 202627, nonConferenceRounds: 2, conferenceGamesPerTeam: Object.fromEntries(snapshot.conferences.map(c => [c.id, 2])) })
+    const created = createNcaaD1Real2026Universe({ seed: 202627, managedGender: 'women', managedProgramId: String(women.teams[0]!.id), generatedSchedules: { men: policy(men), women: policy(women) } })
+    let world = created.world
+    expect(Object.keys(world.teams)).toHaveLength(728)
+    for (const gender of ['male', 'female'] as const) {
+      const game = Object.values(world.games).find(g => world.teams[g.homeTeamId]!.gender === gender)!
+      expect(world.teams[game.awayTeamId]!.gender).toBe(gender)
+      expect(getAvailablePlayersForCompetition(world, game.homeTeamId, game.competitionId, game.seasonId, game.date)).toHaveLength(12)
+      world = simulateAndApplyGame(world, game, 123)
+      expect(world.games[game.id]?.status).toBe('completed')
+      expect(world.matchStatLogsByGameId[game.id]).toBeDefined()
+    }
+    const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, '2026-10-31T09:00:00Z'))))
+    expect(Object.values(reopened.games).filter(g => g.status === 'completed')).toHaveLength(2)
   },
   240_000,
 )
@@ -45,7 +88,7 @@ it.skipIf(process.env.BDM_NCAA_REAL_NATIVE_ACCEPTANCE !== '1')(
       const world = created.world
       validateGameWorld(world)
       expect(Object.values(world.teams)).toHaveLength(gender === 'men' ? 365 : 363)
-      expect(Object.values(world.players)).toHaveLength((gender === 'men' ? 365 : 363) * 7)
+      expect(Object.values(world.players)).toHaveLength((gender === 'men' ? 365 : 363) * 12)
       expect(Object.values(world.coaches)).toHaveLength(gender === 'men' ? 365 : 363)
       expect(world.conferenceMemberships).toHaveLength(gender === 'men' ? 365 : 363)
       expect(Object.values(world.conferencesById)).toHaveLength(32)
@@ -93,7 +136,7 @@ it.skipIf(process.env.BDM_NCAA_REAL_NATIVE_ACCEPTANCE !== '1')(
     const world = created.world
     validateGameWorld(world)
     expect(Object.values(world.teams)).toHaveLength(728)
-    expect(Object.values(world.players)).toHaveLength(728 * 7)
+    expect(Object.values(world.players)).toHaveLength(728 * 12)
     expect(Object.values(world.coaches)).toHaveLength(728)
     expect(Object.values(world.conferencesById)).toHaveLength(64)
     expect(world.conferenceMemberships).toHaveLength(728)

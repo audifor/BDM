@@ -15,6 +15,8 @@ import type { StaffPersonId } from '@/domain/ids'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaConfiguredSchedule, type NcaaGeneratedSchedulePolicy } from '@/engine/competition/schedule'
+import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaAcademics } from '@/engine/academic'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { generateCanonicalRatings, generateCanonicalDevelopmentProfile } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
@@ -24,7 +26,7 @@ import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { buildNcaaD1Real2026ConferenceSnapshot, type NcaaD1RealGender } from './NcaaD1Real2026Conferences'
 import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource, type NcaaD1Real2026FixtureProjection } from './NcaaD1Real2026Fixtures'
 
-const POSITIONS = ['PG', 'SG', 'SF', 'SF', 'PF', 'C', 'C'] as const
+const POSITIONS = ['PG', 'PG', 'SG', 'SG', 'SF', 'SF', 'SF', 'PF', 'PF', 'PF', 'C', 'C'] as const
 const USA = countryIdFromString('country:USA')
 const START = parseGameDate('2026-10-01')
 const END = parseGameDate('2027-06-30')
@@ -51,7 +53,7 @@ export interface NcaaD1Real2026NativeSeed {
 
 /** Real 2026-27 NCAA Division I school identities with BDM-generated people.
  *
- * Build a complete 7-player baseline roster for every actual program and a
+ * Build a 12-player roster for every actual program and a
  * generated head coach for each team using the existing canonical player/staff
  * profile and recruiting systems. All 365/363 teams are present. Games are
  * either explicitly sourced fixtures or generated from supplied rules.
@@ -133,6 +135,7 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
     startDate: START, endDate: END,
     participantTeamIds: teams.map(team => team.id),
     conferenceMembershipSnapshot: snapshot.memberships,
+    ...(options.generatedSchedule === undefined ? {} : { ncaaSchedulePolicy: options.generatedSchedule }),
   })
   const evidence = projectNcaaD1Real2026Fixtures(options.gender, options.sourcedFixtures ?? [])
   let world = createGameWorld({
@@ -148,6 +151,7 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
     seasons: [season], games: evidence.games,
     staffPeople, teamStaffAssignments, staffEmploymentByStaffId,
   })
+  world = ensureNcaaAcademics(ensureNcaaEligibility(world))
   if (options.generatedSchedule !== undefined) {
     world = updateGameWorld(world, { games: generateNcaaConfiguredSchedule(world, season.id, options.generatedSchedule) })
   }

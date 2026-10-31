@@ -6,7 +6,7 @@ import type { CompetitionCalendarPolicy, Season } from '@/domain/season'
 import { createCompetition } from '@/domain/competition'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { generateNcaaConfiguredSchedule, generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { materializeTradeWindows } from '@/engine/competition'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
@@ -123,6 +123,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
       conferenceMembershipSnapshot: (primary.conferenceMembershipSnapshot ?? world.conferenceMemberships.filter((membership) => membership.seasonId === primary.id))
         .map((membership) => ({ ...membership, seasonId: nextIds[0]! })),
     }),
+    ...(primary.ncaaSchedulePolicy === undefined ? {} : { ncaaSchedulePolicy: primary.ncaaSchedulePolicy }),
     ...(primary.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: rollForwardFormat(primary.worldCompetitionFormat, editionIds, nextSeasonLabel(primary)) }),
     ...(nextPrimaryCalendar === undefined ? {} : { calendarPolicy: nextPrimaryCalendar }),
   })
@@ -156,7 +157,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const regularSeasonNodeKey = nextPrimary.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
     ?? nextPrimary.worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
-    ? generateNcaaLikeSchedule(staged, nextPrimary.id)
+    ? nextPrimary.ncaaSchedulePolicy === undefined ? generateNcaaLikeSchedule(staged, nextPrimary.id) : generateNcaaConfiguredSchedule(staged, nextPrimary.id, nextPrimary.ncaaSchedulePolicy)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
   // Rollover creates a future season without moving the world clock. Contract expiry is a
   // daily lifecycle event, so evaluating it at the successor start date would release players

@@ -5,12 +5,8 @@ import { gameIdFromString, type SeasonId, type TeamId } from '@/domain/ids'
 import { getCompetition, getSeason, type GameWorld } from '@/domain/world'
 import { SeededRandomSource, hashStringToSeed } from '@/engine/random'
 
-export interface NcaaGeneratedSchedulePolicy {
-  readonly seed: number
-  /** Required for every conference; values must come from the edition's rules. */
-  readonly conferenceGamesPerTeam: Readonly<Record<string, number>>
-  readonly nonConferenceRounds: number
-}
+export type { NcaaSchedulePolicy as NcaaGeneratedSchedulePolicy } from '@/domain/season/Season'
+import type { NcaaSchedulePolicy as NcaaGeneratedSchedulePolicy } from '@/domain/season/Season'
 
 /** Generates dates and pairings using explicitly supplied conference game counts.
  * A generated pairing is not an official historical fixture or a claim that

@@ -4,6 +4,8 @@ import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferenc
 import { createNcaaD1Real2026WorldSeed } from './NcaaD1Real2026WorldSeed'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 import type { NcaaGeneratedSchedulePolicy } from '@/engine/competition/schedule'
+import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaAcademics } from '@/engine/academic'
 
 export interface NcaaD1Real2026UniverseOptions {
   readonly seed: number
@@ -56,7 +58,7 @@ export function createNcaaD1Real2026Universe(options: NcaaD1Real2026UniverseOpti
   const all = <T>(read: (world: GameWorld) => readonly T[]): T[] => worlds.flatMap(read)
   const evidence = Object.assign({}, male!.sourceEvidenceByGameId, female!.sourceEvidenceByGameId)
   const countryById = new Map(all(world => Object.values(world.countries)).map(country => [country.id, country]))
-  const world = createGameWorld({
+  const world = ensureNcaaAcademics(ensureNcaaEligibility(createGameWorld({
     currentDate: male!.world.currentDate,
     currentSeasonId: options.managedGender === 'men' ? male!.world.currentSeasonId : female!.world.currentSeasonId,
     userCoachId: options.managedGender === 'men' ? male!.world.userCoachId : female!.world.userCoachId,
@@ -73,7 +75,7 @@ export function createNcaaD1Real2026Universe(options: NcaaD1Real2026UniverseOpti
     staffPeople: all(w => Object.values(w.staffPeopleById)),
     teamStaffAssignments: all(w => Object.values(w.teamStaffAssignmentsById)),
     staffEmploymentByStaffId: Object.assign({}, male!.world.staffEmploymentByStaffId, female!.world.staffEmploymentByStaffId),
-  })
+  })))
   if (Object.keys(world.teams).length !== 728 || Object.keys(world.conferencesById).length !== 64 ||
       world.conferenceMemberships.length !== 728 || Object.keys(world.seasons).length !== 2) {
     throw new Error('Real 2026-27 NCAA universe lost male/female teams, conferences or seasons')
