@@ -22,6 +22,7 @@ if not INDEX.is_file() and "BDM_WORLDDB_V2_BATCH_INDEX" not in os.environ:
 PUBLISHED = ROOT / "src/data/worlddb-v2/competitions.json"
 OUTPUT = ROOT / ".worlddb-v2/generated-simulation-candidates"
 ADDITIONAL_FORMATS = ROOT / "src/data/worlddb-v2/additional-formats.json"
+PGM_FORMATS_DIR = Path(os.environ.get("BDM_PGM_SOURCE", "C:/BDM_DB/PBM_WORLD_EXPERIMENT/pgm-source")) / "reference-packs/competition-formats/seasons"
 SOURCE_URL = "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py"
 MASTER_SHA = "f1624039945c253a6bee2d5c793f58fb753443c5f03b549eba9acd4826dec58f"
 
@@ -175,17 +176,26 @@ def reusable_documented_format(row, participants, documents):
 
 
 def load_format_documents(paths):
-    """Accept existing BDM runtime bundles, lists, or individual PGM documents."""
+    """Read known BDM/PGM formats, including the existing PGM seasons directory.
+
+    Read-only input. A collection of edition documents may contain different
+    statuses; only one complete format with matching participants is reused.
+    """
     documents = []
-    for path in paths:
-        payload = read(path)
-        items = (payload if isinstance(payload, list) else
-                 payload.get("competition_formats", [payload]) if isinstance(payload, dict) else None)
-        if not isinstance(items, list) or any(not isinstance(doc, dict) or
-               not doc.get("competition_id") or not doc.get("competition_season_id")
-               for doc in items):
-            raise ValueError("Unsupported documented format source: " + str(path))
-        documents.extend(items)
+    for root in paths:
+        root = Path(root)
+        sources = sorted(root.rglob("*.json")) if root.is_dir() else [root]
+        if not sources:
+            raise ValueError("Format directory has no JSON documents: " + str(root))
+        for path in sources:
+            payload = read(path)
+            items = (payload if isinstance(payload, list) else
+                     payload.get("competition_formats", [payload]) if isinstance(payload, dict) else None)
+            if not isinstance(items, list) or any(not isinstance(doc, dict) or
+                   not doc.get("competition_id") or not doc.get("competition_season_id")
+                   for doc in items):
+                raise ValueError("Unsupported documented format source: " + str(path))
+            documents.extend(items)
     return documents
 
 
@@ -329,9 +339,16 @@ def main():
     parser.add_argument("--published", type=Path, default=PUBLISHED)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--format-source", action="append", type=Path, default=[],
-                        help="Additional read-only PGM/B04 format JSON sources; original documents are never modified")
+                        help="Additional read-only PGM/B04 format JSON file or directory; repeatable")
+    parser.add_argument("--pgm-formats-dir", type=Path, default=PGM_FORMATS_DIR,
+                        help="Existing PGM seasons reference-pack directory, imported read-only if present")
     args = parser.parse_args()
-    documented = load_format_documents([NCAA_BUNDLE, ADDITIONAL_FORMATS, *args.format_source])
+    # Reuse the PGM reference packs already on the developer's disk. Missing
+    # optional private sources never prevent the checked-in bundle from working.
+    sources = [NCAA_BUNDLE, ADDITIONAL_FORMATS]
+    if args.pgm_formats_dir.is_dir():
+        sources.append(args.pgm_formats_dir)
+    documented = load_format_documents([*sources, *args.format_source])
     package = build_package(read(args.matrix), read(args.batch), read(args.published),
                             reusable_formats=documented)
     args.output.mkdir(parents=True, exist_ok=True)
