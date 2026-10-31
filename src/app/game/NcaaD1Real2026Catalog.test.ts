@@ -161,11 +161,11 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
   })
 
   it('projects separately sourced 2026-27 real ASUN men and women fixtures into existing Game and conference classification', () => {
-    expect(sourceFixtureSample.coverage).toBe('ASUN_WOMEN_CONFERENCE_REGULAR_SEASON_FULLY_SOURCED_OTHER_NCAA_GAPS_REMAIN')
+    expect(sourceFixtureSample.coverage).toBe('ASUN_BOTH_GENDERS_CONFERENCE_REGULAR_SEASONS_FULLY_SOURCED_OTHER_NCAA_GAPS_REMAIN')
     const sources = sourceFixtureSample.fixtures as NcaaD1Real2026FixtureSource[]
     const men = projectNcaaD1Real2026Fixtures('men', sources.filter(source => source.gender === 'men'))
     const women = projectNcaaD1Real2026Fixtures('women', sources.filter(source => source.gender === 'women'))
-    expect(men.games).toHaveLength(1)
+    expect(men.games).toHaveLength(56)
     expect(women.games).toHaveLength(56)
     expect(men.games[0]?.classification).toBe('conference')
     expect(women.games[0]?.classification).toBe('conference')
@@ -175,16 +175,32 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(women.games[0]?.status).toBe('scheduled')
     expect(men.games[0]?.competitionId).not.toBe(women.games[0]?.competitionId)
     expect(men.games[0]?.seasonId).not.toBe(women.games[0]?.seasonId)
-    expect(Object.keys(men.evidenceByGameId)).toHaveLength(1)
+    expect(Object.keys(men.evidenceByGameId)).toHaveLength(56)
     expect(Object.keys(women.evidenceByGameId)).toHaveLength(56)
     expect(sourceFixtureSample.officialScope.womenAsunConferenceGamesExpected).toBe(56)
     expect(sourceFixtureSample.officialScope.womenAsunConferenceGamesSourced).toBe(56)
     expect(sourceFixtureSample.officialScope.womenAsunClubSchedulesCrossVerified).toBe(8)
-    expect(sourceFixtureSample.sourceCatalog).toHaveLength(8)
+    expect(sourceFixtureSample.sourceCatalog).toHaveLength(16)
+    expect(sourceFixtureSample.officialScope.menAsunConferenceGamesExpected).toBe(56)
+    expect(sourceFixtureSample.officialScope.menAsunConferenceGamesSourced).toBe(56)
+    expect(sourceFixtureSample.officialScope.menAsunClubSchedulesCrossVerified).toBe(8)
     expect(new Set(women.games.map(g => g.id)).size).toBe(56)
     expect(Object.values(women.evidenceByGameId).every(e => e.corroboratingSourceUrl?.startsWith('https://asunsports.org/schedule.aspx?schedule='))).toBe(true)
     expect(Object.values(women.evidenceByGameId).every(e => e.corroboratingSourceUrl !== e.url)).toBe(true)
     expect(women.games.every(g => g.classification === 'conference')).toBe(true)
+    expect(men.games.every(g => g.classification === 'conference')).toBe(true)
+    expect(Object.values(men.evidenceByGameId).every(e => e.corroboratingSourceUrl && e.corroboratingSourceUrl !== e.url)).toBe(true)
+    for (const team of membership.genders.men.teams.filter(t => t.conferenceId === 'atlantic-sun-conference')) {
+      expect(men.games.filter(game => game.homeTeamId === team.id)).toHaveLength(7)
+      expect(men.games.filter(game => game.awayTeamId === team.id)).toHaveLength(7)
+    }
+    const menPairs = new Map<string, number>()
+    for (const game of men.games) {
+      const key = [game.homeTeamId, game.awayTeamId].sort().join('|')
+      menPairs.set(key, (menPairs.get(key) ?? 0) + 1)
+    }
+    expect(menPairs.size).toBe(28)
+    expect([...menPairs.values()].every(n => n === 2)).toBe(true)
     const northFlorida = 'ncaa:2026-27:women:north-florida-ospreys'
     expect(women.games.filter(g => g.homeTeamId === northFlorida || g.awayTeamId === northFlorida)).toHaveLength(14)
     expect(women.games.filter(g => g.homeTeamId === northFlorida)).toHaveLength(7)
