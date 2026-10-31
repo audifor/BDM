@@ -25,8 +25,8 @@ from bs4 import BeautifulSoup
 
 MONTHS = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
           "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
-DATE_RE = re.compile(r"^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\\s+(" + "|".join(MONTHS) + r")\\s+(\\d{1,2})$")
-GAME_ID_RE = re.compile(r"-(\\d{8,12})$")
+DATE_RE = re.compile(r"^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+(" + "|".join(MONTHS) + r")\s+(\d{1,2})$")
+GAME_ID_RE = re.compile(r"-(\d{8,12})$")
 USER_AGENT = "BDM-WorldDB-Evidence-Harvester/1.0 (2026-27 NCAA women's schedule reconciliation; no robot bypass)"
 
 def read_json(path: Path):
@@ -201,7 +201,7 @@ def main():
     args = parser.parse_args()
     output = build(read_json(args.catalog))
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(output, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    args.out.write_text(json.dumps(output, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(output["summary"], indent=2))
     print("NCAAW schedule is NOT officially certified; 363 programs and 32 conferences were checked.")
 
