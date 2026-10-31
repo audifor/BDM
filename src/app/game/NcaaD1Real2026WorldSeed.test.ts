@@ -5,6 +5,26 @@ import source from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.j
 import { createNcaaD1Real2026WorldSeed } from './NcaaD1Real2026WorldSeed'
 import { createNcaaD1Real2026Universe } from './NcaaD1Real2026Universe'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
+import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
+import { simulateAndApplyGame } from './matchResolution'
+
+it.skipIf(process.env.BDM_NCAA_GENERATED_ACCEPTANCE !== '1')(
+  'creates a full women world with a generated test schedule and exposes the eligibility blocker',
+  () => {
+    const snapshot = buildNcaaD1Real2026ConferenceSnapshot('women')
+    // Minimal test policy, deliberately not presented as an official competition format.
+    const generatedSchedule = { seed: 202627, nonConferenceRounds: 2, conferenceGamesPerTeam: Object.fromEntries(snapshot.conferences.map(c => [c.id, 2])) }
+    const created = createNcaaD1Real2026WorldSeed({ gender: 'women', seed: 202627, managedProgramId: String(snapshot.teams[0]!.id), generatedSchedule })
+    expect(created.fixtureCoverage).toBe('GENERATED_FROM_EXPLICIT_CONFERENCE_RULES')
+    expect(Object.keys(created.sourceEvidenceByGameId)).toHaveLength(0)
+    expect(Object.keys(created.world.teams)).toHaveLength(363)
+    const game = Object.values(created.world.games)[0]!
+    expect(() => simulateAndApplyGame(created.world, game, 123)).toThrow(/0 available players/)
+    const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(created.world, '2026-10-31T09:00:00Z'))))
+    expect(Object.keys(reopened.games)).toHaveLength(Object.keys(created.world.games).length)
+  },
+  240_000,
+)
 
 /** Explicit full-scale acceptance on the developer's runner.
  * npm run typecheck always checks this code; normal CI does NOT certify the

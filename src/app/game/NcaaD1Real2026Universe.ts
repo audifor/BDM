@@ -3,13 +3,15 @@ import type { NcaaD1RealGender } from './NcaaD1Real2026Conferences'
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 import { createNcaaD1Real2026WorldSeed } from './NcaaD1Real2026WorldSeed'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
+import type { NcaaGeneratedSchedulePolicy } from '@/engine/competition/schedule'
 
 export interface NcaaD1Real2026UniverseOptions {
   readonly seed: number
   readonly managedGender: NcaaD1RealGender
   readonly managedProgramId: string
   /** Only individually evidenced actual 2026-27 matches, for either category. */
-  readonly sourcedFixtures: readonly NcaaD1Real2026FixtureSource[]
+  readonly sourcedFixtures?: readonly NcaaD1Real2026FixtureSource[]
+  readonly generatedSchedules?: Readonly<Record<NcaaD1RealGender, NcaaGeneratedSchedulePolicy>>
 }
 export interface NcaaD1Real2026UniverseResult {
   readonly world: GameWorld
@@ -29,6 +31,7 @@ export interface NcaaD1Real2026UniverseResult {
  */
 export function createNcaaD1Real2026Universe(options: NcaaD1Real2026UniverseOptions): NcaaD1Real2026UniverseResult {
   if (!Number.isSafeInteger(options.seed)) throw new RangeError('NCAA world requires deterministic integer seed')
+  if (options.generatedSchedules !== undefined && (!options.generatedSchedules.men || !options.generatedSchedules.women)) throw new Error('Both NCAA categories require explicit generated schedules')
   const selected = buildNcaaD1Real2026ConferenceSnapshot(options.managedGender)
   if (!selected.teams.some(team => String(team.id) === options.managedProgramId)) {
     throw new Error('NCAA manager must choose an eligible 2026-27 program in their category')
@@ -43,7 +46,9 @@ export function createNcaaD1Real2026Universe(options: NcaaD1Real2026UniverseOpti
       gender,
       seed: options.seed,
       managedProgramId: team,
-      sourcedFixtures: options.sourcedFixtures.filter(fixture => fixture.gender === gender),
+      ...(options.generatedSchedules === undefined
+        ? { sourcedFixtures: (options.sourcedFixtures ?? []).filter(fixture => fixture.gender === gender) }
+        : { generatedSchedule: options.generatedSchedules[gender], sourcedFixtures: (options.sourcedFixtures ?? []).filter(fixture => fixture.gender === gender) }),
     })
   })
   const [male, female] = seeds

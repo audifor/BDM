@@ -13,7 +13,8 @@ import { createStaffPerson, type StaffPerson, type TeamStaffAssignment } from '@
 import type { StaffEmployment } from '@/domain/staffCareer'
 import type { StaffPersonId } from '@/domain/ids'
 import { createTeam } from '@/domain/team'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
+import { generateNcaaConfiguredSchedule, type NcaaGeneratedSchedulePolicy } from '@/engine/competition/schedule'
 import { defaultRecruitingRules } from '@/domain/recruiting'
 import { generateCanonicalRatings, generateCanonicalDevelopmentProfile } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
@@ -32,8 +33,9 @@ export interface NcaaD1Real2026WorldSeedOptions {
   readonly gender: NcaaD1RealGender
   readonly seed: number
   readonly managedProgramId: string
-  /** Explicitly sourced partial fixture import, never a synthetic 365-team RR. */
-  readonly sourcedFixtures: readonly NcaaD1Real2026FixtureSource[]
+  /** Existing historical fixtures remain optional and cannot be mixed with a generated schedule. */
+  readonly sourcedFixtures?: readonly NcaaD1Real2026FixtureSource[]
+  readonly generatedSchedule?: NcaaGeneratedSchedulePolicy
 }
 
 export interface NcaaD1Real2026NativeSeed {
@@ -42,7 +44,7 @@ export interface NcaaD1Real2026NativeSeed {
   /** Source provenance is retained outside GameWorld's pure Game DTO; a future
    * persisted edition evidence store must carry it across saves. */
   readonly sourceEvidenceByGameId: NcaaD1Real2026FixtureProjection['evidenceByGameId']
-  readonly fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED'
+  readonly fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED' | 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES'
   readonly membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION'
   readonly sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED'
 }
@@ -51,8 +53,8 @@ export interface NcaaD1Real2026NativeSeed {
  *
  * Build a complete 7-player baseline roster for every actual program and a
  * generated head coach for each team using the existing canonical player/staff
- * profile and recruiting systems. All 365/363 teams are present. The only
- * scheduled Games are explicitly sourced actual fixtures.
+ * profile and recruiting systems. All 365/363 teams are present. Games are
+ * either explicitly sourced fixtures or generated from supplied rules.
  *
  * This does not certify an official schedule, conference championship,
  * 76-team field selection or a complete playable NCAA season. In particular
@@ -60,6 +62,8 @@ export interface NcaaD1Real2026NativeSeed {
  */
 export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOptions): NcaaD1Real2026NativeSeed {
   if (!Number.isSafeInteger(options.seed)) throw new RangeError('NCAA generated profiles require an integer seed')
+  if (options.generatedSchedule !== undefined && (options.sourcedFixtures?.length ?? 0) > 0) throw new Error('NCAA generated and historical schedules cannot be mixed')
+  if (options.generatedSchedule === undefined && options.sourcedFixtures === undefined) throw new Error('NCAA requires explicit generated rules or source fixtures')
   const snapshot = buildNcaaD1Real2026ConferenceSnapshot(options.gender)
   const managed = snapshot.teams.find(team => team.id === options.managedProgramId)
   if (!managed) throw new Error('NCAA manager selection must be a current program in the chosen gender')
@@ -119,8 +123,8 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
     gender: managed.gender, ecosystemId: snapshot.ecosystemId,
     participantTeamIds: teams.map(team => team.id),
     // This old generic data interface requires a leagueRoundRobin field.
-    // It must NEVER be used to generate NCAA fixtures; only official inputs
-    // are scheduled by projectNcaaD1Real2026Fixtures().
+    // It must NEVER be used to infer NCAA fixtures; generation requires an
+    // explicit per-conference policy.
     rules: { ...defaultLeagueCompetitionRules, gameFormat: snapshot.gameFormat },
   })
   const season = createSeason({
@@ -130,8 +134,8 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
     participantTeamIds: teams.map(team => team.id),
     conferenceMembershipSnapshot: snapshot.memberships,
   })
-  const evidence = projectNcaaD1Real2026Fixtures(options.gender, options.sourcedFixtures)
-  const world = createGameWorld({
+  const evidence = projectNcaaD1Real2026Fixtures(options.gender, options.sourcedFixtures ?? [])
+  let world = createGameWorld({
     currentDate: START, currentSeasonId: snapshot.seasonId,
     userCoachId: coachIdFromString('coach:BDM:' + managed.id),
     countries: [country], coaches, players, teams,
@@ -144,10 +148,13 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
     seasons: [season], games: evidence.games,
     staffPeople, teamStaffAssignments, staffEmploymentByStaffId,
   })
+  if (options.generatedSchedule !== undefined) {
+    world = updateGameWorld(world, { games: generateNcaaConfiguredSchedule(world, season.id, options.generatedSchedule) })
+  }
   return {
     world,
     sourceEvidenceByGameId: evidence.evidenceByGameId,
-    fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED',
+    fixtureCoverage: options.generatedSchedule === undefined ? 'PARTIAL_OFFICIALLY_SOURCED' : 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES',
     membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION',
     sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED',
   }
