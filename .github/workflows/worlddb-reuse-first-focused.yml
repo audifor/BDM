@@ -1,0 +1,29 @@
+name: WorldDB reuse-first focused acceptance
+on:
+  push:
+    branches: [feature/worlddb-global-reuse-first-01]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python WorldDB candidate and publisher contracts
+        run: python -m unittest discover -s scripts/playable -p 'test_worlddb_v2_*.py'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Generated and reused native format tests
+        run: npx vitest run src/app/game/WorldDbV2GeneratedSimulation.test.ts --maxWorkers=1
+      - name: Typecheck
+        run: npm run typecheck
