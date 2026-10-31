@@ -173,6 +173,20 @@ export function areRegularSeasonGamesComplete(world: GameWorld, seasonId: keyof 
   const regularNode = variant?.nodes.find((node) => node.key === regularStageKey)
   const teamCount = regularNode?.teamCount ?? season?.participantTeamIds?.length
   const meetingsPerPair = regularNode?.pairing?.meetingsPerPair
+  if (regularNode?.pairing?.type === 'FIXED_SCHEDULE' && regularNode.pairing.payload.bdm_generated_matrix_v1 === true) {
+    const target = regularNode.pairing.payload.games_per_team
+    const participants = season?.participantTeamIds ?? (season ? world.competitions[season.competitionId]!.participantTeamIds : [])
+    if (typeof target !== 'number' || !Number.isInteger(target) || target < 1
+      || games.length !== participants.length * target / 2) return false
+    const counts = new Map(participants.map(id => [id, 0]))
+    for (const game of games) {
+      if (game.status !== 'completed' || game.homeTeamId === game.awayTeamId
+        || !counts.has(game.homeTeamId) || !counts.has(game.awayTeamId)) return false
+      counts.set(game.homeTeamId, counts.get(game.homeTeamId)! + 1)
+      counts.set(game.awayTeamId, counts.get(game.awayTeamId)! + 1)
+    }
+    return [...counts.values()].every(count => count === target)
+  }
   if (regularNode?.opponentScope?.type === 'SAME_GROUP' && season && meetingsPerPair !== undefined) {
     const groups = resolveWorldCompetitionGroups(regularNode, season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds)
     const expected = groups.reduce((total, group) => total + group.length * (group.length - 1) / 2 * meetingsPerPair, 0)
