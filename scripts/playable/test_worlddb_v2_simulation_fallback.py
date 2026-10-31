@@ -55,7 +55,7 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         self.assertEqual(row, original)
         self.assertEqual(doc['competition_id'], row['native_format_id'])
         self.assertEqual(doc['status'], 'COMPLETE')
-        self.assertIn('SIMULATED', doc['notes'].upper())
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
         variant = doc['variants'][0]
         self.assertFalse(variant['is_real_variant'])
         self.assertEqual(variant['nodes'][0]['team_count'], 28)
