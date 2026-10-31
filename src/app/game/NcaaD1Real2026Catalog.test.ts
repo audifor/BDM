@@ -4,6 +4,7 @@ import membership from '@/data/worlddb-v2/ncaa-d1-2026-27-programs.json'
 import officialFormats from '@/data/worlddb-v2/competition-runtime.json'
 import supplementalFormats from '@/data/worlddb-v2/additional-formats.json'
 import publishedCatalog from '@/data/worlddb-v2/competitions.json'
+import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 
 const editions = [
   { gender: 'men', expected: 365, championship: 'edition:USA:ncaa-d1-men-championship:2026-27' },
@@ -40,6 +41,30 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     // A historical PBM 353-club snapshot is not the present-day men or women cohort.
     expect(membership.genders.men.teams).not.toHaveLength(353)
     expect(membership.genders.women.teams).not.toHaveLength(353)
+  })
+
+  it('projects 728 sourced real programs into existing NCAA Conference and season membership domain entities', () => {
+    const men = buildNcaaD1Real2026ConferenceSnapshot('men')
+    const women = buildNcaaD1Real2026ConferenceSnapshot('women')
+    expect(men.conferences).toHaveLength(32)
+    expect(women.conferences).toHaveLength(32)
+    expect(men.memberships).toHaveLength(365)
+    expect(women.memberships).toHaveLength(363)
+    expect(men.teams).toHaveLength(365)
+    expect(women.teams).toHaveLength(363)
+    expect(new Set(men.memberships.map(m => m.teamId)).size).toBe(365)
+    expect(new Set(women.memberships.map(m => m.teamId)).size).toBe(363)
+    expect(men.memberships.every(m => m.seasonId === men.seasonId)).toBe(true)
+    expect(women.memberships.every(m => m.seasonId === women.seasonId)).toBe(true)
+    expect(men.memberships.every(m => men.conferences.some(c => c.id === m.conferenceId))).toBe(true)
+    expect(women.memberships.every(m => women.conferences.some(c => c.id === m.conferenceId))).toBe(true)
+    expect(men.teams.every(t => t.gender === 'male')).toBe(true)
+    expect(women.teams.every(t => t.gender === 'female')).toBe(true)
+    expect(men.teams.every(t => t.id.startsWith('ncaa:2026-27:men:'))).toBe(true)
+    expect(women.teams.every(t => t.id.startsWith('ncaa:2026-27:women:'))).toBe(true)
+    expect(men.seasonId).not.toBe(women.seasonId)
+    expect(men.ecosystemId).not.toBe(women.ecosystemId)
+    expect(men.sourceStatus).toContain('PENDING_INDIVIDUAL_OFFICIAL_VERIFICATION')
   })
 
   it('has distinct official 76-team 2027 championship formats with the required bracket progression', () => {
