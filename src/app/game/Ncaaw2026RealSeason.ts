@@ -112,3 +112,17 @@ export function createNcaaw2026RealWorld(corpus: NcaawSourceCorpus, seed: number
   })
   return { ...result, calendarCoverage: calendar.coverage }
 }
+
+/** Vite compiles this source only after the all-363-page harvest has landed
+ * in the repo. A missing file is a hard block, never a synthetic fallback. */
+export function createNcaaw2026FromCheckedInSources(seed: number, managedProgramId: string):
+  NcaaD1Real2026NativeSeed & { readonly calendarCoverage: Ncaaw2026Coverage } {
+  const files = import.meta.glob('../../data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json', {
+    eager: true, import: 'default',
+  })
+  const loaded = Object.values(files)[0]
+  if (loaded === undefined) {
+    throw new Error('All-363 NCAA women 2026-27 schedule data are not yet harvested')
+  }
+  return createNcaaw2026RealWorld(loaded as NcaawSourceCorpus, seed, managedProgramId)
+}
