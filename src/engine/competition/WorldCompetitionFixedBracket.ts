@@ -62,6 +62,7 @@ export function instantiateWorldCompetitionFixedBracketV1(
   for (const node of topologicalNodes(variant.nodes, variant.edges)) {
     if (node.role === 'REGULAR_SEASON') continue
     if (node.role === 'GROUP_STAGE' && typeof node.pairing?.payload.bdm_generated_group_index === 'number') continue
+    if (node.role === 'SPLIT_STAGE' && ['CROSS_GROUP_CARRYOVER', 'GROUP_ROUND_ROBIN'].includes(String(node.pairing?.payload.bdm_split_policy))) continue
     const pairings = stringArray(node.pairing?.payload, 'pairings')
     const matchups = stringArray(node.pairing?.payload, 'matchups')
     if (pairings.length > 0 && matchups.length > 0) throw new Error(`Fixed bracket node ${node.key} declares both pairings and matchups`)

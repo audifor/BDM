@@ -7,6 +7,7 @@ export function worldDbV2FamilySignature(format: WorldCompetitionFormatDocument)
   const variant = format.variants.find(v => v.isRealVariant) ?? format.variants[0]!
   const capabilities = new Set<string>()
   for (const node of variant.nodes) {
+    if (node.role === 'SPLIT_STAGE') capabilities.add(`stage:${node.pairing?.payload.bdm_split_policy ?? node.pairing?.type}`)
     if (node.role === 'REGULAR_SEASON') capabilities.add(`regular:${node.pairing?.type}:${node.opponentScope?.type ?? 'ALL_STAGE'}`)
     if (node.contest) capabilities.add(`contest:${node.contest.formatType}`)
     if (node.hosting) capabilities.add(`hosting:${node.hosting.ruleType}:${node.hosting.priorityBasis ?? ''}`)
@@ -53,6 +54,7 @@ export function worldDbV2ConnectionBlockers(format: WorldCompetitionFormatDocume
       const plan = instantiateWorldCompetitionFixedBracketV1(format, variant.key, Array.from({ length: participants }, (_, i) => ({ competitionSeasonEntryId: `preflight:${i + 1}`, seed: i + 1 })))
       for (const node of variant.nodes.filter(n => n.role !== 'REGULAR_SEASON')) {
         if (node.role === 'GROUP_STAGE' && typeof node.pairing?.payload.bdm_generated_group_index === 'number') continue
+        if (node.role === 'SPLIT_STAGE' && ['CROSS_GROUP_CARRYOVER', 'GROUP_ROUND_ROBIN'].includes(String(node.pairing?.payload.bdm_split_policy))) continue
         if (!plan.fixtureIdsByNodeKey[node.key]?.length) throw new Error(`${node.key}: phase has no executable fixtures`)
         if (node.contest?.formatType === 'SERIES' && (node.hosting?.ruleType !== 'SERIES_PATTERN' || node.hosting.priorityBasis !== 'HIGHER_SEED')) throw new Error(`${node.key}: explicit series hosting required`)
         if (node.contest?.formatType === 'AGGREGATE' && (node.contest.legCount !== 2 || node.contest.tieResolution?.method !== 'BDM_EXTRA_DECIDER')) throw new Error(`${node.key}: executable aggregate tie policy required`)

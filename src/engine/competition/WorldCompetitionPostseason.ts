@@ -8,6 +8,7 @@ import { calculateStandings } from './standings'
 import { calculateGroupStandings } from './standings/Standings'
 import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
 import { resolveWorldCompetitionAggregate } from './WorldCompetitionAggregate'
+import { calculateSplitStandings, materializeSplitStages, splitStageNodes, splitStagesComplete } from './WorldCompetitionSplitStage'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from './WorldCompetitionCalendar'
 import { evaluateWorldCompetitionSeriesV1, instantiateWorldCompetitionSeriesV1, type WorldCompetitionSeriesPlanV1, type WorldCompetitionSeriesStateV1 } from './WorldCompetitionSeries'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
@@ -51,14 +52,26 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
   if (postseasonKeys.size === 0) return null
   const regularSeasonComplete = areRegularSeasonGamesComplete(world, season.id, regularNode.key)
   if (!regularSeasonComplete) return emptyPostseasonState()
+  const splits = splitStageNodes(world, season.id)
+  if (splits.length && !splitStagesComplete(world, season.id)) return { ...emptyPostseasonState(), regularSeasonComplete: true }
 
   const groups = calculateGroupStandings(world, season.id)
   // Interleave group ranks: every group winner precedes every runner-up.
   // TOP_N therefore gives equal automatic berths when count is a group multiple.
-  const standings = groups.length === 1 ? calculateStandings(world, season.id)
+  const qualifyingSplits = splits.filter(node => variant.edges.some(edge => edge.from === node.key && ['PLAYOFF', 'FINAL'].includes(variant.nodes.find(n => n.key === edge.to)?.role ?? '')))
+  const qualifyingSplit = qualifyingSplits[0]
+  const standings = qualifyingSplit ? calculateSplitStandings(world, season.id, qualifyingSplit) : groups.length === 1 ? calculateStandings(world, season.id)
     : Array.from({ length: Math.max(...groups.map(group => group.length)) }, (_, rank) => groups.flatMap(group => group[rank] ? [group[rank]!] : []))
       .flat().map((row, index) => ({ ...row, position: index + 1 }))
-  const seeds = selectQualifiedEntries(standings, variant.edges.filter((edge) => edge.from === regularNode.key), format.competitionSeasonId)
+  const seeds = qualifyingSplits.length > 1 ? (() => {
+    const tables = qualifyingSplits.map(node => {
+      const rules = variant.edges.filter(edge => edge.from === node.key && edge.selector === 'RANK_RANGE')
+      if (rules.length !== 1 || rules[0]!.rankFrom !== 1 || rules[0]!.rankTo === undefined) throw new Error(`Unsupported split qualification: ${node.key}`)
+      return calculateSplitStandings(world, season.id, node).slice(0, rules[0]!.rankTo)
+    })
+    return Array.from({ length: Math.max(...tables.map(table => table.length)) }, (_, rank) => tables.flatMap(table => table[rank] ? [table[rank]!] : []))
+      .flat().map((row, index) => ({ competitionSeasonEntryId: row.teamId, seed: index + 1 }))
+  })() : selectQualifiedEntries(standings, variant.edges.filter((edge) => edge.from === (qualifyingSplit?.key ?? regularNode.key)), format.competitionSeasonId)
   const bracketPlan = instantiateWorldCompetitionFixedBracketV1(format, variant.key, seeds)
   const outcomes: WorldCompetitionVirtualFixtureOutcomeV1[] = []
   const seriesByFixtureId: Record<string, CompetitionPostseasonSeriesStateV1> = {}
@@ -106,6 +119,8 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
   if (season.worldCompetitionFormat === undefined) return world
+  const regular = requireCompetitionFormatVariant(season.worldCompetitionFormat).nodes.find(node => node.role === 'REGULAR_SEASON')
+  if (regular && splitStageNodes(world, seasonId).length && areRegularSeasonGamesComplete(world, seasonId, regular.key)) world = materializeSplitStages(world, seasonId)
   const state = getCompetitionPostseasonState(world, seasonId)
   if (state === null || !state.regularSeasonComplete || state.bracketPlan === null) return world
   const variant = requireCompetitionFormatVariant(season.worldCompetitionFormat)

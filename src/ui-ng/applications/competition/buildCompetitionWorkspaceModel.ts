@@ -5,6 +5,7 @@ import { trainingDefinitionById } from '@/domain/training'
 import type { GameWorld } from '@/domain/world'
 import { calculateStandings, type StandingsEntry } from '@/engine/competition/standings'
 import { calculateGroupStandings } from '@/engine/competition/standings/Standings'
+import { calculateSplitStandings, splitStageNodes } from '@/engine/competition/WorldCompetitionSplitStage'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { selectCompetitionContext } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
 import { findTeamForPlayer } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -157,6 +158,7 @@ export interface CompetitionWorkspaceModel {
   readonly dateGroups: readonly CompetitionDateGroup[]
   readonly standings: readonly StandingsEntry[]
   readonly groupStandings: readonly (readonly StandingsEntry[])[]
+  readonly groupStandingsLabels: readonly string[]
   readonly standingsZoneBands: StandingsZoneBands
   readonly leaders: readonly CompetitionLeaderRow[]
   readonly statPodiums: readonly CompetitionStatPodium[]
@@ -412,6 +414,9 @@ export function buildCompetitionWorkspaceModel(
     })
     .sort((left, right) => right.ppg - left.ppg || left.playerId.localeCompare(right.playerId))
 
+  const groups = calculateGroupStandings(world, context.seasonId)
+  const startedSplits = splitStageNodes(world, context.seasonId).filter(node => Object.values(world.games).some(game => game.seasonId === context.seasonId && game.competitionStageKey === node.key))
+
   return {
     competitionId: context.competitionId,
     seasonId: context.seasonId,
@@ -431,7 +436,8 @@ export function buildCompetitionWorkspaceModel(
         games: groupedGames.filter((game) => game.status === 'completed'),
       })),
     standings: calculateStandings(world, context.seasonId),
-    groupStandings: calculateGroupStandings(world, context.seasonId),
+    groupStandings: [...groups, ...startedSplits.map(node => calculateSplitStandings(world, context.seasonId, node))],
+    groupStandingsLabels: [...groups.map((_, index) => `Grupo ${index + 1}`), ...startedSplits.map(node => node.name ?? node.key)],
     standingsZoneBands: resolveStandingsZoneBands(world, context.competitionId),
     leaders,
     statPodiums: buildStatPodiums(leaders),

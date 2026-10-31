@@ -180,6 +180,23 @@
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
+    "sourceCompetitionId": "pbm:DYN_championnat:29",
+    "currencyCode": "EUR",
+    "countryId": 1,
+    "countryCode": "FRA",
+    "name": "Nationale 1",
+    "nativeCompetitionId": "competition:FRA:nm1",
+    "editionId": "edition:FRA:nm1:2025-26:bdm-adapted:29",
+    "ecosystemId": "worlddb-batch:DYN_championnat:29",
+    "teamCount": 28,
+    "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:FRA:nm1",
+    "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
+  },
+  {
     "sourceCompetitionId": "pbm:DYN_championnat:32",
     "currencyCode": "EUR",
     "countryId": 14,
@@ -1096,6 +1113,23 @@
     "calendar": "FORMAT_DERIVED_SIMULATION",
     "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
+  },
+  {
+    "sourceCompetitionId": "pbm:DYN_championnat:171",
+    "currencyCode": "EUR",
+    "countryId": 0,
+    "countryCode": "UNRESOLVED",
+    "name": "Liga Sudamericana de Básquetbol",
+    "nativeCompetitionId": "competition:AMERICAS:liga-sudamericana",
+    "editionId": "edition:AMERICAS:liga-sudamericana:2026:bdm-adapted:171",
+    "ecosystemId": "worlddb-batch:DYN_championnat:171",
+    "teamCount": 16,
+    "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:AMERICAS:liga-sudamericana",
+    "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   },
   {
     "sourceCompetitionId": "pbm:DYN_championnat:172",

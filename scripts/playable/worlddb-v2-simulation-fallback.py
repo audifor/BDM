@@ -199,6 +199,12 @@ def adapt_documented_format(row, participants, documents):
     grouped_final = adapt_group_winners_final_four(row, participants, source, variant, regular)
     if grouped_final is not None:
         return grouped_final
+    grouped_split = adapt_two_pool_split(row, participants, source, variant, regular)
+    if grouped_split is not None:
+        return grouped_split
+    four_pools = adapt_four_pool_second_groups(row, participants, source, variant)
+    if four_pools is not None:
+        return four_pools
     if len(regular) != 1 or (regular[0].get('pairing') or {}).get('type') != 'ROUND_ROBIN':
         return None
     if (regular[0].get('opponent_scope') or {}).get('type', 'ALL_STAGE') != 'ALL_STAGE':
@@ -327,13 +333,146 @@ def adapt_group_winners_final_four(row, participants, source, variant, groups):
         metadata['role'] = 'GROUP_STAGE'
         metadata['pairing']['payload'] = {**(metadata['pairing'].get('payload') or {}), 'bdm_generated_group_index': index}
         group_metadata.append(metadata)
+    if row['source_id'] == 'pbm:DYN_championnat:42':
+        # Simulated exchange with the four relegated NM1 clubs: one winner per pool.
+        document.setdefault('consequences', []).extend(
+            {'variant_key': selected['key'], 'source_node': group['key'], 'selector': 'RANK_RANGE',
+             'rank_from': 1, 'rank_to': 1, 'type': 'PROMOTION',
+             'payload': {'destination': 'NM1', 'policy': 'BDM_SIMULATED_GROUP_WINNER'}}
+            for group in groups)
     selected['nodes'] = [regular, *group_metadata, semifinal, third, championship]
     selected['edges'] = [{'from': regular['key'], 'to': semifinal['key'], 'selector': 'TOP_N', 'count': 4},
                          {'from': semifinal['key'], 'to': third['key'], 'selector': 'LOSER'},
                          {'from': semifinal['key'], 'to': championship['key'], 'selector': 'WINNER'}]
     selected['seeding'] = {'scheme_type': 'RANK_BASED', 'basis': [{'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION', 'terminal_tie': 'BDM_TEAM_ID_DRAW'}]}
     document['notes'] = (source.get('notes') or '') + (' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: four source groups and their winners retain the final four and placement game; '
-                         'group assignments, semifinal paths and semifinal single-game contest are BDM-generated, not official.')
+                         'group assignments, semifinal paths, semifinal single-game contest and any added promotion places are BDM-generated, not official.')
+    return document
+
+
+def adapt_two_pool_split(row, participants, source, variant, pools):
+    """Preserve two pools, selective carryover, cross-pool games and playoffs."""
+    nodes, edges = variant.get('nodes', []), variant.get('edges', [])
+    splits = [n for n in nodes if n.get('role') == 'SPLIT_STAGE']
+    playoff = [n for n in nodes if n.get('role') in ('PLAYOFF', 'FINAL')]
+    if len(pools) != 2 or len(splits) != 2 or len(playoff) != 3 or len(nodes) != 7 or participants % 4:
+        return None
+    group_size, half = participants // 2, participants // 4
+    if half < 4 or any(n.get('team_count') != group_size or (n.get('pairing') or {}).get('type') != 'ROUND_ROBIN' or
+                       (n.get('pairing') or {}).get('meetings_per_pair') != 2 or
+                       (n.get('opponent_scope') or {}).get('type') != 'SAME_GROUP' for n in pools):
+        return None
+    for index, node in enumerate(splits):
+        incoming = [e for e in edges if e.get('to') == node['key'] and e.get('from') in {p['key'] for p in pools}]
+        lower, upper = (1, half) if index == 0 else (half + 1, group_size)
+        if len(incoming) != 2 or any(e.get('selector') != 'RANK_RANGE' or e.get('rank_from') != lower or e.get('rank_to') != upper for e in incoming):
+            return None
+        if (node.get('pairing') or {}).get('type') != 'ROUND_ROBIN' or (node.get('carryover') or {}).get('rule_type') != 'SELECTIVE':
+            return None
+    quarter, semi, final = playoff
+    if not any(e.get('from') == splits[0]['key'] and e.get('to') == quarter['key'] and e.get('rank_to') == 8 for e in edges):
+        return None
+    document, selected = copy.deepcopy(source), copy.deepcopy(variant)
+    document['variants'] = [selected]
+    document['status'] = 'COMPLETE'
+    document['competition_season_id'] = source['competition_season_id'] + ':bdm-adapted:' + row['source_id'].rsplit(':', 1)[-1]
+    selected['is_real_variant'] = False
+    regular = {'key': 'REGULAR_GROUPS', 'node_type': 'STAGE', 'role': 'REGULAR_SEASON', 'team_count': participants,
+               'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2},
+               'opponent_scope': {'type': 'SAME_GROUP', 'payload': {'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': 2}}}
+    metadata = []
+    for index, pool in enumerate(pools):
+        node = copy.deepcopy(pool)
+        node['role'] = 'GROUP_STAGE'
+        node['pairing']['payload'] = {**(node['pairing'].get('payload') or {}), 'bdm_generated_group_index': index}
+        metadata.append(node)
+    prepared_splits = []
+    for index, split in enumerate(splits):
+        node = copy.deepcopy(split)
+        node['pairing']['payload'] = {**(node['pairing'].get('payload') or {}), 'bdm_split_policy': 'CROSS_GROUP_CARRYOVER',
+                                      'bdm_rank_from': 1 if index == 0 else half + 1,
+                                      'bdm_rank_to': half if index == 0 else group_size,
+                                      'bdm_round_count': (group_size - 1 + group_size % 2) * 2}
+        prepared_splits.append(node)
+    prepared_playoff = []
+    for node, pairs in zip(playoff, [['1-8', '2-7', '3-6', '4-5'], ['WINNER_1-WINNER_4', 'WINNER_2-WINNER_3'], ['WINNER_1-WINNER_2']]):
+        node = copy.deepcopy(node)
+        node['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': pairs}}
+        contest = node.get('contest') or {}
+        best = contest.get('best_of')
+        if contest.get('format_type') != 'SERIES' or not isinstance(best, int) or best < 1 or best % 2 == 0:
+            return None
+        contest['wins_required'] = best // 2 + 1
+        node['contest'] = contest
+        node['hosting'] = {'rule_type': 'SERIES_PATTERN', 'pattern': ''.join('H' if i % 2 == 0 else 'A' for i in range(best)), 'priority_basis': 'HIGHER_SEED'}
+        prepared_playoff.append(node)
+    selected['nodes'] = [regular, *metadata, *prepared_splits, *prepared_playoff]
+    selected['edges'] = [{'from': regular['key'], 'to': node['key'], 'selector': 'RANK_RANGE',
+                          'rank_from': node['pairing']['payload']['bdm_rank_from'], 'rank_to': node['pairing']['payload']['bdm_rank_to']}
+                         for node in prepared_splits] + [copy.deepcopy(e) for e in edges if e.get('from') in {n['key'] for n in splits + playoff}]
+    selected['seeding'] = {'scheme_type': 'RANK_BASED', 'basis': [{'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION', 'terminal_tie': 'BDM_TEAM_ID_DRAW'}]}
+    # The source describes direct promotion plus the playoff winner, with the
+    # finalist replacing that winner when the same club earns both places.
+    document.setdefault('consequences', []).append({'variant_key': selected['key'], 'source_node': final['key'], 'selector': 'WINNER',
+        'type': 'PROMOTION', 'payload': {'policy': 'BDM_WINNER_OR_FINALIST_IF_DUPLICATE'}})
+    document['notes'] = (source.get('notes') or '') + (' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: source pools, split groups, carried head-to-head results and cross-pool games retained; '
+                         'pool assignments, playoff paths and series hosting generated by BDM; the finalist takes a duplicate playoff promotion place.')
+    return document
+
+
+def adapt_four_pool_second_groups(row, participants, source, variant):
+    """Preserve four opening pools, two subsequent pools and final four."""
+    nodes, edges = variant.get('nodes', []), variant.get('edges', [])
+    pools = [n for n in nodes if n.get('role') == 'GROUP_STAGE' and n.get('node_type') == 'GROUP']
+    second = [n for n in nodes if n.get('role') == 'PLAYOFF' and n.get('node_type') == 'GROUP']
+    semis = [n for n in nodes if n.get('role') == 'PLAYOFF' and n.get('node_type') == 'ROUND']
+    third = [n for n in nodes if n.get('role') == 'PLACEMENT']
+    final = [n for n in nodes if n.get('role') == 'FINAL']
+    if len(pools) != 4 or len(second) != 2 or len(semis) != 1 or len(third) != 1 or len(final) != 1 or len(nodes) != 9 or participants != 16:
+        return None
+    if any(n.get('team_count') != 4 or (n.get('pairing') or {}).get('type') != 'ROUND_ROBIN' or
+           (n.get('pairing') or {}).get('meetings_per_pair') != 1 for n in pools + second):
+        return None
+    for index, stage in enumerate(second):
+        incoming = [e for e in edges if e.get('to') == stage['key']]
+        if len(incoming) != 2 or {e.get('from') for e in incoming} != {n['key'] for n in pools[2*index:2*index+2]} or any(e.get('selector') != 'RANK_RANGE' or e.get('rank_from') != 1 or e.get('rank_to') != 2 for e in incoming):
+            return None
+        if not any(e.get('from') == stage['key'] and e.get('to') == semis[0]['key'] and e.get('rank_from') == 1 and e.get('rank_to') == 2 for e in edges):
+            return None
+    if not all(any(e.get('from') == semis[0]['key'] and e.get('to') == node['key'] and e.get('selector') == selector for e in edges)
+               for node, selector in [(third[0], 'LOSER'), (final[0], 'WINNER')]):
+        return None
+    document, selected = copy.deepcopy(source), copy.deepcopy(variant)
+    document['variants'], document['status'] = [selected], 'COMPLETE'
+    document['competition_season_id'] = source['competition_season_id'] + ':bdm-adapted:' + row['source_id'].rsplit(':', 1)[-1]
+    document.setdefault('consequences', [])
+    selected['is_real_variant'] = False
+    regular = {'key': 'REGULAR_GROUPS', 'node_type': 'STAGE', 'role': 'REGULAR_SEASON', 'team_count': participants,
+               'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 1},
+               'opponent_scope': {'type': 'SAME_GROUP', 'payload': {'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': 4}}}
+    metadata = []
+    for index, pool in enumerate(pools):
+        node = copy.deepcopy(pool)
+        node['pairing']['payload'] = {**(node['pairing'].get('payload') or {}), 'bdm_generated_group_index': index}
+        metadata.append(node)
+    prepared = []
+    for index, stage in enumerate(second):
+        node = copy.deepcopy(stage)
+        node['role'] = 'SPLIT_STAGE'
+        node['pairing']['payload'] = {'bdm_split_policy': 'GROUP_ROUND_ROBIN', 'bdm_source_groups': [2*index, 2*index+1],
+                                      'bdm_rank_from': 1, 'bdm_rank_to': 2, 'bdm_round_count': 3}
+        prepared.append(node)
+    semifinal, placement, championship = copy.deepcopy(semis[0]), copy.deepcopy(third[0]), copy.deepcopy(final[0])
+    semifinal['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['1-4', '2-3']}}
+    placement['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['LOSER_1-LOSER_2']}}
+    championship['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['WINNER_1-WINNER_2']}}
+    selected['nodes'] = [regular, *metadata, *prepared, semifinal, placement, championship]
+    selected['edges'] = [{'from': regular['key'], 'to': n['key'], 'selector': 'RANK_RANGE', 'rank_from': 1, 'rank_to': 2} for n in prepared] + [
+        {'from': n['key'], 'to': semifinal['key'], 'selector': 'RANK_RANGE', 'rank_from': 1, 'rank_to': 2} for n in prepared] + [
+        {'from': semifinal['key'], 'to': placement['key'], 'selector': 'LOSER'}, {'from': semifinal['key'], 'to': championship['key'], 'selector': 'WINNER'}]
+    selected['seeding'] = {'scheme_type': 'RANK_BASED', 'basis': [{'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION', 'terminal_tie': 'BDM_TEAM_ID_DRAW'}]}
+    document['notes'] = (source.get('notes') or '') + (' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: four source pools, two second pools, cross-pool semifinals and placement retained; '
+                         'opening group assignments, second-pool reset and venues generated by BDM.')
     return document
 
 

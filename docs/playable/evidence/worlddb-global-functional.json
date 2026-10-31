@@ -1,15 +1,9 @@
 {
   "original_native_certified": 4,
-  "new_family_candidates": 91,
+  "new_family_candidates": 93,
   "generated": 87,
-  "adapted": 4,
+  "adapted": 6,
   "pending": [
-    {
-      "id": "pbm:DYN_championnat:29",
-      "name": "Nationale 1",
-      "status": "PENDING",
-      "error": "Error: Source format edition:FRA:nm1:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 2; group/conference assignments and stage planner connection required | PHASE1_A: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_A: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities | PHASE1_B: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_B: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities"
-    },
     {
       "id": "pbm:DYN_championnat:44",
       "name": "NBA",
@@ -39,12 +33,6 @@
       "name": "Segunda FEB",
       "status": "PENDING",
       "error": "Error: Source format edition:ESP:segunda-feb:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
-    },
-    {
-      "id": "pbm:DYN_championnat:171",
-      "name": "Liga Sudamericana de Básquetbol",
-      "status": "PENDING",
-      "error": "Error: Source format edition:AMERICAS:liga-sudamericana:2026 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
     }
   ],
   "validation": [
@@ -147,8 +135,12 @@
     {
       "id": "pbm:DYN_championnat:29",
       "name": "Nationale 1",
-      "status": "PENDING",
-      "error": "Error: Source format edition:FRA:nm1:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 2; group/conference assignments and stage planner connection required | PHASE1_A: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_A: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities | PHASE1_B: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_B: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities"
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:RANK_RANGE|selector:WINNER|stage:CROSS_GROUP_CARRYOVER",
+      "teams": 28,
+      "games": 364,
+      "full_source_season": "PASS",
+      "game_period_minutes": 0.1
     },
     {
       "id": "pbm:DYN_championnat:32",
@@ -680,9 +672,13 @@
     },
     {
       "id": "pbm:DYN_championnat:171",
-      "name": "Liga Sudamericana de Básquetbol",
-      "status": "PENDING",
-      "error": "Error: Source format edition:AMERICAS:liga-sudamericana:2026 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 0; group/conference assignments and stage planner connection required"
+      "name": "Liga Sudamericana de B?squetbol",
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SINGLE_GAME|regular:ROUND_ROBIN:SAME_GROUP|selector:LOSER|selector:RANK_RANGE|selector:WINNER|stage:GROUP_ROUND_ROBIN",
+      "teams": 16,
+      "games": 24,
+      "full_source_season": "PASS",
+      "game_period_minutes": 0.1
     },
     {
       "id": "pbm:DYN_championnat:172",
@@ -824,6 +820,14 @@
   "families": [
     {
       "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SINGLE_GAME|regular:ROUND_ROBIN:SAME_GROUP|selector:LOSER|selector:RANK_RANGE|selector:WINNER|stage:GROUP_ROUND_ROBIN",
+      "regularGames": 24,
+      "champion": "pbm:DYN_equipe:10201",
+      "successorGames": 24,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
       "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:ALL_STAGE|selector:RANK_RANGE|selector:WINNER",
       "regularGames": 342,
       "champion": "pbm:DYN_equipe:90013",
@@ -936,6 +940,14 @@
     },
     {
       "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SERIES|hosting:SERIES_PATTERN:HIGHER_SEED|regular:ROUND_ROBIN:SAME_GROUP|selector:RANK_RANGE|selector:WINNER|stage:CROSS_GROUP_CARRYOVER",
+      "regularGames": 364,
+      "champion": "pbm:DYN_equipe:2905",
+      "successorGames": 364,
+      "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
       "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SINGLE_GAME|regular:ROUND_ROBIN:SAME_GROUP|selector:LOSER|selector:TOP_N|selector:WINNER",
       "regularGames": 728,
       "champion": "pbm:DYN_equipe:2914",
@@ -944,5 +956,5 @@
     }
   ],
   "windows_acceptance": "NOT_RUN_FOR_NEW_ENTRIES",
-  "format_sha256": "cf2f4014247d1b390c8dc342b3e6a389f6baaadf00c420a1e00aa65bb57863dd"
+  "format_sha256": "e18f4d05b6590eb43b0eb658f8fcfd34e144f1896981df43c7b9b9cae11eec82"
 }

@@ -2,7 +2,7 @@ import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { ecosystemIdFromString } from '@/domain/ids'
 import { createSportsEcosystem } from '@/domain/ecosystem'
-import { resolveGroupedRelegation } from '@/engine/competition/PromotionRelegation'
+import { countAdaptedTierPlaces } from '@/engine/competition/PromotionRelegation'
 
 /** Adjacent PBM domestic divisions, same country and gender, using a declared
  * one-place standings policy. Missing/ambiguous divisions are never guessed. */
@@ -23,8 +23,12 @@ export function bindWorldDbV2SimulatedTiers(world: GameWorld, snapshots: readonl
     const rules = tiers.slice(1).flatMap((lower, index) => {
       const upper = tiers[index]!
       if (lower.level !== upper.level + 1) return []
-      const season = Object.values(current.seasons).find(item => item.competitionId === upper.competition.id)
-      const exchangeCount = (season && resolveGroupedRelegation(current, season.id)?.length) || 1
+      const upperSeason = Object.values(current.seasons).find(item => item.competitionId === upper.competition.id)
+      const lowerSeason = Object.values(current.seasons).find(item => item.competitionId === lower.competition.id)
+      const relegationPlaces = upperSeason && countAdaptedTierPlaces(current, upperSeason.id, 'RELEGATION')
+      const promotionPlaces = lowerSeason && countAdaptedTierPlaces(current, lowerSeason.id, 'PROMOTION')
+      if (relegationPlaces && promotionPlaces && relegationPlaces !== promotionPlaces) return []
+      const exchangeCount = relegationPlaces || promotionPlaces || 1
       if (exchangeCount > lower.competition.participantTeamIds.length) return []
       return [{ upperCompetitionId: upper.competition.id, lowerCompetitionId: lower.competition.id, exchangeCount }]
     })

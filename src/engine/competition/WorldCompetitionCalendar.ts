@@ -175,6 +175,11 @@ export function requireCompetitionFormatVariant(format: WorldCompetitionFormatDo
 }
 
 function maxGameDays(node: WorldCompetitionFormatNode): number {
+  if (node.role === 'SPLIT_STAGE' && ['CROSS_GROUP_CARRYOVER', 'GROUP_ROUND_ROBIN'].includes(String(node.pairing?.payload.bdm_split_policy))) {
+    const rounds = node.pairing!.payload.bdm_round_count
+    if (typeof rounds !== 'number' || !Number.isInteger(rounds) || rounds < 1) throw new Error(`Split stage ${node.key} requires a round count`)
+    return (rounds - 1) * 3 + 1
+  }
   if (node.contest?.formatType === 'SERIES') {
     if (node.contest.bestOf === undefined || node.contest.winsRequired !== Math.floor(node.contest.bestOf / 2) + 1) throw new Error(`Postseason SERIES node ${node.key} requires a valid best-of rule`)
     return node.contest.bestOf

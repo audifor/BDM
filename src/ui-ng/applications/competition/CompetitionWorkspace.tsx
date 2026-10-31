@@ -295,7 +295,7 @@ export function CompetitionWorkspace() {
       {tab === 'standings' ? (
         <div className="competition-standings">
           {model.groupStandings.length > 1 ? <label>Grupo <select aria-label="Grupo de clasificación" value={groupIndex < model.groupStandings.length ? groupIndex : 0} onChange={event => setGroupIndex(Number(event.target.value))}>
-            {model.groupStandings.map((_, index) => <option key={index} value={index}>{index + 1}</option>)}
+            {model.groupStandings.map((_, index) => <option key={index} value={index}>{model.groupStandingsLabels[index]}</option>)}
           </select> · Consulta los clasificados en el cuadro final.</label> : null}
           <div className="ng-canon__panel ng-holo-panel">
             <NgPrecisionTable
