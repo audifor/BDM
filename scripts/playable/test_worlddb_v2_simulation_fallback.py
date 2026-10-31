@@ -47,7 +47,7 @@ def fixtures():
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
     def test_nba_matrix_preserves_documented_conferences_and_seed_graph(self):
         row = {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
-               'competition': 'NBA'}
+               'competition': 'NBA', 'official_documentary_evidence': [{'identity': 'competition:NAM:nba'}]}
         source = copy.deepcopy(row)
         doc = MODULE.nba_matrix_sim_document(row, 30)
         self.assertEqual(row, source)
@@ -68,7 +68,8 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
             {'source_id': 'pbm:DYN_championnat:45', 'native_format_id': 'competition:NAM:nba'}, 30))
         with self.assertRaisesRegex(ValueError, '30 original clubs'):
             MODULE.nba_matrix_sim_document(
-                {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba'}, 29)
+                {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
+                 'official_documentary_evidence': [{'identity': 'competition:NAM:nba'}]}, 29)
 
 
     def test_nbl_matrix_preserves_source_clubs_and_six_team_path(self):
