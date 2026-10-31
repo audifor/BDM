@@ -180,12 +180,85 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
     return document
 
 
+def adapt_segunda_feb_simulation(row, participants, documents):
+    """Reuse the 2 x 14 topology; mark every unresolved sporting rule simulated.
+
+    Two source PDFs disagree on relegation. We preserve both references, and
+    never invent source-fidelity, original group memberships or relegation slots.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:112' or row.get('native_format_id') != 'competition:ESP:segunda-feb':
+        return None
+    if participants != 28:
+        raise ValueError('Segunda FEB PBM must preserve 28 original clubs')
+    evidence = row.get('official_documentary_evidence') or []
+    if 'dos grupos de 14' not in (row.get('detailed_blocker') or '').lower() or not evidence:
+        raise ValueError('Segunda FEB two-group documentary evidence missing')
+    native = [doc for doc in documents if doc.get('competition_id') == 'competition:ESP:segunda-feb']
+    if len({doc.get('competition_season_id') for doc in native}) > 1:
+        raise ValueError('Ambiguous Segunda FEB editions')
+    sources = copy.deepcopy(native[0].get('sources', [])) if native else []
+    for item in evidence:
+        for url in (item.get('sources') or '').split(' | '):
+            if url.strip() and not any(source.get('url') == url.strip() for source in sources):
+                sources.append({'url': url.strip(), 'type': 'OFFICIAL',
+                                'scope': 'Documented source identity and group topology; playoff simulation is NOT official'})
+    sources.append({'url': SOURCE_URL, 'type': 'SECONDARY',
+                    'scope': 'BDM simulation policy for group assignment, knockout and tie resolution'})
+    doc = simulation_document(row['source_id'], row['competition'], 28, postseason=True, grouped=True)
+    doc.update({
+        'competition_id': 'competition:ESP:segunda-feb',
+        'competition_season_id': 'edition:ESP:segunda-feb:2025-26:bdm-adapted:112',
+        'season_label': '2025-26', 'sources': sources,
+        'notes': ('GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: preserves the PBM 28 clubs and '
+                  'documented two groups of 14. Group assignments, qualification, aggregate knockout '
+                  'and classification are BDM simulation, NOT official regulations. '
+                  'No promotion/relegation numbers inferred from contradictory source PDFs.'),
+    })
+    v = doc['variants'][0]
+    v['key'] = 'SEGUNDA_FEB_BDM_SIM'
+    v['name'] = 'Segunda FEB (two groups, simulated knockout)'
+    regular = v['nodes'][0]
+    regular['key'] = 'REGULAR_GROUPS'
+    regular['opponent_scope'] = {'type': 'SAME_GROUP', 'payload': {
+        'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': 2}}
+    metadata = [{
+        'key': 'GROUP_' + name, 'node_type': 'GROUP', 'role': 'GROUP_STAGE', 'team_count': 14,
+        'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2,
+                    'payload': {'bdm_generated_group_index': idx}},
+        'opponent_scope': {'type': 'SAME_GROUP'},
+    } for idx, name in enumerate(('A', 'B'))]
+    def aggregate(key, count, pairs):
+        return {
+            'key': key, 'node_type': 'ROUND', 'role': 'PLAYOFF', 'team_count': count,
+            'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': pairs}},
+            'contest': {'format_type': 'AGGREGATE', 'leg_count': 2,
+                        'tie_resolution': {'method': 'BDM_EXTRA_DECIDER'}},
+            'hosting': {'rule_type': 'HIGHER_SEED', 'priority_basis': 'HIGHER_SEED'},
+        }
+    quarters = aggregate('QUARTERFINALS', 8, ['1-8', '2-7', '3-6', '4-5'])
+    semis = aggregate('SEMIFINALS', 4, ['WINNER_1-WINNER_4', 'WINNER_2-WINNER_3'])
+    final = {'key': 'FINAL', 'node_type': 'ROUND', 'role': 'FINAL', 'team_count': 2,
+             'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['WINNER_1-WINNER_2']}},
+             'contest': {'format_type': 'SINGLE_GAME', 'requires_winner': True},
+             'hosting': {'rule_type': 'NEUTRAL'}}
+    v['nodes'] = [regular, *metadata, quarters, semis, final]
+    v['edges'] = [
+        {'from': 'REGULAR_GROUPS', 'to': 'QUARTERFINALS', 'selector': 'TOP_N', 'count': 8},
+        {'from': 'QUARTERFINALS', 'to': 'SEMIFINALS', 'selector': 'WINNER'},
+        {'from': 'SEMIFINALS', 'to': 'FINAL', 'selector': 'WINNER'},
+    ]
+    return doc
+
+
 def adapt_documented_format(row, participants, documents):
     """Complete missing execution fields in an isolated, explicitly simulated edition.
 
     Preserve graph, round counts, qualification, consequences and any supplied
     contest/hosting rules. Ambiguous editions and unsupported topology stay visible.
     """
+    segunda = adapt_segunda_feb_simulation(row, participants, documents)
+    if segunda is not None:
+        return segunda
     matches = {d['competition_season_id']: d for d in documents
                if d.get('competition_id') == row.get('native_format_id')}
     if len(matches) != 1:

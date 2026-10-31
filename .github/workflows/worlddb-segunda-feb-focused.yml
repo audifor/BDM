@@ -1,0 +1,26 @@
+name: WorldDB Segunda FEB focused
+on:
+  push:
+    branches:
+      - feature/worlddb-segunda-feb-01
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Python format adapter tests
+        run: python -m unittest discover -s scripts/playable -p 'test_worlddb_v2_simulation_fallback.py' -v
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Segunda FEB lifecycle and family tests
+        run: npx vitest run src/app/game/WorldDbGlobalFamilies.test.ts --maxWorkers=1 --testTimeout=180000
