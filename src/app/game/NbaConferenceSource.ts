@@ -38,10 +38,12 @@ export function pinNbaConferencesToSourceClubs(
   const consumed = new Set<string>()
   for (const club of clubs) {
     const key = normalize(club.name)
-    const matches = franchises.filter(item => {
-      const canonical = normalize(item.name)
+    const exact = franchises.filter(item => key === normalize(item.name))
+    // Match whole nicknames only: "Hornets" must never match "Nets".
+    const matches = exact.length > 0 ? exact : franchises.filter(item => {
       const tail = nickname(item.name)
-      return key === canonical || key.endsWith(tail)
+      const finalWord = normalize(club.name.trim().split(/\\s+/).at(-1)!)
+      return finalWord === tail || (tail === 'trailblazers' && key.endsWith(tail))
     })
     if (matches.length !== 1 || consumed.has(matches[0]!.name)) {
       throw new Error(`NBA conference identity unresolved or duplicated: ${club.id} / ${club.name}`)
