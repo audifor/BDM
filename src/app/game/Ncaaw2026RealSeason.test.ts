@@ -10,6 +10,11 @@ it('merges official Big Ten and Pac-12 calendars without certifying the full sea
   expect(calendar.coverage.officialBigTenGames).toBe(162)
   expect(calendar.coverage.officialPac12Games).toBe(72)
   expect(calendar.coverage.officialMvcGames).toBe(110)
+  expect(calendar.coverage.officialBigEastGames).toBe(110)
+  expect(calendar.coverage.officialBigSouthGames).toBe(72)
+  expect(calendar.coverage.officialBig12Games).toBe(144)
+  expect(calendar.coverage.officialAtlantic10Games).toBe(126)
+  expect(calendar.coverage.officialAmericanGames).toBe(117)
   expect(calendar.coverage.officialFullSeasonCertification).toBe(false)
   const corrected = calendar.fixtures.find(game => game.date === '2027-02-14'
     && game.homeProgramId === 'ncaa:2026-27:women:colorado-state-rams'
@@ -38,6 +43,11 @@ it.skipIf(process.env.BDM_NCAAW_REAL_ACCEPTANCE !== '1')(
     expect(seeded.calendarCoverage.officialBigTenGames).toBe(162)
     expect(seeded.calendarCoverage.officialPac12Games).toBe(72)
     expect(seeded.calendarCoverage.officialMvcGames).toBe(110)
+    expect(seeded.calendarCoverage.officialBigEastGames).toBe(110)
+    expect(seeded.calendarCoverage.officialBigSouthGames).toBe(72)
+    expect(seeded.calendarCoverage.officialBig12Games).toBe(144)
+    expect(seeded.calendarCoverage.officialAtlantic10Games).toBe(126)
+    expect(seeded.calendarCoverage.officialAmericanGames).toBe(117)
     expect(seeded.calendarCoverage.otherUnverifiedGames).toBeGreaterThan(0)
     expect(seeded.calendarCoverage.officialFullSeasonCertification).toBe(false)
     expect(Object.values(world.games).every(g => g.status === 'scheduled')).toBe(true)
