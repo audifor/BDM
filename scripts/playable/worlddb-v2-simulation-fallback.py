@@ -180,6 +180,72 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
     return document
 
 
+def nbl_matrix_sim_document(row, participants):
+    """NBL27: 10 clubs x 33 matches, six-team play-in; fixture matrix is fiction.
+
+    Scheduling and Ignite Cup overlap are intentionally not reconstructed from
+    the published 165-match calendar. Play-in bracket follows NBL published
+    pathway, but opponents, dates and classification fallback are BDM generated.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:78' or row.get('native_format_id') != 'competition:AUS:nbl':
+        return None
+    if participants != 10:
+        raise ValueError('NBL PBM requires its 10 source clubs')
+    doc = simulation_document(row['source_id'], row['competition'], participants, postseason=True)
+    doc.update({
+        'competition_id': 'competition:AUS:nbl',
+        'competition_season_id': 'edition:AUS:nbl:2026-27:bdm-matrix:78',
+        'season_label': '2026-27',
+        'notes': ('GENERATED_SIMULATION: original PBM 10 clubs, published NBL27 33 games per club '
+                  'and six-team postseason pathway. Opponent matrix, precise dates, home advantage '
+                  'in non-source games, Ignite Cup crossover and classification fallback are simulated. '
+                  'NOT an official NBL fixture list.'),
+        'sources': [
+            {'url': 'https://www.nbl.com.au/news/nbl27-schedule-by-the-numbers', 'type': 'OFFICIAL',
+             'scope': '10 clubs, 165 games, 33 per team; not imported fixed fixture dates'},
+            {'url': 'https://www.nbl.com.au/news/the-nbl26-finals-format-explained', 'type': 'OFFICIAL',
+             'scope': 'Six-club postseason, third/fourth seeding qualifier, fifth/sixth play-in and best-of-three semifinals'},
+            {'url': SOURCE_URL, 'type': 'SECONDARY',
+             'scope': 'BDM generated opponent matrix, dates and standings tiebreak policy'},
+        ],
+    })
+    variant = doc['variants'][0]
+    variant['key'] = 'NBL_27_BDM_MATRIX'
+    variant['name'] = 'NBL 2026-27 (33 generated games, six-team finals pathway)'
+    regular = variant['nodes'][0]
+    regular['pairing'] = {'type': 'FIXED_SCHEDULE', 'payload': {'bdm_generated_matrix_v1': True, 'games_per_team': 33}}
+    regular['opponent_scope'] = {'type': 'SCHEDULE_MATRIX', 'payload': {'bdm_generated_matrix_v1': True}}
+    def knockout(key, role, count, matchups, contest, hosting):
+        return {'key': key, 'node_type': 'ROUND', 'role': role, 'team_count': count,
+                'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': matchups}},
+                'contest': contest, 'hosting': hosting}
+    single = {'format_type': 'SINGLE_GAME', 'requires_winner': True}
+    by_seed = {'rule_type': 'HIGHER_SEED', 'priority_basis': 'HIGHER_SEED'}
+    play_56 = knockout('PLAY_IN_5_6', 'PLAY_IN', 2, ['5-6'], single, by_seed)
+    seed_34 = knockout('SEEDING_3_4', 'PLAY_IN', 2, ['3-4'], single, by_seed)
+    play_final = knockout('PLAY_IN_FINAL', 'PLAY_IN', 2, ['7-8'], single, by_seed)
+    semis = knockout('SEMIFINALS', 'PLAYOFF', 4, ['1-8', '2-7'],
+                     {'format_type': 'SERIES', 'best_of': 3, 'wins_required': 2},
+                     {'rule_type': 'SERIES_PATTERN', 'pattern': 'HAH', 'priority_basis': 'HIGHER_SEED'})
+    championship = knockout('FINAL', 'FINAL', 2, ['WINNER_1-WINNER_2'],
+                            {'format_type': 'SERIES', 'best_of': 5, 'wins_required': 3},
+                            {'rule_type': 'SERIES_PATTERN', 'pattern': 'HHA AH'.replace(' ', ''), 'priority_basis': 'HIGHER_SEED'})
+    variant['nodes'] = [regular, play_56, seed_34, play_final, semis, championship]
+    def edge(a, b, selector, **kwargs):
+        return {'from': a, 'to': b, 'selector': selector, **kwargs}
+    variant['edges'] = [
+        edge('REGULAR_SEASON', 'PLAY_IN_5_6', 'RANK_RANGE', rank_from=5, rank_to=6),
+        edge('REGULAR_SEASON', 'SEEDING_3_4', 'RANK_RANGE', rank_from=3, rank_to=4),
+        edge('REGULAR_SEASON', 'SEMIFINALS', 'RANK_RANGE', rank_from=1, rank_to=2),
+        edge('PLAY_IN_5_6', 'PLAY_IN_FINAL', 'WINNER', payload={'playoff_seed': 8}),
+        edge('SEEDING_3_4', 'PLAY_IN_FINAL', 'LOSER', payload={'playoff_seed': 7}),
+        edge('SEEDING_3_4', 'SEMIFINALS', 'WINNER', payload={'playoff_seed': 7}),
+        edge('PLAY_IN_FINAL', 'SEMIFINALS', 'WINNER', payload={'playoff_seed': 8}),
+        edge('SEMIFINALS', 'FINAL', 'WINNER'),
+    ]
+    return doc
+
+
 def adapt_segunda_feb_simulation(row, participants, documents):
     """Reuse the 2 x 14 topology; mark every unresolved sporting rule simulated.
 
@@ -654,6 +720,25 @@ def build_package(matrix, batch, published, reusable_formats=()):
                 "conference_count": ncaa_plan["reference_conferences"],
                 "native_status": "NCAA_MEMBERSHIP_PENDING",
                 "official_fidelity": "NOT_CERTIFIED",
+            })
+            continue
+        nbl_sim = nbl_matrix_sim_document(row, expected_count)
+        if nbl_sim is not None:
+            documents.append(nbl_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': nbl_sim['competition_id'],
+                'editionId': nbl_sim['competition_season_id'], 'name': row['competition'],
+                'calendar': 'FORMAT_DERIVED_SIMULATION', 'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'GENERATED_SIMULATION', 'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'NBL_SOURCE_RULES_WITH_GENERATED_MATRIX',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'GENERATED_SIMULATION',
+                'format_reference_id': row['native_format_id'], 'expected_regular_games': expected_count * 33 // 2,
+                'native_status': 'ENGINE_AND_WINDOWS_ACCEPTANCE_PENDING',
+                'official_fidelity': 'OPPONENTS_DATES_AND_TIEBREAKS_SIMULATED',
             })
             continue
         existing_format, reference_resolution = reusable_documented_format(
