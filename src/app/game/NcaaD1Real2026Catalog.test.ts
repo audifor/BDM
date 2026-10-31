@@ -6,6 +6,8 @@ import supplementalFormats from '@/data/worlddb-v2/additional-formats.json'
 import publishedCatalog from '@/data/worlddb-v2/competitions.json'
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 import { reconcileNcaaD1Real2026MenConferenceFormats } from './NcaaD1Real2026MenReferences'
+import sourceFixtureSample from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
+import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 
 const editions = [
   { gender: 'men', expected: 365, championship: 'edition:USA:ncaa-d1-men-championship:2026-27' },
@@ -132,6 +134,35 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(stage(men.nodes, 'FINAL_FOUR').pairing?.payload.site).toContain('Detroit')
     expect(stage(women.nodes, 'FINAL_FOUR').pairing?.payload.site).not.toContain('Detroit')
     expect(NCAA_MEN_GAME_FORMAT).not.toEqual(NCAA_WOMEN_GAME_FORMAT)
+  })
+
+  it('projects separately sourced 2026-27 real ASUN men and women fixtures into existing Game and conference classification', () => {
+    expect(sourceFixtureSample.coverage).toBe('PARTIAL_OFFICIALLY_ANNOUNCED_GAMES_ONLY')
+    const sources = sourceFixtureSample.fixtures as NcaaD1Real2026FixtureSource[]
+    const men = projectNcaaD1Real2026Fixtures('men', sources.filter(source => source.gender === 'men'))
+    const women = projectNcaaD1Real2026Fixtures('women', sources.filter(source => source.gender === 'women'))
+    expect(men.games).toHaveLength(1)
+    expect(women.games).toHaveLength(1)
+    expect(men.games[0]?.classification).toBe('conference')
+    expect(women.games[0]?.classification).toBe('conference')
+    expect(men.games[0]?.date).toBe('2027-01-07')
+    expect(women.games[0]?.date).toBe('2027-01-09')
+    expect(men.games[0]?.status).toBe('scheduled')
+    expect(women.games[0]?.status).toBe('scheduled')
+    expect(men.games[0]?.competitionId).not.toBe(women.games[0]?.competitionId)
+    expect(men.games[0]?.seasonId).not.toBe(women.games[0]?.seasonId)
+    expect(Object.keys(men.evidenceByGameId)).toHaveLength(1)
+    expect(Object.keys(women.evidenceByGameId)).toHaveLength(1)
+  })
+
+  it('rejects unverified, duplicated, cross-gender or wrong-edition NCAA source fixtures', () => {
+    const m = sourceFixtureSample.fixtures[0]! as NcaaD1Real2026FixtureSource
+    const w = sourceFixtureSample.fixtures[1]! as NcaaD1Real2026FixtureSource
+    expect(() => projectNcaaD1Real2026Fixtures('men', [w])).toThrow(/gender/)
+    expect(() => projectNcaaD1Real2026Fixtures('men', [m, m])).toThrow(/Duplicate/)
+    expect(() => projectNcaaD1Real2026Fixtures('men', [{ ...m, date: '2018-01-07' }])).toThrow(/another edition/)
+    expect(() => projectNcaaD1Real2026Fixtures('men', [{ ...m, sourceUrl: 'https:\/\/example.com/fake' }])).toThrow(/primary source/)
+    expect(() => projectNcaaD1Real2026Fixtures('men', [{ ...m, awayProgramId: w.awayProgramId }])).toThrow(/outside/)
   })
 
   it('keeps new NCAA programs outside published PBM New Game until original-source and native acceptance', () => {
