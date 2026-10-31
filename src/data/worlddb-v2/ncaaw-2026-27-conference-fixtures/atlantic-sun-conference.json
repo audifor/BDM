@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "atlantic-sun-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "memberCount": 8,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:bellarmine-knights",
+    "ncaa:2026-27:women:florida-gulf-coast-eagles",
+    "ncaa:2026-27:women:jacksonville-dolphins",
+    "ncaa:2026-27:women:lipscomb-bisons",
+    "ncaa:2026-27:women:north-florida-ospreys",
+    "ncaa:2026-27:women:queens-university-royals",
+    "ncaa:2026-27:women:stetson-hatters",
+    "ncaa:2026-27:women:west-florida-argonauts"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/bellarmine-knights",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/florida-gulf-coast-eagles",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/jacksonville-dolphins",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/lipscomb-bisons",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/north-florida-ospreys",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/queens-university-royals",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/stetson-hatters",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/west-florida-argonauts"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:north-florida-ospreys",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:west-florida-argonauts",
+      "listedGames": 30,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:bellarmine-knights",
+      "listedGames": 22,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:jacksonville-dolphins",
+      "listedGames": 21,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:stetson-hatters",
+      "listedGames": 23,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:lipscomb-bisons",
+      "listedGames": 28,
+      "inUniverseGames": 0
+    },
+    {
+      "id": "ncaa:2026-27:women:queens-university-royals",
+      "listedGames": 30,
+      "inUniverseGames": 0
+    }
+  ],
+  "fixtureCount": 0,
+  "nonD1OrUnmatched": [],
+  "fixtures": []
+}
