@@ -122,6 +122,6 @@ export function buildNcaaw2027CommitteeBracket(input:NcaaWomen2027CommitteeDecis
   if(fixtures.length!==75||fixtureIdsByNodeKey.OPENING_ROUND?.length!==12||fixtureIdsByNodeKey.FIRST_ROUND?.length!==32||
      fixtureIdsByNodeKey.SECOND_ROUND?.length!==16||fixtureIdsByNodeKey.SWEET_16?.length!==8||
      fixtureIdsByNodeKey.ELITE_EIGHT?.length!==4||fixtureIdsByNodeKey.FINAL_FOUR?.length!==2||
-     fixtureIdsByNodeKey.FINAL?.length!==1)throw Error('Invalid 76-team NCAA women's 2027 championship topology')
+      fixtureIdsByNodeKey.FINAL?.length!==1)throw Error("Invalid 76-team NCAA women's 2027 championship topology")
   return {competitionSeasonId:NCAAW_2027_EDITION,variantKey:'MAIN',fixtures,fixtureIdsByNodeKey}
 }

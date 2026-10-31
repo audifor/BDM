@@ -227,6 +227,12 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(women.games.some(g => g.date === '2027-02-27' && g.homeTeamId === 'ncaa:2026-27:women:stetson-hatters' && g.awayTeamId === northFlorida)).toBe(true)
   })
 
+  it('preserves an explicitly sourced neutral-site flag in the projected Game', () => {
+    const fixture = sourceFixtureSample.fixtures.find(source => source.gender === 'women')! as NcaaD1Real2026FixtureSource
+    const projected = projectNcaaD1Real2026Fixtures('women', [{ ...fixture, neutralSite: true }])
+    expect(projected.games[0]?.neutralSite).toBe(true)
+  })
+
   it('rejects unverified, duplicated, cross-gender or wrong-edition NCAA source fixtures', () => {
     const m = sourceFixtureSample.fixtures.find(fixture => fixture.gender === 'men')! as NcaaD1Real2026FixtureSource
     const w = sourceFixtureSample.fixtures.find(fixture => fixture.gender === 'women')! as NcaaD1Real2026FixtureSource

@@ -29,6 +29,24 @@ DATE_RE = re.compile(r"^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s+(" + "|".join(MONTHS)
 GAME_ID_RE = re.compile(r"-(\d{8,12})$")
 USER_AGENT = "BDM-WorldDB-Evidence-Harvester/1.0 (2026-27 NCAA women's schedule reconciliation; no robot bypass)"
 
+def resolve_verified_duplicate(events, excluded):
+    # Both directory pages list two ESPN event IDs for the same game. ESPN's
+    # 401913047 returns 404; 401919967 resolves to NIU at DePaul on Nov 11.
+    # DePaul's own schedule independently confirms the date and venue.
+    stale, current = '401913047', '401919967'
+    if stale not in events or current not in events:
+        return
+    a, b = events[stale], events[current]
+    expected = ('2026-11-11', 'ncaa:2026-27:women:depaul-blue-demons',
+                'ncaa:2026-27:women:northern-illinois-huskies')
+    if any((row['date'], row['homeProgramId'], row['awayProgramId']) != expected for row in (a, b)):
+        raise ValueError('Previously verified DePaul duplicate has changed; recheck sources')
+    excluded.append({'reason': 'duplicate_stale_event_id', 'record': a, 'supersededBy': current,
+                     'evidence': ['https://depaulbluedemons.com/sports/wbball/schedule/',
+                                  'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401919967',
+                                  'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401913047']})
+    del events[stale]
+
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -157,15 +175,21 @@ def build(catalog):
                     row["listedByTeamIds"].append(page["programId"])
     if sourceConflicts:
         raise ValueError("Schedule identity contradictions: " + json.dumps(sourceConflicts[:8]))
+    resolve_verified_duplicate(events, excluded)
     games = sorted(events.values(), key=lambda g: (g["date"], g["gameId"]))
     date_pairs = {}
-    team_dates = {}
+    duplicate_pairs = []
     for game in games:
         pair = (game["date"], *sorted((game["homeProgramId"], game["awayProgramId"])))
         previous = date_pairs.setdefault(pair, game["gameId"])
         if previous != game["gameId"]:
-            raise ValueError("Same NCAA fixture and date have two different event IDs: "
-                             + previous + " / " + game["gameId"])
+            duplicate_pairs.append({"date": game["date"], "teams": list(pair[1:]),
+                                    "first": events[previous], "second": game})
+    if duplicate_pairs:
+        raise ValueError("Same NCAA fixture and date have different event IDs: "
+                         + json.dumps(duplicate_pairs, ensure_ascii=False))
+    team_dates = {}
+    for game in games:
         for team in (game["homeProgramId"], game["awayProgramId"]):
             key = (game["date"], team)
             other = team_dates.setdefault(key, game["gameId"])

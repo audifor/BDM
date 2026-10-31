@@ -15,6 +15,8 @@ export interface NcaaD1Real2026FixtureSource {
   readonly date: string
   readonly homeProgramId: string
   readonly awayProgramId: string
+  /** True only when the cited schedule explicitly identifies a neutral site. */
+  readonly neutralSite?: boolean
   readonly sourceUrl: string
   /** Second independent official institution entry for cross-confirmed fixtures. */
   readonly corroboratingSourceUrl?: string
@@ -85,6 +87,7 @@ export function projectNcaaD1Real2026Fixtures(
       id, seasonId: snapshot.seasonId, competitionId,
       homeTeamId: fixture.homeProgramId as Game['homeTeamId'],
       awayTeamId: fixture.awayProgramId as Game['awayTeamId'],
+      ...(fixture.neutralSite === undefined ? {} : { neutralSite: fixture.neutralSite }),
       date, status: 'scheduled', result: null, stakes: 'regular',
       classification, competitionStageKey: 'REGULAR_SEASON',
     })
