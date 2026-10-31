@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { parseWorldCompetitionFormatDocument, parseWorldCompetitionRuntimeBundle } from '@/domain/competition'
 import reference from '@/data/worlddb-v2/competition-runtime.json'
 import globalFormats from '@/data/worlddb-v2/global-formats.json'
-const adaptedFormats = globalFormats.filter(doc => doc.notes?.includes('ADAPTED_DOCUMENTED_FORMAT') && !['competition:FRA:nm2', 'competition:FRA:nm1', 'competition:AMERICAS:liga-sudamericana'].includes(doc.competition_id))
+const adaptedFormats = globalFormats.filter(doc => doc.notes?.includes('ADAPTED_DOCUMENTED_FORMAT') && !['competition:FRA:nm2', 'competition:FRA:nm1', 'competition:AMERICAS:liga-sudamericana', 'competition:ESP:segunda-feb'].includes(doc.competition_id))
 import { worldDbV2FamilySignature } from './WorldDbV2Connection'
 import { createWorldDbV2UniverseFromSnapshots } from './WorldDbV2Universe'
 import { resolveAdaptedPromotion, resolveGroupedRelegation } from '@/engine/competition/PromotionRelegation'
