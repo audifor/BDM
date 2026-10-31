@@ -7,6 +7,7 @@ import { createCompetition } from '@/domain/competition'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaConfiguredSchedule, generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { matrixRoundCount } from '@/engine/competition/schedule/MatrixScheduleGenerator'
 import { materializeTradeWindows } from '@/engine/competition'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
@@ -304,6 +305,12 @@ function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: Re
 function regularSeasonRoundCount(world: GameWorld, season: Season, participantCount: number): number {
   const meetingsPerPair = world.competitions[season.competitionId]!.rules.schedule.meetingsPerPair
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+  const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
+  if (node?.pairing?.type === 'FIXED_SCHEDULE' && node.pairing.payload.bdm_generated_matrix_v1 === true) {
+    const target = node.pairing.payload.games_per_team
+    if (typeof target !== 'number') throw new RangeError('Invalid generated matrix games_per_team')
+    return matrixRoundCount(participantCount, target)
+  }
   const scope = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')?.opponentScope
   if (scope?.type === 'SAME_GROUP' && typeof scope.payload.generated_group_count === 'number') participantCount = Math.ceil(participantCount / scope.payload.generated_group_count)
   return (participantCount - 1 + participantCount % 2) * meetingsPerPair

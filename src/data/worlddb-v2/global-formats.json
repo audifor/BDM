@@ -5317,6 +5317,256 @@
   },
   {
     "schema_version": "1.0",
+    "competition_id": "competition:AUS:nbl",
+    "competition_season_id": "edition:AUS:nbl:2026-27:bdm-matrix:78",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION: original PBM 10 clubs, published NBL27 33 games per club and six-team postseason pathway. Opponent matrix, precise dates, home advantage in non-source games, Ignite Cup crossover and classification fallback are simulated. NOT an official NBL fixture list.",
+    "variants": [
+      {
+        "key": "NBL_27_BDM_MATRIX",
+        "name": "NBL 2026-27 (33 generated games, six-team finals pathway)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 10
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 10,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "games_per_team": 33
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "bdm_generated_matrix_v1": true
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "PLAY_IN_5_6",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "5-6"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEEDING_3_4",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "3-4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "7-8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-8",
+                  "2-7"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 3,
+              "wins_required": 2
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "PLAY_IN_5_6",
+            "selector": "RANK_RANGE",
+            "rank_from": 5,
+            "rank_to": 6
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "SEEDING_3_4",
+            "selector": "RANK_RANGE",
+            "rank_from": 3,
+            "rank_to": 4
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "SEMIFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 2
+          },
+          {
+            "from": "PLAY_IN_5_6",
+            "to": "PLAY_IN_FINAL",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 8
+            }
+          },
+          {
+            "from": "SEEDING_3_4",
+            "to": "PLAY_IN_FINAL",
+            "selector": "LOSER",
+            "payload": {
+              "playoff_seed": 7
+            }
+          },
+          {
+            "from": "SEEDING_3_4",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 7
+            }
+          },
+          {
+            "from": "PLAY_IN_FINAL",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 8
+            }
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.nbl.com.au/news/nbl27-schedule-by-the-numbers",
+        "type": "OFFICIAL",
+        "scope": "10 clubs, 165 games, 33 per team; not imported fixed fixture dates"
+      },
+      {
+        "url": "https://www.nbl.com.au/news/the-nbl26-finals-format-explained",
+        "type": "OFFICIAL",
+        "scope": "Six-club postseason, third/fourth seeding qualifier, fifth/sixth play-in and best-of-three semifinals"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM generated opponent matrix, dates and standings tiebreak policy"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
     "competition_id": "competition:BDM-SIM:dyn_championnat-79",
     "competition_season_id": "edition:BDM-SIM:dyn_championnat-79:generated",
     "season_label": "BDM generated season",

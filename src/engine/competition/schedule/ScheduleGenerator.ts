@@ -11,6 +11,7 @@ import { scheduleRoundsByCalendar } from './SchedulePolicy'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from '../WorldCompetitionCalendar'
 import { instantiateWorldCompetitionRoundRobinV1 } from '../WorldCompetitionRoundRobin'
 import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
+import { generateBalancedMatrixRounds } from './MatrixScheduleGenerator'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -43,7 +44,19 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const variant = season.worldCompetitionFormat && requireCompetitionFormatVariant(season.worldCompetitionFormat)
   const regular = variant?.nodes.find(node => node.role === 'REGULAR_SEASON')
   const groups = regular && resolveWorldCompetitionGroups(regular, teamIds)
-  const rounds = groups && groups.length > 1
+  const matrixTarget = regular?.pairing?.type === 'FIXED_SCHEDULE'
+    && regular.pairing.payload.bdm_generated_matrix_v1 === true
+    && regular.opponentScope?.type === 'SCHEDULE_MATRIX'
+    ? regular.pairing.payload.games_per_team : undefined
+  if (regular?.pairing?.type === 'FIXED_SCHEDULE' && matrixTarget === undefined) {
+    throw new Error('Official fixed schedule requires a source-specific scheduler; do not generate a round robin')
+  }
+  if (matrixTarget !== undefined && (typeof matrixTarget !== 'number' || !Number.isInteger(matrixTarget))) {
+    throw new Error('Generated matrix requires an integer games_per_team')
+  }
+  const rounds = matrixTarget !== undefined
+    ? generateBalancedMatrixRounds(teamIds, matrixTarget)
+    : groups && groups.length > 1
     ? groupedRounds(season.worldCompetitionFormat!, groups, regular!.key)
     : teamIds.length % 2 === 0 && (competition.rules.schedule.meetingsPerPair % 2 === 0 || !season.worldCompetitionFormat)
     ? (() => {
