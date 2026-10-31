@@ -130,6 +130,25 @@ it('plays four source groups, the second group stage and cross semifinals throug
   await exerciseFamily(wire, 16, 1, true, false)
 }, 180_000)
 
+it('plays Segunda FEB with two 14-club groups, aggregate rounds and Save V4 rollover', async () => {
+  const wire = globalFormats.find(doc => doc.competition_id === 'competition:ESP:segunda-feb')
+  expect(wire).toBeDefined()
+  expect(wire!.notes).toContain('NOT official')
+  await exerciseFamily(wire, 28, 2, true, false)
+}, 180_000)
+
+it.skipIf(process.env.BDM_WORLDDB_SEGUNDA_FEB_SEASON !== '1')('plays all 28 PBM Segunda FEB clubs through the next edition', async () => {
+  const directory = '.worlddb-v2/generated-simulation-candidates/'
+  const docs = JSON.parse(readFileSync(directory + 'reused-documented-formats.json', 'utf8'))
+  const wire = docs.find((doc: any) => doc.competition_id === 'competition:ESP:segunda-feb')
+  const configurations = JSON.parse(readFileSync(directory + 'candidate-competitions.json', 'utf8'))
+  const config = configurations.find((item: any) => item.sourceCompetitionId === 'pbm:DYN_championnat:112')
+  const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
+  const row = index.results.find((item: any) => item.source_id === config.sourceCompetitionId)
+  const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
+  await exerciseFamily(wire, 28, 2, true, false, source, config)
+}, 3_600_000)
+
 it.skipIf(process.env.BDM_WORLDDB_NM2_SEASON !== '1')('plays the complete 56-club PBM Nationale 2 season and the next edition', async () => {
   const directory = '.worlddb-v2/generated-simulation-candidates/'
   const docs = JSON.parse(readFileSync(directory + 'reused-documented-formats.json', 'utf8'))
@@ -271,9 +290,9 @@ it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('projects every source
   expect(results.filter(r => r.status === 'PROJECTION_SAVE_PASS').length).toBeGreaterThanOrEqual(90)
 }, 600_000)
 
-it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 97 available catalog entries through the default application bundle', async () => {
+it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 98 available catalog entries through the default application bundle', async () => {
   const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
-  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(97)
+  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(98)
   for (const config of WORLDDB_V2_GLOBAL_COMPETITIONS) {
     const row = index.results.find((r: any) => r.source_id === config.sourceCompetitionId)
     const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
