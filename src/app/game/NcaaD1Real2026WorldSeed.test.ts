@@ -3,6 +3,7 @@ import { validateGameWorld } from '@/domain/world'
 import { deserializeGameWorldSaveV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import source from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
 import { createNcaaD1Real2026WorldSeed } from './NcaaD1Real2026WorldSeed'
+import { createNcaaD1Real2026Universe } from './NcaaD1Real2026Universe'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 
 /** Explicit full-scale acceptance on the developer's runner.
@@ -56,4 +57,44 @@ it.skipIf(process.env.BDM_NCAA_REAL_NATIVE_ACCEPTANCE !== '1')(
       .toThrow(/current program/)
   },
   180_000,
+)
+
+it.skipIf(process.env.BDM_NCAA_REAL_NATIVE_ACCEPTANCE !== '1')(
+  'keeps both real 2026-27 NCAA categories in one native GameWorld with separate seasons and Save V4',
+  () => {
+    const fixtures = source.fixtures as NcaaD1Real2026FixtureSource[]
+    const managed = fixtures.find(fixture => fixture.gender === 'women')!.homeProgramId
+    const created = createNcaaD1Real2026Universe({
+      seed: 202627,
+      managedGender: 'women',
+      managedProgramId: managed,
+      sourcedFixtures: fixtures,
+    })
+    const world = created.world
+    validateGameWorld(world)
+    expect(Object.values(world.teams)).toHaveLength(728)
+    expect(Object.values(world.players)).toHaveLength(728 * 7)
+    expect(Object.values(world.coaches)).toHaveLength(728)
+    expect(Object.values(world.conferencesById)).toHaveLength(64)
+    expect(world.conferenceMemberships).toHaveLength(728)
+    expect(Object.values(world.seasons)).toHaveLength(2)
+    expect(Object.values(world.competitions)).toHaveLength(2)
+    expect(Object.values(world.games)).toHaveLength(2)
+    expect(world.currentSeasonId).toContain('women')
+    expect(Object.values(world.games).map(game => game.classification)).toEqual(['conference', 'conference'])
+    expect(new Set(Object.values(world.teams).map(team => team.gender))).toEqual(new Set(['male', 'female']))
+    const genders = Object.values(world.competitions).map(competition => [competition.gender, competition.rules.gameFormat.periodCount] as const)
+    expect(genders).toContainEqual(['male', 2])
+    expect(genders).toContainEqual(['female', 4])
+    expect(Object.keys(created.officialFixtureSourceByGameId)).toHaveLength(2)
+    expect(created.formatCertification).toBe('BLOCKED_SEASONS_AND_TOURNAMENTS_NOT_CONNECTED')
+    const save = serializeGameWorldV4(world, '2026-10-31T09:00:00Z')
+    const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(save)))
+    validateGameWorld(reopened)
+    expect(Object.keys(reopened.teams)).toHaveLength(728)
+    expect(Object.keys(reopened.seasons)).toHaveLength(2)
+    expect(Object.keys(reopened.games)).toHaveLength(2)
+    expect(reopened.conferenceMemberships).toHaveLength(728)
+  },
+  240_000,
 )
