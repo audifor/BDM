@@ -38,6 +38,10 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
     : []
   const candidateConfigs = new Map<string, any>(candidateRows.map(config => [config.sourceCompetitionId, config]))
   const simulationFormats = new Map(simulationDocs.map(doc => [doc.competitionSeasonId, doc]))
+  const documentedDocs: ReturnType<typeof parseWorldCompetitionFormatDocument>[] = simulationMode
+    ? (JSON.parse(readFileSync(resolve(generatedDir, 'reused-documented-formats.json'), 'utf8')) as unknown[])
+      .map(parseWorldCompetitionFormatDocument) : []
+  const documentedFormats = new Map(documentedDocs.map(doc => [doc.competitionSeasonId, doc]))
   if (simulationMode) {
     const manifest = JSON.parse(readFileSync(resolve(generatedDir, 'manifest.json'), 'utf8'))
     expect(candidateConfigs.size).toBe(102)
@@ -45,10 +49,11 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
     expect(candidateRows.filter(config => config.formatProvenance === 'GENERATED_SIMULATION')).toHaveLength(manifest.generated_simulation_candidates)
     const reused = candidateRows.filter(config => config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT')
     expect(reused).toHaveLength(manifest.reused_documented_format_candidates)
+    expect(documentedFormats.size).toBe(manifest.reused_documented_format_candidates)
     expect(reused.some(config => config.sourceCompetitionId === 'pbm:DYN_championnat:44'
       && config.nativeCompetitionId === 'competition:NAM:nba')).toBe(true)
-    // External PGM format sources may increase reuse, but every selected
-    // document must be in this runtime or independently supplied by the batch.
+    // External PGM source documents travel with this candidate package,
+    // without modifying the certified base runtime or source reference files.
     expect(manifest.generated_simulation_candidates + manifest.reused_documented_format_candidates).toBe(97)
     const college = candidateRows.filter(config => config.formatProvenance === 'DOCUMENTED_NCAA_REFERENCE_UNRECONCILED')
     expect(college).toHaveLength(1)
@@ -81,8 +86,9 @@ it.skipIf(process.env.BDM_WORLDDB_BATCH !== '1')('attempts every initializable P
         throw Error('NCAA_353: source conference memberships must be reconciled before native college GameWorld; never use generic ROUND_ROBIN')
       }
       const document = simulationFormats.get(config.editionId) ?? trusted.get(config.editionId)
+        ?? documentedFormats.get(config.editionId)
         ?? (row.formatPath && !simulationMode ? parseWorldCompetitionFormatDocument(JSON.parse(readFileSync(row.formatPath, 'utf8'))) : undefined)
-      if (simulationMode && config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT' && !trusted.has(config.editionId)) {
+      if (simulationMode && config.formatProvenance === 'REUSED_DOCUMENTED_FORMAT' && !documentedFormats.has(config.editionId)) {
         throw Error('Referenced documented format is not available in the runtime bundle: ' + row.source_id)
       }
       if (simulationMode && config.formatProvenance === 'GENERATED_SIMULATION' && !simulationFormats.has(config.editionId)) {
