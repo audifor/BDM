@@ -4,7 +4,7 @@ import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { SCOUTING_TERRITORY_WORKLOAD_COST, scoutingTerritoryKey, type ScoutingTerritory, type ScoutingMission } from '@/domain/scouting'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleIdsInDepartment, type StaffRoleId } from '@/domain/staff'
-import { calculateStaffWorkload, getFreeAgents, getNextScheduledGame, getPlayersInScoutingTerritory, isStaffRoleSuitableForScoutingTerritory, type GameWorld } from '@/domain/world'
+import { calculateStaffWorkload, getFreeAgents, getNextScheduledGame, getPlayersInScoutingTerritory, isPlayerTeamCategoryCompatible, isStaffRoleSuitableForScoutingTerritory, type GameWorld } from '@/domain/world'
 import { getNextScheduledGameForTeam } from '@/engine/calendar/CalendarQueries'
 import { getAvailableDraftProspects } from '@/engine/draft'
 import { getPlayerKnowledgeSummary, hasScoutingCapacityForMission, activeWorkload, isScoutingEvaluatorEligible, requestScouting } from './ScoutingEngine'
@@ -176,7 +176,8 @@ function requestRelevantReports(world: GameWorld, organizationId: OrganizationId
     if (nonterminalPlayers.has(candidate.playerId) || reportedToday.has(candidate.playerId)) continue
     const mission = chooseMission(next, organizationId, candidate)
     if (mission === undefined) continue
-    const evaluator = chooseEvaluator(next, slots, mission)
+    const compatibleSlots = slots.filter(slot => isPlayerTeamCategoryCompatible(next, candidate.playerId, slot.teamId))
+    const evaluator = chooseEvaluator(next, compatibleSlots, mission)
     if (evaluator === undefined || usedStaff.has(evaluator.staffId)) continue
     const previousAssignmentIds = new Set(Object.keys(next.scoutingAssignmentsById))
     next = requestScouting(next, { organizationId, playerId: candidate.playerId, missionType: mission, evaluatorStaffId: evaluator.staffId, requestedBy: 'SCOUTING_DEPARTMENT', teamContextId: evaluator.teamId })
@@ -194,7 +195,9 @@ function collectCandidates(world: GameWorld, organizationId: OrganizationId, tea
   const ownRoster = new Set(teams.flatMap((team) => team.rosterPlayerIds))
   const positionNeeds = positionalNeeds(world, teams)
   const add = (playerId: PlayerId, source: CandidateSource, base: number) => {
-    if (ownRoster.has(playerId) || world.players[playerId] === undefined || world.players[playerId]!.careerEnd !== undefined || candidates.size >= MAX_CANDIDATES_PER_ORGANIZATION && !candidates.has(playerId)) return
+    if (ownRoster.has(playerId) || world.players[playerId] === undefined || world.players[playerId]!.careerEnd !== undefined ||
+        !teams.some(team => isPlayerTeamCategoryCompatible(world, playerId, team.id)) ||
+        candidates.size >= MAX_CANDIDATES_PER_ORGANIZATION && !candidates.has(playerId)) return
     const current = candidates.get(playerId)
     if (current === undefined) candidates.set(playerId, { playerId, priority: base, sources: new Set([source]) })
     else { current.sources.add(source); current.priority = Math.max(current.priority, base) }
