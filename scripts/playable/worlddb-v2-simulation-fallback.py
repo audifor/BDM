@@ -215,6 +215,7 @@ def build_package(matrix, batch, published, reusable_formats=()):
         raise ValueError("Existing four certified league configurations must remain untouched")
     candidates = list(published)
     documents = []
+    reused_documents = []
     evidence = []
     ncaa_plan = None
     reused = 0
@@ -260,6 +261,7 @@ def build_package(matrix, batch, published, reusable_formats=()):
             # The document is not cloned and its native competition/edition IDs
             # remain intact. Runtime binding and Windows acceptance are separate.
             reused += 1
+            reused_documents.append(existing_format)
             candidates.append({
                 **config,
                 "nativeCompetitionId": existing_format["competition_id"],
@@ -316,7 +318,8 @@ def build_package(matrix, batch, published, reusable_formats=()):
     if len({d["competition_id"] for d in documents}) != len(documents):
         raise ValueError("Generated format collision")
     return {
-        "formats": documents, "catalog": candidates, "ncaa_plan": ncaa_plan,
+        "formats": documents, "reused_formats": reused_documents,
+        "catalog": candidates, "ncaa_plan": ncaa_plan,
         "manifest": {
             "total": 102, "original_playable": 4,
             "generated_simulation_candidates": len(documents),
@@ -354,6 +357,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     for key, filename in [
         ("formats", "simulation-formats.json"),
+        ("reused_formats", "reused-documented-formats.json"),
         ("catalog", "candidate-competitions.json"),
         ("ncaa_plan", "ncaa-existing-rules-plan.json"),
         ("manifest", "manifest.json")
