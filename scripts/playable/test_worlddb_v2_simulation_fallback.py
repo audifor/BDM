@@ -6,6 +6,8 @@ Run with:
 import copy
 import importlib.util
 import unittest
+import tempfile
+import json
 from pathlib import Path
 
 SOURCE = Path(__file__).with_name("worlddb-v2-simulation-fallback.py")
@@ -131,6 +133,7 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         self.assertEqual(reused["formatProvenance"], "REUSED_DOCUMENTED_FORMAT")
         self.assertEqual(reused["nativeStatus"], "CANDIDATE_DOCUMENTED_FORMAT_ENGINE_PENDING")
         self.assertEqual(result["manifest"]["reused_documented_format_candidates"], 1)
+        self.assertEqual(result["reused_formats"], [reference])
         self.assertEqual(result["manifest"]["generated_simulation_candidates"], 96)
         self.assertFalse(any("championnat-44" in doc["competition_id"] for doc in result["formats"]))
 
@@ -147,6 +150,20 @@ class GeneratedCompetitionCandidateTests(unittest.TestCase):
         self.assertEqual(result["manifest"]["generated_with_documented_reference"], 1)
         self.assertEqual(result["manifest"]["reused_documented_format_candidates"], 0)
         self.assertEqual(len(result["formats"]), 97)
+
+    def test_imports_existing_pgm_reference_pack_directory_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            directory = root / "reference-packs" / "competition-formats" / "seasons"
+            (directory / "USA" / "nba").mkdir(parents=True)
+            fixture = {"competition_id": "competition:NAM:nba",
+                       "competition_season_id": "edition:NAM:nba:2025-26",
+                       "status": "COMPLETE", "variants": []}
+            source = directory / "USA" / "nba" / "2025-26.json"
+            source.write_text(json.dumps(fixture), encoding="utf-8")
+            before = source.read_bytes()
+            self.assertEqual(MODULE.load_format_documents([directory]), [fixture])
+            self.assertEqual(source.read_bytes(), before)
 
     def test_does_not_guess_among_two_matching_pgm_editions(self):
         matrix, batch, published = fixtures()
