@@ -124,6 +124,13 @@ def build(catalog):
     sourceConflicts = []
     for page in pages:
         for record in page["fixtures"]:
+            # A fixture on a school's page must actually involve that school.
+            # Otherwise DOM sidebar recommendations could silently contaminate
+            # the 363-program NCAA schedule.
+            if page["programId"] not in (record["homeProgramId"], record["awayProgramId"]):
+                excluded.append({"reason": "source_page_is_not_a_participant",
+                                 "listedByProgramId": page["programId"], **record})
+                continue
             if record["homeProgramId"] not in ids or record["awayProgramId"] not in ids:
                 excluded.append({"reason": "outside_current_division_1_women_cohort",
                                  "listedByProgramId": page["programId"], **record})
@@ -151,6 +158,20 @@ def build(catalog):
     if sourceConflicts:
         raise ValueError("Schedule identity contradictions: " + json.dumps(sourceConflicts[:8]))
     games = sorted(events.values(), key=lambda g: (g["date"], g["gameId"]))
+    date_pairs = {}
+    team_dates = {}
+    for game in games:
+        pair = (game["date"], *sorted((game["homeProgramId"], game["awayProgramId"])))
+        previous = date_pairs.setdefault(pair, game["gameId"])
+        if previous != game["gameId"]:
+            raise ValueError("Same NCAA fixture and date have two different event IDs: "
+                             + previous + " / " + game["gameId"])
+        for team in (game["homeProgramId"], game["awayProgramId"]):
+            key = (game["date"], team)
+            other = team_dates.setdefault(key, game["gameId"])
+            if other != game["gameId"]:
+                raise ValueError("One NCAA women's school has conflicting games on the same date: "
+                                 + team + " on " + game["date"])
     for game in games:
         game["listedByTeamIds"].sort()
     conference_by_team = {t["id"]: t["conferenceId"] for t in women}
