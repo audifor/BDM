@@ -15218,5 +15218,459 @@
         "scope": "BDM generated gameplay policy ONLY; not an official source"
       }
     ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:NAM:nba",
+    "competition_season_id": "edition:NAM:nba:2025-26:bdm-matrix:44",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: 30 PBM NBA franchises, 82 generated matches per club, 15+15 actual franchise conference affiliations pinned by club name, conference play-in ranks 7-10, best-of-seven postseason. The generated fixture matrix, in-season NBA Cup conditional fixtures, exact event dates and NBA official tie-break rules are NOT reproduced.",
+    "variants": [
+      {
+        "key": "NBA_BDM_MATRIX",
+        "name": "NBA 2025-26: conferences, Play-In, best-of-seven (simulated fixtures)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 30
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not official NBA tie-breakers",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 30,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "games_per_team": 82,
+                "official_fixture_fidelity": false,
+                "source_published_games_per_team": 80,
+                "conditional_cup_games_per_team": 2
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_NBA_CONFERENCES"
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "EAST_7_8",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "13-15"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_7_8",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "14-16"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "EAST_9_10",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "17-19"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_9_10",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "18-20"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "EAST_PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "LOSER_13_15_VS_WINNER_17_19"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "LOSER_14_16_VS_WINNER_18_20"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-15",
+                  "7-9",
+                  "5-11",
+                  "3-13",
+                  "2-16",
+                  "8-10",
+                  "6-12",
+                  "4-14"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4",
+                  "WINNER_5-WINNER_6",
+                  "WINNER_7-WINNER_8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_FINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "NBA_FINALS",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "FIRST_ROUND",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 12
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 13,
+            "rank_to": 13
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 15,
+            "rank_to": 15
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 14,
+            "rank_to": 14
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 16,
+            "rank_to": 16
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 17,
+            "rank_to": 17
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 19,
+            "rank_to": 19
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 18,
+            "rank_to": 18
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 20,
+            "rank_to": 20
+          },
+          {
+            "from": "EAST_7_8",
+            "to": "EAST_PLAY_IN_FINAL",
+            "selector": "LOSER"
+          },
+          {
+            "from": "EAST_9_10",
+            "to": "EAST_PLAY_IN_FINAL",
+            "selector": "WINNER"
+          },
+          {
+            "from": "EAST_7_8",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 13
+            }
+          },
+          {
+            "from": "EAST_PLAY_IN_FINAL",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 15
+            }
+          },
+          {
+            "from": "WEST_7_8",
+            "to": "WEST_PLAY_IN_FINAL",
+            "selector": "LOSER"
+          },
+          {
+            "from": "WEST_9_10",
+            "to": "WEST_PLAY_IN_FINAL",
+            "selector": "WINNER"
+          },
+          {
+            "from": "WEST_7_8",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 14
+            }
+          },
+          {
+            "from": "WEST_PLAY_IN_FINAL",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 16
+            }
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "CONFERENCE_SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_SEMIFINALS",
+            "to": "CONFERENCE_FINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_FINALS",
+            "to": "NBA_FINALS",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.nba.com/news/2025-26-nba-regular-season-schedule",
+        "type": "OFFICIAL",
+        "scope": "30 clubs, 82 regular games, 80 fixed plus two Cup-dependent games; candidate simulates all 82 independently of Cup"
+      },
+      {
+        "url": "https://www.nba.com/news/nba-play-in-tournament",
+        "type": "OFFICIAL",
+        "scope": "Each conference 7-10 play-in advancement"
+      },
+      {
+        "url": "https://www.nba.com/news/2026-nba-playoffs-schedule",
+        "type": "OFFICIAL",
+        "scope": "Conference bracket four best-of-seven rounds and NBA final"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM simulations of opponents/dates and classification tiebreaks"
+      }
+    ]
   }
 ]
