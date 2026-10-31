@@ -5,6 +5,7 @@ import officialFormats from '@/data/worlddb-v2/competition-runtime.json'
 import supplementalFormats from '@/data/worlddb-v2/additional-formats.json'
 import publishedCatalog from '@/data/worlddb-v2/competitions.json'
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
+import { reconcileNcaaD1Real2026MenConferenceFormats } from './NcaaD1Real2026MenReferences'
 
 const editions = [
   { gender: 'men', expected: 365, championship: 'edition:USA:ncaa-d1-men-championship:2026-27' },
@@ -69,6 +70,24 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(men.seasonId).not.toBe(women.seasonId)
     expect(men.ecosystemId).not.toBe(women.ecosystemId)
     expect(men.sourceStatus).toContain('PENDING_INDIVIDUAL_OFFICIAL_VERIFICATION')
+  })
+
+  it('reconciles 32 documented 2026-27 mens conference formats to exactly 365 actual sourced programs', () => {
+    const rows = reconcileNcaaD1Real2026MenConferenceFormats()
+    expect(rows).toHaveLength(32)
+    expect(rows.reduce((sum, row) => sum + row.sourceClubCount, 0)).toBe(365)
+    expect(rows.every(row => row.documentedClubCount === row.sourceClubCount)).toBe(true)
+    expect(new Set(rows.map(row => row.referenceEditionId)).size).toBe(32)
+    const count = (referenceId: string) => rows.find(row => row.referenceFormatId.endsWith(':' + referenceId + ':regular-season'))?.sourceClubCount
+    expect(count('asun')).toBe(8)
+    expect(count('horizon')).toBe(12)
+    expect(count('mac')).toBe(12)
+    expect(count('nec')).toBe(9)
+    const men = membership.genders.men.teams
+    expect(men.filter(team => team.name === 'West Florida Argonauts' && team.conferenceId === 'atlantic-sun-conference')).toHaveLength(1)
+    expect(men.filter(team => team.name === 'Northern Illinois Huskies' && team.conferenceId === 'horizon-league')).toHaveLength(1)
+    expect(men.some(team => team.name === 'Saint Francis Red Wolves')).toBe(false)
+    expect(membership.provenance.officialMembershipCorrections).toHaveLength(3)
   })
 
   it('has distinct official 76-team 2027 championship formats with the required bracket progression', () => {
