@@ -30,12 +30,13 @@ GAME_ID_RE = re.compile(r"-(\d{8,12})$")
 USER_AGENT = "BDM-WorldDB-Evidence-Harvester/1.0 (2026-27 NCAA women's schedule reconciliation; no robot bypass)"
 
 def resolve_verified_duplicate(events, excluded):
+    resolve_verified_stanford(events)
     # Both directory pages list two ESPN event IDs for the same game. ESPN's
     # 401913047 returns 404; 401919967 resolves to NIU at DePaul on Nov 11.
     # DePaul's own schedule independently confirms the date and venue.
     stale, current = '401913047', '401919967'
     if stale not in events or current not in events:
-        return
+        return resolve_verified_grand_canyon(events, excluded)
     a, b = events[stale], events[current]
     expected = ('2026-11-11', 'ncaa:2026-27:women:depaul-blue-demons',
                 'ncaa:2026-27:women:northern-illinois-huskies')
@@ -46,6 +47,66 @@ def resolve_verified_duplicate(events, excluded):
                                   'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401919967',
                                   'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401913047']})
     del events[stale]
+    resolve_verified_grand_canyon(events, excluded)
+
+def resolve_verified_grand_canyon(events, excluded):
+    # The directory also repeats Winthrop–Grand Canyon on Nov 23, but the
+    # official GCU schedule and the live ESPN event both place it on Nov 25 at
+    # a neutral site. Preserve the erroneous source record in the audit trail.
+    stale, current = '401915901', '401921390'
+    if stale not in events or current not in events:
+        return
+    a, b = events[stale], events[current]
+    expected = ('2026-11-23', 'ncaa:2026-27:women:grand-canyon-lopes',
+                'ncaa:2026-27:women:winthrop-eagles')
+    if any((row['date'], row['homeProgramId'], row['awayProgramId']) != expected for row in (a, b)):
+        raise ValueError('Previously verified Grand Canyon duplicate has changed; recheck sources')
+    evidence = ['https://gculopes.com/sports/womens-basketball/schedule?path=wbball',
+                'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401921390',
+                'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401915901']
+    excluded.append({'reason': 'duplicate_stale_event_id_and_incorrect_date', 'record': a,
+                     'supersededBy': current, 'evidence': evidence})
+    b['sourceCorrection'] = {'originalDate': b['date'], 'date': '2026-11-25',
+                             'neutralSite': True, 'evidence': evidence}
+    b['date'] = '2026-11-25'
+    b['neutralSite'] = True
+    del events[stale]
+    high_point = events.get('401921391')
+    if high_point is not None:
+        expected_high_point = ('2026-11-25', 'ncaa:2026-27:women:high-point-panthers',
+                               'ncaa:2026-27:women:grand-canyon-lopes')
+        if (high_point['date'], high_point['homeProgramId'], high_point['awayProgramId']) != expected_high_point:
+            raise ValueError('Previously verified High Point fixture has changed; recheck sources')
+        high_point['sourceCorrection'] = {'originalDate': high_point['date'], 'date': '2026-11-23',
+            'neutralSite': True, 'evidence': [evidence[0],
+                'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/summary?event=401921391']}
+        high_point['date'] = '2026-11-23'
+        high_point['neutralSite'] = True
+
+def resolve_verified_stanford(events):
+    game = events.get('401915984')
+    if game is None:
+        return
+    expected = ('2026-11-29', 'ncaa:2026-27:women:stanford-cardinal',
+                'ncaa:2026-27:women:columbia-lions')
+    if (game['date'], game['homeProgramId'], game['awayProgramId']) != expected:
+        raise ValueError('Previously verified Stanford fixture has changed; recheck sources')
+    game['sourceCorrection'] = {'originalDate': game['date'], 'date': '2026-11-27',
+        'neutralSite': True, 'evidence': [
+            'https://gostanford.com/news/2026/08/28/nonconference-schedule-set',
+            'https://hawaiiathletics.com/sports/womens-basketball/schedule']}
+    game['date'] = '2026-11-27'
+    game['neutralSite'] = True
+    showdown = events.get('401918886')
+    if showdown is not None:
+        expected_showdown = ('2026-11-27', 'ncaa:2026-27:women:columbia-lions',
+                             'ncaa:2026-27:women:san-diego-state-aztecs')
+        if (showdown['date'], showdown['homeProgramId'], showdown['awayProgramId']) != expected_showdown:
+            raise ValueError('Previously verified Columbia fixture has changed; recheck sources')
+        showdown['sourceCorrection'] = {'originalDate': showdown['date'], 'date': '2026-11-29',
+            'neutralSite': True, 'evidence': ['https://hawaiiathletics.com/sports/womens-basketball/schedule']}
+        showdown['date'] = '2026-11-29'
+        showdown['neutralSite'] = True
 
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -189,13 +250,17 @@ def build(catalog):
         raise ValueError("Same NCAA fixture and date have different event IDs: "
                          + json.dumps(duplicate_pairs, ensure_ascii=False))
     team_dates = {}
+    team_conflicts = []
     for game in games:
         for team in (game["homeProgramId"], game["awayProgramId"]):
             key = (game["date"], team)
             other = team_dates.setdefault(key, game["gameId"])
             if other != game["gameId"]:
-                raise ValueError("One NCAA women's school has conflicting games on the same date: "
-                                 + team + " on " + game["date"])
+                team_conflicts.append({"team": team, "date": game["date"],
+                                       "first": events[other], "second": game})
+    if team_conflicts:
+        raise ValueError("NCAA women's schools have conflicting games on the same date: "
+                         + json.dumps(team_conflicts, ensure_ascii=False))
     for game in games:
         game["listedByTeamIds"].sort()
     conference_by_team = {t["id"]: t["conferenceId"] for t in women}
