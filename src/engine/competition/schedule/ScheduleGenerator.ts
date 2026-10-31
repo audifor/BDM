@@ -67,7 +67,14 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const startDate = options.startDate ?? season.startDate
   const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat, season.calendarPolicy)
   const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && (season.worldCompetitionFormat !== undefined || season.calendarPolicy !== undefined) ? scheduleRoundsByCalendar : undefined)
-  const roundDates = schedulePolicy === undefined
+  const leagueTwoPhase = regular?.pairing?.payload.bdm_gleague_two_phase_v1 === true
+  const matrixFirst = seasonWindows.regularSeasonStart
+  const matrixLast = seasonWindows.regularSeasonEnd
+  const availableDays = Math.round((Date.parse(matrixLast + 'T00:00:00Z') - Date.parse(matrixFirst + 'T00:00:00Z')) / 86_400_000)
+  if (leagueTwoPhase && (matrixTarget !== 36 || rounds.length > availableDays + 1)) throw new Error('G League generated 36-game calendar does not fit its regular window')
+  const roundDates = leagueTwoPhase && options.schedulePolicy === undefined && options.daysBetweenRounds === undefined
+    ? rounds.map((_, i) => addDays(matrixFirst, Math.floor(i * availableDays / Math.max(1, rounds.length - 1))))
+    : schedulePolicy === undefined
     ? rounds.map((_, roundIndex) => addDays(startDate, roundIndex * (options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS)))
     : schedulePolicy(rounds.length, startDate, seasonWindows.regularSeasonEnd, season.calendarPolicy)
 

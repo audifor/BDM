@@ -180,6 +180,35 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
     return document
 
 
+def gleague_two_phase_sim_document(row, participants):
+    """Preserve the authentic 31-club group identities and explicitly simulated fixtures."""
+    if row.get('source_id') != 'pbm:DYN_championnat:94' or row.get('native_format_id') != 'competition:NAM:gleague':
+        return None
+    if not any(item.get('identity') == 'competition:NAM:gleague'
+               for item in row.get('official_documentary_evidence') or []):
+        return None
+    if participants != 31:
+        raise ValueError('G League PBM requires exactly 31 original clubs')
+    path = Path(__file__).resolve().parents[2] / 'src/data/worlddb-v2/global-formats.json'
+    matches = [doc for doc in read(path) if doc.get('competition_id') == 'competition:NAM:gleague'
+               and doc.get('competition_season_id') == 'edition:NAM:gleague:2026-27:bdm-two-phase:94']
+    if len(matches) != 1:
+        raise ValueError('G League source format must resolve uniquely')
+    doc = matches[0]
+    nodes = doc['variants'][0]['nodes']
+    regular = [n for n in nodes if n.get('role') == 'REGULAR_SEASON']
+    tipoff = [n for n in nodes if n.get('key') == 'TIP_OFF_TOURNAMENT']
+    if (doc.get('status') != 'COMPLETE' or len(regular) != 1 or len(tipoff) != 1
+        or regular[0].get('team_count') != 31
+        or regular[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 36
+        or not regular[0].get('pairing', {}).get('payload', {}).get('bdm_gleague_two_phase_v1')
+        or tipoff[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 14
+        or not tipoff[0].get('pairing', {}).get('payload', {}).get('bdm_gleague_tipoff_v1')
+        or 'GENERATED_SIMULATION' not in doc.get('notes', '')):
+        raise ValueError('G League format lacks explicit source and two-phase simulation guarantees')
+    return copy.deepcopy(doc)
+
+
 def nba_matrix_sim_document(row, participants):
     """Load the versioned NBA simulation graph without inventing source club IDs.
 
@@ -750,6 +779,26 @@ def build_package(matrix, batch, published, reusable_formats=()):
                 "conference_count": ncaa_plan["reference_conferences"],
                 "native_status": "NCAA_MEMBERSHIP_PENDING",
                 "official_fidelity": "NOT_CERTIFIED",
+            })
+            continue
+        gleague_sim = gleague_two_phase_sim_document(row, expected_count)
+        if gleague_sim is not None:
+            documents.append(gleague_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': gleague_sim['competition_id'],
+                'editionId': gleague_sim['competition_season_id'],
+                'name': row['competition'], 'currencyCode': 'USD',
+                'calendar': 'FORMAT_DERIVED_SIMULATION', 'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'REUSED_DOCUMENTED_FORMAT', 'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'GLEAGUE_SOURCE_GROUPS_WITH_GENERATED_TWO_PHASE_FIXTURES',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'REUSED_DOCUMENTED_FORMAT',
+                'format_reference_id': row['native_format_id'], 'expected_tipoff_games': 217,
+                'expected_regular_games': 558, 'native_status': 'ENGINE_AND_PBM_NAME_RECONCILIATION_PENDING',
+                'official_fidelity': 'REAL_GROUP_IDENTITIES_TWO_PHASE_QUOTAS_AND_PLAYOFFS; FIXTURES_DATES_SHOWCASE_SIMULATED',
             })
             continue
         nba_sim = nba_matrix_sim_document(row, expected_count)

@@ -16,6 +16,7 @@ import { worldDbV2Competition, worldDbV2Calendar, worldDbV2SeasonEnd } from './W
 import { bindWorldDbV2FrenchFormat } from './WorldDbV2FrenchFormatBinding';
 import { worldDbV2ConnectionBlockers } from './WorldDbV2Connection';
 import { pinNbaConferencesToSourceClubs } from './NbaConferenceSource';
+import { pinGLeagueSourceMemberships } from './GLeagueSourceGroups';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -198,9 +199,10 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
     if (config.sourceCompetitionId !== snapshot.competitions[0]?.entity_id) throw Error('PBM competition/config identity mismatch');
     const rawFormat = runtimeBundle.competitionFormats.find(f => f.competitionSeasonId === config.editionId && f.competitionId === config.nativeCompetitionId);
     if (!rawFormat) throw Error('Verified runtime format/edition mapping required: ' + config.sourceCompetitionId);
-    const format = pinNbaConferencesToSourceClubs(rawFormat, snapshot.clubs.map(club => ({
+    const sourceClubs = snapshot.clubs.map(club => ({
         id: club.entity_id, name: String(club.reference_data.nom_equipe),
-    })));
+    }));
+    const format = pinGLeagueSourceMemberships(pinNbaConferencesToSourceClubs(rawFormat, sourceClubs), sourceClubs);
     const effectiveBundle = format === rawFormat ? runtimeBundle : {
         ...runtimeBundle, competitionFormats: runtimeBundle.competitionFormats.map(doc =>
             doc.competitionId === format.competitionId && doc.competitionSeasonId === format.competitionSeasonId ? format : doc),
