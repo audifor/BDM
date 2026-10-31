@@ -20,6 +20,7 @@ import { isSeasonComplete } from '@/engine/season'
 import { startNextSeasonTransitionFor } from './startNextSeason'
 import { serializeGameWorldV4, deserializeGameWorldSaveV4 } from '@/save/GameWorldSaveV4'
 import { validateGameWorld } from '@/domain/world'
+import { NBA_EAST_FRANCHISE_NAMES, NBA_WEST_FRANCHISE_NAMES } from './NbaConferenceSource'
 
 function generated(count: number, grouped: boolean) {
   return JSON.parse(execFileSync(process.env.BDM_PYTHON ?? 'python', ['-c',
@@ -130,6 +131,21 @@ it('plays four source groups, the second group stage and cross semifinals throug
   await exerciseFamily(wire, 16, 1, true, false)
 }, 180_000)
 
+it('plays NBA 30 clubs through 82 regular games, two real conferences, play-in and BO7 Finals', async () => {
+  const wire = globalFormats.find(doc => doc.competition_id === 'competition:NAM:nba')
+  expect(wire).toBeDefined()
+  const names = [...NBA_EAST_FRANCHISE_NAMES, ...NBA_WEST_FRANCHISE_NAMES]
+  const source = snapshot(30, false)
+  const nbaSource: WorldDbV2Snapshot = {
+    ...source,
+    clubs: source.clubs.map((club, i) => ({
+      ...club, reference_data: { ...club.reference_data, nom_equipe: names[i]! },
+    })),
+    competitions: [{ ...source.competitions[0]!, entity_id: 'pbm:DYN_championnat:44' }],
+  }
+  await exerciseFamily(wire, 30, 2, true, false, nbaSource, worldDbV2Competition('pbm:DYN_championnat:44'))
+}, 600_000)
+
 it('plays NBL27 33-game matrix, six-team play-in, best-of-three semifinals and best-of-five final', async () => {
   const wire = globalFormats.find(doc => doc.competition_id === 'competition:AUS:nbl')
   expect(wire).toBeDefined()
@@ -222,7 +238,7 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
     world = reopened
   }
   save()
-  for (let n = 0; n < 1200 && !isSeasonComplete(world, seasonId); n++) {
+  for (let n = 0; n < regularCount + 160 && !isSeasonComplete(world, seasonId); n++) {
     world = materializeCompetitionPostseason(world, seasonId)
     const game = Object.values(world.games).filter(g => g.seasonId === seasonId && g.status === 'scheduled').sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0]
     expect(game, 'Incomplete season must have a physical next game').toBeDefined()
@@ -235,7 +251,8 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
   expect(champion).toBeTruthy()
   expect(world.seasonHistoryBySeasonId[seasonId]?.championTeamId).toBe(champion)
   const tables = calculateGroupStandings(world, seasonId)
-  expect(tables).toHaveLength(grouped ? Number(format.variants[0]!.nodes[0]!.opponentScope!.payload.generated_group_count) : 1)
+  const simulatedConferences = world.seasons[seasonId]!.worldCompetitionFormat?.variants[0]?.nodes[0]?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES'
+  expect(tables).toHaveLength(simulatedConferences ? 2 : grouped ? Number(format.variants[0]!.nodes[0]!.opponentScope!.payload.generated_group_count) : 1)
   const matrixQuota = format.variants[0]!.nodes.find(node => node.role === 'REGULAR_SEASON')?.pairing?.payload.games_per_team
   for (const table of tables) expect(table.every(row => row.played === (typeof matrixQuota === 'number' ? matrixQuota : (table.length - 1) * meetings))).toBe(true)
   if (format.competitionId === 'competition:FRA:nm2') {
@@ -308,9 +325,9 @@ it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('projects every source
   expect(results.filter(r => r.status === 'PROJECTION_SAVE_PASS').length).toBeGreaterThanOrEqual(90)
 }, 600_000)
 
-it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 99 available catalog entries through the default application bundle', async () => {
+it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 100 available catalog entries through the default application bundle', async () => {
   const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
-  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(99)
+  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(100)
   for (const config of WORLDDB_V2_GLOBAL_COMPETITIONS) {
     const row = index.results.find((r: any) => r.source_id === config.sourceCompetitionId)
     const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
