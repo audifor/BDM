@@ -136,6 +136,30 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(NCAA_MEN_GAME_FORMAT).not.toEqual(NCAA_WOMEN_GAME_FORMAT)
   })
 
+  it('has source-specific official ASUN 2026-27 womens conference season and 2027 seeded tournament, not the mens rules', () => {
+    const regular = formatByEdition.get('edition:USA:ncaa-d1-women:asun:regular-season:2026-27')
+    const tournament = formatByEdition.get('edition:USA:ncaa-d1-women:asun:tournament:2026-27')
+    expect(regular).toBeDefined()
+    expect(tournament).toBeDefined()
+    // Sports structure is real; PARTIAL prevents claiming exact official calendar or
+    // advancement execution while the full fixture and seeding engine isn't connected.
+    expect(regular?.status).toBe('PARTIAL')
+    expect(tournament?.status).toBe('PARTIAL')
+    expect(regular?.sources.every(s => s.type === 'OFFICIAL')).toBe(true)
+    expect(tournament?.sources.every(s => s.type === 'OFFICIAL')).toBe(true)
+    expect(regular?.variants[0]?.isRealVariant).toBe(true)
+    expect(regular?.variants[0]?.nodes[0]?.teamCount).toBe(8)
+    expect(regular?.variants[0]?.nodes[0]?.pairing?.meetingsPerPair).toBe(2)
+    const nodes = tournament!.variants[0]!.nodes
+    const node = (key: string) => nodes.find(n => n.key === key)!
+    expect(node('FIRST_ROUND').pairing?.payload.matchups).toEqual(['5-8', '6-7'])
+    expect(node('SEMIFINALS').teamCount).toBe(4)
+    expect(node('FINAL').hosting?.payload.dates).toEqual(['2027-03-08'])
+    expect(tournament?.variants[0]?.edges.filter(e => e.from === 'QUALIFIED').map(e => e.count)).toEqual([4, 2, 2])
+    const asunWomen = membership.genders.women.teams.filter(t => t.conferenceId === 'atlantic-sun-conference')
+    expect(asunWomen).toHaveLength(8)
+  })
+
   it('projects separately sourced 2026-27 real ASUN men and women fixtures into existing Game and conference classification', () => {
     expect(sourceFixtureSample.coverage).toBe('PARTIAL_OFFICIALLY_ANNOUNCED_GAMES_ONLY')
     const sources = sourceFixtureSample.fixtures as NcaaD1Real2026FixtureSource[]
