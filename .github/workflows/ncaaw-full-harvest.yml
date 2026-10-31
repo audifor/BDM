@@ -1,6 +1,11 @@
 name: NCAAW 2026-27 all 363 programs fixture evidence harvest
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/playable/ncaaw_2026_27_full_harvest.py'
+      - '.github/workflows/ncaaw-full-harvest.yml'
   push:
     branches: [playable/worlddb-102-final-01]
     paths:
@@ -39,7 +44,7 @@ jobs:
           name: ncaaw-2026-27-all-363-fixtures
           path: src/data/worlddb-v2/ncaaw-2026-27-all-sourced-fixtures.json
       - name: Publish source-only data back to PR branch after all validations
-        if: github.event_name == 'push' && github.ref == 'refs/heads/playable/worlddb-102-final-01'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git config user.name "BDM NCAA Evidence Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
