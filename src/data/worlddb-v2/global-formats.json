@@ -23,7 +23,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -180,7 +180,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -337,7 +337,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -494,7 +494,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -651,7 +651,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -808,7 +808,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -965,7 +965,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1122,7 +1122,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1279,7 +1279,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1436,7 +1436,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1593,7 +1593,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1750,7 +1750,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -1907,7 +1907,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2064,7 +2064,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2221,7 +2221,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2378,7 +2378,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2535,7 +2535,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2670,6 +2670,244 @@
   },
   {
     "schema_version": "1.0",
+    "competition_id": "competition:FRA:nm2",
+    "competition_season_id": "edition:FRA:nm2:2025-26:bdm-adapted:42",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "FFBB 2025/26: 56 clubs in four pools of 14, double round robin. The four pool winners contest a two-day drawn Final Four, including a mandatory third-place game. Pool winners access NM1 subject to participation/financial approval; ranks 13-14 in each pool are relegated to NM3. Rules for replacing an ineligible promotion candidate, full standings tiebreak and final draw details are not modeled; PARTIAL. | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: four source groups and their winners retain the final four and placement game; group assignments, semifinal paths and semifinal single-game contest are BDM-generated, not official.",
+    "variants": [
+      {
+        "key": "MAIN",
+        "name": "NM2 2025/26",
+        "nodes": [
+          {
+            "key": "REGULAR_GROUPS",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "team_count": 56,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP",
+              "payload": {
+                "policy": "BDM_GENERATED_GROUPS",
+                "generated_group_count": 4
+              }
+            }
+          },
+          {
+            "key": "POOL_A",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "name": "Pool A",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 0
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "POOL_B",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "name": "Pool B",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 1
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "POOL_C",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "name": "Pool C",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 2
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "POOL_D",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "name": "Pool D",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 3
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "FINAL_FOUR",
+            "node_type": "ROUND",
+            "role": "FINAL_FOUR",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-4",
+                  "2-3"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            }
+          },
+          {
+            "key": "THIRD_PLACE",
+            "node_type": "ROUND",
+            "role": "PLACEMENT",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "LOSER_1-LOSER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_GROUPS",
+            "to": "FINAL_FOUR",
+            "selector": "TOP_N",
+            "count": 4
+          },
+          {
+            "from": "FINAL_FOUR",
+            "to": "THIRD_PLACE",
+            "selector": "LOSER"
+          },
+          {
+            "from": "FINAL_FOUR",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ],
+        "is_real_variant": false,
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        }
+      }
+    ],
+    "consequences": [
+      {
+        "variant_key": "MAIN",
+        "source_node": "POOL_A",
+        "selector": "RANK_RANGE",
+        "rank_from": 13,
+        "rank_to": 14,
+        "type": "RELEGATION",
+        "payload": {
+          "destination": "NM3"
+        }
+      },
+      {
+        "variant_key": "MAIN",
+        "source_node": "POOL_B",
+        "selector": "RANK_RANGE",
+        "rank_from": 13,
+        "rank_to": 14,
+        "type": "RELEGATION",
+        "payload": {
+          "destination": "NM3"
+        }
+      },
+      {
+        "variant_key": "MAIN",
+        "source_node": "POOL_C",
+        "selector": "RANK_RANGE",
+        "rank_from": 13,
+        "rank_to": 14,
+        "type": "RELEGATION",
+        "payload": {
+          "destination": "NM3"
+        }
+      },
+      {
+        "variant_key": "MAIN",
+        "source_node": "POOL_D",
+        "selector": "RANK_RANGE",
+        "rank_from": 13,
+        "rank_to": 14,
+        "type": "RELEGATION",
+        "payload": {
+          "destination": "NM3"
+        }
+      }
+    ],
+    "sources": [
+      {
+        "url": "https://api.ffbb.com/assets/106a861e-a2ae-4e1f-bdf4-8e18e2456e93?download=",
+        "type": "OFFICIAL",
+        "scope": "FFBB Annuaire 2025/26 NM2: 4x14 double round robin, Final Four, access to NM1, relegation of ranks 13-14 to NM3."
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
     "competition_id": "competition:BDM-SIM:dyn_championnat-45",
     "competition_season_id": "edition:BDM-SIM:dyn_championnat-45:generated",
     "season_label": "BDM generated season",
@@ -2692,7 +2930,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -2849,7 +3087,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3006,7 +3244,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3260,7 +3498,8 @@
           "basis": [
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
-              "source": "BDM_GENERATED_SIMULATION"
+              "source": "BDM_GENERATED_SIMULATION",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3330,7 +3569,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3487,7 +3726,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3644,7 +3883,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -3801,7 +4040,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4078,7 +4317,8 @@
           "basis": [
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
-              "source": "BDM_GENERATED_SIMULATION"
+              "source": "BDM_GENERATED_SIMULATION",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4133,7 +4373,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4290,7 +4530,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4447,7 +4687,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4604,7 +4844,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4761,7 +5001,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -4918,7 +5158,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5075,7 +5315,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5232,7 +5472,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5389,7 +5629,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5546,7 +5786,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5703,7 +5943,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -5860,7 +6100,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6017,7 +6257,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6174,7 +6414,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6507,7 +6747,8 @@
           "basis": [
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
-              "source": "BDM_GENERATED_SIMULATION"
+              "source": "BDM_GENERATED_SIMULATION",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6559,7 +6800,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6719,7 +6960,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -6876,7 +7117,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7033,7 +7274,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7190,7 +7431,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7347,7 +7588,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7475,7 +7716,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7632,7 +7873,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7789,7 +8030,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -7946,7 +8187,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8103,7 +8344,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8260,7 +8501,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8417,7 +8658,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8574,7 +8815,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8731,7 +8972,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -8859,7 +9100,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9016,7 +9257,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9173,7 +9414,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9330,7 +9571,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9487,7 +9728,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9644,7 +9885,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9801,7 +10042,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -9958,7 +10199,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10115,7 +10356,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10272,7 +10513,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10397,7 +10638,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10554,7 +10795,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10711,7 +10952,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -10868,7 +11109,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11025,7 +11266,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11182,7 +11423,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11339,7 +11580,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11496,7 +11737,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11653,7 +11894,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11810,7 +12051,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -11967,7 +12208,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12092,7 +12333,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12249,7 +12490,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12406,7 +12647,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12563,7 +12804,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12691,7 +12932,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12851,7 +13092,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -12976,7 +13217,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13101,7 +13342,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13226,7 +13467,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13383,7 +13624,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13540,7 +13781,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13665,7 +13906,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },
@@ -13790,7 +14031,7 @@
             {
               "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
               "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-              "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
             }
           ]
         },

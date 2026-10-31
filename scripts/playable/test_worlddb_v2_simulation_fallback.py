@@ -45,6 +45,24 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_adapts_four_group_winners_and_preserves_the_placement_game(self):
+        groups = [{'key': f'POOL_{i}', 'role': 'REGULAR_SEASON', 'node_type': 'GROUP', 'team_count': 14,
+                   'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2}, 'opponent_scope': {'type': 'SAME_GROUP'}} for i in range(4)]
+        nodes = groups + [{'key': 'SEMIS', 'role': 'FINAL_FOUR', 'node_type': 'ROUND', 'team_count': 4},
+                          {'key': 'THIRD', 'role': 'PLACEMENT', 'node_type': 'ROUND', 'team_count': 2, 'contest': {'format_type': 'SINGLE_GAME'}},
+                          {'key': 'FINAL', 'role': 'FINAL', 'node_type': 'ROUND', 'team_count': 2, 'contest': {'format_type': 'SINGLE_GAME'}}]
+        edges = [{'from': n['key'], 'to': 'SEMIS', 'selector': 'RANK_RANGE', 'rank_from': 1, 'rank_to': 1} for n in groups]
+        edges += [{'from': 'SEMIS', 'to': 'THIRD', 'selector': 'LOSER'}, {'from': 'SEMIS', 'to': 'FINAL', 'selector': 'WINNER'}]
+        source = {'competition_id': 'competition:test', 'competition_season_id': 'edition:test', 'status': 'PARTIAL',
+                  'variants': [{'key': 'MAIN', 'nodes': nodes, 'edges': edges}], 'consequences': [], 'sources': []}
+        before = copy.deepcopy(source)
+        adapted = MODULE.adapt_documented_format({'source_id': 'pbm:DYN_championnat:42', 'native_format_id': 'competition:test'}, 56, [source])
+        self.assertEqual(source, before)
+        variant = adapted['variants'][0]
+        self.assertEqual(variant['nodes'][0]['opponent_scope']['payload']['generated_group_count'], 4)
+        self.assertEqual(variant['edges'][0]['count'], 4)
+        self.assertEqual(next(n for n in variant['nodes'] if n['key'] == 'THIRD')['pairing']['payload']['matchups'], ['LOSER_1-LOSER_2'])
+
     def test_generated_group_and_playoff_policy_keeps_a_bounded_schedule(self):
         doc = MODULE.simulation_document('pbm:DYN_championnat:42', 'NM2 simulation', 56, postseason=True, grouped=True)
         variant = doc['variants'][0]

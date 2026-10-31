@@ -128,7 +128,7 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
             "seeding": {"scheme_type": "RANK_BASED", "basis": [{
                 "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
                 "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
-                "terminal_tie": "EXTERNAL_DRAW_REQUIRED"
+                "terminal_tie": "BDM_TEAM_ID_DRAW"
             }]},
             "nodes": [{
                 "key": "REGULAR_SEASON", "node_type": "STAGE",
@@ -196,6 +196,9 @@ def adapt_documented_format(row, participants, documents):
     if not variant:
         return None
     regular = [n for n in variant.get('nodes', []) if n.get('role') == 'REGULAR_SEASON']
+    grouped_final = adapt_group_winners_final_four(row, participants, source, variant, regular)
+    if grouped_final is not None:
+        return grouped_final
     if len(regular) != 1 or (regular[0].get('pairing') or {}).get('type') != 'ROUND_ROBIN':
         return None
     if (regular[0].get('opponent_scope') or {}).get('type', 'ALL_STAGE') != 'ALL_STAGE':
@@ -265,7 +268,7 @@ def adapt_documented_format(row, participants, documents):
                 patches.append(node['key'] + ' alternating higher-seed hosting')
     seeding = adapted.get('seeding') or {'scheme_type': 'RANK_BASED', 'basis': []}
     if not any(b.get('type') == 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1' for b in seeding.get('basis', []) if isinstance(b, dict)):
-        seeding['basis'] = [*seeding.get('basis', []), {'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION'}]
+        seeding['basis'] = [*seeding.get('basis', []), {'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION', 'terminal_tie': 'BDM_TEAM_ID_DRAW'}]
         adapted['seeding'] = seeding
         patches.append('BDM classification policy')
     if not patches and source.get('status') == 'COMPLETE':
@@ -276,6 +279,61 @@ def adapt_documented_format(row, participants, documents):
     document['competition_season_id'] = source['competition_season_id'] + ':bdm-adapted:' + row['source_id'].rsplit(':', 1)[-1]
     adapted['is_real_variant'] = False
     document['notes'] = (source.get('notes') or '') + ' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: ' + '; '.join(patches)
+    return document
+
+
+def adapt_group_winners_final_four(row, participants, source, variant, groups):
+    """Reuse four equal group seasons and their final four, including third place."""
+    nodes = variant.get('nodes', [])
+    finals = [n for n in nodes if n.get('role') == 'FINAL_FOUR']
+    placements = [n for n in nodes if n.get('role') == 'PLACEMENT']
+    final = [n for n in nodes if n.get('role') == 'FINAL']
+    if len(groups) != 4 or len(finals) != 1 or len(final) != 1 or len(placements) != 1 or len(nodes) != 7:
+        return None
+    meetings = [(n.get('pairing') or {}).get('meetings_per_pair') for n in groups]
+    if (any((n.get('pairing') or {}).get('type') != 'ROUND_ROBIN' or
+            (n.get('opponent_scope') or {}).get('type') != 'SAME_GROUP' for n in groups)
+            or len(set(meetings)) != 1 or not isinstance(meetings[0], int) or meetings[0] < 1
+            or participants < 8):
+        return None
+    group_edges = [e for e in variant.get('edges', []) if e.get('from') in {n['key'] for n in groups}]
+    if len(group_edges) != 4 or any(e.get('to') != finals[0]['key'] or e.get('selector') != 'RANK_RANGE'
+                                     or e.get('rank_from') != 1 or e.get('rank_to') != 1 for e in group_edges):
+        return None
+    if not all(any(e.get('from') == finals[0]['key'] and e.get('to') == node['key'] and e.get('selector') == selector
+                   for e in variant.get('edges', [])) for node, selector in [(final[0], 'WINNER'), (placements[0], 'LOSER')]):
+        return None
+    document = copy.deepcopy(source)
+    selected = copy.deepcopy(variant)
+    document['variants'] = [selected]
+    document['status'] = 'COMPLETE'
+    document['competition_season_id'] = source['competition_season_id'] + ':bdm-adapted:' + row['source_id'].rsplit(':', 1)[-1]
+    selected['is_real_variant'] = False
+    regular = {'key': 'REGULAR_GROUPS', 'node_type': 'STAGE', 'role': 'REGULAR_SEASON', 'team_count': participants,
+               'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': meetings[0]},
+               'opponent_scope': {'type': 'SAME_GROUP', 'payload': {'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': 4}}}
+    semifinal = copy.deepcopy(finals[0])
+    semifinal['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['1-4', '2-3']}}
+    semifinal['contest'] = {'format_type': 'SINGLE_GAME', 'requires_winner': True}
+    third = copy.deepcopy(placements[0])
+    third['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['LOSER_1-LOSER_2']}}
+    championship = copy.deepcopy(final[0])
+    championship['pairing'] = {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['WINNER_1-WINNER_2']}}
+    # Keep the original group identities because documented consequences refer
+    # to them. Games use the single scoped stage; these nodes identify its tables.
+    group_metadata = []
+    for index, group in enumerate(groups):
+        metadata = copy.deepcopy(group)
+        metadata['role'] = 'GROUP_STAGE'
+        metadata['pairing']['payload'] = {**(metadata['pairing'].get('payload') or {}), 'bdm_generated_group_index': index}
+        group_metadata.append(metadata)
+    selected['nodes'] = [regular, *group_metadata, semifinal, third, championship]
+    selected['edges'] = [{'from': regular['key'], 'to': semifinal['key'], 'selector': 'TOP_N', 'count': 4},
+                         {'from': semifinal['key'], 'to': third['key'], 'selector': 'LOSER'},
+                         {'from': semifinal['key'], 'to': championship['key'], 'selector': 'WINNER'}]
+    selected['seeding'] = {'scheme_type': 'RANK_BASED', 'basis': [{'type': 'CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1', 'source': 'BDM_GENERATED_SIMULATION', 'terminal_tie': 'BDM_TEAM_ID_DRAW'}]}
+    document['notes'] = (source.get('notes') or '') + (' | GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: four source groups and their winners retain the final four and placement game; '
+                         'group assignments, semifinal paths and semifinal single-game contest are BDM-generated, not official.')
     return document
 
 

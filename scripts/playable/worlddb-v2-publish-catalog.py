@@ -35,14 +35,14 @@ def publish_validated_families(directory):
         document = documents[config['editionId']]
         if document['status'] != 'COMPLETE':
             raise ValueError('Only executable formats can be published')
-        configs.append({**config, 'nativeStatus': 'ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING'})
+        configs.append({**config, 'nativeStatus': 'FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING'})
         formats.append(document)
     if not configs:
         raise ValueError('No matching source and lifecycle evidence')
     target = BASE / 'src/data/worlddb-v2'
     for name, rows in [('global-competitions.json', configs), ('global-formats.json', formats)]:
         (target / name).write_text(json.dumps(rows, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    report = {'original_native_certified': len(read(target / 'competitions.json')), 'new_engine_playable': len(configs),
+    report = {'original_native_certified': len(read(target / 'competitions.json')), 'new_family_candidates': len(configs),
               'generated': sum(c['formatProvenance'] == 'GENERATED_SIMULATION' for c in configs),
               'adapted': sum(c.get('simulationPolicy') is True for c in configs),
               'pending': [r for r in validation.values() if r['id'] not in {c['sourceCompetitionId'] for c in configs}],
@@ -51,7 +51,7 @@ def publish_validated_families(directory):
               'format_sha256': hashlib.sha256((target / 'global-formats.json').read_bytes()).hexdigest()}
     evidence = BASE / 'docs/playable/evidence/worlddb-global-functional.json'
     evidence.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(json.dumps({k: report[k] for k in ['original_native_certified', 'new_engine_playable', 'generated', 'adapted']}))
+    print(json.dumps({k: report[k] for k in ['original_native_certified', 'new_family_candidates', 'generated', 'adapted']}))
 
 
 def main():

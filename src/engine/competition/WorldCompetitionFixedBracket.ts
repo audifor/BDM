@@ -61,6 +61,7 @@ export function instantiateWorldCompetitionFixedBracketV1(
 
   for (const node of topologicalNodes(variant.nodes, variant.edges)) {
     if (node.role === 'REGULAR_SEASON') continue
+    if (node.role === 'GROUP_STAGE' && typeof node.pairing?.payload.bdm_generated_group_index === 'number') continue
     const pairings = stringArray(node.pairing?.payload, 'pairings')
     const matchups = stringArray(node.pairing?.payload, 'matchups')
     if (pairings.length > 0 && matchups.length > 0) throw new Error(`Fixed bracket node ${node.key} declares both pairings and matchups`)
@@ -94,15 +95,16 @@ export function instantiateWorldCompetitionFixedBracketV1(
         }
         // Authoring packs can address the numbered contests of the preceding
         // round. These numbers are fixture ordinals, never standing seeds.
-        const numbered = /^WINNER_(\d+)-WINNER_(\d+)$/.exec(pairing)
+        const numbered = /^(WINNER|LOSER)_(\d+)-(WINNER|LOSER)_(\d+)$/.exec(pairing)
         if (numbered) {
-          const sources = incomingWinnerSources.get(node.key) ?? []
-          if (sources.length !== 1) throw new Error(`Numbered winner pairing requires one WINNER source: ${node.key}`)
+          const selectors = [numbered[1]!, numbered[3]!]
+          const sources = [...new Set(variant.edges.filter(e => e.to === node.key && selectors.includes(e.selector)).map(e => e.from))]
+          if (sources.length !== 1 || selectors.some(selector => !variant.edges.some(e => e.from === sources[0] && e.to === node.key && e.selector === selector))) throw new Error(`Numbered outcome pairing requires one WINNER source or one declared LOSER source: ${node.key}`)
           const previous = fixturesByNodeKey[sources[0]!] ?? []
-          const refs = [Number(numbered[1]), Number(numbered[2])].map(order => {
+          const refs = [Number(numbered[2]), Number(numbered[4])].map((order, index) => {
             const source = previous.find(f => f.fixtureOrder === order)
             if (!source) throw new Error(`Unknown predecessor fixture ${order} in ${node.key}`)
-            return Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: source.fixtureId })
+            return Object.freeze({ kind: selectors[index] === 'WINNER' ? 'WINNER_OF_FIXTURE' as const : 'LOSER_OF_FIXTURE' as const, fixtureId: source.fixtureId })
           })
           if (refs[0]!.fixtureId === refs[1]!.fixtureId) throw new Error(`Duplicate predecessor fixture in ${node.key}`)
           return Object.freeze([refs[0]!, refs[1]!] as const)

@@ -4,7 +4,7 @@ import type { CompetitionId } from '@/domain/ids'
 import type { ConferenceId, SeasonId, TeamId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
-import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
+import { calculateSeasonGroupStandings } from '@/domain/season/calculateStandings'
 
 export type StandingsEntry = FinalStandingLine
 
@@ -15,18 +15,7 @@ export function calculateStandings(world: GameWorld, seasonId: SeasonId, through
 
 /** Each group uses the same canonical classification/tie-break authority. */
 export function calculateGroupStandings(world: GameWorld, seasonId: SeasonId): readonly StandingsEntry[][] {
-  const season = world.seasons[seasonId]!
-  const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
-  const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
-  const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
-  const groups = node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' ? resolveWorldCompetitionGroups(node, participants) : [participants]
-  return groups.map(group => {
-    const ids = new Set(group)
-    return calculateSeasonStandings({ ...world,
-      seasons: { ...world.seasons, [seasonId]: { ...season, participantTeamIds: group } },
-      games: Object.fromEntries(Object.entries(world.games).filter(([, game]) => game.seasonId !== seasonId || (ids.has(game.homeTeamId) && ids.has(game.awayTeamId)))),
-    }, seasonId)
-  })
+  return calculateSeasonGroupStandings(world, seasonId)
 }
 
 export function calculateStandingsForCompetition(world: GameWorld, competitionId: CompetitionId): StandingsEntry[] {

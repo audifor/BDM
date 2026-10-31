@@ -2,6 +2,7 @@ import type { CompetitionId, SeasonId, TeamId } from '@/domain/ids'
 import type { PromotionRelegationResolution } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateStandings } from './standings'
+import { calculateGroupStandings } from './standings/Standings'
 import { recordTierMovementMemories } from '@/engine/memory'
 
 export function getCompetitionTier(world: GameWorld, competitionId: CompetitionId) { return Object.values(world.ecosystems).flatMap((ecosystem) => ecosystem.domesticTiers.map((tier) => ({ ecosystem, tier }))).find((item) => item.tier.competitionId === competitionId)?.tier }
@@ -17,12 +18,35 @@ export function resolvePromotionRelegation(world: GameWorld, upperSeasonId: Seas
   if (!rule) throw new Error('Competition tiers are not linked')
   if (!isComplete(world, upperSeasonId) || !isComplete(world, lowerSeasonId) || !world.seasonHistoryBySeasonId[upperSeasonId] || !world.seasonHistoryBySeasonId[lowerSeasonId]) return world
   const promotedTeamIds = calculateStandings(world, lowerSeasonId).slice(0, rule.exchangeCount).map((line) => line.teamId)
-  const relegatedTeamIds = calculateStandings(world, upperSeasonId).slice(-rule.exchangeCount).map((line) => line.teamId)
+  const relegatedTeamIds = resolveGroupedRelegation(world, upperSeasonId) ?? calculateStandings(world, upperSeasonId).slice(-rule.exchangeCount).map((line) => line.teamId)
+  if (relegatedTeamIds.length !== rule.exchangeCount) throw new Error('Relegation places do not match the linked tier exchange count')
   const resolution: PromotionRelegationResolution = { id, upperCompetitionId: upper.competitionId, lowerCompetitionId: lower.competitionId, upperSeasonId, lowerSeasonId, promotedTeamIds, relegatedTeamIds, resolvedDate: upper.endDate > lower.endDate ? upper.endDate : lower.endDate }
   let next = updateGameWorld(world, { promotionRelegationResolutions: [...Object.values(world.promotionRelegationResolutionsById), resolution] })
   for (const teamId of promotedTeamIds) next = recordTierMovementMemories(next, { resolutionId: resolution.id, competitionId: lower.competitionId, seasonId: lower.id, teamId, coachId: next.teams[teamId]!.coachId, occurredOn: resolution.resolvedDate, movement: 'promotion' })
   for (const teamId of relegatedTeamIds) next = recordTierMovementMemories(next, { resolutionId: resolution.id, competitionId: upper.competitionId, seasonId: upper.id, teamId, coachId: next.teams[teamId]!.coachId, occurredOn: resolution.resolvedDate, movement: 'relegation' })
   return next
+}
+
+/** Uses documented group rank consequences when all source group assignments are executable. */
+export function resolveGroupedRelegation(world: GameWorld, seasonId: SeasonId): TeamId[] | undefined {
+  const season = world.seasons[seasonId]
+  const format = season?.worldCompetitionFormat
+  const variant = format?.variants.find(v => v.isRealVariant) ?? format?.variants[0]
+  if (!format || !variant) return undefined
+  const groupNodes = variant.nodes.filter(node => node.role === 'GROUP_STAGE' && typeof node.pairing?.payload.bdm_generated_group_index === 'number')
+  const consequences = format.consequences.filter(item => item.variantKey === variant.key && item.type === 'RELEGATION' && groupNodes.some(node => node.key === item.sourceNode))
+  if (!consequences.length) return undefined
+  const tables = calculateGroupStandings(world, seasonId)
+  const selected: TeamId[] = []
+  for (const item of consequences) {
+    const node = groupNodes.find(candidate => candidate.key === item.sourceNode)!
+    const index = node.pairing!.payload.bdm_generated_group_index as number
+    const rows = tables[index]
+    if (!rows || item.selector !== 'RANK_RANGE' || item.rankFrom === undefined || item.rankTo === undefined || item.rankFrom < 1 || item.rankTo < item.rankFrom || item.rankTo > rows.length) throw new Error(`Invalid group relegation consequence: ${item.sourceNode}`)
+    selected.push(...rows.filter(row => row.position >= item.rankFrom! && row.position <= item.rankTo!).map(row => row.teamId))
+  }
+  if (new Set(selected).size !== selected.length) throw new Error('Duplicate team in group relegation consequences')
+  return selected
 }
 export function buildNextCompetitionParticipants(world: GameWorld, seasonId: SeasonId): readonly TeamId[] {
   const season = world.seasons[seasonId]!; const current = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds; let result = [...current]

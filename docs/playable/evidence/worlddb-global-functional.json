@@ -1,20 +1,14 @@
 {
   "original_native_certified": 4,
-  "new_engine_playable": 90,
+  "new_family_candidates": 91,
   "generated": 87,
-  "adapted": 3,
+  "adapted": 4,
   "pending": [
     {
       "id": "pbm:DYN_championnat:29",
       "name": "Nationale 1",
       "status": "PENDING",
       "error": "Error: Source format edition:FRA:nm1:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 2; group/conference assignments and stage planner connection required | PHASE1_A: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_A: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities | PHASE1_B: SAME_GROUP needs verified participant assignments and scoped scheduling | PHASE1_B: source edition declares 14 participants, PBM supplies 28; reconcile editions without changing identities"
-    },
-    {
-      "id": "pbm:DYN_championnat:42",
-      "name": "Nationale 2",
-      "status": "PENDING",
-      "error": "Error: Source format edition:FRA:nm2:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 4; group/conference assignments and stage planner connection required | POOL_A: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_A: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_B: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_B: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_C: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_C: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_D: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_D: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities"
     },
     {
       "id": "pbm:DYN_championnat:44",
@@ -199,8 +193,12 @@
     {
       "id": "pbm:DYN_championnat:42",
       "name": "Nationale 2",
-      "status": "PENDING",
-      "error": "Error: Source format edition:FRA:nm2:2025-26 is PARTIAL; missing execution fields must be reconciled from its sources | Classification policy is not linked; a COMPLETE document does not authorize substituting default tie-breaks | Native single-stage projection requires one regular node; found 4; group/conference assignments and stage planner connection required | POOL_A: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_A: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_B: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_B: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_C: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_C: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities | POOL_D: SAME_GROUP needs verified participant assignments and scoped scheduling | POOL_D: source edition declares 14 participants, PBM supplies 56; reconcile editions without changing identities"
+      "status": "PROJECTION_SAVE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SINGLE_GAME|regular:ROUND_ROBIN:SAME_GROUP|selector:LOSER|selector:TOP_N|selector:WINNER",
+      "teams": 56,
+      "games": 728,
+      "full_source_season": "PASS",
+      "game_period_minutes": 0.1
     },
     {
       "id": "pbm:DYN_championnat:44",
@@ -935,8 +933,16 @@
       "champion": "pbm:DYN_equipe:90003",
       "successorGames": 272,
       "shortGameMinutes": 0.1
+    },
+    {
+      "status": "LIFECYCLE_PASS",
+      "signature": "worlddb-v2-family-v1|bracket:named-outcomes|bracket:ordinal-outcomes|bracket:seeds|classification:CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1|contest:SINGLE_GAME|regular:ROUND_ROBIN:SAME_GROUP|selector:LOSER|selector:TOP_N|selector:WINNER",
+      "regularGames": 728,
+      "champion": "pbm:DYN_equipe:2914",
+      "successorGames": 728,
+      "shortGameMinutes": 0.1
     }
   ],
   "windows_acceptance": "NOT_RUN_FOR_NEW_ENTRIES",
-  "format_sha256": "eae0d9fd519a09ae76e8faefaa8729665ee0914a8f738cdc491c3394258d9e57"
+  "format_sha256": "cf2f4014247d1b390c8dc342b3e6a389f6baaadf00c420a1e00aa65bb57863dd"
 }

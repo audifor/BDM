@@ -10,7 +10,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-3",
     "teamCount": 20,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:FRA:elite-2",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -26,7 +26,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-11",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:DEU:easycredit-bbl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -42,7 +42,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-12",
     "teamCount": 13,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -56,7 +56,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-13",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -70,7 +70,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-15",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:DEU:proa",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -86,7 +86,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-16",
     "teamCount": 9,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -100,7 +100,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-17",
     "teamCount": 17,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -114,7 +114,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-18",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -128,7 +128,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-19",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:ISR:winner-league",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -144,7 +144,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-21",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:TUR:bsl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -160,7 +160,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-22",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:TUR:tbl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -176,7 +176,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-24",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -190,7 +190,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-32",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:CZE:nbl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -206,7 +206,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-36",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -220,7 +220,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-39",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -234,7 +234,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-40",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:UKR:superleague-men",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -250,8 +250,25 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-41",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
+  },
+  {
+    "sourceCompetitionId": "pbm:DYN_championnat:42",
+    "currencyCode": "EUR",
+    "countryId": 1,
+    "countryCode": "FRA",
+    "name": "Nationale 2",
+    "nativeCompetitionId": "competition:FRA:nm2",
+    "editionId": "edition:FRA:nm2:2025-26:bdm-adapted:42",
+    "ecosystemId": "worlddb-batch:DYN_championnat:42",
+    "teamCount": 56,
+    "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:FRA:nm2",
+    "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   },
   {
     "sourceCompetitionId": "pbm:DYN_championnat:45",
@@ -264,7 +281,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-45",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -278,7 +295,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-47",
     "teamCount": 20,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -292,7 +309,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-49",
     "teamCount": 20,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -306,7 +323,7 @@
     "ecosystemId": "worlddb-batch:DYN_championnat:59",
     "teamCount": 17,
     "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
     "simulationPolicy": true,
     "formatReferenceId": "competition:ESP:primera-feb",
@@ -323,7 +340,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-61",
     "teamCount": 20,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -337,7 +354,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-65",
     "teamCount": 15,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -351,7 +368,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-66",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -365,7 +382,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-68",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -379,7 +396,7 @@
     "ecosystemId": "worlddb-batch:DYN_championnat:69",
     "teamCount": 16,
     "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
     "simulationPolicy": true,
     "formatReferenceId": "competition:ESP:lf-endesa",
@@ -396,7 +413,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-70",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -410,7 +427,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-75",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -424,7 +441,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-76",
     "teamCount": 9,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -438,7 +455,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-77",
     "teamCount": 20,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:CHN:cba",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -454,7 +471,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-79",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:CZE:zbl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -470,7 +487,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-80",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:TUR:kbsl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -486,7 +503,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-81",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -500,7 +517,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-84",
     "teamCount": 9,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -514,7 +531,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-85",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -528,7 +545,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-86",
     "teamCount": 15,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -542,7 +559,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-87",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -556,7 +573,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-88",
     "teamCount": 15,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -570,7 +587,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-89",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:RUS:vtb-united",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -586,7 +603,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-90",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:POL:oblk",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -602,7 +619,7 @@
     "ecosystemId": "worlddb-batch:DYN_championnat:93",
     "teamCount": 19,
     "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
     "simulationPolicy": true,
     "formatReferenceId": "competition:ARG:liga-nacional",
@@ -619,7 +636,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-107",
     "teamCount": 53,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -633,7 +650,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-108",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:FRA:lf2",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -649,7 +666,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-110",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:AUT:bsl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -665,7 +682,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-111",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -679,7 +696,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-113",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:FIN:korisliiga",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -695,7 +712,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-114",
     "teamCount": 26,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -709,7 +726,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-115",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:MEX:lnbp",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -725,7 +742,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-116",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:NOR:blno-men",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -741,7 +758,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-117",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -755,7 +772,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-118",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:ROU:lnbm",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -771,7 +788,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-119",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -785,7 +802,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-120",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -799,7 +816,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-121",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -813,7 +830,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-123",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -827,7 +844,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-125",
     "teamCount": 27,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:DEU:prob",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -843,7 +860,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-129",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -857,7 +874,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-133",
     "teamCount": 8,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -871,7 +888,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-134",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -885,7 +902,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-139",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -899,7 +916,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-142",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -913,7 +930,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-146",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -927,7 +944,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-148",
     "teamCount": 8,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -941,7 +958,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-150",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -955,7 +972,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-154",
     "teamCount": 11,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:NZL:nznbl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -971,7 +988,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-155",
     "teamCount": 6,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:PAN:lpb",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -987,7 +1004,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-156",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:PHL:pba",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1003,7 +1020,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-157",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1017,7 +1034,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-159",
     "teamCount": 8,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:DOM:lnb",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1033,7 +1050,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-166",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:URY:lub",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1049,7 +1066,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-167",
     "teamCount": 14,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1063,7 +1080,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-168",
     "teamCount": 18,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1077,7 +1094,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-170",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1091,7 +1108,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-172",
     "teamCount": 16,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1105,7 +1122,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-173",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1119,7 +1136,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-174",
     "teamCount": 17,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1133,7 +1150,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-175",
     "teamCount": 4,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:TWN:plg",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1149,7 +1166,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-176",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:CAN:cebl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1165,7 +1182,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-177",
     "teamCount": 12,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1179,7 +1196,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-178",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1193,7 +1210,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-180",
     "teamCount": 26,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1207,7 +1224,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-186",
     "teamCount": 38,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1221,7 +1238,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-187",
     "teamCount": 6,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:NOR:blno-women",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1237,7 +1254,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-188",
     "teamCount": 6,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1251,7 +1268,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-190",
     "teamCount": 7,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1265,7 +1282,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-191",
     "teamCount": 13,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1279,7 +1296,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-192",
     "teamCount": 10,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1293,7 +1310,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-195",
     "teamCount": 7,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:AUT:bdsl",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
@@ -1309,7 +1326,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-198",
     "teamCount": 7,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
   },
   {
@@ -1323,7 +1340,7 @@
     "ecosystemId": "ecosystem:BDM-SIM:dyn_championnat-199",
     "teamCount": 5,
     "calendar": "FORMAT_DERIVED_SIMULATION",
-    "nativeStatus": "ENGINE_FAMILY_VALIDATED_WINDOWS_QA_PENDING",
+    "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:NZL:tauihi",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"

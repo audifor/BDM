@@ -52,6 +52,7 @@ export function worldDbV2ConnectionBlockers(format: WorldCompetitionFormatDocume
     try {
       const plan = instantiateWorldCompetitionFixedBracketV1(format, variant.key, Array.from({ length: participants }, (_, i) => ({ competitionSeasonEntryId: `preflight:${i + 1}`, seed: i + 1 })))
       for (const node of variant.nodes.filter(n => n.role !== 'REGULAR_SEASON')) {
+        if (node.role === 'GROUP_STAGE' && typeof node.pairing?.payload.bdm_generated_group_index === 'number') continue
         if (!plan.fixtureIdsByNodeKey[node.key]?.length) throw new Error(`${node.key}: phase has no executable fixtures`)
         if (node.contest?.formatType === 'SERIES' && (node.hosting?.ruleType !== 'SERIES_PATTERN' || node.hosting.priorityBasis !== 'HIGHER_SEED')) throw new Error(`${node.key}: explicit series hosting required`)
         if (node.contest?.formatType === 'AGGREGATE' && (node.contest.legCount !== 2 || node.contest.tieResolution?.method !== 'BDM_EXTRA_DECIDER')) throw new Error(`${node.key}: executable aggregate tie policy required`)

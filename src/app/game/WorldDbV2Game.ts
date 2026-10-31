@@ -211,7 +211,7 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
         if (userCoachCreation)
             world = appointCreatedUserCoachToWorldDbClub(world, teamIdFromString(teamId), userCoachCreation);
         world = ensureUserClubBoardState(world);
-        const freePlayers = (snapshot.freeAgents ?? []).map(entity => {
+        const freePlayers = (snapshot.freeAgents ?? []).filter(entity => (entity.reference_data.sexe === 1 ? 'female' : 'male') === slice.competition.gender).map(entity => {
             const r = entity.reference_data, id = playerIdFromString(entity.entity_id), seed = hashStringToSeed(snapshot.manifest.configuration.seed);
             const position = positions[aptitude.reduce((best, key, i) => Number(r[key] ?? 0) > Number(r[aptitude[best]!] ?? 0) ? i : best, 0)]!;
             const ratings = generateCanonicalRatings(seed, id, position), bio = generatePlayerBio(id, position, day);
@@ -228,7 +228,10 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
         const explicitOrganizationCurrencies = Object.values(world.teams).map(team => ({ organizationId: String(team.organizationId), currencyCode: config.currencyCode }));
         const openingEconomicStates = gameBalanceOpeningEconomicStates(world, id => { const r = resolveOrganizationCurrency(world, id, explicitOrganizationCurrencies); return r.status === 'RESOLVED' ? String(r.currencyCode) : null; });
         world = applyGameBalanceBootstrap(ensureCanonicalFinanceFoundation(world, { explicitOrganizationCurrencies, authorizationRenewalPolicies: annualAuthorizationContinuityAuthorities(world), openingEconomicStates }));
-        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: config.sourceCompetitionId, nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents: config.countryCode === 'ESP' ? 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const : 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60' as const }) } });
+        const freeAgents = slice.competition.gender === 'female'
+            ? config.countryCode === 'ESP' ? 'ORIGINAL_SPANISH_FEMALE_18_40_SEEDED_MAX_60' as const : 'ORIGINAL_COUNTRY_FEMALE_18_40_SEEDED_MAX_60' as const
+            : config.countryCode === 'ESP' ? 'ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' as const : 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60' as const;
+        world = attachWorldDbCompetitionRuntime(world, { ...world.worldDbCompetitionRuntime!, worldDbV2: { masterSha256: snapshot.manifest.master.sha256, sourceDate: '2025-07-01', startDate: day, seed: snapshot.manifest.configuration.seed, sourceCompetitionId: config.sourceCompetitionId, nativeCompetitionId: COMPETITION, fictional: true, profiles: 'BDM_GENERATED_CANONICAL', economy: 'BDM_GAME_BALANCE_NOT_PBM', contracts: 'BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY', ...(snapshot.freeAgents === undefined ? {} : { freeAgents }) } });
         return bindWorldDbV2FrenchFormat(world);
     }
     finally {

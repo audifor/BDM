@@ -12,8 +12,30 @@ import { finalizeSeason } from '@/engine/season'
 import { buildNextCompetitionParticipants, getCompetitionTier, resolvePromotionRelegation } from './PromotionRelegation'
 import { advanceCompetitionLifecycles } from '@/app/game/CompetitionLifecycleCoordinator'
 import { startNextSeasonFor } from '@/app/game/startNextSeason'
+import { resolveGroupedRelegation } from './PromotionRelegation'
+import { parseWorldCompetitionFormatDocument, defaultLeagueCompetitionRules } from '@/domain/competition'
+import formats from '@/data/worlddb-v2/global-formats.json'
+import type { GameWorld } from '@/domain/world'
+import { teamIdFromString } from '@/domain/ids'
 
 describe('promotion and relegation', () => {
+  it('selects the documented bottom places from each group, not the overall table', () => {
+    const original = parseWorldCompetitionFormatDocument(formats.find(item => item.competition_id === 'competition:FRA:nm2')!)
+    const variant = original.variants[0]!
+    const format = { ...original, variants: [{ ...variant, nodes: variant.nodes.map(node => node.role === 'REGULAR_SEASON' ? { ...node, teamCount: 12 } : node) }],
+      consequences: original.consequences.map(item => ({ ...item, rankFrom: 2, rankTo: 3 })) }
+    const teams = Array.from({ length: 12 }, (_, i) => teamIdFromString(`team:${String(i).padStart(2, '0')}`))
+    const games = []
+    for (let group = 0; group < 4; group++) {
+      const members = teams.filter((_, i) => i % 4 === group)
+      for (let i = 0; i < members.length; i++) for (let j = i + 1; j < members.length; j++) {
+        games.push({ seasonId: 'season', competitionStageKey: 'REGULAR_GROUPS', status: 'completed', homeTeamId: members[i], awayTeamId: members[j], result: { homeScore: 80 + i, awayScore: 70 + j } })
+      }
+    }
+    const world = { seasons: { season: { id: 'season', competitionId: 'competition', participantTeamIds: teams, worldCompetitionFormat: format } },
+      competitions: { competition: { participantTeamIds: teams, rules: defaultLeagueCompetitionRules } }, games: Object.fromEntries(games.map((game, index) => [index, game])) } as unknown as GameWorld
+    expect(resolveGroupedRelegation(world, seasonIdFromString('season'))).toEqual([teams[4], teams[8], teams[5], teams[9], teams[6], teams[10], teams[7], teams[11]])
+  })
   it('waits for both independent editions, resolves deterministically, and only changes future participants', () => {
     const base = createNewGame(); const teams = Object.values(base.teams); const upperId = competitionIdFromString('tier-one'); const lowerId = competitionIdFromString('tier-two')
     const upper = createCompetition({ id: upperId, name: 'Tier 1', gender: 'male', participantTeamIds: teams.slice(0, 4).map((team) => team.id) })

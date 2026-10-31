@@ -85,7 +85,7 @@ export async function createWorldDbV2UniverseFromSnapshots(
       competitionSeasonIds: [...runtime.competitionSeasonIds, ...imported.worldDbCompetitionRuntime!.competitionSeasonIds],
     })
   }
-  if (snapshots.some(snapshot => { const config = resolveConfig(snapshot); return 'formatProvenance' in config && config.formatProvenance === 'GENERATED_SIMULATION' })) {
+  if (snapshots.some(snapshot => { const config = resolveConfig(snapshot); return config.formatProvenance === 'GENERATED_SIMULATION' || config.simulationPolicy === true })) {
     world = bindWorldDbV2SimulatedTiers(world, snapshots, new Map(snapshots.map(snapshot => [snapshot.competitions[0]!.entity_id, resolveConfig(snapshot).nativeCompetitionId])))
   }
   return attachWorldDbCompetitionRuntime(world, {

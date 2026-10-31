@@ -1,12 +1,13 @@
 import { expect, it } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { parseWorldCompetitionFormatDocument, parseWorldCompetitionRuntimeBundle } from '@/domain/competition'
 import reference from '@/data/worlddb-v2/competition-runtime.json'
 import globalFormats from '@/data/worlddb-v2/global-formats.json'
-const adaptedFormats = globalFormats.filter(doc => doc.notes?.includes('ADAPTED_DOCUMENTED_FORMAT'))
+const adaptedFormats = globalFormats.filter(doc => doc.notes?.includes('ADAPTED_DOCUMENTED_FORMAT') && doc.competition_id !== 'competition:FRA:nm2')
 import { worldDbV2FamilySignature } from './WorldDbV2Connection'
 import { createWorldDbV2UniverseFromSnapshots } from './WorldDbV2Universe'
+import { resolveGroupedRelegation } from '@/engine/competition/PromotionRelegation'
 import { createWorldDbV2GameFromSnapshot } from './WorldDbV2Game'
 import { WORLDDB_V2_GLOBAL_COMPETITIONS, worldDbV2Competition } from './WorldDbV2Competitions'
 import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
@@ -34,6 +35,22 @@ function snapshot(count: number, female: boolean): WorldDbV2Snapshot {
     competitions: [{ entity_id: 'pbm:DYN_championnat:999', parent_id: country, source_table: 'DYN_championnat', reference_data: { sexe: female ? 1 : 0 } }],
   }
 }
+
+it('keeps original free agents within the selected female competition category', async () => {
+  const format = parseWorldCompetitionFormatDocument(generated(4, false))
+  const config = { ...worldDbV2Competition(), sourceCompetitionId: 'pbm:DYN_championnat:999', nativeCompetitionId: format.competitionId,
+    editionId: format.competitionSeasonId, teamCount: 4, calendar: 'FORMAT_DERIVED_SIMULATION', formatProvenance: 'GENERATED_SIMULATION' }
+  const makeAgent = (id: string, sexe: number) => ({ entity_id: id, parent_id: null, source_table: 'DYN_joueur', reference_data: {
+    sexe, joueur_prenom: 'Agent', joueur_nom: id, nationalite: 8, annee_naissance: 2000, mois_naissance: 1, jour_naissance: 1,
+  } })
+  const source = { ...snapshot(4, true), freeAgents: [makeAgent('pbm:DYN_joueur:90001', 0), makeAgent('pbm:DYN_joueur:90002', 1)] }
+  const runtime = { ...parseWorldCompetitionRuntimeBundle(reference), competitionFormats: [format] }
+  const world = await createWorldDbV2GameFromSnapshot(source, source.clubs[0]!.entity_id, undefined, config, runtime)
+  expect(Object.keys(world.players)).not.toContain('pbm:DYN_joueur:90001')
+  expect(world.players['pbm:DYN_joueur:90002' as keyof typeof world.players]?.gender).toBe('female')
+  expect(world.worldDbCompetitionRuntime?.worldDbV2?.freeAgents).toBe('ORIGINAL_SPANISH_FEMALE_18_40_SEEDED_MAX_60')
+  expect(() => deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, '2026-10-31T12:00:00Z'))))).not.toThrow()
+})
 
 it('links domestic tiers without mixing genders and exchanges teams in the next saved editions', async () => {
   const baseWire = generated(2, false)
@@ -86,11 +103,31 @@ it.each(adaptedFormats)('plays adapted $competition_id through every round and t
   await exerciseFamily(wire, count, 2, false, wire.competition_id.includes('lf-endesa'))
 }, 180_000)
 
-async function exerciseFamily(wire: unknown, count: number, meetings: number, grouped: boolean, female: boolean) {
+it.skipIf(!existsSync('.worlddb-v2/generated-simulation-candidates/reused-documented-formats.json'))('plays the four-group source adapter through semifinals, third place, final and rollover', async () => {
+  const docs = JSON.parse(readFileSync('.worlddb-v2/generated-simulation-candidates/reused-documented-formats.json', 'utf8'))
+  const wire = docs.find((doc: any) => doc.competition_id === 'competition:FRA:nm2')
+  expect(wire.notes).toContain('ADAPTED_DOCUMENTED_FORMAT')
+  wire.variants[0].nodes[0].team_count = 8
+  await exerciseFamily(wire, 8, 2, true, false)
+}, 180_000)
+
+it.skipIf(process.env.BDM_WORLDDB_NM2_SEASON !== '1')('plays the complete 56-club PBM Nationale 2 season and the next edition', async () => {
+  const directory = '.worlddb-v2/generated-simulation-candidates/'
+  const docs = JSON.parse(readFileSync(directory + 'reused-documented-formats.json', 'utf8'))
+  const wire = docs.find((doc: any) => doc.competition_id === 'competition:FRA:nm2')
+  const configurations = JSON.parse(readFileSync(directory + 'candidate-competitions.json', 'utf8'))
+  const config = configurations.find((item: any) => item.sourceCompetitionId === 'pbm:DYN_championnat:42')
+  const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
+  const row = index.results.find((item: any) => item.source_id === config.sourceCompetitionId)
+  const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
+  await exerciseFamily(wire, 56, 2, true, false, source, config)
+}, 3_600_000)
+
+async function exerciseFamily(wire: unknown, count: number, meetings: number, grouped: boolean, female: boolean, sourceOverride?: WorldDbV2Snapshot, configOverride?: ReturnType<typeof worldDbV2Competition> & { formatProvenance?: string; simulationPolicy?: boolean }) {
   const format = parseWorldCompetitionFormatDocument(wire)
-  const config = { ...worldDbV2Competition(), sourceCompetitionId: 'pbm:DYN_championnat:999', nativeCompetitionId: format.competitionId,
+  const config = configOverride ?? { ...worldDbV2Competition(), sourceCompetitionId: 'pbm:DYN_championnat:999', nativeCompetitionId: format.competitionId,
     editionId: format.competitionSeasonId, teamCount: count, calendar: 'FORMAT_DERIVED_SIMULATION', formatProvenance: 'GENERATED_SIMULATION' }
-  const source = snapshot(count, female)
+  const source = sourceOverride ?? snapshot(count, female)
   const runtime = { ...parseWorldCompetitionRuntimeBundle(reference), competitionFormats: [format] }
   let world = withShortGameFormat(await createWorldDbV2GameFromSnapshot(source, source.clubs[0]!.entity_id, undefined, config, runtime), 0.1)
   const seasonId = world.currentSeasonId!
@@ -105,7 +142,7 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
     world = reopened
   }
   save()
-  for (let n = 0; n < 600 && !isSeasonComplete(world, seasonId); n++) {
+  for (let n = 0; n < 1200 && !isSeasonComplete(world, seasonId); n++) {
     world = materializeCompetitionPostseason(world, seasonId)
     const game = Object.values(world.games).filter(g => g.seasonId === seasonId && g.status === 'scheduled').sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0]
     expect(game, 'Incomplete season must have a physical next game').toBeDefined()
@@ -119,6 +156,9 @@ async function exerciseFamily(wire: unknown, count: number, meetings: number, gr
   const tables = calculateGroupStandings(world, seasonId)
   expect(tables).toHaveLength(grouped ? Number(format.variants[0]!.nodes[0]!.opponentScope!.payload.generated_group_count) : 1)
   for (const table of tables) expect(table.every(row => row.played === (table.length - 1) * meetings)).toBe(true)
+  if (sourceOverride && format.competitionId === 'competition:FRA:nm2') {
+    expect(resolveGroupedRelegation(world, seasonId)).toEqual(tables.flatMap(table => table.slice(-2).map(row => row.teamId)))
+  }
   expect(Object.keys(world.matchStatLogsByGameId)).toHaveLength(Object.keys(world.games).length)
   save()
   const transition = startNextSeasonTransitionFor(world, seasonId)
@@ -157,9 +197,9 @@ it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('projects every source
   expect(results.filter(r => r.status === 'PROJECTION_SAVE_PASS').length).toBeGreaterThanOrEqual(90)
 }, 600_000)
 
-it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves all 94 published competitions through the default application bundle', async () => {
+it.skipIf(process.env.BDM_WORLDDB_GLOBAL_CATALOG !== '1')('opens and saves the 95 available catalog entries through the default application bundle', async () => {
   const index = JSON.parse(readFileSync('.worlddb-v2/batch-04/index.json', 'utf8'))
-  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(94)
+  expect(WORLDDB_V2_GLOBAL_COMPETITIONS).toHaveLength(95)
   for (const config of WORLDDB_V2_GLOBAL_COMPETITIONS) {
     const row = index.results.find((r: any) => r.source_id === config.sourceCompetitionId)
     const source = JSON.parse(readFileSync(row.snapshotPath, 'utf8')) as WorldDbV2Snapshot
