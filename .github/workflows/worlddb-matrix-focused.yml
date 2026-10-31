@@ -1,0 +1,21 @@
+name: WorldDB generated matrix focused
+on:
+  push:
+    branches:
+      - feature/worlddb-matrix-scheduler-01
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Matrix quotas and GameWorld lifecycle
+        run: npx vitest run src/engine/competition/schedule/MatrixScheduleGenerator.test.ts src/app/game/WorldDbGlobalFamilies.test.ts --maxWorkers=1 --testTimeout=180000
