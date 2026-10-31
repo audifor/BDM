@@ -158,6 +158,14 @@ describe('2026-27 real NCAA Division I men and women source catalog', () => {
     expect(tournament?.variants[0]?.edges.filter(e => e.from === 'QUALIFIED').map(e => e.count)).toEqual([4, 2, 2])
     const asunWomen = membership.genders.women.teams.filter(t => t.conferenceId === 'atlantic-sun-conference')
     expect(asunWomen).toHaveLength(8)
+    const menTournament = formatByEdition.get('edition:USA:ncaa-d1-men:asun:tournament:2026-27')
+    expect(menTournament?.status).toBe('PARTIAL')
+    expect(menTournament?.variants[0]?.isRealVariant).toBe(true)
+    expect(menTournament?.sources.every(source => source.type === 'OFFICIAL')).toBe(true)
+    expect(menTournament?.variants[0]?.nodes.find(n => n.key === 'FIRST_ROUND')?.pairing?.payload.matchups).toEqual(['5-8', '6-7'])
+    expect(menTournament?.variants[0]?.nodes.find(n => n.key === 'FINAL')?.hosting?.payload.dates).toEqual(['2027-03-07'])
+    expect(tournament?.variants[0]?.nodes.find(n => n.key === 'FINAL')?.hosting?.payload.dates).toEqual(['2027-03-08'])
+    expect(menTournament?.competitionSeasonId).not.toBe(tournament?.competitionSeasonId)
   })
 
   it('projects separately sourced 2026-27 real ASUN men and women fixtures into existing Game and conference classification', () => {
