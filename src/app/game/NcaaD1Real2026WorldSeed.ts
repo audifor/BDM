@@ -10,6 +10,8 @@ import {
 import { calculateAge, createPlayer } from '@/domain/player'
 import { createSeason } from '@/domain/season'
 import { createStaffPerson, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
+import type { StaffEmployment } from '@/domain/staffCareer'
+import type { StaffPersonId } from '@/domain/ids'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { defaultRecruitingRules } from '@/domain/recruiting'
@@ -64,7 +66,7 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
   const teams = []
   const staffPeople: StaffPerson[] = []
   const teamStaffAssignments: TeamStaffAssignment[] = []
-  const staffEmploymentByStaffId: Record<string, { status: 'employed'; teamId: typeof managed.id; roleId: 'headCoach'; startedOn: typeof START }> = {}
+  const staffEmploymentByStaffId: Record<StaffPersonId, StaffEmployment> = {}
   for (const school of snapshot.teams) {
     const coachId = coachIdFromString('coach:BDM:' + school.id)
     const coachRefs = coachProfileRefsForCoachId(coachId)
