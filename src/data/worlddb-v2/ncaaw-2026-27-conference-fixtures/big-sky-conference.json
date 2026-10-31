@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "season": "2026-27",
   "division": "NCAA Division I",
   "gender": "women",
-  "season": "2026-27",
   "conferenceId": "big-sky-conference",
   "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
-  "note": "Contemporary fixture directory for NCAA DI programs; contains intra-conference and nonconference games and may be incomplete. Do not invent missing fixtures or treat listings as NCAA official certification.",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Sourced current women's Division I scheduled games across this conference's teams, including nonconference; not a complete NCAA certified season, never fabricate omitted fixtures.",
   "memberCount": 11,
   "memberProgramIds": [
     "ncaa:2026-27:women:eastern-washington-eagles",
@@ -35,62 +36,2069 @@
   ],
   "coverage": [
     {
-      "id": "ncaa:2026-27:women:portland-state-vikings",
-      "listedGames": 24,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:montana-lady-griz",
-      "listedGames": 26,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:northern-arizona-lumberjacks",
-      "listedGames": 23,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:utah-tech-trailblazers",
-      "listedGames": 23,
-      "inUniverseGames": 0
-    },
-    {
       "id": "ncaa:2026-27:women:eastern-washington-eagles",
       "listedGames": 25,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:idaho-vandals",
-      "listedGames": 24,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:northern-colorado-bears",
-      "listedGames": 24,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:southern-utah-thunderbirds",
-      "listedGames": 26,
-      "inUniverseGames": 0
-    },
-    {
-      "id": "ncaa:2026-27:women:montana-state-bobcats",
-      "listedGames": 25,
-      "inUniverseGames": 0
+      "inUniverseGames": 25
     },
     {
       "id": "ncaa:2026-27:women:idaho-state-bengals",
       "listedGames": 25,
-      "inUniverseGames": 0
+      "inUniverseGames": 25
+    },
+    {
+      "id": "ncaa:2026-27:women:idaho-vandals",
+      "listedGames": 24,
+      "inUniverseGames": 24
+    },
+    {
+      "id": "ncaa:2026-27:women:montana-lady-griz",
+      "listedGames": 26,
+      "inUniverseGames": 26
+    },
+    {
+      "id": "ncaa:2026-27:women:montana-state-bobcats",
+      "listedGames": 25,
+      "inUniverseGames": 25
+    },
+    {
+      "id": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    },
+    {
+      "id": "ncaa:2026-27:women:northern-colorado-bears",
+      "listedGames": 24,
+      "inUniverseGames": 24
+    },
+    {
+      "id": "ncaa:2026-27:women:portland-state-vikings",
+      "listedGames": 24,
+      "inUniverseGames": 24
+    },
+    {
+      "id": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "listedGames": 26,
+      "inUniverseGames": 26
+    },
+    {
+      "id": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "listedGames": 23,
+      "inUniverseGames": 23
     },
     {
       "id": "ncaa:2026-27:women:weber-state-wildcats",
       "listedGames": 23,
-      "inUniverseGames": 0
+      "inUniverseGames": 23
     }
   ],
-  "fixtureCount": 0,
+  "fixtureCount": 158,
   "nonD1OrUnmatched": [],
-  "fixtures": []
+  "fixtures": [
+    {
+      "gameId": "401916149",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-byu-cougars-401916149",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401918931",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-utah-utes-401918931",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles"
+      ]
+    },
+    {
+      "gameId": "401916081",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-arizona-state-sun-devils-401916081",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401920403",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-davis-aggies-vs-eastern-washington-eagles-401920403",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles"
+      ]
+    },
+    {
+      "gameId": "401916151",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-byu-cougars-401916151",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401918841",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:texas-longhorns",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-texas-longhorns-401918841",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401917691",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:portland-pilots",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-pilots-vs-montana-state-bobcats-401917691",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401903555",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-washington-state-cougars-401903555",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401921464",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-idaho-state-bengals-401921464",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401906982",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-kansas-state-wildcats-401906982",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401917695",
+      "gender": "women",
+      "date": "2026-11-10",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-san-diego-toreros-401917695",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401903556",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-washington-state-cougars-401903556",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401918739",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:south-dakota-coyotes",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-south-dakota-coyotes-401918739",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401920493",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:unlv-lady-rebels",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-unlv-lady-rebels-401920493",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401920405",
+      "gender": "women",
+      "date": "2026-11-16",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-davis-aggies-vs-northern-colorado-bears-401920405",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401917709",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:portland-pilots",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-portland-pilots-401917709",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401920026",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:air-force-falcons",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-air-force-falcons-401920026",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401921496",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-cal-state-bakersfield-roadrunners-401921496",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401921426",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-iowa-hawkeyes-401921426",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401921522",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-cal-state-fullerton-titans-401921522",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401917712",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:loyola-marymount-lions",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-loyola-marymount-lions-401917712",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401920269",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:nevada-wolf-pack",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-nevada-wolf-pack-401920269",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401916155",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-byu-cougars-401916155",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401921523",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-portland-state-vikings-401921523",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401917718",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-seattle-u-redhawks-401917718",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401917720",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-diego-toreros-vs-utah-tech-trailblazers-401917720",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401917728",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-diego-toreros-vs-southern-utah-thunderbirds-401917728",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401917730",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-seattle-u-redhawks-401917730",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914329",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-eastern-washington-eagles-401914329",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914330",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-idaho-vandals-401914330",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914331",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-idaho-state-bengals-401914331",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914332",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-montana-lady-griz-401914332",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914333",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-weber-state-wildcats-401914333",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-tech-trailblazers",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914334",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-eastern-washington-eagles-401914334",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914335",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-idaho-vandals-401914335",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914336",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-idaho-state-bengals-401914336",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914337",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-montana-state-bobcats-401914337",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914338",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-weber-state-wildcats-401914338",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401903562",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-washington-state-cougars-401903562",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles"
+      ]
+    },
+    {
+      "gameId": "401916158",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-byu-cougars-401916158",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401920504",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:wyoming-cowgirls",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-wyoming-cowgirls-401920504",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401921468",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-cal-poly-mustangs-401921468",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles"
+      ]
+    },
+    {
+      "gameId": "401913064",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-arizona-wildcats-401913064",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401920471",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-uc-davis-aggies-401920471",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401916160",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-byu-cougars-401916160",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401918790",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:omaha-mavericks",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-omaha-mavericks-401918790",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401918939",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-utah-utes-401918939",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401917758",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-seattle-u-redhawks-401917758",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401919880",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:chicago-state-cougars",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-chicago-state-cougars-401919880",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles"
+      ]
+    },
+    {
+      "gameId": "401921527",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-southern-utah-thunderbirds-401921527",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401917763",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:san-francisco-dons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-francisco-dons-vs-idaho-state-bengals-401917763",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401918768",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:south-dakota-coyotes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-dakota-coyotes-vs-montana-lady-griz-401918768",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401918908",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-oregon-ducks-401918908",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401920264",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:grand-canyon-lopes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/grand-canyon-lopes-vs-northern-arizona-lumberjacks-401920264",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401921469",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-utah-tech-trailblazers-401921469",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401917765",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/seattle-u-redhawks-vs-idaho-vandals-401917765",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401917767",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:santa-clara-broncos",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-santa-clara-broncos-401917767",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401906072",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:california-golden-bears",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-california-golden-bears-401906072",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914339",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-southern-utah-thunderbirds-401914339",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914340",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-utah-tech-trailblazers-401914340",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914341",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-northern-colorado-bears-401914341",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914362",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-portland-state-vikings-401914362",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914363",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-northern-arizona-lumberjacks-401914363",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914364",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-utah-tech-trailblazers-401914364",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914365",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-southern-utah-thunderbirds-401914365",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914366",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-northern-arizona-lumberjacks-401914366",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914367",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-portland-state-vikings-401914367",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914368",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-northern-colorado-bears-401914368",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914369",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-northern-arizona-lumberjacks-401914369",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914370",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-montana-state-bobcats-401914370",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914371",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-montana-lady-griz-401914371",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914372",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-northern-colorado-bears-401914372",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914373",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-portland-state-vikings-401914373",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914374",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-northern-arizona-lumberjacks-401914374",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914375",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-montana-lady-griz-401914375",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914376",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-montana-state-bobcats-401914376",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914377",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-northern-colorado-bears-401914377",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914378",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-portland-state-vikings-401914378",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914379",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-eastern-washington-eagles-401914379",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914380",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-idaho-vandals-401914380",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914381",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-idaho-state-bengals-401914381",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914382",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-utah-tech-trailblazers-401914382",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914383",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-weber-state-wildcats-401914383",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914384",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-eastern-washington-eagles-401914384",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914385",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-idaho-vandals-401914385",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914386",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-idaho-state-bengals-401914386",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914387",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-weber-state-wildcats-401914387",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914388",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-southern-utah-thunderbirds-401914388",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914389",
+      "gender": "women",
+      "date": "2027-01-18",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-idaho-state-bengals-401914389",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401914390",
+      "gender": "women",
+      "date": "2027-01-18",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-idaho-vandals-401914390",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914391",
+      "gender": "women",
+      "date": "2027-01-18",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-montana-lady-griz-401914391",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914392",
+      "gender": "women",
+      "date": "2027-01-18",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-montana-state-bobcats-401914392",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914393",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-northern-arizona-lumberjacks-401914393",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914394",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-eastern-washington-eagles-401914394",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401914395",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-idaho-state-bengals-401914395",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914396",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-montana-state-bobcats-401914396",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914397",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-northern-colorado-bears-401914397",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914398",
+      "gender": "women",
+      "date": "2027-01-25",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-weber-state-wildcats-401914398",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914399",
+      "gender": "women",
+      "date": "2027-01-25",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-idaho-state-bengals-401914399",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401914400",
+      "gender": "women",
+      "date": "2027-01-25",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-southern-utah-thunderbirds-401914400",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914401",
+      "gender": "women",
+      "date": "2027-01-25",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-utah-tech-trailblazers-401914401",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914402",
+      "gender": "women",
+      "date": "2027-01-25",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-portland-state-vikings-401914402",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914403",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-northern-colorado-bears-401914403",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914404",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-portland-state-vikings-401914404",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914405",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-utah-tech-trailblazers-401914405",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914406",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-northern-arizona-lumberjacks-401914406",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914407",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-southern-utah-thunderbirds-401914407",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914408",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-portland-state-vikings-401914408",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914409",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-northern-colorado-bears-401914409",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914410",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-southern-utah-thunderbirds-401914410",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914411",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-northern-arizona-lumberjacks-401914411",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914412",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-utah-tech-trailblazers-401914412",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-tech-trailblazers",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914413",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-eastern-washington-eagles-401914413",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914414",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-idaho-vandals-401914414",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914415",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-idaho-state-bengals-401914415",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914416",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-montana-lady-griz-401914416",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914417",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-montana-state-bobcats-401914417",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914418",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-eastern-washington-eagles-401914418",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914419",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-idaho-vandals-401914419",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914420",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-montana-lady-griz-401914420",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914421",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-montana-state-bobcats-401914421",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914422",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-weber-state-wildcats-401914422",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914423",
+      "gender": "women",
+      "date": "2027-02-08",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-southern-utah-thunderbirds-401914423",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914424",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-montana-lady-griz-401914424",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914425",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-montana-state-bobcats-401914425",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914426",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-portland-state-vikings-401914426",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914427",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-northern-arizona-lumberjacks-401914427",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914428",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-northern-colorado-bears-401914428",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914429",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-montana-state-bobcats-401914429",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914430",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-montana-lady-griz-401914430",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914431",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-northern-colorado-bears-401914431",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    },
+    {
+      "gameId": "401914432",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-portland-state-vikings-401914432",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914433",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-utah-tech-trailblazers-401914433",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:southern-utah-thunderbirds",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914434",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-idaho-vandals-401914434",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914435",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-idaho-state-bengals-401914435",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:montana-lady-griz"
+      ]
+    },
+    {
+      "gameId": "401914436",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-weber-state-wildcats-401914436",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914437",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-utah-tech-trailblazers-401914437",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914438",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-southern-utah-thunderbirds-401914438",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914439",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-eastern-washington-eagles-401914439",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:northern-arizona-lumberjacks"
+      ]
+    },
+    {
+      "gameId": "401914440",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-idaho-state-bengals-401914440",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914441",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-weber-state-wildcats-401914441",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914442",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-southern-utah-thunderbirds-401914442",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914443",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-utah-tech-trailblazers-401914443",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:portland-state-vikings",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914444",
+      "gender": "women",
+      "date": "2027-02-22",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-eastern-washington-eagles-401914444",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:idaho-state-bengals"
+      ]
+    },
+    {
+      "gameId": "401914445",
+      "gender": "women",
+      "date": "2027-02-22",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-vandals-vs-weber-state-wildcats-401914445",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-vandals",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914446",
+      "gender": "women",
+      "date": "2027-02-22",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-lady-griz-vs-utah-tech-trailblazers-401914446",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914447",
+      "gender": "women",
+      "date": "2027-02-22",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-southern-utah-thunderbirds-401914447",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914448",
+      "gender": "women",
+      "date": "2027-02-22",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-arizona-lumberjacks-vs-portland-state-vikings-401914448",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914449",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-idaho-vandals-401914449",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401914450",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-weber-state-wildcats-401914450",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914451",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/montana-state-bobcats-vs-montana-lady-griz-401914451",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:montana-state-bobcats"
+      ]
+    },
+    {
+      "gameId": "401914452",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-northern-arizona-lumberjacks-401914452",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914453",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "awayProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/portland-state-vikings-vs-northern-colorado-bears-401914453",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-colorado-bears",
+        "ncaa:2026-27:women:portland-state-vikings"
+      ]
+    },
+    {
+      "gameId": "401914454",
+      "gender": "women",
+      "date": "2027-03-01",
+      "homeProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-eastern-washington-eagles-401914454",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:eastern-washington-eagles",
+        "ncaa:2026-27:women:weber-state-wildcats"
+      ]
+    },
+    {
+      "gameId": "401914455",
+      "gender": "women",
+      "date": "2027-03-01",
+      "homeProgramId": "ncaa:2026-27:women:idaho-vandals",
+      "awayProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/idaho-state-bengals-vs-idaho-vandals-401914455",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:idaho-state-bengals",
+        "ncaa:2026-27:women:idaho-vandals"
+      ]
+    },
+    {
+      "gameId": "401914456",
+      "gender": "women",
+      "date": "2027-03-01",
+      "homeProgramId": "ncaa:2026-27:women:montana-lady-griz",
+      "awayProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-utah-thunderbirds-vs-montana-lady-griz-401914456",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-lady-griz",
+        "ncaa:2026-27:women:southern-utah-thunderbirds"
+      ]
+    },
+    {
+      "gameId": "401914457",
+      "gender": "women",
+      "date": "2027-03-01",
+      "homeProgramId": "ncaa:2026-27:women:montana-state-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-montana-state-bobcats-401914457",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:montana-state-bobcats",
+        "ncaa:2026-27:women:utah-tech-trailblazers"
+      ]
+    },
+    {
+      "gameId": "401914458",
+      "gender": "women",
+      "date": "2027-03-01",
+      "homeProgramId": "ncaa:2026-27:women:northern-arizona-lumberjacks",
+      "awayProgramId": "ncaa:2026-27:women:northern-colorado-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/northern-colorado-bears-vs-northern-arizona-lumberjacks-401914458",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:northern-arizona-lumberjacks",
+        "ncaa:2026-27:women:northern-colorado-bears"
+      ]
+    }
+  ]
 }
