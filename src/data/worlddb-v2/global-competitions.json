@@ -478,6 +478,23 @@
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
   },
   {
+    "sourceCompetitionId": "pbm:DYN_championnat:78",
+    "currencyCode": "EUR",
+    "countryId": 53,
+    "countryCode": "AUS",
+    "name": "National Basketball League",
+    "nativeCompetitionId": "competition:AUS:nbl",
+    "editionId": "edition:AUS:nbl:2026-27:bdm-matrix:78",
+    "ecosystemId": "worlddb-batch:DYN_championnat:78",
+    "teamCount": 10,
+    "calendar": "FORMAT_DERIVED_SIMULATION",
+    "nativeStatus": "CANDIDATE_NATIVE_PENDING",
+    "formatProvenance": "GENERATED_SIMULATION",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:AUS:nbl",
+    "formatReferenceResolution": "NBL_SOURCE_RULES_WITH_GENERATED_MATRIX"
+  },
+  {
     "sourceCompetitionId": "pbm:DYN_championnat:79",
     "currencyCode": "EUR",
     "countryId": 14,
@@ -701,6 +718,23 @@
     "calendar": "FORMAT_DERIVED_SIMULATION",
     "nativeStatus": "FAMILY_TESTED_INDIVIDUAL_SEASON_AND_WINDOWS_PENDING",
     "formatProvenance": "GENERATED_SIMULATION"
+  },
+  {
+    "sourceCompetitionId": "pbm:DYN_championnat:112",
+    "currencyCode": "EUR",
+    "countryId": 8,
+    "countryCode": "ESP",
+    "name": "Segunda FEB",
+    "nativeCompetitionId": "competition:ESP:segunda-feb",
+    "editionId": "edition:ESP:segunda-feb:2025-26:bdm-adapted:112",
+    "ecosystemId": "worlddb-batch:DYN_championnat:112",
+    "teamCount": 28,
+    "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
+    "nativeStatus": "CANDIDATE_NATIVE_PENDING",
+    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
+    "simulationPolicy": true,
+    "formatReferenceId": "competition:ESP:segunda-feb",
+    "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   },
   {
     "sourceCompetitionId": "pbm:DYN_championnat:113",
@@ -1378,22 +1412,5 @@
     "formatProvenance": "GENERATED_SIMULATION",
     "formatReferenceId": "competition:NZL:tauihi",
     "formatReferenceResolution": "DOCUMENTED_REFERENCE_NOT_USABLE"
-  },
-  {
-    "sourceCompetitionId": "pbm:DYN_championnat:112",
-    "currencyCode": "EUR",
-    "countryId": 8,
-    "countryCode": "ESP",
-    "name": "Segunda FEB",
-    "nativeCompetitionId": "competition:ESP:segunda-feb",
-    "editionId": "edition:ESP:segunda-feb:2025-26:bdm-adapted:112",
-    "ecosystemId": "worlddb-batch:DYN_championnat:112",
-    "teamCount": 28,
-    "calendar": "DOCUMENTED_FORMAT_ENGINE_BINDING_REQUIRED",
-    "nativeStatus": "CANDIDATE_NATIVE_PENDING",
-    "formatProvenance": "REUSED_DOCUMENTED_FORMAT",
-    "simulationPolicy": true,
-    "formatReferenceId": "competition:ESP:segunda-feb",
-    "formatReferenceResolution": "ADAPTED_DOCUMENTED_FORMAT"
   }
 ]
