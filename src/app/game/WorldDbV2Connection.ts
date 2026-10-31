@@ -1,5 +1,6 @@
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { instantiateWorldCompetitionFixedBracketV1 } from '@/engine/competition/WorldCompetitionFixedBracket'
+import { matrixRoundCount } from '@/engine/competition/schedule/MatrixScheduleGenerator'
 
 /** Runtime capabilities exercised by a family representative, independent of
  * competition identity, participant count, round names and venue pattern length. */
@@ -41,6 +42,19 @@ export function worldDbV2ConnectionBlockers(format: WorldCompetitionFormatDocume
   const regular = variant.nodes.filter(n => n.role === 'REGULAR_SEASON')
   if (regular.length !== 1) issues.push(`Native single-stage projection requires one regular node; found ${regular.length}; group/conference assignments and stage planner connection required`)
   for (const node of regular) {
+    const matrix = node.pairing?.type === 'FIXED_SCHEDULE' && node.pairing.payload.bdm_generated_matrix_v1 === true
+      && node.opponentScope?.type === 'SCHEDULE_MATRIX'
+    if (matrix) {
+      const quota = node.pairing!.payload.games_per_team
+      try {
+        if (typeof quota !== 'number') throw new RangeError('matrix games_per_team must be a number')
+        matrixRoundCount(participants, quota)
+      } catch (error) { issues.push(String(error)) }
+      if (node.teamCount !== undefined && node.teamCount !== participants) {
+        issues.push(`${node.key}: source edition declares ${node.teamCount} participants, PBM supplies ${participants}`)
+      }
+      continue
+    }
     if (node.pairing?.type !== 'ROUND_ROBIN') issues.push(`${node.key}: ${node.pairing?.type ?? 'missing pairing'} requires its own existing scheduling authority; do not substitute ROUND_ROBIN`)
     const groups = node.opponentScope?.payload.generated_group_count
     const generatedGroups = node.opponentScope?.type === 'SAME_GROUP' && node.opponentScope.payload.policy === 'BDM_GENERATED_GROUPS'
