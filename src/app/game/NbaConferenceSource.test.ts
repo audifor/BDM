@@ -34,7 +34,7 @@ describe('NBA PBM conference identity pinning', () => {
     expect(plan.fixtureIdsByNodeKey['CONFERENCE_SEMIFINALS']).toHaveLength(4)
     expect(plan.fixtureIdsByNodeKey['CONFERENCE_FINALS']).toHaveLength(2)
     expect(plan.fixtureIdsByNodeKey['NBA_FINALS']).toHaveLength(1)
-    expect(plan.fixtures).toHaveLength(20)
+    expect(plan.fixtures).toHaveLength(21)
   })
   it('refuses missing or duplicated source clubs rather than inventing conference assignments', () => {
     expect(() => pinNbaConferencesToSourceClubs(format, franchiseClubs.slice(1))).toThrow('30 unique')
