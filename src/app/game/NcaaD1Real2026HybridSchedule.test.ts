@@ -5,6 +5,7 @@ import official from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 import { createNcaaD1Real2026WorldSeed } from './NcaaD1Real2026WorldSeed'
+import { ncaaD1Real2026GameplayPolicy } from './NcaaD1Real2026GeneratedPolicy'
 
 it.each(['men', 'women'] as const)(
   'keeps all 56 official ASUN %s games and generates remaining D1 fixtures without mixing gender',
@@ -13,10 +14,9 @@ it.each(['men', 'women'] as const)(
     const fixtures = (official.fixtures as NcaaD1Real2026FixtureSource[]).filter(item => item.gender === gender)
     expect(fixtures).toHaveLength(56)
     const asun = snapshot.conferences.find(c => c.name === 'Atlantic Sun Conference')!
-    const policy = {
-      seed: 202627, nonConferenceRounds: 2,
-      conferenceGamesPerTeam: Object.fromEntries(snapshot.conferences.map(c => [c.id, c.id === asun.id ? 14 : 2])),
-    }
+    const policy = ncaaD1Real2026GameplayPolicy(gender, 202627)
+    expect(policy.nonConferenceRounds).toBe(12)
+    expect(policy.conferenceGamesPerTeam[asun.id]).toBe(14)
     const created = createNcaaD1Real2026WorldSeed({
       gender, seed: 202627, managedProgramId: String(snapshot.teams[0]!.id),
       sourcedFixtures: fixtures, generatedSchedule: policy,
@@ -40,7 +40,7 @@ it.each(['men', 'women'] as const)(
       expect(created.world.teams[game.awayTeamId]!.gender).toBe(gender === 'men' ? 'male' : 'female')
     }
     for (const team of snapshot.teams) {
-      expect(actualCounts.get(team.id)).toBe(team.conferenceId === asun.id ? 14 : 2)
+      expect(actualCounts.get(team.id)).toBe(policy.conferenceGamesPerTeam[team.conferenceId])
     }
     validateGameWorld(created.world)
     const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(created.world, '2026-11-01T00:00:00Z'))))
