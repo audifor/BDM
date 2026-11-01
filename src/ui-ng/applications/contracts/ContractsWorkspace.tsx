@@ -6,6 +6,8 @@ import { getUserTeam } from '@/engine/calendar'
 import { assessContractRelease } from '@/app/market/ContractReleaseService'
 import { assessRetentionEligibility } from '@/engine/contractRetention/ContractRetentionEngine'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds'
+import { resolveActiveCompetitionSeasonForTeam } from '@/engine/competition'
+import { salaryRulesInForce } from '@/engine/salary'
 import { useGameStore } from '@/stores/gameStore'
 import { RetentionPanel } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
@@ -55,7 +57,7 @@ export function ContractsWorkspace() {
   const reviews = world === null || team === undefined ? [] : assessContractReviewOutlook(world, team.id).reviews
   const currentContracts = contracts.filter((contract) => world !== null && getPlayerContractStatus(contract, world.currentDate) === 'active')
   const futureContracts = contracts.filter((contract) => world !== null && getPlayerContractStatus(contract, world.currentDate) === 'scheduled')
-  const seasonEnd = world?.seasons[world.currentSeasonId]?.endDate
+  const seasonEnd = world === null || team === undefined ? undefined : resolveActiveCompetitionSeasonForTeam(world, team.id, world.currentDate)?.endDate
   const expiringContracts = currentContracts.filter((contract) => seasonEnd !== undefined && compareGameDates(contract.term.expiresOn, world!.currentDate) > 0 && compareGameDates(contract.term.expiresOn, seasonEnd) <= 0)
 
   if (world === null || team === undefined) return <NgHoloShell appLabel="Contracts / Planning" empty emptyMessage="No user club is available." region="contracts-workspace" />
@@ -75,7 +77,7 @@ export function ContractsWorkspace() {
       const rolePromise = Object.values(world.rolePromisesById).find((item) => item.playerId === contract.playerId && item.teamOrganizationId === team.organizationId && item.status === 'ACTIVE')
       const negotiation = Object.values(world.retentionNegotiationsById).find((item) => item.predecessorContractId === contract.id && !['REJECTED', 'WITHDRAWN', 'EXPIRED'].includes(item.status))
       const status = getPlayerContractStatus(contract, world.currentDate)
-      const capRules = world.salaryRulesBySeasonId[world.currentSeasonId]
+      const capRules = salaryRulesInForce(world, team.id, world.currentDate)[0]
       const cappedSalary = capRules !== undefined && capRules.capAccounting !== 'NOT_APPLICABLE' && compensation.capTreatment?.policy !== 'NOT_APPLICABLE'
       const contractStatus = status === 'active' && seasonEnd !== undefined && compareGameDates(contract.term.expiresOn, seasonEnd) <= 0 ? 'Expiring' : status === 'active' ? 'Active' : status === 'scheduled' ? 'Signed for future' : status
       const signedOn = retentionExecution?.signedOn ?? signedTransaction?.occurredOn

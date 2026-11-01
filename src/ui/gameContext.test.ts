@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame } from '@/app/game'
+import { createAcbTestGame, createNewGame } from '@/app/game'
 import { updateGameWorld } from '@/domain/world'
 import { resolveGameCapabilities, resolveGameContext } from './gameContext'
 
@@ -35,6 +35,27 @@ describe('game context', () => {
     expect(coached.currentSeasonId).not.toBe(nbaSeason.id)
     expect(coached.tradeRulesBySeasonId[coached.currentSeasonId]).toBeUndefined()
     expect(resolveGameCapabilities(coached).hasTrades).toBe(true)
+    expect(resolveGameCapabilities(coached).hasSalaryCap).toBe(true)
+    expect(resolveGameCapabilities(world, nbaSeason.competitionId).hasTrades).toBe(false)
+  })
+
+  it('derives NCAA navigation from the coached program even when another ecosystem owns the world pointer', () => {
+    const world = createNewGame()
+    const ncaaSeason = Object.values(world.seasons).find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]?.kind === 'ncaaLike')!
+    const programId = world.competitions[ncaaSeason.competitionId]!.participantTeamIds.find((teamId) => world.teams[teamId]!.coachId !== undefined)!
+    const coached = updateGameWorld(world, {
+      userCoachId: world.teams[programId]!.coachId!,
+      currentDate: ncaaSeason.startDate,
+      gmPlanStates: Object.values(world.gmPlanStatesById).filter((plan) => plan.teamId !== programId),
+    })
+
+    expect(coached.currentSeasonId).not.toBe(ncaaSeason.id)
+    expect(resolveGameCapabilities(coached).isNcaa).toBe(true)
+  })
+
+  it('does not turn an uncapped professional salary rule into a salary-cap capability', () => {
+    const world = createAcbTestGame({ playableMarket: true })
+    expect(resolveGameCapabilities(world).hasSalaryCap).toBe(false)
   })
 
   it('can derive a screen-specific competition context without changing GameWorld state', () => {
