@@ -55,10 +55,10 @@ jobs:
           $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath 'preview/BDM-NewGame-Experimental.exe').Hash
           @"
           BDM NEW GAME UX EXPERIMENTAL
-          Commit: \${{ github.sha }}
-          Workflow: \${{ github.server_url }}/\${{ github.repository }}/actions/runs/\${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA256: $hash
-          Repository: \${{ github.repository }}
+          Repository: ${{ github.repository }}
           Build host: Windows x64 (MSVC)
           "@ | Set-Content -Path 'preview/BUILD-INFO.txt' -Encoding utf8
           @'
