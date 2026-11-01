@@ -35,7 +35,7 @@ function regionOf(code: string): string {
   if (code === 'UNRESOLVED') return 'Pendiente de conciliar'
   if (code === 'BAL' || code === 'BNX') return 'Ligas conjuntas'
   if (['USA','ARG','BRA','URY','CAN','MEX','COL','DOM','PAN','VEN','CHL'].includes(code)) return 'América'
-  if (['CHN','MAC','PHL','TWN','AUS','NZL','KOR','JPN'].includes(code)) return 'Asia y Oceanía'
+  if (['CHN','PHL','TWN','AUS','NZL','KOR','JPN'].includes(code)) return 'Asia y Oceanía'
   if (['TUR','ISR','GEO'].includes(code)) return 'Europa y proximidad'
   return 'Europa'
 }
