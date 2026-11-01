@@ -27,4 +27,4 @@ jobs:
       - name: Typecheck and production frontend bundle
         run: npm run build
       - name: Startup UI, per-league resolution and Save V4 smoke
-        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts src/app/worldSim/worldSim.test.ts src/save/GameWorldSaveV4.test.ts --maxWorkers=2 --testTimeout=60000
+        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts src/app/game/WorldDbNewGameCatalog.test.ts src/app/worldSim/worldSim.test.ts src/save/GameWorldSaveV4.test.ts --maxWorkers=2 --testTimeout=60000
