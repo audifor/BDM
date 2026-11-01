@@ -1,0 +1,21 @@
+name: WorldDB NCAA daily and New Game
+on:
+  push:
+    branches:
+      - feature/worlddb-ncaa-daily-newgame-01
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Real-program NCAA New Game, daily lifecycle and V4
+        run: npx vitest run src/app/game/NcaaD1Real2027DailyNewGame.test.ts src/app/game/NcaaD1Real2027Postseason.test.ts --maxWorkers=1 --testTimeout=240000
