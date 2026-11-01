@@ -228,7 +228,7 @@ describe('New Game World DB Spain ACB flow', () => {
       ncaaSeed: 202627,
       userCoachCreation: coachCreation,
     }))
-    expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: universeId })
+    await waitFor(() => expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: universeId }))
   })
 
 })
