@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BDM New Game Experimental",
+  "identifier": "com.bdm.newgame.experimental",
+  "app": {
+    "windows": [
+      {
+        "title": "BDM New Game Experimental",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "maximized": true,
+        "dragDropEnabled": false
+      }
+    ]
+  }
+}
