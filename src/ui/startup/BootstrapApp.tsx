@@ -12,6 +12,7 @@ import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
 import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
+import { NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
 import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
 import { WORLDDB_V2_GLOBAL_COMPETITIONS as v2Competitions, WORLDDB_V2_COMPETITIONS as defaultV2Competitions } from '@/app/game/WorldDbV2Competitions'
 
@@ -103,6 +104,8 @@ function StartScreen({
   const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(defaultV2Competitions.map(c=>c.sourceCompetitionId))
   const [v2Error,setV2Error]=useState<string|null>(null)
   const [v2Loading,setV2Loading]=useState(false)
+  const [ncaaSeed, setNcaaSeed] = useState('202627')
+  const isNCAA2026 = universeId === NCAA_D1_2026_MEN_UNIVERSE_ID || universeId === NCAA_D1_2026_WOMEN_UNIVERSE_ID
   useEffect(()=>{
     if(!setupOpen||universeId!==WORLD_DB_V2_UNIVERSE_ID)return
     let active=true
@@ -146,6 +149,7 @@ function StartScreen({
   }
 
   const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? v2Pilot?.teams??[] : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
+  const ncaaSeedReady = !isNCAA2026 || (ncaaSeed.trim().length > 0 && Number.isSafeInteger(Number(ncaaSeed)) && Number(ncaaSeed) >= 0 && Number(ncaaSeed) <= 0xffff_ffff)
   const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? !v2Loading&&v2Pilot!==null&&v2Error===null&&v2Date.length===10&&v2Seed.trim().length>0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
   const coachCreatorSupported = true
   const coachIdentityReady = !coachCreatorSupported || (firstName.trim().length > 0 && lastName.trim().length > 0 && dateOfBirth.length === 10)
@@ -193,13 +197,21 @@ function StartScreen({
           <p className="bdm-universe-description">PBM reference: 1 July 2025. Active leagues advance together. Profiles, contracts and opening economy are BDM-generated. Competitions marked Simulado use provisional rules; individual native acceptance is pending.</p>
           {v2Loading&&<p role="status">Checking WorldDB V2...</p>}{v2Error&&<p role="alert">{v2Error}</p>}
         </>}
+        {isNCAA2026 && (
+          <section aria-label="NCAA 2026-27 SIMULATION POLICY">
+            <label className="bdm-start-field"><span>NCAA FIXTURE / PLAYER SEED</span>
+              <input type="number" min={0} max={4294967295} step={1} value={ncaaSeed} disabled={isStarting} onChange={e=>setNcaaSeed(e.target.value)}/>
+            </label>
+            <p className="bdm-universe-description">Both men's and women's Division I seasons run together. Programs and 112 ASUN games are sourced. Other dates, players, conference tournaments and March Madness seeding are generated for gameplay, not actual NCAA results.</p>
+          </section>
+        )}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && (worldDbLoading || isStarting) && <p aria-live="polite" className="bdm-world-db-status" role="status">Cargando World Database...</p>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && worldDbError !== null && <p className="bdm-start-message">{worldDbError}</p>}
         {availableTeams.length > 0 && (
           <label className="bdm-start-field">
             <span>{universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? `TEAM - ${availableTeams.length} CANONICAL OPTIONS` : 'TEAM'}</span>
             <select disabled={isStarting} value={teamKey} onChange={(event) => setTeamKey(event.target.value)}>
-              {(universeId === WORLD_DB_SPAIN_UNIVERSE_ID||universeId===WORLD_DB_V2_UNIVERSE_ID) && <option disabled value="">CHOOSE A TEAM</option>}
+              {(universeId === WORLD_DB_SPAIN_UNIVERSE_ID||universeId===WORLD_DB_V2_UNIVERSE_ID||isNCAA2026) && <option disabled value="">CHOOSE A TEAM</option>}
               {availableTeams.map((team) => <option key={team.key} value={team.key}>{team.name} · {team.code}</option>)}
             </select>
           </label>
@@ -283,9 +295,10 @@ function StartScreen({
             <p className="bdm-coach-creator__note">Your nationality must exist in the selected world (leave blank for the club country). Your background affects real coaching attributes or finances; ambitions and fictional stories survive saves. Imported historical people stay unchanged.</p>
           </section>
         ) : null}
-        <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
+        <button className="primary-button" disabled={isStarting || !worldDbReady || !ncaaSeedReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
           ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed,competitionId:v2Competition,activeCompetitionIds:v2ActiveCompetitions}}:{}),
+          ...(isNCAA2026 ? { ncaaSeed: Number(ncaaSeed) } : {}),
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
           ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, nationalityCountryCode, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>
