@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import {
-  ACB_TEST_UNIVERSE_ID,
   NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID,
   WORLD_DB_SPAIN_UNIVERSE_ID, WORLD_DB_V2_UNIVERSE_ID,
   type NewGameUniverseId,
 } from '@/app/game/NewGameUniverseCatalog'
+import { ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { WORLDDB_V2_GLOBAL_COMPETITIONS } from '@/app/game/WorldDbV2Competitions'
 
 export type LeagueDepth = 'detailed' | 'reduced' | 'off'
