@@ -18,4 +18,4 @@ jobs:
       - name: TypeScript typecheck
         run: npm run typecheck
       - name: Real-program NCAA New Game, daily lifecycle and V4
-        run: npx vitest run src/app/game/NcaaD1Real2027DailyNewGame.test.ts src/app/game/NcaaD1Real2027Postseason.test.ts --maxWorkers=1 --testTimeout=240000
+        run: npx vitest run src/app/game/NcaaD1Real2027DailyNewGame.test.ts src/app/game/NcaaD1Real2027Postseason.test.ts src/app/game/NcaaD1Real2027NativeMatch.test.ts --maxWorkers=1 --testTimeout=240000
