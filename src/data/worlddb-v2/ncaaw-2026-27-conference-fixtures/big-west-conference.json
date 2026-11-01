@@ -1,0 +1,1811 @@
+{
+  "schemaVersion": 2,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "big-west-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "memberCount": 12,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:cal-poly-mustangs",
+    "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+    "ncaa:2026-27:women:cal-state-fullerton-titans",
+    "ncaa:2026-27:women:cal-state-northridge-matadors",
+    "ncaa:2026-27:women:california-baptist-lancers",
+    "ncaa:2026-27:women:long-beach-state-beach",
+    "ncaa:2026-27:women:sacramento-state-hornets",
+    "ncaa:2026-27:women:uc-irvine-anteaters",
+    "ncaa:2026-27:women:uc-riverside-highlanders",
+    "ncaa:2026-27:women:uc-san-diego-tritons",
+    "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+    "ncaa:2026-27:women:utah-valley-wolverines"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/cal-poly-mustangs",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/cal-state-bakersfield-roadrunners",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/cal-state-fullerton-titans",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/cal-state-northridge-matadors",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/california-baptist-lancers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/long-beach-state-beach",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/sacramento-state-hornets",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/uc-irvine-anteaters",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/uc-riverside-highlanders",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/uc-san-diego-tritons",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/uc-santa-barbara-gauchos",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/utah-valley-wolverines"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:cal-poly-mustangs",
+      "listedGames": 31,
+      "inUniverseGames": 29
+    },
+    {
+      "id": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "listedGames": 32,
+      "inUniverseGames": 31
+    },
+    {
+      "id": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "listedGames": 32,
+      "inUniverseGames": 30
+    },
+    {
+      "id": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    },
+    {
+      "id": "ncaa:2026-27:women:california-baptist-lancers",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:long-beach-state-beach",
+      "listedGames": 13,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:sacramento-state-hornets",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "listedGames": 11,
+      "inUniverseGames": 11
+    },
+    {
+      "id": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "listedGames": 10,
+      "inUniverseGames": 10
+    },
+    {
+      "id": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "listedGames": 13,
+      "inUniverseGames": 13
+    },
+    {
+      "id": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    },
+    {
+      "id": "ncaa:2026-27:women:utah-valley-wolverines",
+      "listedGames": 12,
+      "inUniverseGames": 12
+    }
+  ],
+  "fixtureCount": 133,
+  "nonD1OrUnmatched": [
+    {
+      "school": "ncaa:2026-27:women:cal-poly-mustangs",
+      "reason": "nonDI",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayId": "ncaa:2026-27:women:uc-merced-bobcats"
+    },
+    {
+      "school": "ncaa:2026-27:women:cal-poly-mustangs",
+      "reason": "nonDI",
+      "date": "2026-11-05",
+      "homeId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayId": "ncaa:2026-27:women:whittier-poets"
+    },
+    {
+      "school": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "reason": "nonDI",
+      "date": "2026-11-03",
+      "homeId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayId": "ncaa:2026-27:women:stanislaus-state-warriors"
+    },
+    {
+      "school": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "reason": "nonDI",
+      "date": "2026-11-04",
+      "homeId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayId": "ncaa:2026-27:women:hope-international-royals"
+    },
+    {
+      "school": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "reason": "nonDI",
+      "date": "2026-11-07",
+      "homeId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayId": "ncaa:2026-27:women:westcliff-warriors"
+    }
+  ],
+  "fixtures": [
+    {
+      "gameId": "401921519",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-san-diego-state-aztecs-401921519",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401927836",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-washington-huskies-401927836",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401906063",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:california-golden-bears",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-california-golden-bears-401906063",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401918897",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-ucla-bruins-401918897",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401917686",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-seattle-u-redhawks-401917686",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401917688",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:santa-clara-broncos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/santa-clara-broncos-vs-utah-valley-wolverines-401917688",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401917689",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-diego-toreros-vs-uc-san-diego-tritons-401917689",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401920265",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:nevada-wolf-pack",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-nevada-wolf-pack-401920265",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401917692",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/seattle-u-redhawks-vs-uc-santa-barbara-gauchos-401917692",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401917693",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:santa-clara-broncos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/santa-clara-broncos-vs-long-beach-state-beach-401917693",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921464",
+      "gender": "women",
+      "date": "2026-11-09",
+      "homeProgramId": "ncaa:2026-27:women:idaho-state-bengals",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-idaho-state-bengals-401921464",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401917697",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:seattle-u-redhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/seattle-u-redhawks-vs-cal-poly-mustangs-401917697",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401920404",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-uc-davis-aggies-401920404",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921495",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-washington-huskies-401921495",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401917700",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:pacific-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pacific-tigers-vs-california-baptist-lancers-401917700",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401906066",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:california-golden-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-golden-bears-vs-uc-santa-barbara-gauchos-401906066",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401913875",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-wichita-state-shockers-401913875",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401916195",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:niagara-purple-eagles",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-niagara-purple-eagles-401916195",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401917702",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-san-diego-toreros-401917702",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401917703",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:portland-pilots",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-portland-pilots-401917703",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401920267",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:nevada-wolf-pack",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/nevada-wolf-pack-vs-utah-valley-wolverines-401920267",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401917704",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:pacific-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pacific-tigers-vs-cal-state-fullerton-titans-401917704",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401917706",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:san-francisco-dons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-francisco-dons-vs-uc-san-diego-tritons-401917706",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921496",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-tech-trailblazers-vs-cal-state-bakersfield-roadrunners-401921496",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401917710",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:san-francisco-dons",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-san-francisco-dons-401917710",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401918898",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-ucla-bruins-401918898",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401921522",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:weber-state-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/weber-state-wildcats-vs-cal-state-fullerton-titans-401921522",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401917711",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:pacific-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pacific-tigers-vs-sacramento-state-hornets-401917711",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401918935",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "awayProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-valley-wolverines-vs-utah-utes-401918935",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401920406",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-uc-davis-aggies-401920406",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401917714",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-toreros",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-san-diego-toreros-401917714",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401917717",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:san-francisco-dons",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-san-francisco-dons-401917717",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401921465",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-washington-huskies-401921465",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401921523",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:portland-state-vikings",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-portland-state-vikings-401921523",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401917724",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:portland-pilots",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-portland-pilots-401917724",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401918728",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:st-thomas-tommies",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-st-thomas-tommies-401918728",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401916087",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-arizona-state-sun-devils-401916087",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401918729",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:st-thomas-tommies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/st-thomas-tommies-vs-california-baptist-lancers-401918729",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401913061",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-arizona-wildcats-401913061",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401916216",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:quinnipiac-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-quinnipiac-bobcats-401916216",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401921466",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-cal-poly-mustangs-401921466",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921497",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-uc-santa-barbara-gauchos-401921497",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921524",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-sacramento-state-hornets-401921524",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401917738",
+      "gender": "women",
+      "date": "2026-12-04",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:pacific-tigers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pacific-tigers-vs-uc-san-diego-tritons-401917738",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921467",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-cal-poly-mustangs-401921467",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921498",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-cal-state-northridge-matadors-401921498",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921525",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-long-beach-state-beach-401921525",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401917745",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:san-francisco-dons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-francisco-dons-vs-sacramento-state-hornets-401917745",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401918789",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:omaha-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/omaha-mavericks-vs-cal-state-bakersfield-roadrunners-401918789",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401918900",
+      "gender": "women",
+      "date": "2026-12-11",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-ucla-bruins-401918900",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401916159",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-byu-cougars-401916159",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921468",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:eastern-washington-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-washington-eagles-vs-cal-poly-mustangs-401921468",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401917754",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:loyola-marymount-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/loyola-marymount-lions-vs-long-beach-state-beach-401917754",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401920494",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:unlv-lady-rebels",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-unlv-lady-rebels-401920494",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921526",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:denver-pioneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/denver-pioneers-vs-cal-state-fullerton-titans-401921526",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921499",
+      "gender": "women",
+      "date": "2026-12-14",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:utep-miners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utep-miners-vs-cal-state-bakersfield-roadrunners-401921499",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401920472",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:uc-davis-aggies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-davis-aggies-vs-utah-valley-wolverines-401920472",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401920278",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:new-mexico-lobos",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-new-mexico-lobos-401920278",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921527",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:southern-utah-thunderbirds",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-southern-utah-thunderbirds-401921527",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921152",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-la-salle-explorers-401921152",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921469",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:utah-tech-trailblazers",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-utah-tech-trailblazers-401921469",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401921500",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:san-jose-state-spartans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/san-jose-state-spartans-vs-cal-state-bakersfield-roadrunners-401921500",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401920250",
+      "gender": "women",
+      "date": "2026-12-20",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:air-force-falcons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/air-force-falcons-vs-cal-state-fullerton-titans-401920250",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401915990",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:stanford-cardinal",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-stanford-cardinal-401915990",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs"
+      ]
+    },
+    {
+      "gameId": "401921470",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-cal-poly-mustangs-401921470",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921501",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-valley-wolverines-vs-cal-state-bakersfield-roadrunners-401921501",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921528",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-uc-san-diego-tritons-401921528",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921471",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-cal-poly-mustangs-401921471",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921502",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-cal-state-bakersfield-roadrunners-401921502",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921529",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-uc-irvine-anteaters-401921529",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921553",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-valley-wolverines-vs-cal-state-northridge-matadors-401921553",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921472",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-long-beach-state-beach-401921472",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921503",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-uc-riverside-highlanders-401921503",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921530",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-cal-state-fullerton-titans-401921530",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921554",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-california-baptist-lancers-401921554",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921473",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-cal-state-fullerton-titans-401921473",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921504",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-california-baptist-lancers-401921504",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921555",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-uc-riverside-highlanders-401921555",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921474",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-cal-poly-mustangs-401921474",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921505",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-cal-state-bakersfield-roadrunners-401921505",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921556",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-cal-state-northridge-matadors-401921556",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921475",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-valley-wolverines-vs-cal-poly-mustangs-401921475",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921506",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-cal-state-bakersfield-roadrunners-401921506",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921531",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-cal-state-northridge-matadors-401921531",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921476",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-cal-state-bakersfield-roadrunners-401921476",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401921532",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-cal-state-fullerton-titans-401921532",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921557",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-cal-state-northridge-matadors-401921557",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921477",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-cal-state-northridge-matadors-401921477",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921507",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-santa-barbara-gauchos-vs-cal-state-bakersfield-roadrunners-401921507",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921533",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-cal-state-fullerton-titans-401921533",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921478",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-uc-irvine-anteaters-401921478",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921508",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-sacramento-state-hornets-401921508",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921534",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-cal-state-fullerton-titans-401921534",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921558",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-utah-valley-wolverines-401921558",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921479",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-uc-san-diego-tritons-401921479",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921509",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-utah-valley-wolverines-401921509",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921535",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-cal-state-fullerton-titans-401921535",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921559",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-sacramento-state-hornets-401921559",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921480",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-cal-poly-mustangs-401921480",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921510",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-cal-state-bakersfield-roadrunners-401921510",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921560",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-cal-state-northridge-matadors-401921560",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921481",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-cal-poly-mustangs-401921481",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921511",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-cal-state-bakersfield-roadrunners-401921511",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921536",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-uc-santa-barbara-gauchos-401921536",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921561",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-cal-state-northridge-matadors-401921561",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921482",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-california-baptist-lancers-401921482",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921512",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-long-beach-state-beach-401921512",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921537",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-cal-state-fullerton-titans-401921537",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921483",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-uc-riverside-highlanders-401921483",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921513",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-cal-state-fullerton-titans-401921513",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:cal-state-fullerton-titans"
+      ]
+    },
+    {
+      "gameId": "401921562",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-long-beach-state-beach-401921562",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921484",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-cal-poly-mustangs-401921484",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners"
+      ]
+    },
+    {
+      "gameId": "401921538",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-utah-valley-wolverines-401921538",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921563",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-uc-santa-barbara-gauchos-401921563",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921485",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:uc-santa-barbara-gauchos",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-uc-santa-barbara-gauchos-401921485",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-santa-barbara-gauchos"
+      ]
+    },
+    {
+      "gameId": "401921514",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-cal-state-bakersfield-roadrunners-401921514",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:cal-state-northridge-matadors"
+      ]
+    },
+    {
+      "gameId": "401921539",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:long-beach-state-beach",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/long-beach-state-beach-vs-cal-state-fullerton-titans-401921539",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:long-beach-state-beach"
+      ]
+    },
+    {
+      "gameId": "401921486",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-san-diego-tritons-vs-cal-poly-mustangs-401921486",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921515",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-cal-state-bakersfield-roadrunners-401921515",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921540",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacramento-state-hornets-vs-cal-state-fullerton-titans-401921540",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921564",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-cal-state-northridge-matadors-401921564",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921487",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "awayProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-irvine-anteaters-vs-cal-poly-mustangs-401921487",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921516",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "awayProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/uc-riverside-highlanders-vs-cal-state-bakersfield-roadrunners-401921516",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921541",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "awayProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/utah-valley-wolverines-vs-cal-state-fullerton-titans-401921541",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921565",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "awayProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/california-baptist-lancers-vs-cal-state-northridge-matadors-401921565",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921488",
+      "gender": "women",
+      "date": "2027-03-04",
+      "homeProgramId": "ncaa:2026-27:women:utah-valley-wolverines",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-utah-valley-wolverines-401921488",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:utah-valley-wolverines"
+      ]
+    },
+    {
+      "gameId": "401921517",
+      "gender": "women",
+      "date": "2027-03-04",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-uc-san-diego-tritons-401921517",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    },
+    {
+      "gameId": "401921542",
+      "gender": "women",
+      "date": "2027-03-04",
+      "homeProgramId": "ncaa:2026-27:women:california-baptist-lancers",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-california-baptist-lancers-401921542",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:california-baptist-lancers"
+      ]
+    },
+    {
+      "gameId": "401921566",
+      "gender": "women",
+      "date": "2027-03-04",
+      "homeProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-uc-irvine-anteaters-401921566",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921489",
+      "gender": "women",
+      "date": "2027-03-06",
+      "homeProgramId": "ncaa:2026-27:women:sacramento-state-hornets",
+      "awayProgramId": "ncaa:2026-27:women:cal-poly-mustangs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-poly-mustangs-vs-sacramento-state-hornets-401921489",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-poly-mustangs",
+        "ncaa:2026-27:women:sacramento-state-hornets"
+      ]
+    },
+    {
+      "gameId": "401921518",
+      "gender": "women",
+      "date": "2027-03-06",
+      "homeProgramId": "ncaa:2026-27:women:uc-irvine-anteaters",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-bakersfield-roadrunners-vs-uc-irvine-anteaters-401921518",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-bakersfield-roadrunners",
+        "ncaa:2026-27:women:uc-irvine-anteaters"
+      ]
+    },
+    {
+      "gameId": "401921543",
+      "gender": "women",
+      "date": "2027-03-06",
+      "homeProgramId": "ncaa:2026-27:women:uc-riverside-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-fullerton-titans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-fullerton-titans-vs-uc-riverside-highlanders-401921543",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-fullerton-titans",
+        "ncaa:2026-27:women:uc-riverside-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921567",
+      "gender": "women",
+      "date": "2027-03-06",
+      "homeProgramId": "ncaa:2026-27:women:uc-san-diego-tritons",
+      "awayProgramId": "ncaa:2026-27:women:cal-state-northridge-matadors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cal-state-northridge-matadors-vs-uc-san-diego-tritons-401921567",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:cal-state-northridge-matadors",
+        "ncaa:2026-27:women:uc-san-diego-tritons"
+      ]
+    }
+  ]
+}

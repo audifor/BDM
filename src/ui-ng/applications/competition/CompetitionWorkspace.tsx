@@ -148,8 +148,12 @@ export function CompetitionWorkspace() {
   )
   const [onlyUserTeam, setOnlyUserTeam] = useState(true)
   const [monthOffset, setMonthOffset] = useState(0)
+  const [groupIndex, setGroupIndex] = useState(0)
   const team = world === null ? undefined : getUserTeam(world)
   const model = world === null ? null : buildCompetitionWorkspaceModel(world, preferredCompetitionId, team?.id)
+  const standingRows = model?.groupStandings.length && model.groupStandings.length > 1
+    ? model.groupStandings[groupIndex] ?? model.groupStandings[0]!
+    : model?.standings ?? []
   const currentMonth = world === null ? undefined : shiftMonth(monthStart(parseGameDate(world.currentDate)), monthOffset)
   const cells = currentMonth === undefined ? [] : monthGrid(currentMonth)
   const eventsByDate = useMemo(() => {
@@ -290,10 +294,13 @@ export function CompetitionWorkspace() {
 
       {tab === 'standings' ? (
         <div className="competition-standings">
+          {model.groupStandings.length > 1 ? <label>Grupo <select aria-label="Grupo de clasificación" value={groupIndex < model.groupStandings.length ? groupIndex : 0} onChange={event => setGroupIndex(Number(event.target.value))}>
+            {model.groupStandings.map((_, index) => <option key={index} value={index}>{model.groupStandingsLabels[index]}</option>)}
+          </select> · Consulta los clasificados en el cuadro final.</label> : null}
           <div className="ng-canon__panel ng-holo-panel">
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={ngTableColumns(model.standings.map((row) => ({
+              columns={ngTableColumns(standingRows.map((row) => ({
                 ...row,
                 id: row.teamId,
                 teamName: world.teams[row.teamId]?.name ?? row.teamId,
@@ -321,9 +328,9 @@ export function CompetitionWorkspace() {
               ])}
               gridId="ng-competition-standings"
               rowClassName={(row) =>
-                standingsZoneClassName(standingsZoneForPosition(row.position, model.standingsZoneBands))
+                model.groupStandings.length > 1 ? '' : standingsZoneClassName(standingsZoneForPosition(row.position, model.standingsZoneBands))
               }
-              rows={model.standings.map((row) => ({
+              rows={standingRows.map((row) => ({
                 ...row,
                 id: row.teamId,
                 teamName: world.teams[row.teamId]?.name ?? row.teamId,
@@ -331,7 +338,7 @@ export function CompetitionWorkspace() {
               selectedId={team?.id}
             />
           </div>
-          <StandingsZoneLegend bands={model.standingsZoneBands} />
+          {model.groupStandings.length === 1 ? <StandingsZoneLegend bands={model.standingsZoneBands} /> : null}
         </div>
       ) : null}
 

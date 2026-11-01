@@ -1,0 +1,21 @@
+﻿{
+  "scope": "Historical 2018-19 memberships; PBM source edition and 2026-27 compatibility remain unverified.",
+  "memberships": [
+    {
+      "teamId": "pbm:DYN_equipe:1540",
+      "club": "North Alabama Lions",
+      "pbmConferenceId": 32,
+      "conference": "Atlantic Sun Conference",
+      "season": "2018-19",
+      "evidence": "https://roarlions.com/sports/2015/4/13/MBB_0413152634.aspx"
+    },
+    {
+      "teamId": "pbm:DYN_equipe:1541",
+      "club": "California Baptist Lancers",
+      "pbmConferenceId": 31,
+      "conference": "Western Athletic Conference",
+      "season": "2018-19",
+      "evidence": "https://cbulancers.com/news/2017/1/13/general-cbu-announces-d1-wac-move"
+    }
+  ]
+}

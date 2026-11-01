@@ -13,7 +13,7 @@ import { App } from '@/ui/App'
 import './BootstrapApp.css'
 import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
 import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
-import v2Competitions from '@/data/worlddb-v2/competitions.json'
+import { WORLDDB_V2_GLOBAL_COMPETITIONS as v2Competitions, WORLDDB_V2_COMPETITIONS as defaultV2Competitions } from '@/app/game/WorldDbV2Competitions'
 
 export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
@@ -100,7 +100,7 @@ function StartScreen({
   const [v2Seed,setV2Seed]=useState('bdm-worlddb-v2-pilot')
   const [v2Pilot,setV2Pilot]=useState<WorldDbV2Pilot|null>(null)
   const [v2Competition,setV2Competition]=useState('pbm:DYN_championnat:5')
-  const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(v2Competitions.map(c=>c.sourceCompetitionId))
+  const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(defaultV2Competitions.map(c=>c.sourceCompetitionId))
   const [v2Error,setV2Error]=useState<string|null>(null)
   const [v2Loading,setV2Loading]=useState(false)
   useEffect(()=>{
@@ -188,9 +188,9 @@ function StartScreen({
           <label className="bdm-start-field"><span>WORLDDB SOURCE FOLDER</span><input value={sourceRoot} disabled={isStarting} onChange={e=>setSourceRoot(e.target.value)}/></label>
           <label className="bdm-start-field"><span>START DATE</span><input type="date" value={v2Date} disabled={isStarting} onChange={e=>setV2Date(e.target.value)}/></label>
           <label className="bdm-start-field"><span>WORLD SEED</span><input value={v2Seed} disabled={isStarting} onChange={e=>setV2Seed(e.target.value)}/></label>
-          <fieldset disabled={isStarting}><legend>ACTIVE COMPETITIONS</legend>{v2Competitions.map(c=><label key={c.sourceCompetitionId}><input type="checkbox" checked={v2ActiveCompetitions.includes(c.sourceCompetitionId)} disabled={isStarting || c.sourceCompetitionId===v2Competition} onChange={e=>setV2ActiveCompetitions(ids=>e.target.checked?[...ids,c.sourceCompetitionId]:ids.filter(id=>id!==c.sourceCompetitionId))}/>{c.name} · {c.teamCount} clubs </label>)}</fieldset>
-          <label className="bdm-start-field"><span>CLUB COMPETITION</span><select disabled={isStarting} value={v2Competition} onChange={e=>{setV2Competition(e.target.value);setV2ActiveCompetitions(ids=>ids.includes(e.target.value)?ids:[...ids,e.target.value])}}>{v2Competitions.map(c=><option key={c.sourceCompetitionId} value={c.sourceCompetitionId}>{c.name} · {c.countryCode}</option>)}</select></label>
-          <p className="bdm-universe-description">PBM reference: 1 July 2025. One fictional universe: all active leagues advance together. Profiles, contracts and opening economy are BDM-generated. Uncertified competitions remain unavailable.</p>
+          <fieldset disabled={isStarting}><legend>ACTIVE COMPETITIONS</legend>{v2Competitions.map(c=><label key={c.sourceCompetitionId}><input type="checkbox" checked={v2ActiveCompetitions.includes(c.sourceCompetitionId)} disabled={isStarting || c.sourceCompetitionId===v2Competition} onChange={e=>setV2ActiveCompetitions(ids=>e.target.checked?[...ids,c.sourceCompetitionId]:ids.filter(id=>id!==c.sourceCompetitionId))}/>{c.name}{c.formatProvenance ? ' · Simulado (validación pendiente)' : ''} · {c.teamCount} clubs </label>)}</fieldset>
+          <label className="bdm-start-field"><span>CLUB COMPETITION</span><select disabled={isStarting} value={v2Competition} onChange={e=>{setV2Competition(e.target.value);setV2ActiveCompetitions(ids=>ids.includes(e.target.value)?ids:[...ids,e.target.value])}}>{v2Competitions.map(c=><option key={c.sourceCompetitionId} value={c.sourceCompetitionId}>{c.name} · {c.countryCode}{c.formatProvenance ? ' · Simulado (validación pendiente)' : ''}</option>)}</select></label>
+          <p className="bdm-universe-description">PBM reference: 1 July 2025. Active leagues advance together. Profiles, contracts and opening economy are BDM-generated. Competitions marked Simulado use provisional rules; individual native acceptance is pending.</p>
           {v2Loading&&<p role="status">Checking WorldDB V2...</p>}{v2Error&&<p role="alert">{v2Error}</p>}
         </>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && (worldDbLoading || isStarting) && <p aria-live="polite" className="bdm-world-db-status" role="status">Cargando World Database...</p>}

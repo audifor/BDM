@@ -74,7 +74,9 @@ export function instantiateWorldCompetitionRoundRobinV1(
       const right = current[current.length - 1 - index]!
       if (left === bye || right === bye) continue
 
-      const reverse = (roundIndex + index) % 2 === 1
+      const size = entryIds.length % 2 === 0 ? entryIds.length + 1 : entryIds.length
+      const distance = (entryIds.indexOf(right) - entryIds.indexOf(left) + size) % size
+      const reverse = meetingsPerPair % 2 === 1 ? distance > Math.floor(size / 2) : (roundIndex + index) % 2 === 1
       pairs.push(reverse ? [right, left] : [left, right])
     }
     firstLegPairings.push(pairs)

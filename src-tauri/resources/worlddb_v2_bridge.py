@@ -8,6 +8,14 @@ def has_player_name(first_name, last_name):
     """Optional original free agents must satisfy the existing canonical Player identity contract."""
     return isinstance(first_name, str) and bool(first_name.strip()) and isinstance(last_name, str) and bool(last_name.strip())
 
+
+def validate_discovery(selection, counts):
+    if len(counts) != selection['teamCount'] or not counts:
+        raise ValueError('Original participants do not fit the selected format')
+    generated_population = selection.get('formatProvenance') == 'GENERATED_SIMULATION' or selection.get('simulationPolicy') is True
+    if not generated_population and min(counts) < 5:
+        raise ValueError('Original rosters do not fit the selected format')
+
 def main():
     request = json.loads(sys.stdin.buffer.read().decode('utf-8'))
     root = Path(request['sourceRoot']).resolve()
@@ -20,6 +28,7 @@ def main():
     catalog_config=request.get('competitionCatalog')
     if catalog_config is None:
         catalog_config=json.loads((Path(__file__).resolve().parents[2]/'src/data/worlddb-v2/competitions.json').read_text(encoding='utf-8'))
+        catalog_config += json.loads((Path(__file__).resolve().parents[2]/'src/data/worlddb-v2/global-competitions.json').read_text(encoding='utf-8'))
     selected_id=request.get('competitionId','pbm:DYN_championnat:5')
     selection=next((c for c in catalog_config if c['sourceCompetitionId']==selected_id),None)
     if selection is None:raise ValueError('Competition has no verified BDM mapping: '+selected_id)
@@ -33,7 +42,7 @@ def main():
         try:
             rows=c.execute('SELECT id_equipe,nom_equipe FROM DYN_equipe WHERE championnat_id=? ORDER BY id_equipe',(championship_id,)).fetchall()
             counts=[c.execute('SELECT count(*) FROM DYN_joueur WHERE team_id=? AND is_alive=1 AND retraite=0',(r[0],)).fetchone()[0] for r in rows]
-            if len(rows)!=selection['teamCount'] or min(counts)<5:raise ValueError('Original participants/rosters do not fit the selected format')
+            validate_discovery(selection, counts)
             teams=[dict(key='pbm:DYN_equipe:'+str(r[0]),name=decode(r[1]),code=str(r[0])) for r in rows]
         finally:c.close()
         return dict(competitionId=selected_id,name=candidate['name'],teams=teams,minimumOriginalRoster=min(counts),masterSha256=catalog['master_sha256'])
@@ -53,7 +62,8 @@ def main():
         from runtime import validate_birth, ref
         day=date.fromisoformat(request['startDate'])
         candidates=[]
-        for row in u.c.execute('SELECT * FROM world.DYN_joueur WHERE team_id=0 AND is_alive=1 AND retraite=0 AND sexe=0 AND nationalite=?',(selection['countryId'],)):
+        competition_gender = u.c.execute('SELECT sexe FROM world.DYN_championnat WHERE id=?', (championship_id,)).fetchone()[0]
+        for row in u.c.execute('SELECT * FROM world.DYN_joueur WHERE team_id=0 AND is_alive=1 AND retraite=0 AND sexe=? AND nationalite=?',(competition_gender, selection['countryId'])):
             # Keep incomplete source identities in the immutable master, outside the playable optional pool.
             if not has_player_name(decode(row['joueur_prenom']), decode(row['joueur_nom'])):continue
             born=validate_birth(dict(row),day)
@@ -78,7 +88,8 @@ def main():
                 facilities[facility_id]=dict(facilityId=facility_id,name=f['name_arena'],placeId=place_id,capacity=f['capacity'] if f['capacity'] and f['capacity']>0 else None)
                 usages.append(dict(usageId=facility_id+':'+club['entity_id'],teamId=club['entity_id'],facilityId=facility_id,usageType='home',validFrom=None,validTo=None))
         people=[p for p in u.query('person',10000) if p['parent_id'] is not None]
-        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=people,freeAgents=free_agents,freeAgentSelection=dict(eligibleOriginals=len(candidates),selected=len(selected),policy='ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60' if selection['countryId']==8 else 'ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60'),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
+        policy = 'ORIGINAL_{}_{}_18_40_SEEDED_MAX_60'.format('SPANISH' if selection['countryId']==8 else 'COUNTRY', 'FEMALE' if competition_gender == 1 else 'MALE')
+        return dict(manifest=manifest,countries=u.query('country',10000),clubs=clubs,people=people,freeAgents=free_agents,freeAgentSelection=dict(eligibleOriginals=len(candidates),selected=len(selected),policy=policy),competitions=u.query('competition',100),physicalContent=dict(places=list(places.values()),facilities=list(facilities.values()),teamUsages=usages))
 
 if __name__=='__main__':
     sys.stdout.reconfigure(encoding='utf-8')

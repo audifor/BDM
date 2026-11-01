@@ -1,0 +1,1160 @@
+{
+  "season": "2026-27",
+  "conferenceId": "big-12-conference",
+  "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-19",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-19",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-21",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-21",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-12",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-19",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-09",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-15",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-15",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-23",
+      "awayProgramId": "ncaa:2026-27:women:byu-cougars",
+      "homeProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-23",
+      "awayProgramId": "ncaa:2026-27:women:ucf-knights",
+      "homeProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-23",
+      "awayProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "homeProgramId": "ncaa:2026-27:women:houston-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:utah-utes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "homeProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "homeProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:baylor-bears",
+      "homeProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:arizona-state-sun-devils",
+      "homeProgramId": "ncaa:2026-27:women:arizona-wildcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:houston-cougars",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:iowa-state-cyclones",
+      "homeProgramId": "ncaa:2026-27:women:oklahoma-state-cowgirls",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:utah-utes",
+      "homeProgramId": "ncaa:2026-27:women:byu-cougars",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:west-virginia-mountaineers",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:kansas-state-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:colorado-buffaloes",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:tcu-horned-frogs",
+      "homeProgramId": "ncaa:2026-27:women:baylor-bears",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "homeProgramId": "ncaa:2026-27:women:kansas-jayhawks",
+      "sourceUrl": "https://admin.big12sports.com/news/2026/9/16/2026-27-monster-energy-big-12-womens-basketball-conference-schedule-announced.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

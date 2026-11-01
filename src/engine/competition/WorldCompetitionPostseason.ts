@@ -5,6 +5,10 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { FinalStandingLine } from '@/domain/season'
 import type { WorldCompetitionFormatDocument, WorldCompetitionFormatNode } from '@/domain/competition'
 import { calculateStandings } from './standings'
+import { calculateGroupStandings } from './standings/Standings'
+import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
+import { resolveWorldCompetitionAggregate } from './WorldCompetitionAggregate'
+import { calculateSplitStandings, materializeSplitStages, splitStageNodes, splitStagesComplete } from './WorldCompetitionSplitStage'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from './WorldCompetitionCalendar'
 import { evaluateWorldCompetitionSeriesV1, instantiateWorldCompetitionSeriesV1, type WorldCompetitionSeriesPlanV1, type WorldCompetitionSeriesStateV1 } from './WorldCompetitionSeries'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
@@ -48,9 +52,26 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
   if (postseasonKeys.size === 0) return null
   const regularSeasonComplete = areRegularSeasonGamesComplete(world, season.id, regularNode.key)
   if (!regularSeasonComplete) return emptyPostseasonState()
+  const splits = splitStageNodes(world, season.id)
+  if (splits.length && !splitStagesComplete(world, season.id)) return { ...emptyPostseasonState(), regularSeasonComplete: true }
 
-  const standings = calculateStandings(world, season.id)
-  const seeds = selectQualifiedEntries(standings, variant.edges.filter((edge) => edge.from === regularNode.key), format.competitionSeasonId)
+  const groups = calculateGroupStandings(world, season.id)
+  // Interleave group ranks: every group winner precedes every runner-up.
+  // TOP_N therefore gives equal automatic berths when count is a group multiple.
+  const qualifyingSplits = splits.filter(node => variant.edges.some(edge => edge.from === node.key && ['PLAYOFF', 'FINAL'].includes(variant.nodes.find(n => n.key === edge.to)?.role ?? '')))
+  const qualifyingSplit = qualifyingSplits[0]
+  const standings = qualifyingSplit ? calculateSplitStandings(world, season.id, qualifyingSplit) : groups.length === 1 ? calculateStandings(world, season.id)
+    : Array.from({ length: Math.max(...groups.map(group => group.length)) }, (_, rank) => groups.flatMap(group => group[rank] ? [group[rank]!] : []))
+      .flat().map((row, index) => ({ ...row, position: index + 1 }))
+  const seeds = qualifyingSplits.length > 1 ? (() => {
+    const tables = qualifyingSplits.map(node => {
+      const rules = variant.edges.filter(edge => edge.from === node.key && edge.selector === 'RANK_RANGE')
+      if (rules.length !== 1 || rules[0]!.rankFrom !== 1 || rules[0]!.rankTo === undefined) throw new Error(`Unsupported split qualification: ${node.key}`)
+      return calculateSplitStandings(world, season.id, node).slice(0, rules[0]!.rankTo)
+    })
+    return Array.from({ length: Math.max(...tables.map(table => table.length)) }, (_, rank) => tables.flatMap(table => table[rank] ? [table[rank]!] : []))
+      .flat().map((row, index) => ({ competitionSeasonEntryId: row.teamId, seed: index + 1 }))
+  })() : selectQualifiedEntries(standings, variant.edges.filter((edge) => edge.from === (qualifyingSplit?.key ?? regularNode.key)), format.competitionSeasonId)
   const bracketPlan = instantiateWorldCompetitionFixedBracketV1(format, variant.key, seeds)
   const outcomes: WorldCompetitionVirtualFixtureOutcomeV1[] = []
   const seriesByFixtureId: Record<string, CompetitionPostseasonSeriesStateV1> = {}
@@ -59,6 +80,12 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
     const resolution = resolveWorldCompetitionVirtualFixturesV1(bracketPlan, outcomes)
     let addedOutcome = false
     for (const fixture of resolution.readyFixtures) {
+      const node = requireNode(format, fixture.nodeKey)
+      if (node.contest?.formatType === 'AGGREGATE') {
+        const { outcome } = resolveWorldCompetitionAggregate(world, season.id, fixture, node)
+        if (outcome) { outcomes.push(outcome); addedOutcome = true }
+        continue
+      }
       if(requireNode(format,fixture.nodeKey).contest?.formatType==='SINGLE_GAME'){
         const outcome=singleGameFixtureOutcome(world,season.id,fixture)
         if(outcome){outcomes.push(outcome);addedOutcome=true}
@@ -92,11 +119,18 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
   if (season.worldCompetitionFormat === undefined) return world
+  const regular = requireCompetitionFormatVariant(season.worldCompetitionFormat).nodes.find(node => node.role === 'REGULAR_SEASON')
+  if (regular && splitStageNodes(world, seasonId).length && areRegularSeasonGamesComplete(world, seasonId, regular.key)) world = materializeSplitStages(world, seasonId)
   const state = getCompetitionPostseasonState(world, seasonId)
   if (state === null || !state.regularSeasonComplete || state.bracketPlan === null) return world
   const variant = requireCompetitionFormatVariant(season.worldCompetitionFormat)
   if (!variant.nodes.some((node) => node.role === 'REGULAR_SEASON')) return materializeWorldCompetitionSingleElimination(world, seasonId, state)
   const additions = state.readyFixtures.flatMap((fixture) => {
+    const contestNode = requireNode(season.worldCompetitionFormat!, fixture.nodeKey)
+    if (contestNode.contest?.formatType === 'AGGREGATE') {
+      const { next } = resolveWorldCompetitionAggregate(world, season.id, fixture, contestNode)
+      return next ? [next] : []
+    }
     if(requireNode(season.worldCompetitionFormat!,fixture.nodeKey).contest?.formatType==='SINGLE_GAME'){
       const existing=Object.values(world.games).some(g=>g.seasonId===season.id&&g.postseasonFixtureId===fixture.fixtureId)
       return existing?[]:[singleGameFixture(world,season.id,fixture)]
@@ -139,6 +173,19 @@ export function areRegularSeasonGamesComplete(world: GameWorld, seasonId: keyof 
   const regularNode = variant?.nodes.find((node) => node.key === regularStageKey)
   const teamCount = regularNode?.teamCount ?? season?.participantTeamIds?.length
   const meetingsPerPair = regularNode?.pairing?.meetingsPerPair
+  if (regularNode?.opponentScope?.type === 'SAME_GROUP' && season && meetingsPerPair !== undefined) {
+    const groups = resolveWorldCompetitionGroups(regularNode, season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds)
+    const expected = groups.reduce((total, group) => total + group.length * (group.length - 1) / 2 * meetingsPerPair, 0)
+    if (games.length !== expected) return false
+    const groupByTeam = new Map(groups.flatMap((group, index) => group.map(id => [id, index] as const)))
+    const pairs = new Map<string, number>()
+    for (const game of games) {
+      if (groupByTeam.get(game.homeTeamId) !== groupByTeam.get(game.awayTeamId)) return false
+      const key = [game.homeTeamId, game.awayTeamId].sort().join('|')
+      pairs.set(key, (pairs.get(key) ?? 0) + 1)
+    }
+    return [...pairs.values()].every(count => count === meetingsPerPair) && games.every(game => game.status === 'completed')
+  }
   if (teamCount !== undefined && meetingsPerPair !== undefined) {
     const expectedRounds = (teamCount - 1 + teamCount % 2) * meetingsPerPair
     const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair

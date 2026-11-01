@@ -15,6 +15,14 @@ export interface Season {
   /** Immutable B04 format for this edition; tournament progress is derived from its Games. */
   readonly worldCompetitionFormat?: WorldCompetitionFormatDocument
   readonly calendarPolicy?: CompetitionCalendarPolicy
+  readonly ncaaSchedulePolicy?: NcaaSchedulePolicy
+}
+
+/** Simulation policy, persisted with the edition; opponent choices are generated. */
+export interface NcaaSchedulePolicy {
+  readonly seed: number
+  readonly conferenceGamesPerTeam: Readonly<Record<string, number>>
+  readonly nonConferenceRounds: number
 }
 
 export interface CalendarDateWindow {
@@ -58,6 +66,7 @@ export interface CreateSeasonInput {
   conferenceMembershipSnapshot?: readonly ConferenceMembership[]
   worldCompetitionFormat?: WorldCompetitionFormatDocument
   calendarPolicy?: CompetitionCalendarPolicy
+  ncaaSchedulePolicy?: NcaaSchedulePolicy
 }
 
 export function createSeason(input: CreateSeasonInput): Season {
@@ -81,7 +90,15 @@ export function createSeason(input: CreateSeasonInput): Season {
     ...(input.conferenceMembershipSnapshot === undefined ? {} : { conferenceMembershipSnapshot: Object.freeze(input.conferenceMembershipSnapshot.map((membership) => ({ ...membership }))) }),
     ...(input.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: input.worldCompetitionFormat }),
     ...(input.calendarPolicy === undefined ? {} : { calendarPolicy: createCalendarPolicy(input.calendarPolicy, startDate, endDate) }),
+    ...(input.ncaaSchedulePolicy === undefined ? {} : { ncaaSchedulePolicy: createNcaaSchedulePolicy(input.ncaaSchedulePolicy) }),
   })
+}
+
+function createNcaaSchedulePolicy(value: NcaaSchedulePolicy): NcaaSchedulePolicy {
+  if (!Number.isInteger(value.seed) || value.seed < 0 || value.seed > 0xffff_ffff || !Number.isInteger(value.nonConferenceRounds) || value.nonConferenceRounds < 0 || !value.conferenceGamesPerTeam || typeof value.conferenceGamesPerTeam !== 'object' || Array.isArray(value.conferenceGamesPerTeam)) throw new RangeError('Invalid NCAA schedule policy')
+  const counts = Object.entries(value.conferenceGamesPerTeam)
+  if (counts.some(([id, count]) => !id.trim() || !Number.isInteger(count) || count < 0)) throw new RangeError('Invalid NCAA conference schedule policy')
+  return Object.freeze({ seed: value.seed, nonConferenceRounds: value.nonConferenceRounds, conferenceGamesPerTeam: Object.freeze(Object.fromEntries(counts)) })
 }
 
 function createCalendarPolicy(value: CompetitionCalendarPolicy, startDate: GameDate, endDate: GameDate): CompetitionCalendarPolicy {

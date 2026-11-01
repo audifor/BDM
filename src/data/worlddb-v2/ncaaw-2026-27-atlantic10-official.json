@@ -1,0 +1,1016 @@
+{
+  "season": "2026-27",
+  "conferenceId": "atlantic-10-conference",
+  "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-02",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-03",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:fordham-rams",
+      "homeProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "homeProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "homeProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:dayton-flyers",
+      "homeProgramId": "ncaa:2026-27:women:saint-louis-billikens",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "homeProgramId": "ncaa:2026-27:women:richmond-spiders",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:la-salle-explorers",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:loyola-chicago-ramblers",
+      "homeProgramId": "ncaa:2026-27:women:duquesne-dukes",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:saint-joseph-s-hawks",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "homeProgramId": "ncaa:2026-27:women:fordham-rams",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "homeProgramId": "ncaa:2026-27:women:davidson-wildcats",
+      "sourceUrl": "https://admin.atlantic10.com/documents/2026/10/6/2026_27_WBB_CompositeFINAL.pdf?id=8868",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}
