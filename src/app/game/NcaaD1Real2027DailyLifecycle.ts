@@ -1,6 +1,7 @@
 import { withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { seasonIdFromString } from '@/domain/ids'
 import type { NcaaD1RealGender } from './NcaaD1Real2026Conferences'
+import { finalizeCompletedSeason } from '@/engine/season'
 import { startNcaa2027ConferenceTournaments, advanceNcaa2027ConferenceTournament, getNcaa2027ConferenceChampions } from './NcaaD1Real2027ConferenceTournaments'
 import { startNcaa2027NationalTournament, advanceNcaa2027NationalTournament } from './NcaaD1Real2027NationalTournament'
 
@@ -33,6 +34,13 @@ export function materializeNcaa2027PostseasonForDay(world: GameWorld): GameWorld
         const regular = Object.values(current.games).filter(game => game.seasonId === source.id)
         if (!regular.length || regular.some(game => game.status !== 'completed')) continue
         if (current.currentDate > '2027-03-15') throw new Error('NCAA conference tournament cannot be seeded after national selection')
+        // Normal MatchResultApplication already finalizes regular seasons. Also
+        // support a complete imported/save-recovered result set, but never
+        // consider a competition history complete without its SeasonHistory.
+        if (!current.seasonHistoryBySeasonId[source.id]) {
+          current = finalizeCompletedSeason(current, source.id)
+        }
+        if (!current.seasonHistoryBySeasonId[source.id]) throw new Error('NCAA regular season did not finalize before conference tournament')
         current = startNcaa2027ConferenceTournaments(current, gender)
       } else if (championshipIds.length !== 32) {
         throw new Error('NCAA postseason has a partially materialized conference set')
