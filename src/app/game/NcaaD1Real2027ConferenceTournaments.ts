@@ -54,7 +54,7 @@ export function startNcaa2027ConferenceTournaments(world: GameWorld, gender: Nca
     }))
     additions.seasons.push(createSeason({
       id, competitionId: compId, label: `2027 ${gender} ${conference.name} BDM simulated postseason`,
-      startDate: start, endDate: '2027-03-15', participantTeamIds: seed,
+      startDate: start, endDate: parseGameDate('2027-03-15'), participantTeamIds: seed,
     }))
     const target = nextPow2(seed.length)
     const prelimCount = seed.length - target
