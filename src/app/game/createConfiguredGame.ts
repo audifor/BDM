@@ -1,4 +1,4 @@
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { parseGameDate } from '@/domain/date'
@@ -58,7 +58,14 @@ export async function createConfiguredGameAsync(
     if(!options.worldDbV2)throw new Error('WorldDB V2 source, date and seed are required')
     if(options.worldDbV2.activeCompetitionIds){
       const { createWorldDbV2Universe } = await import('./WorldDbV2Universe')
-      return createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.worldDbV2.activeCompetitionIds,options.userCoachCreation)
+      const active = options.worldDbV2.activeCompetitionIds
+      const reduced = options.worldDbV2.reducedCompetitionIds ?? []
+      if (reduced.some(id => !active.includes(id)) || new Set(reduced).size !== reduced.length) throw new Error('Reduced leagues must be unique and active')
+      const world = await createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',active,options.userCoachCreation)
+      if (reduced.length === 0) return world
+      const runtime = world.worldDbCompetitionRuntime
+      if (!runtime?.worldDbV2) throw new Error('WorldDB V2 runtime provenance is required for persisted league detail')
+      return attachWorldDbCompetitionRuntime(world, { ...runtime, worldDbV2: { ...runtime.worldDbV2, reducedCompetitionIds: reduced } })
     }
     const { createWorldDbV2Game } = await import('./WorldDbV2Game')
     return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
