@@ -120,3 +120,155 @@
   .bdm-wizard__footer-right { flex-direction: column; align-items: end; }
   .bdm-wizard-manager { width: 100% !important; }
 }
+
+
+/* New Game Courtside workspace: full viewport, readable controls, 2 independent panes. */
+.bdm-wizard-page {
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  height: 100dvh;
+  padding: clamp(12px, 1.5vw, 24px);
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  background: radial-gradient(70% 90% at 100% 0%, #ff6a2b12, transparent 70%), #0c0a14;
+  color: #f7f3ee;
+  font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
+}
+.bdm-wizard-page .bdm-wizard {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  border-radius: 20px;
+  border: 1px solid #ffffff17;
+  background: #100e1a;
+  padding: clamp(18px, 1.8vw, 32px);
+  gap: clamp(12px, 1.3vh, 20px);
+  box-shadow: none;
+}
+.bdm-wizard-page .bdm-wizard__heading { flex: none; }
+.bdm-wizard-page .bdm-wizard__heading h1,
+.bdm-wizard-page .bdm-manager-panel-head h2,
+.bdm-wizard-page .bdm-coach-creator__head h2 {
+  font-family: 'Barlow Condensed', 'Inter Tight', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: .018em;
+}
+.bdm-wizard-page .bdm-wizard__heading h1 { font-size: clamp(34px, 3.2vw, 60px); line-height: .96; }
+.bdm-wizard-page .eyebrow { color: #ff9a4d; letter-spacing: .12em; }
+.bdm-wizard-page .bdm-wizard__progress { font-size: 14px; gap: 16px; }
+.bdm-wizard-page .bdm-wizard__progress strong { color: #ff9a4d; border-color: #ff6a2b; }
+.bdm-wizard-page .bdm-wizard__toolbar { flex: none; grid-template-columns: minmax(280px, 500px) 1fr; }
+.bdm-wizard-page .bdm-wizard__explorer {
+  grid-template-columns: minmax(210px, 19%) minmax(350px, 1fr) minmax(255px, 22%);
+  gap: 16px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.bdm-wizard-page .bdm-wizard__countries,
+.bdm-wizard-page .bdm-wizard__leagues,
+.bdm-wizard-page .bdm-wizard__summary,
+.bdm-wizard-page .bdm-wizard__ncaa,
+.bdm-wizard-page .bdm-wizard__advanced,
+.bdm-wizard-page .bdm-manager-club,
+.bdm-wizard-page .bdm-manager-profile {
+  border: 1px solid #ffffff1a;
+  border-radius: 15px;
+  background: #17141f;
+  padding: clamp(16px, 1.5vw, 26px);
+  box-shadow: inset 0 1px 0 #ffffff09;
+}
+.bdm-wizard-page .bdm-wizard__countries,
+.bdm-wizard-page .bdm-wizard__summary { overflow-y: auto; }
+.bdm-wizard-page .bdm-wizard__leagues { overflow: hidden; }
+.bdm-wizard-page .bdm-wizard__countries h2,
+.bdm-wizard-page .bdm-wizard__leagues h2,
+.bdm-wizard-page .bdm-wizard__summary h2,
+.bdm-wizard-page .bdm-wizard__ncaa h2 { font-size: 20px; }
+.bdm-wizard__aside-intro { font-size: 12px; line-height: 1.5; color: #bdb5c8; margin: 0 0 16px; }
+.bdm-wizard-page .bdm-wizard__countries button { padding: 12px; font-size: 14px; color: #c4bdd0; }
+.bdm-wizard-page .bdm-wizard__countries button.selected,
+.bdm-wizard-page .bdm-wizard__countries button:hover { background: #ff6a2b22; color: #fff5ef; }
+.bdm-wizard-page .bdm-wizard__league { padding: 17px 4px; }
+.bdm-wizard-page .bdm-wizard__league-name strong { font-size: 16px; }
+.bdm-wizard-page .bdm-wizard__league-name span { font-size: 13px; }
+.bdm-wizard-page .bdm-wizard__league-name small { font-size: 12px; }
+.bdm-wizard-page .bdm-wizard__depth select {
+  width: 150px; min-height: 44px; font-size: 13px;
+  background: #282336; border-color: #ffffff22; color: #f7f3ee;
+}
+.bdm-wizard-page .bdm-wizard__search,
+.bdm-wizard-page .bdm-start-field select,
+.bdm-wizard-page .bdm-start-field input,
+.bdm-wizard-page .bdm-coach-creator textarea {
+  border: 1px solid #ffffff24;
+  background: #100e1a;
+  color: #f7f3ee;
+  border-radius: 9px;
+  font-size: 14px;
+  min-height: 46px;
+}
+.bdm-wizard-page .bdm-wizard__search { font-size: 15px; }
+.bdm-wizard-page .bdm-wizard__metric strong { color: #ff9a4d; font-size: 34px; }
+.bdm-wizard-page .bdm-wizard__metric span,
+.bdm-wizard-page .bdm-wizard__summary p { font-size: 13px; color: #c4bdd0; }
+.bdm-wizard__qualification { border-top: 1px solid #ffffff22; padding-top: 14px; margin-top: 14px; }
+.bdm-wizard__qualification summary { color: #ff9a4d; font-size: 13px; font-weight: 700; cursor: pointer; line-height: 1.5; }
+.bdm-wizard__qualification ul { padding-left: 20px; margin: 12px 0; display: grid; gap: 6px; color: #c4bdd0; font-size: 12px; }
+.bdm-wizard-page .bdm-wizard__advanced { padding: 0; flex: none; }
+.bdm-wizard-page .bdm-wizard__advanced summary { padding: 14px 20px; }
+.bdm-wizard-page .bdm-wizard__footer { flex: none; padding-top: 14px; border-color: #ffffff1e; }
+.bdm-wizard-page .primary-button { background: #ff6a2b; color: #140d0b; font-weight: 800; border-radius: 9px; font-size: 14px; padding: 11px 22px; }
+.bdm-wizard-page .primary-button:disabled { opacity: .55; cursor: not-allowed; }
+.bdm-wizard-page :is(button,select,input,textarea,summary):focus-visible { outline: 2px solid #ff9a4d; outline-offset: 3px; }
+.bdm-wizard-page .bdm-wizard-manager { display: flex; }
+.bdm-manager-layout {
+  min-height: 0; flex: 1 1 auto; overflow: hidden;
+  display: grid; grid-template-columns: minmax(300px, 1fr) minmax(540px, 2fr); gap: 18px;
+}
+.bdm-manager-club, .bdm-manager-profile { min-width: 0; min-height: 0; overflow-y: auto; }
+.bdm-manager-club { display: flex; flex-direction: column; align-items: stretch; gap: 18px; border-top: 3px solid #ff6a2b !important; }
+.bdm-manager-panel-head h2, .bdm-coach-creator__head h2 { font-size: clamp(26px, 2.2vw, 38px); margin: 0 0 5px; }
+.bdm-manager-panel-head p, .bdm-coach-creator__head p { color: #bdb5c8; font-size: 14px; line-height: 1.5; margin: 0; }
+.bdm-manager-club .bdm-universe-description { margin: 0; font-size: 14px; }
+.bdm-wizard-page .bdm-manager-league-summary { gap: 15px; padding: 18px; border-radius: 12px; background: #1e1a29; border-color: #ffffff1a; }
+.bdm-wizard-page .bdm-manager-league-summary strong { font-size: 16px; color: #f7f3ee; }
+.bdm-wizard-page .bdm-manager-league-summary p { font-size: 13px; line-height: 1.55; }
+.bdm-wizard-page .bdm-start-field { font-size: 12px; letter-spacing: .055em; color: #c4bdd0; gap: 10px; }
+.bdm-wizard-page .bdm-manager-profile { border-top: 3px solid #ff6a2b !important; display: flex; flex-direction: column; gap: 20px; }
+.bdm-wizard-page .bdm-coach-creator__head { gap: 18px; align-items: start; }
+.bdm-wizard-page .bdm-coach-creator__head span { font-size: 11px; line-height: 1.4; color: #ff9a4d; }
+.bdm-wizard-page .bdm-coach-creator__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.5vw, 26px); }
+.bdm-wizard-page .bdm-coach-creator__note { font-size: 13px; line-height: 1.6; color: #bdb5c8; }
+.bdm-wizard-page .bdm-coach-creator textarea { min-height: 92px; padding: 14px; }
+.bdm-manager-footer .primary-button { margin-left: auto; min-width: 210px; }
+.bdm-manager-footer .bdm-start-message { margin: 0; font-size: 13px; }
+@media (max-width: 1150px) {
+  .bdm-wizard-page .bdm-wizard__explorer { grid-template-columns: minmax(170px, 23%) minmax(300px, 1fr); }
+  .bdm-wizard-page .bdm-wizard__summary { grid-column: 1 / -1; max-height: 180px; }
+  .bdm-manager-layout { grid-template-columns: minmax(250px, 1fr) minmax(440px, 1.45fr); }
+  .bdm-wizard-page .bdm-coach-creator__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+  .bdm-wizard-page { height: auto; min-height: 100dvh; overflow: auto; }
+  .bdm-wizard-page .bdm-wizard { min-height: calc(100dvh - 24px); height: auto; }
+  .bdm-wizard-page .bdm-wizard__heading, .bdm-wizard-page .bdm-wizard__toolbar { display: grid; grid-template-columns: 1fr; }
+  .bdm-wizard-page .bdm-wizard__explorer { display: flex; flex-direction: column; overflow: visible; }
+  .bdm-wizard-page .bdm-wizard__countries { max-height: 240px; }
+  .bdm-wizard-page .bdm-wizard__leagues { min-height: 400px; }
+  .bdm-wizard-page .bdm-wizard__league-list { max-height: 380px; }
+  .bdm-wizard-page .bdm-wizard__summary { max-height: none; }
+  .bdm-manager-layout { grid-template-columns: 1fr; overflow: visible; }
+  .bdm-manager-club, .bdm-manager-profile { overflow: visible; }
+  .bdm-wizard-page .bdm-coach-creator__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .bdm-wizard-page .bdm-wizard { padding: 16px; border-radius: 12px; }
+  .bdm-wizard-page .bdm-coach-creator__grid { grid-template-columns: 1fr; }
+  .bdm-wizard-page .bdm-wizard__depth select { width: 118px; }
+  .bdm-wizard-page .bdm-wizard__footer { flex-wrap: wrap; }
+}
