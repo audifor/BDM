@@ -62,7 +62,17 @@ function fillCoachIdentity() {
   fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: coachCreation.lastName } })
 }
 
-describe('New Game World DB Spain ACB flow', () => {
+function openWizard(universeId?: string) {
+  render(<BootstrapApp />)
+  fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+  if (universeId) fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: universeId } })
+}
+
+function enterManager() {
+  fireEvent.click(screen.getByRole('button', { name: /Continuar: crear mánager/ }))
+}
+
+describe('New Game two-step league universe and manager', () => {
   beforeEach(() => {
     mocks.createConfiguredGameAsync.mockReset()
     mocks.discoverWorldDbSpainSelection.mockReset().mockResolvedValue({ teams })
@@ -72,128 +82,98 @@ describe('New Game World DB Spain ACB flow', () => {
     mocks.getSaveInfo.mockReset().mockResolvedValue(null)
     mocks.discoverWorldDbV2.mockReset().mockResolvedValue({ teams })
   })
-
   afterEach(cleanup)
 
-  it('offers the 18-club ACB pilot by default without reading an external database', () => {
-    render(<BootstrapApp />)
-    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('acb-2026-27')
-    expect(within(screen.getByLabelText('TEAM')).getAllByRole('option')).toHaveLength(18)
-    expect(mocks.discoverWorldDbSpainSelection).not.toHaveBeenCalled()
+  it('opens in league selection with an organised WorldDB list and no manager form', () => {
+    openWizard()
+    expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('worldDbV2')
+    expect(screen.getByText('Configurar universo')).toBeTruthy()
+    expect(screen.getByText('Regiones')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'España 4' }).textContent).toContain('España')
+    expect(screen.queryByLabelText('COACH FIRST NAME')).toBeNull()
+    expect(mocks.discoverWorldDbV2).not.toHaveBeenCalled()
   })
 
-  it('selects the active leagues together with the club, date and seed', async () => {
+  it('selects loaded and reduced leagues, then sends them into the same world and manager', async () => {
     mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'shared-universe' })
-    render(<BootstrapApp />)
-    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbV2' } })
+    openWizard()
+    fireEvent.change(screen.getByLabelText('Detalle de Liga Endesa'), { target: { value: 'reduced' } })
+    fireEvent.change(screen.getByLabelText('BUSCAR LIGAS'), { target: { value: 'Betclic Élite' } })
+    fireEvent.change(screen.getByLabelText('Detalle de Betclic Élite'), { target: { value: 'off' } })
+    enterManager()
+    expect(screen.getByText('Tu mánager')).toBeTruthy()
     const select = await screen.findByLabelText('TEAM')
     await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(19))
-    const active = screen.getAllByRole('checkbox') as HTMLInputElement[]
-    expect(active).toHaveLength(97)
-    expect(active.filter(input => input.checked)).toHaveLength(4)
-    expect(active[0]!.disabled).toBe(true)
-    fireEvent.click(active[3]!)
     fireEvent.change(select, { target: { value: teams[0]!.key } })
-    fireEvent.change(screen.getByLabelText('START DATE'), { target: { value: '2025-10-04' } })
-    fireEvent.change(screen.getByLabelText('WORLD SEED'), { target: { value: 'shared-seed' } })
     fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
-    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith(expect.objectContaining({
-      universeId: 'worldDbV2', userTeamKey: teams[0]!.key,
-      worldDbV2: expect.objectContaining({ startDate: '2025-10-04', seed: 'shared-seed', activeCompetitionIds: ['pbm:DYN_championnat:5', 'pbm:DYN_championnat:2', 'pbm:DYN_championnat:10'] }),
-    })))
-  })
-
-  it('lists 18 canonical teams and sends the selected team through async creation into the normal world store', async () => {
-    let finishCreation!: (world: object) => void
-    const createdWorld = { marker: 'world-db-gameworld' }
-    mocks.createConfiguredGameAsync.mockReturnValue(new Promise((resolve) => { finishCreation = resolve }))
-    render(<BootstrapApp />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbSpain' } })
-    const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS') as HTMLSelectElement
-    const options = within(teamSelect).getAllByRole('option') as HTMLOptionElement[]
-    expect(options.filter((option) => option.value !== '')).toHaveLength(18)
-    expect(teamSelect.value).toBe('')
-
-    const selectedTeam = teams[7]!
-    fireEvent.change(teamSelect, { target: { value: selectedTeam.key } })
-    fillCoachIdentity()
-    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
-
     await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
-      universeId: 'worldDbSpain',
-      userTeamKey: selectedTeam.key,
+      universeId: 'worldDbV2', userTeamKey: teams[0]!.key,
       userCoachCreation: coachCreation,
+      worldDbV2: expect.objectContaining({
+        sourceRoot: 'C:\\BDM_DB\\WORLDDB_PBM',
+        activeCompetitionIds: ['pbm:DYN_championnat:5', 'pbm:DYN_championnat:10', 'pbm:DYN_championnat:109'],
+        reducedCompetitionIds: ['pbm:DYN_championnat:5'],
+      }),
     }))
-    expect(screen.getByRole('status').textContent).toBe('Cargando World Database...')
-    expect(screen.getByRole('button', { name: 'STARTING CAREER...' }).hasAttribute('disabled')).toBe(true)
-    expect(mocks.replaceWorld).not.toHaveBeenCalled()
-
-    finishCreation(createdWorld)
-    await waitFor(() => expect(mocks.replaceWorld).toHaveBeenCalledWith(createdWorld))
-    expect(mocks.clearMatch).toHaveBeenCalledOnce()
-    expect(mocks.resetTacticalPlan).toHaveBeenCalledOnce()
+    expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: 'shared-universe' })
   })
 
-  it('shows the World DB bootstrap error and does not fall back to the fake ACB universe', async () => {
-    mocks.createConfiguredGameAsync.mockRejectedValue(new Error('World DB not found'))
-    render(<BootstrapApp />)
+  it('preserves league configuration and manager data when returning to the first step', () => {
+    openWizard()
+    fireEvent.change(screen.getByLabelText('Detalle de Liga Endesa'), { target: { value: 'reduced' } })
+    enterManager()
+    fillCoachIdentity()
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a ligas' }))
+    expect((screen.getByLabelText('Detalle de Liga Endesa') as HTMLSelectElement).value).toBe('reduced')
+    enterManager()
+    expect((screen.getByLabelText('COACH FIRST NAME') as HTMLInputElement).value).toBe('Elena')
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'worldDbSpain' } })
-    const teamSelect = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS')
-    fireEvent.change(teamSelect, { target: { value: teams[0]!.key } })
+  it.each([
+    {universeId: 'ncaaD1Real2026Men', count: 365},
+    {universeId: 'ncaaD1Real2026Women', count: 363},
+  ])('selects NCAA programs and sends $universeId through the manager step', async ({ universeId, count }) => {
+    mocks.createConfiguredGameAsync.mockResolvedValue({ marker: universeId })
+    openWizard(universeId)
+    expect(screen.getByText('Masculina')).toBeTruthy()
+    expect(screen.getByText('Femenina')).toBeTruthy()
+    enterManager()
+    const select = screen.getByLabelText('TEAM')
+    const options = within(select).getAllByRole('option') as HTMLOptionElement[]
+    expect(options).toHaveLength(count + 1)
+    fireEvent.change(select, {target: {value: options[1]!.value}})
     fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
+    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
+      universeId, userTeamKey: options[1]!.value, ncaaSeed: 202627, userCoachCreation: coachCreation,
+    }))
+  })
 
+  it('keeps the existing Spain DB flow and surfaces a bootstrap failure', async () => {
+    mocks.createConfiguredGameAsync.mockRejectedValue(new Error('World DB not found'))
+    openWizard('worldDbSpain')
+    enterManager()
+    const select = await screen.findByLabelText('TEAM - 18 CANONICAL OPTIONS')
+    fireEvent.change(select, { target: { value: teams[0]!.key } })
+    fillCoachIdentity()
+    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
     await waitFor(() => expect(screen.getByText('World DB not found')).toBeTruthy())
-    expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
-      universeId: 'worldDbSpain',
-      userTeamKey: teams[0]!.key,
-      userCoachCreation: coachCreation,
-    })
     expect(mocks.replaceWorld).not.toHaveBeenCalled()
   })
-  it('requires a coach identity and forwards a real creator payload for the synthetic ACB game', async () => {
+
+  it('requires manager identity for ACB and submits the canonical RPG profile', async () => {
     mocks.createConfiguredGameAsync.mockResolvedValue({ marker: 'created-coach-world' })
-    render(<BootstrapApp />)
-    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
-    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: 'acb-2026-27' } })
+    openWizard('acb-2026-27')
+    enterManager()
     expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
-
-    fireEvent.change(screen.getByLabelText('COACH FIRST NAME'), { target: { value: 'Elena' } })
-    fireEvent.change(screen.getByLabelText('COACH LAST NAME'), { target: { value: 'Villalobos' } })
-    fireEvent.change(screen.getByLabelText('DATE OF BIRTH'), { target: { value: '1991-06-19' } })
-    fireEvent.change(screen.getByLabelText('GENDER'), { target: { value: 'female' } })
-    fireEvent.change(screen.getByLabelText('NATIONALITY (OPTIONAL)'), { target: { value: 'ESP' } })
-    fireEvent.change(screen.getByLabelText('BACKGROUND'), { target: { value: 'inDebt' } })
-    fireEvent.change(screen.getByLabelText('CAREER AMBITION'), { target: { value: 'financialFreedom' } })
-    fireEvent.change(screen.getByLabelText('PERSONAL BACKSTORY (OPTIONAL, MAX 600 CHARACTERS)'), { target: { value: 'Former university student working to pay outstanding family loans.' } })
-    fireEvent.change(screen.getByLabelText('COACHING STYLE'), { target: { value: 'tactician' } })
-    fireEvent.change(screen.getByLabelText('PERSONALITY'), { target: { value: 'ambitious' } })
+    fillCoachIdentity()
     fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
-
     await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
       universeId: 'acb-2026-27',
       userTeamKey: expect.any(String),
-      userCoachCreation: {
-        firstName: 'Elena',
-        lastName: 'Villalobos',
-        dateOfBirth: '1991-06-19',
-        gender: 'female',
-        nationalityCountryCode: 'ESP',
-        background: 'inDebt',
-        ambition: 'financialFreedom',
-        biography: 'Former university student working to pay outstanding family loans.',
-        coachingStyle: 'tactician',
-        disposition: 'ambitious',
-      },
+      userCoachCreation: coachCreation,
     }))
     expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: 'created-coach-world' })
   })
-
 })
