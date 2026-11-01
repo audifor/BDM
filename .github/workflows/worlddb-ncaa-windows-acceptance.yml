@@ -40,8 +40,8 @@ jobs:
         run: npm ci
       - name: TypeScript typecheck
         run: npm run typecheck
-      - name: NCAA men and women real match engine / Save V4 smoke
-        run: npx vitest run src/app/game/NcaaD1Real2027NativeMatch.test.ts --maxWorkers=1 --testTimeout=240000
+      - name: NCAA male/female new-game picker and real match engine / Save V4 smoke
+        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NcaaD1Real2027NativeMatch.test.ts --maxWorkers=1 --testTimeout=240000
       - name: Build native Windows executable (no installer)
         run: npm run tauri build -- --no-bundle
       - name: Check executable and assemble traceable acceptance artifact
@@ -64,7 +64,7 @@ jobs:
           EXE SHA256: $hash
           Built on: windows-latest / Windows x64 MSVC
           TypeScript: CI typecheck step
-          NCAA match test: one actual game per gender using BDM match engine + Save V4
+          NCAA smoke tests: new-game UI selection, seed validation, plus one match per gender using BDM engine + Save V4
           Scope: native compilation, NOT graphical runtime acceptance
           PBM master files and main: not modified
           "@ | Set-Content -Path 'acceptance/BUILD-INFO.txt' -Encoding utf8
