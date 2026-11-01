@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
+import { createAcbTestGame } from '@/app/game/createAcbTestGame'
+import { applyUserCoachCreation } from '@/app/game/UserCoachCreator'
+import { getUserHumanSituations } from '@/app/hrpg/HumanSimulationService'
 import type { GameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { buildDirectorHubModel } from './directorHubModel'
@@ -31,6 +34,24 @@ describe('CAREER-F2 director hub projection', () => {
   it('does not expose a second decision queue: only existing breakpoint or advisory records become actionable', () => {
     const model = buildDirectorHubModel(createNewGame())
     expect(model.items.every((item) => item.action === undefined || item.action.type === 'navigate' || item.action.type === 'continue')).toBe(true)
+    expect(model.items.every((item) => item.choices === undefined)).toBe(true)
+  })
+
+  it('projects real HRPG choices into the Hub without creating a second inbox', () => {
+    const world = applyUserCoachCreation(createAcbTestGame({ userTeamKey: 'ucm' }), {
+      firstName: 'Elena', lastName: 'Human', dateOfBirth: '1990-01-01', gender: 'female', nationalityCountryCode: 'ESP',
+      background: 'rookie', ambition: 'firstTitle', coachingStyle: 'balanced', disposition: 'balanced', biography: 'F3 test coach.',
+    })
+    const sourceSituations = getUserHumanSituations(world).filter((item) => item.status === 'open' && item.choices.length > 0)
+    const model = buildDirectorHubModel(world)
+    const humanItems = model.items.filter((item) => item.id.startsWith('human-situation:'))
+
+    expect(sourceSituations.length).toBeGreaterThan(0)
+    expect(humanItems).toHaveLength(sourceSituations.length)
+    expect(humanItems.every((item) => item.tier === 'A' && item.action === undefined && (item.choices?.length ?? 0) > 0)).toBe(true)
+    expect(model.items.filter((item) => item.id.startsWith('human-situation:')).map((item) => item.id)).toEqual(
+      sourceSituations.map((item) => `human-situation:${item.id}`),
+    )
   })
 
   it('rebuilds the same projection after Save V4 round-trip because the hub stores no derived state', () => {

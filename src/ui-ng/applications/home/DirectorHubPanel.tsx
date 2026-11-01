@@ -6,8 +6,9 @@ import { buildDirectorHubModel, type DirectorHubAction, type DirectorHubItem } f
 
 import './director-hub.css'
 
-function runAction(action: DirectorHubAction, handlers: { readonly acceptStaff: (id: string) => void; readonly dismissStaff: (id: string) => void; readonly acceptReport: (id: string) => void; readonly continue: () => void }) {
+function runAction(action: DirectorHubAction, handlers: { readonly acceptStaff: (id: string) => void; readonly dismissStaff: (id: string) => void; readonly acceptReport: (id: string) => void; readonly resolveHuman: (situationId: string, actionId: string) => void; readonly continue: () => void }) {
   if (action.type === 'navigate') syncWorkspaceAppQuery(action.app, 'push')
+  else if (action.type === 'resolve-human-situation') handlers.resolveHuman(action.situationId, action.actionId)
   else if (action.type === 'accept-staff-recommendation') handlers.acceptStaff(action.outcomeId)
   else if (action.type === 'dismiss-staff-recommendation') handlers.dismissStaff(action.outcomeId)
   else if (action.type === 'accept-opposition-report') handlers.acceptReport(action.reportId)
@@ -30,6 +31,9 @@ function HubItem({ item, onAction }: { readonly item: DirectorHubItem; readonly 
       <div className="director-hub__actions">
         {action === undefined ? null : <button className="ng-canon__action director-hub__action" type="button" onClick={() => onAction(action)}>{item.actionLabel ?? 'Abrir'}</button>}
         {secondaryAction === undefined ? null : <button className="ng-canon__action director-hub__action director-hub__action--secondary" type="button" onClick={() => onAction(secondaryAction)}>{item.secondaryActionLabel ?? 'Ignorar'}</button>}
+        {item.choices === undefined ? null : <div className="director-hub__choices">
+          {item.choices.map((choice) => <button key={choice.action.type === 'resolve-human-situation' ? `${choice.action.situationId}:${choice.action.actionId}` : choice.label} className="ng-canon__action director-hub__action" type="button" onClick={() => onAction(choice.action)}>{choice.label}</button>)}
+        </div>}
       </div>
     </article>
   )
@@ -40,6 +44,7 @@ export function DirectorHubPanel() {
   const acceptStaffRecommendation = useGameStore((state) => state.acceptStaffRecommendation)
   const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
   const acceptOppositionScoutingReport = useGameStore((state) => state.acceptOppositionScoutingReport)
+  const decideUserHumanSituation = useGameStore((state) => state.decideUserHumanSituation)
   const continueGameAsync = useGameStore((state) => state.continueGameAsync)
   const [notice, setNotice] = useState<string | null>(null)
   const model = useMemo(() => world === null ? null : buildDirectorHubModel(world), [world])
@@ -61,6 +66,10 @@ export function DirectorHubPanel() {
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'No se pudo aplicar el informe.')
       }
+    },
+    resolveHuman: (situationId, actionId) => {
+      const result = decideUserHumanSituation(situationId, actionId)
+      setNotice(result.status === 'APPLIED' ? 'Decisión profesional aplicada y registrada en la carrera.' : `No se pudo aplicar: ${result.reason}.`)
     },
     continue: () => {
       void continueGameAsync().then((result) => setNotice(result === null ? 'No se pudo continuar.' : `Continue avanzó ${result.daysAdvanced} día${result.daysAdvanced === 1 ? '' : 's'}.`))

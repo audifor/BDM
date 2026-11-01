@@ -1,5 +1,6 @@
 import { getContinueStopReason } from '@/app/game/ContinueFlow'
 import { getGamePlan } from '@/app/game/TacticalPlanning'
+import { getUserHumanSituations } from '@/app/hrpg/HumanSimulationService'
 import { getTeamResponsibilities } from '@/domain/world'
 import type { GameWorld } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
@@ -13,6 +14,7 @@ export type DirectorHubTier = 'A' | 'B' | 'C' | 'D'
 
 export type DirectorHubAction =
   | { readonly type: 'navigate'; readonly app: WorkspaceAppId }
+  | { readonly type: 'resolve-human-situation'; readonly situationId: string; readonly actionId: string }
   | { readonly type: 'accept-staff-recommendation'; readonly outcomeId: string }
   | { readonly type: 'dismiss-staff-recommendation'; readonly outcomeId: string }
   | { readonly type: 'accept-opposition-report'; readonly reportId: string }
@@ -28,6 +30,7 @@ export interface DirectorHubItem {
   readonly actionLabel?: string
   readonly secondaryAction?: DirectorHubAction
   readonly secondaryActionLabel?: string
+  readonly choices?: readonly { readonly label: string; readonly action: DirectorHubAction }[]
 }
 
 export interface DirectorHubModel {
@@ -88,6 +91,24 @@ export function buildDirectorHubModel(world: GameWorld): DirectorHubModel {
       summary: stop.breakpoint.diagnostic,
       action: { type: 'navigate', app: stop.type === 'userGame' ? 'match' : breakpointApp(stop.breakpoint.route) },
       actionLabel: stop.type === 'userGame' ? 'Abrir partido' : 'Resolver',
+    })
+  }
+
+  // HRPG remains the authority for human situations. The Hub only projects the
+  // user's currently available choices; it does not create a second inbox or
+  // persist a presentation-level decision.
+  for (const situation of getUserHumanSituations(world).filter((item) => item.status === 'open' && item.choices.length > 0)) {
+    const participantNames = situation.participants.map((participant) => participant.name).join(' · ')
+    items.push({
+      id: `human-situation:${situation.id}`,
+      tier: 'A',
+      title: 'Situación profesional pendiente',
+      summary: situation.narration.description,
+      detail: participantNames,
+      choices: situation.choices.map((choice) => ({
+        label: choice.label,
+        action: { type: 'resolve-human-situation' as const, situationId: situation.id, actionId: choice.id },
+      })),
     })
   }
 
