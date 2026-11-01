@@ -41,6 +41,7 @@ import type {
 import type { Player } from '@/domain/player'
 import { createPlayerRepertoire, type PlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
+import { ncaa2027TournamentWinner } from '@/domain/season/Ncaa2027TournamentCompletion'
 import type { Team } from '@/domain/team'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
@@ -3222,12 +3223,22 @@ function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): 
     teams.add(line.teamId); positions.add(line.position)
   }
   if (history.championSource === 'postseason') {
-    const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
-    const finalNode = formatVariant?.nodes.find((node) => node.role === 'FINAL')
-    const winsRequired = finalNode?.contest?.winsRequired ?? 1
-    const finalGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === finalNode?.key && game.status === 'completed')
-    const wins = finalGames.filter((game) => game.result !== null && (game.homeTeamId === history.championTeamId ? game.result.homeScore > game.result.awayScore : game.awayTeamId === history.championTeamId && game.result.awayScore > game.result.homeScore)).length
-    if (finalNode === undefined || wins < winsRequired) throw new GameWorldValidationError(`Season history ${history.seasonId} champion has not won the final`)
+    const ncaa2027Winner = ncaa2027TournamentWinner(world, history.seasonId)
+    if (ncaa2027Winner !== undefined) {
+      // NCAA 2027 is staged into canonical Games without pretending that its
+      // simulated conference/national brackets are a source-certified B04 format.
+      // This checks ALL n-1 or 75 fixtures and the actual final's victor.
+      if (ncaa2027Winner === null || ncaa2027Winner !== history.championTeamId) {
+        throw new GameWorldValidationError(`Season history ${history.seasonId} NCAA champion has not won the complete bracket`)
+      }
+    } else {
+      const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+      const finalNode = formatVariant?.nodes.find((node) => node.role === 'FINAL')
+      const winsRequired = finalNode?.contest?.winsRequired ?? 1
+      const finalGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === finalNode?.key && game.status === 'completed')
+      const wins = finalGames.filter((game) => game.result !== null && (game.homeTeamId === history.championTeamId ? game.result.homeScore > game.result.awayScore : game.awayTeamId === history.championTeamId && game.result.awayScore > game.result.homeScore)).length
+      if (finalNode === undefined || wins < winsRequired) throw new GameWorldValidationError(`Season history ${history.seasonId} champion has not won the final`)
+    }
   } else if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) {
     throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first without a completed postseason`)
   }
