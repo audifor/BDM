@@ -1,0 +1,101 @@
+name: WorldDB NCAA 2026-27 Windows acceptance
+
+on:
+  push:
+    branches:
+      - feature/worlddb-ncaa-windows-acceptance-01
+  workflow_dispatch:
+
+concurrency:
+  group: worlddb-ncaa-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows-native:
+    name: Windows MSVC portable smoke
+    runs-on: windows-latest
+    timeout-minutes: 85
+    steps:
+      - name: Checkout isolated NCAA integration branch
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Rust MSVC
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: NCAA men and women real match engine / Save V4 smoke
+        run: npx vitest run src/app/game/NcaaD1Real2027NativeMatch.test.ts --maxWorkers=1 --testTimeout=240000
+      - name: Build native Windows executable (no installer)
+        run: npm run tauri build -- --no-bundle
+      - name: Check executable and assemble traceable acceptance artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = 'src-tauri/target/release/bdm.exe'
+          if (!(Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Native Windows executable is missing: $exe" }
+          $info = Get-Item -LiteralPath $exe
+          if ($info.Length -le 0) { throw 'Native Windows executable is empty' }
+          New-Item -ItemType Directory -Force -Path acceptance | Out-Null
+          Copy-Item -LiteralPath $exe -Destination 'acceptance/BDM-NCAA-2026-27-EXPERIMENTAL.exe'
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath 'acceptance/BDM-NCAA-2026-27-EXPERIMENTAL.exe').Hash
+          @"
+          WORLDDB NCAA WINDOWS ACCEPTANCE
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          CI run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EXE size (bytes): $($info.Length)
+          EXE SHA256: $hash
+          Built on: windows-latest / Windows x64 MSVC
+          TypeScript: CI typecheck step
+          NCAA match test: one actual game per gender using BDM match engine + Save V4
+          Scope: native compilation, NOT graphical runtime acceptance
+          PBM master files and main: not modified
+          "@ | Set-Content -Path 'acceptance/BUILD-INFO.txt' -Encoding utf8
+          @'
+          BDM NCAA 2026-27 EXPERIMENTAL WINDOWS ACCEPTANCE
+          ------------------------------------------------
+          1. Extract the ZIP to a NEW folder, away from any production game or saves.
+          2. Run BDM-NCAA-2026-27-EXPERIMENTAL.exe on Windows 10/11 with WebView2.
+          3. Open NEW GAME, select NCAA D1 2026/27 MEN [SIMULATION].
+          4. Choose a men's school, enter a coach, then START CAREER.
+          5. Confirm the date starts in October 2026; inspect a men's roster and calendar.
+          6. Make a separate NEW GAME with NCAA D1 2026/27 WOMEN [SIMULATION].
+          7. Choose a women's school and confirm its female roster/competition.
+          8. Play or simulate a scheduled match in EACH category; save, close, reopen
+             and CONTINUE. Confirm the same result, team and selected manager.
+          9. Verify that men's and women's teams/athletes are not mixed.
+          10. Report the exact BUILD-INFO commit, action, failed step and any error.
+
+          The NCAA people, most fixtures, conference postseason brackets and
+          national at-large selection are BDM GENERATED. Program identities and
+          the 112 documented ASUN fixtures are source-backed. This is NOT a
+          certified 2026-27 NCAA historical season, Windows release or local
+          PBM compatibility certification.
+          This is unsigned experimental software. DO NOT use main saves.
+          The CI workflow compiles the EXE but cannot verify these UI actions:
+          they require a separate actual Windows graphical acceptance pass.
+          '@ | Set-Content -Path 'acceptance/README-TEST-WINDOWS.txt' -Encoding utf8
+      - name: Upload Windows acceptance executable and SHA256 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: BDM-NCAA-2026-27-Windows-Experimental
+          path: acceptance/*
+          if-no-files-found: error
+          retention-days: 14
