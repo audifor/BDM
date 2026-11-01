@@ -1,0 +1,85 @@
+name: BDM New Game Windows playable preview
+
+on:
+  push:
+    branches:
+      - feature/newgame-two-step-league-selector-01
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bdm-newgame-preview-windows
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Build BDM native Windows preview
+    runs-on: windows-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout actual BDM game
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Rust MSVC
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Verify TypeScript and frontend
+        run: npm run build
+      - name: Verify manager and league selector, simulations and save
+        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts --maxWorkers=1 --testTimeout=90000
+      - name: Build native BDM exe with New Game redesign
+        run: npm run tauri build -- --no-bundle
+      - name: Package playable isolated version and provenance
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = 'src-tauri/target/release/bdm.exe'
+          if (!(Test-Path -LiteralPath $source -PathType Leaf)) { throw "Windows BDM executable not built at $source" }
+          New-Item -ItemType Directory -Force -Path preview | Out-Null
+          Copy-Item -LiteralPath $source -Destination 'preview/BDM-NewGame-Experimental.exe'
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath 'preview/BDM-NewGame-Experimental.exe').Hash
+          @"
+          BDM NEW GAME UX EXPERIMENTAL
+          Commit: \${{ github.sha }}
+          Workflow: \${{ github.server_url }}/\${{ github.repository }}/actions/runs/\${{ github.run_id }}
+          SHA256: $hash
+          Repository: \${{ github.repository }}
+          Build host: Windows x64 (MSVC)
+          "@ | Set-Content -Path 'preview/BUILD-INFO.txt' -Encoding utf8
+          @'
+          BDM NEW GAME PREVIEW
+          1. Extract ZIP into a separate directory. Do NOT replace your current installed BDM.
+          2. Run BDM-NewGame-Experimental.exe (unsigned prototype, Windows 10/11, WebView2).
+          3. Click NEW GAME. Screen 1: select countries/leagues, choose Detailed,
+             Reduced, or Not Loaded. WorldDB default source: C:\BDM_DB\WORLDDB_PBM.
+          4. Click Continue: create manager. Screen 2: choose starting league,
+             club and manager identity. Start career and verify your roster.
+          5. Test back-navigation, Save/Continue, and several match days.
+          6. NCAA men and women are separate real-program category choices within
+             an experimental combined NCAA universe, NOT mixed with PBM WorldDB.
+          7. Keep a backup of all previous saves and your PBM source before any test.
+             The executable is not production certified. No automatic update to main.
+          NOTE: The workflow verifies build/test but not real Windows UI interactions.
+          '@ | Set-Content -Path 'preview/README-TEST.txt' -Encoding utf8
+      - name: Upload playable BDM Windows preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: BDM-NewGame-Windows-Experimental
+          path: preview/*
+          retention-days: 14
+          if-no-files-found: error
