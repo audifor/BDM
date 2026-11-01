@@ -89,7 +89,7 @@ describe('New Game two-step league universe and manager', () => {
     expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('worldDbV2')
     expect(screen.getByText('Configurar universo')).toBeTruthy()
     expect(screen.getByText('Regiones')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'España 4' }).textContent).toContain('España')
+    expect(screen.getByRole('button', { name: /^España\s*4$/ }).textContent).toContain('España')
     expect(screen.queryByLabelText('COACH FIRST NAME')).toBeNull()
     expect(mocks.discoverWorldDbV2).not.toHaveBeenCalled()
   })
