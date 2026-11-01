@@ -10,6 +10,8 @@ import { calculateTeamStrength } from '@/engine/team'
 import { useGameStore } from '@/stores/gameStore'
 import { buildCompetitionWorkspaceModel } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
 import { HomeDashboardSlot } from '@/ui-ng/applications/home/HomeDashboardSlot'
+import { CareerArrivalBriefing } from '@/ui-ng/applications/home/CareerArrivalBriefing'
+import { buildCareerArrivalModel } from '@/ui-ng/applications/home/careerArrivalModel'
 import { HOME_SELECTABLE_IDS, readHomeLayout, saveHomeLayout, type HomeSelectableModuleId } from './homeLayoutSettings'
 import { homeDashboardModuleLabel } from '@/ui-ng/applications/home/homeDashboardModules'
 import { deriveTeamColors, formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -168,6 +170,8 @@ export function HomeWorkspace() {
     }
   }, [world])
 
+  const arrival = useMemo(() => (world === null ? null : buildCareerArrivalModel(world)), [world])
+
   if (world === null || model === null) {
     return (
       <NgHoloShell
@@ -204,6 +208,7 @@ export function HomeWorkspace() {
       teamId={homeTeam?.id}
     >
       <div className="home-dashboard">
+        {arrival === null ? null : <CareerArrivalBriefing model={arrival} />}
         <div className="home-dashboard__top">
           {layout.fixture==='fixture'?<section className="home-dashboard__fixture ng-holo-panel">
             <div className="home-dashboard__fixture-side">

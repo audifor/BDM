@@ -20,6 +20,141 @@
   height: 100%;
 }
 
+[data-ng-region='home-workspace'] .career-arrival {
+  display: grid;
+  gap: var(--ng-spacing-12);
+  padding: var(--ng-spacing-16);
+  border: 1px solid color-mix(in srgb, var(--ng-cyan) 42%, var(--ng-border-subtle));
+  border-radius: var(--ng-radius-panel, 8px);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ng-cyan-muted) 35%, var(--bdm-surface-2)), var(--bdm-surface-2));
+  box-shadow: var(--ng-glow-cyan-low);
+}
+
+[data-ng-region='home-workspace'] .career-arrival__header,
+[data-ng-region='home-workspace'] .career-arrival__decision {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ng-spacing-16);
+  align-items: flex-start;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__title {
+  margin: 0;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: clamp(18px, 2vw, 25px);
+  line-height: 1.1;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__intro,
+[data-ng-region='home-workspace'] .career-arrival__column p,
+[data-ng-region='home-workspace'] .career-arrival__decision p {
+  max-width: 780px;
+  margin: 6px 0 0;
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+  line-height: 1.5;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__facts,
+[data-ng-region='home-workspace'] .career-arrival__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+[data-ng-region='home-workspace'] .career-arrival__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+[data-ng-region='home-workspace'] .career-arrival__facts > div,
+[data-ng-region='home-workspace'] .career-arrival__column,
+[data-ng-region='home-workspace'] .career-arrival__responsibilities,
+[data-ng-region='home-workspace'] .career-arrival__decision {
+  padding: var(--ng-spacing-10);
+  border: 1px solid var(--ng-border-subtle);
+  background: color-mix(in srgb, var(--bdm-surface-3) 68%, transparent);
+}
+
+[data-ng-region='home-workspace'] .career-arrival__facts span {
+  display: block;
+  color: var(--ng-text-faint);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__facts strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ng-text-primary);
+  font-size: 15px;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__facts small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ng-text-muted);
+}
+
+[data-ng-region='home-workspace'] .career-arrival h2 {
+  margin: 0;
+  color: var(--ng-text-primary);
+  font-size: 14px;
+}
+
+[data-ng-region='home-workspace'] .career-arrival ul {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 17px;
+  color: var(--ng-text-primary);
+  font-size: 12px;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__muted {
+  color: var(--ng-text-faint);
+}
+
+[data-ng-region='home-workspace'] .career-arrival__links,
+[data-ng-region='home-workspace'] .career-arrival__decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__responsibilities ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-left: 0;
+  list-style: none;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__responsibilities li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+[data-ng-region='home-workspace'] .career-arrival__responsibilities li span {
+  color: var(--ng-text-muted);
+  text-align: right;
+}
+
+[data-ng-region='home-workspace'] .career-arrival__decision {
+  border-color: color-mix(in srgb, var(--ng-amber) 42%, var(--ng-border-subtle));
+}
+
+@media (max-width: 900px) {
+  [data-ng-region='home-workspace'] .career-arrival__facts,
+  [data-ng-region='home-workspace'] .career-arrival__grid,
+  [data-ng-region='home-workspace'] .career-arrival__responsibilities ul { grid-template-columns: 1fr; }
+  [data-ng-region='home-workspace'] .career-arrival__header,
+  [data-ng-region='home-workspace'] .career-arrival__decision { flex-direction: column; }
+}
+
 [data-ng-region='home-workspace'] .home-dashboard__top {
   display: grid;
   flex: none;
