@@ -18,6 +18,7 @@ const conferences = {
 export const GLEAGUE_2026_FRANCHISE_NAMES: readonly string[] = Object.values(regions).flat()
 
 const alias: Readonly<Record<string, string>> = {
+  'capitanesdeciudaddemexico': 'mexicocitycapitanes',
   'southbaylakers': 'coachellavalleylakers',
   'birminghamsquadron': 'laketownsquadron',
 }
