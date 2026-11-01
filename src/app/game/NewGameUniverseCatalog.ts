@@ -12,7 +12,7 @@ export const NCAA_D1_2026_WOMEN_UNIVERSE_ID = 'ncaaD1Real2026Women' as const
 export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID | typeof WORLD_DB_V2_UNIVERSE_ID | typeof NCAA_D1_2026_MEN_UNIVERSE_ID | typeof NCAA_D1_2026_WOMEN_UNIVERSE_ID
 
 export interface NewGameConfiguration {
-  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string;readonly competitionId?:string;readonly activeCompetitionIds?:readonly string[];readonly reducedCompetitionIds?:readonly string[]}
+  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string;readonly competitionId?:string;readonly activeCompetitionIds?:readonly string[];readonly reducedCompetitionIds?:readonly string[];readonly includeNcaa?: boolean}
   readonly universeId?: NewGameUniverseId
   readonly userTeamKey?: string
   /** Deterministic synthetic NCAA fixture and player seed; identity and official ASUN games remain source-backed. */
@@ -33,6 +33,11 @@ export interface NewGameUniverseOption {
 
 const ncaaReal2026TeamOptions = (gender: 'men' | 'women'): readonly NewGameTeamOption[] =>
   ncaaPrograms.genders[gender].teams.map(team => ({ key: team.id, name: team.name, code: team.conference }))
+
+export const NCAA_D1_REAL_2026_TEAM_OPTIONS: readonly NewGameTeamOption[] = [
+  ...ncaaReal2026TeamOptions('men'),
+  ...ncaaReal2026TeamOptions('women'),
+]
 
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
   {

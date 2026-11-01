@@ -16,6 +16,7 @@ import { ncaaD1Real2026GameplayPolicy } from './NcaaD1Real2026GeneratedPolicy'
 import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
 import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
 import officialNcaa2026 from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
+import { createWorldDbV2UniverseWithNcaa } from './WorldDbV2Universe'
 
 export function createConfiguredGame(options: NewGameConfiguration = {}): GameWorld {
   const universeId = options.universeId ?? 'prototype'
@@ -61,11 +62,19 @@ export async function createConfiguredGameAsync(
       const active = options.worldDbV2.activeCompetitionIds
       const reduced = options.worldDbV2.reducedCompetitionIds ?? []
       if (reduced.some(id => !active.includes(id)) || new Set(reduced).size !== reduced.length) throw new Error('Reduced leagues must be unique and active')
+      if (options.worldDbV2.includeNcaa) {
+        const world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', active, options.userCoachCreation, options.ncaaSeed ?? 202627)
+        return options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined ? applyUserCoachCreation(world, options.userCoachCreation) : world
+      }
       const world = await createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',active,options.userCoachCreation)
       if (reduced.length === 0) return world
       const runtime = world.worldDbCompetitionRuntime
       if (!runtime?.worldDbV2) throw new Error('WorldDB V2 runtime provenance is required for persisted league detail')
       return attachWorldDbCompetitionRuntime(world, { ...runtime, worldDbV2: { ...runtime.worldDbV2, reducedCompetitionIds: reduced } })
+    }
+    if (options.worldDbV2.includeNcaa) {
+      const world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', [], options.userCoachCreation, options.ncaaSeed ?? 202627)
+      return options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined ? applyUserCoachCreation(world, options.userCoachCreation) : world
     }
     const { createWorldDbV2Game } = await import('./WorldDbV2Game')
     return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)

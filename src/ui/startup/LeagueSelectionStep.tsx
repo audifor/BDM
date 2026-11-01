@@ -19,12 +19,14 @@ interface LeagueSelectionStepProps {
   readonly startDate: string
   readonly seed: string
   readonly ncaaSeed: string
+  readonly includeNcaa: boolean
   readonly onUniverseChange: (id: NewGameUniverseId) => void
   readonly onLevelChange: (id: string, depth: LeagueDepth) => void
   readonly onSourceRootChange: (path: string) => void
   readonly onStartDateChange: (date: string) => void
   readonly onSeedChange: (seed: string) => void
   readonly onNcaaSeedChange: (seed: string) => void
+  readonly onIncludeNcaaChange: (include: boolean) => void
   readonly onCancel: () => void
   readonly onContinue: () => void
 }
@@ -69,7 +71,7 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
     return countryMatches && queryMatches && (!onlySelected || (props.levels[c.sourceCompetitionId] ?? 'off') !== 'off')
   })
   const ncaaSeedReady = /^\d+$/.test(props.ncaaSeed) && Number.isSafeInteger(Number(props.ncaaSeed)) && Number(props.ncaaSeed) <= 0xffff_ffff
-  const ready = isWorldDb ? selected.length > 0 && props.sourceRoot.trim().length > 0 && props.seed.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(props.startDate) : !isNcaa || ncaaSeedReady
+  const ready = isWorldDb ? (selected.length > 0 || props.includeNcaa) && props.sourceRoot.trim().length > 0 && props.seed.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(props.startDate) : !isNcaa || ncaaSeedReady
 
   return (
     <main className="start-screen bdm-wizard-page">
@@ -160,7 +162,11 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
                 <p>No son ligas iniciales. Su acceso depende de méritos deportivos y, según el torneo, de licencias o invitaciones. El constructor actual todavía no calcula esas plazas automáticamente.</p>
                 <ul>{international.map(item => <li key={item.sourceCompetitionId}>{item.name}</li>)}</ul>
               </details>
-              <p className="bdm-wizard__notice">Las ligas con formato provisional están etiquetadas. Las NCAA todavía no pueden mezclarse con el universo PBM en una sola partida.</p>
+              <label className="bdm-wizard__ncaa-toggle">
+                <input checked={props.includeNcaa} onChange={event => props.onIncludeNcaaChange(event.target.checked)} type="checkbox" />
+                <span><strong>Incluir NCAA masculina y femenina</strong><small>Ambas categorias coexistiran en este mismo GameWorld; tu club inicial puede pertenecer a cualquiera de ellas.</small></span>
+              </label>
+              <p className="bdm-wizard__notice">Las ligas con formato provisional están etiquetadas. NCAA masculina y femenina pueden coexistir con el universo PBM en esta misma partida.</p>
             </aside>
           </div>
         )}
@@ -177,7 +183,7 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
             <label className="bdm-start-field"><span>START DATE</span><input type="date" value={props.startDate} onChange={e => props.onStartDateChange(e.target.value)}/></label>
             <label className="bdm-start-field"><span>WORLD SEED</span><input value={props.seed} onChange={e => props.onSeedChange(e.target.value)}/></label>
           </div>}
-          {isNcaa && <label className="bdm-start-field"><span>NCAA FIXTURE / PLAYER SEED</span>
+          {(isNcaa || (isWorldDb && props.includeNcaa)) && <label className="bdm-start-field"><span>NCAA FIXTURE / PLAYER SEED</span>
             <input type="number" min={0} max={4294967295} step={1} value={props.ncaaSeed} onChange={e => props.onNcaaSeedChange(e.target.value)}/>
           </label>}
           {!isNcaa && !isWorldDb && <p>Este escenario conserva su configuración de desarrollo actual.</p>}

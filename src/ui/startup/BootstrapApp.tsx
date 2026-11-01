@@ -13,7 +13,7 @@ import { App } from '@/ui/App'
 import './BootstrapApp.css'
 import { LeagueSelectionStep, type LeagueDepth } from './LeagueSelectionStep'
 import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
-import { NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
+import { NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID, NCAA_D1_REAL_2026_TEAM_OPTIONS } from '@/app/game/NewGameUniverseCatalog'
 import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
 import { WORLDDB_V2_COMPETITIONS as defaultV2Competitions } from '@/app/game/WorldDbV2Competitions'
 import { WORLDDB_NEW_GAME_SELECTABLE as v2Competitions, WORLDDB_NEW_GAME_COUNTRY_NAMES } from '@/app/game/WorldDbNewGameCatalog'
@@ -102,6 +102,7 @@ function StartScreen({
   const [sourceRoot,setSourceRoot]=useState('C:\\BDM_DB\\WORLDDB_PBM')
   const [v2Date,setV2Date]=useState('2025-07-01')
   const [v2Seed,setV2Seed]=useState('bdm-worlddb-v2-pilot')
+  const [includeNcaa, setIncludeNcaa] = useState(false)
   const [v2Pilot,setV2Pilot]=useState<WorldDbV2Pilot|null>(null)
   const [v2Competition,setV2Competition]=useState('pbm:DYN_championnat:5')
   const [v2Levels, setV2Levels] = useState<Record<string, LeagueDepth>>(() => Object.fromEntries(defaultV2Competitions.map(c => [c.sourceCompetitionId, 'detailed' as LeagueDepth])))
@@ -116,9 +117,9 @@ function StartScreen({
     if(!setupOpen||wizardStep!=='manager'||universeId!==WORLD_DB_V2_UNIVERSE_ID||!v2StartCompetition)return
     let active=true
     setV2Pilot(null);setV2Error(null);setV2Loading(true)
-    void discoverWorldDbV2(sourceRoot,v2StartCompetition).then(p=>{if(active){setV2Pilot(p);setTeamKey(current=>p.teams.some(team=>team.key===current)?current:'')}}).catch(e=>{if(active)setV2Error(String(e))}).finally(()=>{if(active)setV2Loading(false)})
+    void discoverWorldDbV2(sourceRoot,v2StartCompetition).then(p=>{if(active){setV2Pilot(p);setTeamKey(current=>p.teams.some(team=>team.key===current)||(includeNcaa&&NCAA_D1_REAL_2026_TEAM_OPTIONS.some(team=>team.key===current))?current:'')}}).catch(e=>{if(active)setV2Error(String(e))}).finally(()=>{if(active)setV2Loading(false)})
     return ()=>{active=false}
-  },[setupOpen,wizardStep,universeId,sourceRoot,v2StartCompetition])
+  },[setupOpen,wizardStep,universeId,sourceRoot,v2StartCompetition,includeNcaa])
 
   useEffect(() => {
     if (!setupOpen || wizardStep !== 'manager' || universeId !== WORLD_DB_SPAIN_UNIVERSE_ID) {
@@ -156,15 +157,16 @@ function StartScreen({
 
   const enterManager = () => {
     if (universeId === WORLD_DB_V2_UNIVERSE_ID) {
-      if (v2ActiveCompetitions.length === 0) return
-      if (!v2ActiveCompetitions.includes(v2Competition)) setV2Competition(v2ActiveCompetitions[0]!)
+      if (v2ActiveCompetitions.length === 0 && !includeNcaa) return
+      if (v2ActiveCompetitions.length > 0 && !v2ActiveCompetitions.includes(v2Competition)) setV2Competition(v2ActiveCompetitions[0]!)
     }
     setWizardStep('manager')
   }
 
-  const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? v2Pilot?.teams??[] : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
-  const ncaaSeedReady = !isNCAA2026 || (ncaaSeed.trim().length > 0 && Number.isSafeInteger(Number(ncaaSeed)) && Number(ncaaSeed) >= 0 && Number(ncaaSeed) <= 0xffff_ffff)
-  const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? v2ActiveCompetitions.length>0&&!v2Loading&&v2Pilot!==null&&v2Error===null&&v2Date.length===10&&v2Seed.trim().length>0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
+  const worldDbTeamsAndNcaa = universeId === WORLD_DB_V2_UNIVERSE_ID ? [...(v2Pilot?.teams ?? []), ...(includeNcaa ? NCAA_D1_REAL_2026_TEAM_OPTIONS : [])] : []
+  const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? worldDbTeamsAndNcaa : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
+  const ncaaSeedReady = (!isNCAA2026 && !(universeId === WORLD_DB_V2_UNIVERSE_ID && includeNcaa)) || (ncaaSeed.trim().length > 0 && Number.isSafeInteger(Number(ncaaSeed)) && Number(ncaaSeed) >= 0 && Number(ncaaSeed) <= 0xffff_ffff)
+  const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? (v2ActiveCompetitions.length === 0 ? includeNcaa : !v2Loading && v2Pilot !== null && v2Error === null) && v2Date.length === 10 && v2Seed.trim().length > 0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
   const coachCreatorSupported = true
   const coachIdentityReady = !coachCreatorSupported || (firstName.trim().length > 0 && lastName.trim().length > 0 && dateOfBirth.length === 10)
 
@@ -196,12 +198,14 @@ function StartScreen({
       startDate={v2Date}
       seed={v2Seed}
       ncaaSeed={ncaaSeed}
+      includeNcaa={includeNcaa}
       onUniverseChange={chooseUniverse}
       onLevelChange={(id,level)=>setV2Levels(current=>({...current,[id]:level}))}
       onSourceRootChange={setSourceRoot}
       onStartDateChange={setV2Date}
       onSeedChange={setV2Seed}
       onNcaaSeedChange={setNcaaSeed}
+      onIncludeNcaaChange={setIncludeNcaa}
       onCancel={()=>setSetupOpen(false)}
       onContinue={enterManager}
     />
@@ -340,8 +344,8 @@ function StartScreen({
           <button className="text-button" disabled={isStarting} onClick={() => setWizardStep('leagues')} type="button">Volver a ligas</button>
           <button className="primary-button" disabled={isStarting || !worldDbReady || !ncaaSeedReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
-          ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed,competitionId:v2StartCompetition,activeCompetitionIds:v2ActiveCompetitions,reducedCompetitionIds:v2ReducedCompetitions}}:{}),
-          ...(isNCAA2026 ? { ncaaSeed: Number(ncaaSeed) } : {}),
+          ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed,competitionId:v2StartCompetition,activeCompetitionIds:v2ActiveCompetitions,reducedCompetitionIds:v2ReducedCompetitions,includeNcaa}}:{}),
+          ...(isNCAA2026 || (universeId === WORLD_DB_V2_UNIVERSE_ID && includeNcaa) ? { ncaaSeed: Number(ncaaSeed) } : {}),
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
           ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, nationalityCountryCode, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>

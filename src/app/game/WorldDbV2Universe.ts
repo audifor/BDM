@@ -1,10 +1,38 @@
 import { attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world'
+import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { buildWorldDbV2, type WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
 import type { UserCoachCreationInput } from './UserCoachCreator'
 import { createWorldDbV2GameFromSnapshot } from './WorldDbV2Game'
 import { worldDbV2Competition } from './WorldDbV2Competitions'
 import { bindWorldDbV2SimulatedTiers } from './WorldDbV2TierBindings'
+import { createNcaaD1Real2026Universe } from './NcaaD1Real2026Universe'
+import { ncaaD1Real2026GameplayPolicy } from './NcaaD1Real2026GeneratedPolicy'
+import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
+import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
+import officialNcaa2026 from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
+
+const WORLD_DB_RUNTIME_KEYS = new Set(['schemaVersion', 'currentDate', 'currentSeasonId', 'userCoachId', 'worldDbCompetitionRuntime'])
+
+/** Merges independent source projections before the shared GameWorld clock starts. */
+export function mergeGameWorlds(base: GameWorld, supplemental: GameWorld): GameWorld {
+  const merged: Record<string, unknown> = { ...base }
+  for (const [key, value] of Object.entries(supplemental)) {
+    if (WORLD_DB_RUNTIME_KEYS.has(key)) continue
+    const current = merged[key]
+    if (Array.isArray(value)) {
+      merged[key] = [...new Map([...(current as readonly unknown[]), ...value].map(item => [JSON.stringify(item), item])).values()]
+    } else if (typeof value === 'object' && value !== null) {
+      const collection = { ...(current as object) } as Record<string, unknown>
+      for (const [id, entity] of Object.entries(value)) {
+        if (id in collection && JSON.stringify(collection[id]) !== JSON.stringify(entity)) throw new Error(`Conflicting WorldDB identity: ${key}/${id}`)
+        collection[id] = entity
+      }
+      merged[key] = collection
+    }
+  }
+  return updateGameWorld(merged as unknown as GameWorld, {})
+}
 
 export async function createWorldDbV2Universe(sourceRoot: string, startDate: string, seed: string, teamId: string, competitionIds: readonly string[], userCoachCreation?: UserCoachCreationInput): Promise<GameWorld> {
   if (!competitionIds.length || new Set(competitionIds).size !== competitionIds.length) throw new Error('Select distinct active competitions')
@@ -64,23 +92,9 @@ export async function createWorldDbV2UniverseFromSnapshots(
     const imported = await createWorldDbV2GameFromSnapshot(
       snapshot, snapshot.clubs[0]!.entity_id, undefined, resolveConfig(snapshot), candidates?.runtimeBundle,
     )
-    const merged: Record<string, unknown> = { ...world }
-    for (const [key, value] of Object.entries(imported)) {
-      if (['schemaVersion', 'currentDate', 'currentSeasonId', 'userCoachId', 'worldDbCompetitionRuntime'].includes(key)) continue
-      const current = merged[key]
-      if (Array.isArray(value)) {
-        merged[key] = [...new Map([...(current as readonly unknown[]), ...value].map(item => [JSON.stringify(item), item])).values()]
-      } else if (typeof value === 'object' && value !== null) {
-        const collection = { ...(current as object) } as Record<string, unknown>
-        for (const [id, entity] of Object.entries(value)) {
-          if (id in collection && JSON.stringify(collection[id]) !== JSON.stringify(entity)) throw new Error(`Conflicting WorldDB identity: ${key}/${id}`)
-          collection[id] = entity
-        }
-        merged[key] = collection
-      }
-    }
+    const merged = mergeGameWorlds(world, imported)
     const runtime = world.worldDbCompetitionRuntime!
-    world = attachWorldDbCompetitionRuntime(updateGameWorld(merged as unknown as GameWorld, {}), {
+    world = attachWorldDbCompetitionRuntime(merged, {
       ...runtime,
       competitionSeasonIds: [...runtime.competitionSeasonIds, ...imported.worldDbCompetitionRuntime!.competitionSeasonIds],
     })
@@ -91,5 +105,55 @@ export async function createWorldDbV2UniverseFromSnapshots(
   return attachWorldDbCompetitionRuntime(world, {
     ...world.worldDbCompetitionRuntime!,
     worldDbV2: { ...world.worldDbCompetitionRuntime!.worldDbV2!, activeCompetitionIds: ids },
+  })
+}
+
+/**
+ * Adds both real-program NCAA categories to the same GameWorld used by the
+ * selected WorldDB competitions. The NCAA source remains the existing
+ * category-aware bootstrap; this function only composes its projections.
+ */
+export async function createWorldDbV2UniverseWithNcaa(
+  sourceRoot: string,
+  startDate: string,
+  seed: string,
+  teamId: string,
+  competitionIds: readonly string[],
+  userCoachCreation?: UserCoachCreationInput,
+  ncaaSeed = 202627,
+): Promise<GameWorld> {
+  if (new Set(competitionIds).size !== competitionIds.length) throw new Error('Select distinct active competitions')
+  const womenTeam = teamId.includes(':women:')
+  const gender = womenTeam ? 'women' : 'men'
+  const genderSnapshot = buildNcaaD1Real2026ConferenceSnapshot(gender)
+  const managedProgramId = genderSnapshot.teams.some(team => String(team.id) === teamId)
+    ? teamId
+    : String(buildNcaaD1Real2026ConferenceSnapshot('men').teams[0]!.id)
+  const ncaaBase = createNcaaD1Real2026Universe({
+    seed: ncaaSeed,
+    managedGender: gender,
+    managedProgramId,
+    sourcedFixtures: officialNcaa2026.fixtures as readonly NcaaD1Real2026FixtureSource[],
+    generatedSchedules: { men: ncaaD1Real2026GameplayPolicy('men', ncaaSeed), women: ncaaD1Real2026GameplayPolicy('women', ncaaSeed) },
+  }).world
+  const ncaa = updateGameWorld(ncaaBase, { coachRpgProfilesByCoachId: {
+    ...ncaaBase.coachRpgProfilesByCoachId,
+    [ncaaBase.userCoachId]: ncaaBase.coachRpgProfilesByCoachId[ncaaBase.userCoachId] ?? createInitialCoachRpgProfile(),
+  } })
+  if (competitionIds.length === 0) {
+    if (!teamId.startsWith('ncaa:')) throw new Error('A WorldDB competition or an NCAA program is required')
+    return ncaa
+  }
+  const snapshots: WorldDbV2Snapshot[] = []
+  for (const id of competitionIds) snapshots.push(await buildWorldDbV2(sourceRoot, startDate, seed, id))
+  const pbmTeamId = snapshots.find(snapshot => snapshot.clubs.some(club => club.entity_id === teamId))?.clubs.find(club => club.entity_id === teamId)?.entity_id
+    ?? snapshots[0]!.clubs[0]!.entity_id
+  const pbm = await createWorldDbV2UniverseFromSnapshots(snapshots, pbmTeamId, teamId.startsWith('ncaa:') ? undefined : userCoachCreation)
+  const world = teamId.startsWith('ncaa:') ? mergeGameWorlds(ncaa, pbm) : mergeGameWorlds(pbm, ncaa)
+  const runtime = pbm.worldDbCompetitionRuntime
+  if (runtime?.worldDbV2 === undefined) return world
+  return attachWorldDbCompetitionRuntime(world, {
+    ...runtime,
+    worldDbV2: { ...runtime.worldDbV2, activeCompetitionIds: competitionIds },
   })
 }
