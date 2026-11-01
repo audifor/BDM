@@ -41,6 +41,7 @@ import {
 
 interface NgWorkspaceNavigationValue {
   readonly app: WorkspaceAppId
+  readonly playerId: import('@/domain/ids').PlayerId | null
   readonly teamId: TeamId | null
   readonly competitionId: CompetitionId | null
   /** Canonical context carried by a resolver (for example a trade negotiation selected by a breakpoint). */
@@ -70,6 +71,7 @@ function readNavigation() {
   const snapshot = readNgWorkspaceNavigation()
   return {
     app: snapshot.app,
+    playerId: snapshot.playerId,
     teamId: snapshot.teamId,
     competitionId: snapshot.competitionId,
     negotiationId: snapshot.negotiationId,

@@ -268,6 +268,39 @@ export function navigateToRecruitingPlayer(playerId: PlayerId) {
   notifyNgNavigation()
 }
 
+/** Opens the existing Market free-agent contact flow with the selected player already focused. */
+export function navigateToDirectSigningPlayer(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'market')
+  url.searchParams.set('marketTab', 'free-agents')
+  url.searchParams.set('marketContract', 'FREE')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.delete('focusPlayerId')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+/** Opens the canonical two-club Trade Machine with the player as the initial target asset. */
+export function navigateToPlayerTrade(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'trades')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.delete('playerView')
+  url.searchParams.delete('focusPlayerId')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+/** Opens the existing Portal list focused on the selected player. */
+export function navigateToPortalPlayer(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'portal')
+  url.searchParams.delete('playerId')
+  url.searchParams.set('focusPlayerId', playerId)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
 export function clearRecruitingPlayerFocus() {
   const url = new URL(window.location.href)
   url.searchParams.delete('focusPlayerId')

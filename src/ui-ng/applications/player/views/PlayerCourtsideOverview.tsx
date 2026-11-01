@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
+import { PlayerSportingOperations } from '@/ui-ng/applications/player/components/PlayerSportingOperations'
 import { CourtsideFamilyRadar } from '@/ui-ng/applications/player/components/visual/CourtsideFamilyRadar'
 import type { PlayerWorkspaceModel } from '@/ui-ng/applications/player/data/playerWorkspaceModel'
 import {
@@ -373,6 +374,7 @@ export function PlayerCourtsideOverview() {
   return <div className={`po-cs-board${model.knowledgeAccess.kind === 'own-roster' ? '' : ' po-cs-board--opponent'}`}
     data-ng-region="player-courtside-overview">
     <PlayerDna model={model} />
+    <PlayerSportingOperations />
     <Radar model={model} />
     <div className="po-cs-board__right"><Season model={model}/><Form model={model}/></div>
     <ManagerRead model={model} />

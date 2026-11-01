@@ -7,6 +7,9 @@ import {
   navigateToPlayer,
   navigateToPlayerFromRoster,
   navigateToPlayerMedical,
+  navigateToDirectSigningPlayer,
+  navigateToPlayerTrade,
+  navigateToPortalPlayer,
   navigateToRecruitingPlayer,
   navigateToTalentApp,
   navigateToTalentDestination,
@@ -130,6 +133,23 @@ describe('workspaceApps navigation', () => {
     const url = new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('recruiting')
     expect(url.searchParams.get('focusPlayerId')).toBe('player:portal')
+  })
+
+  it('opens all three player operation adapters with the selected player context', () => {
+    const playerId = 'player:operation' as PlayerId
+    window.history.replaceState({}, '', '/?ui=ng&app=player')
+
+    navigateToDirectSigningPlayer(playerId)
+    expect(new URL(window.location.href).searchParams.toString()).toContain('marketTab=free-agents')
+    expect(new URL(window.location.href).searchParams.get('playerId')).toBe(playerId)
+
+    navigateToPlayerTrade(playerId)
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('trades')
+    expect(new URL(window.location.href).searchParams.get('playerId')).toBe(playerId)
+
+    navigateToPortalPlayer(playerId)
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('portal')
+    expect(new URL(window.location.href).searchParams.get('focusPlayerId')).toBe(playerId)
   })
 
   it('navigateToPlayerMedical opens the player medical view', () => {
