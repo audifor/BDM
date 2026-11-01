@@ -13,6 +13,7 @@ import { applyBoardTierMovement, evaluateBoardSeason } from '@/engine/board'
 import { processCoachSeason, recordCoachAchievement, recordTierLegacy } from '@/engine/legacy'
 import { processSeasonContentLifecycle } from './SeasonContentLifecycle'
 import { creditContractServiceTimeForCompletedSeason } from '@/engine/salary/ContractServiceTime'
+import { ncaa2027TournamentWinner, isNcaa2027TournamentSeason } from './Ncaa2027TournamentCompletion'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
@@ -32,6 +33,8 @@ function isCompetitionSeasonComplete(world: GameWorld, seasonId: keyof GameWorld
   if (competition.rules.completion !== 'allScheduledGamesCompleted') return false
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   if (games.length === 0 || games.some((game) => game.status !== 'completed')) return false
+  const specialNCAA = ncaa2027TournamentWinner(world, seasonId)
+  if (specialNCAA !== undefined) return specialNCAA !== null
   const postseason = getCompetitionPostseasonState(world, seasonId)
   return postseason === null || postseason.championTeamId !== null
 }
@@ -41,12 +44,19 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   if (season === undefined || !isCompetitionComplete(world, season.competitionId)) throw new Error(`Season ${seasonId} is not complete`)
   if (world.seasonHistoryBySeasonId[seasonId] !== undefined) throw new Error(`Season ${seasonId} is already finalized`)
   const standings = calculateStandings(world, seasonId)
-  const postseasonChampion = getCompetitionPostseasonChampion(world, seasonId)
+  const postseasonChampion = ncaa2027TournamentWinner(world, seasonId) ?? getCompetitionPostseasonChampion(world, seasonId)
   const championTeamId = postseasonChampion ?? (world.competitions[season.competitionId]!.rules.champion === 'standingsLeader' ? standings[0]?.teamId : undefined)
   if (championTeamId === undefined) throw new Error(`Season ${seasonId} has no champion`)
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
   const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId, ...(postseasonChampion === undefined ? {} : { championSource: 'postseason' as const }), finalStandings: standings.map((line) => ({ ...line })) }
+  if (isNcaa2027TournamentSeason(world, seasonId)) {
+    // A March postseason is NOT another NCAA academic year: never advance
+    // eligibility, service time, recruiting, enrollment, staff annual reviews
+    // or development an extra 33 times per gender. Only the champion and
+    // complete results are recorded as standard SeasonHistory/Save V4.
+    return rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history])
+  }
   const finalized=recordSeasonPromiseConsequences(creditContractServiceTimeForCompletedSeason(resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId), seasonId), seasonId)
   const team=finalized.teams[championTeamId]!, competition=finalized.competitions[season.competitionId]!
   const remembered = recordChampionMemories(finalized, { seasonId, competitionId: competition.id, teamId: team.id, coachId: team.coachId, occurredOn: completedOn })
