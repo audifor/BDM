@@ -25,13 +25,22 @@ it.each([
   expect(option.teams).toHaveLength(count)
   expect(option.isTest).toBe(true)
   expect(option.description).toMatch(/generated|BDM-generated/)
-  const world = createConfiguredGame({universeId: id,userTeamKey:option.teams[0]!.key,ncaaSeed:202627})
+  const world = createConfiguredGame({
+    universeId: id,userTeamKey:option.teams[0]!.key,ncaaSeed:202627,
+    userCoachCreation: {
+      firstName: 'NCAA',lastName: 'Manager',dateOfBirth: '1984-06-01',
+      gender: gender==='men'?'male':'female',background: 'rookie',
+      ambition: 'firstTitle',disposition: 'balanced',coachingStyle: 'balanced',
+    },
+  })
   expect(Object.values(world.teams)).toHaveLength(728)
   expect(Object.values(world.seasons)).toHaveLength(2)
   expect(world.seasons[source('men') as keyof typeof world.seasons]).toBeDefined()
   expect(world.seasons[source('women') as keyof typeof world.seasons]).toBeDefined()
   expect(world.teams[option.teams[0]!.key as keyof typeof world.teams]!.gender).toBe(gender==='men'?'male':'female')
   expect(world.userCoachId).toBe(world.teams[option.teams[0]!.key as keyof typeof world.teams]!.coachId)
+  expect(world.coaches[world.userCoachId]!.firstName).toBe('NCAA')
+  expect(world.coachRpgProfilesByCoachId[world.userCoachId]?.creatorOrigin?.background).toBe('rookie')
   const officialASUN = Object.values(world.games).filter(g=>g.id.startsWith('game:USA:ncaa-d1-') && g.id.includes(':2026-27:'))
   expect(officialASUN).toHaveLength(112)
   expect(Object.values(world.games).filter(g=>g.date==='2027-02-27')).not.toHaveLength(0)
