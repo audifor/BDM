@@ -12,6 +12,7 @@ import { buildCompetitionWorkspaceModel } from '@/ui-ng/applications/competition
 import { HomeDashboardSlot } from '@/ui-ng/applications/home/HomeDashboardSlot'
 import { CareerArrivalBriefing } from '@/ui-ng/applications/home/CareerArrivalBriefing'
 import { buildCareerArrivalModel } from '@/ui-ng/applications/home/careerArrivalModel'
+import { DirectorHubPanel } from '@/ui-ng/applications/home/DirectorHubPanel'
 import { HOME_SELECTABLE_IDS, readHomeLayout, saveHomeLayout, type HomeSelectableModuleId } from './homeLayoutSettings'
 import { homeDashboardModuleLabel } from '@/ui-ng/applications/home/homeDashboardModules'
 import { deriveTeamColors, formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -209,6 +210,7 @@ export function HomeWorkspace() {
     >
       <div className="home-dashboard">
         {arrival === null ? null : <CareerArrivalBriefing model={arrival} />}
+        <DirectorHubPanel />
         <div className="home-dashboard__top">
           {layout.fixture==='fixture'?<section className="home-dashboard__fixture ng-holo-panel">
             <div className="home-dashboard__fixture-side">
