@@ -1,6 +1,7 @@
 import { createCompetition } from '@/domain/competition'
 import { createGame, type Game } from '@/domain/game'
-import { parseGameDate, type GameDate } from '@/domain/date'
+import { parseGameDate } from '@/domain/date'
+import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { competitionIdFromString, gameIdFromString, seasonIdFromString, type SeasonId, type TeamId } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
@@ -16,7 +17,7 @@ const tournamentId = (gender: NcaaD1RealGender) => seasonIdFromString(`season:US
 const rounds = ['OPENING_ROUND', 'FIRST_ROUND', 'SECOND_ROUND', 'SWEET_16', 'ELITE_EIGHT', 'FINAL_FOUR', 'FINAL'] as const
 type NationalRound = typeof rounds[number]
 const expected = [12, 32, 16, 8, 4, 2, 1]
-const days: Readonly<Record<NcaaD1RealGender, Readonly<Record<NationalRound, readonly GameDate[]>>>> = {
+const days: Readonly<Record<NcaaD1RealGender, Readonly<Record<NationalRound, readonly string[]>>>> = {
   men: {
     OPENING_ROUND: ['2027-03-16','2027-03-17'], FIRST_ROUND: ['2027-03-18','2027-03-19'],
     SECOND_ROUND: ['2027-03-20','2027-03-21'], SWEET_16: ['2027-03-25','2027-03-26'],
@@ -86,9 +87,11 @@ function pairsAdjacent(teams: readonly TeamId[]): [TeamId,TeamId][] {
 
 export function startNcaa2027NationalTournament(world: GameWorld, gender: NcaaD1RealGender): GameWorld {
   if (world.seasons[tournamentId(gender)]) throw new Error('NCAA 2027 national tournament was already selected')
-  const officialWomen = formatDocuments.find(doc => doc.competition_id === 'competition:USA:ncaa-d1-women-championship')
-  const opening = officialWomen?.variants[0]?.nodes.find(node => node.key === 'OPENING_ROUND')
-  if (officialWomen?.status !== 'COMPLETE' || officialWomen.variants[0]?.entry_selection?.payload.field_size !== 76
+  const sourced = formatDocuments.find(doc => doc.competition_id === 'competition:USA:ncaa-d1-women-championship')
+  if (!sourced) throw new Error('Missing published NCAA 2027 reference format')
+  const officialWomen = parseWorldCompetitionFormatDocument(sourced)
+  const opening = officialWomen.variants[0]?.nodes.find(node => node.key === 'OPENING_ROUND')
+  if (officialWomen.status !== 'COMPLETE' || officialWomen.variants[0]?.entrySelection?.payload.field_size !== 76
     || opening?.pairing?.payload.game_count !== 12) throw new Error('NCAA 2027 format provenance no longer confirms the 76-team, 12-opening-game bracket')
   const field = selectNcaa2027Field(world,gender)
   const ordered = field.seeded, index = new Map(ordered.map((team,i)=>[team,i]))
@@ -106,7 +109,7 @@ export function startNcaa2027NationalTournament(world: GameWorld, gender: NcaaD1
   })
   const season=createSeason({
     id:tournamentId(gender),competitionId:competition.id,label:`2027 NCAA DI ${gender} 76-team BDM committee simulation`,
-    startDate:gender==='men'?'2027-03-14':'2027-03-14',endDate:gender==='men'?'2027-04-05':'2027-04-04',
+    startDate:parseGameDate('2027-03-14'),endDate:parseGameDate(gender==='men'?'2027-04-05':'2027-04-04'),
     participantTeamIds:field.seeded,
   })
   return updateGameWorld(world,{
