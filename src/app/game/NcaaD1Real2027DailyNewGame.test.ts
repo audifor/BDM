@@ -60,6 +60,14 @@ it('enters men and women conference tournaments via the canonical March 1 daily 
   const advanced=advanceDayWithTrace(world)
   expect(advanced.status).toBe('COMPLETED')
   if(advanced.status!=='COMPLETED')throw Error(advanced.failure?.message)
+  const phaseTimes = [...advanced.phases]
+    .map(phase => ({ id: phase.phaseId, milliseconds: phase.elapsedMs ?? 0, changed: phase.worldChanged }))
+    .sort((a, b) => b.milliseconds - a.milliseconds)
+  console.info('NCAA2027_FULL_WORLD_DAILY_PERF', JSON.stringify({
+    allPhasesMs: phaseTimes.reduce((sum, phase) => sum + phase.milliseconds, 0),
+    slowest: phaseTimes.slice(0, 14),
+  }))
+  expect(advanced.phases.find(phase => phase.phaseId === 'NCAA_2027_POSTSEASON')?.elapsedMs).toBeGreaterThanOrEqual(0)
   world=advanced.world
   expect(world.currentDate).toBe('2027-03-01')
   expect(advanced.phases.find(p=>p.phaseId==='NCAA_2027_POSTSEASON')?.worldChanged).toBe(true)
