@@ -8,6 +8,7 @@ import type { MatchSetup } from '@/engine/match-next'
 import type { MatchSimulationProgress, MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { simulateBackgroundMatch, type BackgroundMatchResult } from '@/engine/world-sim/background/BackgroundMatchModel'
 import { completeBackgroundMatch } from '@/app/worldSim/BackgroundMatchCompletion'
+import { worldDbV2Competition } from './WorldDbV2Competitions'
 import { decideResolutions, DEFAULT_SIMULATION_DETAIL, type SimulationDetailSettings, type SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { requireUserGameToday, userMatchTacticalPlans } from './playUserGame'
 
@@ -23,7 +24,15 @@ export type DayResolution = 'FULL' | 'FAST' | 'BACKGROUND'
 
 /** WSR1 seam for the user's simulation-detail setting (persisted settings will be read here; until then the default). */
 export function simulationDetailFor(world: GameWorld): SimulationDetailSettings {
-  if (world.worldDbCompetitionRuntime?.worldDbV2?.activeCompetitionIds) return { ...DEFAULT_SIMULATION_DETAIL, level: 'DETAILED', exactBudgetPerDay: 64 }
+  const provenance = world.worldDbCompetitionRuntime?.worldDbV2
+  if (provenance?.activeCompetitionIds) {
+    const reduced = new Set(provenance.reducedCompetitionIds ?? [])
+    const active = provenance.activeCompetitionIds
+    const asCompetitionId = (id: string) => worldDbV2Competition(id).nativeCompetitionId
+    const highDetailCompetitionIds = Object.values(world.competitions).filter(c => active.some(id => !reduced.has(id) && asCompetitionId(id) === c.id)).map(c => c.id)
+    const lowDetailCompetitionIds = Object.values(world.competitions).filter(c => active.some(id => reduced.has(id) && asCompetitionId(id) === c.id)).map(c => c.id)
+    return { ...DEFAULT_SIMULATION_DETAIL, level: 'DETAILED', exactBudgetPerDay: 64, highDetailCompetitionIds, lowDetailCompetitionIds }
+  }
   return DEFAULT_SIMULATION_DETAIL
 }
 
