@@ -2,6 +2,7 @@ import { expect, it } from 'vitest'
 import { createGame, type Game } from '@/domain/game'
 import { updateGameWorld, validateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import { deserializeGameWorldSaveV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
 import source from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
 import { buildNcaaD1Real2026ConferenceSnapshot, type NcaaD1RealGender } from './NcaaD1Real2026Conferences'
 import { ncaaD1Real2026GameplayPolicy } from './NcaaD1Real2026GeneratedPolicy'
@@ -77,6 +78,17 @@ it.each(['men','women'] as const)(
     expect(summary.roundGameCounts).toEqual([12,32,16,8,4,2,1])
     for(const game of original)expect(world.games[game.id]).toEqual(fullScore(game))
     validateGameWorld(world)
+    const tournamentSeasons = Object.values(world.seasons).filter(s => s.label.includes('BDM simulated postseason') || s.id === nationalId)
+    expect(tournamentSeasons).toHaveLength(33)
+    expect(tournamentSeasons.every(s => isSeasonComplete(world,s.id))).toBe(true)
+    world = withSingleWorldValidation(world, updated => {
+      updated = finalizeCompletedSeason(updated, cohort.seasonId)
+      for (const tournament of tournamentSeasons) updated = finalizeCompletedSeason(updated, tournament.id)
+      return updated
+    })
+    expect(world.seasonHistoryBySeasonId[cohort.seasonId]).toBeDefined()
+    expect(tournamentSeasons.every(s => world.seasonHistoryBySeasonId[s.id] !== undefined)).toBe(true)
+    expect(world.seasonHistoryBySeasonId[nationalId as keyof typeof world.seasons]?.championTeamId).toBe(getNcaa2027NationalChampion(world,gender))
     const recovered=deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world,'2026-11-01T00:00:00Z'))))
     expect(getNcaa2027NationalChampion(recovered,gender)).toBe(getNcaa2027NationalChampion(world,gender))
     expect(getNcaa2027ConferenceChampions(recovered,gender)).toEqual(champions)
