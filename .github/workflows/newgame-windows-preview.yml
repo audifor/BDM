@@ -72,9 +72,11 @@ jobs:
           5. Test back-navigation, Save/Continue, and several match days.
           6. NCAA men and women are separate real-program category choices within
              an experimental combined NCAA universe, NOT mixed with PBM WorldDB.
-          7. The experimental app uses a separate application identifier and separate saves.\n          Keep a backup of your PBM source before any test.
+          7. The experimental app uses a separate application identifier and separate saves.
+          Keep a backup of your PBM source before any test.
              The executable is not production certified. No automatic update to main.
-          NOTE: The workflow verifies build/test but not real Windows UI interactions.\n          WorldDB V2 needs working local Python/Runtime V1 and access to the PBM source folder.
+          NOTE: The workflow verifies build/test but not real Windows UI interactions.
+          WorldDB V2 needs working local Python/Runtime V1 and access to the PBM source folder.
           '@ | Set-Content -Path 'preview/README-TEST.txt' -Encoding utf8
       - name: Upload playable BDM Windows preview
         uses: actions/upload-artifact@v4
