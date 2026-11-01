@@ -43,7 +43,7 @@ jobs:
       - name: Verify manager and league selector, simulations and save
         run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts --maxWorkers=1 --testTimeout=90000
       - name: Build native BDM exe with New Game redesign
-        run: npm run tauri build -- --no-bundle
+        run: npm run tauri build -- --no-bundle --config src-tauri/tauri.newgame-preview.conf.json
       - name: Package playable isolated version and provenance
         shell: pwsh
         run: |
@@ -72,9 +72,9 @@ jobs:
           5. Test back-navigation, Save/Continue, and several match days.
           6. NCAA men and women are separate real-program category choices within
              an experimental combined NCAA universe, NOT mixed with PBM WorldDB.
-          7. Keep a backup of all previous saves and your PBM source before any test.
+          7. The experimental app uses a separate application identifier and separate saves.\n          Keep a backup of your PBM source before any test.
              The executable is not production certified. No automatic update to main.
-          NOTE: The workflow verifies build/test but not real Windows UI interactions.
+          NOTE: The workflow verifies build/test but not real Windows UI interactions.\n          WorldDB V2 needs working local Python/Runtime V1 and access to the PBM source folder.
           '@ | Set-Content -Path 'preview/README-TEST.txt' -Encoding utf8
       - name: Upload playable BDM Windows preview
         uses: actions/upload-artifact@v4
