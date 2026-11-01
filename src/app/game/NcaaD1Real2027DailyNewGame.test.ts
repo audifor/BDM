@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { addDays, parseGameDate } from '@/domain/date'
+import { parseGameDate } from '@/domain/date'
 import { createGame, type Game } from '@/domain/game'
 import { updateGameWorld, validateGameWorld, type GameWorld } from '@/domain/world'
 import { advanceDayWithTrace, DAILY_LIFECYCLE_PHASE_IDS } from '@/engine/calendar'
@@ -32,8 +32,8 @@ it.each([
   expect(world.seasons[source('women') as keyof typeof world.seasons]).toBeDefined()
   expect(world.teams[option.teams[0]!.key as keyof typeof world.teams]!.gender).toBe(gender==='men'?'male':'female')
   expect(world.userCoachId).toBe(world.teams[option.teams[0]!.key as keyof typeof world.teams]!.coachId)
-  const totalRegular = Object.values(world.games).filter(g=>g.classification==='conference'&&g.id.startsWith('ncaa:2026-27:'))
-  expect(totalRegular.length).toBeGreaterThanOrEqual(112)
+  const officialASUN = Object.values(world.games).filter(g=>g.id.startsWith('game:USA:ncaa-d1-') && g.id.includes(':2026-27:'))
+  expect(officialASUN).toHaveLength(112)
   expect(Object.values(world.games).filter(g=>g.date==='2027-02-27')).not.toHaveLength(0)
   validateGameWorld(world)
   const reopened = deserializeGameWorldSaveV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world,'2026-11-01T00:00:00Z'))))
