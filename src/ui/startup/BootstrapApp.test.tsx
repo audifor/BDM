@@ -196,4 +196,39 @@ describe('New Game World DB Spain ACB flow', () => {
     expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: 'created-coach-world' })
   })
 
+  it.each([
+    { universeId: 'ncaaD1Real2026Men', programCount: 365 },
+    { universeId: 'ncaaD1Real2026Women', programCount: 363 },
+  ])('chooses a real NCAA $universeId program, validates the seed and submits the correct new-game selection', async ({ universeId, programCount }) => {
+    mocks.createConfiguredGameAsync.mockResolvedValue({ marker: universeId })
+    render(<BootstrapApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'NEW GAME' }))
+    fireEvent.change(screen.getByLabelText('UNIVERSE'), { target: { value: universeId } })
+
+    const teamSelect = screen.getByLabelText('TEAM') as HTMLSelectElement
+    const programOptions = within(teamSelect).getAllByRole('option') as HTMLOptionElement[]
+    expect(programOptions).toHaveLength(programCount + 1)
+    expect(teamSelect.value).toBe('')
+    expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByText(/Both men's and women's Division I seasons run together/)).toBeTruthy()
+
+    const chosenProgram = programOptions[1]!.value
+    fireEvent.change(teamSelect, { target: { value: chosenProgram } })
+    fillCoachIdentity()
+    const seed = screen.getByLabelText('NCAA FIXTURE / PLAYER SEED')
+    fireEvent.change(seed, { target: { value: '4294967296' } })
+    expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(true)
+    fireEvent.change(seed, { target: { value: '202627' } })
+    expect(screen.getByRole('button', { name: 'START CAREER' }).hasAttribute('disabled')).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'START CAREER' }))
+
+    await waitFor(() => expect(mocks.createConfiguredGameAsync).toHaveBeenCalledWith({
+      universeId,
+      userTeamKey: chosenProgram,
+      ncaaSeed: 202627,
+      userCoachCreation: coachCreation,
+    }))
+    expect(mocks.replaceWorld).toHaveBeenCalledWith({ marker: universeId })
+  })
+
 })
