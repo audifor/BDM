@@ -5,7 +5,10 @@ import {
   type NewGameUniverseId,
 } from '@/app/game/NewGameUniverseCatalog'
 import { ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
-import { WORLDDB_V2_GLOBAL_COMPETITIONS } from '@/app/game/WorldDbV2Competitions'
+import {
+  WORLDDB_NEW_GAME_SELECTABLE,
+  WORLDDB_NEW_GAME_QUALIFICATION_ONLY, WORLDDB_NEW_GAME_COUNTRY_NAMES,
+} from '@/app/game/WorldDbNewGameCatalog'
 
 export type LeagueDepth = 'detailed' | 'reduced' | 'off'
 
@@ -26,27 +29,20 @@ interface LeagueSelectionStepProps {
   readonly onContinue: () => void
 }
 
-const countryNames: Readonly<Record<string, string>> = {
-  ESP: 'España', FRA: 'Francia', ITA: 'Italia', DEU: 'Alemania', BRA: 'Brasil',
-  USA: 'Estados Unidos', ARG: 'Argentina', URY: 'Uruguay', CAN: 'Canadá',
-  MEX: 'México', COL: 'Colombia', DOM: 'República Dominicana', PAN: 'Panamá',
-  VEN: 'Venezuela', TUR: 'Turquía', ISR: 'Israel', POL: 'Polonia',
-  CZE: 'Chequia', UKR: 'Ucrania', PRT: 'Portugal', RUS: 'Rusia',
-  CHN: 'China', AUS: 'Australia', NZL: 'Nueva Zelanda', MAC: 'Macao',
-  MNE: 'Montenegro', AUT: 'Austria', FIN: 'Finlandia', NOR: 'Noruega',
-  ROU: 'Rumanía', ALB: 'Albania', GEO: 'Georgia', ISL: 'Islandia',
-  XKX: 'Kosovo', LUX: 'Luxemburgo', PHL: 'Filipinas', TWN: 'Taiwán',
-}
+const countryNames = WORLDDB_NEW_GAME_COUNTRY_NAMES
 
 function regionOf(code: string): string {
-  if (code === 'UNRESOLVED') return 'Sin conciliar'
-  if (['USA','ARG','BRA','URY','CAN','MEX','COL','DOM','PAN','VEN'].includes(code)) return 'América'
-  if (['CHN','MAC','PHL','TWN','AUS','NZL'].includes(code)) return 'Asia y Oceanía'
+  if (code === 'UNRESOLVED') return 'Pendiente de conciliar'
+  if (code === 'BAL' || code === 'BNX') return 'Ligas conjuntas'
+  if (['USA','ARG','BRA','URY','CAN','MEX','COL','DOM','PAN','VEN','CHL'].includes(code)) return 'América'
+  if (['CHN','PHL','TWN','AUS','NZL','KOR','JPN'].includes(code)) return 'Asia y Oceanía'
   if (['TUR','ISR','GEO'].includes(code)) return 'Europa y proximidad'
   return 'Europa'
 }
 
-const catalog = WORLDDB_V2_GLOBAL_COMPETITIONS
+// Only leagues that a club can join directly appear in the selection controls.
+const catalog = WORLDDB_NEW_GAME_SELECTABLE
+const international = WORLDDB_NEW_GAME_QUALIFICATION_ONLY
 const countries = [...new Set(catalog.map(c => c.countryCode))]
   .sort((a,b) => (countryNames[a] ?? a).localeCompare(countryNames[b] ?? b, 'es'))
 const regions = [...new Set(countries.map(regionOf))]
@@ -106,7 +102,8 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
         {isWorldDb && (
           <div className="bdm-wizard__explorer">
             <aside className="bdm-wizard__countries" aria-label="Países y regiones">
-              <h2>Regiones</h2>
+              <h2>Países y regiones</h2>
+              <p className="bdm-wizard__aside-intro">Elige campeonatos nacionales o ligas conjuntas. Los torneos por clasificación no se activan aquí.</p>
               <button className={country === 'ALL' ? 'selected' : ''} onClick={() => setCountry('ALL')} type="button">Todas las ligas</button>
               {regions.map(region => (
                 <details key={region} open={region === 'Europa' || region === 'América'}>
@@ -124,7 +121,7 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
             <section className="bdm-wizard__leagues" aria-label="Ligas disponibles">
               <div className="bdm-wizard__list-heading">
                 <div><h2>{search ? 'Resultados de búsqueda' : country === 'ALL' ? 'Todas las competiciones' : countryNames[country] ?? (country === 'UNRESOLVED' ? 'País sin conciliar' : country)}</h2>
-                  <p>{displayed.length} competiciones en el catálogo</p></div>
+                  <p>{displayed.length} ligas disponibles para iniciar una carrera</p></div>
                 <label><input type="checkbox" checked={onlySelected} onChange={event => setOnlySelected(event.target.checked)}/> Solo seleccionadas</label>
               </div>
               <input className="bdm-wizard__search" aria-label="BUSCAR LIGAS" placeholder="Buscar liga o país…" value={search} onChange={event => setSearch(event.target.value)}/>
@@ -135,7 +132,7 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
                     <div className="bdm-wizard__league-name">
                       <strong>{item.name}</strong>
                       <span>{countryNames[item.countryCode] ?? (item.countryCode === 'UNRESOLVED' ? 'País por verificar' : item.countryCode)} · {item.teamCount} equipos</span>
-                      {(item.formatProvenance === 'GENERATED_SIMULATION' || item.simulationPolicy) && <small>Formato provisional simulado</small>}
+                      {(item.formatProvenance === 'GENERATED_SIMULATION' || item.simulationPolicy) && <small>Calendario o formato provisional</small>}
                     </div>
                     <label className="bdm-wizard__depth">
                       <span className="sr-only">Detalle de {item.name}</span>
@@ -158,6 +155,11 @@ export function LeagueSelectionStep(props: LeagueSelectionStepProps) {
               <p><strong>Detallada</strong>: partidos prioritarios para el motor de mayor precisión, sujetos al presupuesto diario.</p>
               <p><strong>Reducida</strong>: partidos en simulación rápida, con clubes y mercado igualmente cargados. Los partidos de tu equipo siguen teniendo prioridad.</p>
               <p><strong>Sin cargar</strong>: esa competición no se importa a la partida activa.</p>
+              <details className="bdm-wizard__qualification">
+                <summary>{international.length} competiciones por acceso reglamentario</summary>
+                <p>No son ligas iniciales. Su acceso depende de méritos deportivos y, según el torneo, de licencias o invitaciones. El constructor actual todavía no calcula esas plazas automáticamente.</p>
+                <ul>{international.map(item => <li key={item.sourceCompetitionId}>{item.name}</li>)}</ul>
+              </details>
               <p className="bdm-wizard__notice">Las ligas con formato provisional están etiquetadas. Las NCAA todavía no pueden mezclarse con el universo PBM en una sola partida.</p>
             </aside>
           </div>

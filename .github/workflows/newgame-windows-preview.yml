@@ -41,7 +41,7 @@ jobs:
       - name: Verify TypeScript and frontend
         run: npm run build
       - name: Verify manager and league selector, simulations and save
-        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts --maxWorkers=1 --testTimeout=90000
+        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts src/app/game/WorldDbNewGameCatalog.test.ts --maxWorkers=1 --testTimeout=90000
       - name: Build native BDM exe with New Game redesign
         run: npm run tauri build -- --no-bundle --config src-tauri/tauri.newgame-preview.conf.json
       - name: Package playable isolated version and provenance

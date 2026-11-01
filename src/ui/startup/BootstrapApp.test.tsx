@@ -88,10 +88,21 @@ describe('New Game two-step league universe and manager', () => {
     openWizard()
     expect((screen.getByLabelText('UNIVERSE') as HTMLSelectElement).value).toBe('worldDbV2')
     expect(screen.getByText('Configurar universo')).toBeTruthy()
-    expect(screen.getByText('Regiones')).toBeTruthy()
+    expect(screen.getByText('Países y regiones')).toBeTruthy()
     expect(screen.getByRole('button', { name: /^España\s*4$/ }).textContent).toContain('España')
     expect(screen.queryByLabelText('COACH FIRST NAME')).toBeNull()
     expect(mocks.discoverWorldDbV2).not.toHaveBeenCalled()
+  })
+
+  it('reconciles national countries and prevents starting directly in continental tournaments', () => {
+    openWizard()
+    expect(screen.getByRole('button', { name: /Grecia/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Japón/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /País pendiente/ })).toBeNull()
+    fireEvent.change(screen.getByLabelText('BUSCAR LIGAS'), { target: { value: 'Euroleague' } })
+    expect(screen.queryByLabelText('Detalle de Euroleague')).toBeNull()
+    expect(screen.getByText(/No hay ligas que coincidan/)).toBeTruthy()
+    expect(screen.getByText(/competiciones por acceso reglamentario/)).toBeTruthy()
   })
 
   it('selects loaded and reduced leagues, then sends them into the same world and manager', async () => {
