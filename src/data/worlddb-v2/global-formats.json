@@ -5317,6 +5317,256 @@
   },
   {
     "schema_version": "1.0",
+    "competition_id": "competition:AUS:nbl",
+    "competition_season_id": "edition:AUS:nbl:2026-27:bdm-matrix:78",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION: original PBM 10 clubs, published NBL27 33 games per club and six-team postseason pathway. Opponent matrix, precise dates, home advantage in non-source games, Ignite Cup crossover and classification fallback are simulated. NOT an official NBL fixture list.",
+    "variants": [
+      {
+        "key": "NBL_27_BDM_MATRIX",
+        "name": "NBL 2026-27 (33 generated games, six-team finals pathway)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 10
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 10,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "games_per_team": 33
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "bdm_generated_matrix_v1": true
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "PLAY_IN_5_6",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "5-6"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEEDING_3_4",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "3-4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "7-8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-8",
+                  "2-7"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 3,
+              "wins_required": 2
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 5,
+              "wins_required": 3
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "PLAY_IN_5_6",
+            "selector": "RANK_RANGE",
+            "rank_from": 5,
+            "rank_to": 6
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "SEEDING_3_4",
+            "selector": "RANK_RANGE",
+            "rank_from": 3,
+            "rank_to": 4
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "SEMIFINALS",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 2
+          },
+          {
+            "from": "PLAY_IN_5_6",
+            "to": "PLAY_IN_FINAL",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 8
+            }
+          },
+          {
+            "from": "SEEDING_3_4",
+            "to": "PLAY_IN_FINAL",
+            "selector": "LOSER",
+            "payload": {
+              "playoff_seed": 7
+            }
+          },
+          {
+            "from": "SEEDING_3_4",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 7
+            }
+          },
+          {
+            "from": "PLAY_IN_FINAL",
+            "to": "SEMIFINALS",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 8
+            }
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.nbl.com.au/news/nbl27-schedule-by-the-numbers",
+        "type": "OFFICIAL",
+        "scope": "10 clubs, 165 games, 33 per team; not imported fixed fixture dates"
+      },
+      {
+        "url": "https://www.nbl.com.au/news/the-nbl26-finals-format-explained",
+        "type": "OFFICIAL",
+        "scope": "Six-club postseason, third/fourth seeding qualifier, fifth/sixth play-in and best-of-three semifinals"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM generated opponent matrix, dates and standings tiebreak policy"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
     "competition_id": "competition:BDM-SIM:dyn_championnat-79",
     "competition_season_id": "edition:BDM-SIM:dyn_championnat-79:generated",
     "season_label": "BDM generated season",
@@ -7742,6 +7992,212 @@
         "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
         "type": "SECONDARY",
         "scope": "BDM generated gameplay policy ONLY; not an official source"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:ESP:segunda-feb",
+    "competition_season_id": "edition:ESP:segunda-feb:2025-26:bdm-adapted:112",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: preserves the PBM 28 clubs and documented two groups of 14. Group assignments, qualification, aggregate knockout and classification are BDM simulation, NOT official regulations. No promotion/relegation numbers inferred from contradictory source PDFs.",
+    "variants": [
+      {
+        "key": "SEGUNDA_FEB_BDM_SIM",
+        "name": "Segunda FEB (two groups, simulated knockout)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 28
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not a federation regulation",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_GROUPS",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 28,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "policy": "BDM_GENERATED_DOUBLE_ROUND_ROBIN"
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP",
+              "payload": {
+                "policy": "BDM_GENERATED_GROUPS",
+                "generated_group_count": 2
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "GROUP_A",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 0
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "GROUP_B",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 14,
+            "pairing": {
+              "type": "ROUND_ROBIN",
+              "meetings_per_pair": 2,
+              "payload": {
+                "bdm_generated_group_index": 1
+              }
+            },
+            "opponent_scope": {
+              "type": "SAME_GROUP"
+            }
+          },
+          {
+            "key": "QUARTERFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-8",
+                  "2-7",
+                  "3-6",
+                  "4-5"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "AGGREGATE",
+              "leg_count": 2,
+              "tie_resolution": {
+                "method": "BDM_EXTRA_DECIDER"
+              }
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_4",
+                  "WINNER_2-WINNER_3"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "AGGREGATE",
+              "leg_count": 2,
+              "tie_resolution": {
+                "method": "BDM_EXTRA_DECIDER"
+              }
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FINAL",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "NEUTRAL"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_GROUPS",
+            "to": "QUARTERFINALS",
+            "selector": "TOP_N",
+            "count": 8
+          },
+          {
+            "from": "QUARTERFINALS",
+            "to": "SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "SEMIFINALS",
+            "to": "FINAL",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6549%5DBBCC%20SEGUNDA%20FEB%2025-26%20-%20Versi%C3%B3n%20Web.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6549%5DBBCC%20SEGUNDA%20FEB%2025-26.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://www.feb.es/Documentos/Enlaces/%5B6005%5D1266_Reglamento%20General%20y%20Competiciones%20%28Baloncesto%29%20CD%2007.10.2025%20-%20CSD%20Versi%C3%B3n%20web.pdf",
+        "type": "OFFICIAL",
+        "scope": "Documented source identity and group topology; playoff simulation is NOT official"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM simulation policy for group assignment, knockout and tie resolution"
       }
     ]
   },
@@ -14760,6 +15216,689 @@
         "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
         "type": "SECONDARY",
         "scope": "BDM generated gameplay policy ONLY; not an official source"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:NAM:nba",
+    "competition_season_id": "edition:NAM:nba:2025-26:bdm-matrix:44",
+    "season_label": "2025-26",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: 30 PBM NBA franchises, 82 generated matches per club, 15+15 actual franchise conference affiliations pinned by club name, conference play-in ranks 7-10, best-of-seven postseason. The generated fixture matrix, in-season NBA Cup conditional fixtures, exact event dates and NBA official tie-break rules are NOT reproduced.",
+    "variants": [
+      {
+        "key": "NBA_BDM_MATRIX",
+        "name": "NBA 2025-26: conferences, Play-In, best-of-seven (simulated fixtures)",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 30
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION, not official NBA tie-breakers",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 30,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "games_per_team": 82,
+                "official_fixture_fidelity": false,
+                "source_published_games_per_team": 80,
+                "conditional_cup_games_per_team": 2
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_NBA_CONFERENCES"
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "EAST_7_8",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "13-15"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_7_8",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "14-16"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "EAST_9_10",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "17-19"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_9_10",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "18-20"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "EAST_PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "LOSER_13_15_VS_WINNER_17_19"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "WEST_PLAY_IN_FINAL",
+            "node_type": "ROUND",
+            "role": "PLAY_IN",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "LOSER_14_16_VS_WINNER_18_20"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "FIRST_ROUND",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-15",
+                  "7-9",
+                  "5-11",
+                  "3-13",
+                  "2-16",
+                  "8-10",
+                  "6-12",
+                  "4-14"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4",
+                  "WINNER_5-WINNER_6",
+                  "WINNER_7-WINNER_8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_FINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "NBA_FINALS",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 7,
+              "wins_required": 4
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HHAAHAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "FIRST_ROUND",
+            "selector": "RANK_RANGE",
+            "rank_from": 1,
+            "rank_to": 12
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 13,
+            "rank_to": 13
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 15,
+            "rank_to": 15
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 14,
+            "rank_to": 14
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_7_8",
+            "selector": "RANK_RANGE",
+            "rank_from": 16,
+            "rank_to": 16
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 17,
+            "rank_to": 17
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "EAST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 19,
+            "rank_to": 19
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 18,
+            "rank_to": 18
+          },
+          {
+            "from": "REGULAR_SEASON",
+            "to": "WEST_9_10",
+            "selector": "RANK_RANGE",
+            "rank_from": 20,
+            "rank_to": 20
+          },
+          {
+            "from": "EAST_7_8",
+            "to": "EAST_PLAY_IN_FINAL",
+            "selector": "LOSER"
+          },
+          {
+            "from": "EAST_9_10",
+            "to": "EAST_PLAY_IN_FINAL",
+            "selector": "WINNER"
+          },
+          {
+            "from": "EAST_7_8",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 13
+            }
+          },
+          {
+            "from": "EAST_PLAY_IN_FINAL",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 15
+            }
+          },
+          {
+            "from": "WEST_7_8",
+            "to": "WEST_PLAY_IN_FINAL",
+            "selector": "LOSER"
+          },
+          {
+            "from": "WEST_9_10",
+            "to": "WEST_PLAY_IN_FINAL",
+            "selector": "WINNER"
+          },
+          {
+            "from": "WEST_7_8",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 14
+            }
+          },
+          {
+            "from": "WEST_PLAY_IN_FINAL",
+            "to": "FIRST_ROUND",
+            "selector": "WINNER",
+            "payload": {
+              "playoff_seed": 16
+            }
+          },
+          {
+            "from": "FIRST_ROUND",
+            "to": "CONFERENCE_SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_SEMIFINALS",
+            "to": "CONFERENCE_FINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_FINALS",
+            "to": "NBA_FINALS",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://www.nba.com/news/2025-26-nba-regular-season-schedule",
+        "type": "OFFICIAL",
+        "scope": "30 clubs, 82 regular games, 80 fixed plus two Cup-dependent games; candidate simulates all 82 independently of Cup"
+      },
+      {
+        "url": "https://www.nba.com/news/nba-play-in-tournament",
+        "type": "OFFICIAL",
+        "scope": "Each conference 7-10 play-in advancement"
+      },
+      {
+        "url": "https://www.nba.com/news/2026-nba-playoffs-schedule",
+        "type": "OFFICIAL",
+        "scope": "Conference bracket four best-of-seven rounds and NBA final"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "BDM simulations of opponents/dates and classification tiebreaks"
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "competition_id": "competition:NAM:gleague",
+    "competition_season_id": "edition:NAM:gleague:2026-27:bdm-two-phase:94",
+    "season_label": "2026-27",
+    "status": "COMPLETE",
+    "notes": "GENERATED_SIMULATION: 31 original PBM clubs; source-defined 4 Tip-Off regions (8/8/8/7) with exactly 14 games/team and separate standings; records RESET before the 36-game regular season with 16 East/15 West conference standings; top eight each qualify; three single-elimination rounds then BO3 Finals. Generated opponents, dates, tournament winner/Winter Showcase bracket and classification tie rules are NOT official. The Tip-Off championship is NOT yet simulated.",
+    "variants": [
+      {
+        "key": "GLEAGUE_2026_27_BDM_TWO_PHASE",
+        "name": "NBA G League 2026-27: Tip-Off 14 + regular 36, conferences",
+        "is_real_variant": false,
+        "entry_selection": {
+          "method": "DIRECT",
+          "payload": {
+            "team_count": 31
+          }
+        },
+        "seeding": {
+          "scheme_type": "RANK_BASED",
+          "basis": [
+            {
+              "type": "CLASSIFICATION_POINTS_MINILEAGUE_2_1_V1",
+              "source": "BDM_GENERATED_SIMULATION; tie rules not official",
+              "terminal_tie": "BDM_TEAM_ID_DRAW"
+            }
+          ]
+        },
+        "nodes": [
+          {
+            "key": "REGULAR_SEASON",
+            "node_type": "STAGE",
+            "role": "REGULAR_SEASON",
+            "specialized_type": "REGULAR_SEASON",
+            "team_count": 31,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_generated_matrix_v1": true,
+                "bdm_gleague_two_phase_v1": true,
+                "games_per_team": 36
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_GLEAGUE_CONFERENCES"
+              }
+            },
+            "hosting": {
+              "rule_type": "BALANCED",
+              "payload": {}
+            }
+          },
+          {
+            "key": "TIP_OFF_TOURNAMENT",
+            "node_type": "GROUP",
+            "role": "GROUP_STAGE",
+            "team_count": 31,
+            "pairing": {
+              "type": "FIXED_SCHEDULE",
+              "payload": {
+                "bdm_gleague_tipoff_v1": true,
+                "games_per_team": 14
+              }
+            },
+            "opponent_scope": {
+              "type": "SCHEDULE_MATRIX",
+              "payload": {
+                "policy": "BDM_PINNED_GLEAGUE_TIPOFF_REGIONS"
+              }
+            }
+          },
+          {
+            "key": "PLAYOFF_ROUND_1",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 16,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "1-15",
+                  "3-13",
+                  "5-11",
+                  "7-9",
+                  "2-16",
+                  "4-14",
+                  "6-12",
+                  "8-10"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_SEMIFINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 8,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4",
+                  "WINNER_5-WINNER_6",
+                  "WINNER_7-WINNER_8"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "CONFERENCE_FINALS",
+            "node_type": "ROUND",
+            "role": "PLAYOFF",
+            "team_count": 4,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2",
+                  "WINNER_3-WINNER_4"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SINGLE_GAME",
+              "requires_winner": true
+            },
+            "hosting": {
+              "rule_type": "HIGHER_SEED",
+              "priority_basis": "HIGHER_SEED"
+            }
+          },
+          {
+            "key": "GLEAGUE_FINALS",
+            "node_type": "ROUND",
+            "role": "FINAL",
+            "team_count": 2,
+            "pairing": {
+              "type": "FIXED_BRACKET",
+              "payload": {
+                "matchups": [
+                  "WINNER_1-WINNER_2"
+                ]
+              }
+            },
+            "contest": {
+              "format_type": "SERIES",
+              "best_of": 3,
+              "wins_required": 2
+            },
+            "hosting": {
+              "rule_type": "SERIES_PATTERN",
+              "pattern": "HAH",
+              "priority_basis": "HIGHER_SEED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "REGULAR_SEASON",
+            "to": "PLAYOFF_ROUND_1",
+            "selector": "TOP_N",
+            "count": 16
+          },
+          {
+            "from": "PLAYOFF_ROUND_1",
+            "to": "CONFERENCE_SEMIFINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_SEMIFINALS",
+            "to": "CONFERENCE_FINALS",
+            "selector": "WINNER"
+          },
+          {
+            "from": "CONFERENCE_FINALS",
+            "to": "GLEAGUE_FINALS",
+            "selector": "WINNER"
+          }
+        ]
+      }
+    ],
+    "consequences": [],
+    "sources": [
+      {
+        "url": "https://gleague.nba.com/news/2026-27-nba-g-league-schedule-release",
+        "type": "OFFICIAL",
+        "scope": "31 teams, 14 Tip-Off games plus 36 league games and separate phases"
+      },
+      {
+        "url": "https://gleague.nba.com/tip-off-tournament-regions",
+        "type": "OFFICIAL",
+        "scope": "Four Tip-Off regional memberships (8,8,8,7)"
+      },
+      {
+        "url": "https://gleague.nba.com/nba-g-league-conferences",
+        "type": "OFFICIAL",
+        "scope": "2026-27 conferences, record reset, top eight per conference"
+      },
+      {
+        "url": "https://gleague.nba.com/playoff-format",
+        "type": "OFFICIAL",
+        "scope": "2025-26 four-round 16-team playoff with three single rounds and BO3 Finals; provisional carryover to 2026-27"
+      },
+      {
+        "url": "https://github.com/audifor/BDM/blob/main/scripts/playable/worlddb-v2-simulation-fallback.py",
+        "type": "SECONDARY",
+        "scope": "Explicit generated opponent matrices, date placement and tie policy"
       }
     ]
   }

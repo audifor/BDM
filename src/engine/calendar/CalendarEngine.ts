@@ -45,9 +45,10 @@ import { progressPlayerCareerEnds } from '@/engine/career/PlayerCareerLifecycle'
 import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
 import { progressAiProfessionalPathways } from '@/engine/career/AiProfessionalPathways'
 import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
+import { materializeNcaa2027PostseasonForDay } from '@/app/game/NcaaD1Real2027DailyLifecycle'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
-  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'DATE_ADVANCE', 'NCAA_2027_POSTSEASON', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
   'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT', 'PROFESSIONAL_PATHWAYS',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
@@ -127,6 +128,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
   try {
     const nextDate = addDays(world.currentDate, 1)
     run('DATE_ADVANCE', nextDate, true, (input) => ensureCollegeRulesetContinuity(migrateCurrentSeasonIfElapsed(updateGameWorld(input, { currentDate: nextDate }))), 'Always runs exactly one calendar day forward and carries supplied college policies through offseason gaps.')
+    run('NCAA_2027_POSTSEASON', current.currentDate, true, materializeNcaa2027PostseasonForDay, 'Materializes complete 2027 NCAA male/female tournament brackets only after source results are final, without introducing historical fixtures.')
     run('ANNUAL_PLAYER_DEVELOPMENT', current.currentDate, current.currentDate.slice(5) === '07-01' && !hasAppliedAnnualDevelopmentCycle(current, annualDevelopmentCycleId(current.currentDate)), progressAnnualPlayerDevelopment, 'Runs once on the annual 1 July checkpoint.')
     run('ANNUAL_TALENT_SUPPLY', current.currentDate, current.currentDate.slice(5) === '07-01', progressAnnualTalentSupply, 'Creates the deterministic simulated talent age cohort once each year.')
     run('PLAYER_CAREER_END', current.currentDate, current.currentDate.slice(5) === '07-01', progressPlayerCareerEnds, 'Ends careers beyond the structural player age limit and closes current sporting membership.')

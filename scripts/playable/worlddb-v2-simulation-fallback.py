@@ -180,12 +180,210 @@ def simulation_document(source_id, name, participants, postseason=False, grouped
     return document
 
 
+def gleague_two_phase_sim_document(row, participants):
+    """Preserve the authentic 31-club group identities and explicitly simulated fixtures."""
+    if row.get('source_id') != 'pbm:DYN_championnat:94' or row.get('native_format_id') != 'competition:NAM:gleague':
+        return None
+    if not any(item.get('identity') == 'competition:NAM:gleague'
+               for item in row.get('official_documentary_evidence') or []):
+        return None
+    if participants != 31:
+        raise ValueError('G League PBM requires exactly 31 original clubs')
+    path = Path(__file__).resolve().parents[2] / 'src/data/worlddb-v2/global-formats.json'
+    matches = [doc for doc in read(path) if doc.get('competition_id') == 'competition:NAM:gleague'
+               and doc.get('competition_season_id') == 'edition:NAM:gleague:2026-27:bdm-two-phase:94']
+    if len(matches) != 1:
+        raise ValueError('G League source format must resolve uniquely')
+    doc = matches[0]
+    nodes = doc['variants'][0]['nodes']
+    regular = [n for n in nodes if n.get('role') == 'REGULAR_SEASON']
+    tipoff = [n for n in nodes if n.get('key') == 'TIP_OFF_TOURNAMENT']
+    if (doc.get('status') != 'COMPLETE' or len(regular) != 1 or len(tipoff) != 1
+        or regular[0].get('team_count') != 31
+        or regular[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 36
+        or not regular[0].get('pairing', {}).get('payload', {}).get('bdm_gleague_two_phase_v1')
+        or tipoff[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 14
+        or not tipoff[0].get('pairing', {}).get('payload', {}).get('bdm_gleague_tipoff_v1')
+        or 'GENERATED_SIMULATION' not in doc.get('notes', '')):
+        raise ValueError('G League format lacks explicit source and two-phase simulation guarantees')
+    return copy.deepcopy(doc)
+
+
+def nba_matrix_sim_document(row, participants):
+    """Load the versioned NBA simulation graph without inventing source club IDs.
+
+    Each real PBM team is reconciled to East/West at game bootstrap, not here.
+    Unrecognized franchise identities fail closed at that boundary.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:44' or row.get('native_format_id') != 'competition:NAM:nba':
+        return None
+    if not any(item.get('identity') == 'competition:NAM:nba' for item in row.get('official_documentary_evidence') or []):
+        return None
+    if participants != 30:
+        raise ValueError('NBA PBM requires 30 original clubs')
+    path = Path(__file__).resolve().parents[2] / 'src/data/worlddb-v2/global-formats.json'
+    formats = read(path)
+    matched = [doc for doc in formats if doc.get('competition_id') == 'competition:NAM:nba'
+               and doc.get('competition_season_id') == 'edition:NAM:nba:2025-26:bdm-matrix:44']
+    if len(matched) != 1:
+        raise ValueError('NBA BDM matrix source format must resolve uniquely')
+    document = matched[0]
+    variant = document['variants'][0]
+    regular = [node for node in variant['nodes'] if node.get('role') == 'REGULAR_SEASON']
+    if (document.get('status') != 'COMPLETE' or len(regular) != 1
+        or regular[0].get('team_count') != participants
+        or regular[0].get('pairing', {}).get('payload', {}).get('games_per_team') != 82
+        or regular[0].get('opponent_scope', {}).get('payload', {}).get('policy') != 'BDM_PINNED_NBA_CONFERENCES'
+        or 'GENERATED_SIMULATION' not in document.get('notes', '')):
+        raise ValueError('NBA matrix lacks explicit source and simulation guarantees')
+    return copy.deepcopy(document)
+
+
+def nbl_matrix_sim_document(row, participants):
+    """NBL27: 10 clubs x 33 matches, six-team play-in; fixture matrix is fiction.
+
+    Scheduling and Ignite Cup overlap are intentionally not reconstructed from
+    the published 165-match calendar. Play-in bracket follows NBL published
+    pathway, but opponents, dates and classification fallback are BDM generated.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:78' or row.get('native_format_id') != 'competition:AUS:nbl':
+        return None
+    if participants != 10:
+        raise ValueError('NBL PBM requires its 10 source clubs')
+    doc = simulation_document(row['source_id'], row['competition'], participants, postseason=True)
+    doc.update({
+        'competition_id': 'competition:AUS:nbl',
+        'competition_season_id': 'edition:AUS:nbl:2026-27:bdm-matrix:78',
+        'season_label': '2026-27',
+        'notes': ('GENERATED_SIMULATION: original PBM 10 clubs, published NBL27 33 games per club '
+                  'and six-team postseason pathway. Opponent matrix, precise dates, home advantage '
+                  'in non-source games, Ignite Cup crossover and classification fallback are simulated. '
+                  'NOT an official NBL fixture list.'),
+        'sources': [
+            {'url': 'https://www.nbl.com.au/news/nbl27-schedule-by-the-numbers', 'type': 'OFFICIAL',
+             'scope': '10 clubs, 165 games, 33 per team; not imported fixed fixture dates'},
+            {'url': 'https://www.nbl.com.au/news/the-nbl26-finals-format-explained', 'type': 'OFFICIAL',
+             'scope': 'Six-club postseason, third/fourth seeding qualifier, fifth/sixth play-in and best-of-three semifinals'},
+            {'url': SOURCE_URL, 'type': 'SECONDARY',
+             'scope': 'BDM generated opponent matrix, dates and standings tiebreak policy'},
+        ],
+    })
+    variant = doc['variants'][0]
+    variant['key'] = 'NBL_27_BDM_MATRIX'
+    variant['name'] = 'NBL 2026-27 (33 generated games, six-team finals pathway)'
+    regular = variant['nodes'][0]
+    regular['pairing'] = {'type': 'FIXED_SCHEDULE', 'payload': {'bdm_generated_matrix_v1': True, 'games_per_team': 33}}
+    regular['opponent_scope'] = {'type': 'SCHEDULE_MATRIX', 'payload': {'bdm_generated_matrix_v1': True}}
+    def knockout(key, role, count, matchups, contest, hosting):
+        return {'key': key, 'node_type': 'ROUND', 'role': role, 'team_count': count,
+                'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': matchups}},
+                'contest': contest, 'hosting': hosting}
+    single = {'format_type': 'SINGLE_GAME', 'requires_winner': True}
+    by_seed = {'rule_type': 'HIGHER_SEED', 'priority_basis': 'HIGHER_SEED'}
+    play_56 = knockout('PLAY_IN_5_6', 'PLAY_IN', 2, ['5-6'], single, by_seed)
+    seed_34 = knockout('SEEDING_3_4', 'PLAY_IN', 2, ['3-4'], single, by_seed)
+    play_final = knockout('PLAY_IN_FINAL', 'PLAY_IN', 2, ['7-8'], single, by_seed)
+    semis = knockout('SEMIFINALS', 'PLAYOFF', 4, ['1-8', '2-7'],
+                     {'format_type': 'SERIES', 'best_of': 3, 'wins_required': 2},
+                     {'rule_type': 'SERIES_PATTERN', 'pattern': 'HAH', 'priority_basis': 'HIGHER_SEED'})
+    championship = knockout('FINAL', 'FINAL', 2, ['WINNER_1-WINNER_2'],
+                            {'format_type': 'SERIES', 'best_of': 5, 'wins_required': 3},
+                            {'rule_type': 'SERIES_PATTERN', 'pattern': 'HHA AH'.replace(' ', ''), 'priority_basis': 'HIGHER_SEED'})
+    variant['nodes'] = [regular, play_56, seed_34, play_final, semis, championship]
+    def edge(a, b, selector, **kwargs):
+        return {'from': a, 'to': b, 'selector': selector, **kwargs}
+    variant['edges'] = [
+        edge('REGULAR_SEASON', 'PLAY_IN_5_6', 'RANK_RANGE', rank_from=5, rank_to=6),
+        edge('REGULAR_SEASON', 'SEEDING_3_4', 'RANK_RANGE', rank_from=3, rank_to=4),
+        edge('REGULAR_SEASON', 'SEMIFINALS', 'RANK_RANGE', rank_from=1, rank_to=2),
+        edge('PLAY_IN_5_6', 'PLAY_IN_FINAL', 'WINNER', payload={'playoff_seed': 8}),
+        edge('SEEDING_3_4', 'PLAY_IN_FINAL', 'LOSER', payload={'playoff_seed': 7}),
+        edge('SEEDING_3_4', 'SEMIFINALS', 'WINNER', payload={'playoff_seed': 7}),
+        edge('PLAY_IN_FINAL', 'SEMIFINALS', 'WINNER', payload={'playoff_seed': 8}),
+        edge('SEMIFINALS', 'FINAL', 'WINNER'),
+    ]
+    return doc
+
+
+def adapt_segunda_feb_simulation(row, participants, documents):
+    """Reuse the 2 x 14 topology; mark every unresolved sporting rule simulated.
+
+    Two source PDFs disagree on relegation. We preserve both references, and
+    never invent source-fidelity, original group memberships or relegation slots.
+    """
+    if row.get('source_id') != 'pbm:DYN_championnat:112' or row.get('native_format_id') != 'competition:ESP:segunda-feb':
+        return None
+    if participants != 28:
+        raise ValueError('Segunda FEB PBM must preserve 28 original clubs')
+    evidence = row.get('official_documentary_evidence') or []
+    if 'dos grupos de 14' not in (row.get('detailed_blocker') or '').lower() or not evidence:
+        raise ValueError('Segunda FEB two-group documentary evidence missing')
+    native = [doc for doc in documents if doc.get('competition_id') == 'competition:ESP:segunda-feb']
+    if len({doc.get('competition_season_id') for doc in native}) > 1:
+        raise ValueError('Ambiguous Segunda FEB editions')
+    sources = copy.deepcopy(native[0].get('sources', [])) if native else []
+    for item in evidence:
+        for url in (item.get('sources') or '').split(' | '):
+            if url.strip() and not any(source.get('url') == url.strip() for source in sources):
+                sources.append({'url': url.strip(), 'type': 'OFFICIAL',
+                                'scope': 'Documented source identity and group topology; playoff simulation is NOT official'})
+    sources.append({'url': SOURCE_URL, 'type': 'SECONDARY',
+                    'scope': 'BDM simulation policy for group assignment, knockout and tie resolution'})
+    doc = simulation_document(row['source_id'], row['competition'], 28, postseason=True, grouped=True)
+    doc.update({
+        'competition_id': 'competition:ESP:segunda-feb',
+        'competition_season_id': 'edition:ESP:segunda-feb:2025-26:bdm-adapted:112',
+        'season_label': '2025-26', 'sources': sources,
+        'notes': ('GENERATED_SIMULATION ADAPTED_DOCUMENTED_FORMAT: preserves the PBM 28 clubs and '
+                  'documented two groups of 14. Group assignments, qualification, aggregate knockout '
+                  'and classification are BDM simulation, NOT official regulations. '
+                  'No promotion/relegation numbers inferred from contradictory source PDFs.'),
+    })
+    v = doc['variants'][0]
+    v['key'] = 'SEGUNDA_FEB_BDM_SIM'
+    v['name'] = 'Segunda FEB (two groups, simulated knockout)'
+    regular = v['nodes'][0]
+    regular['key'] = 'REGULAR_GROUPS'
+    regular['opponent_scope'] = {'type': 'SAME_GROUP', 'payload': {
+        'policy': 'BDM_GENERATED_GROUPS', 'generated_group_count': 2}}
+    metadata = [{
+        'key': 'GROUP_' + name, 'node_type': 'GROUP', 'role': 'GROUP_STAGE', 'team_count': 14,
+        'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2,
+                    'payload': {'bdm_generated_group_index': idx}},
+        'opponent_scope': {'type': 'SAME_GROUP'},
+    } for idx, name in enumerate(('A', 'B'))]
+    def aggregate(key, count, pairs):
+        return {
+            'key': key, 'node_type': 'ROUND', 'role': 'PLAYOFF', 'team_count': count,
+            'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': pairs}},
+            'contest': {'format_type': 'AGGREGATE', 'leg_count': 2,
+                        'tie_resolution': {'method': 'BDM_EXTRA_DECIDER'}},
+            'hosting': {'rule_type': 'HIGHER_SEED', 'priority_basis': 'HIGHER_SEED'},
+        }
+    quarters = aggregate('QUARTERFINALS', 8, ['1-8', '2-7', '3-6', '4-5'])
+    semis = aggregate('SEMIFINALS', 4, ['WINNER_1-WINNER_4', 'WINNER_2-WINNER_3'])
+    final = {'key': 'FINAL', 'node_type': 'ROUND', 'role': 'FINAL', 'team_count': 2,
+             'pairing': {'type': 'FIXED_BRACKET', 'payload': {'matchups': ['WINNER_1-WINNER_2']}},
+             'contest': {'format_type': 'SINGLE_GAME', 'requires_winner': True},
+             'hosting': {'rule_type': 'NEUTRAL'}}
+    v['nodes'] = [regular, *metadata, quarters, semis, final]
+    v['edges'] = [
+        {'from': 'REGULAR_GROUPS', 'to': 'QUARTERFINALS', 'selector': 'TOP_N', 'count': 8},
+        {'from': 'QUARTERFINALS', 'to': 'SEMIFINALS', 'selector': 'WINNER'},
+        {'from': 'SEMIFINALS', 'to': 'FINAL', 'selector': 'WINNER'},
+    ]
+    return doc
+
+
 def adapt_documented_format(row, participants, documents):
     """Complete missing execution fields in an isolated, explicitly simulated edition.
 
     Preserve graph, round counts, qualification, consequences and any supplied
     contest/hosting rules. Ambiguous editions and unsupported topology stay visible.
     """
+    segunda = adapt_segunda_feb_simulation(row, participants, documents)
+    if segunda is not None:
+        return segunda
     matches = {d['competition_season_id']: d for d in documents
                if d.get('competition_id') == row.get('native_format_id')}
     if len(matches) != 1:
@@ -581,6 +779,67 @@ def build_package(matrix, batch, published, reusable_formats=()):
                 "conference_count": ncaa_plan["reference_conferences"],
                 "native_status": "NCAA_MEMBERSHIP_PENDING",
                 "official_fidelity": "NOT_CERTIFIED",
+            })
+            continue
+        gleague_sim = gleague_two_phase_sim_document(row, expected_count)
+        if gleague_sim is not None:
+            documents.append(gleague_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': gleague_sim['competition_id'],
+                'editionId': gleague_sim['competition_season_id'],
+                'name': row['competition'], 'currencyCode': 'USD',
+                'calendar': 'FORMAT_DERIVED_SIMULATION', 'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'REUSED_DOCUMENTED_FORMAT', 'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'GLEAGUE_SOURCE_GROUPS_WITH_GENERATED_TWO_PHASE_FIXTURES',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'REUSED_DOCUMENTED_FORMAT',
+                'format_reference_id': row['native_format_id'], 'expected_tipoff_games': 217,
+                'expected_regular_games': 558, 'native_status': 'ENGINE_AND_PBM_NAME_RECONCILIATION_PENDING',
+                'official_fidelity': 'REAL_GROUP_IDENTITIES_TWO_PHASE_QUOTAS_AND_PLAYOFFS; FIXTURES_DATES_SHOWCASE_SIMULATED',
+            })
+            continue
+        nba_sim = nba_matrix_sim_document(row, expected_count)
+        if nba_sim is not None:
+            documents.append(nba_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': nba_sim['competition_id'],
+                'editionId': nba_sim['competition_season_id'],
+                'name': row['competition'], 'currencyCode': 'USD',
+                'calendar': 'FORMAT_DERIVED_SIMULATION',
+                'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'REUSED_DOCUMENTED_FORMAT',
+                'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'NBA_SOURCE_CONFERENCES_WITH_GENERATED_MATRIX',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'REUSED_DOCUMENTED_FORMAT',
+                'format_reference_id': row['native_format_id'], 'expected_regular_games': 1230,
+                'native_status': 'ENGINE_AND_PBM_NAME_RECONCILIATION_PENDING',
+                'official_fidelity': 'SOURCE_NBA_CONFERENCES_PLAY_IN_AND_BO7; FIXTURES_AND_TIEBREAK_SIMULATED',
+            })
+            continue
+        nbl_sim = nbl_matrix_sim_document(row, expected_count)
+        if nbl_sim is not None:
+            documents.append(nbl_sim)
+            candidates.append({
+                **config, 'nativeCompetitionId': nbl_sim['competition_id'],
+                'editionId': nbl_sim['competition_season_id'], 'name': row['competition'],
+                'calendar': 'FORMAT_DERIVED_SIMULATION', 'nativeStatus': 'CANDIDATE_NATIVE_PENDING',
+                'formatProvenance': 'GENERATED_SIMULATION', 'simulationPolicy': True,
+                'formatReferenceId': row['native_format_id'],
+                'formatReferenceResolution': 'NBL_SOURCE_RULES_WITH_GENERATED_MATRIX',
+            })
+            evidence.append({
+                'source_id': source_id, 'name': row['competition'], 'original_clubs': expected_count,
+                'source_status': row['status'], 'format_provenance': 'GENERATED_SIMULATION',
+                'format_reference_id': row['native_format_id'], 'expected_regular_games': expected_count * 33 // 2,
+                'native_status': 'ENGINE_AND_WINDOWS_ACCEPTANCE_PENDING',
+                'official_fidelity': 'OPPONENTS_DATES_AND_TIEBREAKS_SIMULATED',
             })
             continue
         existing_format, reference_resolution = reusable_documented_format(

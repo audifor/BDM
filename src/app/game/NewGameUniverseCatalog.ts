@@ -1,17 +1,22 @@
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import type { UserCoachCreationInput } from './UserCoachCreator'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
+import ncaaPrograms from '@/data/worlddb-v2/ncaa-d1-2026-27-programs.json'
 
 export const WORLD_DB_SPAIN_UNIVERSE_ID = 'worldDbSpain' as const
 export const NCAA_SIMULATED_UNIVERSE_ID = 'ncaaSimulated' as const
 export const WORLD_DB_V2_UNIVERSE_ID = 'worldDbV2' as const
+export const NCAA_D1_2026_MEN_UNIVERSE_ID = 'ncaaD1Real2026Men' as const
+export const NCAA_D1_2026_WOMEN_UNIVERSE_ID = 'ncaaD1Real2026Women' as const
 
-export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID | typeof WORLD_DB_V2_UNIVERSE_ID
+export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID | typeof WORLD_DB_V2_UNIVERSE_ID | typeof NCAA_D1_2026_MEN_UNIVERSE_ID | typeof NCAA_D1_2026_WOMEN_UNIVERSE_ID
 
 export interface NewGameConfiguration {
-  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string;readonly competitionId?:string;readonly activeCompetitionIds?:readonly string[]}
+  readonly worldDbV2?: {readonly sourceRoot:string;readonly startDate:string;readonly seed:string;readonly competitionId?:string;readonly activeCompetitionIds?:readonly string[];readonly reducedCompetitionIds?:readonly string[]}
   readonly universeId?: NewGameUniverseId
   readonly userTeamKey?: string
+  /** Deterministic synthetic NCAA fixture and player seed; identity and official ASUN games remain source-backed. */
+  readonly ncaaSeed?: number
   readonly coachRpgPreset?: CoachRpgPreset
   readonly userCoachCreation?: UserCoachCreationInput
 }
@@ -26,7 +31,22 @@ export interface NewGameUniverseOption {
   readonly defaultTeamKey?: string
 }
 
+const ncaaReal2026TeamOptions = (gender: 'men' | 'women'): readonly NewGameTeamOption[] =>
+  ncaaPrograms.genders[gender].teams.map(team => ({ key: team.id, name: team.name, code: team.conference }))
+
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
+  {
+    id: NCAA_D1_2026_MEN_UNIVERSE_ID,
+    label: 'NCAA D1 2026/27 · MEN [SIMULATION]',
+    description: '365 real Division I male-category programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
+    isTest: true, teams: ncaaReal2026TeamOptions('men'),
+  },
+  {
+    id: NCAA_D1_2026_WOMEN_UNIVERSE_ID,
+    label: 'NCAA D1 2026/27 · WOMEN [SIMULATION]',
+    description: '363 real Division I female-category programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
+    isTest: true, teams: ncaaReal2026TeamOptions('women'),
+  },
   {id:WORLD_DB_V2_UNIVERSE_ID,label:'WORLDDB V2 · PBM',description:'Original PBM clubs and identities; BDM-generated sporting profiles and economy. Fictional career using the selected competition’s documented native format.',isTest:false,teams:[]},
   {
     id: NCAA_SIMULATED_UNIVERSE_ID,

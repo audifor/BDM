@@ -15,6 +15,8 @@ import { createGeneratedProfessionalSalaryRulesV1 } from './GeneratedProfessiona
 import { worldDbV2Competition, worldDbV2Calendar, worldDbV2SeasonEnd } from './WorldDbV2Competitions';
 import { bindWorldDbV2FrenchFormat } from './WorldDbV2FrenchFormatBinding';
 import { worldDbV2ConnectionBlockers } from './WorldDbV2Connection';
+import { pinNbaConferencesToSourceClubs } from './NbaConferenceSource';
+import { pinGLeagueSourceMemberships } from './GLeagueSourceGroups';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
@@ -195,12 +197,20 @@ export function worldDbV2Repository(slice: WorldDbGameBootstrapSliceV1, runtimeB
 }
 export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapshot, teamId: string, userCoachCreation?: UserCoachCreationInput, config: WorldDbV2CompetitionConfig = worldDbV2Competition(snapshot.competitions[0]?.entity_id), runtimeBundle = bundle): Promise<GameWorld> {
     if (config.sourceCompetitionId !== snapshot.competitions[0]?.entity_id) throw Error('PBM competition/config identity mismatch');
-    const format = runtimeBundle.competitionFormats.find(f => f.competitionSeasonId === config.editionId && f.competitionId === config.nativeCompetitionId);
-    if (!format) throw Error('Verified runtime format/edition mapping required: ' + config.sourceCompetitionId);
+    const rawFormat = runtimeBundle.competitionFormats.find(f => f.competitionSeasonId === config.editionId && f.competitionId === config.nativeCompetitionId);
+    if (!rawFormat) throw Error('Verified runtime format/edition mapping required: ' + config.sourceCompetitionId);
+    const sourceClubs = snapshot.clubs.map(club => ({
+        id: club.entity_id, name: String(club.reference_data.nom_equipe),
+    }));
+    const format = pinGLeagueSourceMemberships(pinNbaConferencesToSourceClubs(rawFormat, sourceClubs), sourceClubs);
+    const effectiveBundle = format === rawFormat ? runtimeBundle : {
+        ...runtimeBundle, competitionFormats: runtimeBundle.competitionFormats.map(doc =>
+            doc.competitionId === format.competitionId && doc.competitionSeasonId === format.competitionSeasonId ? format : doc),
+    };
     const frozenTemplatePolicy = reference.competitionFormats.some(f => f.competitionSeasonId === format.competitionSeasonId && f.competitionId === format.competitionId);
     const blockers = worldDbV2ConnectionBlockers(format, snapshot.clubs.length, frozenTemplatePolicy);
     if (blockers.length) throw Error(blockers.join(' | '));
-    const slice = projectWorldDbV2(snapshot, config), repository = worldDbV2Repository(slice, runtimeBundle);
+    const slice = projectWorldDbV2(snapshot, config), repository = worldDbV2Repository(slice, effectiveBundle);
     const session = new WorldDbSessionV1({ repository, databasePath: 'worlddb-v2:projection', runtimeBundlePath: 'worlddb-v2:rules-template' });
     await session.open();
     try {

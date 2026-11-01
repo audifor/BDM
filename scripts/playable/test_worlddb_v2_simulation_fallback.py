@@ -45,6 +45,117 @@ def fixtures():
 
 
 class GeneratedCompetitionCandidateTests(unittest.TestCase):
+    def test_gleague_two_phase_keeps_31_clubs_and_separate_14_36_stages(self):
+        row = {'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague',
+               'official_documentary_evidence': [{'identity': 'competition:NAM:gleague'}]}
+        original = copy.deepcopy(row)
+        doc = MODULE.gleague_two_phase_sim_document(row, 31)
+        self.assertEqual(row, original)
+        self.assertEqual(doc['competition_id'], 'competition:NAM:gleague')
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        regular = next(node for node in doc['variants'][0]['nodes'] if node['role'] == 'REGULAR_SEASON')
+        tipoff = next(node for node in doc['variants'][0]['nodes'] if node['key'] == 'TIP_OFF_TOURNAMENT')
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 36)
+        self.assertEqual(tipoff['pairing']['payload']['games_per_team'], 14)
+        self.assertTrue(regular['pairing']['payload']['bdm_gleague_two_phase_v1'])
+        self.assertEqual(regular['opponent_scope']['payload']['policy'], 'BDM_PINNED_GLEAGUE_CONFERENCES')
+        self.assertEqual(tipoff['opponent_scope']['payload']['policy'], 'BDM_PINNED_GLEAGUE_TIPOFF_REGIONS')
+        self.assertEqual([n['key'] for n in doc['variants'][0]['nodes'][-4:]],
+                         ['PLAYOFF_ROUND_1', 'CONFERENCE_SEMIFINALS', 'CONFERENCE_FINALS', 'GLEAGUE_FINALS'])
+
+    def test_gleague_does_not_substitute_itself_for_ambiguous_or_missing_PBM_evidence(self):
+        self.assertIsNone(MODULE.gleague_two_phase_sim_document({
+            'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague'}, 31))
+        with self.assertRaisesRegex(ValueError, '31 original clubs'):
+            MODULE.gleague_two_phase_sim_document({
+                'source_id': 'pbm:DYN_championnat:94', 'native_format_id': 'competition:NAM:gleague',
+                'official_documentary_evidence': [{'identity': 'competition:NAM:gleague'}]}, 30)
+
+
+    def test_nba_matrix_preserves_documented_conferences_and_seed_graph(self):
+        row = {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
+               'competition': 'NBA', 'official_documentary_evidence': [{'identity': 'competition:NAM:nba'}]}
+        source = copy.deepcopy(row)
+        doc = MODULE.nba_matrix_sim_document(row, 30)
+        self.assertEqual(row, source)
+        self.assertEqual(doc['competition_id'], row['native_format_id'])
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        variant = doc['variants'][0]
+        self.assertFalse(variant['is_real_variant'])
+        regular = variant['nodes'][0]
+        self.assertEqual(regular['team_count'], 30)
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 82)
+        self.assertEqual(regular['opponent_scope']['payload']['policy'], 'BDM_PINNED_NBA_CONFERENCES')
+        self.assertEqual(len([node for node in variant['nodes'] if node['role'] == 'PLAY_IN']), 6)
+        self.assertEqual(len([node for node in variant['nodes'] if node.get('contest', {}).get('best_of') == 7]), 4)
+        self.assertEqual(len([edge for edge in variant['edges'] if edge.get('payload', {}).get('playoff_seed')]), 4)
+
+    def test_nba_matrix_rejects_wrong_size_or_source_identity(self):
+        self.assertIsNone(MODULE.nba_matrix_sim_document(
+            {'source_id': 'pbm:DYN_championnat:45', 'native_format_id': 'competition:NAM:nba'}, 30))
+        with self.assertRaisesRegex(ValueError, '30 original clubs'):
+            MODULE.nba_matrix_sim_document(
+                {'source_id': 'pbm:DYN_championnat:44', 'native_format_id': 'competition:NAM:nba',
+                 'official_documentary_evidence': [{'identity': 'competition:NAM:nba'}]}, 29)
+
+
+    def test_nbl_matrix_preserves_source_clubs_and_six_team_path(self):
+        row = {'source_id': 'pbm:DYN_championnat:78', 'native_format_id': 'competition:AUS:nbl',
+               'competition': 'National Basketball League'}
+        before = copy.deepcopy(row)
+        doc = MODULE.nbl_matrix_sim_document(row, 10)
+        self.assertEqual(before, row)
+        self.assertEqual(doc['competition_id'], 'competition:AUS:nbl')
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        variant = doc['variants'][0]
+        regular = variant['nodes'][0]
+        self.assertEqual(regular['pairing']['type'], 'FIXED_SCHEDULE')
+        self.assertEqual(regular['pairing']['payload']['games_per_team'], 33)
+        self.assertEqual([n['key'] for n in variant['nodes'][1:]],
+                         ['PLAY_IN_5_6', 'SEEDING_3_4', 'PLAY_IN_FINAL', 'SEMIFINALS', 'FINAL'])
+        self.assertEqual(variant['nodes'][-1]['contest']['best_of'], 5)
+        self.assertEqual(len([edge for edge in variant['edges'] if edge.get('payload', {}).get('playoff_seed')]), 4)
+
+    def test_nbl_matrix_does_not_rewrite_other_editions_or_10_team_format_without_identity(self):
+        self.assertIsNone(MODULE.nbl_matrix_sim_document(
+            {'source_id': 'pbm:DYN_championnat:100', 'native_format_id': 'competition:AUS:nbl'}, 10))
+        with self.assertRaisesRegex(ValueError, '10 source clubs'):
+            MODULE.nbl_matrix_sim_document(
+                {'source_id': 'pbm:DYN_championnat:78', 'native_format_id': 'competition:AUS:nbl'}, 11)
+
+
+    def test_segunda_feb_preserves_two_documented_pools_without_claiming_official_knockout(self):
+        row = {'source_id': 'pbm:DYN_championnat:112', 'competition': 'Segunda FEB',
+               'native_format_id': 'competition:ESP:segunda-feb',
+               'detailed_blocker': 'Segunda FEB: dos grupos de 14 y eliminatorias agregadas;',
+               'official_documentary_evidence': [{'sources': 'https://www.feb.es/segundafeb.pdf'}]}
+        original = copy.deepcopy(row)
+        doc = MODULE.adapt_documented_format(row, 28, [])
+        self.assertEqual(row, original)
+        self.assertEqual(doc['competition_id'], row['native_format_id'])
+        self.assertEqual(doc['status'], 'COMPLETE')
+        self.assertIn('GENERATED_SIMULATION', doc['notes'])
+        variant = doc['variants'][0]
+        self.assertFalse(variant['is_real_variant'])
+        self.assertEqual(variant['nodes'][0]['team_count'], 28)
+        self.assertEqual(variant['nodes'][0]['opponent_scope']['payload']['generated_group_count'], 2)
+        self.assertEqual([n['pairing']['payload']['bdm_generated_group_index'] for n in variant['nodes'] if n['role'] == 'GROUP_STAGE'], [0, 1])
+        self.assertEqual(len([n for n in variant['nodes'] if n.get('contest', {}).get('format_type') == 'AGGREGATE']), 2)
+        self.assertEqual(variant['edges'][0]['count'], 8)
+        self.assertEqual(doc['consequences'], [])
+        self.assertTrue(any(s['type'] == 'OFFICIAL' for s in doc['sources']))
+
+    def test_segunda_feb_refuses_wrong_cohort_and_missing_evidence(self):
+        row = {'source_id': 'pbm:DYN_championnat:112', 'competition': 'Segunda FEB',
+               'native_format_id': 'competition:ESP:segunda-feb',
+               'detailed_blocker': 'dos grupos de 14',
+               'official_documentary_evidence': [{'sources': 'https://www.feb.es/segundafeb.pdf'}]}
+        with self.assertRaisesRegex(ValueError, '28 original clubs'):
+            MODULE.adapt_documented_format(row, 27, [])
+        with self.assertRaisesRegex(ValueError, 'documentary evidence missing'):
+            MODULE.adapt_documented_format({**row, 'official_documentary_evidence': []}, 28, [])
+
+
     def test_adapts_four_group_winners_and_preserves_the_placement_game(self):
         groups = [{'key': f'POOL_{i}', 'role': 'REGULAR_SEASON', 'node_type': 'GROUP', 'team_count': 14,
                    'pairing': {'type': 'ROUND_ROBIN', 'meetings_per_pair': 2}, 'opponent_scope': {'type': 'SAME_GROUP'}} for i in range(4)]

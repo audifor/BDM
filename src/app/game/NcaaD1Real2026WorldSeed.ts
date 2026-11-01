@@ -25,6 +25,7 @@ import { generateAiCoachProfessionalProfile, createUserCoachRookieProfessionalPr
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { buildNcaaD1Real2026ConferenceSnapshot, type NcaaD1RealGender } from './NcaaD1Real2026Conferences'
 import { projectNcaaD1Real2026Fixtures, type NcaaD1Real2026FixtureSource, type NcaaD1Real2026FixtureProjection } from './NcaaD1Real2026Fixtures'
+import { mergeNcaaCompleteSourceConferences } from './NcaaD1Real2026HybridSchedule'
 
 const POSITIONS = ['PG', 'PG', 'SG', 'SG', 'SF', 'SF', 'SF', 'PF', 'PF', 'PF', 'C', 'C'] as const
 const USA = countryIdFromString('country:USA')
@@ -35,7 +36,7 @@ export interface NcaaD1Real2026WorldSeedOptions {
   readonly gender: NcaaD1RealGender
   readonly seed: number
   readonly managedProgramId: string
-  /** Existing historical fixtures remain optional and cannot be mixed with a generated schedule. */
+  /** Real sourced fixtures are preserved, with remaining conference games generated only under an explicit policy. */
   readonly sourcedFixtures?: readonly NcaaD1Real2026FixtureSource[]
   readonly generatedSchedule?: NcaaGeneratedSchedulePolicy
 }
@@ -46,7 +47,7 @@ export interface NcaaD1Real2026NativeSeed {
   /** Source provenance is retained outside GameWorld's pure Game DTO; a future
    * persisted edition evidence store must carry it across saves. */
   readonly sourceEvidenceByGameId: NcaaD1Real2026FixtureProjection['evidenceByGameId']
-  readonly fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED' | 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES'
+  readonly fixtureCoverage: 'PARTIAL_OFFICIALLY_SOURCED' | 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES' | 'OFFICIAL_COMPLETE_CONFERENCES_PLUS_GENERATED_GAPS'
   readonly membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION'
   readonly sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED'
 }
@@ -56,7 +57,7 @@ export interface NcaaD1Real2026NativeSeed {
  * Build a 12-player roster for every actual program and a
  * generated head coach for each team using the existing canonical player/staff
  * profile and recruiting systems. All 365/363 teams are present. Games are
- * either explicitly sourced fixtures or generated from supplied rules.
+ * sourced fixtures preserved for complete evidenced conference blocks, with other games generated from explicit policy.
  *
  * This does not certify an official schedule, conference championship,
  * 76-team field selection or a complete playable NCAA season. In particular
@@ -64,7 +65,6 @@ export interface NcaaD1Real2026NativeSeed {
  */
 export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOptions): NcaaD1Real2026NativeSeed {
   if (!Number.isSafeInteger(options.seed)) throw new RangeError('NCAA generated profiles require an integer seed')
-  if (options.generatedSchedule !== undefined && (options.sourcedFixtures?.length ?? 0) > 0) throw new Error('NCAA generated and historical schedules cannot be mixed')
   if (options.generatedSchedule === undefined && options.sourcedFixtures === undefined) throw new Error('NCAA requires explicit generated rules or source fixtures')
   const snapshot = buildNcaaD1Real2026ConferenceSnapshot(options.gender)
   const managed = snapshot.teams.find(team => team.id === options.managedProgramId)
@@ -153,12 +153,15 @@ export function createNcaaD1Real2026WorldSeed(options: NcaaD1Real2026WorldSeedOp
   })
   world = ensureNcaaAcademics(ensureNcaaEligibility(world))
   if (options.generatedSchedule !== undefined) {
-    world = updateGameWorld(world, { games: generateNcaaConfiguredSchedule(world, season.id, options.generatedSchedule) })
+    const generated = generateNcaaConfiguredSchedule(world, season.id, options.generatedSchedule)
+    const combined = evidence.games.length === 0 ? generated
+      : mergeNcaaCompleteSourceConferences(world, season.id, generated, evidence.games, options.generatedSchedule)
+    world = updateGameWorld(world, { games: combined })
   }
   return {
     world,
     sourceEvidenceByGameId: evidence.evidenceByGameId,
-    fixtureCoverage: options.generatedSchedule === undefined ? 'PARTIAL_OFFICIALLY_SOURCED' : 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES',
+    fixtureCoverage: options.generatedSchedule === undefined ? 'PARTIAL_OFFICIALLY_SOURCED' : evidence.games.length ? 'OFFICIAL_COMPLETE_CONFERENCES_PLUS_GENERATED_GAPS' : 'GENERATED_FROM_EXPLICIT_CONFERENCE_RULES',
     membershipCoverage: 'SECONDARY_DIRECTORY_PENDING_PRIMARY_VERIFICATION',
     sportingFormatCoverage: 'NCAA_EXISTING_ENGINE_NOT_FULLY_CONNECTED',
   }

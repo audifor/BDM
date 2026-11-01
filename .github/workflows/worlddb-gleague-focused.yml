@@ -1,0 +1,26 @@
+name: WorldDB G League two-phase focused
+on:
+  push:
+    branches:
+      - feature/worlddb-gleague-two-phase-01
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Python candidate generation
+        run: python -m unittest discover -s scripts/playable -p 'test_worlddb_v2_simulation_fallback.py' -v
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: G League franchise membership, regional Tip-Off and full season lifecycle
+        run: npx vitest run src/app/game/GLeagueSourceGroups.test.ts src/app/game/WorldDbGlobalFamilies.test.ts --maxWorkers=1 --testTimeout=600000

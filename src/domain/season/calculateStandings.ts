@@ -14,7 +14,7 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
   const participants = season.participantTeamIds ?? competition.participantTeamIds
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
   const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
-  if (node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS') {
+  if (node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' || node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES' || node?.opponentScope?.payload.policy === 'BDM_PINNED_GLEAGUE_CONFERENCES') {
     const groups = calculateSeasonGroupStandings(world, seasonId, throughDate)
     return Array.from({ length: Math.max(...groups.map(group => group.length)) }, (_, rank) => groups.flatMap(group => group[rank] ? [group[rank]!] : []))
       .flat().map((row, index) => ({ ...row, position: index + 1 }))
@@ -28,21 +28,32 @@ export function calculateSeasonGroupStandings(world: GameWorld, seasonId: keyof 
   const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
   const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
-  const groups = node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' ? resolveWorldCompetitionGroups(node, participants) : [participants]
-  return groups.map(group => calculateStandingTable(world, seasonId, group, throughDate))
+  const pinnedConferences = node?.opponentScope?.payload.policy === 'BDM_PINNED_NBA_CONFERENCES' || node?.opponentScope?.payload.policy === 'BDM_PINNED_GLEAGUE_CONFERENCES'
+  const groups = node?.opponentScope?.payload.policy === 'BDM_GENERATED_GROUPS' || pinnedConferences ? resolveWorldCompetitionGroups(node, participants) : [participants]
+  return groups.map(group => calculateStandingTable(world, seasonId, group, throughDate, pinnedConferences))
 }
 
-function calculateStandingTable(world: GameWorld, seasonId: keyof GameWorld['seasons'], participants: readonly TeamId[], throughDate?: GameDate): FinalStandingLine[] {
+function calculateStandingTable(world: GameWorld, seasonId: keyof GameWorld['seasons'], participants: readonly TeamId[], throughDate?: GameDate, includeCrossConferenceGames = false): FinalStandingLine[] {
   const season = world.seasons[seasonId]!
   const competition = world.competitions[season.competitionId]!
   const entries = participants.map((teamId) => ({ teamId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }))
   const byTeam = Object.fromEntries(entries.map((entry) => [entry.teamId, entry])) as Record<TeamId, typeof entries[number]>
   for (const game of Object.values(world.games)) {
     if (game.seasonId !== seasonId || game.status !== 'completed' || (throughDate !== undefined && game.date > throughDate)) continue
-    if (!isRegularSeasonGame(season, game) || !byTeam[game.homeTeamId] || !byTeam[game.awayTeamId]) continue
-    const home = byTeam[game.homeTeamId]!; const away = byTeam[game.awayTeamId]!; const result = game.result
-    home.played += 1; away.played += 1; home.pointsFor += result.homeScore; home.pointsAgainst += result.awayScore; away.pointsFor += result.awayScore; away.pointsAgainst += result.homeScore
-    if (result.homeScore > result.awayScore) { home.wins += 1; away.losses += 1 } else { away.wins += 1; home.losses += 1 }
+    if (!isRegularSeasonGame(season, game)) continue
+    const home = byTeam[game.homeTeamId]; const away = byTeam[game.awayTeamId]
+    if (includeCrossConferenceGames ? !home && !away : !home || !away) continue
+    const result = game.result
+    if (home) {
+      home.played += 1; home.pointsFor += result.homeScore; home.pointsAgainst += result.awayScore
+      if (result.homeScore > result.awayScore) home.wins += 1
+      else home.losses += 1
+    }
+    if (away) {
+      away.played += 1; away.pointsFor += result.awayScore; away.pointsAgainst += result.homeScore
+      if (result.awayScore > result.homeScore) away.wins += 1
+      else away.losses += 1
+    }
   }
   const rows = entries.map((entry) => ({ ...entry, position: 0, pointDifference: entry.pointsFor - entry.pointsAgainst }))
   const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
