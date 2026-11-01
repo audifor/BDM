@@ -1,4 +1,5 @@
-import type { GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { parseGameDate } from '@/domain/date'
 import { createAcbTestGame } from './createAcbTestGame'
@@ -33,7 +34,12 @@ export function createConfiguredGame(options: NewGameConfiguration = {}): GameWo
       sourcedFixtures: officialNcaa2026.fixtures as readonly NcaaD1Real2026FixtureSource[],
       generatedSchedules: schedules,
     }).world
-    return options.userCoachCreation === undefined ? original : applyUserCoachCreation(original, options.userCoachCreation)
+    const coach = original.userCoachId
+    const withRpg = updateGameWorld(original, { coachRpgProfilesByCoachId: {
+      ...original.coachRpgProfilesByCoachId,
+      [coach]: original.coachRpgProfilesByCoachId[coach] ?? createInitialCoachRpgProfile(),
+    } })
+    return options.userCoachCreation === undefined ? withRpg : applyUserCoachCreation(withRpg, options.userCoachCreation)
   }
   if (universeId === WORLD_DB_SPAIN_UNIVERSE_ID || universeId === WORLD_DB_V2_UNIVERSE_ID) throw new RangeError('World DB requires async new-game bootstrap')
   const world = universeId === ACB_TEST_UNIVERSE_ID
