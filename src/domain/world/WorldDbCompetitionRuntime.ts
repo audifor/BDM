@@ -85,7 +85,13 @@ export function readWorldDbV2Provenance(value: unknown): WorldDbV2Provenance {
   const keys=['masterSha256','sourceDate','startDate','seed','sourceCompetitionId','nativeCompetitionId','fictional','profiles','economy']
   if (Object.keys(v).some(k=>!keys.includes(k)&&k!=='contracts'&&k!=='freeAgents'&&k!=='activeCompetitionIds'&&k!=='reducedCompetitionIds') || keys.some(k=>!(k in v))) throw new TypeError('Incomplete WorldDB V2 provenance')
   if(v.activeCompetitionIds!==undefined&&(!Array.isArray(v.activeCompetitionIds)||!v.activeCompetitionIds.length||v.activeCompetitionIds.some(id=>typeof id!=='string'||!id)||new Set(v.activeCompetitionIds).size!==v.activeCompetitionIds.length||!v.activeCompetitionIds.includes(v.sourceCompetitionId)))throw new TypeError('Invalid WorldDB V2 active competitions')
-  if(v.reducedCompetitionIds!==undefined&&(!Array.isArray(v.reducedCompetitionIds)||v.reducedCompetitionIds.some(id=>typeof id!=='string'||!id)||new Set(v.reducedCompetitionIds).size!==v.reducedCompetitionIds.length||!Array.isArray(v.activeCompetitionIds)||v.reducedCompetitionIds.some(id=>!v.activeCompetitionIds.includes(id))))throw new TypeError('Invalid WorldDB V2 reduced competitions')
+  const reducedIds = v.reducedCompetitionIds
+  const activeIds: readonly string[] | null = Array.isArray(v.activeCompetitionIds) ? v.activeCompetitionIds as string[] : null
+  if (reducedIds !== undefined) {
+    if (!Array.isArray(reducedIds) || reducedIds.some((id: unknown) => typeof id !== 'string' || !id)
+      || new Set(reducedIds).size !== reducedIds.length || activeIds === null
+      || reducedIds.some((id: string) => !activeIds.includes(id))) throw new TypeError('Invalid WorldDB V2 reduced competitions')
+  }
   if(v.contracts!==undefined&&v.contracts!=='BDM_GENERATED_INITIAL_V1_PBM_REFERENCE_ONLY')throw new TypeError('Invalid WorldDB V2 contracts provenance')
   if(v.freeAgents!==undefined&&(typeof v.freeAgents!=='string'||!['ORIGINAL_SPANISH_MALE_18_40_SEEDED_MAX_60','ORIGINAL_COUNTRY_MALE_18_40_SEEDED_MAX_60','ORIGINAL_SPANISH_FEMALE_18_40_SEEDED_MAX_60','ORIGINAL_COUNTRY_FEMALE_18_40_SEEDED_MAX_60'].includes(v.freeAgents)))throw new TypeError('Invalid WorldDB V2 free agents provenance')
   for(const key of keys.filter(k=>k!=='fictional'))if(typeof v[key]!=='string'||!v[key])throw new TypeError('Invalid WorldDB V2 provenance '+key)
