@@ -55,7 +55,7 @@ import { LineupSelectionError } from '@/engine/tactics/LineupAvailability'
 import { validateTacticalPlan } from '@/engine/match'
 import { getTeamLineup } from '@/domain/world'
 import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
-import { clearGamePlanOverride, setTacticalInstruction, updateGamePlan } from '@/app/game/TacticalPlanning'
+import { acceptOppositionScoutingReport, clearGamePlanOverride, setTacticalInstruction, updateGamePlan } from '@/app/game/TacticalPlanning'
 import { deleteDesignerPlay, deleteDesignerPlaybook, saveDesignerPlay, saveDesignerPlaybook } from '@/engine/tactics/PlaybookEngine'
 import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
@@ -242,6 +242,7 @@ interface GameStore {
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
   updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
+  acceptOppositionScoutingReport(reportId: string): void
   updateGamePlanTacticalOverride(tacticalOverride: MatchTacticalPlan): void
   /** Removes the next game's tactical override so the team's standing plan applies again (matchups are kept). */
   clearGamePlanTacticalOverride(): void
@@ -730,6 +731,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
     set({ world: updateGamePlan(world, { gameId: game.id, teamId: team.id, ...(existing?.rotationOverride === undefined ? {} : { rotationOverride: existing.rotationOverride }), ...(existing?.tacticalOverride === undefined ? {} : { tacticalOverride: existing.tacticalOverride }), matchups }) },
     )
+  },
+  acceptOppositionScoutingReport: (reportId) => {
+    set({ world: acceptOppositionScoutingReport(requireWorld(get().world), reportId) })
   },
   updateGamePlanTacticalOverride: (tacticalOverride) => {
     const world = requireWorld(get().world)
