@@ -1,4 +1,5 @@
-import type { GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
 import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { parseGameDate } from '@/domain/date'
 import { createAcbTestGame } from './createAcbTestGame'
@@ -9,9 +10,37 @@ import { createWorldDbSpainGame, type WorldDbSpainGameAccess } from './WorldDbSp
 import { createNcaaSimulatedGame } from './createNcaaSimulatedGame'
 import { applyUserCoachCreation } from './UserCoachCreator'
 import { WORLD_DB_V2_UNIVERSE_ID } from './NewGameUniverseCatalog'
+import { NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID } from './NewGameUniverseCatalog'
+import { createNcaaD1Real2026Universe } from './NcaaD1Real2026Universe'
+import { ncaaD1Real2026GameplayPolicy } from './NcaaD1Real2026GeneratedPolicy'
+import { buildNcaaD1Real2026ConferenceSnapshot } from './NcaaD1Real2026Conferences'
+import type { NcaaD1Real2026FixtureSource } from './NcaaD1Real2026Fixtures'
+import officialNcaa2026 from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixtures-sample.json'
 
 export function createConfiguredGame(options: NewGameConfiguration = {}): GameWorld {
   const universeId = options.universeId ?? 'prototype'
+  if (universeId === NCAA_D1_2026_MEN_UNIVERSE_ID || universeId === NCAA_D1_2026_WOMEN_UNIVERSE_ID) {
+    const managedGender = universeId === NCAA_D1_2026_MEN_UNIVERSE_ID ? 'men' : 'women'
+    const seed = options.ncaaSeed ?? 202627
+    if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffff_ffff) throw new RangeError('NCAA 2026-27 universe needs a valid 32-bit seed')
+    const programs = buildNcaaD1Real2026ConferenceSnapshot(managedGender)
+    const userTeamKey = options.userTeamKey
+    if (!userTeamKey || !programs.teams.some(team => team.id === userTeamKey)) {
+      throw new RangeError('Select one of the real NCAA 2026-27 programs in the chosen gender')
+    }
+    const schedules = { men: ncaaD1Real2026GameplayPolicy('men', seed), women: ncaaD1Real2026GameplayPolicy('women', seed) }
+    const original = createNcaaD1Real2026Universe({
+      seed, managedGender, managedProgramId: userTeamKey,
+      sourcedFixtures: officialNcaa2026.fixtures as readonly NcaaD1Real2026FixtureSource[],
+      generatedSchedules: schedules,
+    }).world
+    const coach = original.userCoachId
+    const withRpg = updateGameWorld(original, { coachRpgProfilesByCoachId: {
+      ...original.coachRpgProfilesByCoachId,
+      [coach]: original.coachRpgProfilesByCoachId[coach] ?? createInitialCoachRpgProfile(),
+    } })
+    return options.userCoachCreation === undefined ? withRpg : applyUserCoachCreation(withRpg, options.userCoachCreation)
+  }
   if (universeId === WORLD_DB_SPAIN_UNIVERSE_ID || universeId === WORLD_DB_V2_UNIVERSE_ID) throw new RangeError('World DB requires async new-game bootstrap')
   const world = universeId === ACB_TEST_UNIVERSE_ID
     ? createAcbTestGame({ userTeamKey: options.userTeamKey, careerStartDate: parseGameDate(ACB_CAREER_START_DATE), ...(options.userCoachCreation === undefined ? { coachRpgPreset: options.coachRpgPreset } : {}), gameBalance: BDM_GAME_BALANCE_V1, playableMarket: true })
