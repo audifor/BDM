@@ -38,13 +38,13 @@ export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
   {
     id: NCAA_D1_2026_MEN_UNIVERSE_ID,
     label: 'NCAA D1 2026/27 · MEN [SIMULATION]',
-    description: '365 real Division I men's programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
+    description: '365 real Division I male-category programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
     isTest: true, teams: ncaaReal2026TeamOptions('men'),
   },
   {
     id: NCAA_D1_2026_WOMEN_UNIVERSE_ID,
     label: 'NCAA D1 2026/27 · WOMEN [SIMULATION]',
-    description: '363 real Division I women's programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
+    description: '363 real Division I female-category programs; 32 source conferences; 56 ASUN sourced matches. Other fixtures, players, conference titles and 76-team national field are BDM-generated. Experimental career, not an official NCAA season.',
     isTest: true, teams: ncaaReal2026TeamOptions('women'),
   },
   {id:WORLD_DB_V2_UNIVERSE_ID,label:'WORLDDB V2 · PBM',description:'Original PBM clubs and identities; BDM-generated sporting profiles and economy. Fictional career using the selected competition’s documented native format.',isTest:false,teams:[]},
